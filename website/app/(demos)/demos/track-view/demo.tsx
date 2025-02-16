@@ -9,17 +9,24 @@ import styles from "./demo.module.css";
 
 export default function Page() {
   const demoRef = useRef(null);
+  const sectionRefs = useRef(new Set<Element>());
+
+  const addSectionRef = (section) => {
+    sectionRefs.current.add(section);
+  };
 
   useEffect(() => {
     let watcher;
     const main = demoRef.current;
+    const sections = [...sectionRefs.current];
+
     if (main) {
       watcher = ViewWatcher.create({
         root: main,
         rootMargin: "200px",
       });
 
-      for (const section of main.querySelectorAll(`.${styles.section}`)) {
+      for (const section of sections) {
         watcher.trackView(section, null, {
           debounceWindow: 0,
           resizeThreshold: 0,
@@ -30,8 +37,8 @@ export default function Page() {
 
     return () => {
       // cleanup
-      if (watcher && main) {
-        watcher.noTrackView(main);
+      for (const section of sections) {
+        watcher.noTrackView(section);
       }
     };
   }, []);
@@ -40,7 +47,7 @@ export default function Page() {
     <>
       <div className={styles.wrapper}>
         <div ref={demoRef} className={[styles.demo, "light-theme"].join(" ")}>
-          <div className={styles.section}>
+          <div ref={addSectionRef} className={styles.section}>
             {/* https://unsplash.com/photos/a-close-up-of-a-red-and-black-substance-OOFSqPWjCt0 */}
             <div className={styles.background}>
               <Image src="/images/abstract-1.jpg" alt="" />
@@ -53,7 +60,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div ref={addSectionRef} className={styles.section}>
             {/* https://unsplash.com/photos/a-purple-and-green-abstract-background-with-lots-of-lines-pEgsWN0kwbQ */}
             <div className={styles.background}>
               <Image src="/images/abstract-4.jpg" alt="" />
@@ -66,7 +73,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div ref={addSectionRef} className={styles.section}>
             {/* https://unsplash.com/photos/purple-black-and-orange-abstract-paintin-arwTpnIUHdM */}
             <div className={styles.background}>
               <Image src="/images/abstract-3.jpg" alt="" />
@@ -79,7 +86,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className={styles.section}>
+          <div ref={addSectionRef} className={styles.section}>
             {/* https://unsplash.com/photos/a-very-long-line-of-yellow-lines-on-a-black-background-YeUVDKZWSZ4 */}
             <div className={styles.background}>
               <Image src="/images/abstract-2.jpg" alt="" />

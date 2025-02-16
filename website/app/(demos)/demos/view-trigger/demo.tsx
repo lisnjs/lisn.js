@@ -7,6 +7,7 @@ import {
   LoadTrigger,
   Show,
   AutoHide,
+  ViewData,
 } from "lisn.js";
 import { ScrollbarComponent } from "@lisn.js/react";
 import "lisn.js/scrollbar.css";
@@ -15,47 +16,69 @@ import styles from "./demo.module.css";
 
 export default function Page() {
   const msgRef = useRef(null);
-  const demoRef = useRef(null);
+  const scrollableRef = useRef(null);
+  const triggerRefs = useRef([]);
+  const tabRefs = useRef([]);
+
+  const addTriggerRef = (trigger) => {
+    triggerRefs.current.push(trigger);
+  };
+
+  const addTabRef = (tab) => {
+    tabRefs.current.push(tab);
+  };
+
+  const getTabForTrigger = (trigger: Element) =>
+    tabRefs.current[triggerRefs.current.indexOf(trigger)];
+
+  const getTriggerForTab = (tab: Element) =>
+    triggerRefs.current[tabRefs.current.indexOf(tab)];
+
+  const onTabSelect = (event) => {
+    const tab = event.target;
+    const scrollable = scrollableRef.current.getWidget()?.getScrollable();
+    if (scrollable && tab instanceof Element) {
+      const trigger = getTriggerForTab(tab);
+      if (trigger) {
+        ScrollWatcher.reuse().scrollTo(trigger, {
+          scrollable: scrollable,
+          offset: { top: -5 },
+        });
+      }
+    }
+  };
 
   useEffect(() => {
-    const main = demoRef.current;
-    const scrollWatcher = ScrollWatcher.reuse();
     let viewWatcher;
-    if (main) {
-      const scrollable = main.querySelector(`.${styles.scrollable}`);
-      const tabs = main.querySelectorAll(`.${styles.tab}`);
-      const triggerLines = scrollable.querySelectorAll(`.${styles.trigger}`);
+    const scrollable = scrollableRef.current.getWidget()?.getScrollable();
+    const triggers = [...triggerRefs.current];
 
+    const onViewHandler = (trigger: Element, viewData: ViewData) => {
+      const tab = getTabForTrigger(trigger);
+      if (tab) {
+        if (viewData.views[0] === "at") {
+          tab.classList.add(styles.inview);
+        } else {
+          tab.classList.remove(styles.inview);
+        }
+      }
+    };
+
+    if (scrollable) {
       viewWatcher = ViewWatcher.create({
         root: scrollable,
         rootMargin: "0px",
       });
 
-      for (let i = 0; i < triggerLines.length; i++) {
-        const tab = tabs[i];
-        if (tab) {
-          viewWatcher.onView(triggerLines[i], (e, viewData) => {
-            if (viewData.views[0] === "at") {
-              tab.classList.add(styles.inview);
-            } else {
-              tab.classList.remove(styles.inview);
-            }
-          });
-
-          tab.addEventListener("click", () =>
-            scrollWatcher.scrollTo(triggerLines[i], {
-              scrollable: scrollable,
-              offset: { top: -5 },
-            }),
-          );
-        }
+      for (const trigger of triggers) {
+        viewWatcher.onView(trigger, onViewHandler);
       }
     }
 
     return () => {
       // cleanup
-      if (main) {
-        viewWatcher.noTrackScroll(null, main);
+      for (const trigger of triggers) {
+        viewWatcher?.offView(trigger, onViewHandler);
       }
     };
   }, []);
@@ -83,16 +106,27 @@ export default function Page() {
           Scroll the box
         </p>
 
-        <div ref={demoRef} className={styles.demo}>
+        <div className={styles.demo}>
           <div className={styles.tabs}>
-            <div className={styles.tab}>L</div>
-            <div className={styles.tab}>I</div>
-            <div className={styles.tab}>S</div>
-            <div className={styles.tab}>N</div>
+            <div ref={addTabRef} onClick={onTabSelect} className={styles.tab}>
+              L
+            </div>
+            <div ref={addTabRef} onClick={onTabSelect} className={styles.tab}>
+              I
+            </div>
+            <div ref={addTabRef} onClick={onTabSelect} className={styles.tab}>
+              S
+            </div>
+            <div ref={addTabRef} onClick={onTabSelect} className={styles.tab}>
+              N
+            </div>
           </div>
 
-          <ScrollbarComponent className={styles.scrollable}>
-            <div className={styles.trigger}></div>
+          <ScrollbarComponent
+            widgetRef={scrollableRef}
+            className={styles.scrollable}
+          >
+            <div ref={addTriggerRef} className={styles.trigger}></div>
             <div className={styles.section}>
               <h1>L</h1>
               <h4>Lightweight.</h4>
@@ -104,7 +138,7 @@ export default function Page() {
               </ul>
             </div>
 
-            <div className={styles.trigger}></div>
+            <div ref={addTriggerRef} className={styles.trigger}></div>
             <div className={styles.section}>
               <h1>I</h1>
               <h4>Interactive.</h4>
@@ -116,7 +150,7 @@ export default function Page() {
               </ul>
             </div>
 
-            <div className={styles.trigger}></div>
+            <div ref={addTriggerRef} className={styles.trigger}></div>
             <div className={styles.section}>
               <h1>S</h1>
               <h4>Simple.</h4>
@@ -128,7 +162,7 @@ export default function Page() {
               </ul>
             </div>
 
-            <div className={styles.trigger}></div>
+            <div ref={addTriggerRef} className={styles.trigger}></div>
             <div className={styles.section}>
               <h1>N</h1>
               <h4>No-nonsense.</h4>

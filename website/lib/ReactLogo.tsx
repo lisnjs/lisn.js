@@ -1,4 +1,4 @@
-export const ReactLogo = ({ size = 60, color = "rgb(88 196 220)" }) => {
+export const ReactLogo = ({ size = 60, color = "var(--text-color)" }) => {
   return (
     <svg
       width={size}

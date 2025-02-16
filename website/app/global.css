@@ -19,6 +19,7 @@
   --bg-color: var(--light-color);
   --bg-color-lighter: var(--light-color-l);
   --bg-color-lightest: var(--light-color-ll);
+  --accent-color: #cfb3e7;
   --hljs-bg-color: #fafafa;
 }
 
@@ -28,6 +29,7 @@
   --bg-color: var(--dark-color);
   --bg-color-lighter: var(--dark-color-l);
   --bg-color-lightest: var(--dark-color-ll);
+  --accent-color: #60578c;
   --hljs-bg-color: #282c34;
 }
 

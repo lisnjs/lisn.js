@@ -48,7 +48,13 @@ export default function Page() {
         </ul>
 
         <div className="bold flex i-center gap-3">
-          <ReactLogo /> React wrappers (more frameworks planned).
+          <ReactLogo />
+          <Link
+            href="https://www.npmjs.com/package/@lisn.js/react"
+            external={true}
+          >
+            React wrappers
+          </Link>{" "}
         </div>
       </Section>
 
@@ -144,7 +150,7 @@ import "lisn.js/pager.css"`}</code>
             <pre>
               <code className="language-bash">{`npm install @lisn.js/react
 # OR
-yarn add lisn.js`}</code>
+yarn add @lisn.js/react`}</code>
             </pre>
             Then import the components and any required CSS in your project:
             <pre>
@@ -287,6 +293,20 @@ LISN.watchers.ScrollWatcher.onScroll(
           <code>ResizeObserver</code>, <code>IntersectionObserver</code> and
           possibly other features.
         </p>
+      </Section>
+
+      <Section>
+        <h2 className="text-center">Future plans.</h2>
+        <ul className="checked bold center fit">
+          <li>Wrappers for more frameworks.</li>
+          <li>SmoothScroller widget.</li>
+          <li>Radio/checkbox trigger.</li>
+          <li>
+            <Link href="https://github.com/lisnjs/lisn.js/issues">
+              You tell me :)
+            </Link>
+          </li>
+        </ul>
       </Section>
     </>
   );

@@ -7,7 +7,7 @@
     "build": "npx next build",
     "start": "npx next start",
     "serve": "node server",
-    "deploy": "npx gh-pages --dist out --nojekyll --repo https://github.com/lisnjs/lisnjs.github.io.git --branch main"
+    "deploy": "npx gh-pages --dist out --nojekyll --repo git@github.com:lisnjs/lisnjs.github.io.git --branch main"
   },
   "dependencies": {
     "highlight.js": "^11.11.1",

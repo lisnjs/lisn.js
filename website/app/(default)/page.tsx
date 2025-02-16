@@ -214,7 +214,7 @@ LISN.watchers.ScrollWatcher.onScroll(
             <span>Default</span>
             <Image
               alt="File size in bytes"
-              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2Flisn.js-bundles%2Flisn.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
+              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
               unoptimized={true}
             />
           </div>
@@ -229,7 +229,7 @@ LISN.watchers.ScrollWatcher.onScroll(
             <span>Slim</span>
             <Image
               alt="File size in bytes"
-              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2Flisn.js-bundles%2Flisn.slim.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
+              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.slim.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
               unoptimized={true}
             />
           </div>
@@ -244,7 +244,7 @@ LISN.watchers.ScrollWatcher.onScroll(
             <span>Essentials</span>
             <Image
               alt="File size in bytes"
-              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2Flisn.js-bundles%2Flisn.essentials.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
+              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.essentials.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
               unoptimized={true}
             />
           </div>
@@ -256,7 +256,7 @@ LISN.watchers.ScrollWatcher.onScroll(
             <span>Debug/dev (not minified)</span>
             <Image
               alt="File size in bytes"
-              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2Flisn.js-bundles%2Flisn.debug.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
+              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.debug.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
               unoptimized={true}
             />
           </div>

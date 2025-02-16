@@ -1,4 +1,4 @@
-# [Official website](https://lisnjs.github.io/demos/) | [Demos](https://lisnjs.github.io/demos/) | [Docs](https://lisnjs.github.io/docs/)
+# [Official website](https://lisnjs.github.io/) | [Demos](https://lisnjs.github.io/demos/) | [Docs](https://lisnjs.github.io/docs/)
 
 # Intro
 

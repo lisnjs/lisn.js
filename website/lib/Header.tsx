@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import styles from "./header.module.css";
 
 import Badge from "./Badge";
-import GitHubLogo from "./GitHubLogo";
+import GitHubCorner from "./GitHubCorner";
 import Link from "./Link";
 
 export const Header = ({ className = "" }) => {
@@ -37,8 +37,12 @@ export const Header = ({ className = "" }) => {
           <Link href="/changelog" external={true}>
             Changelog
           </Link>
-          <Link href="https://github.com/lisnjs/lisn.js" target="_blank">
-            <GitHubLogo />
+          <Link
+            className={styles.github}
+            href="https://github.com/lisnjs/lisn.js"
+            target="_blank"
+          >
+            <GitHubCorner />
           </Link>
         </div>
       </div>

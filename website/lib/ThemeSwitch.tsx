@@ -26,15 +26,15 @@ export const ThemeSwitch = ({
           cy="24"
           r="10"
           stroke={color}
-          stroke-width="2"
+          strokeWidth="2"
           fill="none"
         />
         <path d="M24 14A10 10 0 0 1 34 24A10 10 0 0 1 24 34Z" fill={color} />
         <path
           d="M24 4V8M24 40V44M4 24H8M40 24H44M10 10L14 14M34 34L38 38M10 38L14 34M34 14L38 10"
           stroke={color}
-          stroke-width="2"
-          stroke-linecap="round"
+          strokeWidth="2"
+          strokeLinecap="round"
         />
       </svg>
     </button>

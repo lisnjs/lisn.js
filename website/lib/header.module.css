@@ -1,8 +1,8 @@
 .header {
   z-index: 100;
   position: relative;
-  font-size: 16px;
-  padding: 5px;
+  font-size: 0.8em;
+  padding: 12px 50px 12px 12px;
   display: flex;
   flex-wrap: wrap-reverse;
   align-items: center;
@@ -10,16 +10,22 @@
   gap: 0.5em;
 }
 
-.header .version {
+.version {
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
 
-.header .links {
+.links {
   display: flex;
   flex-wrap: wrap-reverse;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5em;
+}
+
+.github {
+  position: absolute;
+  top: 0;
+  right: 0;
 }

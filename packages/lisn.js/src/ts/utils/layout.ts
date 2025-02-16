@@ -157,11 +157,12 @@ export const NUM_LAYOUTS =
 const S_DEVICES = "devices";
 const S_ASPECTRS_CAMEL = "aspectRatios";
 
+// Don't use capture groups for old browser support
 const LAYOUT_RANGE_REGEX = RegExp(
-  "^ *(" +
-    "(?<layoutA>[a-z-]+) +to +(?<layoutB>[a-z-]+)|" +
-    "min +(?<minLayout>[a-z-]+)|" +
-    "max +(?<maxLayout>[a-z-]+)" +
+  "^ *(?:" +
+    "([a-z-]+) +to +([a-z-]+)|" +
+    "min +([a-z-]+)|" +
+    "max +([a-z-]+)" +
     ") *$",
 );
 
@@ -227,15 +228,8 @@ const getBitmaskFromSpec = <T extends Device | AspectRatio>(
   if (MH.isString(spec)) {
     const rangeMatch = spec.match(LAYOUT_RANGE_REGEX);
     if (rangeMatch) {
-      /* istanbul ignore next */ // shouldn't happen
-      if (!rangeMatch.groups) {
-        throw MH.bugError("Layout regex has no named groups");
-      }
-
-      const minLayout =
-        rangeMatch.groups.layoutA || rangeMatch.groups.minLayout;
-      const maxLayout =
-        rangeMatch.groups.layoutB || rangeMatch.groups.maxLayout;
+      const minLayout = rangeMatch[1] || rangeMatch[3];
+      const maxLayout = rangeMatch[2] || rangeMatch[4];
 
       if (minLayout !== undefined && !bitSpace.has(minLayout)) {
         throw MH.usageError(`Unknown ${singleKeyName} '${minLayout}'`);

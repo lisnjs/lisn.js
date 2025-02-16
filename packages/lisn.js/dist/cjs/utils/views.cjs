@@ -159,16 +159,15 @@ const getViewsBitmask = viewsStr => {
  */
 exports.getViewsBitmask = getViewsBitmask;
 const parseScrollOffset = input => {
-  var _match$groups, _match$groups2;
   const match = input.match(OFFSET_REGEX);
   if (!match) {
     throw MH.usageError(`Invalid offset: '${input}'`);
   }
-  const reference = (_match$groups = match.groups) === null || _match$groups === void 0 ? void 0 : _match$groups.ref;
-  const value = (_match$groups2 = match.groups) === null || _match$groups2 === void 0 ? void 0 : _match$groups2.value;
+  const reference = match[1];
+  const value = match[2];
   /* istanbul ignore next */ // shouldn't happen
   if (!reference || !value) {
-    throw MH.bugError("Offset regex: blank named groups");
+    throw MH.bugError("Offset regex: blank capture groups");
   }
   return {
     reference,
@@ -186,7 +185,7 @@ const VIEWS_SPACE = exports.VIEWS_SPACE = (0, _bitSpaces.createBitSpace)((0, _bi
 
 // --------------------
 
-const OFFSET_REGEX = RegExp("(?<ref>top|bottom|left|right): *(?<value>[^ ].+)");
+const OFFSET_REGEX = RegExp("(top|bottom|left|right): *([^ ].+)");
 const getViewsFromBitmask = bitmask => {
   const views = [];
   for (let bit = VIEWS_SPACE.start; bit <= VIEWS_SPACE.end; bit++) {

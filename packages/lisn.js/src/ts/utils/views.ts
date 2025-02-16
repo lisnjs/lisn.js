@@ -171,11 +171,11 @@ export const parseScrollOffset = (input: string) => {
     throw MH.usageError(`Invalid offset: '${input}'`);
   }
 
-  const reference = match.groups?.ref;
-  const value = match.groups?.value;
+  const reference = match[1];
+  const value = match[2];
   /* istanbul ignore next */ // shouldn't happen
   if (!reference || !value) {
-    throw MH.bugError("Offset regex: blank named groups");
+    throw MH.bugError("Offset regex: blank capture groups");
   }
 
   return { reference, value };
@@ -197,7 +197,8 @@ export const VIEWS_SPACE = createBitSpace<View>(newBitSpaces(), ...VIEWS);
 
 // --------------------
 
-const OFFSET_REGEX = RegExp("(?<ref>top|bottom|left|right): *(?<value>[^ ].+)");
+// Don't use capture groups for old browser support
+const OFFSET_REGEX = RegExp("(top|bottom|left|right): *([^ ].+)");
 
 const getViewsFromBitmask = (bitmask: number): View[] => {
   const views: View[] = [];

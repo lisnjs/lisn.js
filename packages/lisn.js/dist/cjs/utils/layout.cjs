@@ -125,7 +125,7 @@ const NUM_LAYOUTS = exports.NUM_LAYOUTS = MH.lengthOf(ORDERED_DEVICE_NAMES) + MH
 
 const S_DEVICES = "devices";
 const S_ASPECTRS_CAMEL = "aspectRatios";
-const LAYOUT_RANGE_REGEX = RegExp("^ *(" + "(?<layoutA>[a-z-]+) +to +(?<layoutB>[a-z-]+)|" + "min +(?<minLayout>[a-z-]+)|" + "max +(?<maxLayout>[a-z-]+)" + ") *$");
+const LAYOUT_RANGE_REGEX = RegExp("^ *(?:" + "([a-z-]+) +to +([a-z-]+)|" + "min +([a-z-]+)|" + "max +([a-z-]+)" + ") *$");
 const getLayoutsFromBitmask = (keyName, bitmask, bitSpace) => {
   const layouts = [];
   for (let bit = bitSpace.start; bit <= bitSpace.end; bit++) {
@@ -166,12 +166,8 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
   if (MH.isString(spec)) {
     const rangeMatch = spec.match(LAYOUT_RANGE_REGEX);
     if (rangeMatch) {
-      /* istanbul ignore next */ // shouldn't happen
-      if (!rangeMatch.groups) {
-        throw MH.bugError("Layout regex has no named groups");
-      }
-      const minLayout = rangeMatch.groups.layoutA || rangeMatch.groups.minLayout;
-      const maxLayout = rangeMatch.groups.layoutB || rangeMatch.groups.maxLayout;
+      const minLayout = rangeMatch[1] || rangeMatch[3];
+      const maxLayout = rangeMatch[2] || rangeMatch[4];
       if (minLayout !== undefined && !bitSpace.has(minLayout)) {
         throw MH.usageError(`Unknown ${singleKeyName} '${minLayout}'`);
       }

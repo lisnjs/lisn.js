@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.0.0
+ * LISN.js v1.0.1
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -2628,7 +2628,7 @@ const ORDERED_ASPECTR = createBitSpace(bitSpaces, ...ORDERED_ASPECTR_NAMES);
 const NUM_LAYOUTS = lengthOf(ORDERED_DEVICE_NAMES) + lengthOf(ORDERED_ASPECTR_NAMES);
 const S_DEVICES = "devices";
 const S_ASPECTRS_CAMEL = "aspectRatios";
-const LAYOUT_RANGE_REGEX = RegExp("^ *(" + "(?<layoutA>[a-z-]+) +to +(?<layoutB>[a-z-]+)|" + "min +(?<minLayout>[a-z-]+)|" + "max +(?<maxLayout>[a-z-]+)" + ") *$");
+const LAYOUT_RANGE_REGEX = RegExp("^ *(?:" + "([a-z-]+) +to +([a-z-]+)|" + "min +([a-z-]+)|" + "max +([a-z-]+)" + ") *$");
 const getLayoutsFromBitmask = (keyName, bitmask, bitSpace) => {
   const layouts = [];
   for (let bit = bitSpace.start; bit <= bitSpace.end; bit++) {
@@ -2669,11 +2669,8 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
   if (isString(spec)) {
     const rangeMatch = spec.match(LAYOUT_RANGE_REGEX);
     if (rangeMatch) {
-      if (!rangeMatch.groups) {
-        throw bugError("Layout regex has no named groups");
-      }
-      const minLayout = rangeMatch.groups.layoutA || rangeMatch.groups.minLayout;
-      const maxLayout = rangeMatch.groups.layoutB || rangeMatch.groups.maxLayout;
+      const minLayout = rangeMatch[1] || rangeMatch[3];
+      const maxLayout = rangeMatch[2] || rangeMatch[4];
       if (minLayout !== undefined && !bitSpace.has(minLayout)) {
         throw usageError(`Unknown ${singleKeyName} '${minLayout}'`);
       }
@@ -4220,15 +4217,14 @@ const getViewsBitmask = viewsStr => {
   return viewsBitmask;
 };
 const parseScrollOffset = input => {
-  var _match$groups, _match$groups2;
   const match = input.match(OFFSET_REGEX);
   if (!match) {
     throw usageError(`Invalid offset: '${input}'`);
   }
-  const reference = (_match$groups = match.groups) === null || _match$groups === void 0 ? void 0 : _match$groups.ref;
-  const value = (_match$groups2 = match.groups) === null || _match$groups2 === void 0 ? void 0 : _match$groups2.value;
+  const reference = match[1];
+  const value = match[2];
   if (!reference || !value) {
-    throw bugError("Offset regex: blank named groups");
+    throw bugError("Offset regex: blank capture groups");
   }
   return {
     reference,
@@ -4237,7 +4233,7 @@ const parseScrollOffset = input => {
 };
 const VIEWS = [S_AT, S_ABOVE, S_BELOW, S_LEFT, S_RIGHT];
 const VIEWS_SPACE = createBitSpace(newBitSpaces(), ...VIEWS);
-const OFFSET_REGEX = RegExp("(?<ref>top|bottom|left|right): *(?<value>[^ ].+)");
+const OFFSET_REGEX = RegExp("(top|bottom|left|right): *([^ ].+)");
 const getViewsFromBitmask = bitmask => {
   const views = [];
   for (let bit = VIEWS_SPACE.start; bit <= VIEWS_SPACE.end; bit++) {

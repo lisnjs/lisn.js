@@ -275,11 +275,11 @@ LISN.watchers.ScrollWatcher.onScroll(
         <h2 className="text-center">Browser support.</h2>
         <p>Official support is for:</p>
         <ul>
-          <li>Chrome &gt;= 58</li>
-          <li>Edge &gt;= 16</li>
-          <li>Firefox &gt;= 54</li>
-          <li>Safari &gt;= 11</li>
-          <li>iOS &gt;= 11</li>
+          <li>Chrome &gt;= 64</li>
+          <li>Edge &gt;= 79</li>
+          <li>Firefox &gt;= 69</li>
+          <li>Safari &gt;= 13.1</li>
+          <li>iOS &gt;= 13.4</li>
         </ul>
         <p>
           If you require older browser support (like IE), you'll need to

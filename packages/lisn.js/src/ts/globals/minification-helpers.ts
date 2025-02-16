@@ -131,7 +131,7 @@ export const isMouseEvent = (event: Event): event is MouseEvent =>
   isInstanceOf(event, MouseEvent);
 
 export const isPointerEvent = (event: Event): event is PointerEvent =>
-  isInstanceOf(event, PointerEvent);
+  typeof PointerEvent !== "undefined" && isInstanceOf(event, PointerEvent);
 
 export const isTouchPointerEvent = (event: Event): event is PointerEvent =>
   isPointerEvent(event) && getPointerType(event) === MC.S_TOUCH;
@@ -143,7 +143,7 @@ export const isKeyboardEvent = (event: Event): event is KeyboardEvent =>
   isInstanceOf(event, KeyboardEvent);
 
 export const isTouchEvent = (event: Event): event is TouchEvent =>
-  isInstanceOf(event, TouchEvent);
+  typeof TouchEvent !== "undefined" && isInstanceOf(event, TouchEvent);
 
 export const isNode = (target: unknown) => isInstanceOf(target, Node);
 

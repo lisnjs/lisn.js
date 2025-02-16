@@ -3,8 +3,8 @@ import { usePathname } from "next/navigation";
 
 import styles from "./header.module.css";
 
+import Badge from "./Badge";
 import GitHubLogo from "./GitHubLogo";
-import Image from "./Image";
 import Link from "./Link";
 
 export const Header = ({ className = "" }) => {
@@ -14,16 +14,15 @@ export const Header = ({ className = "" }) => {
     <header className={className}>
       <div className={styles.header}>
         <div className={styles.version}>
-          <Image
-            alt="Latest version"
-            src="https://img.shields.io/npm/v/lisn.js?style=flat-square&labelColor=%232e2e4c&color=%232e2e4c&label=version%3A"
-            unoptimized={true}
+          <Badge
+            label="Latest version"
+            path="npm/v/lisn.js"
+            extra="label=version%3A"
           />
-
-          <Image
-            alt="Release date"
-            src="https://img.shields.io/npm/last-update/lisn.js?style=flat-square&labelColor=%232e2e4c&color=%232e2e4c&label=%7C"
-            unoptimized={true}
+          <Badge
+            label="Release date"
+            path="npm/last-update/lisn.js"
+            extra="label=%7C"
           />
         </div>
 

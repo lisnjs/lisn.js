@@ -2,27 +2,24 @@
   scroll-behavior: smooth;
 }
 
-body {
+:root {
   --dark-color: #1e1e31;
   --dark-color-l: #2e2e4c;
   --dark-color-ll: #414168;
-  --light-color: #e0e9ea;
-  --light-color-l: #eaeafb;
+  --light-color: #eef2f3;
+  --light-color-l: #fafafa;
   --light-color-ll: #fff;
-
-  --lisn-color-dark: var(--dark-color);
-  --lisn-color-dark-t: color-mix(in hsl, var(--dark-color), transparent 5%);
-  --lisn-color-light: var(--light-color);
-  --lisn-color-light-t: color-mix(in hsl, var(--light-color), transparent 5%);
 }
 
 :root,
 .light-theme {
   --text-color: var(--dark-color);
   --text-color-lighter: var(--dark-color-l);
+  --text-color-lightest: var(--dark-color-ll);
   --bg-color: var(--light-color);
   --bg-color-lighter: var(--light-color-l);
   --bg-color-lightest: var(--light-color-ll);
+  --hljs-bg-color: #fafafa;
 }
 
 .dark-theme {
@@ -31,6 +28,22 @@ body {
   --bg-color: var(--dark-color);
   --bg-color-lighter: var(--dark-color-l);
   --bg-color-lightest: var(--dark-color-ll);
+  --hljs-bg-color: #282c34;
+}
+
+.light-theme .hide-on-light {
+  display: none;
+}
+
+.dark-theme .hide-on-dark {
+  display: none;
+}
+
+body {
+  --lisn-color-dark: var(--dark-color);
+  --lisn-color-dark-t: color-mix(in hsl, var(--dark-color), transparent 5%);
+  --lisn-color-light: var(--light-color);
+  --lisn-color-light-t: color-mix(in hsl, var(--light-color), transparent 5%);
 }
 
 * {

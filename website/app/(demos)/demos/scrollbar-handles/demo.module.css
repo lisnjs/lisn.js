@@ -19,7 +19,7 @@
   height: 400px;
   width: 800px;
   max-width: calc(100% - 50px);
-  background: #28283f;
+  background: var(--bg-color-lighter);
   box-shadow: var(--lisn-shadow);
   color: var(--text-color);
   overflow: auto;

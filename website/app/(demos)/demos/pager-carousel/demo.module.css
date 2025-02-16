@@ -106,13 +106,12 @@
 
 .demo[data-lisn-current-page-is-first-enabled="true"] [data-switch="prev"],
 .demo[data-lisn-current-page-is-last-enabled="true"] [data-switch="next"] {
-  --btn-color: #777;
   cursor: default;
   pointer-events: none;
+  opacity: 0.25;
 }
 
 .arrow {
-  --btn-color: #ddd;
   background: none;
   padding: 0;
   margin: 10px;
@@ -122,11 +121,11 @@
   opacity: 0.8;
   cursor: pointer;
   border-width: 13px;
-  border-color: transparent var(--btn-color);
+  border-color: transparent var(--text-color);
 }
 
 .arrow:hover {
-  --btn-color: #fff;
+  opacity: 1;
 }
 
 .arrow[data-switch="prev"] {

@@ -7,7 +7,8 @@ import xml from "highlight.js/lib/languages/xml";
 import javascript from "highlight.js/lib/languages/javascript";
 import typescript from "highlight.js/lib/languages/typescript";
 import css from "highlight.js/lib/languages/css";
-import "highlight.js/styles/atom-one-dark.css";
+
+import "@app/highlightjs.scss";
 
 hljs.registerLanguage("bash", bash);
 hljs.registerLanguage("xml", xml);

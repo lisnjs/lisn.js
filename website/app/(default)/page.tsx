@@ -1,5 +1,5 @@
+import Badge from "@lib/Badge";
 import { CodePager, CodePagerPage } from "@lib/CodePager";
-import Image from "@lib/Image";
 import Link from "@lib/Link";
 import ReactLogo from "@lib/ReactLogo";
 import Section from "@lib/Section";
@@ -218,10 +218,9 @@ LISN.watchers.ScrollWatcher.onScroll(
         <div>
           <div className="bold flex i-center gap-s">
             <span>Default</span>
-            <Image
-              alt="File size in bytes"
-              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
-              unoptimized={true}
+            <Badge
+              label="File size in bytes"
+              path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.min.js"
             />
           </div>
           <p className="small">
@@ -233,10 +232,9 @@ LISN.watchers.ScrollWatcher.onScroll(
         <div>
           <div className="bold flex i-center gap-s">
             <span>Slim</span>
-            <Image
-              alt="File size in bytes"
-              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.slim.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
-              unoptimized={true}
+            <Badge
+              label="File size in bytes"
+              path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.slim.min.js"
             />
           </div>
           <p className="small">
@@ -248,10 +246,9 @@ LISN.watchers.ScrollWatcher.onScroll(
         <div>
           <div className="bold flex i-center gap-s">
             <span>Essentials</span>
-            <Image
-              alt="File size in bytes"
-              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.essentials.min.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
-              unoptimized={true}
+            <Badge
+              label="File size in bytes"
+              path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.essentials.min.js"
             />
           </div>
           <p className="small">Includes just the watchers.</p>
@@ -260,10 +257,9 @@ LISN.watchers.ScrollWatcher.onScroll(
         <div>
           <div className="bold flex i-center gap-s">
             <span>Debug/dev (not minified)</span>
-            <Image
-              alt="File size in bytes"
-              src="https://img.shields.io/github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.debug.js?style=flat-square&labelColor=%231e1e31&color=%231e1e31"
-              unoptimized={true}
+            <Badge
+              label="File size in bytes"
+              path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.debug.js"
             />
           </div>
           <p className="small">

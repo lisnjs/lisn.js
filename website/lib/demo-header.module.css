@@ -8,7 +8,7 @@
 
 .popupTrigger {
   padding: 7px;
-  background: var(--lisn-color-dark-t);
+  background: var(--bg-color);
   cursor: default;
   outline: none;
   border: none;

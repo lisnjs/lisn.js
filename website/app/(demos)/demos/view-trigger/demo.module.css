@@ -22,7 +22,7 @@
   height: 400px;
   width: 800px;
   max-width: 100%;
-  background: #28283f;
+  background: var(--bg-color-lighter);
   box-shadow: var(--lisn-shadow);
   color: var(--text-color);
   overflow: auto;

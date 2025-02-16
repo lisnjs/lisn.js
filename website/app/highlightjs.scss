@@ -1,0 +1,9 @@
+@use "sass:meta";
+
+html.light-theme {
+  @include meta.load-css("highlight.js/styles/atom-one-light");
+}
+
+html.dark-theme {
+  @include meta.load-css("highlight.js/styles/atom-one-dark");
+}

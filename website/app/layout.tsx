@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 
+import ThemedRoot from "@lib/ThemedRoot";
+
 import lisnPkgJson from "lisn.js/package.json";
 
 export const metadata: Metadata = {
@@ -23,11 +25,8 @@ import "@app/global.css";
 
 export default function Layout({ children }) {
   return (
-    <html
-      lang="en"
-      className={[roboto.className, "lisn-hide-scroll"].join(" ")}
-    >
-      <body className="dark-theme">{children}</body>
-    </html>
+    <ThemedRoot className={[roboto.className, "lisn-hide-scroll"].join(" ")}>
+      {children}
+    </ThemedRoot>
   );
 }

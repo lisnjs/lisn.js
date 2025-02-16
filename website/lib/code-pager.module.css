@@ -9,8 +9,8 @@
 }
 
 .pager .tabs .tab {
-  --btn-color: #2f323c;
-  color: #ddd;
+  --btn-color: var(--bg-color);
+  color: var(--text-color);
   font-weight: 500;
   font-size: 16px;
   cursor: pointer;
@@ -26,12 +26,11 @@
 }
 
 .pager .tabs .tab:hover {
-  --btn-color: #3e414c;
+  --btn-color: var(--bg-color-lighter);
 }
 
 .pager .tabs .tab[data-lisn-page-state="current"] {
-  --btn-color: #282c34;
-  color: #fff;
+  --btn-color: var(--bg-color-lighter);
   font-weight: 600;
   transform: scale(1);
 }
@@ -45,7 +44,7 @@
 
 .pager .page {
   box-shadow: none;
-  background: #282c34;
+  background: var(--hljs-bg-color);
   transform: none !important;
   overflow: auto;
   position: relative;
@@ -54,7 +53,7 @@
 
 .pager.multi .page {
   padding: 1.5em;
-  background: #21212e;
+  background: var(--bg-color);
 }
 
 .pager.fixedH,

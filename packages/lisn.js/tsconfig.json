@@ -39,6 +39,7 @@
       "exampleTag": false
     },
     "out": "../../website/public/docs/",
+    "favicon": "../../website/app/favicon.ico",
     "plugin": ["typedoc-plugin-merge-modules"],
     "mergeModulesMergeMode": "module",
     "highlightLanguages": [

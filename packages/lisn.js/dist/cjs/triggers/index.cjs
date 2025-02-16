@@ -9,7 +9,7 @@ Object.keys(_pointerTrigger).forEach(function (key) {
   if (key in exports && exports[key] === _pointerTrigger[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _pointerTrigger[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_layoutTrigger).forEach(function (key) {
   if (key in exports && exports[key] === _layoutTrigger[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _layoutTrigger[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_loadTrigger).forEach(function (key) {
   if (key in exports && exports[key] === _loadTrigger[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _loadTrigger[key];
     }
   });
@@ -42,7 +42,7 @@ Object.keys(_scrollTrigger).forEach(function (key) {
   if (key in exports && exports[key] === _scrollTrigger[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _scrollTrigger[key];
     }
   });
@@ -53,7 +53,7 @@ Object.keys(_trigger).forEach(function (key) {
   if (key in exports && exports[key] === _trigger[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _trigger[key];
     }
   });
@@ -64,7 +64,7 @@ Object.keys(_viewTrigger).forEach(function (key) {
   if (key in exports && exports[key] === _viewTrigger[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _viewTrigger[key];
     }
   });

@@ -11,22 +11,11 @@ var _misc = require("../utils/misc.cjs");
 var _validation = require("../utils/validation.cjs");
 var _pointerWatcher = require("../watchers/pointer-watcher.cjs");
 var _trigger = require("./trigger.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
-function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
-function _possibleConstructorReturn(t, e) { if (e && ("object" == _typeof(e) || "function" == typeof e)) return e; if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined"); return _assertThisInitialized(t); }
-function _assertThisInitialized(e) { if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); return e; }
-function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
-function _getPrototypeOf(t) { return _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) { return t.__proto__ || Object.getPrototypeOf(t); }, _getPrototypeOf(t); }
-function _inherits(t, e) { if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function"); t.prototype = Object.create(e && e.prototype, { constructor: { value: t, writable: !0, configurable: !0 } }), Object.defineProperty(t, "prototype", { writable: !1 }), e && _setPrototypeOf(t, e); }
-function _setPrototypeOf(t, e) { return _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) { return t.__proto__ = e, t; }, _setPrototypeOf(t, e); }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
  * @module Triggers
  *
  * @categoryDescription Pointer
@@ -122,35 +111,25 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
  *
  * @category Pointer
  */
-var ClickTrigger = exports.ClickTrigger = /*#__PURE__*/function (_Trigger) {
+class ClickTrigger extends _trigger.Trigger {
+  static register() {
+    (0, _trigger.registerTrigger)(MC.S_CLICK, (element, args, actions, config) => new ClickTrigger(element, actions, config), newConfigValidator);
+  }
+
   /**
    * If no actions are supplied, nothing is done.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  function ClickTrigger(element, actions) {
-    var _this;
-    var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    _classCallCheck(this, ClickTrigger);
-    _this = _callSuper(this, ClickTrigger, [element, actions, config]);
-    _defineProperty(_this, "getConfig", void 0);
-    _this.getConfig = function () {
-      return MH.copyObject(config);
-    };
-    setupWatcher(_this, element, actions, config, MC.S_CLICK);
-    return _this;
+  constructor(element, actions, config = {}) {
+    super(element, actions, config);
+    _defineProperty(this, "getConfig", void 0);
+    this.getConfig = () => MH.copyObject(config);
+    setupWatcher(this, element, actions, config, MC.S_CLICK);
   }
-  _inherits(ClickTrigger, _Trigger);
-  return _createClass(ClickTrigger, null, [{
-    key: "register",
-    value: function register() {
-      (0, _trigger.registerTrigger)(MC.S_CLICK, function (element, args, actions, config) {
-        return new ClickTrigger(element, actions, config);
-      }, newConfigValidator);
-    }
-  }]);
-}(_trigger.Trigger);
+}
+
 /**
  * {@link PressTrigger} allows you to run actions when the user presses and
  * holds a pointing device (or their finger) on a target element, and undo
@@ -231,35 +210,26 @@ var ClickTrigger = exports.ClickTrigger = /*#__PURE__*/function (_Trigger) {
  *
  * @category Pointer
  */
-var PressTrigger = exports.PressTrigger = /*#__PURE__*/function (_Trigger2) {
+exports.ClickTrigger = ClickTrigger;
+class PressTrigger extends _trigger.Trigger {
+  static register() {
+    (0, _trigger.registerTrigger)(MC.S_PRESS, (element, args, actions, config) => new PressTrigger(element, actions, config), newConfigValidator);
+  }
+
   /**
    * If no actions are supplied, nothing is done.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  function PressTrigger(element, actions) {
-    var _this2;
-    var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    _classCallCheck(this, PressTrigger);
-    _this2 = _callSuper(this, PressTrigger, [element, actions, config]);
-    _defineProperty(_this2, "getConfig", void 0);
-    _this2.getConfig = function () {
-      return MH.copyObject(config);
-    };
-    setupWatcher(_this2, element, actions, config, MC.S_PRESS);
-    return _this2;
+  constructor(element, actions, config = {}) {
+    super(element, actions, config);
+    _defineProperty(this, "getConfig", void 0);
+    this.getConfig = () => MH.copyObject(config);
+    setupWatcher(this, element, actions, config, MC.S_PRESS);
   }
-  _inherits(PressTrigger, _Trigger2);
-  return _createClass(PressTrigger, null, [{
-    key: "register",
-    value: function register() {
-      (0, _trigger.registerTrigger)(MC.S_PRESS, function (element, args, actions, config) {
-        return new PressTrigger(element, actions, config);
-      }, newConfigValidator);
-    }
-  }]);
-}(_trigger.Trigger);
+}
+
 /**
  * {@link HoverTrigger} allows you to run actions when the user hovers overs
  * a target element, and undo those actions when their pointing device moves
@@ -337,44 +307,36 @@ var PressTrigger = exports.PressTrigger = /*#__PURE__*/function (_Trigger2) {
  *
  * @category Pointer
  */
-var HoverTrigger = exports.HoverTrigger = /*#__PURE__*/function (_Trigger3) {
+exports.PressTrigger = PressTrigger;
+class HoverTrigger extends _trigger.Trigger {
+  static register() {
+    (0, _trigger.registerTrigger)(MC.S_HOVER, (element, args, actions, config) => new HoverTrigger(element, actions, config), newConfigValidator);
+  }
+
   /**
    * If no actions are supplied, nothing is done.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  function HoverTrigger(element, actions) {
-    var _this3;
-    var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    _classCallCheck(this, HoverTrigger);
-    _this3 = _callSuper(this, HoverTrigger, [element, actions, config]);
-    _defineProperty(_this3, "getConfig", void 0);
-    _this3.getConfig = function () {
-      return MH.copyObject(config);
-    };
-    setupWatcher(_this3, element, actions, config, MC.S_HOVER);
-    return _this3;
+  constructor(element, actions, config = {}) {
+    super(element, actions, config);
+    _defineProperty(this, "getConfig", void 0);
+    this.getConfig = () => MH.copyObject(config);
+    setupWatcher(this, element, actions, config, MC.S_HOVER);
   }
-  _inherits(HoverTrigger, _Trigger3);
-  return _createClass(HoverTrigger, null, [{
-    key: "register",
-    value: function register() {
-      (0, _trigger.registerTrigger)(MC.S_HOVER, function (element, args, actions, config) {
-        return new HoverTrigger(element, actions, config);
-      }, newConfigValidator);
-    }
-  }]);
-}(_trigger.Trigger);
+}
+
 /**
  * @category Pointer
  * @interface
  */
+exports.HoverTrigger = HoverTrigger;
 // --------------------
 
-var newConfigValidator = function newConfigValidator(element) {
+const newConfigValidator = element => {
   return {
-    target: function target(key, value) {
+    target: (key, value) => {
       var _ref;
       return (_ref = MH.isLiteralString(value) ? (0, _domSearch.waitForReferenceElement)(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
     },
@@ -382,17 +344,17 @@ var newConfigValidator = function newConfigValidator(element) {
     preventSelect: _validation.validateBoolean
   };
 };
-var setupWatcher = function setupWatcher(widget, element, actions, config, action) {
+const setupWatcher = (widget, element, actions, config, action) => {
   if (!MH.lengthOf(actions)) {
     return;
   }
-  var target = MH.targetOf(config) || element;
+  const target = MH.targetOf(config) || element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS
   // state rather than the odd/even clicks. Otherwise if the trigger is
   // disabled, then clicking will "swap" the state.
-  var startHandler;
-  var endHandler;
+  let startHandler;
+  let endHandler;
   if (action === MC.S_CLICK) {
     startHandler = endHandler = widget[MC.S_TOGGLE];
   } else {

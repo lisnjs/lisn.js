@@ -1,6 +1,5 @@
 "use strict";
 
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -9,8 +8,8 @@ var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"))
 var _cssAlter = require("./css-alter.cjs");
 var _domEvents = require("./dom-events.cjs");
 var _log = require("./log.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 /**
  * @module Utils
  *
@@ -67,28 +66,26 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  *                        If the specification is invalid or if thisElement is
  *                        not given for a specification of "next", "prev" or "this"
  */
-var getReferenceElement = exports.getReferenceElement = function getReferenceElement(spec, thisElement) {
+const getReferenceElement = (spec, thisElement) => {
   if (!spec) {
     return thisElement;
   }
   if (spec[0] === "#") {
     // element ID
-    var _referenceElement = MH.getElementById(spec.slice(1));
-    if (!_referenceElement) {
+    const referenceElement = MH.getElementById(spec.slice(1));
+    if (!referenceElement) {
       return null;
     }
-    return _referenceElement;
+    return referenceElement;
   }
-  var relation = ["next", "prev", "this", "first", "last"].find(function (p) {
-    return spec.startsWith("".concat(p, ".")) || spec.startsWith("".concat(p, "-")) || spec === p;
-  });
+  const relation = ["next", "prev", "this", "first", "last"].find(p => spec.startsWith(`${p}.`) || spec.startsWith(`${p}-`) || spec === p);
   if (!relation) {
-    throw MH.usageError("Invalid search specification '".concat(spec, "'"));
+    throw MH.usageError(`Invalid search specification '${spec}'`);
   }
-  var rest = spec.slice(MH.lengthOf(relation));
-  var matchOp = rest.slice(0, 1);
-  var refOrCls = rest.slice(1);
-  var selector;
+  const rest = spec.slice(MH.lengthOf(relation));
+  const matchOp = rest.slice(0, 1);
+  let refOrCls = rest.slice(1);
+  let selector;
   if (matchOp === ".") {
     selector = matchOp + refOrCls;
   } else {
@@ -96,11 +93,11 @@ var getReferenceElement = exports.getReferenceElement = function getReferenceEle
       refOrCls = (0, _cssAlter.getData)(thisElement, PREFIX_REF) || "";
     }
     if (!refOrCls) {
-      throw MH.usageError("No reference name in '".concat(spec, "'"));
+      throw MH.usageError(`No reference name in '${spec}'`);
     }
-    selector = "[".concat(DATA_REF, "=\"").concat(refOrCls, "\"]");
+    selector = `[${DATA_REF}="${refOrCls}"]`;
   }
-  var referenceElement;
+  let referenceElement;
   if (relation === "first") {
     referenceElement = getFirstReferenceElement(selector);
   } else if (relation === "last") {
@@ -114,7 +111,7 @@ var getReferenceElement = exports.getReferenceElement = function getReferenceEle
       referenceElement = getPrevReferenceElement(selector, thisElement);
     } else {
       /* istanbul ignore next */{
-        (0, _log.logError)(MH.bugError("Unhandled relation case ".concat(relation)));
+        (0, _log.logError)(MH.bugError(`Unhandled relation case ${relation}`));
         return null;
       }
     }
@@ -131,49 +128,35 @@ var getReferenceElement = exports.getReferenceElement = function getReferenceEle
  *
  * @category DOM: Searching for reference elements
  */
-var waitForReferenceElement = exports.waitForReferenceElement = function waitForReferenceElement(spec, thisElement) {
-  var timeout = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 200;
-  return (0, _domEvents.waitForElement)(function () {
-    return getReferenceElement(spec, thisElement);
-  }, timeout);
-};
+exports.getReferenceElement = getReferenceElement;
+const waitForReferenceElement = (spec, thisElement, timeout = 200) => (0, _domEvents.waitForElement)(() => getReferenceElement(spec, thisElement), timeout);
 
 // ----------------------------------------
-
-var PREFIX_REF = MH.prefixName("ref");
-var DATA_REF = MH.prefixData(PREFIX_REF);
-var getAllReferenceElements = function getAllReferenceElements(selector) {
-  return MH.docQuerySelectorAll(selector);
-};
-var getFirstReferenceElement = function getFirstReferenceElement(selector) {
-  return MH.docQuerySelector(selector);
-};
-var getLastReferenceElement = function getLastReferenceElement(selector) {
-  var allRefs = getAllReferenceElements(selector);
+exports.waitForReferenceElement = waitForReferenceElement;
+const PREFIX_REF = MH.prefixName("ref");
+const DATA_REF = MH.prefixData(PREFIX_REF);
+const getAllReferenceElements = selector => MH.docQuerySelectorAll(selector);
+const getFirstReferenceElement = selector => MH.docQuerySelector(selector);
+const getLastReferenceElement = selector => {
+  const allRefs = getAllReferenceElements(selector);
   return allRefs && allRefs[MH.lengthOf(allRefs) - 1] || null;
 };
-var getThisReferenceElement = function getThisReferenceElement(selector, thisElement) {
-  return thisElement.closest(selector);
-};
-var getNextReferenceElement = function getNextReferenceElement(selector, thisElement) {
-  return getNextOrPrevReferenceElement(selector, thisElement, false);
-};
-var getPrevReferenceElement = function getPrevReferenceElement(selector, thisElement) {
-  return getNextOrPrevReferenceElement(selector, thisElement, true);
-};
-var getNextOrPrevReferenceElement = function getNextOrPrevReferenceElement(selector, thisElement, goBackward) {
+const getThisReferenceElement = (selector, thisElement) => thisElement.closest(selector);
+const getNextReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, false);
+const getPrevReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, true);
+const getNextOrPrevReferenceElement = (selector, thisElement, goBackward) => {
   thisElement = getThisReferenceElement(selector, thisElement) || thisElement;
   if (!MH.getDoc().contains(thisElement)) {
     return null;
   }
-  var allRefs = getAllReferenceElements(selector);
+  const allRefs = getAllReferenceElements(selector);
   if (!allRefs) {
     return null;
   }
-  var numRefs = MH.lengthOf(allRefs);
-  var refIndex = goBackward ? numRefs - 1 : -1;
-  for (var i = 0; i < numRefs; i++) {
-    var currentIsAfter = MH.isNodeBAfterA(thisElement, allRefs[i]);
+  const numRefs = MH.lengthOf(allRefs);
+  let refIndex = goBackward ? numRefs - 1 : -1;
+  for (let i = 0; i < numRefs; i++) {
+    const currentIsAfter = MH.isNodeBAfterA(thisElement, allRefs[i]);
 
     // As soon as we find either the starting element or the first element
     // that follows it, stop iteration.

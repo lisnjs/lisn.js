@@ -1,6 +1,5 @@
 "use strict";
 
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -10,8 +9,8 @@ var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"))
 var _cssAlter = require("./css-alter.cjs");
 var _misc = require("./misc.cjs");
 var _xMap = require("../modules/x-map.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 /**
  * @module Utils
  */
@@ -22,7 +21,7 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  *
  * @category Events: Generic
  */
-var callEventListener = exports.callEventListener = function callEventListener(handler, event) {
+const callEventListener = (handler, event) => {
   if (MH.isFunction(handler)) {
     handler.call(event.currentTarget || self, event);
   } else {
@@ -42,19 +41,19 @@ var callEventListener = exports.callEventListener = function callEventListener(h
  *
  * @category Events: Generic
  */
-var addEventListenerTo = exports.addEventListenerTo = function addEventListenerTo(target, eventType, handler) {
-  var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+exports.callEventListener = callEventListener;
+const addEventListenerTo = (target, eventType, handler, options = {}) => {
   eventType = transformEventType(eventType);
   if (getEventHandlerData(target, eventType, handler, options)) {
     // already added
     return false;
   }
-  var thirdArg = options;
-  var wrappedHandler = handler;
+  let thirdArg = options;
+  let wrappedHandler = handler;
 
   // If the user passed an options object but the browser only supports a
   // boolen for 'useCapture', then handle this.
-  var supports = getBrowserSupport();
+  const supports = getBrowserSupport();
   if (MH.isNonPrimitive(options)) {
     if (!supports._optionsArg) {
       var _options$capture;
@@ -62,7 +61,7 @@ var addEventListenerTo = exports.addEventListenerTo = function addEventListenerT
     }
     if (options.once && !supports._options.once) {
       // Remove the handler once it's called once
-      wrappedHandler = function wrappedHandler(event) {
+      wrappedHandler = event => {
         removeEventListenerFrom(target, eventType, handler, options);
         callEventListener(handler, event);
       };
@@ -91,10 +90,10 @@ var addEventListenerTo = exports.addEventListenerTo = function addEventListenerT
  *
  * @category Events: Generic
  */
-var removeEventListenerFrom = exports.removeEventListenerFrom = function removeEventListenerFrom(target, eventType, handler) {
-  var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+exports.addEventListenerTo = addEventListenerTo;
+const removeEventListenerFrom = (target, eventType, handler, options = {}) => {
   eventType = transformEventType(eventType);
-  var data = getEventHandlerData(target, eventType, handler, options);
+  const data = getEventHandlerData(target, eventType, handler, options);
   if (!data) {
     return false;
   }
@@ -107,7 +106,8 @@ var removeEventListenerFrom = exports.removeEventListenerFrom = function removeE
  * @ignore
  * @internal
  */
-var preventSelect = exports.preventSelect = function preventSelect(target) {
+exports.removeEventListenerFrom = removeEventListenerFrom;
+const preventSelect = target => {
   addEventListenerTo(target, MC.S_SELECTSTART, MH.preventDefault);
   if (MH.isElement(target)) {
     (0, _cssAlter.addClasses)(target, MC.PREFIX_NO_SELECT);
@@ -118,7 +118,8 @@ var preventSelect = exports.preventSelect = function preventSelect(target) {
  * @ignore
  * @internal
  */
-var undoPreventSelect = exports.undoPreventSelect = function undoPreventSelect(target) {
+exports.preventSelect = preventSelect;
+const undoPreventSelect = target => {
   removeEventListenerFrom(target, MC.S_SELECTSTART, MH.preventDefault);
   if (MH.isElement(target)) {
     (0, _cssAlter.removeClasses)(target, MC.PREFIX_NO_SELECT);
@@ -129,12 +130,13 @@ var undoPreventSelect = exports.undoPreventSelect = function undoPreventSelect(t
  * @ignore
  * @internal
  */
-var getBrowserSupport = exports.getBrowserSupport = function getBrowserSupport() {
+exports.undoPreventSelect = undoPreventSelect;
+const getBrowserSupport = () => {
   if (browserEventSupport) {
     // already detected
     return browserEventSupport;
   }
-  var supports = {
+  const supports = {
     _pointer: false,
     _optionsArg: false,
     _options: {
@@ -146,12 +148,12 @@ var getBrowserSupport = exports.getBrowserSupport = function getBrowserSupport()
   };
 
   // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#safely_detecting_option_support
-  var optTest = {};
-  var opt;
-  var _loop = function _loop() {
-    var thisOpt = opt;
+  const optTest = {};
+  let opt;
+  for (opt in supports._options) {
+    const thisOpt = opt;
     MH.defineProperty(optTest, thisOpt, {
-      get: function get() {
+      get: () => {
         supports._options[thisOpt] = true;
         if (thisOpt === "signal") {
           return new AbortController().signal;
@@ -159,12 +161,9 @@ var getBrowserSupport = exports.getBrowserSupport = function getBrowserSupport()
         return false;
       }
     });
-  };
-  for (opt in supports._options) {
-    _loop();
   }
-  var dummyHandler = function dummyHandler() {}; // TypeScript does not accept null
-  var dummyElement = MH.createElement("div");
+  const dummyHandler = () => {}; // TypeScript does not accept null
+  const dummyElement = MH.createElement("div");
   try {
     dummyElement.addEventListener("testOptionSupport", dummyHandler, optTest);
     dummyElement.removeEventListener("testOptionSupport", dummyHandler, optTest);
@@ -178,16 +177,14 @@ var getBrowserSupport = exports.getBrowserSupport = function getBrowserSupport()
 };
 
 // --------------------
-
-var browserEventSupport;
-var registeredEventHandlerData = (0, _xMap.newXWeakMap)((0, _xMap.newXMapGetter)((0, _xMap.newXMapGetter)(function () {
-  return MH.newMap();
-})));
+exports.getBrowserSupport = getBrowserSupport;
+let browserEventSupport;
+const registeredEventHandlerData = (0, _xMap.newXWeakMap)((0, _xMap.newXMapGetter)((0, _xMap.newXMapGetter)(() => MH.newMap())));
 
 // detect browser features, see below
 
-var getEventOptionsStr = function getEventOptionsStr(options) {
-  var finalOptions = {
+const getEventOptionsStr = options => {
+  const finalOptions = {
     capture: false,
     passive: false,
     once: false
@@ -199,23 +196,23 @@ var getEventOptionsStr = function getEventOptionsStr(options) {
   }
   return MH.stringify(finalOptions);
 };
-var getEventHandlerData = function getEventHandlerData(target, eventType, handler, options) {
+const getEventHandlerData = (target, eventType, handler, options) => {
   var _registeredEventHandl;
-  var optionsStr = getEventOptionsStr(options);
+  const optionsStr = getEventOptionsStr(options);
   return (_registeredEventHandl = registeredEventHandlerData.get(target)) === null || _registeredEventHandl === void 0 || (_registeredEventHandl = _registeredEventHandl.get(eventType)) === null || _registeredEventHandl === void 0 || (_registeredEventHandl = _registeredEventHandl.get(handler)) === null || _registeredEventHandl === void 0 ? void 0 : _registeredEventHandl.get(optionsStr);
 };
-var deleteEventHandlerData = function deleteEventHandlerData(target, eventType, handler, options) {
+const deleteEventHandlerData = (target, eventType, handler, options) => {
   var _registeredEventHandl2;
-  var optionsStr = getEventOptionsStr(options);
+  const optionsStr = getEventOptionsStr(options);
   MH.deleteKey((_registeredEventHandl2 = registeredEventHandlerData.get(target)) === null || _registeredEventHandl2 === void 0 || (_registeredEventHandl2 = _registeredEventHandl2.get(eventType)) === null || _registeredEventHandl2 === void 0 ? void 0 : _registeredEventHandl2.get(handler), optionsStr);
   registeredEventHandlerData.prune(target, eventType, handler);
 };
-var setEventHandlerData = function setEventHandlerData(target, eventType, handler, options, data) {
-  var optionsStr = getEventOptionsStr(options);
+const setEventHandlerData = (target, eventType, handler, options, data) => {
+  const optionsStr = getEventOptionsStr(options);
   registeredEventHandlerData.sGet(target).sGet(eventType).sGet(handler).set(optionsStr, data);
 };
-var transformEventType = function transformEventType(eventType) {
-  var supports = getBrowserSupport();
+const transformEventType = eventType => {
+  const supports = getBrowserSupport();
   if (eventType.startsWith(MC.S_POINTER) && !supports._pointer) {
     // TODO maybe log a warning message is it's not supported, e.g. there's no
     // mousecancel

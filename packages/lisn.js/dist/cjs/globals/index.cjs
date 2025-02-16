@@ -9,7 +9,7 @@ Object.keys(_errors).forEach(function (key) {
   if (key in exports && exports[key] === _errors[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _errors[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_settings).forEach(function (key) {
   if (key in exports && exports[key] === _settings[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _settings[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_types).forEach(function (key) {
   if (key in exports && exports[key] === _types[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _types[key];
     }
   });

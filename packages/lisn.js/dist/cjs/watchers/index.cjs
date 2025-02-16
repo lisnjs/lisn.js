@@ -9,7 +9,7 @@ Object.keys(_domWatcher).forEach(function (key) {
   if (key in exports && exports[key] === _domWatcher[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _domWatcher[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_gestureWatcher).forEach(function (key) {
   if (key in exports && exports[key] === _gestureWatcher[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _gestureWatcher[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_layoutWatcher).forEach(function (key) {
   if (key in exports && exports[key] === _layoutWatcher[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _layoutWatcher[key];
     }
   });
@@ -42,7 +42,7 @@ Object.keys(_pointerWatcher).forEach(function (key) {
   if (key in exports && exports[key] === _pointerWatcher[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _pointerWatcher[key];
     }
   });
@@ -53,7 +53,7 @@ Object.keys(_scrollWatcher).forEach(function (key) {
   if (key in exports && exports[key] === _scrollWatcher[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _scrollWatcher[key];
     }
   });
@@ -64,7 +64,7 @@ Object.keys(_sizeWatcher).forEach(function (key) {
   if (key in exports && exports[key] === _sizeWatcher[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _sizeWatcher[key];
     }
   });
@@ -75,7 +75,7 @@ Object.keys(_viewWatcher).forEach(function (key) {
   if (key in exports && exports[key] === _viewWatcher[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _viewWatcher[key];
     }
   });

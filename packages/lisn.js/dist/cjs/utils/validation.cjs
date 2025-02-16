@@ -1,6 +1,5 @@
 "use strict";
 
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -10,8 +9,8 @@ var _errors = require("../globals/errors.cjs");
 var _math = require("./math.cjs");
 var _misc = require("./misc.cjs");
 var _text = require("./text.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 /**
  * @module Utils
  */
@@ -25,10 +24,9 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  *
  * @category Validation
  */
-var isValidStrList = exports.isValidStrList = function isValidStrList(value, checkFn) {
-  var allowEmpty = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+const isValidStrList = (value, checkFn, allowEmpty = true) => {
   try {
-    var res = validateStrList("", value, checkFn);
+    const res = validateStrList("", value, checkFn);
     return allowEmpty || !MH.isNullish(res);
   } catch (err) {
     if (MH.isInstanceOf(err, _errors.LisnUsageError)) {
@@ -57,11 +55,10 @@ var isValidStrList = exports.isValidStrList = function isValidStrList(value, che
  *
  * @category Validation
  */
-var validateStrList = exports.validateStrList = function validateStrList(key, value, checkFn) {
+exports.isValidStrList = isValidStrList;
+const validateStrList = (key, value, checkFn) => {
   var _toArray;
-  return MH.filterBlank((_toArray = toArray(value)) === null || _toArray === void 0 ? void 0 : _toArray.map(function (v) {
-    return _validateString(key, v, checkFn, "a string or a string array");
-  }));
+  return MH.filterBlank((_toArray = toArray(value)) === null || _toArray === void 0 ? void 0 : _toArray.map(v => _validateString(key, v, checkFn, "a string or a string array")));
 };
 
 /**
@@ -82,11 +79,10 @@ var validateStrList = exports.validateStrList = function validateStrList(key, va
  *
  * @category Validation
  */
-var validateNumList = exports.validateNumList = function validateNumList(key, value) {
+exports.validateStrList = validateStrList;
+const validateNumList = (key, value) => {
   var _toArray2;
-  return MH.filterBlank((_toArray2 = toArray(value)) === null || _toArray2 === void 0 ? void 0 : _toArray2.map(function (v) {
-    return _validateNumber(key, v, "a number or a number array");
-  }));
+  return MH.filterBlank((_toArray2 = toArray(value)) === null || _toArray2 === void 0 ? void 0 : _toArray2.map(v => _validateNumber(key, v, "a number or a number array")));
 };
 
 /**
@@ -100,9 +96,8 @@ var validateNumList = exports.validateNumList = function validateNumList(key, va
  *
  * @category Validation
  */
-var validateNumber = exports.validateNumber = function validateNumber(key, value) {
-  return _validateNumber(key, value);
-};
+exports.validateNumList = validateNumList;
+const validateNumber = (key, value) => _validateNumber(key, value);
 
 /**
  * Returns a boolean corresponding to the given value as follows:
@@ -121,9 +116,8 @@ var validateNumber = exports.validateNumber = function validateNumber(key, value
  *
  * @category Validation
  */
-var validateBoolean = exports.validateBoolean = function validateBoolean(key, value) {
-  return _validateBoolean(key, value);
-};
+exports.validateNumber = validateNumber;
+const validateBoolean = (key, value) => _validateBoolean(key, value);
 
 /**
  * Returns a valid string from the supplied value, ensuring the supplied value
@@ -143,9 +137,8 @@ var validateBoolean = exports.validateBoolean = function validateBoolean(key, va
  *
  * @category Validation
  */
-var validateString = exports.validateString = function validateString(key, value, checkFn) {
-  return _validateString(key, value, checkFn);
-};
+exports.validateBoolean = validateBoolean;
+const validateString = (key, value, checkFn) => _validateString(key, value, checkFn);
 
 /**
  * Like {@link validateString} except it requires input to be given and
@@ -156,10 +149,11 @@ var validateString = exports.validateString = function validateString(key, value
  *
  * @category Validation
  */
-var validateStringRequired = exports.validateStringRequired = function validateStringRequired(key, value, checkFn) {
-  var result = _validateString(key, value, checkFn);
+exports.validateString = validateString;
+const validateStringRequired = (key, value, checkFn) => {
+  const result = _validateString(key, value, checkFn);
   if (MH.isEmpty(result)) {
-    throw MH.usageError("'".concat(key, "' is required"));
+    throw MH.usageError(`'${key}' is required`);
   }
   return result;
 };
@@ -181,14 +175,13 @@ var validateStringRequired = exports.validateStringRequired = function validateS
  *
  * @category Validation
  */
-var validateBooleanOrString = exports.validateBooleanOrString = function validateBooleanOrString(key, value, stringCheckFn) {
-  return _validateBooleanOrString(key, value, stringCheckFn);
-};
+exports.validateStringRequired = validateStringRequired;
+const validateBooleanOrString = (key, value, stringCheckFn) => _validateBooleanOrString(key, value, stringCheckFn);
 
 // --------------------
-
-var toArray = function toArray(value) {
-  var result;
+exports.validateBooleanOrString = validateBooleanOrString;
+const toArray = value => {
+  let result;
   if (MH.isArray(value)) {
     result = value;
   } else if (MH.isIterableObject(value)) {
@@ -200,51 +193,49 @@ var toArray = function toArray(value) {
   } else {
     result = null;
   }
-  return result ? MH.filterBlank(result.map(function (v) {
-    return MH.isLiteralString(v) ? v.trim() : v;
-  })) : undefined;
+  return result ? MH.filterBlank(result.map(v => MH.isLiteralString(v) ? v.trim() : v)) : undefined;
 };
-var _validateNumber = function _validateNumber(key, value, typeDescription) {
+const _validateNumber = (key, value, typeDescription) => {
   if (MH.isNullish(value)) {
     return;
   }
-  var numVal = (0, _math.toNum)(value, null);
+  const numVal = (0, _math.toNum)(value, null);
   if (numVal === null) {
-    throw MH.usageError("'".concat(key, "' must be ").concat(typeDescription !== null && typeDescription !== void 0 ? typeDescription : "a number"));
+    throw MH.usageError(`'${key}' must be ${typeDescription !== null && typeDescription !== void 0 ? typeDescription : "a number"}`);
   }
   return numVal;
 };
-var _validateBoolean = function _validateBoolean(key, value, typeDescription) {
+const _validateBoolean = (key, value, typeDescription) => {
   if (MH.isNullish(value)) {
     return;
   }
-  var boolVal = (0, _misc.toBool)(value);
+  const boolVal = (0, _misc.toBool)(value);
   if (boolVal === null) {
-    throw MH.usageError("'".concat(key, "' must be ").concat(typeDescription !== null && typeDescription !== void 0 ? typeDescription : '"true" or "false"'));
+    throw MH.usageError(`'${key}' must be ${typeDescription !== null && typeDescription !== void 0 ? typeDescription : '"true" or "false"'}`);
   }
   return boolVal;
 };
-var _validateString = function _validateString(key, value, checkFn, typeDescription) {
+const _validateString = (key, value, checkFn, typeDescription) => {
   if (MH.isNullish(value)) {
     return;
   }
   if (!MH.isLiteralString(value)) {
-    throw MH.usageError("'".concat(key, "' must be ").concat(typeDescription !== null && typeDescription !== void 0 ? typeDescription : "a string"));
+    throw MH.usageError(`'${key}' must be ${typeDescription !== null && typeDescription !== void 0 ? typeDescription : "a string"}`);
   } else if (checkFn && !checkFn(value)) {
-    throw MH.usageError("Invalid value for '".concat(key, "'"));
+    throw MH.usageError(`Invalid value for '${key}'`);
   }
   return value;
 };
-var _validateBooleanOrString = function _validateBooleanOrString(key, value, stringCheckFn, typeDescription) {
+const _validateBooleanOrString = (key, value, stringCheckFn, typeDescription) => {
   if (MH.isNullish(value)) {
     return;
   }
-  var boolVal = (0, _misc.toBool)(value);
+  const boolVal = (0, _misc.toBool)(value);
   if (boolVal !== null) {
     return boolVal;
   }
   if (!MH.isLiteralString(value)) {
-    throw MH.usageError("'".concat(key, "' must be ").concat(typeDescription !== null && typeDescription !== void 0 ? typeDescription : "a boolean or string"));
+    throw MH.usageError(`'${key}' must be ${typeDescription !== null && typeDescription !== void 0 ? typeDescription : "a boolean or string"}`);
   }
   return _validateString(key, value, stringCheckFn);
 };

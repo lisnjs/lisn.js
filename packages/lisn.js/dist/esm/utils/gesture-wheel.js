@@ -1,6 +1,3 @@
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 /**
  * @module Utils
  */
@@ -54,62 +51,53 @@ import { addDeltaZ } from "./gesture.js";
  *
  * @category Gestures
  */
-export var getWheelGestureFragment = function getWheelGestureFragment(events, options) {
+export const getWheelGestureFragment = (events, options) => {
   if (!MH.isIterableObject(events)) {
     events = [events];
   }
-  var direction = MC.S_NONE;
-  var intent = null;
-  var deltaX = 0,
+  let direction = MC.S_NONE;
+  let intent = null;
+  let deltaX = 0,
     deltaY = 0,
     deltaZ = 1;
-  var _iterator = _createForOfIteratorHelper(events),
-    _step;
-  try {
-    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-      var event = _step.value;
-      if (!MH.isWheelEvent(event) || event.type !== MC.S_WHEEL) {
-        continue;
-      }
-      var data = normalizeWheel(event);
-      var thisIntent = MC.S_SCROLL;
-      var thisDeltaX = data.pixelX;
-      var thisDeltaY = data.pixelY;
-      var thisDeltaZ = 1;
-      var maxDelta = havingMaxAbs(thisDeltaX, thisDeltaY);
-      if (event.ctrlKey && !thisDeltaX) {
-        // Browsers report negative deltaY for zoom in, so swap sign
-        var percentage = -maxDelta;
-        // If it's more than 50, assume it's a mouse wheel => delta is roughly
-        // multiple of 10%. Otherwise a trackpad => delta is roughly multiple of 1%
-        if (MH.abs(percentage) >= 50) {
-          percentage /= 10;
-        }
-        thisDeltaZ = 1 + percentage / 100;
-        thisDeltaX = thisDeltaY = 0;
-        thisIntent = MC.S_ZOOM;
-      } else if (event.shiftKey && !thisDeltaX) {
-        // Holding Shift while turning wheel or swiping trackpad in vertically
-        // results in sideways scroll.
-        thisDeltaX = thisDeltaY;
-        thisDeltaY = 0;
-      }
-      deltaX += thisDeltaX;
-      deltaY += thisDeltaY;
-      deltaZ = addDeltaZ(deltaZ, thisDeltaZ);
-      if (!thisIntent) {
-        // not a relevant key
-      } else if (!intent) {
-        intent = thisIntent;
-      } else if (intent !== thisIntent) {
-        // mixture of zoom and scroll
-        intent = MC.S_UNKNOWN;
-      }
+  for (const event of events) {
+    if (!MH.isWheelEvent(event) || event.type !== MC.S_WHEEL) {
+      continue;
     }
-  } catch (err) {
-    _iterator.e(err);
-  } finally {
-    _iterator.f();
+    const data = normalizeWheel(event);
+    let thisIntent = MC.S_SCROLL;
+    let thisDeltaX = data.pixelX;
+    let thisDeltaY = data.pixelY;
+    let thisDeltaZ = 1;
+    const maxDelta = havingMaxAbs(thisDeltaX, thisDeltaY);
+    if (event.ctrlKey && !thisDeltaX) {
+      // Browsers report negative deltaY for zoom in, so swap sign
+      let percentage = -maxDelta;
+      // If it's more than 50, assume it's a mouse wheel => delta is roughly
+      // multiple of 10%. Otherwise a trackpad => delta is roughly multiple of 1%
+      if (MH.abs(percentage) >= 50) {
+        percentage /= 10;
+      }
+      thisDeltaZ = 1 + percentage / 100;
+      thisDeltaX = thisDeltaY = 0;
+      thisIntent = MC.S_ZOOM;
+    } else if (event.shiftKey && !thisDeltaX) {
+      // Holding Shift while turning wheel or swiping trackpad in vertically
+      // results in sideways scroll.
+      thisDeltaX = thisDeltaY;
+      thisDeltaY = 0;
+    }
+    deltaX += thisDeltaX;
+    deltaY += thisDeltaY;
+    deltaZ = addDeltaZ(deltaZ, thisDeltaZ);
+    if (!thisIntent) {
+      // not a relevant key
+    } else if (!intent) {
+      intent = thisIntent;
+    } else if (intent !== thisIntent) {
+      // mixture of zoom and scroll
+      intent = MC.S_UNKNOWN;
+    }
   }
   if (!intent) {
     return false; // no relevant events
@@ -122,11 +110,11 @@ export var getWheelGestureFragment = function getWheelGestureFragment(events, op
   }
   return direction === MC.S_NONE ? false : {
     device: MC.S_WHEEL,
-    direction: direction,
-    intent: intent,
-    deltaX: deltaX,
-    deltaY: deltaY,
-    deltaZ: deltaZ
+    direction,
+    intent,
+    deltaX,
+    deltaY,
+    deltaZ
   };
 };
 //# sourceMappingURL=gesture-wheel.js.map

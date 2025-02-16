@@ -9,7 +9,7 @@ Object.keys(_autoHide).forEach(function (key) {
   if (key in exports && exports[key] === _autoHide[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _autoHide[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_openable).forEach(function (key) {
   if (key in exports && exports[key] === _openable[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _openable[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_pageLoader).forEach(function (key) {
   if (key in exports && exports[key] === _pageLoader[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _pageLoader[key];
     }
   });
@@ -42,7 +42,7 @@ Object.keys(_pager).forEach(function (key) {
   if (key in exports && exports[key] === _pager[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _pager[key];
     }
   });
@@ -53,7 +53,7 @@ Object.keys(_sameHeight).forEach(function (key) {
   if (key in exports && exports[key] === _sameHeight[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _sameHeight[key];
     }
   });
@@ -64,7 +64,7 @@ Object.keys(_scrollbar).forEach(function (key) {
   if (key in exports && exports[key] === _scrollbar[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _scrollbar[key];
     }
   });
@@ -75,7 +75,7 @@ Object.keys(_scrollToTop).forEach(function (key) {
   if (key in exports && exports[key] === _scrollToTop[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _scrollToTop[key];
     }
   });
@@ -86,7 +86,7 @@ Object.keys(_sortable).forEach(function (key) {
   if (key in exports && exports[key] === _sortable[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _sortable[key];
     }
   });
@@ -97,7 +97,7 @@ Object.keys(_trackGesture).forEach(function (key) {
   if (key in exports && exports[key] === _trackGesture[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _trackGesture[key];
     }
   });
@@ -108,7 +108,7 @@ Object.keys(_trackScroll).forEach(function (key) {
   if (key in exports && exports[key] === _trackScroll[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _trackScroll[key];
     }
   });
@@ -119,7 +119,7 @@ Object.keys(_trackSize).forEach(function (key) {
   if (key in exports && exports[key] === _trackSize[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _trackSize[key];
     }
   });
@@ -130,7 +130,7 @@ Object.keys(_trackView).forEach(function (key) {
   if (key in exports && exports[key] === _trackView[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _trackView[key];
     }
   });
@@ -141,7 +141,7 @@ Object.keys(_widget).forEach(function (key) {
   if (key in exports && exports[key] === _widget[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _widget[key];
     }
   });

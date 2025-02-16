@@ -9,7 +9,7 @@ Object.keys(_globals).forEach(function (key) {
   if (key in exports && exports[key] === _globals[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _globals[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_actions).forEach(function (key) {
   if (key in exports && exports[key] === _actions[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _actions[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_debug).forEach(function (key) {
   if (key in exports && exports[key] === _debug[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _debug[key];
     }
   });
@@ -42,7 +42,7 @@ Object.keys(_modules).forEach(function (key) {
   if (key in exports && exports[key] === _modules[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _modules[key];
     }
   });
@@ -53,7 +53,7 @@ Object.keys(_triggers).forEach(function (key) {
   if (key in exports && exports[key] === _triggers[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _triggers[key];
     }
   });
@@ -64,7 +64,7 @@ Object.keys(_utils).forEach(function (key) {
   if (key in exports && exports[key] === _utils[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _utils[key];
     }
   });
@@ -75,7 +75,7 @@ Object.keys(_watchers).forEach(function (key) {
   if (key in exports && exports[key] === _watchers[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _watchers[key];
     }
   });
@@ -86,7 +86,7 @@ Object.keys(_widgets).forEach(function (key) {
   if (key in exports && exports[key] === _widgets[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _widgets[key];
     }
   });

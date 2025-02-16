@@ -7,25 +7,21 @@ import * as MH from "../globals/minification-helpers.js";
 /**
  * @category Validation
  */
-export var isValidPosition = function isValidPosition(position) {
-  return MH.includes(POSITIONS, position);
-};
+export const isValidPosition = position => MH.includes(POSITIONS, position);
 
 /**
  * @category Validation
  */
-export var isValidTwoFoldPosition = function isValidTwoFoldPosition(position) {
-  return position.match(TWO_FOLD_POSITION_REGEX) !== null;
-};
+export const isValidTwoFoldPosition = position => position.match(TWO_FOLD_POSITION_REGEX) !== null;
 
 /**
  * @ignore
  * @internal
  */
-export var POSITIONS = [MC.S_TOP, MC.S_BOTTOM, MC.S_LEFT, MC.S_RIGHT];
+export const POSITIONS = [MC.S_TOP, MC.S_BOTTOM, MC.S_LEFT, MC.S_RIGHT];
 
 // --------------------
 
-var POSITIONS_OPTIONS_STR = "(" + POSITIONS.join("|") + ")";
-var TWO_FOLD_POSITION_REGEX = RegExp("^".concat(POSITIONS_OPTIONS_STR, "-").concat(POSITIONS_OPTIONS_STR, "$"));
+const POSITIONS_OPTIONS_STR = "(" + POSITIONS.join("|") + ")";
+const TWO_FOLD_POSITION_REGEX = RegExp(`^${POSITIONS_OPTIONS_STR}-${POSITIONS_OPTIONS_STR}$`);
 //# sourceMappingURL=position.js.map

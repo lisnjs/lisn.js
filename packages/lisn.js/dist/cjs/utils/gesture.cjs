@@ -1,6 +1,5 @@
 "use strict";
 
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -8,8 +7,8 @@ exports.isValidIntentList = exports.isValidIntent = exports.isValidInputDeviceLi
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _validation = require("./validation.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 /**
  * @module Utils
  */
@@ -40,18 +39,15 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  *
  * @category Validation
  */
-var isValidInputDevice = exports.isValidInputDevice = function isValidInputDevice(device) {
-  return MH.includes(DEVICES, device);
-};
+const isValidInputDevice = device => MH.includes(DEVICES, device);
 
 /**
  * Returns true if the given string is a valid gesture intent.
  *
  * @category Validation
  */
-var isValidIntent = exports.isValidIntent = function isValidIntent(intent) {
-  return MH.includes(INTENTS, intent);
-};
+exports.isValidInputDevice = isValidInputDevice;
+const isValidIntent = intent => MH.includes(INTENTS, intent);
 
 /**
  * Returns true if the given string or array is a list of valid gesture
@@ -59,9 +55,8 @@ var isValidIntent = exports.isValidIntent = function isValidIntent(intent) {
  *
  * @category Validation
  */
-var isValidInputDeviceList = exports.isValidInputDeviceList = function isValidInputDeviceList(devices) {
-  return (0, _validation.isValidStrList)(devices, isValidInputDevice, false);
-};
+exports.isValidIntent = isValidIntent;
+const isValidInputDeviceList = devices => (0, _validation.isValidStrList)(devices, isValidInputDevice, false);
 
 /**
  * Returns true if the given string or array is a list of valid gesture
@@ -69,30 +64,29 @@ var isValidInputDeviceList = exports.isValidInputDeviceList = function isValidIn
  *
  * @category Validation
  */
-var isValidIntentList = exports.isValidIntentList = function isValidIntentList(intents) {
-  return (0, _validation.isValidStrList)(intents, isValidIntent, false);
-};
+exports.isValidInputDeviceList = isValidInputDeviceList;
+const isValidIntentList = intents => (0, _validation.isValidStrList)(intents, isValidIntent, false);
 
 /**
  * @ignore
  * @internal
  */
-var addDeltaZ = exports.addDeltaZ = function addDeltaZ(current, increment) {
-  return MH.max(MIN_DELTA_Z, current * increment);
-};
+exports.isValidIntentList = isValidIntentList;
+const addDeltaZ = (current, increment) => MH.max(MIN_DELTA_Z, current * increment);
 
 /**
  * @ignore
  * @internal
  */
-var DEVICES = exports.DEVICES = [MC.S_KEY, MC.S_POINTER, MC.S_TOUCH, MC.S_WHEEL];
+exports.addDeltaZ = addDeltaZ;
+const DEVICES = exports.DEVICES = [MC.S_KEY, MC.S_POINTER, MC.S_TOUCH, MC.S_WHEEL];
 
 /**
  * @ignore
  * @internal
  */
-var INTENTS = exports.INTENTS = [MC.S_SCROLL, MC.S_ZOOM, MC.S_DRAG, MC.S_UNKNOWN];
+const INTENTS = exports.INTENTS = [MC.S_SCROLL, MC.S_ZOOM, MC.S_DRAG, MC.S_UNKNOWN];
 
 // Do not allow zooming out more than this value
-var MIN_DELTA_Z = 0.1;
+const MIN_DELTA_Z = 0.1;
 //# sourceMappingURL=gesture.cjs.map

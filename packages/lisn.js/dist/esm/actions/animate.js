@@ -1,17 +1,6 @@
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
-function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
-function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * @module Actions
  */
@@ -46,9 +35,11 @@ import debug from "../debug/debug.js";
  *
  * @category Animation
  */
-export var Animate = /*#__PURE__*/function () {
-  function Animate(element) {
-    _classCallCheck(this, Animate);
+export class Animate {
+  static register() {
+    registerAction("animate", element => new Animate(element));
+  }
+  constructor(element) {
     /**
      * (Re)plays the animations forwards.
      */
@@ -61,58 +52,41 @@ export var Animate = /*#__PURE__*/function () {
      * Reverses the animations from its current direction.
      */
     _defineProperty(this, "toggle", void 0);
-    var logger = debug ? new debug.Logger({
-      name: "Animate-".concat(formatAsString(element))
+    const logger = debug ? new debug.Logger({
+      name: `Animate-${formatAsString(element)}`
     }) : null;
 
     // initial state is 0% and paused
     animate(element, GO_FORWARD, logger, true);
-    var isFirst = true;
-    this["do"] = function () {
-      return animate(element, GO_FORWARD, logger);
-    };
-    this.undo = function () {
-      return animate(element, GO_BACKWARD, logger);
-    };
-    this[MC.S_TOGGLE] = function () {
-      var res = animate(element, isFirst ? GO_FORWARD : GO_TOGGLE, logger);
+    let isFirst = true;
+    this.do = () => animate(element, GO_FORWARD, logger);
+    this.undo = () => animate(element, GO_BACKWARD, logger);
+    this[MC.S_TOGGLE] = () => {
+      const res = animate(element, isFirst ? GO_FORWARD : GO_TOGGLE, logger);
       isFirst = false;
       return res;
     };
   }
-  return _createClass(Animate, null, [{
-    key: "register",
-    value: function register() {
-      registerAction("animate", function (element) {
-        return new Animate(element);
-      });
-    }
-  }]);
-}();
+}
 
 // --------------------
 
-var GO_FORWARD = 0;
-var GO_BACKWARD = 1;
-var GO_TOGGLE = 2;
-var animate = function animate(element, direction, logger) {
-  var isInitial = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+const GO_FORWARD = 0;
+const GO_BACKWARD = 1;
+const GO_TOGGLE = 2;
+const animate = (element, direction, logger, isInitial = false) => {
   debug: logger === null || logger === void 0 || logger.debug8("Animating element");
   return iterateAnimations(element, /* istanbul ignore next */ // jsdom doesn't support Web Animations
-  function (animation) {
-    return setupAnimation(animation, direction, logger, isInitial);
-  }, function (element) {
-    return setupAnimationLegacy(element, direction, logger, isInitial);
-  }, isInitial);
+  animation => setupAnimation(animation, direction, logger, isInitial), element => setupAnimationLegacy(element, direction, logger, isInitial), isInitial);
 };
 
 /* istanbul ignore next */ // jsdom doesn't support Web Animations
-var setupAnimation = function setupAnimation(animation, direction, logger, isInitial) {
-  var pauseTillReady = !isPageReady();
-  var isBackward = animation.playbackRate === -1;
+const setupAnimation = (animation, direction, logger, isInitial) => {
+  const pauseTillReady = !isPageReady();
+  const isBackward = animation.playbackRate === -1;
   debug: logger === null || logger === void 0 || logger.debug9("Setting up animation", animation, {
-    direction: direction,
-    isBackward: isBackward
+    direction,
+    isBackward
   });
   if (direction === GO_TOGGLE || direction === GO_FORWARD && isBackward || direction === GO_BACKWARD && !isBackward) {
     debug: logger === null || logger === void 0 || logger.debug9("Reversing animation", animation.playState);
@@ -129,7 +103,7 @@ var setupAnimation = function setupAnimation(animation, direction, logger, isIni
     if (!isInitial) {
       // we were only pausing until ready
       /* istanbul ignore next */
-      waitForPageReady().then(function () {
+      waitForPageReady().then(() => {
         debug: logger === null || logger === void 0 || logger.debug9("Restarting animation", animation.playState);
         animation.play();
       });
@@ -139,57 +113,44 @@ var setupAnimation = function setupAnimation(animation, direction, logger, isIni
   // If the element is moved (including if wrapped, such as by the ViewTrigger),
   // this will cancel CSS animations and replace them with new running ones
   if (MH.isInstanceOf(animation, CSSAnimation)) {
-    var cancelHandler = function cancelHandler(event) {
-      return onAnimationCancel(event, animation, direction, logger, isInitial);
-    };
+    const cancelHandler = event => onAnimationCancel(event, animation, direction, logger, isInitial);
     animation.addEventListener(MC.S_CANCEL, cancelHandler);
-    animation.addEventListener("finish", function () {
-      return animation.removeEventListener(MC.S_CANCEL, cancelHandler);
-    });
+    animation.addEventListener("finish", () => animation.removeEventListener(MC.S_CANCEL, cancelHandler));
   }
 };
 
 /* istanbul ignore next */ // jsdom doesn't support Web Animations
-var onAnimationCancel = function onAnimationCancel(event, animation, direction, logger, isInitial) {
-  var _MH$targetOf;
+const onAnimationCancel = (event, animation, direction, logger, isInitial) => {
   // setup again the new animation
   debug: logger === null || logger === void 0 || logger.debug9("Animation cancelled, re-setting up new one");
-  var target = MH.targetOf(event);
+  const target = MH.targetOf(event);
   if (!MH.isInstanceOf(target, Animation)) {
     return;
   }
-  var effect = target.effect;
+  const effect = target.effect;
   if (!MH.isInstanceOf(effect, KeyframeEffect)) {
     return;
   }
-  var _iterator = _createForOfIteratorHelper(((_MH$targetOf = MH.targetOf(effect)) === null || _MH$targetOf === void 0 ? void 0 : _MH$targetOf.getAnimations()) || []),
-    _step;
-  try {
-    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-      var newAnimation = _step.value;
-      if (MH.isInstanceOf(newAnimation, CSSAnimation) && newAnimation.animationName === animation.animationName) {
-        setupAnimation(newAnimation, direction, logger, isInitial);
-        break;
-      }
+  for (const newAnimation of ((_MH$targetOf = MH.targetOf(effect)) === null || _MH$targetOf === void 0 ? void 0 : _MH$targetOf.getAnimations()) || []) {
+    var _MH$targetOf;
+    if (MH.isInstanceOf(newAnimation, CSSAnimation) && newAnimation.animationName === animation.animationName) {
+      setupAnimation(newAnimation, direction, logger, isInitial);
+      break;
     }
-  } catch (err) {
-    _iterator.e(err);
-  } finally {
-    _iterator.f();
   }
 };
-var setupAnimationLegacy = function setupAnimationLegacy(element, direction, logger, isInitial) {
-  var isBackward = hasClass(element, MC.PREFIX_ANIMATE_REVERSE);
-  var isPaused = hasClass(element, MC.PREFIX_ANIMATE_PAUSE);
-  var pauseTillReady = !isPageReady();
-  var goBackwards = direction === GO_BACKWARD || direction === GO_TOGGLE && !isBackward;
-  var doPause = isInitial || pauseTillReady;
+const setupAnimationLegacy = (element, direction, logger, isInitial) => {
+  const isBackward = hasClass(element, MC.PREFIX_ANIMATE_REVERSE);
+  const isPaused = hasClass(element, MC.PREFIX_ANIMATE_PAUSE);
+  const pauseTillReady = !isPageReady();
+  const goBackwards = direction === GO_BACKWARD || direction === GO_TOGGLE && !isBackward;
+  const doPause = isInitial || pauseTillReady;
   debug: logger === null || logger === void 0 || logger.debug9("Setting up legacy animations", element, {
-    direction: direction,
-    isBackward: isBackward,
-    isPaused: isPaused,
-    goBackwards: goBackwards,
-    doPause: doPause
+    direction,
+    isBackward,
+    isPaused,
+    goBackwards,
+    doPause
   });
   if (goBackwards === isBackward && doPause === isPaused) {
     // nothing to do
@@ -198,11 +159,9 @@ var setupAnimationLegacy = function setupAnimationLegacy(element, direction, log
   }
   resetCssAnimationsNow(element);
   removeClassesNow(element, MC.PREFIX_ANIMATE_PAUSE, MC.PREFIX_ANIMATE_REVERSE);
-  addClassesNow.apply(void 0, [element].concat(_toConsumableArray(goBackwards ? [MC.PREFIX_ANIMATE_REVERSE] : []), _toConsumableArray(doPause ? [MC.PREFIX_ANIMATE_PAUSE] : [])));
+  addClassesNow(element, ...(goBackwards ? [MC.PREFIX_ANIMATE_REVERSE] : []), ...(doPause ? [MC.PREFIX_ANIMATE_PAUSE] : []));
   if (!isInitial && pauseTillReady) {
-    waitForPageReady().then(function () {
-      return removeClasses(element, MC.PREFIX_ANIMATE_PAUSE);
-    });
+    waitForPageReady().then(() => removeClasses(element, MC.PREFIX_ANIMATE_PAUSE));
   }
 };
 //# sourceMappingURL=animate.js.map

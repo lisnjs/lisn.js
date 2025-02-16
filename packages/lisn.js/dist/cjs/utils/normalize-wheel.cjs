@@ -159,12 +159,12 @@ var _settings = require("../globals/settings.cjs");
  *         Firefox v4/OS X  |     undefined    |       1
  *         Firefox v4/Win7  |     undefined    |       3
  */
-var normalizeWheel = exports.normalizeWheel = function normalizeWheel(event) {
-  var spinX = 0,
+const normalizeWheel = event => {
+  let spinX = 0,
     spinY = 0,
     pixelX = event.deltaX,
     pixelY = event.deltaY;
-  var LINE = _settings.settings.deltaLineHeight;
+  const LINE = _settings.settings.deltaLineHeight;
 
   // Legacy
   if (event.detail !== undefined) {
@@ -199,12 +199,13 @@ var normalizeWheel = exports.normalizeWheel = function normalizeWheel(event) {
     spinY = pixelY < 1 ? -1 : 1;
   }
   return {
-    spinX: spinX,
-    spinY: spinY,
-    pixelX: pixelX,
-    pixelY: pixelY
+    spinX,
+    spinY,
+    pixelX,
+    pixelY
   };
 };
 
 // --------------------
+exports.normalizeWheel = normalizeWheel;
 //# sourceMappingURL=normalize-wheel.cjs.map

@@ -1,14 +1,13 @@
 "use strict";
 
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.waitForPageReady = exports.waitForInteractive = exports.waitForElementOrInteractive = exports.waitForElement = exports.waitForComplete = exports.isPageReady = void 0;
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _settings = require("../globals/settings.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 /**
  * @module Utils
  */
@@ -28,36 +27,34 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  *
  * @category DOM: Events
  */
-var waitForElement = exports.waitForElement = function waitForElement(checkFn, timeout) {
-  return MH.newPromise(function (resolve) {
-    var callFn = function callFn() {
-      var result = checkFn();
-      if (!MH.isNullish(result)) {
-        resolve(result);
-        return true; // done
-      }
-      return false;
-    };
+const waitForElement = (checkFn, timeout) => MH.newPromise(resolve => {
+  const callFn = () => {
+    const result = checkFn();
+    if (!MH.isNullish(result)) {
+      resolve(result);
+      return true; // done
+    }
+    return false;
+  };
+  if (callFn()) {
+    return; // resolved already
+  }
+  if (!MH.isNullish(timeout)) {
+    MH.setTimer(() => {
+      resolve(null);
+      observer.disconnect();
+    }, timeout);
+  }
+  const observer = MH.newMutationObserver(() => {
     if (callFn()) {
-      return; // resolved already
+      observer.disconnect();
     }
-    if (!MH.isNullish(timeout)) {
-      MH.setTimer(function () {
-        resolve(null);
-        observer.disconnect();
-      }, timeout);
-    }
-    var observer = MH.newMutationObserver(function () {
-      if (callFn()) {
-        observer.disconnect();
-      }
-    });
-    observer.observe(MH.getDocElement(), {
-      childList: true,
-      subtree: true
-    });
   });
-};
+  observer.observe(MH.getDocElement(), {
+    childList: true,
+    subtree: true
+  });
+});
 
 /**
  * Returns a Promise that is resolved when the given `checkFn` function returns
@@ -77,25 +74,22 @@ var waitForElement = exports.waitForElement = function waitForElement(checkFn, t
  *
  * @category DOM: Events
  */
-var waitForElementOrInteractive = exports.waitForElementOrInteractive = function waitForElementOrInteractive(checkFn) {
-  return MH.newPromise(function (resolve) {
-    var isInteractive = false;
-    // Check element first, then readyState. The callback to waitForElement is
-    // run synchronously first time, so isInteractive will be false and checkFn
-    // will run.
-    waitForElement(function () {
-      return isInteractive || checkFn();
-    }).then(function (res) {
-      if (!isInteractive) {
-        resolve(res);
-      } // else already resolved to null
-    });
-    waitForInteractive().then(function () {
-      isInteractive = true;
-      resolve(null);
-    });
+exports.waitForElement = waitForElement;
+const waitForElementOrInteractive = checkFn => MH.newPromise(resolve => {
+  let isInteractive = false;
+  // Check element first, then readyState. The callback to waitForElement is
+  // run synchronously first time, so isInteractive will be false and checkFn
+  // will run.
+  waitForElement(() => isInteractive || checkFn()).then(res => {
+    if (!isInteractive) {
+      resolve(res);
+    } // else already resolved to null
   });
-};
+  waitForInteractive().then(() => {
+    isInteractive = true;
+    resolve(null);
+  });
+});
 
 /**
  * Returns a Promise that is resolved when the
@@ -105,18 +99,15 @@ var waitForElementOrInteractive = exports.waitForElementOrInteractive = function
  *
  * @category DOM: Events
  */
-var waitForInteractive = exports.waitForInteractive = function waitForInteractive() {
-  return MH.newPromise(function (resolve) {
-    var readyState = MH.getReadyState();
-    if (readyState === INTERACTIVE || readyState === COMPLETE) {
-      resolve();
-      return;
-    }
-    MH.getDoc().addEventListener("DOMContentLoaded", function () {
-      return resolve();
-    });
-  });
-};
+exports.waitForElementOrInteractive = waitForElementOrInteractive;
+const waitForInteractive = () => MH.newPromise(resolve => {
+  const readyState = MH.getReadyState();
+  if (readyState === INTERACTIVE || readyState === COMPLETE) {
+    resolve();
+    return;
+  }
+  MH.getDoc().addEventListener("DOMContentLoaded", () => resolve());
+});
 
 /**
  * Returns a Promise that is resolved when the
@@ -126,19 +117,18 @@ var waitForInteractive = exports.waitForInteractive = function waitForInteractiv
  *
  * @category DOM: Events
  */
-var waitForComplete = exports.waitForComplete = function waitForComplete() {
-  return MH.newPromise(function (resolve) {
+exports.waitForInteractive = waitForInteractive;
+const waitForComplete = () => MH.newPromise(resolve => {
+  if (MH.getReadyState() === COMPLETE) {
+    resolve();
+    return;
+  }
+  MH.getDoc().addEventListener("readystatechange", () => {
     if (MH.getReadyState() === COMPLETE) {
       resolve();
-      return;
     }
-    MH.getDoc().addEventListener("readystatechange", function () {
-      if (MH.getReadyState() === COMPLETE) {
-        resolve();
-      }
-    });
   });
-};
+});
 
 /**
  * Returns a Promise that is resolved either when the
@@ -149,48 +139,46 @@ var waitForComplete = exports.waitForComplete = function waitForComplete() {
  *
  * @category DOM: Events
  */
-var waitForPageReady = exports.waitForPageReady = function waitForPageReady() {
-  return MH.newPromise(function (resolve) {
-    if (pageIsReady) {
-      resolve();
-      return;
-    }
-    return waitForInteractive().then(function () {
-      // Setup a listener for the complete state but wait at most
-      // <pageLoadTimeout> (if specified)
-      var timer = null;
-      var dispatchReady = function dispatchReady() {
-        pageIsReady = true;
-        if (timer) {
-          MH.clearTimer(timer);
-          timer = null;
-        }
-        resolve();
-      };
-      if (_settings.settings.pageLoadTimeout > 0) {
-        timer = MH.setTimer(function () {
-          dispatchReady();
-        }, _settings.settings.pageLoadTimeout);
+exports.waitForComplete = waitForComplete;
+const waitForPageReady = () => MH.newPromise(resolve => {
+  if (pageIsReady) {
+    resolve();
+    return;
+  }
+  return waitForInteractive().then(() => {
+    // Setup a listener for the complete state but wait at most
+    // <pageLoadTimeout> (if specified)
+    let timer = null;
+    const dispatchReady = () => {
+      pageIsReady = true;
+      if (timer) {
+        MH.clearTimer(timer);
+        timer = null;
       }
-      waitForComplete().then(dispatchReady);
-    });
+      resolve();
+    };
+    if (_settings.settings.pageLoadTimeout > 0) {
+      timer = MH.setTimer(() => {
+        dispatchReady();
+      }, _settings.settings.pageLoadTimeout);
+    }
+    waitForComplete().then(dispatchReady);
   });
-};
+});
 
 /**
  * Returns true if the page is "ready". See {@link waitForPageReady}.
  *
  * @category DOM: Events
  */
-var isPageReady = exports.isPageReady = function isPageReady() {
-  return pageIsReady;
-};
+exports.waitForPageReady = waitForPageReady;
+const isPageReady = () => pageIsReady;
 
 // --------------------
-
-var COMPLETE = "complete";
-var INTERACTIVE = "interactive";
-var pageIsReady = false;
+exports.isPageReady = isPageReady;
+const COMPLETE = "complete";
+const INTERACTIVE = "interactive";
+let pageIsReady = false;
 if (!MH.hasDOM()) {
   pageIsReady = true;
 } else {

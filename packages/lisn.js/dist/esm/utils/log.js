@@ -1,9 +1,3 @@
-function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
-function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 /**
  * @module Utils
  */
@@ -19,12 +13,9 @@ import { Callback } from "../modules/callback.js";
  *
  * @category Logging
  */
-export var logInfo = function logInfo() {
-  for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-    args[_key] = arguments[_key];
-  }
+export const logInfo = (...args) => {
   if (!isMessageSeen(args)) {
-    MH.consoleInfo.apply(MH, [MC.LOG_PREFIX].concat(args));
+    MH.consoleInfo(MC.LOG_PREFIX, ...args);
   }
 };
 
@@ -34,12 +25,9 @@ export var logInfo = function logInfo() {
  *
  * @category Logging
  */
-export var logWarn = function logWarn() {
-  for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-    args[_key2] = arguments[_key2];
-  }
+export const logWarn = (...args) => {
   if (!isMessageSeen(args)) {
-    MH.consoleWarn.apply(MH, [MC.LOG_PREFIX].concat(args));
+    MH.consoleWarn(MC.LOG_PREFIX, ...args);
   }
 };
 
@@ -49,18 +37,15 @@ export var logWarn = function logWarn() {
  *
  * @category Logging
  */
-export var logError = function logError() {
-  for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-    args[_key3] = arguments[_key3];
-  }
+export const logError = (...args) => {
   if ((MH.lengthOf(args) > 1 || args[0] !== Callback.REMOVE) && !isMessageSeen(args)) {
-    MH.consoleError.apply(MH, [MC.LOG_PREFIX].concat(args));
+    MH.consoleError(MC.LOG_PREFIX, ...args);
   }
 };
-var discardMessages = MH.newSet();
-var isMessageSeen = function isMessageSeen(args) {
-  var msg = joinAsString.apply(void 0, [" "].concat(_toConsumableArray(args)));
-  var isSeen = discardMessages.has(msg);
+const discardMessages = MH.newSet();
+const isMessageSeen = args => {
+  const msg = joinAsString(" ", ...args);
+  const isSeen = discardMessages.has(msg);
   discardMessages.add(msg);
   return isSeen;
 };

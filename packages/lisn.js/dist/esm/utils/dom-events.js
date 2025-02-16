@@ -19,36 +19,34 @@ import { settings } from "../globals/settings.js";
  *
  * @category DOM: Events
  */
-export var waitForElement = function waitForElement(checkFn, timeout) {
-  return MH.newPromise(function (resolve) {
-    var callFn = function callFn() {
-      var result = checkFn();
-      if (!MH.isNullish(result)) {
-        resolve(result);
-        return true; // done
-      }
-      return false;
-    };
+export const waitForElement = (checkFn, timeout) => MH.newPromise(resolve => {
+  const callFn = () => {
+    const result = checkFn();
+    if (!MH.isNullish(result)) {
+      resolve(result);
+      return true; // done
+    }
+    return false;
+  };
+  if (callFn()) {
+    return; // resolved already
+  }
+  if (!MH.isNullish(timeout)) {
+    MH.setTimer(() => {
+      resolve(null);
+      observer.disconnect();
+    }, timeout);
+  }
+  const observer = MH.newMutationObserver(() => {
     if (callFn()) {
-      return; // resolved already
+      observer.disconnect();
     }
-    if (!MH.isNullish(timeout)) {
-      MH.setTimer(function () {
-        resolve(null);
-        observer.disconnect();
-      }, timeout);
-    }
-    var observer = MH.newMutationObserver(function () {
-      if (callFn()) {
-        observer.disconnect();
-      }
-    });
-    observer.observe(MH.getDocElement(), {
-      childList: true,
-      subtree: true
-    });
   });
-};
+  observer.observe(MH.getDocElement(), {
+    childList: true,
+    subtree: true
+  });
+});
 
 /**
  * Returns a Promise that is resolved when the given `checkFn` function returns
@@ -68,25 +66,21 @@ export var waitForElement = function waitForElement(checkFn, timeout) {
  *
  * @category DOM: Events
  */
-export var waitForElementOrInteractive = function waitForElementOrInteractive(checkFn) {
-  return MH.newPromise(function (resolve) {
-    var isInteractive = false;
-    // Check element first, then readyState. The callback to waitForElement is
-    // run synchronously first time, so isInteractive will be false and checkFn
-    // will run.
-    waitForElement(function () {
-      return isInteractive || checkFn();
-    }).then(function (res) {
-      if (!isInteractive) {
-        resolve(res);
-      } // else already resolved to null
-    });
-    waitForInteractive().then(function () {
-      isInteractive = true;
-      resolve(null);
-    });
+export const waitForElementOrInteractive = checkFn => MH.newPromise(resolve => {
+  let isInteractive = false;
+  // Check element first, then readyState. The callback to waitForElement is
+  // run synchronously first time, so isInteractive will be false and checkFn
+  // will run.
+  waitForElement(() => isInteractive || checkFn()).then(res => {
+    if (!isInteractive) {
+      resolve(res);
+    } // else already resolved to null
   });
-};
+  waitForInteractive().then(() => {
+    isInteractive = true;
+    resolve(null);
+  });
+});
 
 /**
  * Returns a Promise that is resolved when the
@@ -96,18 +90,14 @@ export var waitForElementOrInteractive = function waitForElementOrInteractive(ch
  *
  * @category DOM: Events
  */
-export var waitForInteractive = function waitForInteractive() {
-  return MH.newPromise(function (resolve) {
-    var readyState = MH.getReadyState();
-    if (readyState === INTERACTIVE || readyState === COMPLETE) {
-      resolve();
-      return;
-    }
-    MH.getDoc().addEventListener("DOMContentLoaded", function () {
-      return resolve();
-    });
-  });
-};
+export const waitForInteractive = () => MH.newPromise(resolve => {
+  const readyState = MH.getReadyState();
+  if (readyState === INTERACTIVE || readyState === COMPLETE) {
+    resolve();
+    return;
+  }
+  MH.getDoc().addEventListener("DOMContentLoaded", () => resolve());
+});
 
 /**
  * Returns a Promise that is resolved when the
@@ -117,19 +107,17 @@ export var waitForInteractive = function waitForInteractive() {
  *
  * @category DOM: Events
  */
-export var waitForComplete = function waitForComplete() {
-  return MH.newPromise(function (resolve) {
+export const waitForComplete = () => MH.newPromise(resolve => {
+  if (MH.getReadyState() === COMPLETE) {
+    resolve();
+    return;
+  }
+  MH.getDoc().addEventListener("readystatechange", () => {
     if (MH.getReadyState() === COMPLETE) {
       resolve();
-      return;
     }
-    MH.getDoc().addEventListener("readystatechange", function () {
-      if (MH.getReadyState() === COMPLETE) {
-        resolve();
-      }
-    });
   });
-};
+});
 
 /**
  * Returns a Promise that is resolved either when the
@@ -140,48 +128,44 @@ export var waitForComplete = function waitForComplete() {
  *
  * @category DOM: Events
  */
-export var waitForPageReady = function waitForPageReady() {
-  return MH.newPromise(function (resolve) {
-    if (pageIsReady) {
-      resolve();
-      return;
-    }
-    return waitForInteractive().then(function () {
-      // Setup a listener for the complete state but wait at most
-      // <pageLoadTimeout> (if specified)
-      var timer = null;
-      var dispatchReady = function dispatchReady() {
-        pageIsReady = true;
-        if (timer) {
-          MH.clearTimer(timer);
-          timer = null;
-        }
-        resolve();
-      };
-      if (settings.pageLoadTimeout > 0) {
-        timer = MH.setTimer(function () {
-          dispatchReady();
-        }, settings.pageLoadTimeout);
+export const waitForPageReady = () => MH.newPromise(resolve => {
+  if (pageIsReady) {
+    resolve();
+    return;
+  }
+  return waitForInteractive().then(() => {
+    // Setup a listener for the complete state but wait at most
+    // <pageLoadTimeout> (if specified)
+    let timer = null;
+    const dispatchReady = () => {
+      pageIsReady = true;
+      if (timer) {
+        MH.clearTimer(timer);
+        timer = null;
       }
-      waitForComplete().then(dispatchReady);
-    });
+      resolve();
+    };
+    if (settings.pageLoadTimeout > 0) {
+      timer = MH.setTimer(() => {
+        dispatchReady();
+      }, settings.pageLoadTimeout);
+    }
+    waitForComplete().then(dispatchReady);
   });
-};
+});
 
 /**
  * Returns true if the page is "ready". See {@link waitForPageReady}.
  *
  * @category DOM: Events
  */
-export var isPageReady = function isPageReady() {
-  return pageIsReady;
-};
+export const isPageReady = () => pageIsReady;
 
 // --------------------
 
-var COMPLETE = "complete";
-var INTERACTIVE = "interactive";
-var pageIsReady = false;
+const COMPLETE = "complete";
+const INTERACTIVE = "interactive";
+let pageIsReady = false;
 if (!MH.hasDOM()) {
   pageIsReady = true;
 } else {

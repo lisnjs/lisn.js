@@ -29,19 +29,19 @@ import { getBrowserSupport } from "./event.js";
  *
  * @category Gestures
  */
-export var getPointerGestureFragment = function getPointerGestureFragment(events, options) {
+export const getPointerGestureFragment = (events, options) => {
   if (!MH.isIterableObject(events)) {
     events = [events];
   }
-  var isCancelled = false;
-  var supports = getBrowserSupport();
+  let isCancelled = false;
+  const supports = getBrowserSupport();
 
   // If the browser supports pointer events, then only take those; otherwise
   // take the mouse events
-  var pointerEventClass = supports._pointer ? PointerEvent : MouseEvent;
-  var pointerUpType = supports._pointer ? MC.S_POINTERUP : MC.S_MOUSEUP;
-  var filteredEvents = MH.filter(events, function (event) {
-    var eType = event.type;
+  const pointerEventClass = supports._pointer ? PointerEvent : MouseEvent;
+  const pointerUpType = supports._pointer ? MC.S_POINTERUP : MC.S_MOUSEUP;
+  const filteredEvents = MH.filter(events, event => {
+    const eType = event.type;
     isCancelled = isCancelled || eType === MC.S_POINTERCANCEL;
     if (eType !== MC.S_CLICK && MH.isInstanceOf(event, pointerEventClass)) {
       // Only events where the primary button is pressed (unless it's a
@@ -53,27 +53,27 @@ export var getPointerGestureFragment = function getPointerGestureFragment(events
     }
     return false;
   });
-  var numEvents = MH.lengthOf(filteredEvents);
+  const numEvents = MH.lengthOf(filteredEvents);
   if (numEvents < 2) {
     return false; // no enough events
   }
   if (isCancelled) {
     return null; // terminated
   }
-  var firstEvent = filteredEvents[0];
-  var lastEvent = filteredEvents[numEvents - 1];
+  const firstEvent = filteredEvents[0];
+  const lastEvent = filteredEvents[numEvents - 1];
   if (MH.getPointerType(firstEvent) !== MH.getPointerType(lastEvent)) {
     return null; // different devices, consider it terminated
   }
-  var deltaX = lastEvent.clientX - firstEvent.clientX;
-  var deltaY = lastEvent.clientY - firstEvent.clientY;
-  var direction = getVectorDirection([deltaX, deltaY], options === null || options === void 0 ? void 0 : options.angleDiffThreshold);
+  const deltaX = lastEvent.clientX - firstEvent.clientX;
+  const deltaY = lastEvent.clientY - firstEvent.clientY;
+  const direction = getVectorDirection([deltaX, deltaY], options === null || options === void 0 ? void 0 : options.angleDiffThreshold);
   return direction === MC.S_NONE ? false : {
     device: MC.S_POINTER,
-    direction: direction,
+    direction,
     intent: MC.S_DRAG,
-    deltaX: deltaX,
-    deltaY: deltaY,
+    deltaX,
+    deltaY,
     deltaZ: 1
   };
 };

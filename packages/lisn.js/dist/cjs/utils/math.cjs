@@ -1,22 +1,17 @@
 "use strict";
 
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.toPosNum = exports.toNumWithBounds = exports.toNum = exports.toNonNegNum = exports.toInt = exports.sortedKeysByVal = exports.roundNumTo = exports.radToDeg = exports.quadraticRoots = exports.normalizeAngle = exports.minAbs = exports.maxAbs = exports.keyWithMinVal = exports.keyWithMaxVal = exports.isValidNum = exports.havingMinAbs = exports.havingMaxAbs = exports.hAngle = exports.getBitmask = exports.easeInOutQuad = exports.distanceBetween = exports.degToRad = exports.areParallel = exports.areAntiParallel = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
-function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
-function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; } /**
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+/**
  * @module Utils
  */
+
 /**
  * Round a number to the given decimal precision (default is 0).
  *
@@ -24,9 +19,8 @@ function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length)
  *
  * @category Math
  */
-var roundNumTo = exports.roundNumTo = function roundNumTo(value) {
-  var numDecimal = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-  var multiplicationFactor = MH.pow(10, numDecimal);
+const roundNumTo = (value, numDecimal = 0) => {
+  const multiplicationFactor = MH.pow(10, numDecimal);
   return MH.round(value * multiplicationFactor) / multiplicationFactor;
 };
 
@@ -35,9 +29,8 @@ var roundNumTo = exports.roundNumTo = function roundNumTo(value) {
  *
  * @category Validation
  */
-var isValidNum = exports.isValidNum = function isValidNum(value) {
-  return MH.isNumber(value) && MC.NUMBER.isFinite(value);
-};
+exports.roundNumTo = roundNumTo;
+const isValidNum = value => MH.isNumber(value) && MC.NUMBER.isFinite(value);
 
 /**
  * If the given value is a valid _finite_ number, it is returned, otherwise
@@ -45,9 +38,9 @@ var isValidNum = exports.isValidNum = function isValidNum(value) {
  *
  * @category Math
  */
-var toNum = exports.toNum = function toNum(value) {
-  var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-  var numValue = MH.isLiteralString(value) ? MH.parseFloat(value) : value;
+exports.isValidNum = isValidNum;
+const toNum = (value, defaultValue = 0) => {
+  const numValue = MH.isLiteralString(value) ? MH.parseFloat(value) : value;
 
   // parseFloat will strip trailing non-numeric characters, so we check that
   // the parsed number is equal to the string, if it was a string, using loose
@@ -61,9 +54,9 @@ var toNum = exports.toNum = function toNum(value) {
  *
  * @category Math
  */
-var toInt = exports.toInt = function toInt(value) {
-  var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-  var numValue = toNum(value, null);
+exports.toNum = toNum;
+const toInt = (value, defaultValue = 0) => {
+  let numValue = toNum(value, null);
   numValue = numValue === null ? numValue : MH.floor(numValue);
 
   // Ensure that the parsed int equaled the original by loose equality.
@@ -76,9 +69,9 @@ var toInt = exports.toInt = function toInt(value) {
  *
  * @category Math
  */
-var toNonNegNum = exports.toNonNegNum = function toNonNegNum(value) {
-  var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-  var numValue = toNum(value, null);
+exports.toInt = toInt;
+const toNonNegNum = (value, defaultValue = 0) => {
+  const numValue = toNum(value, null);
   return numValue !== null && numValue >= 0 ? numValue : defaultValue;
 };
 
@@ -88,9 +81,9 @@ var toNonNegNum = exports.toNonNegNum = function toNonNegNum(value) {
  *
  * @category Math
  */
-var toPosNum = exports.toPosNum = function toPosNum(value) {
-  var defaultValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-  var numValue = toNum(value, null);
+exports.toNonNegNum = toNonNegNum;
+const toPosNum = (value, defaultValue = 0) => {
+  const numValue = toNum(value, null);
   return numValue !== null && numValue > 0 ? numValue : defaultValue;
 };
 
@@ -109,13 +102,14 @@ var toPosNum = exports.toPosNum = function toPosNum(value) {
  *
  * @category Math
  */
-var toNumWithBounds = exports.toNumWithBounds = function toNumWithBounds(value, limits, defaultValue) {
+exports.toPosNum = toPosNum;
+const toNumWithBounds = (value, limits, defaultValue) => {
   var _limits$min, _limits$max;
-  var isDefaultGiven = defaultValue !== undefined;
-  var numValue = toNum(value, null);
-  var min = (_limits$min = limits === null || limits === void 0 ? void 0 : limits.min) !== null && _limits$min !== void 0 ? _limits$min : null;
-  var max = (_limits$max = limits === null || limits === void 0 ? void 0 : limits.max) !== null && _limits$max !== void 0 ? _limits$max : null;
-  var result;
+  const isDefaultGiven = defaultValue !== undefined;
+  const numValue = toNum(value, null);
+  const min = (_limits$min = limits === null || limits === void 0 ? void 0 : limits.min) !== null && _limits$min !== void 0 ? _limits$min : null;
+  const max = (_limits$max = limits === null || limits === void 0 ? void 0 : limits.max) !== null && _limits$max !== void 0 ? _limits$max : null;
+  let result;
   if (!isValidNum(numValue)) {
     var _ref;
     result = isDefaultGiven ? defaultValue : (_ref = min !== null && min !== void 0 ? min : max) !== null && _ref !== void 0 ? _ref : 0;
@@ -136,14 +130,8 @@ var toNumWithBounds = exports.toNumWithBounds = function toNumWithBounds(value, 
  *
  * @category Math
  */
-var maxAbs = exports.maxAbs = function maxAbs() {
-  for (var _len = arguments.length, values = new Array(_len), _key = 0; _key < _len; _key++) {
-    values[_key] = arguments[_key];
-  }
-  return MH.max.apply(MH, _toConsumableArray(values.map(function (v) {
-    return MH.abs(v);
-  })));
-};
+exports.toNumWithBounds = toNumWithBounds;
+const maxAbs = (...values) => MH.max(...values.map(v => MH.abs(v)));
 
 /**
  * Returns the smallest absolute value among the given ones.
@@ -152,14 +140,8 @@ var maxAbs = exports.maxAbs = function maxAbs() {
  *
  * @category Math
  */
-var minAbs = exports.minAbs = function minAbs() {
-  for (var _len2 = arguments.length, values = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-    values[_key2] = arguments[_key2];
-  }
-  return MH.min.apply(MH, _toConsumableArray(values.map(function (v) {
-    return MH.abs(v);
-  })));
-};
+exports.maxAbs = maxAbs;
+const minAbs = (...values) => MH.min(...values.map(v => MH.abs(v)));
 
 /**
  * Returns the value with the largest absolute value among the given ones.
@@ -168,14 +150,8 @@ var minAbs = exports.minAbs = function minAbs() {
  *
  * @category Math
  */
-var havingMaxAbs = exports.havingMaxAbs = function havingMaxAbs() {
-  for (var _len3 = arguments.length, values = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-    values[_key3] = arguments[_key3];
-  }
-  return MH.lengthOf(values) ? values.sort(function (a, b) {
-    return MH.abs(b) - MH.abs(a);
-  })[0] : -MC.INFINITY;
-};
+exports.minAbs = minAbs;
+const havingMaxAbs = (...values) => MH.lengthOf(values) ? values.sort((a, b) => MH.abs(b) - MH.abs(a))[0] : -MC.INFINITY;
 
 /**
  * Returns the value with the smallest absolute value among the given ones.
@@ -184,14 +160,8 @@ var havingMaxAbs = exports.havingMaxAbs = function havingMaxAbs() {
  *
  * @category Math
  */
-var havingMinAbs = exports.havingMinAbs = function havingMinAbs() {
-  for (var _len4 = arguments.length, values = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-    values[_key4] = arguments[_key4];
-  }
-  return MH.lengthOf(values) ? values.sort(function (a, b) {
-    return MH.abs(a) - MH.abs(b);
-  })[0] : MC.INFINITY;
-};
+exports.havingMaxAbs = havingMaxAbs;
+const havingMinAbs = (...values) => MH.lengthOf(values) ? values.sort((a, b) => MH.abs(a) - MH.abs(b))[0] : MC.INFINITY;
 
 /**
  * Returns the angle (in radians) that the vector defined by the given x, y
@@ -201,9 +171,8 @@ var havingMinAbs = exports.havingMinAbs = function havingMinAbs() {
  *
  * @category Math
  */
-var hAngle = exports.hAngle = function hAngle(x, y) {
-  return normalizeAngle(MC.MATH.atan2(y, x));
-}; // ensure that -PI is transformed to +PI
+exports.havingMinAbs = havingMinAbs;
+const hAngle = (x, y) => normalizeAngle(MC.MATH.atan2(y, x)); // ensure that -PI is transformed to +PI
 
 /**
  * Normalizes the given angle (in radians) so that it's in the range -PI to PI,
@@ -211,7 +180,8 @@ var hAngle = exports.hAngle = function hAngle(x, y) {
  *
  * @category Math
  */
-var normalizeAngle = exports.normalizeAngle = function normalizeAngle(a) {
+exports.hAngle = hAngle;
+const normalizeAngle = a => {
   // ensure it's positive in the range 0 to 2 PI
   while (a < 0 || a > MC.PI * 2) {
     a += (a < 0 ? 1 : -1) * MC.PI * 2;
@@ -226,18 +196,16 @@ var normalizeAngle = exports.normalizeAngle = function normalizeAngle(a) {
  *
  * @category Math
  */
-var degToRad = exports.degToRad = function degToRad(a) {
-  return a * MC.PI / 180;
-};
+exports.normalizeAngle = normalizeAngle;
+const degToRad = a => a * MC.PI / 180;
 
 /**
  * Converts the given angle in radians to degrees.
  *
  * @category Math
  */
-var radToDeg = exports.radToDeg = function radToDeg(a) {
-  return a * 180 / MC.PI;
-};
+exports.degToRad = degToRad;
+const radToDeg = a => a * 180 / MC.PI;
 
 /**
  * Returns true if the given vectors point in the same direction.
@@ -253,10 +221,10 @@ var radToDeg = exports.radToDeg = function radToDeg(a) {
  *
  * @category Math
  */
-var areParallel = exports.areParallel = function areParallel(vA, vB) {
-  var angleDiffThreshold = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-  var angleA = hAngle(vA[0], vA[1]);
-  var angleB = hAngle(vB[0], vB[1]);
+exports.radToDeg = radToDeg;
+const areParallel = (vA, vB, angleDiffThreshold = 0) => {
+  const angleA = hAngle(vA[0], vA[1]);
+  const angleB = hAngle(vB[0], vB[1]);
   angleDiffThreshold = MH.min(89.99, MH.abs(angleDiffThreshold));
   return MH.abs(normalizeAngle(angleA - angleB)) <= degToRad(angleDiffThreshold);
 };
@@ -275,19 +243,16 @@ var areParallel = exports.areParallel = function areParallel(vA, vB) {
  *
  * @category Math
  */
-var areAntiParallel = exports.areAntiParallel = function areAntiParallel(vA, vB) {
-  var angleDiffThreshold = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-  return areParallel(vA, [-vB[0], -vB[1]], angleDiffThreshold);
-};
+exports.areParallel = areParallel;
+const areAntiParallel = (vA, vB, angleDiffThreshold = 0) => areParallel(vA, [-vB[0], -vB[1]], angleDiffThreshold);
 
 /**
  * Returns the distance between two points on the screen.
  *
  * @category Math
  */
-var distanceBetween = exports.distanceBetween = function distanceBetween(ptA, ptB) {
-  return MH.sqrt(MH.pow(ptA[0] - ptB[0], 2) + MH.pow(ptA[1] - ptB[1], 2));
-};
+exports.areAntiParallel = areAntiParallel;
+const distanceBetween = (ptA, ptB) => MH.sqrt(MH.pow(ptA[0] - ptB[0], 2) + MH.pow(ptA[1] - ptB[1], 2));
 
 /**
  * Returns the two roots of the quadratic equation with coefficients
@@ -297,8 +262,9 @@ var distanceBetween = exports.distanceBetween = function distanceBetween(ptA, pt
  *
  * @category Math
  */
-var quadraticRoots = exports.quadraticRoots = function quadraticRoots(a, b, c) {
-  var z = MH.sqrt(b * b - 4 * a * c);
+exports.distanceBetween = distanceBetween;
+const quadraticRoots = (a, b, c) => {
+  const z = MH.sqrt(b * b - 4 * a * c);
   return [(-b + z) / (2 * a), (-b - z) / (2 * a)];
 };
 
@@ -310,25 +276,20 @@ var quadraticRoots = exports.quadraticRoots = function quadraticRoots(a, b, c) {
  *
  * @category Math
  */
-var easeInOutQuad = exports.easeInOutQuad = function easeInOutQuad(x) {
-  return x < 0.5 ? 2 * x * x : 1 - MH.pow(-2 * x + 2, 2) / 2;
-};
+exports.quadraticRoots = quadraticRoots;
+const easeInOutQuad = x => x < 0.5 ? 2 * x * x : 1 - MH.pow(-2 * x + 2, 2) / 2;
 
 /**
  * Returns an array of object's keys sorted by the numeric value they hold.
  *
  * @category Math
  */
-var sortedKeysByVal = exports.sortedKeysByVal = function sortedKeysByVal(obj) {
-  var descending = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+exports.easeInOutQuad = easeInOutQuad;
+const sortedKeysByVal = (obj, descending = false) => {
   if (descending) {
-    return MH.keysOf(obj).sort(function (x, y) {
-      return obj[y] - obj[x];
-    });
+    return MH.keysOf(obj).sort((x, y) => obj[y] - obj[x]);
   }
-  return MH.keysOf(obj).sort(function (x, y) {
-    return obj[x] - obj[y];
-  });
+  return MH.keysOf(obj).sort((x, y) => obj[x] - obj[y]);
 };
 
 /**
@@ -338,7 +299,8 @@ var sortedKeysByVal = exports.sortedKeysByVal = function sortedKeysByVal(obj) {
  *
  * @category Math
  */
-var keyWithMaxVal = exports.keyWithMaxVal = function keyWithMaxVal(obj) {
+exports.sortedKeysByVal = sortedKeysByVal;
+const keyWithMaxVal = obj => {
   return sortedKeysByVal(obj).slice(-1)[0];
 };
 
@@ -349,7 +311,8 @@ var keyWithMaxVal = exports.keyWithMaxVal = function keyWithMaxVal(obj) {
  *
  * @category Math
  */
-var keyWithMinVal = exports.keyWithMinVal = function keyWithMinVal(obj) {
+exports.keyWithMaxVal = keyWithMaxVal;
+const keyWithMinVal = obj => {
   return sortedKeysByVal(obj).slice(0, 1)[0];
 };
 
@@ -364,7 +327,7 @@ var keyWithMinVal = exports.keyWithMinVal = function keyWithMinVal(obj) {
  *
  * @category Math
  */
-var _getBitmask = exports.getBitmask = function getBitmask(start, end) {
-  return start > end ? _getBitmask(end, start) : ~0 >>> 32 - end - 1 + start << start;
-};
+exports.keyWithMinVal = keyWithMinVal;
+const getBitmask = (start, end) => start > end ? getBitmask(end, start) : ~0 >>> 32 - end - 1 + start << start;
+exports.getBitmask = getBitmask;
 //# sourceMappingURL=math.cjs.map

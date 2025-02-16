@@ -12,7 +12,7 @@ import * as triggers from "./triggers/index.js";
 export * from "./bundle-essentials.js";
 
 // --- remove widget specific actions
-export var actions = omitKeys(_actions, {
+export const actions = omitKeys(_actions, {
   Open: true,
   NextPage: true,
   PrevPage: true,

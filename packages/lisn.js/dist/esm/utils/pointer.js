@@ -11,9 +11,7 @@ import { isValidStrList } from "./validation.js";
  *
  * @category Validation
  */
-export var isValidPointerAction = function isValidPointerAction(action) {
-  return MH.includes(POINTER_ACTIONS, action);
-};
+export const isValidPointerAction = action => MH.includes(POINTER_ACTIONS, action);
 
 /**
  * Returns true if the given string or array is a valid list of pointer
@@ -21,13 +19,11 @@ export var isValidPointerAction = function isValidPointerAction(action) {
  *
  * @category Validation
  */
-export var isValidPointerActionList = function isValidPointerActionList(actions) {
-  return isValidStrList(actions, isValidPointerAction, false);
-};
+export const isValidPointerActionList = actions => isValidStrList(actions, isValidPointerAction, false);
 
 /**
  * @ignore
  * @internal
  */
-export var POINTER_ACTIONS = [MC.S_CLICK, MC.S_HOVER, MC.S_PRESS];
+export const POINTER_ACTIONS = [MC.S_CLICK, MC.S_HOVER, MC.S_PRESS];
 //# sourceMappingURL=pointer.js.map

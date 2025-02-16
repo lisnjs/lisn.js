@@ -9,7 +9,7 @@ Object.keys(_logger).forEach(function (key) {
   if (key in exports && exports[key] === _logger[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _logger[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_console).forEach(function (key) {
   if (key in exports && exports[key] === _console[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _console[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_remoteConsole).forEach(function (key) {
   if (key in exports && exports[key] === _remoteConsole[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _remoteConsole[key];
     }
   });

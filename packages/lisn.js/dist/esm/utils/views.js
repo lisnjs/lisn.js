@@ -1,6 +1,3 @@
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 /**
  * @module Utils
  */
@@ -15,27 +12,21 @@ import { newBitSpaces, createBitSpace } from "../modules/bit-spaces.js";
  *
  * @category Validation
  */
-export var isValidScrollOffset = function isValidScrollOffset(offset) {
-  return offset.match(OFFSET_REGEX) !== null;
-};
+export const isValidScrollOffset = offset => offset.match(OFFSET_REGEX) !== null;
 
 /**
  * Returns true if the given string is a valid "view".
  *
  * @category Validation
  */
-export var isValidView = function isValidView(view) {
-  return MH.includes(VIEWS, view);
-};
+export const isValidView = view => MH.includes(VIEWS, view);
 
 /**
  * Returns true if the given string or array is a list of valid views.
  *
  * @category Validation
  */
-export var isValidViewList = function isValidViewList(views) {
-  return isValidStrList(views, isValidView, false);
-};
+export const isValidViewList = views => isValidStrList(views, isValidView, false);
 
 /**
  * Returns the views that are opposite to the given set of views.
@@ -102,12 +93,12 @@ export var isValidViewList = function isValidViewList(views) {
  *
  * @category Views
  */
-export var getOppositeViews = function getOppositeViews(views) {
+export const getOppositeViews = views => {
   if (!views) {
     throw MH.usageError("'views' cannot be empty");
   }
-  var bitmask = getViewsBitmask(views);
-  var oppositeBitmask = VIEWS_SPACE.bitmask & ~bitmask; // initial, all not present in bitmask
+  const bitmask = getViewsBitmask(views);
+  let oppositeBitmask = VIEWS_SPACE.bitmask & ~bitmask; // initial, all not present in bitmask
 
   // If the given view is "at", then include all the other ones.
   // Otherwise include only the opposite views of those directional
@@ -135,24 +126,15 @@ export var getOppositeViews = function getOppositeViews(views) {
  * @ignore
  * @internal
  */
-export var getViewsBitmask = function getViewsBitmask(viewsStr) {
-  var viewsBitmask = 0;
-  var views = validateStrList("views", viewsStr, isValidView);
+export const getViewsBitmask = viewsStr => {
+  let viewsBitmask = 0;
+  const views = validateStrList("views", viewsStr, isValidView);
   if (views) {
-    var _iterator = _createForOfIteratorHelper(views),
-      _step;
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var v = _step.value;
-        if (!isValidView(v)) {
-          throw MH.usageError("Unknown view '".concat(v, "'"));
-        }
-        viewsBitmask |= VIEWS_SPACE.bit[v];
+    for (const v of views) {
+      if (!isValidView(v)) {
+        throw MH.usageError(`Unknown view '${v}'`);
       }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
+      viewsBitmask |= VIEWS_SPACE.bit[v];
     }
   } else {
     viewsBitmask = VIEWS_SPACE.bitmask; // default: all
@@ -164,40 +146,40 @@ export var getViewsBitmask = function getViewsBitmask(viewsStr) {
  * @ignore
  * @internal
  */
-export var parseScrollOffset = function parseScrollOffset(input) {
+export const parseScrollOffset = input => {
   var _match$groups, _match$groups2;
-  var match = input.match(OFFSET_REGEX);
+  const match = input.match(OFFSET_REGEX);
   if (!match) {
-    throw MH.usageError("Invalid offset: '".concat(input, "'"));
+    throw MH.usageError(`Invalid offset: '${input}'`);
   }
-  var reference = (_match$groups = match.groups) === null || _match$groups === void 0 ? void 0 : _match$groups.ref;
-  var value = (_match$groups2 = match.groups) === null || _match$groups2 === void 0 ? void 0 : _match$groups2.value;
+  const reference = (_match$groups = match.groups) === null || _match$groups === void 0 ? void 0 : _match$groups.ref;
+  const value = (_match$groups2 = match.groups) === null || _match$groups2 === void 0 ? void 0 : _match$groups2.value;
   /* istanbul ignore next */ // shouldn't happen
   if (!reference || !value) {
     throw MH.bugError("Offset regex: blank named groups");
   }
   return {
-    reference: reference,
-    value: value
+    reference,
+    value
   };
 };
-var VIEWS = [MC.S_AT, MC.S_ABOVE, MC.S_BELOW, MC.S_LEFT, MC.S_RIGHT];
+const VIEWS = [MC.S_AT, MC.S_ABOVE, MC.S_BELOW, MC.S_LEFT, MC.S_RIGHT];
 
 /**
  * @ignore
  * @internal
  */
-export var VIEWS_SPACE = createBitSpace.apply(void 0, [newBitSpaces()].concat(VIEWS));
+export const VIEWS_SPACE = createBitSpace(newBitSpaces(), ...VIEWS);
 
 // --------------------
 
-var OFFSET_REGEX = RegExp("(?<ref>top|bottom|left|right): *(?<value>[^ ].+)");
-var getViewsFromBitmask = function getViewsFromBitmask(bitmask) {
-  var views = [];
-  for (var bit = VIEWS_SPACE.start; bit <= VIEWS_SPACE.end; bit++) {
-    var value = 1 << bit;
+const OFFSET_REGEX = RegExp("(?<ref>top|bottom|left|right): *(?<value>[^ ].+)");
+const getViewsFromBitmask = bitmask => {
+  const views = [];
+  for (let bit = VIEWS_SPACE.start; bit <= VIEWS_SPACE.end; bit++) {
+    const value = 1 << bit;
     if (bitmask & value) {
-      var name = VIEWS_SPACE.nameOf(value);
+      const name = VIEWS_SPACE.nameOf(value);
       if (name) {
         views.push(name);
       }

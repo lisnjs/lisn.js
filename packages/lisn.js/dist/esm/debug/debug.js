@@ -11,8 +11,8 @@ import { Logger } from "./logger.js";
 import { Console } from "./console.js";
 import { RemoteConsole } from "./remote-console.js";
 export default {
-  Logger: Logger,
-  Console: Console,
-  RemoteConsole: RemoteConsole
+  Logger,
+  Console,
+  RemoteConsole
 };
 //# sourceMappingURL=debug.js.map

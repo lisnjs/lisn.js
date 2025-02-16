@@ -154,12 +154,12 @@ import { settings } from "../globals/settings.js";
  *         Firefox v4/OS X  |     undefined    |       1
  *         Firefox v4/Win7  |     undefined    |       3
  */
-export var normalizeWheel = function normalizeWheel(event) {
-  var spinX = 0,
+export const normalizeWheel = event => {
+  let spinX = 0,
     spinY = 0,
     pixelX = event.deltaX,
     pixelY = event.deltaY;
-  var LINE = settings.deltaLineHeight;
+  const LINE = settings.deltaLineHeight;
 
   // Legacy
   if (event.detail !== undefined) {
@@ -194,10 +194,10 @@ export var normalizeWheel = function normalizeWheel(event) {
     spinY = pixelY < 1 ? -1 : 1;
   }
   return {
-    spinX: spinX,
-    spinY: spinY,
-    pixelX: pixelX,
-    pixelY: pixelY
+    spinX,
+    spinY,
+    pixelX,
+    pixelY
   };
 };
 

@@ -1,6 +1,5 @@
 "use strict";
 
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -9,20 +8,12 @@ var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _math = require("./math.cjs");
 var _validation = require("./validation.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
-function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
-function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; } /**
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+/**
  * @module Utils
  */
+
 /**
  * Returns the cardinal direction in the XY plane for the larger of the two
  * deltas (horizontal vs vertical).
@@ -33,7 +24,7 @@ function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length)
  *
  * @category Directions
  */
-var getMaxDeltaDirection = exports.getMaxDeltaDirection = function getMaxDeltaDirection(deltaX, deltaY) {
+const getMaxDeltaDirection = (deltaX, deltaY) => {
   if (!MH.abs(deltaX) && !MH.abs(deltaY)) {
     return MC.S_NONE;
   }
@@ -62,10 +53,10 @@ var getMaxDeltaDirection = exports.getMaxDeltaDirection = function getMaxDeltaDi
  *
  * @category Directions
  */
-var getVectorDirection = exports.getVectorDirection = function getVectorDirection(vector) {
-  var angleDiffThreshold = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+exports.getMaxDeltaDirection = getMaxDeltaDirection;
+const getVectorDirection = (vector, angleDiffThreshold = 0) => {
   angleDiffThreshold = MH.min(44.99, MH.abs(angleDiffThreshold));
-  if (!_math.maxAbs.apply(void 0, _toConsumableArray(vector))) {
+  if (!(0, _math.maxAbs)(...vector)) {
     return MC.S_NONE;
   } else if ((0, _math.areParallel)(vector, [1, 0], angleDiffThreshold)) {
     return MC.S_RIGHT;
@@ -98,7 +89,8 @@ var getVectorDirection = exports.getVectorDirection = function getVectorDirectio
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the given view is not valid.
  */
-var getOppositeDirection = exports.getOppositeDirection = function getOppositeDirection(direction) {
+exports.getVectorDirection = getVectorDirection;
+const getOppositeDirection = direction => {
   if (!(direction in OPPOSITE_DIRECTIONS)) {
     throw MH.usageError("Invalid 'direction'");
   }
@@ -131,41 +123,24 @@ var getOppositeDirection = exports.getOppositeDirection = function getOppositeDi
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the given view is not valid.
  */
-var getOppositeXYDirections = exports.getOppositeXYDirections = function getOppositeXYDirections(directions) {
-  var directionList = (0, _validation.validateStrList)("directions", directions, isValidXYDirection);
+exports.getOppositeDirection = getOppositeDirection;
+const getOppositeXYDirections = directions => {
+  const directionList = (0, _validation.validateStrList)("directions", directions, isValidXYDirection);
   if (!directionList) {
     throw MH.usageError("'directions' is required");
   }
-  var opposites = [];
-  var _iterator = _createForOfIteratorHelper(directionList),
-    _step;
-  try {
-    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-      var _direction = _step.value;
-      var opposite = getOppositeDirection(_direction);
-      if (opposite && isValidXYDirection(opposite) && !MH.includes(directionList, opposite)) {
-        opposites.push(opposite);
-      }
+  const opposites = [];
+  for (const direction of directionList) {
+    const opposite = getOppositeDirection(direction);
+    if (opposite && isValidXYDirection(opposite) && !MH.includes(directionList, opposite)) {
+      opposites.push(opposite);
     }
-  } catch (err) {
-    _iterator.e(err);
-  } finally {
-    _iterator.f();
   }
   if (!MH.lengthOf(opposites)) {
-    var _iterator2 = _createForOfIteratorHelper(XY_DIRECTIONS),
-      _step2;
-    try {
-      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-        var direction = _step2.value;
-        if (!MH.includes(directionList, direction)) {
-          opposites.push(direction);
-        }
+    for (const direction of XY_DIRECTIONS) {
+      if (!MH.includes(directionList, direction)) {
+        opposites.push(direction);
       }
-    } catch (err) {
-      _iterator2.e(err);
-    } finally {
-      _iterator2.f();
     }
   }
   return opposites;
@@ -176,62 +151,68 @@ var getOppositeXYDirections = exports.getOppositeXYDirections = function getOppo
  *
  * @category Validation
  */
-var isValidXYDirection = exports.isValidXYDirection = function isValidXYDirection(direction) {
-  return MH.includes(XY_DIRECTIONS, direction);
-};
+exports.getOppositeXYDirections = getOppositeXYDirections;
+const isValidXYDirection = direction => MH.includes(XY_DIRECTIONS, direction);
 
 /**
  * Returns true if the given direction is one of the known Z ones.
  *
  * @category Validation
  */
-var isValidZDirection = exports.isValidZDirection = function isValidZDirection(direction) {
-  return MH.includes(Z_DIRECTIONS, direction);
-};
+exports.isValidXYDirection = isValidXYDirection;
+const isValidZDirection = direction => MH.includes(Z_DIRECTIONS, direction);
 
 /**
  * Returns true if the given string is a valid direction.
  *
  * @category Validation
  */
-var isValidDirection = exports.isValidDirection = function isValidDirection(direction) {
-  return MH.includes(DIRECTIONS, direction);
-};
+exports.isValidZDirection = isValidZDirection;
+const isValidDirection = direction => MH.includes(DIRECTIONS, direction);
 
 /**
  * Returns true if the given string or array is a list of valid directions.
  *
  * @category Validation
  */
-var isValidDirectionList = exports.isValidDirectionList = function isValidDirectionList(directions) {
-  return (0, _validation.isValidStrList)(directions, isValidDirection, false);
-};
+exports.isValidDirection = isValidDirection;
+const isValidDirectionList = directions => (0, _validation.isValidStrList)(directions, isValidDirection, false);
 
 /**
  * @ignore
  * @internal
  */
-var XY_DIRECTIONS = exports.XY_DIRECTIONS = [MC.S_UP, MC.S_DOWN, MC.S_LEFT, MC.S_RIGHT];
+exports.isValidDirectionList = isValidDirectionList;
+const XY_DIRECTIONS = exports.XY_DIRECTIONS = [MC.S_UP, MC.S_DOWN, MC.S_LEFT, MC.S_RIGHT];
 
 /**
  * @ignore
  * @internal
  */
-var Z_DIRECTIONS = exports.Z_DIRECTIONS = [MC.S_IN, MC.S_OUT];
+const Z_DIRECTIONS = exports.Z_DIRECTIONS = [MC.S_IN, MC.S_OUT];
 
 /**
  * @ignore
  * @internal
  */
-var SCROLL_DIRECTIONS = exports.SCROLL_DIRECTIONS = [].concat(XY_DIRECTIONS, [MC.S_NONE, MC.S_AMBIGUOUS]);
+const SCROLL_DIRECTIONS = exports.SCROLL_DIRECTIONS = [...XY_DIRECTIONS, MC.S_NONE, MC.S_AMBIGUOUS];
 
 /**
  * @ignore
  * @internal
  */
-var DIRECTIONS = exports.DIRECTIONS = [].concat(XY_DIRECTIONS, Z_DIRECTIONS, [MC.S_NONE, MC.S_AMBIGUOUS]);
+const DIRECTIONS = exports.DIRECTIONS = [...XY_DIRECTIONS, ...Z_DIRECTIONS, MC.S_NONE, MC.S_AMBIGUOUS];
 
 // --------------------
 
-var OPPOSITE_DIRECTIONS = _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, MC.S_UP, MC.S_DOWN), MC.S_DOWN, MC.S_UP), MC.S_LEFT, MC.S_RIGHT), MC.S_RIGHT, MC.S_LEFT), MC.S_IN, MC.S_OUT), MC.S_OUT, MC.S_IN), MC.S_NONE, null), MC.S_AMBIGUOUS, null);
+const OPPOSITE_DIRECTIONS = {
+  [MC.S_UP]: MC.S_DOWN,
+  [MC.S_DOWN]: MC.S_UP,
+  [MC.S_LEFT]: MC.S_RIGHT,
+  [MC.S_RIGHT]: MC.S_LEFT,
+  [MC.S_IN]: MC.S_OUT,
+  [MC.S_OUT]: MC.S_IN,
+  [MC.S_NONE]: null,
+  [MC.S_AMBIGUOUS]: null
+};
 //# sourceMappingURL=directions.cjs.map

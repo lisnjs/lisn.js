@@ -22,35 +22,72 @@ var _xMap = require("../modules/x-map.cjs");
 var _domWatcher = require("./dom-watcher.cjs");
 var _sizeWatcher = require("./size-watcher.cjs");
 var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { "default": e }; }
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
-function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
-function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
-function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
  * @module Watchers/ScrollWatcher
  */
 // re-export for convenience
+
 /**
  * {@link ScrollWatcher} listens for scroll events in any direction.
  *
  * It manages registered callbacks globally and reuses event listeners for more
  * efficient performance.
  */
-var ScrollWatcher = exports.ScrollWatcher = /*#__PURE__*/function () {
-  function ScrollWatcher(config, key) {
-    var _this = this;
-    _classCallCheck(this, ScrollWatcher);
+class ScrollWatcher {
+  /**
+   * Returns the element that holds the main page content. By default it's
+   * `document.body` but is overridden by
+   * {@link settings.mainScrollableElementSelector}.
+   *
+   * It will wait for the element to be available if not already.
+   */
+  static fetchMainContentElement() {
+    return (0, _scroll.fetchMainContentElement)();
+  }
+
+  /**
+   * Returns the scrollable element that holds the wrapper around the main page
+   * content. By default it's `document.scrollable` (unless `document.body` is
+   * actually scrollable, in which case it will be used) but it will be
+   * different if {@link settings.mainScrollableElementSelector} is set.
+   *
+   * It will wait for the element to be available if not already.
+   */
+  static fetchMainScrollableElement() {
+    return (0, _scroll.fetchMainScrollableElement)();
+  }
+
+  /**
+   * Creates a new instance of ScrollWatcher with the given
+   * {@link ScrollWatcherConfig}. It does not save it for future reuse.
+   */
+  static create(config = {}) {
+    return new ScrollWatcher(getConfig(config), CONSTRUCTOR_KEY);
+  }
+
+  /**
+   * Returns an existing instance of ScrollWatcher with the given
+   * {@link ScrollWatcherConfig}, or creates a new one.
+   *
+   * **NOTE:** It saves it for future reuse, so don't use this for temporary
+   * short-lived watchers.
+   */
+  static reuse(config = {}) {
+    const myConfig = getConfig(config);
+    const configStrKey = (0, _text.objToStrKey)(myConfig);
+    let instance = instances.get(configStrKey);
+    if (!instance) {
+      instance = new ScrollWatcher(myConfig, CONSTRUCTOR_KEY);
+      instances.set(configStrKey, instance);
+    }
+    return instance;
+  }
+  constructor(config, key) {
     /**
      * Call the given handler whenever the given scrollable is scrolled.
      *
@@ -196,65 +233,41 @@ var ScrollWatcher = exports.ScrollWatcher = /*#__PURE__*/function () {
     if (key !== CONSTRUCTOR_KEY) {
       throw MH.illegalConstructorError("ScrollWatcher.create");
     }
-    var logger = _debug["default"] ? new _debug["default"].Logger({
+    const logger = _debug.default ? new _debug.default.Logger({
       name: "ScrollWatcher",
       logAtCreation: config
     }) : null;
-    var allScrollData = MH.newWeakMap();
-    var activeListeners = MH.newWeakMap();
-    var allCallbacks = (0, _xMap.newXWeakMap)(function () {
-      return MH.newMap();
-    });
+    const allScrollData = MH.newWeakMap();
+    const activeListeners = MH.newWeakMap();
+    const allCallbacks = (0, _xMap.newXWeakMap)(() => MH.newMap());
 
     // ----------
 
-    var fetchCurrentScroll = /*#__PURE__*/function () {
-      var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(element) {
-        var realtime,
-          isScrollEvent,
-          previousEventData,
-          latestData,
-          _args = arguments;
-        return _regeneratorRuntime().wrap(function _callee$(_context) {
-          while (1) switch (_context.prev = _context.next) {
-            case 0:
-              realtime = _args.length > 1 && _args[1] !== undefined ? _args[1] : false;
-              isScrollEvent = _args.length > 2 && _args[2] !== undefined ? _args[2] : false;
-              // The scroll data can change event without a scroll event, e.g. by the
-              // element changing size, so always get the latest here.
-              previousEventData = allScrollData.get(element);
-              _context.next = 5;
-              return fetchScrollData(element, previousEventData, realtime);
-            case 5:
-              latestData = _context.sent;
-              // If there hasn't been a scroll event, use the old scroll direction
-              if (!isScrollEvent && previousEventData) {
-                latestData.direction = previousEventData.direction;
-              }
-              return _context.abrupt("return", latestData);
-            case 8:
-            case "end":
-              return _context.stop();
-          }
-        }, _callee);
-      }));
-      return function fetchCurrentScroll(_x) {
-        return _ref.apply(this, arguments);
-      };
-    }();
+    const fetchCurrentScroll = async (element, realtime = false, isScrollEvent = false) => {
+      // The scroll data can change event without a scroll event, e.g. by the
+      // element changing size, so always get the latest here.
+      const previousEventData = allScrollData.get(element);
+      const latestData = await fetchScrollData(element, previousEventData, realtime);
+
+      // If there hasn't been a scroll event, use the old scroll direction
+      if (!isScrollEvent && previousEventData) {
+        latestData.direction = previousEventData.direction;
+      }
+      return latestData;
+    };
 
     // ----------
 
-    var createCallback = function createCallback(handler, options, trackType) {
+    const createCallback = (handler, options, trackType) => {
       var _allCallbacks$get;
-      var element = options._element;
+      const element = options._element;
       MH.remove((_allCallbacks$get = allCallbacks.get(element)) === null || _allCallbacks$get === void 0 || (_allCallbacks$get = _allCallbacks$get.get(handler)) === null || _allCallbacks$get === void 0 ? void 0 : _allCallbacks$get._callback);
       debug: logger === null || logger === void 0 || logger.debug5("Adding/updating handler", options);
-      var callback = (0, _callback.wrapCallback)(handler, options._debounceWindow);
-      callback.onRemove(function () {
+      const callback = (0, _callback.wrapCallback)(handler, options._debounceWindow);
+      callback.onRemove(() => {
         deleteHandler(handler, options);
       });
-      var entry = {
+      const entry = {
         _callback: callback,
         _trackType: trackType,
         _options: options
@@ -265,118 +278,73 @@ var ScrollWatcher = exports.ScrollWatcher = /*#__PURE__*/function () {
 
     // ----------
 
-    var setupOnScroll = /*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(handler, userOptions, trackType) {
-        var options, element, entry, callback, eventTarget, scrollData, listenerOptions, directions;
-        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-          while (1) switch (_context2.prev = _context2.next) {
-            case 0:
-              _context2.next = 2;
-              return fetchOnScrollOptions(config, userOptions || {});
-            case 2:
-              options = _context2.sent;
-              element = options._element; // Don't await for the scroll data before creating the callback so that
-              // setupOnScroll and removeOnScroll have the same "timing" and therefore
-              // calling onScroll and offScroll immediately without awaiting removes the
-              // callback.
-              entry = createCallback(handler, options, trackType);
-              callback = entry._callback;
-              eventTarget = options._eventTarget;
-              _context2.next = 9;
-              return fetchCurrentScroll(element, options._debounceWindow === 0);
-            case 9:
-              scrollData = _context2.sent;
-              if (!callback.isRemoved()) {
-                _context2.next = 12;
-                break;
-              }
-              return _context2.abrupt("return");
-            case 12:
-              entry._data = scrollData;
-              allScrollData.set(element, scrollData);
-              if (!(trackType === TRACK_FULL)) {
-                _context2.next = 17;
-                break;
-              }
-              _context2.next = 17;
-              return setupSizeTrack(entry);
-            case 17:
-              listenerOptions = activeListeners.get(eventTarget);
-              if (!listenerOptions) {
-                debug: logger === null || logger === void 0 || logger.debug4("Adding scroll listener", eventTarget);
-                listenerOptions = {
-                  _nRealtime: 0
-                };
-                activeListeners.set(eventTarget, listenerOptions);
-                // Don't debounce the scroll handler, only the callbacks.
-                (0, _event.addEventListenerTo)(eventTarget, MC.S_SCROLL, scrollHandler);
-              }
-              if (options._debounceWindow === 0) {
-                listenerOptions._nRealtime++;
-              }
-              directions = options._directions;
-              if (!(!callback.isRemoved() && !(userOptions !== null && userOptions !== void 0 && userOptions.skipInitial) && directionMatches(directions, scrollData.direction))) {
-                _context2.next = 25;
-                break;
-              }
-              debug: logger === null || logger === void 0 || logger.debug5("Calling initially with", element, scrollData);
-              // Use a one-off callback that's not debounced for the initial call.
-              _context2.next = 25;
-              return invokeCallback((0, _callback.wrapCallback)(handler), element, scrollData);
-            case 25:
-            case "end":
-              return _context2.stop();
-          }
-        }, _callee2);
-      }));
-      return function setupOnScroll(_x2, _x3, _x4) {
-        return _ref2.apply(this, arguments);
-      };
-    }();
+    const setupOnScroll = async (handler, userOptions, trackType) => {
+      const options = await fetchOnScrollOptions(config, userOptions || {});
+      const element = options._element;
+
+      // Don't await for the scroll data before creating the callback so that
+      // setupOnScroll and removeOnScroll have the same "timing" and therefore
+      // calling onScroll and offScroll immediately without awaiting removes the
+      // callback.
+      const entry = createCallback(handler, options, trackType);
+      const callback = entry._callback;
+      const eventTarget = options._eventTarget;
+      const scrollData = await fetchCurrentScroll(element, options._debounceWindow === 0);
+      if (callback.isRemoved()) {
+        return;
+      }
+      entry._data = scrollData;
+      allScrollData.set(element, scrollData);
+      if (trackType === TRACK_FULL) {
+        await setupSizeTrack(entry);
+      }
+      let listenerOptions = activeListeners.get(eventTarget);
+      if (!listenerOptions) {
+        debug: logger === null || logger === void 0 || logger.debug4("Adding scroll listener", eventTarget);
+        listenerOptions = {
+          _nRealtime: 0
+        };
+        activeListeners.set(eventTarget, listenerOptions);
+        // Don't debounce the scroll handler, only the callbacks.
+        (0, _event.addEventListenerTo)(eventTarget, MC.S_SCROLL, scrollHandler);
+      }
+      if (options._debounceWindow === 0) {
+        listenerOptions._nRealtime++;
+      }
+      const directions = options._directions;
+      if (!callback.isRemoved() && !(userOptions !== null && userOptions !== void 0 && userOptions.skipInitial) && directionMatches(directions, scrollData.direction)) {
+        debug: logger === null || logger === void 0 || logger.debug5("Calling initially with", element, scrollData);
+        // Use a one-off callback that's not debounced for the initial call.
+        await invokeCallback((0, _callback.wrapCallback)(handler), element, scrollData);
+      }
+    };
 
     // ----------
 
-    var removeOnScroll = /*#__PURE__*/function () {
-      var _ref3 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3(handler, scrollable, trackType) {
-        var _allCallbacks$get2;
-        var options, element, currEntry;
-        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-          while (1) switch (_context3.prev = _context3.next) {
-            case 0:
-              _context3.next = 2;
-              return fetchOnScrollOptions(config, {
-                scrollable: scrollable
-              });
-            case 2:
-              options = _context3.sent;
-              element = options._element;
-              currEntry = (_allCallbacks$get2 = allCallbacks.get(element)) === null || _allCallbacks$get2 === void 0 ? void 0 : _allCallbacks$get2.get(handler);
-              if ((currEntry === null || currEntry === void 0 ? void 0 : currEntry._trackType) === trackType) {
-                MH.remove(currEntry._callback);
-                if (handler === setScrollCssProps) {
-                  // delete the properties
-                  setScrollCssProps(element, null);
-                }
-              }
-            case 6:
-            case "end":
-              return _context3.stop();
-          }
-        }, _callee3);
-      }));
-      return function removeOnScroll(_x5, _x6, _x7) {
-        return _ref3.apply(this, arguments);
-      };
-    }();
+    const removeOnScroll = async (handler, scrollable, trackType) => {
+      var _allCallbacks$get2;
+      const options = await fetchOnScrollOptions(config, {
+        scrollable
+      });
+      const element = options._element;
+      const currEntry = (_allCallbacks$get2 = allCallbacks.get(element)) === null || _allCallbacks$get2 === void 0 ? void 0 : _allCallbacks$get2.get(handler);
+      if ((currEntry === null || currEntry === void 0 ? void 0 : currEntry._trackType) === trackType) {
+        MH.remove(currEntry._callback);
+        if (handler === setScrollCssProps) {
+          // delete the properties
+          setScrollCssProps(element, null);
+        }
+      }
+    };
 
     // ----------
 
-    var deleteHandler = function deleteHandler(handler, options) {
-      var element = options._element;
-      var eventTarget = options._eventTarget;
+    const deleteHandler = (handler, options) => {
+      const element = options._element;
+      const eventTarget = options._eventTarget;
       MH.deleteKey(allCallbacks.get(element), handler);
       allCallbacks.prune(element);
-      var listenerOptions = activeListeners.get(eventTarget);
+      const listenerOptions = activeListeners.get(eventTarget);
       if (listenerOptions && options._debounceWindow === 0) {
         listenerOptions._nRealtime--;
       }
@@ -390,386 +358,229 @@ var ScrollWatcher = exports.ScrollWatcher = /*#__PURE__*/function () {
 
     // ----------
 
-    var setupSizeTrack = /*#__PURE__*/function () {
-      var _ref4 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee5(entry) {
-        var options, element, scrollCallback, doc, docScrollingElement, resizeCallback, sizeWatcher, setupOnResize, observedElements, allowedToWrap, wrapper, _iterator, _step, child, domWatcher, onAddedCallback;
-        return _regeneratorRuntime().wrap(function _callee5$(_context5) {
-          while (1) switch (_context5.prev = _context5.next) {
-            case 0:
-              options = entry._options;
-              element = options._element;
-              scrollCallback = entry._callback;
-              debug: logger === null || logger === void 0 || logger.debug8("Setting up size tracking", element);
-              doc = MH.getDoc();
-              docScrollingElement = MH.getDocScrollingElement();
-              resizeCallback = (0, _callback.wrapCallback)(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
-                var latestData, thresholdsExceeded;
-                return _regeneratorRuntime().wrap(function _callee4$(_context4) {
-                  while (1) switch (_context4.prev = _context4.next) {
-                    case 0:
-                      _context4.next = 2;
-                      return fetchCurrentScroll(element);
-                    case 2:
-                      latestData = _context4.sent;
-                      thresholdsExceeded = hasExceededThreshold(options, latestData, entry._data);
-                      if (thresholdsExceeded) {
-                        _context4.next = 8;
-                        break;
-                      }
-                      debug: logger === null || logger === void 0 || logger.debug9("Threshold not exceeded", options, latestData, entry._data);
-                      _context4.next = 11;
-                      break;
-                    case 8:
-                      if (scrollCallback.isRemoved()) {
-                        _context4.next = 11;
-                        break;
-                      }
-                      _context4.next = 11;
-                      return invokeCallback(scrollCallback, element, latestData);
-                    case 11:
-                    case "end":
-                      return _context4.stop();
-                  }
-                }, _callee4);
-              })));
-              scrollCallback.onRemove(resizeCallback.remove);
-
-              // Don't use default instance as it has a high threshold.
-              sizeWatcher = _sizeWatcher.SizeWatcher.reuse();
-              setupOnResize = function setupOnResize(target) {
-                return sizeWatcher.onResize(resizeCallback, _defineProperty(_defineProperty({
-                  target: target
-                }, MC.S_DEBOUNCE_WINDOW, options._debounceWindow), "threshold", options._threshold));
-              };
-              if (!(element === docScrollingElement)) {
-                _context5.next = 14;
-                break;
-              }
-              // In case we're tracking the main document scroll, then we only need to
-              // observe the viewport size and the size of the documentElement (which is
-              // the content size).
-
-              setupOnResize(); // viewport size
-              setupOnResize(doc); // content size
-              return _context5.abrupt("return");
-            case 14:
-              // ResizeObserver only detects changes in offset width/height which is
-              // the visible size of the scrolling element, and that is not affected by the
-              // size of its content.
-              // But we also need to detect changes in the scroll width/height which is
-              // the size of the content.
-              // We also need to keep track of elements being added to the scrollable element.
-              observedElements = MH.newSet([element]); // Observe the scrolling element
-              setupOnResize(element);
-
-              // And also its children (if possible, single wrapper around children
-              allowedToWrap = _settings.settings.contentWrappingAllowed === true && element !== docScrollingElement && (0, _cssAlter.getData)(element, MC.PREFIX_NO_WRAP) === null;
-              if (!allowedToWrap) {
-                _context5.next = 25;
-                break;
-              }
-              _context5.next = 20;
-              return (0, _domAlter.wrapScrollingContent)(element);
-            case 20:
-              wrapper = _context5.sent;
-              setupOnResize(wrapper);
-              observedElements.add(wrapper);
-
-              //
-              _context5.next = 27;
-              break;
-            case 25:
-              _iterator = _createForOfIteratorHelper(MH.childrenOf(element));
-              try {
-                for (_iterator.s(); !(_step = _iterator.n()).done;) {
-                  child = _step.value;
-                  setupOnResize(child);
-                  observedElements.add(child);
-                }
-              } catch (err) {
-                _iterator.e(err);
-              } finally {
-                _iterator.f();
-              }
-            case 27:
-              // Watch for newly added elements
-              domWatcher = _domWatcher.DOMWatcher.create({
-                root: element,
-                // only direct children
-                subtree: false
-              });
-              onAddedCallback = (0, _callback.wrapCallback)(function (operation) {
-                var child = MH.currentTargetOf(operation);
-                // If we've just added the wrapper, it will be in DOMWatcher's queue,
-                // so check.
-                if (child !== wrapper) {
-                  if (allowedToWrap) {
-                    // Move this child into the wrapper. If this results in change of size
-                    // for wrapper, SizeWatcher will call us.
-                    (0, _domAlter.moveElement)(child, {
-                      to: wrapper,
-                      ignoreMove: true
-                    });
-                  } else {
-                    // Track the size of this child.
-                    // Don't skip initial, call the callback now
-                    setupOnResize(child);
-                    observedElements.add(child);
-                  }
-                }
-              });
-              domWatcher.onMutation(onAddedCallback, {
-                categories: [MC.S_ADDED]
-              });
-              resizeCallback.onRemove(onAddedCallback.remove);
-            case 31:
-            case "end":
-              return _context5.stop();
-          }
-        }, _callee5);
-      }));
-      return function setupSizeTrack(_x8) {
-        return _ref4.apply(this, arguments);
-      };
-    }();
-
-    // ----------
-
-    var scrollHandler = /*#__PURE__*/function () {
-      var _ref6 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee6(event) {
-        var _activeListeners$get, _allCallbacks$get3;
-        var scrollable, element, realtime, latestData, _iterator2, _step2, entry, _options, thresholdsExceeded;
-        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
-          while (1) switch (_context6.prev = _context6.next) {
-            case 0:
-              // We cannot use event.currentTarget because scrollHandler is called inside
-              // a setTimeout so by that time, currentTarget is null or something else.
-              //
-              // However, target and currentTarget only differ when the event is in the
-              // bubbling or capturing phase. Because
-              //
-              // - the scroll event only bubbles when fired on document, and (it only
-              //   bubbles up to window)
-              // - and we never attach the listener to the capturing phase
-              // - and we always use document instead of window to listen for scroll on
-              //   document
-              //
-              // then event.target suffices.
-              scrollable = MH.targetOf(event);
-              /* istanbul ignore next */
-              if (!(!scrollable || !(MH.isElement(scrollable) || MH.isDoc(scrollable)))) {
-                _context6.next = 3;
-                break;
-              }
-              return _context6.abrupt("return");
-            case 3:
-              _context6.next = 5;
-              return (0, _scroll.fetchScrollableElement)(scrollable);
-            case 5:
-              element = _context6.sent;
-              realtime = (((_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) || 0) > 0;
-              _context6.next = 9;
-              return fetchCurrentScroll(element, realtime, true);
-            case 9:
-              latestData = _context6.sent;
-              allScrollData.set(element, latestData);
-              debug: logger === null || logger === void 0 || logger.debug9("Scroll event", element, latestData);
-              _iterator2 = _createForOfIteratorHelper(((_allCallbacks$get3 = allCallbacks.get(element)) === null || _allCallbacks$get3 === void 0 ? void 0 : _allCallbacks$get3.values()) || []);
-              _context6.prev = 13;
-              _iterator2.s();
-            case 15:
-              if ((_step2 = _iterator2.n()).done) {
-                _context6.next = 29;
-                break;
-              }
-              entry = _step2.value;
-              // Consider the direction since the last scroll event and not the
-              // direction based on the largest delta the last time the callback
-              // was called.
-              _options = entry._options;
-              thresholdsExceeded = hasExceededThreshold(_options, latestData, entry._data);
-              if (thresholdsExceeded) {
-                _context6.next = 22;
-                break;
-              }
-              debug: logger === null || logger === void 0 || logger.debug9("Threshold not exceeded", _options, latestData, entry._data);
-              return _context6.abrupt("continue", 27);
-            case 22:
-              // If threshold has been exceeded, always update the latest data for
-              // this callback.
-              entry._data = latestData;
-              if (directionMatches(_options._directions, latestData.direction)) {
-                _context6.next = 26;
-                break;
-              }
-              debug: logger === null || logger === void 0 || logger.debug9("Direction does not match", _options, latestData);
-              return _context6.abrupt("continue", 27);
-            case 26:
-              invokeCallback(entry._callback, element, latestData);
-            case 27:
-              _context6.next = 15;
-              break;
-            case 29:
-              _context6.next = 34;
-              break;
-            case 31:
-              _context6.prev = 31;
-              _context6.t0 = _context6["catch"](13);
-              _iterator2.e(_context6.t0);
-            case 34:
-              _context6.prev = 34;
-              _iterator2.f();
-              return _context6.finish(34);
-            case 37:
-            case "end":
-              return _context6.stop();
-          }
-        }, _callee6, null, [[13, 31, 34, 37]]);
-      }));
-      return function scrollHandler(_x9) {
-        return _ref6.apply(this, arguments);
-      };
-    }();
-
-    // ----------
-
-    this.fetchCurrentScroll = function (scrollable, realtime) {
-      return (0, _scroll.fetchScrollableElement)(scrollable).then(function (element) {
-        return fetchCurrentScroll(element, realtime);
+    const setupSizeTrack = async entry => {
+      const options = entry._options;
+      const element = options._element;
+      const scrollCallback = entry._callback;
+      debug: logger === null || logger === void 0 || logger.debug8("Setting up size tracking", element);
+      const doc = MH.getDoc();
+      const docScrollingElement = MH.getDocScrollingElement();
+      const resizeCallback = (0, _callback.wrapCallback)(async () => {
+        // Get the latest scroll data for the scrollable
+        // Currently, the resize callback is already delayed by a frame due to
+        // the SizeWatcher, so we don't need to treat this as realtime.
+        const latestData = await fetchCurrentScroll(element);
+        const thresholdsExceeded = hasExceededThreshold(options, latestData, entry._data);
+        if (!thresholdsExceeded) {
+          debug: logger === null || logger === void 0 || logger.debug9("Threshold not exceeded", options, latestData, entry._data);
+        } else if (!scrollCallback.isRemoved()) {
+          await invokeCallback(scrollCallback, element, latestData);
+        }
       });
+      scrollCallback.onRemove(resizeCallback.remove);
+
+      // Don't use default instance as it has a high threshold.
+      const sizeWatcher = _sizeWatcher.SizeWatcher.reuse();
+      const setupOnResize = target => sizeWatcher.onResize(resizeCallback, {
+        target,
+        [MC.S_DEBOUNCE_WINDOW]: options._debounceWindow,
+        // TODO maybe accepts resizeThreshold option
+        threshold: options._threshold
+      });
+      if (element === docScrollingElement) {
+        // In case we're tracking the main document scroll, then we only need to
+        // observe the viewport size and the size of the documentElement (which is
+        // the content size).
+
+        setupOnResize(); // viewport size
+        setupOnResize(doc); // content size
+
+        return;
+      }
+
+      // ResizeObserver only detects changes in offset width/height which is
+      // the visible size of the scrolling element, and that is not affected by the
+      // size of its content.
+      // But we also need to detect changes in the scroll width/height which is
+      // the size of the content.
+      // We also need to keep track of elements being added to the scrollable element.
+
+      const observedElements = MH.newSet([element]);
+
+      // Observe the scrolling element
+      setupOnResize(element);
+
+      // And also its children (if possible, single wrapper around children
+      const allowedToWrap = _settings.settings.contentWrappingAllowed === true && element !== docScrollingElement && (0, _cssAlter.getData)(element, MC.PREFIX_NO_WRAP) === null;
+      let wrapper;
+      if (allowedToWrap) {
+        // Wrap the content and observe the wrapper
+        wrapper = await (0, _domAlter.wrapScrollingContent)(element);
+        setupOnResize(wrapper);
+        observedElements.add(wrapper);
+
+        //
+      } else {
+        for (const child of MH.childrenOf(element)) {
+          setupOnResize(child);
+          observedElements.add(child);
+        }
+      }
+
+      // Watch for newly added elements
+      const domWatcher = _domWatcher.DOMWatcher.create({
+        root: element,
+        // only direct children
+        subtree: false
+      });
+      const onAddedCallback = (0, _callback.wrapCallback)(operation => {
+        const child = MH.currentTargetOf(operation);
+        // If we've just added the wrapper, it will be in DOMWatcher's queue,
+        // so check.
+        if (child !== wrapper) {
+          if (allowedToWrap) {
+            // Move this child into the wrapper. If this results in change of size
+            // for wrapper, SizeWatcher will call us.
+            (0, _domAlter.moveElement)(child, {
+              to: wrapper,
+              ignoreMove: true
+            });
+          } else {
+            // Track the size of this child.
+            // Don't skip initial, call the callback now
+            setupOnResize(child);
+            observedElements.add(child);
+          }
+        }
+      });
+      domWatcher.onMutation(onAddedCallback, {
+        categories: [MC.S_ADDED]
+      });
+      resizeCallback.onRemove(onAddedCallback.remove);
     };
 
     // ----------
 
-    this.scroll = function (direction) {
-      var _options$amount;
-      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      if (!(0, _scroll.isValidScrollDirection)(direction)) {
-        throw MH.usageError("Unknown scroll direction: '".concat(direction, "'"));
+    const scrollHandler = async event => {
+      var _activeListeners$get;
+      // We cannot use event.currentTarget because scrollHandler is called inside
+      // a setTimeout so by that time, currentTarget is null or something else.
+      //
+      // However, target and currentTarget only differ when the event is in the
+      // bubbling or capturing phase. Because
+      //
+      // - the scroll event only bubbles when fired on document, and (it only
+      //   bubbles up to window)
+      // - and we never attach the listener to the capturing phase
+      // - and we always use document instead of window to listen for scroll on
+      //   document
+      //
+      // then event.target suffices.
+      const scrollable = MH.targetOf(event);
+      /* istanbul ignore next */
+      if (!scrollable || !(MH.isElement(scrollable) || MH.isDoc(scrollable))) {
+        return;
       }
-      var isVertical = direction === MC.S_UP || direction === MC.S_DOWN;
-      var sign = direction === MC.S_UP || direction === MC.S_LEFT ? -1 : 1;
-      var targetCoordinate;
-      var amount = (_options$amount = options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
-      var asFractionOf = options.asFractionOf;
+      const element = await (0, _scroll.fetchScrollableElement)(scrollable);
+      const realtime = (((_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) || 0) > 0;
+      const latestData = await fetchCurrentScroll(element, realtime, true);
+      allScrollData.set(element, latestData);
+      debug: logger === null || logger === void 0 || logger.debug9("Scroll event", element, latestData);
+      for (const entry of ((_allCallbacks$get3 = allCallbacks.get(element)) === null || _allCallbacks$get3 === void 0 ? void 0 : _allCallbacks$get3.values()) || []) {
+        var _allCallbacks$get3;
+        // Consider the direction since the last scroll event and not the
+        // direction based on the largest delta the last time the callback
+        // was called.
+        const options = entry._options;
+        const thresholdsExceeded = hasExceededThreshold(options, latestData, entry._data);
+        if (!thresholdsExceeded) {
+          debug: logger === null || logger === void 0 || logger.debug9("Threshold not exceeded", options, latestData, entry._data);
+          continue;
+        }
+
+        // If threshold has been exceeded, always update the latest data for
+        // this callback.
+        entry._data = latestData;
+        if (!directionMatches(options._directions, latestData.direction)) {
+          debug: logger === null || logger === void 0 || logger.debug9("Direction does not match", options, latestData);
+          continue;
+        }
+        invokeCallback(entry._callback, element, latestData);
+      }
+    };
+
+    // ----------
+
+    this.fetchCurrentScroll = (scrollable, realtime) => (0, _scroll.fetchScrollableElement)(scrollable).then(element => fetchCurrentScroll(element, realtime));
+
+    // ----------
+
+    this.scroll = (direction, options = {}) => {
+      var _options$amount;
+      if (!(0, _scroll.isValidScrollDirection)(direction)) {
+        throw MH.usageError(`Unknown scroll direction: '${direction}'`);
+      }
+      const isVertical = direction === MC.S_UP || direction === MC.S_DOWN;
+      const sign = direction === MC.S_UP || direction === MC.S_LEFT ? -1 : 1;
+      let targetCoordinate;
+      const amount = (_options$amount = options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
+      const asFractionOf = options.asFractionOf;
       if (asFractionOf === "visible") {
-        targetCoordinate = isVertical ? function (el) {
-          return el[MC.S_SCROLL_TOP] + sign * amount * (0, _scroll.getClientHeightNow)(el) / 100;
-        } : function (el) {
-          return el[MC.S_SCROLL_LEFT] + sign * amount * (0, _scroll.getClientWidthNow)(el) / 100;
-        };
+        targetCoordinate = isVertical ? el => el[MC.S_SCROLL_TOP] + sign * amount * (0, _scroll.getClientHeightNow)(el) / 100 : el => el[MC.S_SCROLL_LEFT] + sign * amount * (0, _scroll.getClientWidthNow)(el) / 100;
 
         //
       } else if (asFractionOf === "content") {
-        targetCoordinate = isVertical ? function (el) {
-          return el[MC.S_SCROLL_TOP] + sign * amount * el[MC.S_SCROLL_HEIGHT] / 100;
-        } : function (el) {
-          return el[MC.S_SCROLL_LEFT] + sign * amount * el[MC.S_SCROLL_WIDTH] / 100;
-        };
+        targetCoordinate = isVertical ? el => el[MC.S_SCROLL_TOP] + sign * amount * el[MC.S_SCROLL_HEIGHT] / 100 : el => el[MC.S_SCROLL_LEFT] + sign * amount * el[MC.S_SCROLL_WIDTH] / 100;
 
         //
       } else if (asFractionOf !== undefined && asFractionOf !== "pixel") {
-        throw MH.usageError("Unknown 'asFractionOf' keyword: '".concat(asFractionOf, "'"));
+        throw MH.usageError(`Unknown 'asFractionOf' keyword: '${asFractionOf}'`);
 
         //
       } else {
-        targetCoordinate = isVertical ? function (el) {
-          return el[MC.S_SCROLL_TOP] + sign * amount;
-        } : function (el) {
-          return el[MC.S_SCROLL_LEFT] + sign * amount;
-        };
+        targetCoordinate = isVertical ? el => el[MC.S_SCROLL_TOP] + sign * amount : el => el[MC.S_SCROLL_LEFT] + sign * amount;
       }
-      var target = isVertical ? {
+      const target = isVertical ? {
         top: targetCoordinate
       } : {
         left: targetCoordinate
       };
-      return _this.scrollTo(target, options);
+      return this.scrollTo(target, options);
     };
 
     // ----------
 
-    this.scrollTo = /*#__PURE__*/function () {
-      var _ref7 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee7(to) {
-        var options,
-          _args7 = arguments;
-        return _regeneratorRuntime().wrap(function _callee7$(_context7) {
-          while (1) switch (_context7.prev = _context7.next) {
-            case 0:
-              options = _args7.length > 1 && _args7[1] !== undefined ? _args7[1] : {};
-              _context7.t0 = _scroll.scrollTo;
-              _context7.t1 = to;
-              _context7.t2 = MH;
-              _context7.t3 = {
-                duration: config._scrollDuration
-              };
-              _context7.t4 =
-              // default
-              options;
-              _context7.next = 8;
-              return (0, _scroll.fetchScrollableElement)(options.scrollable);
-            case 8:
-              _context7.t5 = _context7.sent;
-              _context7.t6 = {
-                scrollable: _context7.t5
-              };
-              _context7.t7 = _context7.t2.merge.call(_context7.t2, _context7.t3, _context7.t4, _context7.t6);
-              return _context7.abrupt("return", (0, _context7.t0)(_context7.t1, _context7.t7));
-            case 12:
-            case "end":
-              return _context7.stop();
-          }
-        }, _callee7);
-      }));
-      return function (_x10) {
-        return _ref7.apply(this, arguments);
-      };
-    }();
+    this.scrollTo = async (to, options = {}) => (0, _scroll.scrollTo)(to, MH.merge({
+      duration: config._scrollDuration
+    },
+    // default
+    options, {
+      scrollable: await (0, _scroll.fetchScrollableElement)(options.scrollable)
+    } // override
+    ));
 
     // ----------
 
-    this.fetchCurrentScrollAction = function (scrollable) {
-      return (0, _scroll.fetchScrollableElement)(scrollable).then(function (element) {
-        return (0, _scroll.getCurrentScrollAction)(element);
+    this.fetchCurrentScrollAction = scrollable => (0, _scroll.fetchScrollableElement)(scrollable).then(element => (0, _scroll.getCurrentScrollAction)(element));
+
+    // ----------
+
+    this.stopUserScrolling = async (options = {}) => {
+      const element = await (0, _scroll.fetchScrollableElement)(options.scrollable);
+      const stopScroll = () => MH.elScrollTo(element, {
+        top: element[MC.S_SCROLL_TOP],
+        left: element[MC.S_SCROLL_LEFT]
       });
+      if (options.immediate) {
+        stopScroll();
+      } else {
+        (0, _domOptimize.waitForMeasureTime)().then(stopScroll);
+      }
     };
 
     // ----------
 
-    this.stopUserScrolling = /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee8() {
-      var options,
-        element,
-        stopScroll,
-        _args8 = arguments;
-      return _regeneratorRuntime().wrap(function _callee8$(_context8) {
-        while (1) switch (_context8.prev = _context8.next) {
-          case 0:
-            options = _args8.length > 0 && _args8[0] !== undefined ? _args8[0] : {};
-            _context8.next = 3;
-            return (0, _scroll.fetchScrollableElement)(options.scrollable);
-          case 3:
-            element = _context8.sent;
-            stopScroll = function stopScroll() {
-              return MH.elScrollTo(element, {
-                top: element[MC.S_SCROLL_TOP],
-                left: element[MC.S_SCROLL_LEFT]
-              });
-            };
-            if (options.immediate) {
-              stopScroll();
-            } else {
-              (0, _domOptimize.waitForMeasureTime)().then(stopScroll);
-            }
-          case 6:
-          case "end":
-            return _context8.stop();
-        }
-      }, _callee8);
-    }));
-
-    // ----------
-
-    this.trackScroll = function (handler, options) {
+    this.trackScroll = (handler, options) => {
       if (!handler) {
         handler = setScrollCssProps;
       }
@@ -778,7 +589,7 @@ var ScrollWatcher = exports.ScrollWatcher = /*#__PURE__*/function () {
 
     // ----------
 
-    this.noTrackScroll = function (handler, scrollable) {
+    this.noTrackScroll = (handler, scrollable) => {
       if (!handler) {
         handler = setScrollCssProps;
       }
@@ -787,96 +598,40 @@ var ScrollWatcher = exports.ScrollWatcher = /*#__PURE__*/function () {
 
     // ----------
 
-    this.onScroll = function (handler, options) {
-      return setupOnScroll(handler, options, TRACK_REGULAR);
-    };
+    this.onScroll = (handler, options) => setupOnScroll(handler, options, TRACK_REGULAR);
 
     // ----------
 
-    this.offScroll = function (handler, scrollable) {
+    this.offScroll = (handler, scrollable) => {
       removeOnScroll(handler, scrollable, TRACK_REGULAR); // no need to await
     };
   }
-  return _createClass(ScrollWatcher, null, [{
-    key: "fetchMainContentElement",
-    value:
-    /**
-     * Returns the element that holds the main page content. By default it's
-     * `document.body` but is overridden by
-     * {@link settings.mainScrollableElementSelector}.
-     *
-     * It will wait for the element to be available if not already.
-     */
-    function fetchMainContentElement() {
-      return (0, _scroll.fetchMainContentElement)();
-    }
+}
 
-    /**
-     * Returns the scrollable element that holds the wrapper around the main page
-     * content. By default it's `document.scrollable` (unless `document.body` is
-     * actually scrollable, in which case it will be used) but it will be
-     * different if {@link settings.mainScrollableElementSelector} is set.
-     *
-     * It will wait for the element to be available if not already.
-     */
-  }, {
-    key: "fetchMainScrollableElement",
-    value: function fetchMainScrollableElement() {
-      return (0, _scroll.fetchMainScrollableElement)();
-    }
-
-    /**
-     * Creates a new instance of ScrollWatcher with the given
-     * {@link ScrollWatcherConfig}. It does not save it for future reuse.
-     */
-  }, {
-    key: "create",
-    value: function create() {
-      var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      return new ScrollWatcher(getConfig(config), CONSTRUCTOR_KEY);
-    }
-
-    /**
-     * Returns an existing instance of ScrollWatcher with the given
-     * {@link ScrollWatcherConfig}, or creates a new one.
-     *
-     * **NOTE:** It saves it for future reuse, so don't use this for temporary
-     * short-lived watchers.
-     */
-  }, {
-    key: "reuse",
-    value: function reuse() {
-      var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      var myConfig = getConfig(config);
-      var configStrKey = (0, _text.objToStrKey)(myConfig);
-      var instance = instances.get(configStrKey);
-      if (!instance) {
-        instance = new ScrollWatcher(myConfig, CONSTRUCTOR_KEY);
-        instances.set(configStrKey, instance);
-      }
-      return instance;
-    }
-  }]);
-}();
 /**
  * @interface
  */
+
 /**
  * @interface
  */
+
 /**
  * @interface
  */
+
 /**
  * The handler is invoked with two arguments:
  *
  * - the element that has been resized
  * - the {@link ScrollData} for the element
  */
+
 // ----------------------------------------
-var CONSTRUCTOR_KEY = MC.SYMBOL();
-var instances = MH.newMap();
-var getConfig = function getConfig(config) {
+exports.ScrollWatcher = ScrollWatcher;
+const CONSTRUCTOR_KEY = MC.SYMBOL();
+const instances = MH.newMap();
+const getConfig = config => {
   return {
     _debounceWindow: (0, _math.toNonNegNum)(config[MC.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -884,57 +639,38 @@ var getConfig = function getConfig(config) {
     _scrollDuration: (0, _math.toNonNegNum)(config.scrollDuration, 1000)
   };
 };
-var TRACK_REGULAR = 1; // only scroll events
-var TRACK_FULL = 2; // scroll + resizing of content and/or wrapper
+const TRACK_REGULAR = 1; // only scroll events
+const TRACK_FULL = 2; // scroll + resizing of content and/or wrapper
 
 // --------------------
 
-var fetchOnScrollOptions = /*#__PURE__*/function () {
-  var _ref9 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee9(config, options) {
-    var _options$MC$S_DEBOUNC;
-    var directions, element;
-    return _regeneratorRuntime().wrap(function _callee9$(_context9) {
-      while (1) switch (_context9.prev = _context9.next) {
-        case 0:
-          directions = (0, _validation.validateStrList)("directions", options.directions, _scroll.isValidScrollDirection) || null;
-          _context9.next = 3;
-          return (0, _scroll.fetchScrollableElement)(options.scrollable);
-        case 3:
-          element = _context9.sent;
-          return _context9.abrupt("return", {
-            _element: element,
-            _eventTarget: getEventTarget(element),
-            _directions: directions,
-            // If threshold is 0, internally treat as 1 (pixel)
-            _threshold: (0, _math.toNonNegNum)(options.threshold, config._scrollThreshold) || 1,
-            _debounceWindow: (_options$MC$S_DEBOUNC = options[MC.S_DEBOUNCE_WINDOW]) !== null && _options$MC$S_DEBOUNC !== void 0 ? _options$MC$S_DEBOUNC : config._debounceWindow
-          });
-        case 5:
-        case "end":
-          return _context9.stop();
-      }
-    }, _callee9);
-  }));
-  return function fetchOnScrollOptions(_x11, _x12) {
-    return _ref9.apply(this, arguments);
+const fetchOnScrollOptions = async (config, options) => {
+  var _options$MC$S_DEBOUNC;
+  const directions = (0, _validation.validateStrList)("directions", options.directions, _scroll.isValidScrollDirection) || null;
+  const element = await (0, _scroll.fetchScrollableElement)(options.scrollable);
+  return {
+    _element: element,
+    _eventTarget: getEventTarget(element),
+    _directions: directions,
+    // If threshold is 0, internally treat as 1 (pixel)
+    _threshold: (0, _math.toNonNegNum)(options.threshold, config._scrollThreshold) || 1,
+    _debounceWindow: (_options$MC$S_DEBOUNC = options[MC.S_DEBOUNCE_WINDOW]) !== null && _options$MC$S_DEBOUNC !== void 0 ? _options$MC$S_DEBOUNC : config._debounceWindow
   };
-}();
-var directionMatches = function directionMatches(userDirections, latestDirection) {
-  return !userDirections || MH.includes(userDirections, latestDirection);
 };
-var hasExceededThreshold = function hasExceededThreshold(options, latestData, lastThresholdData) {
-  var directions = options._directions;
-  var threshold = options._threshold;
+const directionMatches = (userDirections, latestDirection) => !userDirections || MH.includes(userDirections, latestDirection);
+const hasExceededThreshold = (options, latestData, lastThresholdData) => {
+  const directions = options._directions;
+  const threshold = options._threshold;
   if (!lastThresholdData) {
     /* istanbul ignore */
     return false;
   }
-  var topDiff = (0, _math.maxAbs)(latestData[MC.S_SCROLL_TOP] - lastThresholdData[MC.S_SCROLL_TOP], latestData[MC.S_SCROLL_HEIGHT] - lastThresholdData[MC.S_SCROLL_HEIGHT], latestData[MC.S_CLIENT_HEIGHT] - lastThresholdData[MC.S_CLIENT_HEIGHT]);
-  var leftDiff = (0, _math.maxAbs)(latestData[MC.S_SCROLL_LEFT] - lastThresholdData[MC.S_SCROLL_LEFT], latestData[MC.S_SCROLL_WIDTH] - lastThresholdData[MC.S_SCROLL_WIDTH], latestData[MC.S_CLIENT_WIDTH] - lastThresholdData[MC.S_CLIENT_WIDTH]);
+  const topDiff = (0, _math.maxAbs)(latestData[MC.S_SCROLL_TOP] - lastThresholdData[MC.S_SCROLL_TOP], latestData[MC.S_SCROLL_HEIGHT] - lastThresholdData[MC.S_SCROLL_HEIGHT], latestData[MC.S_CLIENT_HEIGHT] - lastThresholdData[MC.S_CLIENT_HEIGHT]);
+  const leftDiff = (0, _math.maxAbs)(latestData[MC.S_SCROLL_LEFT] - lastThresholdData[MC.S_SCROLL_LEFT], latestData[MC.S_SCROLL_WIDTH] - lastThresholdData[MC.S_SCROLL_WIDTH], latestData[MC.S_CLIENT_WIDTH] - lastThresholdData[MC.S_CLIENT_WIDTH]);
 
   // If the callback is only interested in up/down, then only check the
   // scrollTop delta, and similarly for left/right.
-  var checkTop = false,
+  let checkTop = false,
     checkLeft = false;
   if (!directions || MH.includes(directions, MC.S_NONE) || MH.includes(directions, MC.S_AMBIGUOUS)) {
     checkTop = checkLeft = true;
@@ -948,63 +684,58 @@ var hasExceededThreshold = function hasExceededThreshold(options, latestData, la
   }
   return checkTop && topDiff >= threshold || checkLeft && leftDiff >= threshold;
 };
-var fetchScrollData = /*#__PURE__*/function () {
-  var _ref10 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee10(element, previousEventData, realtime) {
-    var scrollTop, scrollLeft, scrollWidth, scrollHeight, clientWidth, clientHeight, scrollTopFraction, scrollLeftFraction, prevScrollTop, prevScrollLeft, direction;
-    return _regeneratorRuntime().wrap(function _callee10$(_context10) {
-      while (1) switch (_context10.prev = _context10.next) {
-        case 0:
-          if (realtime) {
-            _context10.next = 3;
-            break;
-          }
-          _context10.next = 3;
-          return (0, _domOptimize.waitForMeasureTime)();
-        case 3:
-          scrollTop = MH.ceil(element[MC.S_SCROLL_TOP]);
-          scrollLeft = MH.ceil(element[MC.S_SCROLL_LEFT]);
-          scrollWidth = element[MC.S_SCROLL_WIDTH];
-          scrollHeight = element[MC.S_SCROLL_HEIGHT];
-          clientWidth = (0, _scroll.getClientWidthNow)(element);
-          clientHeight = (0, _scroll.getClientHeightNow)(element);
-          scrollTopFraction = MH.round(scrollTop) / (scrollHeight - clientHeight || MC.INFINITY);
-          scrollLeftFraction = MH.round(scrollLeft) / (scrollWidth - clientWidth || MC.INFINITY);
-          prevScrollTop = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) || 0;
-          prevScrollLeft = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) || 0;
-          direction = (0, _directions.getMaxDeltaDirection)(scrollLeft - prevScrollLeft, scrollTop - prevScrollTop);
-          return _context10.abrupt("return", _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty({
-            direction: direction
-          }, MC.S_SCROLL_TOP, scrollTop), MC.S_SCROLL_TOP_FRACTION, scrollTopFraction), MC.S_SCROLL_LEFT, scrollLeft), MC.S_SCROLL_LEFT_FRACTION, scrollLeftFraction), MC.S_SCROLL_WIDTH, scrollWidth), MC.S_SCROLL_HEIGHT, scrollHeight), MC.S_CLIENT_WIDTH, clientWidth), MC.S_CLIENT_HEIGHT, clientHeight));
-        case 15:
-        case "end":
-          return _context10.stop();
-      }
-    }, _callee10);
-  }));
-  return function fetchScrollData(_x13, _x14, _x15) {
-    return _ref10.apply(this, arguments);
+const fetchScrollData = async (element, previousEventData, realtime) => {
+  if (!realtime) {
+    await (0, _domOptimize.waitForMeasureTime)();
+  }
+  const scrollTop = MH.ceil(element[MC.S_SCROLL_TOP]);
+  const scrollLeft = MH.ceil(element[MC.S_SCROLL_LEFT]);
+  const scrollWidth = element[MC.S_SCROLL_WIDTH];
+  const scrollHeight = element[MC.S_SCROLL_HEIGHT];
+  const clientWidth = (0, _scroll.getClientWidthNow)(element);
+  const clientHeight = (0, _scroll.getClientHeightNow)(element);
+  const scrollTopFraction = MH.round(scrollTop) / (scrollHeight - clientHeight || MC.INFINITY);
+  const scrollLeftFraction = MH.round(scrollLeft) / (scrollWidth - clientWidth || MC.INFINITY);
+  const prevScrollTop = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) || 0;
+  const prevScrollLeft = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) || 0;
+  const direction = (0, _directions.getMaxDeltaDirection)(scrollLeft - prevScrollLeft, scrollTop - prevScrollTop);
+  return {
+    direction,
+    [MC.S_SCROLL_TOP]: scrollTop,
+    [MC.S_SCROLL_TOP_FRACTION]: scrollTopFraction,
+    [MC.S_SCROLL_LEFT]: scrollLeft,
+    [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
+    [MC.S_SCROLL_WIDTH]: scrollWidth,
+    [MC.S_SCROLL_HEIGHT]: scrollHeight,
+    [MC.S_CLIENT_WIDTH]: clientWidth,
+    [MC.S_CLIENT_HEIGHT]: clientHeight
   };
-}();
-var setScrollCssProps = function setScrollCssProps(element, scrollData) {
-  var prefix = "";
+};
+const setScrollCssProps = (element, scrollData) => {
+  let prefix = "";
   if (element === (0, _scroll.tryGetMainScrollableElement)()) {
     // Set the CSS vars on the root element
     element = MH.getDocElement();
     prefix = "page-";
   }
   scrollData = scrollData || {};
-  var props = _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, MC.S_SCROLL_TOP, scrollData[MC.S_SCROLL_TOP]), MC.S_SCROLL_TOP_FRACTION, scrollData[MC.S_SCROLL_TOP_FRACTION]), MC.S_SCROLL_LEFT, scrollData[MC.S_SCROLL_LEFT]), MC.S_SCROLL_LEFT_FRACTION, scrollData[MC.S_SCROLL_LEFT_FRACTION]), MC.S_SCROLL_WIDTH, scrollData[MC.S_SCROLL_WIDTH]), MC.S_SCROLL_HEIGHT, scrollData[MC.S_SCROLL_HEIGHT]);
+  const props = {
+    [MC.S_SCROLL_TOP]: scrollData[MC.S_SCROLL_TOP],
+    [MC.S_SCROLL_TOP_FRACTION]: scrollData[MC.S_SCROLL_TOP_FRACTION],
+    [MC.S_SCROLL_LEFT]: scrollData[MC.S_SCROLL_LEFT],
+    [MC.S_SCROLL_LEFT_FRACTION]: scrollData[MC.S_SCROLL_LEFT_FRACTION],
+    [MC.S_SCROLL_WIDTH]: scrollData[MC.S_SCROLL_WIDTH],
+    [MC.S_SCROLL_HEIGHT]: scrollData[MC.S_SCROLL_HEIGHT]
+  };
   (0, _cssAlter.setNumericStyleProps)(element, props, {
     _prefix: prefix
   });
 };
-var getEventTarget = function getEventTarget(element) {
+const getEventTarget = element => {
   if (element === MH.getDocScrollingElement()) {
     return MH.getDoc();
   }
   return element;
 };
-var invokeCallback = function invokeCallback(callback, element, scrollData) {
-  return callback.invoke(element, MH.copyObject(scrollData))["catch"](_log.logError);
-};
+const invokeCallback = (callback, element, scrollData) => callback.invoke(element, MH.copyObject(scrollData)).catch(_log.logError);
 //# sourceMappingURL=scroll-watcher.cjs.map

@@ -9,7 +9,7 @@ Object.keys(_animations).forEach(function (key) {
   if (key in exports && exports[key] === _animations[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _animations[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_cssAlter).forEach(function (key) {
   if (key in exports && exports[key] === _cssAlter[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _cssAlter[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_directions).forEach(function (key) {
   if (key in exports && exports[key] === _directions[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _directions[key];
     }
   });
@@ -42,7 +42,7 @@ Object.keys(_dom).forEach(function (key) {
   if (key in exports && exports[key] === _dom[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _dom[key];
     }
   });
@@ -53,7 +53,7 @@ Object.keys(_domAlter).forEach(function (key) {
   if (key in exports && exports[key] === _domAlter[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _domAlter[key];
     }
   });
@@ -64,7 +64,7 @@ Object.keys(_domEvents).forEach(function (key) {
   if (key in exports && exports[key] === _domEvents[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _domEvents[key];
     }
   });
@@ -75,7 +75,7 @@ Object.keys(_domOptimize).forEach(function (key) {
   if (key in exports && exports[key] === _domOptimize[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _domOptimize[key];
     }
   });
@@ -86,7 +86,7 @@ Object.keys(_domQuery).forEach(function (key) {
   if (key in exports && exports[key] === _domQuery[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _domQuery[key];
     }
   });
@@ -97,7 +97,7 @@ Object.keys(_domSearch).forEach(function (key) {
   if (key in exports && exports[key] === _domSearch[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _domSearch[key];
     }
   });
@@ -108,7 +108,7 @@ Object.keys(_event).forEach(function (key) {
   if (key in exports && exports[key] === _event[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _event[key];
     }
   });
@@ -119,7 +119,7 @@ Object.keys(_gestureKey).forEach(function (key) {
   if (key in exports && exports[key] === _gestureKey[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _gestureKey[key];
     }
   });
@@ -130,7 +130,7 @@ Object.keys(_gesturePointer).forEach(function (key) {
   if (key in exports && exports[key] === _gesturePointer[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _gesturePointer[key];
     }
   });
@@ -141,7 +141,7 @@ Object.keys(_gestureTouch).forEach(function (key) {
   if (key in exports && exports[key] === _gestureTouch[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _gestureTouch[key];
     }
   });
@@ -152,7 +152,7 @@ Object.keys(_gestureWheel).forEach(function (key) {
   if (key in exports && exports[key] === _gestureWheel[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _gestureWheel[key];
     }
   });
@@ -163,7 +163,7 @@ Object.keys(_gesture).forEach(function (key) {
   if (key in exports && exports[key] === _gesture[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _gesture[key];
     }
   });
@@ -174,7 +174,7 @@ Object.keys(_layout).forEach(function (key) {
   if (key in exports && exports[key] === _layout[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _layout[key];
     }
   });
@@ -185,7 +185,7 @@ Object.keys(_log).forEach(function (key) {
   if (key in exports && exports[key] === _log[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _log[key];
     }
   });
@@ -196,7 +196,7 @@ Object.keys(_math).forEach(function (key) {
   if (key in exports && exports[key] === _math[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _math[key];
     }
   });
@@ -207,7 +207,7 @@ Object.keys(_misc).forEach(function (key) {
   if (key in exports && exports[key] === _misc[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _misc[key];
     }
   });
@@ -218,7 +218,7 @@ Object.keys(_overlays).forEach(function (key) {
   if (key in exports && exports[key] === _overlays[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _overlays[key];
     }
   });
@@ -229,7 +229,7 @@ Object.keys(_position).forEach(function (key) {
   if (key in exports && exports[key] === _position[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _position[key];
     }
   });
@@ -240,7 +240,7 @@ Object.keys(_pointer).forEach(function (key) {
   if (key in exports && exports[key] === _pointer[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _pointer[key];
     }
   });
@@ -251,7 +251,7 @@ Object.keys(_scroll).forEach(function (key) {
   if (key in exports && exports[key] === _scroll[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _scroll[key];
     }
   });
@@ -262,7 +262,7 @@ Object.keys(_size).forEach(function (key) {
   if (key in exports && exports[key] === _size[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _size[key];
     }
   });
@@ -273,7 +273,7 @@ Object.keys(_tasks).forEach(function (key) {
   if (key in exports && exports[key] === _tasks[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _tasks[key];
     }
   });
@@ -284,7 +284,7 @@ Object.keys(_text).forEach(function (key) {
   if (key in exports && exports[key] === _text[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _text[key];
     }
   });
@@ -295,7 +295,7 @@ Object.keys(_validation).forEach(function (key) {
   if (key in exports && exports[key] === _validation[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _validation[key];
     }
   });
@@ -306,7 +306,7 @@ Object.keys(_views).forEach(function (key) {
   if (key in exports && exports[key] === _views[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _views[key];
     }
   });

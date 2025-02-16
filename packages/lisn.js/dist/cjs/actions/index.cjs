@@ -9,7 +9,7 @@ Object.keys(_addClass).forEach(function (key) {
   if (key in exports && exports[key] === _addClass[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _addClass[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_animate).forEach(function (key) {
   if (key in exports && exports[key] === _animate[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _animate[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_animatePlay).forEach(function (key) {
   if (key in exports && exports[key] === _animatePlay[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _animatePlay[key];
     }
   });
@@ -42,7 +42,7 @@ Object.keys(_display).forEach(function (key) {
   if (key in exports && exports[key] === _display[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _display[key];
     }
   });
@@ -53,7 +53,7 @@ Object.keys(_trigger).forEach(function (key) {
   if (key in exports && exports[key] === _trigger[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _trigger[key];
     }
   });
@@ -64,7 +64,7 @@ Object.keys(_scrollTo).forEach(function (key) {
   if (key in exports && exports[key] === _scrollTo[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _scrollTo[key];
     }
   });
@@ -75,7 +75,7 @@ Object.keys(_setAttribute).forEach(function (key) {
   if (key in exports && exports[key] === _setAttribute[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _setAttribute[key];
     }
   });
@@ -86,7 +86,7 @@ Object.keys(_show).forEach(function (key) {
   if (key in exports && exports[key] === _show[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _show[key];
     }
   });
@@ -97,7 +97,7 @@ Object.keys(_open).forEach(function (key) {
   if (key in exports && exports[key] === _open[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _open[key];
     }
   });
@@ -108,7 +108,7 @@ Object.keys(_pager).forEach(function (key) {
   if (key in exports && exports[key] === _pager[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _pager[key];
     }
   });
@@ -119,7 +119,7 @@ Object.keys(_action).forEach(function (key) {
   if (key in exports && exports[key] === _action[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _action[key];
     }
   });

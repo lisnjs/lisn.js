@@ -1,14 +1,13 @@
 "use strict";
 
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.toMargins = exports.splitOn = exports.randId = exports.objToStrKey = exports.kebabToCamelCase = exports.joinAsString = exports.formatAsString = exports.camelToKebabCase = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 /**
  * @module Utils
  */
@@ -31,8 +30,8 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  *
  * @category Text
  */
-var formatAsString = exports.formatAsString = function formatAsString(value, maxLen) {
-  var result = _maybeConvertToString(value, false);
+const formatAsString = (value, maxLen) => {
+  const result = maybeConvertToString(value, false);
   if (!MH.isNullish(maxLen) && maxLen > 0 && MH.lengthOf(result) > maxLen) {
     return result.slice(0, MH.max(0, maxLen - 3)) + "...";
   }
@@ -49,14 +48,8 @@ var formatAsString = exports.formatAsString = function formatAsString(value, max
  *
  * @category Text
  */
-var joinAsString = exports.joinAsString = function joinAsString(separator) {
-  for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    args[_key - 1] = arguments[_key];
-  }
-  return args.map(function (a) {
-    return formatAsString(a);
-  }).join(separator);
-};
+exports.formatAsString = formatAsString;
+const joinAsString = (separator, ...args) => args.map(a => formatAsString(a)).join(separator);
 
 /**
  * Similar to
@@ -85,24 +78,23 @@ var joinAsString = exports.joinAsString = function joinAsString(separator) {
  *
  * @category Text
  */
-var splitOn = exports.splitOn = function splitOn(input, separator, trim, limit) {
+exports.joinAsString = joinAsString;
+const splitOn = (input, separator, trim, limit) => {
   if (!input.trim()) {
     return [];
   }
   limit = limit !== null && limit !== void 0 ? limit : -1;
-  var output = [];
-  var addEntry = function addEntry(s) {
-    return output.push(trim ? s.trim() : s);
-  };
+  const output = [];
+  const addEntry = s => output.push(trim ? s.trim() : s);
   while (limit--) {
-    var matchIndex = -1,
+    let matchIndex = -1,
       matchLength = 0;
     if (MH.isLiteralString(separator)) {
       matchIndex = input.indexOf(separator);
       matchLength = MH.lengthOf(separator);
     } else {
       var _match$index;
-      var match = separator.exec(input);
+      const match = separator.exec(input);
       matchIndex = (_match$index = match === null || match === void 0 ? void 0 : match.index) !== null && _match$index !== void 0 ? _match$index : -1;
       matchLength = match ? MH.lengthOf(match[0]) : 0;
     }
@@ -123,7 +115,8 @@ var splitOn = exports.splitOn = function splitOn(input, separator, trim, limit) 
  *
  * @category Text
  */
-var kebabToCamelCase = exports.kebabToCamelCase = MH.kebabToCamelCase;
+exports.splitOn = splitOn;
+const kebabToCamelCase = exports.kebabToCamelCase = MH.kebabToCamelCase;
 
 /**
  * Converts a camelCasedString to kebab-case.
@@ -132,7 +125,7 @@ var kebabToCamelCase = exports.kebabToCamelCase = MH.kebabToCamelCase;
  *
  * @category Text
  */
-var camelToKebabCase = exports.camelToKebabCase = MH.camelToKebabCase;
+const camelToKebabCase = exports.camelToKebabCase = MH.camelToKebabCase;
 
 /**
  * Generates a random string of a fixed length.
@@ -143,12 +136,9 @@ var camelToKebabCase = exports.camelToKebabCase = MH.camelToKebabCase;
  *
  * @category Text
  */
-var randId = exports.randId = function randId() {
-  var nChars = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 8;
-  var segment = function segment() {
-    return MH.floor(100000 + MC.MATH.random() * 900000).toString(36);
-  };
-  var s = "";
+const randId = (nChars = 8) => {
+  const segment = () => MH.floor(100000 + MC.MATH.random() * 900000).toString(36);
+  let s = "";
   while (MH.lengthOf(s) < nChars) {
     s += segment();
   }
@@ -174,17 +164,18 @@ var randId = exports.randId = function randId() {
  *
  * @category Text
  */
-var toMargins = exports.toMargins = function toMargins(value, absoluteSize) {
+exports.randId = randId;
+const toMargins = (value, absoluteSize) => {
   var _parts$, _parts$2, _ref, _parts$3;
-  var toPxValue = function toPxValue(strValue, index) {
-    var margin = MH.parseFloat(strValue || "") || 0;
+  const toPxValue = (strValue, index) => {
+    let margin = MH.parseFloat(strValue || "") || 0;
     if (strValue === margin + "%") {
       margin *= index % 2 ? absoluteSize[MC.S_HEIGHT] : absoluteSize[MC.S_WIDTH];
     }
     return margin;
   };
-  var parts = splitOn(value, " ", true);
-  var margins = [
+  const parts = splitOn(value, " ", true);
+  const margins = [
   // top
   toPxValue(parts[0], 0),
   // right
@@ -200,31 +191,26 @@ var toMargins = exports.toMargins = function toMargins(value, absoluteSize) {
  * @ignore
  * @internal
  */
-var objToStrKey = exports.objToStrKey = function objToStrKey(obj) {
-  return MH.stringify(_flattenForSorting(obj));
-};
+exports.toMargins = toMargins;
+const objToStrKey = obj => MH.stringify(flattenForSorting(obj));
 
 // --------------------
-
-var _flattenForSorting = function flattenForSorting(obj) {
-  var array = MH.isArray(obj) ? obj : MH.keysOf(obj).sort().map(function (k) {
-    return obj[k];
-  });
-  return array.map(function (value) {
+exports.objToStrKey = objToStrKey;
+const flattenForSorting = obj => {
+  const array = MH.isArray(obj) ? obj : MH.keysOf(obj).sort().map(k => obj[k]);
+  return array.map(value => {
     if (MH.isArray(value) || MH.isNonPrimitive(value) && MH.constructorOf(value) === MC.OBJECT) {
-      return _flattenForSorting(value);
+      return flattenForSorting(value);
     }
     return value;
   });
 };
-var stringifyReplacer = function stringifyReplacer(key, value) {
-  return key ? _maybeConvertToString(value, true) : value;
-};
-var _maybeConvertToString = function maybeConvertToString(value, nested) {
-  var result = "";
+const stringifyReplacer = (key, value) => key ? maybeConvertToString(value, true) : value;
+const maybeConvertToString = (value, nested) => {
+  let result = "";
   if (MH.isElement(value)) {
-    var classStr = MH.classList(value).toString().trim();
-    result = value.id ? "#" + value.id : "<".concat(MH.tagName(value)).concat(classStr ? ' class="' + classStr + '"' : "", ">");
+    const classStr = MH.classList(value).toString().trim();
+    result = value.id ? "#" + value.id : `<${MH.tagName(value)}${classStr ? ' class="' + classStr + '"' : ""}>`;
 
     //
   } else if (MH.isInstanceOf(value, Error)) {
@@ -232,18 +218,16 @@ var _maybeConvertToString = function maybeConvertToString(value, nested) {
     if ("stack" in value && MH.isString(value.stack)) {
       result = value.stack;
     } else {
-      result = "Error: ".concat(value.message);
+      result = `Error: ${value.message}`;
     }
 
     //
   } else if (MH.isArray(value)) {
-    result = "[" + value.map(function (v) {
-      return MH.isString(v) ? MH.stringify(v) : _maybeConvertToString(v, false);
-    }).join(",") + "]";
+    result = "[" + value.map(v => MH.isString(v) ? MH.stringify(v) : maybeConvertToString(v, false)).join(",") + "]";
 
     //
   } else if (MH.isIterableObject(value)) {
-    result = MH.typeOrClassOf(value) + "(" + _maybeConvertToString(MH.arrayFrom(value), false) + ")";
+    result = MH.typeOrClassOf(value) + "(" + maybeConvertToString(MH.arrayFrom(value), false) + ")";
 
     //
   } else if (MH.isNonPrimitive(value)) {

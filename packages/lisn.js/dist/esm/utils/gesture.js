@@ -32,18 +32,14 @@ import { isValidStrList } from "./validation.js";
  *
  * @category Validation
  */
-export var isValidInputDevice = function isValidInputDevice(device) {
-  return MH.includes(DEVICES, device);
-};
+export const isValidInputDevice = device => MH.includes(DEVICES, device);
 
 /**
  * Returns true if the given string is a valid gesture intent.
  *
  * @category Validation
  */
-export var isValidIntent = function isValidIntent(intent) {
-  return MH.includes(INTENTS, intent);
-};
+export const isValidIntent = intent => MH.includes(INTENTS, intent);
 
 /**
  * Returns true if the given string or array is a list of valid gesture
@@ -51,9 +47,7 @@ export var isValidIntent = function isValidIntent(intent) {
  *
  * @category Validation
  */
-export var isValidInputDeviceList = function isValidInputDeviceList(devices) {
-  return isValidStrList(devices, isValidInputDevice, false);
-};
+export const isValidInputDeviceList = devices => isValidStrList(devices, isValidInputDevice, false);
 
 /**
  * Returns true if the given string or array is a list of valid gesture
@@ -61,30 +55,26 @@ export var isValidInputDeviceList = function isValidInputDeviceList(devices) {
  *
  * @category Validation
  */
-export var isValidIntentList = function isValidIntentList(intents) {
-  return isValidStrList(intents, isValidIntent, false);
-};
+export const isValidIntentList = intents => isValidStrList(intents, isValidIntent, false);
 
 /**
  * @ignore
  * @internal
  */
-export var addDeltaZ = function addDeltaZ(current, increment) {
-  return MH.max(MIN_DELTA_Z, current * increment);
-};
+export const addDeltaZ = (current, increment) => MH.max(MIN_DELTA_Z, current * increment);
 
 /**
  * @ignore
  * @internal
  */
-export var DEVICES = [MC.S_KEY, MC.S_POINTER, MC.S_TOUCH, MC.S_WHEEL];
+export const DEVICES = [MC.S_KEY, MC.S_POINTER, MC.S_TOUCH, MC.S_WHEEL];
 
 /**
  * @ignore
  * @internal
  */
-export var INTENTS = [MC.S_SCROLL, MC.S_ZOOM, MC.S_DRAG, MC.S_UNKNOWN];
+export const INTENTS = [MC.S_SCROLL, MC.S_ZOOM, MC.S_DRAG, MC.S_UNKNOWN];
 
 // Do not allow zooming out more than this value
-var MIN_DELTA_Z = 0.1;
+const MIN_DELTA_Z = 0.1;
 //# sourceMappingURL=gesture.js.map

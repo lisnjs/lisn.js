@@ -9,7 +9,7 @@ Object.keys(_bitSpaces).forEach(function (key) {
   if (key in exports && exports[key] === _bitSpaces[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _bitSpaces[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_callback).forEach(function (key) {
   if (key in exports && exports[key] === _callback[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _callback[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_xIntersectionObserver).forEach(function (key) {
   if (key in exports && exports[key] === _xIntersectionObserver[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _xIntersectionObserver[key];
     }
   });
@@ -42,7 +42,7 @@ Object.keys(_xMap).forEach(function (key) {
   if (key in exports && exports[key] === _xMap[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _xMap[key];
     }
   });
@@ -53,7 +53,7 @@ Object.keys(_xResizeObserver).forEach(function (key) {
   if (key in exports && exports[key] === _xResizeObserver[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _xResizeObserver[key];
     }
   });

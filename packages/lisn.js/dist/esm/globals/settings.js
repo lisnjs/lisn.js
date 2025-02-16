@@ -28,7 +28,7 @@ import * as MH from "./minification-helpers.js";
  * </html>
  * ```
  */
-export var settings = MH.preventExtensions({
+export const settings = MH.preventExtensions({
   /**
    * A unique selector (preferably `#some-id`) for the element that holds the
    * main page content, if other than `document.body`.

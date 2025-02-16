@@ -1,0 +1,31 @@
+@use "./_variables.scss" as *;
+
+.lisn-spinner {
+  --lisn_sz: var(--lisn-spinner--size, #{$spinner-size});
+  --lisn_bw: var(--lisn-spinner--thickness, #{$spinner-thickness});
+  border-radius: 50%;
+  box-shadow: inset calc(0.7 * var(--lisn_bw)) calc(0.7 * var(--lisn_bw)) 0px
+    0px var(--lisn-spinner--color, var(--lisn-color-fg));
+  width: var(--lisn_sz);
+  height: var(--lisn_sz);
+  display: inline-block;
+  box-sizing: border-box;
+  position: absolute;
+  top: calc(50% - var(--lisn_sz) / 2);
+  left: calc(50% - var(--lisn_sz) / 2);
+  animation: lisnSpin 1s linear infinite;
+}
+
+:where(:has(> .lisn-spinner)) {
+  position: relative;
+}
+
+@keyframes lisnSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

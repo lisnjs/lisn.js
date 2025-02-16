@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+  </head>
+  <body>
+    Watch console and remote logger
+    <script charset="utf-8">
+      console.debug("XXX DEBUG");
+      console.log("XXX LOG");
+      console.info("XXX INFO");
+      console.warn("XXX WARN");
+      console.error("XXX ERROR");
+
+      const logger = new LISN.debug.Logger({ name: "test" });
+      logger.debug1("DEBUG1");
+      logger.debug("DEBUG");
+      logger.log("LOG");
+      logger.info("INFO");
+      logger.warn("WARN");
+      logger.error("ERROR");
+    </script>
+  </body>
+</html>

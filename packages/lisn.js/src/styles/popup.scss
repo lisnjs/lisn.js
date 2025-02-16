@@ -1,0 +1,142 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+@use "./_close-button.scss";
+
+.lisn-popup__container {
+  position: relative;
+  display: table;
+  width: fit-content;
+}
+
+.lisn-popup__root {
+  @include openable(
+    $x-color: var(--lisn-popup--x-color, #{$popup-x-color}),
+    $transition-duration: var(--animate-duration, #{$popup-animate-duration})
+  );
+
+  & {
+    @include abs-full-size;
+    z-index: 999999;
+    pointer-events: none;
+    text-align: center;
+    transition-property: opacity;
+    opacity: 0;
+  }
+
+  &[data-lisn-is-open="true"] {
+    opacity: 1;
+  }
+
+  & .lisn-popup__inner-wrapper {
+    position: absolute;
+    box-shadow: var(--lisn-popup--shadow, #{$popup-shadow});
+    background: var(--lisn-popup--bg, #{$popup-background});
+    padding: var(--lisn-popup--v-padding, #{$popup-v-padding})
+      var(--lisn-popup--h-padding, #{$popup-h-padding});
+    width: var(--lisn-popup--width, #{$popup-width});
+    min-width: var(--lisn-popup--min-width, #{$popup-min-width});
+    max-width: var(--lisn-popup--max-width, #{$popup-max-width});
+    pointer-events: none;
+  }
+
+  &[data-lisn-is-open="true"] .lisn-popup__inner-wrapper {
+    pointer-events: auto;
+  }
+
+  /* Placement */
+  &[data-lisn-place="top"] .lisn-popup__inner-wrapper {
+    bottom: 100%;
+    left: 50%;
+    top: auto;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  &[data-lisn-place="top-left"] .lisn-popup__inner-wrapper {
+    bottom: 100%;
+    left: 0px;
+    top: auto;
+    right: auto;
+  }
+
+  &[data-lisn-place="top-right"] .lisn-popup__inner-wrapper {
+    bottom: 100%;
+    right: 0px;
+    top: auto;
+    left: auto;
+  }
+
+  &[data-lisn-place="bottom"] .lisn-popup__inner-wrapper {
+    top: 100%;
+    left: 50%;
+    bottom: auto;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  &[data-lisn-place="bottom-left"] .lisn-popup__inner-wrapper {
+    top: 100%;
+    left: 0px;
+    bottom: auto;
+    right: auto;
+  }
+
+  &[data-lisn-place="bottom-right"] .lisn-popup__inner-wrapper {
+    top: 100%;
+    right: 0px;
+    bottom: auto;
+    left: auto;
+  }
+
+  &[data-lisn-place="left"] .lisn-popup__inner-wrapper {
+    top: 50%;
+    right: 100%;
+    bottom: auto;
+    left: auto;
+    transform: translateY(-50%);
+  }
+
+  &[data-lisn-place="left-top"] .lisn-popup__inner-wrapper {
+    top: 0px;
+    right: 100%;
+    bottom: auto;
+    left: auto;
+  }
+
+  &[data-lisn-place="left-bottom"] .lisn-popup__inner-wrapper {
+    bottom: 0px;
+    right: 100%;
+    top: auto;
+    left: auto;
+  }
+
+  &[data-lisn-place="right"] .lisn-popup__inner-wrapper {
+    top: 50%;
+    left: 100%;
+    bottom: auto;
+    right: auto;
+    transform: translateY(-50%);
+  }
+
+  &[data-lisn-place="right-top"] .lisn-popup__inner-wrapper {
+    top: 0px;
+    left: 100%;
+    bottom: auto;
+    right: auto;
+  }
+
+  &[data-lisn-place="right-bottom"] .lisn-popup__inner-wrapper {
+    bottom: 0px;
+    left: 100%;
+    top: auto;
+    right: auto;
+  }
+}
+
+.lisn-popup__trigger {
+  @include openable-trigger(
+    $transition-duration: var(--animate-duration, #{$popup-animate-duration})
+  );
+}

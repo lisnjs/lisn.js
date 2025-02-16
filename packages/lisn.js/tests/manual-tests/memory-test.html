@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <script charset="utf-8">
+      LISN.settings.verbosityLevel = 0;
+    </script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      #log {
+        white-space: wrap;
+        max-width: 100vw;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <input id="numEls" type="number" value="1000" , min="10" />
+      <label for="numEls">Number of elements to insert and remove</label>
+    </div>
+
+    <div>
+      <input id="offX" type="checkbox" />
+      <label for="offX">Remove watcher callbacks during cleanup</label>
+    </div>
+
+    <div>
+      <input id="testR" type="checkbox" />
+      <label for="testR"
+        >Also test with reusable watchers (they are saved for reuse)</label
+      >
+      <p>
+        Note that when using reusable watcher and NOT removing callbacks, memory
+        WILL leak of course
+      </p>
+    </div>
+
+    <button onclick="runTest();">Run test</button>
+    <button onclick="logMem(true);">Log memory usage</button>
+    <div id="log"></div>
+
+    <script charset="utf-8">
+      const logEl = document.getElementById("log");
+      const numElsInput = document.getElementById("numEls");
+      const offXInput = document.getElementById("offX");
+      const testRInput = document.getElementById("testR");
+
+      const scaleF = Math.pow(1024, 2);
+      let firstMemUsage = null,
+        lastMemUsage = null;
+
+      log(
+        "Open Performance tools and click the trash icon to force collect garbage. " +
+          "Then click the button to run the tests.",
+      );
+
+      function log(txt) {
+        console.log(txt);
+        const el = document.createElement("p");
+        el.innerText = txt;
+        logEl.append(el);
+      }
+
+      function logMem(diffSinceFirst = false) {
+        let { totalJSHeapSize, usedJSHeapSize } = performance.memory;
+        totalJSHeapSize /= scaleF;
+        usedJSHeapSize /= scaleF;
+
+        log(JSON.stringify({ totalJSHeapSize, usedJSHeapSize }, null, 2));
+
+        if (lastMemUsage) {
+          log(`Difference since ${diffSinceFirst ? "first" : "last"}:`);
+          const cmpMemUsage = diffSinceFirst ? firstMemUsage : lastMemUsage;
+          const deltaTotalJSHeapSize =
+            totalJSHeapSize - cmpMemUsage.totalJSHeapSize;
+          const deltaUsedJSHeapSize =
+            usedJSHeapSize - cmpMemUsage.usedJSHeapSize;
+          log(
+            JSON.stringify(
+              { deltaTotalJSHeapSize, deltaUsedJSHeapSize },
+              null,
+              2,
+            ),
+          );
+        }
+
+        lastMemUsage = { totalJSHeapSize, usedJSHeapSize };
+        if (!firstMemUsage) {
+          firstMemUsage = lastMemUsage;
+        }
+      }
+
+      async function runTest() {
+        const numEls = numElsInput.value || 1000;
+        const offX = offXInput.checked || false;
+        const testR = testRInput.checked || false;
+
+        const dwR = testR ? LISN.watchers.DOMWatcher.reuse() : null;
+        const gwR = testR ? LISN.watchers.GestureWatcher.reuse() : null;
+        const lwR = testR ? LISN.watchers.LayoutWatcher.reuse() : null;
+        const pwR = testR ? LISN.watchers.PointerWatcher.reuse() : null;
+        const slwR = testR ? LISN.watchers.ScrollWatcher.reuse() : null;
+        const szwR = testR ? LISN.watchers.SizeWatcher.reuse() : null;
+        const vwR = testR ? LISN.watchers.ViewWatcher.reuse() : null;
+
+        await LISN.utils.waitForDelay(100);
+
+        log("Memory usage at start:");
+        logMem();
+
+        log(
+          `Inserting ${numEls} elements, attaching all watchers to them, then removing..`,
+        );
+
+        await LISN.utils.waitForDelay(0);
+        const reps = [];
+
+        for (let i = 0; i < numEls; i++) {
+          const el = document.createElement("div");
+          const hn = () => {};
+
+          const dw = LISN.watchers.DOMWatcher.create({ root: el });
+          dw.onMutation(hn, { target: el });
+          dwR?.onMutation(hn, { target: el });
+
+          const gw = LISN.watchers.GestureWatcher.create();
+          gw.onGesture(el, hn);
+          gwR?.onGesture(el, hn);
+
+          const lw = LISN.watchers.LayoutWatcher.create({ root: el });
+          lw.onLayout(hn);
+          lwR?.onLayout(hn);
+
+          const pw = LISN.watchers.PointerWatcher.create();
+          pw.onPointer(el, hn);
+          pwR?.onPointer(el, hn);
+
+          const slw = LISN.watchers.ScrollWatcher.create();
+          slw.onScroll(hn, { scrollable: el });
+          slwR?.onScroll(hn, { scrollable: el });
+
+          const szw = LISN.watchers.SizeWatcher.create();
+          szw.onResize(hn, { target: el });
+          szwR?.onResize(hn, { target: el });
+
+          const vw = LISN.watchers.ViewWatcher.create({ root: el });
+          vw.onView(el, hn);
+          vwR?.onView(el, hn);
+
+          document.body.append(el);
+
+          reps.push({ el, hn, dw, gw, lw, pw, slw, szw, vw });
+        }
+
+        log(`Cleaning up (${offX ? "" : "not "}removing watcher callbacks)`);
+
+        await LISN.utils.waitForDelay(1000);
+        for (const rep of reps) {
+          const { el, hn, dw, gw, lw, pw, slw, szw, vw } = rep;
+          el.remove();
+
+          if (offX) {
+            dw.offMutation(hn);
+            dwR?.offMutation(hn);
+            gw.offGesture(el, hn);
+            gwR?.offGesture(el, hn);
+            lw.offLayout(hn);
+            lwR?.offLayout(hn);
+            pw.offPointer(el, hn);
+            pwR?.offPointer(el, hn);
+            slw.offScroll(hn, el);
+            slwR?.offScroll(hn, el);
+            szw.offResize(hn, el);
+            szwR?.offResize(hn, el);
+            vw.offView(el, hn);
+            vwR?.offView(el, hn);
+          }
+        }
+        reps.splice(0, reps.length);
+
+        logMem();
+        log(
+          "Done. Open Performance tools and click the trash icon to force collect garbage. " +
+            "Then click the button to log memory usage at end.",
+        );
+      }
+    </script>
+  </body>
+</html>

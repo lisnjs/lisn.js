@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="same-height.css" />
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .same-height {
+        flex-wrap: wrap;
+        background: #aaa;
+      }
+
+      .same-height:nth-child(even) {
+        flex-wrap: wrap;
+        background: #ccc;
+      }
+
+      .same-height * {
+        min-width: 150px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div
+      class="same-height"
+      data-lisn-same-height="diff-tolerance=20|resize-threshold=20|debounce-window=30|min-gap=50|max-free-r=0.7|max-width-r=3.5"
+    >
+      <div>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+          eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
+          minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+          aliquip ex ea commodo consequat. Duis aute irure dolor in
+          reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+          culpa qui officia deserunt mollit anim id est laborum.
+        </p>
+      </div>
+      <div>
+        <img
+          src="https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@1.5x.png"
+        />
+      </div>
+    </div>
+  </body>
+</html>

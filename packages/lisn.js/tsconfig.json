@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "moduleResolution": "node",
+    "module": "preserve",
+    "outDir": "./dist/esm/",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "isolatedModules": true,
+    "paths": {
+      "@lisn/*": ["./src/ts/*"]
+    },
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+    "alwaysStrict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipDefaultLibCheck": false,
+    "skipLibCheck": false
+  },
+  "include": ["src/ts/"],
+  "typedocOptions": {
+    "name": "LISN.js | Docs",
+    "titleLink": "https://lisnjs.github.io",
+    "entryPoints": ["src/ts/"],
+    "readme": "INTRO.md",
+    "entryPointStrategy": "expand",
+    "groupOrder": ["Methods", "Constructors", "Properties", "*"],
+    "sort": ["kind", "static-first", "alphabetical"],
+    "jsDocCompatibility": {
+      "exampleTag": false
+    },
+    "out": "../../website/public/docs/",
+    "plugin": ["typedoc-plugin-merge-modules"],
+    "mergeModulesMergeMode": "module",
+    "highlightLanguages": [
+      "bash",
+      "console",
+      "css",
+      "sass",
+      "scss",
+      "html",
+      "javascript",
+      "json",
+      "tsx",
+      "typescript"
+    ]
+  }
+}

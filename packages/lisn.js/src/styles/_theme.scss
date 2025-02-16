@@ -1,0 +1,26 @@
+@use "sass:map";
+
+@use "./_variables.scss" as *;
+
+:root {
+  /* User can override these */
+  --lisn-color-dark: #{$dark-color};
+  --lisn-color-dark-t: #{$dark-color-t};
+  --lisn-color-light: #{$light-color};
+  --lisn-color-light-t: #{$light-color-t};
+}
+
+:root,
+.#{$light-theme-cls} {
+  --lisn-color-fg: var(--lisn-color-dark);
+  --lisn-color-fg-t: var(--lisn-color-dark-t);
+  --lisn-color-bg: var(--lisn-color-light);
+  --lisn-color-bg-t: var(--lisn-color-light-t);
+}
+
+.#{$dark-theme-cls} {
+  --lisn-color-fg: var(--lisn-color-light);
+  --lisn-color-fg-t: var(--lisn-color-light-t);
+  --lisn-color-bg: var(--lisn-color-dark);
+  --lisn-color-bg-t: var(--lisn-color-dark-t);
+}

@@ -1,0 +1,85 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+@use "./_close-button.scss";
+
+.lisn-offcanvas__root {
+  @include modal-or-offcanvas(
+    "offcanvas",
+    $bg: var(--lisn-offcanvas--bg, #{$offcanvas-bg}),
+    $h-padding: var(--lisn-offcanvas--h-padding, #{$offcanvas-h-padding}),
+    $v-padding: var(--lisn-offcanvas--v-padding, #{$offcanvas-v-padding}),
+    $x-color: var(--lisn-offcanvas--x-color, #{$offcanvas-x-color}),
+    $transition-duration: var(
+        --animate-duration,
+        #{$offcanvas-animate-duration}
+      )
+  );
+
+  & {
+    box-shadow: var(--lisn-offcanvas--shadow, #{$offcanvas-shadow});
+  }
+
+  /* Placement and slide-in effect */
+  &[data-lisn-place][data-lisn-is-open="true"] {
+    transform: translate3d(0px, 0px, 0px);
+  }
+
+  &[data-lisn-place="top"],
+  &[data-lisn-place="bottom"] {
+    width: 100%;
+    min-height: var(--lisn-offcanvas--min-height, #{$offcanvas-min-height});
+    max-height: var(--lisn-offcanvas--max-height, #{$offcanvas-max-height});
+    height: var(--lisn-offcanvas--height, #{$offcanvas-height});
+  }
+
+  &[data-lisn-place="top"] {
+    top: var(--lisn-window--top);
+    left: 0px;
+    right: auto;
+    bottom: auto;
+    transform: translate3d(0px, -100%, 0px);
+  }
+
+  &[data-lisn-place="bottom"] {
+    bottom: 0px;
+    left: 0px;
+    right: auto;
+    top: auto;
+    transform: translate3d(0px, 100%, 0px);
+  }
+
+  &[data-lisn-place="left"],
+  &[data-lisn-place="right"] {
+    min-width: var(--lisn-offcanvas--min-width, #{$offcanvas-min-width});
+    max-width: var(--lisn-offcanvas--max-width, #{$offcanvas-max-width});
+    width: var(--lisn-offcanvas--width, #{$offcanvas-width});
+    height: var(--lisn-window--height);
+  }
+
+  &[data-lisn-place="left"] {
+    top: var(--lisn-window--top);
+    left: 0px;
+    right: auto;
+    bottom: auto;
+    transform: translate3d(-100%, 0px, 0px);
+  }
+
+  &[data-lisn-place="right"] {
+    top: var(--lisn-window--top);
+    right: 0px;
+    left: auto;
+    bottom: auto;
+    transform: translate3d(100%, 0px, 0px);
+  }
+}
+
+.lisn-offcanvas__trigger {
+  @include openable-trigger(
+    $transition-duration: var(
+        --animate-duration,
+        #{$offcanvas-animate-duration}
+      )
+  );
+}

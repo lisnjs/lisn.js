@@ -1,0 +1,40 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+@use "./_arrows.scss";
+
+.lisn-scroll-to-top__root {
+  --lisn_stt_sz: var(--lisn-scroll-to-top--size, #{$scroll-to-top-size});
+  --lisn_stt_mg: var(--lisn-scroll-to-top--margin, #{$scroll-to-top-margin});
+  box-sizing: border-box;
+  position: fixed;
+  bottom: var(--lisn_stt_mg);
+  z-index: 99999;
+  cursor: pointer;
+  background: var(--lisn-scroll-to-top--bg, #{$scroll-to-top-bg});
+  width: var(--lisn_stt_sz);
+  height: var(--lisn_stt_sz);
+  border-radius: 50%;
+  border: none;
+  outline: none;
+  margin: 0;
+  padding: 0;
+
+  &[data-lisn-place="left"] {
+    left: var(--lisn_stt_mg);
+  }
+
+  &[data-lisn-place="right"] {
+    right: var(--lisn_stt_mg);
+  }
+
+  & .lisn-arrow {
+    --lisn-arrow--color: var(--lisn-scroll-to-top--bg, #{$scroll-to-top-fg});
+    --lisn-arrow--width: calc(0.3 * var(--lisn_stt_sz));
+    --lisn-arrow--length: calc(0.3 * var(--lisn_stt_sz));
+    position: absolute;
+    top: calc(var(--lisn_stt_sz) * 0.3);
+    left: calc(var(--lisn_stt_sz) * 0.275);
+  }
+}

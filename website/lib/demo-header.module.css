@@ -1,0 +1,53 @@
+.header {
+  z-index: 100;
+  position: fixed;
+  right: 0;
+  top: 0;
+  font-size: 16px;
+}
+
+.popupTrigger {
+  padding: 7px;
+  background: var(--lisn-color-dark-t);
+  cursor: default;
+  outline: none;
+  border: none;
+  color: inherit;
+  border-radius: 7px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu :global(.lisn-popup__inner-wrapper) {
+  margin-top: 4px;
+  border-radius: 7px;
+}
+
+.trigger {
+  white-space: nowrap;
+  opacity: 0.8;
+  outline: none;
+  background: none;
+  border: none;
+  color: inherit;
+}
+
+.trigger:hover {
+  opacity: 1;
+}
+
+.modal {
+  --lisn-modal--content-bg: none;
+  --lisn-modal--shadow: none;
+  --lisn-modal--content-v-padding: 0px;
+  --lisn-modal--content-h-padding: 0px;
+}
+
+.modal :global(.lisn-modal__inner-wrapper),
+.modal .content {
+  height: 100%;
+}

@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        width: 200vw;
+      }
+
+      .section {
+        padding: 50vh 10vw;
+        border: 2px solid purple;
+      }
+
+      .align-right {
+        margin-left: auto;
+      }
+
+      button {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="section">
+      <button
+        onclick="watcher.scroll('right', {amount: 100, asFractionOf: 'visible'}).then(logScroll)"
+      >
+        Scroll right 1 screen
+      </button>
+      <button
+        class="align-right"
+        onclick="watcher.scroll('left', {amount: 100, asFractionOf: 'visible'}).then(logScroll)"
+      >
+        Scroll left 1 screen
+      </button>
+      <button onclick="watcher.scroll('right', {amount: 100}).then(logScroll)">
+        Scroll right 100px
+      </button>
+      <button onclick="watcher.scroll('left', {amount: 100}).then(logScroll)">
+        Scroll left 100px
+      </button>
+      <button
+        onclick="watcher.scroll('down', {amount: 100, asFractionOf: 'visible'}).then(logScroll)"
+      >
+        Scroll down 1 screen
+      </button>
+      <button
+        onclick="setTimeout(() => watcher.scrollTo({top: 0, left: 0}, {userCanInterrupt: true}).then(logScroll), 1000)"
+      >
+        Scroll to top after 1s (user-interruptible)
+      </button>
+    </div>
+
+    <div id="foo" class="section">
+      <button onclick="watcher.scrollTo('#bar').then(logScroll)">
+        Scroll to third section using selector
+      </button>
+      <button
+        onclick="watcher.scrollTo(document.getElementById('bar')).then(logScroll)"
+      >
+        Scroll to third section using element
+      </button>
+      <button
+        onclick="watcher.scroll('up', {amount: 100, asFractionOf: 'visible'}).then(logScroll)"
+      >
+        Scroll up 1 screen
+      </button>
+      <button
+        onclick="watcher.scroll('down', {amount: 10, asFractionOf: 'content'}).then(logScroll)"
+      >
+        Scroll down 10% of content
+      </button>
+      <button
+        onclick="watcher.scroll('up', {amount: 10, asFractionOf: 'visible'}).then(logScroll)"
+      >
+        Scroll up 10% of viewport
+      </button>
+      <button
+        onclick="watcher.scroll('down', {amount: 10, asFractionOf: 'content', duration: 4000}).then(logScroll)"
+      >
+        Scroll down 10% of content slowly
+      </button>
+      <button
+        onclick="watcher.scroll('down', {amount: 10, asFractionOf: 'content', duration: 4000, weCanInterrupt: true}).then(logScroll)"
+      >
+        Scroll down 10% of content slowly (interruptible)
+      </button>
+      <button
+        onclick="watcher.scroll('down', {amount: 10, asFractionOf: 'content', duration: 4000, userCanInterrupt: true}).then(logScroll)"
+      >
+        Scroll down 10% of content slowly (user-interruptible)
+      </button>
+    </div>
+
+    <div id="bar" class="section">
+      <button onclick="watcher.scrollTo('#foo').then(logScroll)">
+        Scroll to second section using selector
+      </button>
+      <button
+        onclick="watcher.scrollTo(document.getElementById('foo')).then(logScroll)"
+      >
+        Scroll to second section using element
+      </button>
+      <button
+        onclick="watcher.scroll('down', {weCanInterrupt: true, amount: 100, asFractionOf: 'visible'}).then(logScroll); setTimeout(() => watcher.scrollTo('#foo').then(logScroll), 100)"
+      >
+        Scroll down (interruptible), then to second section
+      </button>
+      <button
+        onclick="watcher.scroll('down', {amount: 100, asFractionOf: 'visible'}).then(logScroll); setTimeout(() => watcher.scrollTo('#foo').then(logScroll), 100)"
+      >
+        Scroll down, then fail to scroll to second section
+      </button>
+      <button onclick="watcher.scrollTo({left: 100, top: 200}).then(logScroll)">
+        Scroll to 100,200
+      </button>
+    </div>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger({ name: "test" });
+      const watcher = LISN.watchers.ScrollWatcher.reuse();
+      async function logScroll(action) {
+        if (!action) {
+          logger.log("scroll not initiated");
+          return;
+        }
+
+        action
+          .waitFor()
+          .then((x) => logger.log(x))
+          .catch((x) => logger.error(x));
+      }
+    </script>
+  </body>
+</html>

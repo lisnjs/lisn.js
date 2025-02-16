@@ -1,0 +1,1 @@
+{"version":3,"file":"track-size.d.ts","sourceRoot":"","sources":["../../../src/ts/widgets/track-size.ts"],"names":[],"mappings":"AAAA;;GAEG;AAMH,OAAO,EAAE,MAAM,EAAkB,MAAM,sBAAsB,CAAC;AAE9D;;;;;;;;;;;;;;;;;;;;;;;;;;GA0BG;AACH,qBAAa,SAAU,SAAQ,MAAM;IACnC,MAAM,CAAC,GAAG,CAAC,OAAO,EAAE,OAAO,GAAG,SAAS,GAAG,IAAI;IAQ9C,MAAM,CAAC,QAAQ;gBASH,OAAO,EAAE,OAAO;CAU7B"}

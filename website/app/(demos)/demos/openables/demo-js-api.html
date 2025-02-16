@@ -1,0 +1,344 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Openables (JS API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="assets/css/common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+      LISN.widgets.ScrollToTop.enableMain();
+      LISN.widgets.Scrollbar.enableMain();
+    </script>
+
+    <script id="main-js" charset="utf-8">
+      document.addEventListener("DOMContentLoaded", () => {
+        const main = document.getElementById("demo");
+
+        // Setup menu, modal and the their scroll and view triggers.
+        // In what follows we've used the triggers JavaScript API but we could
+        // have equally used the respective watchers.
+        const menu = document.getElementById("demo-menu");
+        new LISN.widgets.Offcanvas(menu, {
+          position: "top",
+          closeButton: false,
+        });
+        new LISN.triggers.ScrollTrigger(menu, [new LISN.actions.Open(menu)], {
+          directions: "up",
+        });
+
+        const modal = document.getElementById("demo-modal");
+        new LISN.widgets.Modal(modal);
+        new LISN.triggers.ViewTrigger(modal, [new LISN.actions.Open(modal)], {
+          target: "top: 50%",
+          rootMargin: "-48%, 0px",
+          once: true,
+        });
+
+        // Setup the triggers for the messages.
+        const msg1 = document.getElementById("msg1");
+        new LISN.triggers.ScrollTrigger(msg1, [new LISN.actions.Hide(msg1)], {
+          directions: "up",
+          once: true,
+        });
+
+        const msg2 = document.getElementById("msg2");
+        new LISN.triggers.ScrollTrigger(
+          msg2,
+          [
+            new LISN.actions.Show(msg2),
+            new LISN.actions.Enable(msg2, "hide-on-down"),
+          ],
+          {
+            directions: "up",
+            once: true,
+            delay: 300,
+          },
+        );
+        // We could use Hide on direction down, but this will set the initial
+        // state of the element to be shown, so we reverse the logic.
+        new LISN.triggers.ScrollTrigger(msg2, [new LISN.actions.Show(msg2)], {
+          directions: "up",
+          once: true,
+          id: "hide-on-down",
+        });
+
+        // Setup the collapsibles.
+        const peekable = main.querySelector(".peekable");
+        const peekableTrigger = main.querySelector(".peekable-trigger");
+        new LISN.widgets.Collapsible(peekable, {
+          triggers: new Map([
+            // transfer the class also to the trigger wrapper so we can target it with
+            // .peekable-trigger[data-lisn-is-open="false"]
+            [peekableTrigger, { className: "peekable-trigger" }],
+          ]),
+          peek: "75px",
+        });
+
+        for (const item of main.querySelectorAll(".accordion-item")) {
+          const trigger = item.querySelector(".accordion-item-trigger");
+          const content = item.querySelector(".accordion-item-content");
+          new LISN.widgets.Collapsible(content, {
+            triggers: [trigger],
+            autoClose: true,
+            // We can set the trigger properties either here or on a per-trigger
+            // basis.
+            icon: "left",
+            iconClosed: "plus",
+            iconOpen: "minus",
+          });
+        }
+
+        // Setup the popups.
+        for (const item of main.querySelectorAll(".popup")) {
+          const trigger = item.querySelector(".popup-trigger");
+          const content = item.querySelector(".popup-content");
+          new LISN.widgets.Popup(content, {
+            triggers: new Map([[trigger, { hover: true }]]),
+            position: "top",
+          });
+        }
+      });
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      #demo .huge {
+        font-size: 2.5em;
+      }
+
+      /* Layout */
+      #demo .section {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #demo .section.top {
+        justify-content: flex-start;
+      }
+
+      #demo .spacer {
+        margin: 50px 0;
+      }
+
+      /* Collapsibles */
+      #demo .peekable-trigger[data-lisn-is-open="false"] .less {
+        display: none;
+      }
+
+      #demo .peekable-trigger[data-lisn-is-open="true"] .more {
+        display: none;
+      }
+
+      #demo .accordion-item-trigger :is(h1, h2, h3, h4, h5, h6) {
+        margin: 5px 0;
+      }
+
+      #demo p {
+        margin: 3px 0;
+      }
+
+      #demo .accordion-item-content {
+        padding: 1em 0 1em 1.3em;
+      }
+
+      /* Popups */
+      #demo {
+        --lisn-popup--v-padding: 15px;
+        --lisn-popup--h-padding: 15px;
+        --lisn-popup--width: 350px;
+        --lisn-popup--max-width: 98vw;
+      }
+
+      #demo .popup-content {
+        font-size: 16px;
+      }
+
+      #demo .popup-trigger::after {
+        content: "?";
+        display: inline-block;
+        border: solid 1px currentColor;
+        border-radius: 50%;
+        width: 11px;
+        height: 11px;
+        font-size: 9px;
+        line-height: 12px;
+        text-align: center;
+        margin-left: 5px;
+        transform: translateY(-9px);
+      }
+
+      /* Offcanvas menu */
+      #demo-menu {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 1.5em;
+        font-weight: bold;
+        font-size: 22px;
+      }
+
+      /* Modal */
+      #demo-modal {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body id="main-html" class="dark-theme">
+    <div id="demo">
+      <div id="demo-menu">
+        <a>More demos</a>
+        <a>Getting started</a>
+        <a>Source code</a>
+      </div>
+
+      <div id="demo-modal">
+        You've reached the middle of the page. Are you liking LISN already?
+      </div>
+
+      <div class="section">
+        <p>
+          This demo includes all four types of openables with several types of
+          triggers for opening them.
+        </p>
+        <h2>Scroll down.</h2>
+      </div>
+
+      <div class="section">
+        <h2 id="msg2">Now keep going down.</h2>
+        <div class="spacer"></div>
+        <h2 id="msg1">Then scroll up a bit.</h2>
+      </div>
+
+      <!-- blank page for spacing -->
+      <div class="section"></div>
+
+      <div class="section top accordions">
+        <h1 class="huge">Why LISN?</h1>
+        <div class="peekable">
+          <div class="accordion-item">
+            <h4 class="accordion-item-trigger">Lightweight.</h4>
+
+            <div class="accordion-item-content">
+              <div>
+                <p>Vanilla TypeScript</p>
+              </div>
+
+              <div>
+                <p>Highly optimized</p>
+              </div>
+
+              <div class="popup">
+                <p class="popup-trigger">No layout thrashing</p>
+                <div class="popup-content">
+                  Correct use of <code>requestAnimationFrame</code> to
+                  completely eliminate forced re-layouts and run smoothly even
+                  on mobile devices.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h4 class="accordion-item-trigger">Interactive.</h4>
+
+            <div class="accordion-item-content">
+              <div>
+                <p>Powerful API</p>
+              </div>
+
+              <div class="popup">
+                <p class="popup-trigger">Multi gesture support</p>
+                <div class="popup-content">
+                  Take actions based on user gestures. Scroll, zoom or drag,
+                  using wheel, touch or pointer device? Any or all of these.
+                </div>
+              </div>
+
+              <div>
+                <p>Mobile/touch ready</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h4 class="accordion-item-trigger">Simple.</h4>
+
+            <div class="accordion-item-content">
+              <div>
+                <p>Intuitive syntax</p>
+              </div>
+
+              <div>
+                <p>Consistent API</p>
+              </div>
+
+              <div class="popup">
+                <p class="popup-trigger">HTML-only mode</p>
+                <div class="popup-content">
+                  The HTML-only API can do much of what the full JavaScript API
+                  can.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <h4 class="accordion-item-trigger">No-nonsense.</h4>
+
+            <div class="accordion-item-content">
+              <div>
+                <p>What says on the box</p>
+              </div>
+
+              <div class="popup">
+                <p class="popup-trigger">Sensible defaults</p>
+                <div class="popup-content">
+                  Spend time building your site, not configuring LISN.
+                </div>
+              </div>
+
+              <div class="popup">
+                <p class="popup-trigger">Highly customizable</p>
+                <div class="popup-content">
+                  But if you want to tweak... go wild.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="peekable-trigger">
+          <h5 class="more">~~ View more ~~</h5>
+          <h5 class="less">~~ View less ~~</h5>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,349 @@
+/**
+ * @module Utils
+ */
+
+import * as MC from "@lisn/globals/minification-constants";
+import * as MH from "@lisn/globals/minification-helpers";
+
+import { Point, Vector, AtLeastOne } from "@lisn/globals/types";
+
+/**
+ * Round a number to the given decimal precision (default is 0).
+ *
+ * @param {} [numDecimal = 0]
+ *
+ * @category Math
+ */
+export const roundNumTo = (value: number, numDecimal = 0) => {
+  const multiplicationFactor = MH.pow(10, numDecimal);
+  return MH.round(value * multiplicationFactor) / multiplicationFactor;
+};
+
+/**
+ * Returns true if the given value is a valid _finite_ number.
+ *
+ * @category Validation
+ */
+export const isValidNum = (value: unknown): value is number =>
+  MH.isNumber(value) && MC.NUMBER.isFinite(value);
+
+/**
+ * If the given value is a valid _finite_ number, it is returned, otherwise
+ * the default is returned.
+ *
+ * @category Math
+ */
+export const toNum = <D extends number | false | null = 0>(
+  value: unknown,
+  defaultValue: D | 0 = 0,
+): number | D => {
+  const numValue = MH.isLiteralString(value) ? MH.parseFloat(value) : value;
+
+  // parseFloat will strip trailing non-numeric characters, so we check that
+  // the parsed number is equal to the string, if it was a string, using loose
+  // equality, in order to make sure the entire string was a number.
+  return isValidNum(numValue) && numValue == value ? numValue : defaultValue;
+};
+
+/**
+ * If the given value is a valid _finite integer_ number, it is returned,
+ * otherwise the default is returned.
+ *
+ * @category Math
+ */
+export const toInt = <D extends number | false | null = 0>(
+  value: unknown,
+  defaultValue: D | 0 = 0,
+): number | D => {
+  let numValue = toNum(value, null);
+  numValue = numValue === null ? numValue : MH.floor(numValue);
+
+  // Ensure that the parsed int equaled the original by loose equality.
+  return isValidNum(numValue) && numValue == value ? numValue : defaultValue;
+};
+
+/**
+ * If the given value is a valid non-negative _finite_ number, it is returned,
+ * otherwise the default is returned.
+ *
+ * @category Math
+ */
+export const toNonNegNum = <D extends number | false | null = 0>(
+  value: unknown,
+  defaultValue: D | 0 = 0,
+): number | D => {
+  const numValue = toNum(value, null);
+  return numValue !== null && numValue >= 0 ? numValue : defaultValue;
+};
+
+/**
+ * If the given value is a valid positive number, it is returned, otherwise the
+ * default is returned.
+ *
+ * @category Math
+ */
+export const toPosNum = <D extends number | false | null = 0>(
+  value: unknown,
+  defaultValue: D | 0 = 0,
+): number | D => {
+  const numValue = toNum(value, null);
+  return numValue !== null && numValue > 0 ? numValue : defaultValue;
+};
+
+/**
+ * Returns the given number bound by min and/or max value.
+ *
+ * If the value is not a valid number, then `defaultValue` is returned if given
+ * (_including if it is null_), otherwise `limits.min` if given and not null,
+ * otherwise `limits.max` if given and not null, or finally 0.
+ *
+ * If the value is outside the bounds, then:
+ * - if `defaultValue` is given, `defaultValue` is returned (_including if it
+ *   is null_)
+ * - otherwise, the min or the max value (whichever one is violated) is
+ *   returned
+ *
+ * @category Math
+ */
+export const toNumWithBounds = <D extends number | false | null = number>(
+  value: unknown,
+  limits: AtLeastOne<{ min: number | null; max: number | null }>,
+  defaultValue?: D,
+): number | D => {
+  const isDefaultGiven = defaultValue !== undefined;
+  const numValue = toNum(value, null);
+  const min = limits?.min ?? null;
+  const max = limits?.max ?? null;
+
+  let result: number | D;
+  if (!isValidNum(numValue)) {
+    result = isDefaultGiven ? defaultValue : (min ?? max ?? 0);
+  } else if (min !== null && numValue < min) {
+    result = isDefaultGiven ? defaultValue : min;
+  } else if (max !== null && numValue > max) {
+    result = isDefaultGiven ? defaultValue : max;
+  } else {
+    result = numValue;
+  }
+
+  return result;
+};
+
+/**
+ * Returns the largest absolute value among the given ones.
+ *
+ * The result is always positive.
+ *
+ * @category Math
+ */
+export const maxAbs = (...values: number[]) =>
+  MH.max(...values.map((v) => MH.abs(v)));
+
+/**
+ * Returns the smallest absolute value among the given ones.
+ *
+ * The result is always positive.
+ *
+ * @category Math
+ */
+export const minAbs = (...values: number[]) =>
+  MH.min(...values.map((v) => MH.abs(v)));
+
+/**
+ * Returns the value with the largest absolute value among the given ones.
+ *
+ * The result can be negative.
+ *
+ * @category Math
+ */
+export const havingMaxAbs = (...values: number[]): number =>
+  MH.lengthOf(values)
+    ? values.sort((a, b) => MH.abs(b) - MH.abs(a))[0]
+    : -MC.INFINITY;
+
+/**
+ * Returns the value with the smallest absolute value among the given ones.
+ *
+ * The result can be negative.
+ *
+ * @category Math
+ */
+export const havingMinAbs = (...values: number[]) =>
+  MH.lengthOf(values)
+    ? values.sort((a, b) => MH.abs(a) - MH.abs(b))[0]
+    : MC.INFINITY;
+
+/**
+ * Returns the angle (in radians) that the vector defined by the given x, y
+ * makes with the positive horizontal axis.
+ *
+ * The angle returned is in the range -PI to PI, not including -PI.
+ *
+ * @category Math
+ */
+export const hAngle = (x: number, y: number) =>
+  normalizeAngle(MC.MATH.atan2(y, x)); // ensure that -PI is transformed to +PI
+
+/**
+ * Normalizes the given angle (in radians) so that it's in the range -PI to PI,
+ * not including -PI.
+ *
+ * @category Math
+ */
+export const normalizeAngle = (a: number) => {
+  // ensure it's positive in the range 0 to 2 PI
+  while (a < 0 || a > MC.PI * 2) {
+    a += (a < 0 ? 1 : -1) * MC.PI * 2;
+  }
+
+  // then, if > PI, offset by - 2PI
+  return a > MC.PI ? a - MC.PI * 2 : a;
+};
+
+/**
+ * Converts the given angle in degrees to radians.
+ *
+ * @category Math
+ */
+export const degToRad = (a: number) => (a * MC.PI) / 180;
+
+/**
+ * Converts the given angle in radians to degrees.
+ *
+ * @category Math
+ */
+export const radToDeg = (a: number) => (a * 180) / MC.PI;
+
+/**
+ * Returns true if the given vectors point in the same direction.
+ *
+ * @param {} angleDiffThreshold
+ *                  Sets the threshold in degrees when comparing the angles of
+ *                  two vectors. E.g. for 5 degrees threshold, directions
+ *                  whose vectors are within 5 degrees of each other are
+ *                  considered parallel.
+ *                  It doesn't make sense for this value to be < 0 or >= 90
+ *                  degrees. If it is, it's forced to be positive (absolute)
+ *                  and <= 89.99.
+ *
+ * @category Math
+ */
+export const areParallel = (vA: Vector, vB: Vector, angleDiffThreshold = 0) => {
+  const angleA = hAngle(vA[0], vA[1]);
+  const angleB = hAngle(vB[0], vB[1]);
+  angleDiffThreshold = MH.min(89.99, MH.abs(angleDiffThreshold));
+
+  return (
+    MH.abs(normalizeAngle(angleA - angleB)) <= degToRad(angleDiffThreshold)
+  );
+};
+
+/**
+ * Returns true if the given vectors point in the opposite direction.
+ *
+ * @param {} angleDiffThreshold
+ *                  Sets the threshold in degrees when comparing the angles of
+ *                  two vectors. E.g. for 5 degrees threshold, directions
+ *                  whose vectors are within 175-185 degrees of each other are
+ *                  considered antiparallel.
+ *                  It doesn't make sense for this value to be < 0 or >= 90
+ *                  degrees. If it is, it's forced to be positive (absolute)
+ *                  and <= 89.99.
+ *
+ * @category Math
+ */
+export const areAntiParallel = (
+  vA: Vector,
+  vB: Vector,
+  angleDiffThreshold = 0,
+) => areParallel(vA, [-vB[0], -vB[1]], angleDiffThreshold);
+
+/**
+ * Returns the distance between two points on the screen.
+ *
+ * @category Math
+ */
+export const distanceBetween = (ptA: Point, ptB: Point) =>
+  MH.sqrt(MH.pow(ptA[0] - ptB[0], 2) + MH.pow(ptA[1] - ptB[1], 2));
+
+/**
+ * Returns the two roots of the quadratic equation with coefficients
+ * `a`, `b` & `c`, i.e. `a * x^2 + b * x + c = 0`
+ *
+ * The roots may be `NaN` if the quadratic has no real solutions.
+ *
+ * @category Math
+ */
+export const quadraticRoots = (a: number, b: number, c: number) => {
+  const z = MH.sqrt(b * b - 4 * a * c);
+  return [(-b + z) / (2 * a), (-b - z) / (2 * a)];
+};
+
+/**
+ * Returns the value that an "easing" quadratic function would have at the
+ * given x.
+ *
+ * @see https://easings.net/#easeInOutQuad
+ *
+ * @category Math
+ */
+export const easeInOutQuad = (x: number) =>
+  x < 0.5 ? 2 * x * x : 1 - MH.pow(-2 * x + 2, 2) / 2;
+
+/**
+ * Returns an array of object's keys sorted by the numeric value they hold.
+ *
+ * @category Math
+ */
+export const sortedKeysByVal = <T extends Record<string, number>>(
+  obj: T,
+  descending = false,
+): Array<keyof T> => {
+  if (descending) {
+    return MH.keysOf(obj).sort((x: keyof T, y: keyof T) => obj[y] - obj[x]);
+  }
+
+  return MH.keysOf(obj).sort((x: keyof T, y: keyof T) => obj[x] - obj[y]);
+};
+
+/**
+ * Returns the key in the given object which holds the largest numeric value.
+ *
+ * If the object is empty, returns `undefined`.
+ *
+ * @category Math
+ */
+export const keyWithMaxVal = (
+  obj: Record<string, number>,
+): string | undefined => {
+  return sortedKeysByVal(obj).slice(-1)[0];
+};
+
+/**
+ * Returns the key in the given object which holds the smallest numeric value.
+ *
+ * If the object is empty, returns `undefined`.
+ *
+ * @category Math
+ */
+export const keyWithMinVal = (
+  obj: Record<string, number>,
+): string | undefined => {
+  return sortedKeysByVal(obj).slice(0, 1)[0];
+};
+
+/**
+ * Takes two integers and returns a bitmask that covers all values between
+ * 1 << start and 1 << end, _including the starting and ending one_.
+ *
+ * If pStart > pEnd, they are reversed.
+ *
+ * getBitmask(start, start) always returns 1 << start
+ * getBitmask(start, end) always returns same as getBitmask(end, start)
+ *
+ * @category Math
+ */
+export const getBitmask = (start: number, end: number): number =>
+  start > end
+    ? getBitmask(end, start)
+    : (~0 >>> (32 - end - 1 + start)) << start;

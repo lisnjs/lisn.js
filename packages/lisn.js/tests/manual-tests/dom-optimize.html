@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+  </head>
+  <body>
+    <p>
+      Start performance recording, then click button below to schedule tasks.
+      Inspect the performance for forced layouts.
+    </p>
+    <button onclick="scheduleTasks()">Schedule tasks</button>
+
+    <script charset="utf-8">
+      const { waitForMutateTime, waitForMeasureTime } = LISN.utils;
+
+      function mutate(msg) {
+        console.log(msg, "inserting el");
+        const el = document.createElement("div");
+        el.style.setProperty("height", "10px");
+        document.body.append(el);
+      }
+
+      function measure(msg) {
+        console.log(msg, document.body.offsetHeight);
+      }
+
+      function runAndScheduleSubTasks(prefix) {
+        const canRecurse = !prefix.includes(" >> ");
+        if (prefix.split(" ").slice(-1)[0].includes("measurement")) {
+          measure(prefix);
+        } else {
+          mutate(prefix);
+
+          if (!canRecurse) {
+            waitForMeasureTime().then(() => {
+              measure(`${prefix} >> final measurement`);
+            });
+          }
+        }
+
+        if (canRecurse) {
+          waitForMeasureTime().then(() => {
+            runAndScheduleSubTasks(`${prefix} >> measurement1`);
+          });
+
+          waitForMutateTime().then(() => {
+            runAndScheduleSubTasks(`${prefix} >> mutation1`);
+          });
+
+          waitForMeasureTime().then(() => {
+            runAndScheduleSubTasks(`${prefix} >> measurement2`);
+          });
+
+          waitForMutateTime().then(() => {
+            runAndScheduleSubTasks(`${prefix} >> mutation2`);
+          });
+        }
+      }
+
+      function scheduleTasks() {
+        waitForMeasureTime().then(() => {
+          runAndScheduleSubTasks("measurement1");
+        });
+
+        waitForMutateTime().then(() => {
+          runAndScheduleSubTasks("mutation1");
+        });
+
+        waitForMeasureTime().then(() => {
+          runAndScheduleSubTasks("measurement2");
+        });
+
+        waitForMutateTime().then(() => {
+          runAndScheduleSubTasks("mutation2");
+        });
+      }
+    </script>
+  </body>
+</html>

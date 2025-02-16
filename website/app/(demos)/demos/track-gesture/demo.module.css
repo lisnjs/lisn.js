@@ -1,0 +1,101 @@
+.demo {
+  --max-offset: 240px;
+  background: var(--bg-color);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.plane[data-plane] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.spacer,
+.background {
+  transition-duration: 0.25s;
+  transition-timing-function: linear;
+}
+
+.background {
+  pointer-events: none;
+  width: 100%;
+  height: calc(100% + var(--max-offset));
+  object-fit: cover;
+  overflow-clip-margin: unset;
+  transition-property: transform;
+  transform-origin: 50% 65%;
+}
+
+.spacer {
+  transition-property: height;
+  min-height: 0px;
+}
+
+/* Per-plane transforms */
+.plane[data-plane="4"] .background {
+  margin-top: 0;
+  transform: scale(calc(0.05 * var(--lisn-js--zoom-delta-z, 1) + 0.95));
+}
+
+.plane[data-plane="3"] .background {
+  margin-top: calc(-1 * var(--max-offset) / 3);
+  transform: scale(calc(0.2 * var(--lisn-js--zoom-delta-z, 1) + 0.8));
+}
+
+.plane[data-plane="3"] .spacer {
+  height: calc(
+    var(--max-offset) / 3 - 1px * var(--lisn-js--scroll-delta-y, 0) / 12
+  );
+  max-height: calc(var(--max-offset) / 3);
+}
+
+.plane[data-plane="2"] .background {
+  margin-top: calc(-1 * var(--max-offset) / 2);
+  transform: scale(calc(0.4 * var(--lisn-js--zoom-delta-z, 1) + 0.6));
+}
+
+.plane[data-plane="2"] .spacer {
+  height: calc(
+    var(--max-offset) / 2 - 1px * var(--lisn-js--scroll-delta-y, 0) / 8
+  );
+  max-height: calc(var(--max-offset) / 2);
+}
+
+.plane[data-plane="1"] .background {
+  margin-top: calc(-1 * var(--max-offset));
+  transform: scale(calc(0.6 * var(--lisn-js--zoom-delta-z, 1) + 0.4));
+}
+
+.plane[data-plane="1"] .spacer {
+  height: calc(var(--max-offset) - 1px * var(--lisn-js--scroll-delta-y, 0) / 4);
+  max-height: var(--max-offset);
+}
+
+/* Misc styles */
+.demo h1 {
+  text-align: center;
+  color: #03505c;
+  z-index: 10;
+  position: relative;
+  font-weight: 400;
+  margin-top: 25vh;
+  margin-left: 4vw;
+  mix-blend-mode: multiply;
+}
+
+.license {
+  position: fixed;
+  bottom: 10px;
+  right: 20px;
+  color: #6bb6c4;
+  font-size: 14px;
+}

@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        background: lightblue;
+        position: relative;
+      }
+
+      [data-lisn-pager] {
+        margin: 25vw auto;
+        width: 50vw;
+        height: 50vh;
+      }
+
+      [data-lisn-pager] > * {
+        background: lightyellow;
+      }
+
+      [data-lisn-pager] .buttons {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+      }
+
+      [data-lisn-pager] .buttons > div {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      [data-lisn-pager] .buttons button {
+        padding: 5px;
+        border: none;
+        box-shadow: rgba(1, 1, 1, 0.2) 0px 0px 1px 1px;
+        background: rgba(220, 220, 255);
+        margin: 0 10px;
+      }
+
+      [data-lisn-pager] .buttons button.toggle-btn {
+        background: rgba(220, 255, 220);
+      }
+
+      [data-lisn-pager] .buttons button.toggle-btn.disabled {
+        background: rgba(255, 220, 220);
+      }
+
+      [data-lisn-pager]
+        .buttons
+        button.toggle-btn:not(.disabled)
+        .disabled-icon {
+        display: none;
+      }
+
+      [data-lisn-pager] .buttons button.toggle-btn.disabled .enabled-icon {
+        display: none;
+      }
+
+      .lisn-pager-page,
+      [data-lisn-pager-page] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      data-lisn-pager="use-gestures=false"
+      data-lisn-on-click="
+                   @prev-page+one-way+target=#prevPageBtn ;
+                   @next-page+one-way+target=#nextPageBtn ;
+                   @go-to-page:1+one-way+target=#toPage1Btn ;
+                   @go-to-page:2+one-way+target=#toPage2Btn ;
+                   @go-to-page:3+one-way+target=#toPage3Btn ;
+                   @go-to-page:4+one-way+target=#toPage4Btn ;
+                   @disable-page:1+target=#togglePage1Btn ;
+                   @disable-page:2+target=#togglePage2Btn ;
+                   @disable-page:3+target=#togglePage3Btn ;
+                   @disable-page:4+target=#togglePage4Btn"
+    >
+      <div class="lisn-pager-page">Page 1.1</div>
+      <div data-lisn-pager-page>Page 1.2</div>
+      <div data-lisn-pager-page>Page 1.3</div>
+      <div data-lisn-pager-page>Page 1.4</div>
+
+      <div class="buttons">
+        <div>
+          <button id="prevPageBtn">&lt;&lt;</button>
+          <button id="toPage1Btn">&nbsp;1&nbsp;</button>
+          <button id="toPage2Btn">&nbsp;2&nbsp;</button>
+          <button id="toPage3Btn">&nbsp;3&nbsp;</button>
+          <button id="toPage4Btn">&nbsp;4&nbsp;</button>
+          <button id="nextPageBtn">&gt;&gt;</button>
+        </div>
+
+        <div>
+          <button
+            class="toggle-btn"
+            id="togglePage1Btn"
+            data-lisn-on-click="@add-class:disabled"
+          >
+            <span class="enabled-icon">&#x2299;</span>
+            <span class="disabled-icon">&#x2298;</span>
+          </button>
+
+          <button
+            class="toggle-btn"
+            id="togglePage2Btn"
+            data-lisn-on-click="@add-class:disabled"
+          >
+            <span class="enabled-icon">&#x2299;</span>
+            <span class="disabled-icon">&#x2298;</span>
+          </button>
+
+          <button
+            class="toggle-btn"
+            id="togglePage3Btn"
+            data-lisn-on-click="@add-class:disabled"
+          >
+            <span class="enabled-icon">&#x2299;</span>
+            <span class="disabled-icon">&#x2298;</span>
+          </button>
+
+          <button
+            class="toggle-btn"
+            id="togglePage4Btn"
+            data-lisn-on-click="@add-class:disabled"
+          >
+            <span class="enabled-icon">&#x2299;</span>
+            <span class="disabled-icon">&#x2298;</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

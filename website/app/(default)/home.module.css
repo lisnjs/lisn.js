@@ -1,0 +1,34 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: space-between;
+  gap: 3vw;
+  padding: 10vh 10vw;
+  font-size: 22px;
+  font-size: clamp(20px, calc(13px + 2vw), 24px);
+  min-height: 80vh;
+}
+
+.banner .intro {
+  flex-basis: 60%;
+  min-width: 300px;
+  font-weight: 400;
+  font-size: 1.1em;
+  margin-top: 20vh;
+}
+
+.banner .title {
+  margin-left: auto;
+  margin-bottom: -20vh;
+  font-size: 60px;
+  font-size: clamp(50px, calc(40px + 2vw), 70px);
+  font-style: normal;
+}
+
+.banner .title h1 {
+  margin: 0;
+}
+
+.banner .title .tiny {
+  font-size: 0.6em;
+}

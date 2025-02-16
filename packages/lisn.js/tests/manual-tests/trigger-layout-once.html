@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        height: 100vh;
+      }
+
+      .fixed {
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+
+      .foo {
+        height: 20px;
+        border: solid 1px black;
+      }
+
+      .foo.yellow {
+        background: yellow;
+      }
+
+      .foo.shadow {
+        box-shadow: 2px 2px grey;
+      }
+
+      .foo.active {
+        border: solid 2px red;
+      }
+
+      .lisn-overlay {
+        background: blue;
+        opacity: 0.2;
+        min-height: 10px;
+        z-index: 10;
+      }
+
+      .msg {
+        height: 20px;
+        color: lightgrey;
+        border: solid 1px black;
+      }
+
+      .msg.active {
+        color: black;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="lisn-modal lisn-on-layout--mobile-wide@open+once">
+      <p>
+        MOBILE WIDE Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+        do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+        ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+        aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit
+        in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+        Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
+        officia deserunt mollit anim id est laborum.
+      </p>
+    </div>
+
+    <div class="lisn-modal" data-lisn-on-layout="desktop@open+once">
+      <p>
+        DESKTOP Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+        eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
+        minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
+        ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
+        voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur
+        sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
+        mollit anim id est laborum.
+      </p>
+    </div>
+
+    <div class="fixed">
+      <div
+        class="foo lisn-on-layout--tablet@add-class:shadow"
+        data-lisn-on-layout="max mobile-wide @add-class:active +once ; desktop @add-class:yellow"
+      >
+        active on max mobile-wide, shadow on tablet, yellow on desktop
+      </div>
+      <div
+        class="foo lisn-on-layout--tablet@add-class:shadow"
+        data-lisn-on-layout="max mobile @add-class:active,yellow +once"
+      >
+        active yellow on (max) mobile, shadow on tablet
+      </div>
+      <div class="msg" data-lisn-on-layout="mobile @add-class:active +once">
+        mobile
+      </div>
+      <div class="msg" data-lisn-on-layout="min mobile @add-class:active +once">
+        min mobile
+      </div>
+      <div class="msg" data-lisn-on-layout="max mobile @add-class:active +once">
+        max mobile
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="mobile-wide @add-class:active +once"
+      >
+        mobile-wide
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="min mobile-wide @add-class:active +once"
+      >
+        min mobile-wide
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="max mobile-wide @add-class:active +once"
+      >
+        max mobile-wide
+      </div>
+      <div class="msg" data-lisn-on-layout="tablet @add-class:active +once">
+        tablet
+      </div>
+      <div class="msg" data-lisn-on-layout="min tablet @add-class:active +once">
+        min tablet
+      </div>
+      <div class="msg" data-lisn-on-layout="max tablet @add-class:active +once">
+        max tablet
+      </div>
+      <div class="msg" data-lisn-on-layout="desktop @add-class:active +once">
+        desktop
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="min desktop @add-class:active +once"
+      >
+        min desktop
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="max desktop @add-class:active +once"
+      >
+        max desktop
+      </div>
+
+      <div class="msg" data-lisn-on-layout="very-wide @add-class:active +once">
+        very-wide
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="min very-wide @add-class:active +once"
+      >
+        min very-wide
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="max very-wide @add-class:active +once"
+      >
+        max very-wide
+      </div>
+      <div class="msg" data-lisn-on-layout="wide @add-class:active +once">
+        wide
+      </div>
+      <div class="msg" data-lisn-on-layout="min wide @add-class:active +once">
+        min wide
+      </div>
+      <div class="msg" data-lisn-on-layout="max wide @add-class:active +once">
+        max wide
+      </div>
+      <div class="msg" data-lisn-on-layout="square @add-class:active +once">
+        square
+      </div>
+      <div class="msg" data-lisn-on-layout="min square @add-class:active +once">
+        min square
+      </div>
+      <div class="msg" data-lisn-on-layout="max square @add-class:active +once">
+        max square
+      </div>
+      <div class="msg" data-lisn-on-layout="tall @add-class:active +once">
+        tall
+      </div>
+      <div class="msg" data-lisn-on-layout="min tall @add-class:active +once">
+        min tall
+      </div>
+      <div class="msg" data-lisn-on-layout="max tall @add-class:active +once">
+        max tall
+      </div>
+      <div class="msg" data-lisn-on-layout="very-tall @add-class:active +once">
+        very-tall
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="min very-tall @add-class:active +once"
+      >
+        min very-tall
+      </div>
+      <div
+        class="msg"
+        data-lisn-on-layout="max very-tall @add-class:active +once"
+      >
+        max very-tall
+      </div>
+    </div>
+  </body>
+</html>

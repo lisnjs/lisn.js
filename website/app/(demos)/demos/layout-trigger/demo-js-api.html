@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Layout trigger (JS API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="assets/css/common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+    </script>
+
+    <script id="main-js" charset="utf-8">
+      document.addEventListener("DOMContentLoaded", () => {
+        const layoutMapping = {
+          "mobile-wide": "mobile (landscape)",
+          square: "roughly square",
+        };
+
+        const formatLayout = (l) => (layoutMapping[l] ?? l).replace(/-/g, " ");
+
+        const main = document.getElementById("demo");
+        const box = main.querySelector(".box");
+        const windowLayout = main.querySelector(".window-layout");
+        const boxLayout = main.querySelector(".box-layout");
+
+        LISN.watchers.LayoutWatcher.reuse().onLayout((layout) => {
+          windowLayout.innerText =
+            `This is a ${formatLayout(layout.device)} device ` +
+            `with a ${formatLayout(layout.aspectRatio)} aspect ratio.`;
+        });
+
+        LISN.watchers.LayoutWatcher.create({ root: box }).onLayout((layout) => {
+          boxLayout.innerText =
+            `The resizable box below has a ${formatLayout(layout.device)} width ` +
+            `and a ${formatLayout(layout.aspectRatio)} aspect ratio.`;
+        });
+
+        const msg = document.getElementById("msg");
+        // or you could use LayoutWatcher directly and show/hide the element in your callback
+        new LISN.triggers.LayoutTrigger(msg, [new LISN.actions.Show(msg)], {
+          layout: "max tablet",
+        });
+      });
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      #demo {
+        text-align: center;
+        width: 100%;
+        padding: 1em;
+      }
+
+      #demo .box {
+        margin: 0 auto;
+        width: 400px;
+        height: 400px;
+        resize: both;
+        background: #28283f;
+        box-shadow: var(--lisn-shadow);
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <main id="main-html">
+      <h4 id="msg">This demo is best viewed on a computer.</h4>
+
+      <div id="demo">
+        <p class="window-layout"></p>
+        <p class="box-layout"></p>
+        <div class="box"></div>
+      </div>
+    </main>
+  </body>
+</html>

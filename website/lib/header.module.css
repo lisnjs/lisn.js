@@ -1,0 +1,25 @@
+.header {
+  z-index: 100;
+  position: relative;
+  font-size: 16px;
+  padding: 5px;
+  display: flex;
+  flex-wrap: wrap-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5em;
+}
+
+.header .version {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.header .links {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5em;
+}

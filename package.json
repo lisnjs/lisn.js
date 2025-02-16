@@ -1,0 +1,67 @@
+{
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "website",
+    "packages/*",
+    "packages/@lisn.js/*"
+  ],
+  "devDependencies": {
+    "@babel/cli": "^7.26.4",
+    "@babel/core": "^7.26.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.26.3",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-typescript": "^7.26.0",
+    "@eslint/js": "^9.20.0",
+    "@next/eslint-plugin-next": "^15.1.7",
+    "@types/eslint__js": "^8.42.3",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "cssnano": "^7.0.6",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.13.0",
+    "markdown-to-html-cli": "^5.0.3",
+    "postcss": "^8.4.49",
+    "postcss-cli": "^11.0.0",
+    "postcss-import": "^16.1.0",
+    "postcss-preset-env": "^10.1.2",
+    "prettier": "^3.5.0",
+    "remark-cli": "^12.0.1",
+    "remark-toc": "^9.0.0",
+    "sass": "^1.84.0",
+    "tsc-alias": "^1.8.10",
+    "typedoc": "^0.27.5",
+    "typedoc-plugin-merge-modules": "^6.1.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.24.0"
+  },
+  "scripts": {
+    "test": "npm run test --workspace=lisn.js && npm run test --workspace=@lisn.js/react",
+    "dist": "npm run dist --workspace=lisn.js && npm run dist --workspace=@lisn.js/react",
+    "doc": "npm run doc --workspace=lisn.js",
+    "web:changelog": "npx markdown-to-html --source packages/lisn.js/CHANGELOG.md --output website/public/changelog/index.html",
+    "web:build": "npm run build --workspace=lisnjs.github.io",
+    "web:deploy": "npm run deploy --workspace=lisnjs.github.io",
+    "web": "npm run doc && npm run web:changelog && npm run web:build && npm run web:deploy"
+  },
+  "markdown-to-html": {
+    "document": {
+      "title": "LISN.js | Changelog",
+      "description": "LISN handles all complexities so you can simply handle user gestures, actions and events.",
+      "meta": [
+        {
+          "description": "LISN handles all complexities so you can simply handle user gestures, actions and events."
+        },
+        {
+          "keywords": "lisn,lisn.js,gesture,interaction,interactive,user action,action trigger,event,scrollbar,pager,slider,carousel,modal,popup,collapsible,sortable"
+        }
+      ]
+    },
+    "github-corners": "https://github.com/lisnjs/lisn.js",
+    "reurls": {
+      "README.md": "https://lisnjs/github.io/"
+    }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

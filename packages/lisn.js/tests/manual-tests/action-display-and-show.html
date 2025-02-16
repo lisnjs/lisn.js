@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- Just as an example of achieving this by chaining actions and trigger delays -->
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .box {
+        width: 200px;
+        height: 200px;
+        background: lightblue;
+      }
+
+      .outline {
+        border: solid 1px grey;
+      }
+    </style>
+  </head>
+  <body>
+    <button type="button" id="startBtn">Click to display and show</button>
+    <button type="button" id="startHBtn">Hover to display and show</button>
+
+    <div class="outline">
+      <div
+        class="box"
+        data-lisn-on-run="@display +undo-delay=1000 +id=dt ; @show +do-delay=50 +id=st"
+        data-lisn-on-click="@run:dt,st +target=#startBtn"
+        data-lisn-on-hover="@run:dt,st +target=#startHBtn"
+      ></div>
+    </div>
+  </body>
+</html>

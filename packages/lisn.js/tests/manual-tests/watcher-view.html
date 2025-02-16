@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      input {
+        background: transparent;
+      }
+
+      #root-outline {
+        position: fixed;
+        top: 10vh;
+        left: 10vw;
+        width: 80vw;
+        height: 80vh;
+        box-sizing: border-box;
+        border: solid 1px grey;
+        background: lightblue;
+        z-index: -1;
+      }
+
+      body {
+        min-height: 2000px;
+      }
+
+      #box {
+        width: 100px;
+        height: 100px;
+        background: orange;
+        resize: both;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      There is a ViewWatcher with onView on the viewport with a root margin of
+      -10%. The blue box visualizes the effective root (viewport with 10%
+      padding). Scroll, move or scale the box and watch the console for view
+      changes. You can also use arrow keys and +/- to move and scale.
+    </p>
+
+    <div id="root-outline"></div>
+    <div id="box"></div>
+
+    <div>
+      <label for="xOffset">x offset (in px)</label>
+      <input type="number" value="0" id="xOffset" step="10" />
+    </div>
+
+    <div>
+      <label for="yOffset">y offset (in px)</label>
+      <input type="number" value="0" id="yOffset" step="10" />
+    </div>
+
+    <div>
+      <label for="xScale">x scale (in %)</label>
+      <input type="number" value="100" id="xScale" step="10" />
+    </div>
+
+    <div>
+      <label for="yScale">y scale (in %)</label>
+      <input type="number" value="100" id="yScale" step="10" />
+    </div>
+
+    <script charset="utf-8">
+      const box = document.getElementById("box");
+
+      const inputs = {};
+      for (const el of document.getElementsByTagName("input")) {
+        inputs[el.id] = el;
+        el.addEventListener("change", updateStyle);
+      }
+
+      const logger = new LISN.debug.Logger();
+      const watcher = LISN.watchers.ViewWatcher.reuse({
+        rootMargin: "-10% -10% -10% -10%",
+      });
+      watcher.onView(box, (e, v) =>
+        logger.log(v.views, v.rootBounds, v.relative),
+      );
+
+      function updateStyle() {
+        box.style.setProperty(
+          "transform",
+          `translate(${inputs.xOffset.value}px, ${inputs.yOffset.value}px) ` +
+            `scale(${inputs.xScale.value / 100}, ${inputs.yScale.value / 100})`,
+        );
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.target.tagName === "INPUT") {
+          return;
+        }
+
+        switch (event.key) {
+          case "ArrowUp":
+            inputs.yOffset.value = Number(inputs.yOffset.value) - 10;
+            break;
+          case "ArrowDown":
+            inputs.yOffset.value = Number(inputs.yOffset.value) + 10;
+            break;
+          case "ArrowLeft":
+            inputs.xOffset.value = Number(inputs.xOffset.value) - 10;
+            break;
+          case "ArrowRight":
+            inputs.xOffset.value = Number(inputs.xOffset.value) + 10;
+            break;
+          case "+":
+            inputs.xScale.value = Number(inputs.xScale.value) + 10;
+            inputs.yScale.value = Number(inputs.yScale.value) + 10;
+            break;
+          case "-":
+            inputs.xScale.value = Number(inputs.xScale.value) - 10;
+            inputs.yScale.value = Number(inputs.yScale.value) - 10;
+            break;
+          default:
+            return;
+        }
+        event.preventDefault();
+        updateStyle();
+      });
+    </script>
+  </body>
+</html>

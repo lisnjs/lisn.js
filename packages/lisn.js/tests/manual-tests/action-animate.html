@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .animate__animated,
+      .web-animation {
+        width: 200px;
+        height: 200px;
+        background: pink;
+      }
+
+      .flex {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <button type="button" id="startBtn">Click to toggle animate</button>
+    <button type="button" id="startHBtn">Hover to animate</button>
+
+    <div class="flex">
+      <div
+        class="animate__animated animate__fadeInUp"
+        data-lisn-on-click="@animate+target=#startBtn"
+        data-lisn-on-hover="@animate+target=#startHBtn"
+      >
+        With CSS animation
+      </div>
+
+      <div
+        class="web-animation"
+        data-lisn-on-click="@animate+target=#startBtn"
+        data-lisn-on-hover="@animate+target=#startHBtn"
+      >
+        With web animation
+      </div>
+
+      <div
+        class="animate__animated animate__fadeInUp"
+        data-lisn-on-click="@animate+target=#startBtn"
+        data-lisn-on-hover="@animate+target=#startHBtn"
+        data-lisn-test-legacy
+      >
+        Legacy
+      </div>
+
+      <div
+        class="animate__animated animate__fadeInUp"
+        data-lisn-on-click="@animate+target=#startBtn"
+        data-lisn-test-legacy
+      >
+        Legacy (click only)
+      </div>
+
+      <div
+        class="animate__animated animate__fadeInUp"
+        data-lisn-on-hover="@animate+target=#startHBtn"
+        data-lisn-test-legacy
+      >
+        Legacy (hover only)
+      </div>
+    </div>
+
+    <script charset="utf-8">
+      const fadeInUp = [
+        { opacity: 0, transform: "translate3d(0,100%,0)" },
+        { opacity: 1, transform: "translateZ(0)" },
+      ];
+      const timing = {
+        duration: 1000,
+        easing: "ease",
+        iterations: 1,
+        fill: "both",
+      };
+
+      for (const el of document.querySelectorAll(".web-animation")) {
+        el.animate(fadeInUp, timing);
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,39 @@
+.lisn-same-height__root {
+  background-color: lightgrey;
+}
+
+.lisn-same-height__root img {
+  width: 100%;
+}
+
+.lisn-same-height__root > div:nth-child(odd) {
+  background-color: lightblue;
+}
+
+.lisn-same-height__root > div:nth-child(even) {
+  background-color: lightyellow;
+}
+
+.lisn-same-height__root.wide {
+  max-width: 1200px;
+}
+
+.lisn-same-height__root.narrow {
+  max-width: 400px;
+}
+
+.lisn-same-height__root > .large {
+  font-size: 24px;
+}
+
+.lisn-same-height__root > .cropV img {
+  margin: -20% 0;
+}
+
+.lisn-same-height__root > .cropH img {
+  margin: 0 -20%;
+}
+
+button {
+  margin: 10px 0;
+}

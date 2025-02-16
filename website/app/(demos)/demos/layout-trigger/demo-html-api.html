@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Layout trigger (HTML API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="assets/css/common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      #demo {
+        text-align: center;
+        width: 100%;
+        padding: 1em;
+      }
+
+      #demo .box {
+        margin: 0 auto;
+        width: 400px;
+        height: 400px;
+        resize: both;
+        background: #28283f;
+        box-shadow: var(--lisn-shadow);
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <main id="main-html">
+      <h4 data-lisn-on-layout="max tablet @show">
+        This demo is best viewed on a computer.
+      </h4>
+
+      <div id="demo">
+        <p>
+          This is a
+          <span data-lisn-on-layout="mobile @display">mobile</span>
+          <span data-lisn-on-layout="mobile-wide @display"
+            >mobile (landscape)</span
+          >
+          <span data-lisn-on-layout="tablet @display">tablet</span>
+          <span data-lisn-on-layout="desktop @display">desktop</span>
+          device with a
+          <span data-lisn-on-layout="very-wide @display">very-wide</span>
+          <span data-lisn-on-layout="wide @display">wide</span>
+          <span data-lisn-on-layout="square @display">roughly square</span>
+          <span data-lisn-on-layout="tall @display">tall</span>
+          <span data-lisn-on-layout="very-tall @display">very tall</span>
+          aspect ratio.
+        </p>
+
+        <p>
+          The resizable box below has a
+          <span data-lisn-on-layout="mobile @display +root=next.box"
+            >mobile</span
+          >
+          <span data-lisn-on-layout="mobile-wide @display +root=next.box"
+            >mobile (landscape)</span
+          >
+          <span data-lisn-on-layout="tablet @display +root=next.box"
+            >tablet</span
+          >
+          <span data-lisn-on-layout="desktop @display +root=next.box"
+            >desktop</span
+          >
+          width and a
+          <span data-lisn-on-layout="very-wide @display +root=next.box"
+            >very-wide</span
+          >
+          <span data-lisn-on-layout="wide @display +root=next.box">wide</span>
+          <span data-lisn-on-layout="square @display +root=next.box"
+            >roughly square</span
+          >
+          <span data-lisn-on-layout="tall @display +root=next.box">tall</span>
+          <span data-lisn-on-layout="very-tall @display +root=next.box"
+            >very tall</span
+          >
+          aspect ratio.
+        </p>
+
+        <div class="box"></div>
+      </div>
+    </main>
+  </body>
+</html>

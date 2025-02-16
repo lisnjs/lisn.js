@@ -1,0 +1,28 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+@use "./_spinner.scss";
+
+.lisn-page-loader__root {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  min-width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 100vw;
+  max-height: 100vh;
+  max-height: 100dvh;
+  z-index: 999999;
+  background: var(--lisn-page-loader--bg, #{$page-loader-bg});
+
+  & .lisn-spinner {
+    --lisn-spinner--size: var(--lisn-page-loader--size, #{$page-loader-size});
+    --lisn-spinner--thickness: var(
+      --lisn-page-loader--thickness,
+      #{$page-loader-thickness}
+    );
+    --lisn-spinner--color: var(--lisn-page-loader--fg, #{$page-loader-fg});
+  }
+}

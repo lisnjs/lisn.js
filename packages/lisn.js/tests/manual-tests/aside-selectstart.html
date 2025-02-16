@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      #target {
+        width: 400px;
+        height: 300px;
+        background: lightblue;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+      }
+
+      button {
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="target">
+      <p>Press and hold.</p>
+      <img
+        width="200"
+        src="https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@1.5x.png"
+      />
+      <button>Press and hold</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script charset="utf-8">
+      const target = document.getElementById("target");
+      const logEl = document.getElementById("log");
+      target.addEventListener("selectstart", (e) => {
+        e.preventDefault();
+        logEl.innerText += "x";
+      });
+    </script>
+  </body>
+</html>

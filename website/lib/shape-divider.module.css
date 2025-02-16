@@ -1,0 +1,21 @@
+.divider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  z-index: -1;
+}
+
+.divider svg {
+  position: relative;
+  display: block;
+  width: calc(130% + 1.3px);
+  height: 460px;
+}
+
+.divider path {
+  fill: var(--bg-color-lighter);
+  filter: drop-shadow(0px 3px 2px rgba(15, 15, 25, 0.3));
+}

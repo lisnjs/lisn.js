@@ -1,0 +1,59 @@
+@use "./_mixins.scss" as *;
+
+.lisn-hide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.lisn-hide-scroll {
+  scrollbar-width: none;
+}
+
+body[data-lisn-has-modal] {
+  overflow: hidden;
+}
+
+.lisn-border-size {
+  box-sizing: border-box;
+}
+
+.lisn-undisplay {
+  display: none !important;
+}
+
+.lisn-no-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.lisn-no-touch-action {
+  touch-action: none;
+}
+
+.lisn-ghost {
+  @include abs;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1000;
+}
+
+.lisn-wrapper {
+  position: relative;
+}
+
+.lisn-wrapper-inline {
+  width: fit-content;
+  display: inline-block;
+}
+
+.lisn-overlay-container {
+  position: relative;
+}
+
+.lisn-overlay {
+  pointer-events: none;
+  z-index: -99999;
+  visibility: hidden;
+  contain: strict;
+}

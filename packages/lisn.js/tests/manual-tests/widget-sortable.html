@@ -1,0 +1,184 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        position: relative;
+      }
+
+      .box {
+        min-height: 70px;
+        background: lightblue;
+      }
+
+      .box:nth-of-type(even) {
+        background: lightyellow;
+      }
+
+      .spacer {
+        height: 50px;
+        position: relative;
+      }
+
+      .spacer::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 0;
+        height: 1px;
+        width: 100%;
+        background: grey;
+      }
+
+      .flex {
+        display: flex;
+        gap: 20px;
+      }
+
+      .flex > * {
+        flex-grow: 1;
+      }
+
+      .sticky {
+        position: sticky;
+        background: white;
+        z-index: 10;
+        top: 0;
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sticky">
+      <button onclick="disable()">Disable all</button>
+      <button onclick="enable()">Enable all</button>
+      <button onclick="disableItem2()">
+        Disable Item 2 (by original order) everywhere
+      </button>
+      <button onclick="enableItem2()">
+        Enable Item 2 (by original order) everywhere
+      </button>
+      <button onclick="disableItem2(true)">
+        Disable Item 2 (by current order) everywhere
+      </button>
+      <button onclick="enableItem2(true)">
+        Enable Item 2 (by current order) everywhere
+      </button>
+    </div>
+
+    <div class="lisn-sortable sortable">
+      <div class="box">Item 1</div>
+      <div class="box">Item 2</div>
+      <div class="box">Item 3</div>
+      <div class="box">Item 4</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="lisn-sortable sortable flex">
+      <div>
+        <div class="box lisn-sortable-item">Item 1</div>
+        <div class="box">Ignored</div>
+        <div class="box lisn-sortable-item">Item 2</div>
+        <div class="box">Ignored</div>
+        <div class="box lisn-sortable-item">Item 3</div>
+        <div class="box lisn-sortable-item">Item 4</div>
+      </div>
+
+      <div>
+        <div class="box" data-lisn-sortable-item>Other item 1</div>
+        <div class="box">Other ignored</div>
+        <div class="box" data-lisn-sortable-item>Other item 2</div>
+        <div class="box">Other ignored</div>
+        <div class="box" data-lisn-sortable-item>Other item 3</div>
+        <div class="box" data-lisn-sortable-item>Other item 4</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="lisn-sortable sortable flex">
+      <div>
+        <div class="box" draggable>Item 1</div>
+        <div class="box">Ignored</div>
+        <div class="box" draggable>Item 2</div>
+        <div class="box">Ignored</div>
+        <div class="box" draggable>Item 3</div>
+        <div class="box" draggable>Item 4</div>
+      </div>
+
+      <div>
+        <div class="box" draggable>Other item 1</div>
+        <div class="box">Other ignored</div>
+        <div class="box" draggable>Other item 2</div>
+        <div class="box">Other ignored</div>
+        <div class="box" draggable>Other item 3</div>
+        <div class="box" draggable>Other item 4</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div id="sortable" class="sortable flex">
+      <div>
+        <div class="box">Item 1</div>
+        <div class="box" data-ignore>Ignored</div>
+        <div class="box">Item 2</div>
+        <div class="box" data-ignore>Ignored</div>
+        <div class="box">Item 3</div>
+        <div class="box">Item 4</div>
+      </div>
+
+      <div>
+        <div class="box">Other item 1</div>
+        <div class="box" data-ignore>Other ignored</div>
+        <div class="box">Other item 2</div>
+        <div class="box" data-ignore>Other ignored</div>
+        <div class="box">Other item 3</div>
+        <div class="box">Other item 4</div>
+      </div>
+    </div>
+
+    <script charset="utf-8">
+      const sortableJs = document.getElementById("sortable");
+      new LISN.widgets.Sortable(sortableJs, {
+        items: sortableJs.querySelectorAll(".box:not([data-ignore])"),
+      });
+
+      function disable() {
+        for (const el of document.querySelectorAll(".sortable")) {
+          LISN.widgets.Sortable.get(el)?.disable();
+        }
+      }
+
+      function enable() {
+        for (const el of document.querySelectorAll(".sortable")) {
+          LISN.widgets.Sortable.get(el)?.enable();
+        }
+      }
+
+      function disableItem2(currentOrder = false) {
+        for (const el of document.querySelectorAll(".sortable")) {
+          LISN.widgets.Sortable.get(el)?.disableItem(2, currentOrder);
+        }
+      }
+
+      function enableItem2(currentOrder = false) {
+        for (const el of document.querySelectorAll(".sortable")) {
+          LISN.widgets.Sortable.get(el)?.enableItem(2, currentOrder);
+        }
+      }
+    </script>
+  </body>
+</html>

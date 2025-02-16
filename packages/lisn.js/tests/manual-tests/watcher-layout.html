@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .box {
+        width: 400px;
+        height: 400px;
+        resize: both;
+        overflow: hidden;
+        border: 1px solid black;
+      }
+
+      .lisn-overlay[data-lisn-device],
+      .lisn-overlay[data-lisn-aspect-ratio] {
+        min-height: 10px;
+        background: lightblue;
+        opacity: 0.2;
+        visibility: visible;
+      }
+
+      p {
+        max-width: 800px;
+        font-size: 18px;
+        line-height: 1.7;
+        font-family: "Arial";
+        color: #222;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Resize window and box and watch console.</p>
+
+    <div id="box" class="box"></div>
+
+    <div id="vp-layout"></div>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger({ name: "test" });
+      const vpLayoutEl = document.getElementById("vp-layout");
+      const box = document.getElementById("box");
+      let boxWatcher;
+
+      function logLatest(prefix, layout) {
+        const txt = prefix + ": " + JSON.stringify(layout);
+        console.log(txt);
+        const el = document.createElement("div");
+        el.innerText = txt;
+        vpLayoutEl.append(el);
+      }
+
+      LISN.watchers.LayoutWatcher.reuse().onLayout((l) =>
+        logLatest("viewport", l),
+      );
+
+      boxWatcher = LISN.watchers.LayoutWatcher.reuse({
+        root: box,
+      });
+      boxWatcher.onLayout((l) => logLatest("box", l));
+    </script>
+  </body>
+</html>

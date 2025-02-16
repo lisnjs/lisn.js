@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <script charset="utf-8">
+      LISN.settings.mainScrollElementId = "content";
+    </script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        margin: 0;
+      }
+
+      .spacer {
+        margin: 100px;
+      }
+
+      .box {
+        resize: both;
+        height: 400px;
+        width: 500px;
+        margin: 200px 100px;
+        background: lightblue;
+        border: solid 1px black;
+        overflow: auto;
+      }
+
+      .dummy {
+        height: 100vh;
+        width: 500px;
+        border: solid 1px black;
+      }
+
+      #content {
+        height: 100vh;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="content"
+      class="lisn-track-view lisn-track-size lisn-track-scroll"
+      data-lisn-track-gesture="prevent-default=false"
+    >
+      <div class="spacer"></div>
+      <button onclick="addOrRemoveElement()">
+        Toggle extra content element
+      </button>
+      <div
+        class="box lisn-track-view lisn-track-size lisn-track-scroll"
+        data-lisn-track-gesture="prevent-default=false"
+      >
+        <div class="lisn-content-wrapper">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+          eiusmod tempor incididunt ut labore et dolore magna aliqua. Volutpat
+          blandit aliquam etiam erat velit scelerisque in dictum non. Dui nunc
+          mattis enim ut tellus elementum sagittis vitae et. Donec ultrices
+          tincidunt arcu non sodales neque sodales ut etiam. Sed euismod nisi
+          porta lorem mollis aliquam ut. Vel turpis nunc eget lorem dolor sed
+          viverra ipsum. Ut sem viverra aliquet eget sit amet tellus cras
+          adipiscing. Risus nec feugiat in fermentum. Mauris pharetra et
+          ultrices neque ornare. Scelerisque mauris pellentesque pulvinar
+          pellentesque habitant. Enim ut tellus elementum sagittis vitae et leo
+          duis. Consectetur lorem donec massa sapien faucibus et. Elementum nibh
+          tellus molestie nunc. Enim nulla aliquet porttitor lacus luctus
+          accumsan tortor posuere ac. Dignissim cras tincidunt lobortis feugiat
+          vivamus at augue eget. Ultrices vitae auctor eu augue ut lectus arcu
+          bibendum at. A iaculis at erat pellentesque adipiscing commodo elit.
+          Vestibulum morbi blandit cursus risus. Amet consectetur adipiscing
+          elit pellentesque habitant morbi tristique senectus et. Nibh venenatis
+          cras sed felis eget velit aliquet sagittis. Egestas sed sed risus
+          pretium quam vulputate dignissim suspendisse in. Faucibus interdum
+          posuere lorem ipsum dolor sit. Augue lacus viverra vitae congue eu
+          consequat ac felis. Viverra adipiscing at in tellus. Egestas integer
+          eget aliquet nibh praesent tristique. Fermentum leo vel orci porta non
+          pulvinar neque laoreet suspendisse. Auctor neque vitae tempus quam
+          pellentesque nec nam aliquam. In dictum non consectetur a erat nam.
+          Rhoncus est pellentesque elit ullamcorper dignissim. Tortor vitae
+          purus faucibus ornare. Sed elementum tempus egestas sed sed risus
+          pretium quam. Purus semper eget duis at tellus. Bibendum enim
+          facilisis gravida neque. Scelerisque varius morbi enim nunc faucibus.
+          Ultricies integer quis auctor elit sed vulputate mi sit amet. Semper
+          viverra nam libero justo laoreet sit amet cursus sit. Porta nibh
+          venenatis cras sed felis eget velit aliquet sagittis. Vulputate enim
+          nulla aliquet porttitor lacus. Aenean pharetra magna ac placerat
+          vestibulum lectus mauris ultrices eros. Suspendisse potenti nullam ac
+          tortor vitae purus faucibus. Lobortis scelerisque fermentum dui
+          faucibus in ornare quam viverra. Elit ut aliquam purus sit amet
+          luctus. Ultricies lacus sed turpis tincidunt id. Convallis convallis
+          tellus id interdum. Hendrerit gravida rutrum quisque non. Gravida cum
+          sociis natoque penatibus et magnis. Id leo in vitae turpis massa sed
+          elementum tempus. Ac turpis egestas maecenas pharetra convallis
+          posuere morbi. Vitae suscipit tellus mauris a diam. Donec adipiscing
+          tristique risus nec feugiat in fermentum posuere urna. Sit amet
+          consectetur adipiscing elit duis tristique sollicitudin nibh sit.
+          Tempor orci eu lobortis elementum nibh. Ullamcorper eget nulla
+          facilisi etiam dignissim diam quis enim. At varius vel pharetra vel
+          turpis nunc eget. Cursus risus at ultrices mi tempus imperdiet nulla.
+          Gravida neque convallis a cras semper auctor neque vitae tempus. Id
+          leo in vitae turpis massa sed elementum. Nam libero justo laoreet sit
+          amet. Eu augue ut lectus arcu bibendum at varius vel. Nulla aliquet
+          porttitor lacus luctus. Etiam erat velit scelerisque in dictum. Nulla
+          porttitor massa id neque aliquam vestibulum. Sem et tortor consequat
+          id porta nibh venenatis cras. Sit amet est placerat in egestas erat.
+          Risus at ultrices mi tempus imperdiet nulla. Sit amet aliquam id diam
+          maecenas ultricies.
+        </div>
+      </div>
+    </div>
+
+    <script charset="utf-8">
+      const contentElement = document.getElementById("content").children[0];
+      const element = document.createElement("div");
+      element.classList.add("dummy");
+      let isAdded = false;
+      function addOrRemoveElement() {
+        if (isAdded) {
+          element.remove();
+        } else {
+          contentElement.append(element);
+        }
+        isAdded = !isAdded;
+      }
+    </script>
+  </body>
+</html>

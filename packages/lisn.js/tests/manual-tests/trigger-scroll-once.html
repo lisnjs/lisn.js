@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        min-height: 600vh;
+        width: 120vw;
+      }
+
+      .fixed {
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+
+      .msg {
+        height: 20px;
+        color: lightgrey;
+        border: solid 1px black;
+      }
+
+      .msg.active {
+        color: black;
+      }
+
+      .scrollable {
+        height: 400px;
+        width: 400px;
+        max-width: 80vw;
+        max-height: 80vh;
+        overflow: scroll;
+        border: solid 1px;
+      }
+
+      .scrollable > div {
+        width: 1200px;
+        height: 1200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="fixed">
+      <div
+        id="scroll-up"
+        class="msg"
+        data-lisn-on-scroll="up@add-class:active+once"
+      >
+        scroll: up
+      </div>
+      <div
+        id="scroll-down"
+        class="msg"
+        data-lisn-on-scroll="down@add-class:active+once"
+      >
+        scroll: down
+      </div>
+      <div
+        id="scroll-left"
+        class="msg"
+        data-lisn-on-scroll="left@add-class:active+once"
+      >
+        scroll: left
+      </div>
+      <div
+        id="scroll-right"
+        class="msg"
+        data-lisn-on-scroll="right@add-class:active+once"
+      >
+        scroll: right
+      </div>
+
+      <div
+        id="scroll-up-down"
+        class="msg"
+        data-lisn-on-scroll="up,down@add-class:active+once"
+      >
+        scroll: up,down
+      </div>
+      <div
+        id="scroll-up-left"
+        class="msg"
+        data-lisn-on-scroll="up,left@add-class:active+once"
+      >
+        scroll: up,left
+      </div>
+      <div
+        id="scroll-left-right"
+        class="msg"
+        data-lisn-on-scroll="left,right@add-class:active+once"
+      >
+        scroll: left,right
+      </div>
+
+      <div
+        id="scroll-up"
+        class="msg"
+        data-lisn-on-scroll="up@add-class:active+once+scrollable=next-scrollable"
+      >
+        scroll: up (scrollable)
+      </div>
+      <div
+        id="scroll-down"
+        class="msg"
+        data-lisn-on-scroll="down@add-class:active+once+scrollable=next-scrollable"
+      >
+        scroll: down (scrollable)
+      </div>
+      <div
+        id="scroll-left"
+        class="msg"
+        data-lisn-on-scroll="left@add-class:active+once+scrollable=next-scrollable"
+      >
+        scroll: left (scrollable)
+      </div>
+      <div
+        id="scroll-right"
+        class="msg"
+        data-lisn-on-scroll="right@add-class:active+once+scrollable=next-scrollable"
+      >
+        scroll: right (scrollable)
+      </div>
+
+      <div data-lisn-ref="scrollable" class="scrollable">
+        <div></div>
+      </div>
+    </div>
+  </body>
+</html>

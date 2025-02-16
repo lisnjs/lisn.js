@@ -1,0 +1,22 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+
+.lisn-sortable__item {
+  touch-action: pinch-zoom;
+}
+
+.lisn-sortable__ghost {
+  position: fixed !important;
+  top: 0px !important;
+  left: 0px !important;
+  opacity: 0.6;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate3d(
+    var(--lisn-js--client-x, 0px),
+    var(--lisn-js--client-y, 0px),
+    0.1px
+  ) !important;
+}

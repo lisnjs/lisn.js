@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+  </head>
+  <body>
+    <div class="lisn-page-loader"></div>
+    <div id="foo"></div>
+    <script charset="utf-8">
+      const foo = document.getElementById("foo");
+      foo.innerText = `Do nc -l -s ${MY_IP_ADDRESS} -p 8085 -k`;
+      const img = document.createElement("img");
+      (img.src = `http://${MY_IP_ADDRESS}:8085`), document.body.append(img);
+    </script>
+  </body>
+</html>

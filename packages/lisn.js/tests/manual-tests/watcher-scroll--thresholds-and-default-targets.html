@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      p {
+        max-width: 800px;
+        font-size: 18px;
+        line-height: 1.7;
+        font-family: "Arial";
+        color: #222;
+      }
+
+      body {
+        min-height: 300vh;
+        min-width: 200vw;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      Scroll document and watch console. Filter messages: XXX.ZZZ messages are
+      for default threshold (50), YYY.ZZZ for threshold of 100, ZZZ.ZZZ are for
+      0 threshold. Ensure all fire correctly (at threshold, but debounced by
+      around 75ms) and that default/window/document targets are correct.
+    </p>
+
+    <p>
+      <button onclick="getLatest()">Click here</button> to get the latest scroll
+      of window
+    </p>
+    <div id="win-scroll"></div>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger({ name: "test" });
+      const watcher = LISN.watchers.ScrollWatcher.reuse({ name: "test" });
+      const winScrollEl = document.getElementById("win-scroll");
+      function getLatest() {
+        watcher
+          .fetchCurrentScroll()
+          .then((s) => (winScrollEl.innerText = JSON.stringify(s)));
+      }
+
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "XXX.ZZZ documentElement scroll (default threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: document.documentElement,
+        },
+      );
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "XXX.ZZZ document scroll (default threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: document,
+        },
+      );
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "XXX.ZZZ window scroll (default threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: window,
+        },
+      );
+      watcher.onScroll((element, sizeData) => {
+        logger.log(
+          "XXX.ZZZ default scroll (default threshold):",
+          JSON.stringify(sizeData),
+          LISN.utils.formatAsString(element),
+        );
+      }, {});
+
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ documentElement scroll (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: document.documentElement,
+          threshold: 100,
+        },
+      );
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ document scroll (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: document,
+          threshold: 100,
+        },
+      );
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ window scroll (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: window,
+          threshold: 100,
+        },
+      );
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ default scroll (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          threshold: 100,
+        },
+      );
+
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ documentElement scroll (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: document.documentElement,
+          threshold: 0,
+        },
+      );
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ document scroll (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: document,
+          threshold: 0,
+        },
+      );
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ window scroll (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          scrollable: window,
+          threshold: 0,
+        },
+      );
+      watcher.onScroll(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ default scroll (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          threshold: 0,
+        },
+      );
+    </script>
+  </body>
+</html>

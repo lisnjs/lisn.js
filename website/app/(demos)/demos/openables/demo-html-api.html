@@ -1,0 +1,292 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Openables (HTML API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="assets/css/common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      #demo .huge {
+        font-size: 2.5em;
+      }
+
+      /* Layout */
+      #demo .section {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #demo .section.top {
+        justify-content: flex-start;
+      }
+
+      #demo .spacer {
+        margin: 50px 0;
+      }
+
+      /* Collapsibles */
+      #demo .peekable-trigger[data-lisn-is-open="false"] .less {
+        display: none;
+      }
+
+      #demo .peekable-trigger[data-lisn-is-open="true"] .more {
+        display: none;
+      }
+
+      #demo .accordion-item-trigger :is(h1, h2, h3, h4, h5, h6) {
+        margin: 5px 0;
+      }
+
+      #demo p {
+        margin: 3px 0;
+      }
+
+      #demo .accordion-item-content {
+        padding: 1em 0 1em 1.3em;
+      }
+
+      /* Popups */
+      #demo {
+        --lisn-popup--v-padding: 15px;
+        --lisn-popup--h-padding: 15px;
+        --lisn-popup--width: 350px;
+        --lisn-popup--max-width: 98vw;
+      }
+
+      #demo [data-lisn-popup] {
+        font-size: 16px;
+      }
+
+      #demo [data-lisn-popup-trigger]::after {
+        content: "?";
+        display: inline-block;
+        border: solid 1px currentColor;
+        border-radius: 50%;
+        width: 11px;
+        height: 11px;
+        font-size: 9px;
+        line-height: 12px;
+        text-align: center;
+        margin-left: 5px;
+        transform: translateY(-9px);
+      }
+
+      /* Offcanvas menu */
+      #demo-menu {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 1.5em;
+        font-weight: bold;
+        font-size: 22px;
+      }
+
+      /* Modal */
+      #demo-modal {
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body id="main-html" data-lisn-scrollbar class="dark-theme">
+    <div data-lisn-scroll-to-top></div>
+    <div id="demo">
+      <div
+        id="demo-menu"
+        data-lisn-offcanvas="position=top | close-button=false"
+        data-lisn-on-scroll="up @open"
+      >
+        <a>More demos</a>
+        <a>Getting started</a>
+        <a>Source code</a>
+      </div>
+
+      <div
+        id="demo-modal"
+        data-lisn-modal
+        data-lisn-on-view="@open +target=top: 50%
+                           +rootMargin=-48%,0px +once"
+      >
+        You've reached the middle of the page. Are you liking LISN already?
+      </div>
+
+      <div class="section">
+        <p>
+          This demo includes all four types of openables with several types of
+          triggers for opening them.
+        </p>
+        <h2>Scroll down.</h2>
+      </div>
+
+      <div class="section">
+        <!-- use the @show action for both triggers so that the initial state is hidden -->
+        <h2
+          data-lisn-on-scroll="up @show +once +id=hide-on-down ;
+                               up @show @enable:hide-on-down +once +delay=300"
+        >
+          Now keep going down.
+        </h2>
+        <div class="spacer"></div>
+        <h2 data-lisn-on-scroll="up @hide +once">Then scroll up a bit.</h2>
+      </div>
+
+      <!-- blank page for spacing -->
+      <div class="section"></div>
+
+      <div class="section top accordions">
+        <h1 class="huge">Why LISN?</h1>
+        <div data-lisn-collapsible="peek=75px">
+          <div>
+            <h4
+              data-lisn-collapsible-trigger="icon=left
+                                             | icon-closed=plus
+                                             | icon-open=minus"
+            >
+              Lightweight.
+            </h4>
+
+            <div data-lisn-collapsible="auto-close">
+              <div>
+                <p>Vanilla TypeScript</p>
+              </div>
+
+              <div>
+                <p>Highly optimized</p>
+              </div>
+
+              <div>
+                <p data-lisn-popup-trigger="hover">No layout thrashing</p>
+                <div data-lisn-popup="position=top">
+                  Correct use of <code>requestAnimationFrame</code> to
+                  completely eliminate forced re-layouts and run smoothly even
+                  on mobile devices.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4
+              data-lisn-collapsible-trigger="icon=left
+                                             | icon-closed=plus
+                                             | icon-open=minus"
+            >
+              Interactive.
+            </h4>
+
+            <div data-lisn-collapsible="auto-close">
+              <div>
+                <p>Powerful API</p>
+              </div>
+
+              <div>
+                <p data-lisn-popup-trigger="hover">Multi gesture support</p>
+                <div data-lisn-popup="position=top">
+                  Take actions based on user gestures. Scroll, zoom or drag,
+                  using wheel, touch or pointer device? Any or all of these.
+                </div>
+              </div>
+
+              <div>
+                <p>Mobile/touch ready</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4
+              data-lisn-collapsible-trigger="icon=left
+                                             | icon-closed=plus
+                                             | icon-open=minus"
+            >
+              Simple.
+            </h4>
+
+            <div data-lisn-collapsible="auto-close">
+              <div>
+                <p>Intuitive syntax</p>
+              </div>
+
+              <div>
+                <p>Consistent API</p>
+              </div>
+
+              <div>
+                <p data-lisn-popup-trigger="hover">HTML-only mode</p>
+                <div data-lisn-popup="position=top">
+                  The HTML-only API can do much of what the full JavaScript API
+                  can.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4
+              data-lisn-collapsible-trigger="icon=left
+                                             | icon-closed=plus
+                                             | icon-open=minus"
+            >
+              No-nonsense.
+            </h4>
+
+            <div data-lisn-collapsible="auto-close">
+              <div>
+                <p>What says on the box</p>
+              </div>
+
+              <div>
+                <p data-lisn-popup-trigger="hover">Sensible defaults</p>
+                <div data-lisn-popup="position=top">
+                  Spend time building your site, not configuring LISN.
+                </div>
+              </div>
+
+              <div>
+                <p data-lisn-popup-trigger="hover">Highly customizable</p>
+                <div data-lisn-popup="position=top">
+                  But if you want to tweak... go wild.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-lisn-collapsible-trigger="class-name=peekable-trigger">
+          <h5 class="more">~~ View more ~~</h5>
+          <h5 class="less">~~ View less ~~</h5>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .wrapper {
+        padding: 10px;
+        border: solid 1px grey;
+        background: lightblue;
+      }
+
+      .wrapper-st {
+        background: #88bb88;
+      }
+
+      .wrapper-1 {
+        background: lightyellow;
+      }
+
+      .wrapper-rm {
+        background: #ff9999;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <button onclick="showElems()">Re-show elements</button>
+      <button onclick="disable()">Disable widgets</button>
+      <button onclick="enable()">Enable widgets</button>
+    </div>
+
+    <div class="wrapper">
+      <div id="testA">This will be hidden after 3s</div>
+    </div>
+
+    <div class="wrapper wrapper-1">
+      <div id="testB">This will be hidden after 1s</div>
+    </div>
+
+    <div id="testC">
+      <div class="wrapper wrapper-1">
+        <p id="testC1">This will be hidden after 1s</p>
+      </div>
+      <div class="wrapper"><p id="testC2">This will be hidden after 3s</p></div>
+      <div class="wrapper wrapper-st"><p>This will stay</p></div>
+      <div class="wrapper wrapper-1 wrapper-rm">
+        <p id="testC3">This will be removed after 1s</p>
+      </div>
+    </div>
+    <div class="wrapper wrapper-rm">
+      <div id="testD">This will be removed after 3s</div>
+    </div>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger({ name: "test" });
+
+      const testElemA = document.getElementById("testA");
+      const testElemB = document.getElementById("testB");
+
+      const testElemC = document.getElementById("testC");
+      const testElemC1 = document.getElementById("testC1");
+      const testElemC2 = document.getElementById("testC2");
+      const testElemC3 = document.getElementById("testC3");
+
+      const testElemD = document.getElementById("testD");
+
+      const parentC3 = testElemC3.parentElement;
+      const parentD = testElemD.parentElement;
+
+      const widgets = [];
+      widgets.push(new LISN.widgets.AutoHide(testElemA));
+      widgets.push(new LISN.widgets.AutoHide(testElemB, { delay: 1000 }));
+      widgets.push(
+        new LISN.widgets.AutoHide(testElemC, {
+          delay: 1000,
+          selector: "div:nth-child(1)>p",
+        }),
+      );
+      widgets.push(
+        new LISN.widgets.AutoHide(testElemC, {
+          selector: "div:nth-child(2)>p",
+        }),
+      );
+      widgets.push(
+        new LISN.widgets.AutoHide(testElemC, {
+          delay: 1000,
+          remove: true,
+          selector: "div:last-child>p",
+        }),
+      );
+      widgets.push(new LISN.widgets.AutoHide(testElemD, { remove: true }));
+
+      function showElems() {
+        logger.log("re-showing/adding elements");
+        LISN.utils.showElement(testElemA);
+        LISN.utils.showElement(testElemB);
+        LISN.utils.showElement(testElemC1);
+        LISN.utils.showElement(testElemC2);
+        LISN.utils.showElement(testElemC3);
+        LISN.utils.showElement(testElemD);
+
+        parentC3.append(testElemC3);
+        parentD.append(testElemD);
+      }
+
+      function disable() {
+        for (const w of widgets) {
+          w.disable();
+        }
+      }
+
+      function enable() {
+        for (const w of widgets) {
+          w.enable();
+        }
+      }
+    </script>
+  </body>
+</html>

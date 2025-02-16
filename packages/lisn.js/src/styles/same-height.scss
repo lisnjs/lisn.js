@@ -1,0 +1,29 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+
+.lisn-same-height__root,
+.lisn-same-height__root .lisn-same-height__item {
+  box-sizing: border-box;
+}
+
+.lisn-same-height__root {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+
+  &:not([data-lisn-orientation="vertical"]) > .lisn-same-height__item {
+    flex-basis: var(--lisn-js--same-height-w, auto);
+  }
+
+  &[data-lisn-orientation="vertical"] {
+    flex-direction: column;
+  }
+
+  & img {
+    width: 100%;
+    height: auto;
+  }
+}

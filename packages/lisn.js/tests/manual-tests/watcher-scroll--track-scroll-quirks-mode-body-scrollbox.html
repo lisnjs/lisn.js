@@ -1,0 +1,71 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      html {
+        overflow: hidden;
+      }
+
+      body {
+        margin-top: 50px;
+        margin-left: 50px;
+        width: 90vw;
+        height: 90vh;
+        overflow: scroll;
+      }
+
+      #content {
+        width: 200vw;
+      }
+
+      .box {
+        width: 200vw;
+        height: 200vh;
+        background: orange;
+      }
+
+      #add-box {
+        position: fixed;
+        top: 50vh;
+        left: 50vw;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="content">
+      <p>
+        There is a ScrollWatcher on the document. Scroll the document, append
+        content or resize the window and watch the DOM attributes or the console
+        for scroll offset changes.
+      </p>
+
+      <button id="add-box" onclick="addBox()">Add content</button>
+    </div>
+
+    <script charset="utf-8">
+      const content = document.getElementById("content");
+      const logger = new LISN.debug.Logger();
+      LISN.watchers.ScrollWatcher.reuse().trackScroll((e, s) => logger.log(s), {
+        threshold: 0,
+      });
+      LISN.watchers.ScrollWatcher.reuse().trackScroll(null, { threshold: 0 });
+
+      function addBox() {
+        const box = document.createElement("div");
+        box.classList.add("box");
+        content.append(box);
+      }
+    </script>
+  </body>
+</html>

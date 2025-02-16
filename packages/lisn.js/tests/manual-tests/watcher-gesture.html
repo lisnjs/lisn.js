@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      #box {
+        padding: 50px;
+        width: 30vw;
+        height: 200px;
+        overflow: scroll;
+        border: 1px solid black;
+      }
+
+      .overflow {
+        height: 1000px;
+        width: 1000px;
+      }
+
+      #log {
+        height: 100vh;
+        overflow: auto;
+        white-space: wrap;
+        max-width: 100vw;
+      }
+
+      p {
+        max-width: 800px;
+        font-size: 18px;
+        line-height: 1.7;
+        font-family: "Arial";
+        color: #222;
+      }
+
+      main {
+        display: flex;
+        gap: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div>
+        <p>Scroll, swipe, etc over the box.</p>
+
+        <div id="box">
+          <div class="overflow"></div>
+        </div>
+      </div>
+
+      <div>
+        <div id="log"></div>
+      </div>
+    </main>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger({ name: "test" });
+      const logEl = document.getElementById("log");
+      const box = document.getElementById("box");
+
+      function logLatest(__ignored, fragment) {
+        const txt = JSON.stringify(fragment, null, 2);
+        console.log(txt);
+        const el = document.createElement("div");
+        el.innerText = txt;
+        logEl.append(el);
+      }
+
+      LISN.watchers.GestureWatcher.reuse().onGesture(box, logLatest);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Sortable: Puzzle game (JS API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="assets/css/common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+    </script>
+
+    <script id="main-js" charset="utf-8">
+      document.addEventListener("DOMContentLoaded", () => {
+        const sortable = document.getElementById("demo");
+        const items = sortable.querySelectorAll(".box");
+        new LISN.widgets.Sortable(sortable, {
+          items,
+          mode: "swap",
+        });
+      });
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      /* Grid */
+      #demo {
+        display: grid;
+        justify-items: center;
+        align-items: center;
+        grid-template-rows: repeat(2, 1fr) 0px;
+        grid-template-columns: repeat(4, 1fr) 0px;
+        background: var(--text-color-lighter);
+        box-shadow: var(--text-color) 0px 0px 14px -3px;
+      }
+
+      /* Grid box and content */
+      #demo .box {
+        background: var(--bg-color-lighter);
+        width: 75px;
+        height: 75px;
+        text-align: center;
+        color: var(--text-color-lighter);
+        font-family: "Roboto Mono", ui-monospace, monospace, sans-serif;
+        font-size: 100px;
+        line-height: 1.5em;
+        position: relative;
+        overflow: hidden;
+        margin: 0 -1px;
+      }
+
+      #demo .box .letter {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translate(-50%, 0%);
+      }
+
+      #demo .box.r2 .letter {
+        transform: translate(-50%, -50%);
+      }
+
+      /* Dummies to create a gap */
+      #demo .line {
+        transition-property: width, height;
+        transition-duration: 1.5s;
+      }
+
+      #demo .line-h {
+        width: 95px;
+      }
+
+      #demo .line-v {
+        height: 95px;
+      }
+
+      /* When complete (ordered) */
+      #demo
+        .box.r1.c1
+        + .box.r1.c2
+        + .box.r1.c3
+        + .box.r1.c4
+        ~ .box.r2.c1
+        + .box.r2.c2
+        + .box.r2.c3
+        + .box.r2.c4
+        + .line-v {
+        height: 75px;
+      }
+
+      #demo
+        .box.r1.c1
+        + .box.r1.c2
+        + .box.r1.c3
+        + .box.r1.c4
+        ~ .box.r2.c1
+        + .box.r2.c2
+        + .box.r2.c3
+        + .box.r2.c4
+        ~ .line-h {
+        width: 73px;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <main id="main-html">
+      <div id="demo">
+        <div class="box r1 c4"><span class="letter">N</span></div>
+        <div class="box r2 c2"><span class="letter">I</span></div>
+        <div class="box r1 c2"><span class="letter">I</span></div>
+        <div class="box r2 c1"><span class="letter">L</span></div>
+
+        <div></div>
+
+        <div class="box r2 c4"><span class="letter">N</span></div>
+        <div class="box r1 c1"><span class="letter">L</span></div>
+        <div class="box r2 c3"><span class="letter">S</span></div>
+        <div class="box r1 c3"><span class="letter">S</span></div>
+
+        <div class="line line-v"></div>
+        <div class="line line-h"></div>
+      </div>
+    </main>
+  </body>
+</html>

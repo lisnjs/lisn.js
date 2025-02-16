@@ -1,0 +1,272 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        min-height: 600vh;
+      }
+
+      .fixed {
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+
+      .msg {
+        height: 20px;
+        color: lightgrey;
+        border: solid 1px black;
+      }
+
+      .msg.active {
+        color: black;
+      }
+
+      .spacer {
+        height: 200vh;
+      }
+
+      .animate__animated {
+        width: 200px;
+        height: 200px;
+        background: pink;
+        margin-left: 200px;
+      }
+
+      .line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: red;
+      }
+      .line::after {
+        position: absolute;
+        right: 0;
+      }
+
+      .top-150px {
+        top: 150px;
+      }
+      .top-150px::after {
+        content: "+150px";
+      }
+
+      .bottom-150px {
+        bottom: 150px;
+      }
+      .bottom-150px::after {
+        content: "-150px";
+      }
+
+      .top-150vh {
+        top: 150vh;
+      }
+      .top-150vh::after {
+        content: "+150vh";
+      }
+
+      .bottom-150vh {
+        bottom: 150vh;
+      }
+      .bottom-150vh::after {
+        content: "-150vh";
+      }
+
+      .trigger-wrapper {
+        top: 250vh;
+        background: black;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="fixed">
+      <div
+        id="view-above-trigger-line"
+        class="msg"
+        data-lisn-on-view="above@add-class:active+target=#triggerLine"
+      >
+        view-above-trigger-line
+      </div>
+      <div
+        id="view-at-trigger-line"
+        class="msg"
+        data-lisn-on-view="at@add-class:active+target=#triggerLine"
+      >
+        view-at-trigger-line
+      </div>
+      <div
+        id="view-below-trigger-line"
+        class="msg"
+        data-lisn-on-view="below@add-class:active+target=#triggerLine"
+      >
+        view-below-trigger-line
+      </div>
+
+      <div
+        id="top-150px"
+        class="msg"
+        data-lisn-on-view="at@add-class:active+target=top:150px"
+      >
+        top-150px
+      </div>
+      <div
+        id="max-top-150px"
+        class="msg"
+        data-lisn-on-view="at,above@add-class:active+target=top:150px"
+      >
+        max-top-150px
+      </div>
+      <div
+        id="min-top-150px"
+        class="msg"
+        data-lisn-on-view="below@add-class:active+target=top:150px"
+      >
+        min-top-150px
+      </div>
+
+      <div
+        id="top-150vh"
+        class="msg"
+        data-lisn-on-view="at@add-class:active+target=top:150vh"
+      >
+        top-150vh
+      </div>
+      <div
+        id="max-top-150vh"
+        class="msg"
+        data-lisn-on-view="at,above@add-class:active+target=top:150vh"
+      >
+        max-top-150vh
+      </div>
+      <div
+        id="min-top-150vh"
+        class="msg"
+        data-lisn-on-view="below@add-class:active+target=top:150vh"
+      >
+        min-top-150vh
+      </div>
+
+      <div
+        id="bottom-150px"
+        class="msg"
+        data-lisn-on-view="at@add-class:active+target=bottom:150px"
+      >
+        bottom-150px
+      </div>
+      <div
+        id="max-bottom-150px"
+        class="msg"
+        data-lisn-on-view="at,below@add-class:active+target=bottom:150px"
+      >
+        max-bottom-150px
+      </div>
+      <div
+        id="min-bottom-150px"
+        class="msg"
+        data-lisn-on-view="above@add-class:active+target=bottom:150px"
+      >
+        min-bottom-150px
+      </div>
+
+      <div
+        id="bottom-150vh"
+        class="msg"
+        data-lisn-on-view="at@add-class:active+target=bottom:150vh"
+      >
+        bottom-150vh
+      </div>
+      <div
+        id="max-bottom-150vh"
+        class="msg"
+        data-lisn-on-view="at,below@add-class:active+target=bottom:150vh"
+      >
+        max-bottom-150vh
+      </div>
+      <div
+        id="min-bottom-150vh"
+        class="msg"
+        data-lisn-on-view="above@add-class:active+target=bottom:150vh"
+      >
+        min-bottom-150vh
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <div>Using on-view=at@{action}</div>
+    <div
+      class="animate__animated animate__fadeInUp lisn-on-view--at@animate"
+      data-lisn-test-legacy
+    >
+      Legacy
+    </div>
+    <div
+      class="animate__animated animate__fadeInUp"
+      data-lisn-on-view="at@animate"
+      data-lisn-no-wrap
+      data-lisn-test-legacy
+    >
+      Legacy, no wrap
+    </div>
+
+    <div
+      class="animate__animated animate__fadeInUp lisn-on-view--at@animate"
+    ></div>
+    <div
+      class="animate__animated animate__fadeInUp"
+      data-lisn-on-view="at@animate"
+      data-lisn-no-wrap
+    >
+      No wrap
+    </div>
+
+    <div class="spacer"></div>
+    <div>Using on-view=@{action}</div>
+    <div
+      class="animate__animated animate__fadeInUp lisn-on-view--@animate"
+      data-lisn-test-legacy
+    >
+      Legacy
+    </div>
+    <div
+      class="animate__animated animate__fadeInUp"
+      data-lisn-on-view="@animate"
+      data-lisn-no-wrap
+      data-lisn-test-legacy
+    >
+      Legacy, no wrap
+    </div>
+
+    <div
+      class="animate__animated animate__fadeInUp lisn-on-view--@animate"
+    ></div>
+    <div
+      class="animate__animated animate__fadeInUp"
+      data-lisn-on-view="@animate"
+      data-lisn-no-wrap
+    >
+      No wrap
+    </div>
+
+    <div class="line trigger-wrapper"><div id="triggerLine"></div></div>
+    <div class="line top-150px"></div>
+    <div class="line top-150vh"></div>
+    <div class="line bottom-150px"></div>
+    <div class="line bottom-150vh"></div>
+  </body>
+</html>

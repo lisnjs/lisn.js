@@ -1,0 +1,256 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+
+.lisn-scrollbar__root {
+  --lisn_spc: var(--lisn-scrollbar--spacing, #{$scrollbar-spacing});
+  --lisn_spc-t: var(--lisn-scrollbar--tip-spacing, #{$scrollbar-tip-spacing});
+  --lisn_th_inner: calc(
+    var(--lisn-scrollbar--thickness, #{$scrollbar-thickness})
+  );
+  --lisn_th_outer: calc(
+    var(--lisn_spc) * 2 +
+      var(--lisn-scrollbar--thickness-hover, #{$scrollbar-thickness-hover})
+  );
+  --lisn_hn-minw: var(
+    --lisn-scrollbar--min-handle-length,
+    #{$scrollbar-min-handle-length}
+  );
+  --lisn_bordt: var(--lisn-js--border-top-width, 0px);
+  --lisn_bordb: var(--lisn-js--border-bottom-width, 0px);
+  --lisn_padt: var(--lisn-js--padding-top, 0px);
+  --lisn_padb: var(--lisn-js--padding-bottom, 0px);
+  --lisn_padl: var(--lisn-js--padding-left, 0px);
+  --lisn_padr: var(--lisn-js--padding-right, 0px);
+  --lisn_ofst: 0px;
+  --lisn_ofsb: 0px;
+  --lisn_ofsl: 0px;
+  --lisn_ofsr: 0px;
+  --lisn_clht: calc(
+    var(--lisn-js--bar-height) - var(--lisn_bordt) - var(--lisn_bordb)
+  );
+
+  &[data-lisn-has-scrollbar-top="true"] {
+    --lisn_ofst: var(--lisn_th_outer);
+  }
+
+  &[data-lisn-has-scrollbar-bottom="true"] {
+    --lisn_ofsb: var(--lisn_th_outer);
+  }
+
+  &[data-lisn-has-scrollbar-left="true"] {
+    --lisn_ofsl: var(--lisn_th_outer);
+  }
+
+  &[data-lisn-has-scrollbar-right="true"] {
+    --lisn_ofsr: var(--lisn_th_outer);
+  }
+}
+
+.lisn-scrollbar__container {
+  position: relative;
+
+  &[data-lisn-has-wrapper="true"] {
+    overflow: hidden !important;
+  }
+
+  & .lisn-scrollbar__content {
+    width: calc(100% - var(--lisn_ofsl) - var(--lisn_ofsr));
+    overflow: auto;
+    padding-top: calc(var(--lisn_padt) + var(--lisn_ofst));
+    padding-bottom: calc(var(--lisn_padb) + var(--lisn_ofsb));
+    padding-left: calc(var(--lisn_padl) + var(--lisn_ofsl));
+    padding-right: calc(var(--lisn_padr) + var(--lisn_ofsr));
+    box-sizing: content-box;
+    margin-left: calc(-1 * var(--lisn_padl));
+    margin-top: calc(-1 * var(--lisn_padt));
+    margin-bottom: calc(-1 * var(--lisn_padb));
+  }
+
+  &[data-lisn-has-fixed-height="true"] .lisn-scrollbar__content {
+    height: calc(
+      var(--lisn_clht) - var(--lisn_padt) - var(--lisn_ofst) - var(
+          --lisn_padb
+        ) - var(--lisn_ofsb)
+    );
+  }
+}
+
+.lisn-scrollbar__wrapper {
+  @include abs-full-width;
+  height: 0px;
+  z-index: 9;
+  pointer-events: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  outline: none;
+
+  &[data-lisn-position="fixed"] {
+    z-index: 99;
+    position: fixed;
+    --lisn_clht: var(--lisn-window--height);
+    top: var(--lisn-window--top);
+  }
+
+  &[data-lisn-position="sticky"] {
+    position: sticky;
+    float: left;
+  }
+
+  & .lisn-scrollbar__bar {
+    --lisn_cfr: var(--lisn-js--complete-fr, 0);
+    --lisn_cpc: calc(var(--lisn_cfr) * 100%);
+    --lisn_vpc: calc(var(--lisn-js--view-fr, 0) * 100%);
+    @include abs;
+    background: var(--lisn-scrollbar--bg, #{$scrollbar-bg});
+    overflow: hidden;
+    pointer-events: auto;
+    box-sizing: border-box;
+    width: 0px;
+    height: 0px;
+    display: flex;
+    align-items: flex-start;
+    align-content: stretch;
+    align-items: stretch;
+
+    &[data-lisn-orientation="vertical"] {
+      flex-direction: column;
+    }
+
+    &[data-lisn-place="right"],
+    &[data-lisn-place="bottom"] {
+      align-items: flex-end;
+    }
+
+    &[data-lisn-draggable="true"],
+    &[data-lisn-clickable="true"] {
+      cursor: pointer;
+    }
+  }
+
+  /* Bar placement */
+  & .lisn-scrollbar__bar {
+    top: 0px;
+    left: 0px;
+  }
+
+  &[data-lisn-position="sticky"] .lisn-scrollbar__bar {
+    top: calc(-1 * var(--lisn_padt));
+    left: calc(-1 * var(--lisn_padl));
+  }
+
+  & .lisn-scrollbar__bar[data-lisn-place="bottom"] {
+    top: calc(var(--lisn_clht) - var(--lisn_th_outer));
+  }
+
+  &[data-lisn-position="sticky"]
+    .lisn-scrollbar__bar[data-lisn-place="bottom"] {
+    top: calc(var(--lisn_clht) - var(--lisn_th_outer) - var(--lisn_padt));
+  }
+
+  & .lisn-scrollbar__bar[data-lisn-place="right"] {
+    left: calc(100% - var(--lisn_th_outer));
+  }
+
+  &[data-lisn-position="sticky"] .lisn-scrollbar__bar[data-lisn-place="right"] {
+    left: calc(100% - var(--lisn_th_outer) + var(--lisn_padl));
+  }
+
+  /* Full bar size */
+  & .lisn-scrollbar__bar[data-lisn-orientation="horizontal"] {
+    width: 100%;
+    height: var(--lisn_th_outer);
+    padding: var(--lisn_spc) var(--lisn_spc-t);
+  }
+
+  &[data-lisn-position="sticky"]
+    .lisn-scrollbar__bar[data-lisn-orientation="horizontal"] {
+    width: calc(100% + var(--lisn_padl) + var(--lisn_padr));
+  }
+
+  & .lisn-scrollbar__bar[data-lisn-orientation="vertical"] {
+    width: var(--lisn_th_outer);
+    height: var(--lisn_clht);
+    padding: var(--lisn_spc-t) var(--lisn_spc);
+  }
+}
+
+.lisn-scrollbar__handle,
+.lisn-scrollbar__spacer,
+.lisn-scrollbar__fill {
+  flex-shrink: 0;
+  transition-duration: 0.05s;
+  /* force GPU acceleration */
+  transform: translate3d(0px, 0px, 0px);
+  will-change: transform;
+}
+
+.lisn-scrollbar__handle,
+.lisn-scrollbar__fill {
+  z-index: 1;
+  background: var(--lisn-scrollbar--fg, #{$scrollbar-fg});
+  border-radius: var(
+    --lisn-scrollbar--border-radius,
+    #{$scrollbar-border-radius}
+  );
+}
+
+.lisn-scrollbar__handle[data-lisn-draggable="true"]:hover {
+  filter: brightness(1.3);
+  cursor: pointer;
+}
+
+/* Fill/spacer/handle size and offset */
+.lisn-scrollbar__spacer,
+.lisn-scrollbar__fill {
+  flex-basis: var(--lisn_cpc);
+  transition-property: flex-basis, width, height;
+}
+
+.lisn-scrollbar__handle {
+  flex-basis: var(--lisn_vpc);
+  cursor: default;
+  transition-property: transform, width, height;
+}
+
+.lisn-scrollbar__bar[data-lisn-orientation="horizontal"] {
+  & .lisn-scrollbar__handle,
+  & .lisn-scrollbar__fill {
+    height: var(--lisn_th_inner);
+  }
+
+  & .lisn-scrollbar__handle {
+    min-width: var(--lisn_hn-minw);
+    transform: translateX(calc(-100% * var(--lisn_cfr)));
+  }
+}
+
+.lisn-scrollbar__bar[data-lisn-orientation="vertical"] {
+  & .lisn-scrollbar__handle,
+  & .lisn-scrollbar__fill {
+    width: var(--lisn_th_inner);
+  }
+
+  & .lisn-scrollbar__handle {
+    min-height: var(--lisn_hn-minw);
+    transform: translateY(calc(-100% * var(--lisn_cfr)));
+  }
+}
+
+.lisn-scrollbar__container[data-lisn-allow-collapse="false"],
+.lisn-scrollbar__wrapper:hover {
+  & .lisn-scrollbar__bar[data-lisn-orientation="horizontal"] {
+    & .lisn-scrollbar__handle,
+    & .lisn-scrollbar__fill {
+      height: 100%;
+    }
+  }
+
+  & .lisn-scrollbar__bar[data-lisn-orientation="vertical"] {
+    & .lisn-scrollbar__handle,
+    & .lisn-scrollbar__fill {
+      width: 100%;
+    }
+  }
+}

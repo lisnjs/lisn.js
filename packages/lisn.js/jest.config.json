@@ -1,0 +1,31 @@
+{
+  "collectCoverage": true,
+  "collectCoverageFrom": ["<rootDir>/src/ts/**"],
+  "coveragePathIgnorePatterns": [
+    "<rootDir>/src/ts/bundle.*.ts",
+    "<rootDir>/src/ts/index.ts",
+    "<rootDir>/src/ts/.*/index.ts",
+    "<rootDir>/src/ts/debug/.*"
+  ],
+  "coverageDirectory": "<rootDir>/tests/unit-tests/coverage",
+  "coverageThreshold": {
+    "global": {
+      "lines": 90
+    }
+  },
+  "injectGlobals": false,
+  "testEnvironment": "jsdom",
+  "testPathIgnorePatterns": ["/node_modules/", "\\.IGNORE($|\\.)"],
+  "testMatch": ["<rootDir>/tests/unit-tests/*.js"],
+  "setupFilesAfterEnv": [
+    "<rootDir>/tests/unit-tests/supplementary/bootstrap.js"
+  ],
+  "transform": {
+    "^.+\\.ts$": ["ts-jest", { "diagnostics": { "ignoreCodes": ["TS151001"] } }]
+  },
+  "moduleNameMapper": {
+    "^@lisn-bundle$": "<rootDir>/bundles/lisn.debug.min.js",
+    "^@lisn/(.*)$": "<rootDir>/src/ts/$1",
+    "^(node_modules/.*)$": "<rootDir>/$1"
+  }
+}

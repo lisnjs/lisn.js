@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.slim.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      #msg {
+        padding: 20px;
+        font-size: 22px;
+      }
+
+      #msg.success {
+        background: #77ff77;
+      }
+
+      #msg.error {
+        background: #ff7777;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="msg"></div>
+    <script charset="utf-8">
+      const msg = document.getElementById("msg");
+      if (typeof LISN === "undefined") {
+        msg.classList.add("error");
+        msg.innerText = "LISN did NOT load";
+      } else {
+        msg.classList.add("success");
+        msg.innerText = "LISN loaded";
+      }
+    </script>
+  </body>
+</html>

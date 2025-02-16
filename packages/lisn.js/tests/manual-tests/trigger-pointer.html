@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .msg {
+        height: 20px;
+        color: lightgrey;
+        border: solid 1px black;
+      }
+
+      .msg.active {
+        color: black;
+      }
+
+      .box {
+        height: 200px;
+        width: 200px;
+        background: lightblue;
+      }
+
+      .box.active {
+        background: lightyellow;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="click" class="msg" data-lisn-on-click="@add-class:active">
+      click
+    </div>
+    <div id="press" class="msg" data-lisn-on-press="@add-class:active">
+      press and hold
+    </div>
+    <div id="hover" class="msg" data-lisn-on-hover="@add-class:active">
+      hover over
+    </div>
+
+    <div class="box lisn-on-hover--@add-class:active+target=next.box">
+      Hover to activate next box (via class)
+    </div>
+
+    <div class="box" data-lisn-on-hover="@add-class:active +target=prev.box">
+      Hover to activate previous box (via data attr)
+    </div>
+  </body>
+</html>

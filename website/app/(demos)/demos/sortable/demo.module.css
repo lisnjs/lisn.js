@@ -1,0 +1,91 @@
+/* Container */
+.wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Grid */
+.demo {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  grid-template-rows: repeat(2, 1fr) 0px;
+  grid-template-columns: repeat(4, 1fr) 0px;
+  background: var(--text-color-lighter);
+  box-shadow: var(--text-color) 0px 0px 14px -3px;
+}
+
+/* Grid box and content */
+.box {
+  background: var(--bg-color-lighter);
+  width: 75px;
+  height: 75px;
+  text-align: center;
+  color: var(--text-color-lighter);
+  font-family: "Roboto Mono", ui-monospace, monospace, sans-serif;
+  font-size: 100px;
+  line-height: 1.5em;
+  position: relative;
+  overflow: hidden;
+  margin: 0 -1px;
+}
+
+.box .letter {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, 0%);
+}
+
+.box.r2 .letter {
+  transform: translate(-50%, -50%);
+}
+
+/* Dummies to create a gap */
+.line {
+  transition-property: width, height;
+  transition-duration: 1.5s;
+}
+
+.lineH {
+  width: 95px;
+}
+
+.lineV {
+  height: 95px;
+}
+
+/* When complete (ordered) */
+.box.r1.c1
+  + .box.r1.c2
+  + .box.r1.c3
+  + .box.r1.c4
+  ~ .box.r2.c1
+  + .box.r2.c2
+  + .box.r2.c3
+  + .box.r2.c4
+  + .lineV {
+  height: 75px;
+}
+
+.box.r1.c1
+  + .box.r1.c2
+  + .box.r1.c3
+  + .box.r1.c4
+  ~ .box.r2.c1
+  + .box.r2.c2
+  + .box.r2.c3
+  + .box.r2.c4
+  ~ .lineH {
+  width: 73px;
+}

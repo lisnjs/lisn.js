@@ -1,0 +1,114 @@
+/* Container and sections */
+.wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.demo {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.section {
+  width: 100%;
+  height: 80%;
+  position: relative;
+}
+
+.section:first-of-type {
+  margin-top: 40vh;
+}
+
+.section:last-of-type {
+  max-height: 60%;
+}
+
+/* Section background */
+.section .background {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.section .background img {
+  --max-offset: 0.4;
+  --rel-top: var(--lisn-js--r-top, 0);
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% * (1 + var(--max-offset)));
+  object-fit: cover;
+  overflow-clip-margin: unset;
+  transform: translate3d(
+    0,
+    calc(-100% * var(--max-offset) * var(--rel-top)),
+    0
+  );
+  will-change: transform;
+}
+
+/* Section content */
+.content {
+  width: 100%;
+  height: 20px;
+  background-image: linear-gradient(
+    0deg,
+    transparent -150%,
+    var(--bg-color-lightest) 40%,
+    var(--bg-color-lightest) 60%,
+    transparent 250%
+  );
+  transform: translateY(-50%);
+}
+
+.card {
+  --max-scale-down: 0.3;
+  position: absolute;
+  width: 80vw;
+  max-width: 400px;
+  top: 0;
+  left: 50%;
+  padding: 3vh 3vw;
+  border-radius: 20px;
+  background-image: linear-gradient(
+    0deg,
+    transparent -100%,
+    var(--bg-color-lightest) 30%,
+    var(--bg-color-lightest) 70%,
+    transparent 200%
+  );
+  color: var(--text-color);
+  text-align: center;
+  /* Because the section is full-screen height, --lisn-js--r-v-middle will
+           range between approximately 1.5 and approximately 0.5 */
+  transform: translate(-50%, -50%)
+    scale(
+      calc(
+        1 - var(--max-scale-down) * 2 *
+          max(
+            var(--lisn-js--r-v-middle, 0) - 1,
+            1 - var(--lisn-js--r-v-middle, 0)
+          )
+      )
+    );
+  will-change: transform;
+  transition-property: transform;
+  transition-duration: 0.1s;
+}

@@ -1,0 +1,90 @@
+@use "sass:color";
+
+$base-color: blue;
+$base-color-t: rgba($base-color, 0.95);
+$light-color: color.adjust($base-color, $saturation: -35%, $lightness: 50%);
+$light-color-t: rgba($light-color, 0.95);
+$dark-color: color.adjust($base-color, $saturation: -60%, $lightness: -35%);
+$dark-color-t: rgba($dark-color, 0.95);
+
+$light-theme-cls: light-theme;
+$dark-theme-cls: dark-theme;
+$default-shadow:
+  rgba(0, 0, 0, 0.2) 0 3px 5px -1px,
+  rgba(0, 0, 0, 0.14) 0 6px 10px 0,
+  rgba(0, 0, 0, 0.12) 0px 1px 18px 0px;
+$window-top: 0px;
+
+$animate-duration: 0.7s;
+
+// Widgets
+$openable-icon-length: 0.8em;
+$openable-icon-thickness: 0.16em;
+
+$collapsible-animate-duration: $animate-duration;
+$collapsible-peek-size: 100px;
+
+$popup-animate-duration: calc($animate-duration / 2);
+$popup-shadow: var(--lisn-shadow);
+$popup-background: var(--lisn-color-bg-t);
+$popup-h-padding: 1em;
+$popup-v-padding: 1em;
+$popup-width: auto;
+$popup-min-width: auto;
+$popup-max-width: auto;
+$popup-x-color: currentColor;
+
+$modal-animate-duration: calc($animate-duration / 2);
+$modal-shadow: var(--lisn-shadow);
+$modal-h-padding: 10vw;
+$modal-content-h-padding: 3em;
+$modal-v-padding: 10vh;
+$modal-content-v-padding: 3em;
+$modal-bg: color-mix(in hsl, rgba(1, 1, 1, 0.3) 70%, var(--lisn-color-bg));
+$modal-content-bg: var(--lisn-color-bg);
+$modal-x-color: currentColor;
+
+$offcanvas-animate-duration: calc($animate-duration / 2);
+$offcanvas-shadow: var(--lisn-shadow);
+$offcanvas-h-padding: 3em;
+$offcanvas-v-padding: 3em;
+$offcanvas-bg: var(--lisn-color-bg-t);
+$offcanvas-x-color: currentColor;
+$offcanvas-height: auto;
+$offcanvas-min-height: auto;
+$offcanvas-max-height: 100%;
+$offcanvas-width: 400px;
+$offcanvas-min-width: auto;
+$offcanvas-max-width: 100%;
+
+$page-loader-bg: var(--lisn-color-bg);
+$page-loader-fg: var(--lisn-color-fg);
+$page-loader-size: 7vmax;
+$page-loader-thickness: 4px;
+
+$pager-animate-duration: $animate-duration;
+$pager-shadow-v: rgba(0, 0, 0, 0.2) 0px -8px 5px -5px;
+$pager-shadow-h: rgba(0, 0, 0, 0.2) -8px 0px 5px -5px;
+$pager-max-parallax-shift: 30%;
+$pager-max-parallax-scale-down: 0.1;
+
+$scroll-to-top-size: 40px;
+$scroll-to-top-margin: 20px;
+$scroll-to-top-bg: var(--lisn-color-fg);
+$scroll-to-top-fg: var(--lisn-color-bg);
+
+$scrollbar-spacing: 2px;
+$scrollbar-tip-spacing: $scrollbar-spacing;
+$scrollbar-thickness: 2px;
+$scrollbar-thickness-hover: 7px;
+$scrollbar-min-handle-length: 30px;
+$scrollbar-bg: transparent;
+$scrollbar-fg: var(--lisn-color-fg);
+$scrollbar-border-radius: 5px;
+
+// Generic elements
+$arrow-color: currentColor;
+$arrow-width: 0.35em;
+$arrow-length: 0.25em;
+$spinner-size: 5vmax;
+$spinner-thickness: 4px;

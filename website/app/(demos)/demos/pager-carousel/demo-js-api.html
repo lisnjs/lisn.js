@@ -1,0 +1,297 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Pager: Carousel (JS API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="assets/css/common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+    </script>
+
+    <script id="main-js" charset="utf-8">
+      document.addEventListener("DOMContentLoaded", () => {
+        const pager = document.getElementById("demo");
+        const pages = pager.querySelectorAll(".page");
+        const switches = pager.querySelectorAll(".switch");
+        const prevSwitch = pager.querySelector(".prev-switch");
+        const nextSwitch = pager.querySelector(".next-switch");
+        new LISN.widgets.Pager(pager, {
+          pages,
+          switches,
+          prevSwitch,
+          nextSwitch,
+          horizontal: true,
+          useGestures: "touch,wheel",
+          alignGestureDirection: true,
+          preventDefault: false,
+        });
+      });
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      /* Pager and page container */
+      #demo {
+        width: 100%;
+        padding: 0 3vmax;
+      }
+
+      #demo .pages {
+        --gap: 3vmin;
+        --tot-p: var(--lisn-js--total-pages, 1);
+        --curr-p: var(--lisn-js--current-page, 1);
+        --vis-p: min(6, var(--tot-p));
+        --page-w: calc(
+          min(
+            320px,
+            (100% - var(--gap) * (var(--vis-p) - 1)) /
+              (var(--vis-p) + min(var(--tot-p) - var(--vis-p), 0.5))
+          )
+        );
+        max-width: calc(
+          var(--tot-p) * var(--page-w) + (var(--vis-p) - 1) * var(--gap)
+        );
+        margin: 0 auto;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: var(--gap);
+        overflow: visible;
+        transition-duration: 0.7s;
+        transition-property: transform;
+        transform: translateX(
+          calc(
+            -1 * (var(--page-w) + var(--gap)) *
+              max(
+                0,
+                min(
+                  var(--tot-p) - var(--vis-p) - 0.5,
+                  var(--curr-p) - 1.25 - (var(--vis-p) - 1) / 2
+                )
+              )
+          )
+        );
+      }
+
+      /* Individual pages */
+      #demo .page {
+        padding: 5vh 3vmin;
+        border-radius: 15px;
+        background: var(--bg-color-lighter);
+        flex: 0 0 var(--page-w);
+        height: auto;
+        position: relative;
+        transform: scale(0.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition-property: transform, flex-basis;
+        box-shadow: rgba(0, 0, 0, 0.2) 4px 5px 5px 0px;
+      }
+
+      #demo .page[data-lisn-page-state="current"] {
+        background: var(--bg-color-lightest);
+        transform: scale(1);
+      }
+
+      #demo .switch {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        outline: none;
+      }
+
+      /* Prev/next arrows */
+      #demo[data-lisn-current-page-is-first-enabled="true"] .prev-switch,
+      #demo[data-lisn-current-page-is-last-enabled="true"] .next-switch {
+        --btn-color: #777;
+        cursor: default;
+        pointer-events: none;
+      }
+
+      #demo .prev-next-buttons {
+        width: 100%;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      #demo .prev-next-buttons button {
+        --btn-color: #ddd;
+        background: none;
+        padding: 0;
+        margin: 10px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        opacity: 0.8;
+        cursor: pointer;
+        border-width: 13px;
+        border-color: transparent var(--btn-color);
+      }
+
+      #demo .prev-next-buttons button:hover {
+        --btn-color: #fff;
+      }
+
+      #demo .prev-switch {
+        border-left: none !important;
+      }
+
+      #demo .next-switch {
+        border-right: none !important;
+      }
+
+      /* Number of visible pages on smaller screens */
+      @media (max-width: 1810px) {
+        #demo .pages {
+          --vis-p: min(5, var(--tot-p));
+        }
+      }
+
+      @media (max-width: 1530px) {
+        #demo .pages {
+          --vis-p: min(4, var(--tot-p));
+        }
+      }
+
+      @media (max-width: 1250px) {
+        #demo .pages {
+          --vis-p: min(3, var(--tot-p));
+        }
+      }
+
+      @media (max-width: 970px) {
+        #demo .pages {
+          --vis-p: min(2, var(--tot-p));
+        }
+      }
+
+      @media (max-width: 750px) {
+        #demo .pages {
+          --vis-p: 1;
+        }
+      }
+
+      /* Page content */
+      #demo h1 {
+        margin: 0 auto;
+        font-size: 75px;
+        background-image: linear-gradient(
+          45deg,
+          var(--text-color) 42%,
+          var(--text-color-lighter) 50%,
+          var(--text-color) 58%
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+
+      #demo h4 {
+        font-size: clamp(20px, calc(15px + 2vw), 32px);
+      }
+
+      #demo ul {
+        padding: 0;
+        list-style-type: none;
+      }
+
+      #demo ul li {
+        margin: 8px 0;
+      }
+
+      #demo ul li::before {
+        content: "\2726";
+        display: inline-block;
+        font-size: 0.4em;
+        transform: translateY(-0.4em);
+        margin: 0 0.6em 0 0;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <main id="main-html">
+      <div id="demo">
+        <div class="prev-next-buttons">
+          <button class="prev-switch" aria-label="Previous"></button>
+          <button class="next-switch" aria-label="Next"></button>
+        </div>
+
+        <div class="pages">
+          <div class="page switch">
+            <h1>L</h1>
+            <h4>Lightweight.</h4>
+
+            <ul>
+              <li>Vanilla TypeScript</li>
+              <li>Highly optimized</li>
+              <li>No layout thrashing</li>
+            </ul>
+          </div>
+
+          <div class="page switch">
+            <h1>I</h1>
+            <h4>Interactive.</h4>
+
+            <ul>
+              <li>Powerful API</li>
+              <li>Multi gesture support</li>
+              <li>Mobile/touch ready</li>
+            </ul>
+          </div>
+
+          <div class="page switch">
+            <h1>S</h1>
+            <h4>Simple.</h4>
+
+            <ul>
+              <li>Intuitive syntax</li>
+              <li>Consistent API</li>
+              <li>HTML-only mode</li>
+            </ul>
+          </div>
+
+          <div class="page switch">
+            <h1>N</h1>
+            <h4>No-nonsense.</h4>
+
+            <ul>
+              <li>What says on the box</li>
+              <li>Sensible defaults</li>
+              <li>Highly customizable</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

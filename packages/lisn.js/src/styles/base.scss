@@ -1,0 +1,11 @@
+@use "./_variables.scss" as *;
+
+@use "./_theme.scss";
+@use "./_transitions.scss";
+@use "./_misc.scss";
+
+:root {
+  --lisn-shadow: #{$default-shadow};
+  --lisn-window--top: #{$window-top};
+  --lisn-window--height: calc(100vh - var(--lisn-window--top));
+}

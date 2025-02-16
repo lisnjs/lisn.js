@@ -1,0 +1,1 @@
+{"version":3,"file":"dummy.cjs","names":["_default","exports"],"sources":["../../../src/ts/debug/dummy.ts"],"sourcesContent":["/**\n * @module\n * @ignore\n * @internal\n */\n\nexport default null;\n"],"mappings":";;;;;;AAAA;AACA;AACA;AACA;AACA;AAJA,IAAAA,QAAA,GAAAC,OAAA,cAMe,IAAI","ignoreList":[]}

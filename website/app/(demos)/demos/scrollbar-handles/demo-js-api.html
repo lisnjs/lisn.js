@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Scrollbar (handle) (JS API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="assets/css/common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+    </script>
+
+    <script id="main-js" charset="utf-8">
+      document.addEventListener("DOMContentLoaded", () => {
+        const scrollable = document.getElementById("demo");
+        new LISN.widgets.Scrollbar(scrollable, {
+          onMobile: true,
+          useHandle: true,
+          positionV: "left",
+        });
+
+        const msg = document.getElementById("msg");
+        new LISN.triggers.LoadTrigger(msg, [new LISN.actions.Show(msg)], {
+          delay: 1000,
+        });
+        new LISN.widgets.AutoHide(msg, { delay: 1500 });
+      });
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      /* Container */
+      #demo {
+        --lisn-scrollbar--fg: var(--text-color);
+        height: 400px;
+        width: 800px;
+        max-width: calc(100% - 50px);
+        background: #28283f;
+        box-shadow: var(--lisn-shadow);
+        color: var(--text-color);
+        overflow: auto;
+      }
+
+      /* Content */
+      #demo .section {
+        height: 400px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #demo h1 {
+        margin: 0 auto;
+        font-size: 75px;
+        background-image: linear-gradient(
+          45deg,
+          var(--text-color) 42%,
+          var(--text-color-lighter) 50%,
+          var(--text-color) 58%
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+      }
+
+      #demo h4 {
+        font-size: clamp(20px, calc(15px + 2vw), 32px);
+      }
+
+      #demo ul {
+        padding: 0;
+        list-style-type: none;
+      }
+
+      #demo ul li {
+        margin: 8px 0;
+      }
+
+      #demo ul li::before {
+        content: "\2726";
+        display: inline-block;
+        font-size: 0.4em;
+        transform: translateY(-0.4em);
+        margin: 0 0.6em 0 0;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <main id="main-html">
+      <p id="msg" class="lisn-hide">Scroll the box</p>
+
+      <div id="demo" class="lisn-hide-scroll">
+        <div class="section">
+          <h1>L</h1>
+          <h4>Lightweight.</h4>
+
+          <ul>
+            <li>Vanilla TypeScript</li>
+            <li>Highly optimized</li>
+            <li>No layout thrashing</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h1>I</h1>
+          <h4>Interactive.</h4>
+
+          <ul>
+            <li>Powerful API</li>
+            <li>Multi gesture support</li>
+            <li>Mobile/touch ready</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h1>S</h1>
+          <h4>Simple.</h4>
+
+          <ul>
+            <li>Intuitive syntax</li>
+            <li>Consistent API</li>
+            <li>HTML-only mode</li>
+          </ul>
+        </div>
+
+        <div class="section">
+          <h1>N</h1>
+          <h4>No-nonsense.</h4>
+
+          <ul>
+            <li>What says on the box</li>
+            <li>Sensible defaults</li>
+            <li>Highly customizable</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

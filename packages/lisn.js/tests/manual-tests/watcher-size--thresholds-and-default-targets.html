@@ -1,0 +1,236 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      p {
+        max-width: 800px;
+        font-size: 18px;
+        line-height: 1.7;
+        font-family: "Arial";
+        color: #222;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      Resize window and watch console. Filter messages: XXX.ZZZ messages are for
+      default threshold (50), YYY.ZZZ for threshold of 100, ZZZ.ZZZ are for 0
+      threshold. Ensure all fire correctly (at threshold, but debounced by
+      around 75ms) and that default/window/document targets are correct.
+    </p>
+
+    <p>
+      <button onclick="getLatest()">Click here</button> to get the latest size
+      of viewport
+    </p>
+    <div id="vp-size"></div>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger({ name: "test" });
+      const watcher = LISN.watchers.SizeWatcher.reuse({ name: "test" });
+      const vpSizeEl = document.getElementById("vp-size");
+      function getLatest() {
+        watcher
+          .fetchCurrentSize()
+          .then((s) => (vpSizeEl.innerText = JSON.stringify(s)));
+      }
+
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "XXX.ZZZ body size (default threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document.body,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "XXX.ZZZ documentElement size (default threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document.documentElement,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "XXX.ZZZ document size (default threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "XXX.ZZZ window size (default threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: window,
+        },
+      );
+      watcher.onResize((element, sizeData) => {
+        logger.log(
+          "XXX.ZZZ default size (default threshold):",
+          JSON.stringify(sizeData),
+          LISN.utils.formatAsString(element),
+        );
+      }, {});
+
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ body size (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document.body,
+          threshold: 100,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ documentElement size (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document.documentElement,
+          threshold: 100,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ document size (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document,
+          threshold: 100,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ window size (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: window,
+          threshold: 100,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "YYY.ZZZ default size (100 threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          threshold: 100,
+        },
+      );
+
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ body size (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document.body,
+          threshold: 0,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ documentElement size (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document.documentElement,
+          threshold: 0,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ document size (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: document,
+          threshold: 0,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ window size (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          target: window,
+          threshold: 0,
+        },
+      );
+      watcher.onResize(
+        (element, sizeData) => {
+          logger.log(
+            "ZZZ.ZZZ default size (zero threshold):",
+            JSON.stringify(sizeData),
+            LISN.utils.formatAsString(element),
+          );
+        },
+        {
+          threshold: 0,
+        },
+      );
+    </script>
+  </body>
+</html>

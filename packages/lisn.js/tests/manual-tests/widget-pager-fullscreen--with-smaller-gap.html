@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        background: lightblue;
+        position: relative;
+      }
+
+      .spacer {
+        height: 50vh;
+      }
+
+      .sticky {
+        position: sticky;
+        background: white;
+        z-index: 10;
+        top: 0;
+        left: 0;
+      }
+
+      .pager > * {
+        background: lightyellow;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sticky">
+      <button onclick="disable()">Disable all</button>
+      <button onclick="enable()">Enable all</button>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="pager" data-lisn-pager="fullscreen">
+      <div>Vertical: Page 1.1</div>
+      <div>Vertical: Page 1.2</div>
+      <div>Vertical: Page 1.3</div>
+      <div>Vertical: Page 1.4</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="pager" data-lisn-pager="fullscreen|horizontal">
+      <div>Horizontal: Page 2.1</div>
+      <div>Horizontal: Page 2.2</div>
+      <div>Horizontal: Page 2.3</div>
+      <div>Horizontal: Page 2.4</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="pager" data-lisn-pager="fullscreen|parallax">
+      <div>Vertical with parallax: Page 3.1</div>
+      <div>Vertical with parallax: Page 3.2</div>
+      <div>Vertical with parallax: Page 3.3</div>
+      <div>Vertical with parallax: Page 3.4</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="pager" data-lisn-pager="fullscreen|horizontal|parallax">
+      <div>Horizontal with parallax: Page 3.1</div>
+      <div>Horizontal with parallax: Page 3.2</div>
+      <div>Horizontal with parallax: Page 3.3</div>
+      <div>Horizontal with parallax: Page 3.4</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <script charset="utf-8">
+      function disable() {
+        for (const el of document.querySelectorAll(".pager")) {
+          LISN.widgets.Pager.get(el)?.disable();
+        }
+      }
+
+      function enable() {
+        for (const el of document.querySelectorAll(".pager")) {
+          LISN.widgets.Pager.get(el)?.enable();
+        }
+      }
+    </script>
+  </body>
+</html>

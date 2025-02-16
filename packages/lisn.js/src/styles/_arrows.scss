@@ -1,0 +1,39 @@
+@use "./_variables.scss" as *;
+
+.lisn-arrow {
+  --lisn_arrc: var(--lisn-arrow--color, #{$arrow-color});
+  --lisn_arrw: var(--lisn-arrow--width, #{$arrow-width});
+  --lisn_arrl: var(--lisn-arrow--length, #{$arrow-length});
+  width: 0px;
+  height: 0px;
+  border-style: solid;
+  display: inline-block;
+
+  &[data-lisn-direction="up"],
+  &[data-lisn-direction="down"] {
+    border-color: var(--lisn_arrc) transparent;
+    border-width: var(--lisn_arrl) calc(var(--lisn_arrw) * 0.75);
+  }
+
+  &[data-lisn-direction="left"],
+  &[data-lisn-direction="right"] {
+    border-color: transparent var(--lisn_arrc);
+    border-width: calc(var(--lisn_arrw) * 0.75) var(--lisn_arrl);
+  }
+
+  &[data-lisn-direction="up"] {
+    border-top: none;
+  }
+
+  &[data-lisn-direction="down"] {
+    border-bottom: none;
+  }
+
+  &[data-lisn-direction="left"] {
+    border-left: none;
+  }
+
+  &[data-lisn-direction="right"] {
+    border-right: none;
+  }
+}

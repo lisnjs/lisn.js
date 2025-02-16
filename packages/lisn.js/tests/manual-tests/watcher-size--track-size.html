@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .box {
+        width: 200vw;
+        height: 200vh;
+        background: orange;
+      }
+
+      #add-box {
+        position: fixed;
+        top: 50vh;
+        left: 50vw;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      There is a SizeWatcher on the viewport. Resize the window and watch the
+      console and DOM tree for size changes attributes being set.
+    </p>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger();
+      LISN.watchers.SizeWatcher.reuse().trackSize((e, s) => logger.log(s), {
+        threshold: 0,
+      });
+      LISN.watchers.SizeWatcher.reuse().trackSize(null, { threshold: 0 });
+
+      function addBox() {
+        const box = document.createElement("div");
+        box.classList.add("box");
+        document.body.append(box);
+      }
+    </script>
+  </body>
+</html>

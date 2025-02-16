@@ -1,0 +1,38 @@
+{
+  "name": "@lisn.js/bundles",
+  "version": "1.0.0",
+  "description": "LISN.js browser bundles.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "lisn",
+    "lisn.js",
+    "gesture",
+    "interaction",
+    "interactive",
+    "user action",
+    "action trigger",
+    "event",
+    "scrollbar",
+    "pager",
+    "slider",
+    "carousel",
+    "modal",
+    "popup",
+    "collapsible",
+    "sortable"
+  ],
+  "author": "Aayla Secura <aayla.secura.1138@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://lisnjs.github.io/lisn.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lisnjs/lisn.js"
+  },
+  "bugs": {
+    "url": "https://github.com/lisnjs/lisn.js/issues"
+  },
+  "type": "commonjs",
+  "browser": "./dist/lisn.min.js"
+}

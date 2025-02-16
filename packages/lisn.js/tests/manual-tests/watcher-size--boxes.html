@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .box {
+        padding: 50px;
+        width: 400px;
+        height: 400px;
+        resize: both;
+        overflow: hidden;
+        border: 1px solid black;
+      }
+
+      #content-box {
+        box-sizing: content-box;
+      }
+
+      #border-box {
+        box-sizing: border-box;
+      }
+
+      .box > div {
+        width: 100%;
+        height: 100%;
+        border: 1px solid red;
+      }
+
+      p {
+        max-width: 800px;
+        font-size: 18px;
+        line-height: 1.7;
+        font-family: "Arial";
+        color: #222;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="border-box" class="box">
+      <div>This box has "border-box" sizing</div>
+    </div>
+
+    <div id="content-box" class="box">
+      <div>This box has "content-box" sizing</div>
+    </div>
+
+    <p>
+      Enlarge the boxes and check that it triggers change of both content and
+      border sizes. Note that the threshold is the default one (50px).
+    </p>
+
+    <p>
+      <button onclick="changePadding()">Click here</button> to change box
+      paddings. Check that it triggers change of sizes. "border-box" sized one
+      should trigger content size change and "content-box" sized one should
+      trigger border size change.
+    </p>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger({ name: "test" });
+      const watcher = LISN.watchers.SizeWatcher.reuse({ name: "test" });
+      const bBox = document.getElementById("border-box");
+      const cBox = document.getElementById("content-box");
+
+      let nBoxCbks = 0;
+      let boxPaddingDoubled = false;
+
+      function addNew() {
+        const n = nBoxCbks++;
+        watcher.onResize(
+          (element, sizeData) => {
+            logger.log(
+              `XXX.ZZZ border-box box size #${n} (default threshold, either size change):`,
+              JSON.stringify(sizeData),
+              LISN.utils.formatAsString(element),
+            );
+          },
+          {
+            target: bBox,
+          },
+        );
+        watcher.onResize(
+          (element, sizeData) => {
+            logger.log(
+              `XXX.ZZZ content-box box size #${n} (default threshold, either size change):`,
+              JSON.stringify(sizeData),
+              LISN.utils.formatAsString(element),
+            );
+          },
+          {
+            target: cBox,
+          },
+        );
+        watcher.onResize(
+          (element, sizeData) => {
+            logger.log(
+              `XXX.ZZZ border-box box size #${n} (default threshold, border size change):`,
+              JSON.stringify(sizeData),
+              LISN.utils.formatAsString(element),
+            );
+          },
+          {
+            target: bBox,
+            box: "border",
+          },
+        );
+        watcher.onResize(
+          (element, sizeData) => {
+            logger.log(
+              `XXX.ZZZ content-box box size #${n} (default threshold, border size change):`,
+              JSON.stringify(sizeData),
+              LISN.utils.formatAsString(element),
+            );
+          },
+          {
+            target: cBox,
+            box: "border",
+          },
+        );
+        watcher.onResize(
+          (element, sizeData) => {
+            logger.log(
+              `XXX.ZZZ border-box box size #${n} (default threshold, content size change):`,
+              JSON.stringify(sizeData),
+              LISN.utils.formatAsString(element),
+            );
+          },
+          {
+            target: bBox,
+            box: "content",
+          },
+        );
+        watcher.onResize(
+          (element, sizeData) => {
+            logger.log(
+              `XXX.ZZZ content-box box size #${n} (default threshold, content size change):`,
+              JSON.stringify(sizeData),
+              LISN.utils.formatAsString(element),
+            );
+          },
+          {
+            target: cBox,
+            box: "content",
+          },
+        );
+      }
+      addNew();
+
+      function changePadding() {
+        const padding = boxPaddingDoubled ? 50 : 100;
+        boxPaddingDoubled = !boxPaddingDoubled;
+        cBox.style.padding = padding + "px";
+        bBox.style.padding = padding + "px";
+      }
+    </script>
+  </body>
+</html>

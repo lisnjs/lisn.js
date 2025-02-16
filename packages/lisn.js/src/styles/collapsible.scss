@@ -1,0 +1,145 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+@use "./_openable-icons.scss";
+
+.lisn-collapsible__root {
+  @include openable($transition-duration: var(--lisn_t-dur));
+
+  & {
+    --lisn_t-dur: var(--animate-duration, #{$collapsible-animate-duration});
+    --lisn_c-sz: 0px; /* size when collapsed */
+    display: grid;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* When it's fully open and the transition has finished, disable overflow hidden */
+  &.lisn-transition__disable[data-lisn-is-open="true"] {
+    overflow: visible !important;
+    @include mask-image(none !important);
+  }
+
+  /* Root size */
+  &[data-lisn-orientation="vertical"] {
+    transition-property:
+      grid-template-rows,
+      mask-size,
+      -webkit-mask-size;
+    min-height: var(--lisn_c-sz);
+    grid-template-rows: 0fr;
+  }
+
+  &[data-lisn-orientation="vertical"][data-lisn-is-open="true"] {
+    grid-template-rows: 1fr;
+  }
+
+  &[data-lisn-orientation="horizontal"] {
+    transition-property:
+      grid-template-columns,
+      mask-size,
+      -webkit-mask-size;
+    min-width: var(--lisn_c-sz);
+    grid-template-columns: 0fr;
+  }
+
+  &[data-lisn-orientation="horizontal"][data-lisn-is-open="true"] {
+    grid-template-columns: 1fr;
+  }
+
+  /* Inner wrapper size */
+  &[data-lisn-orientation="vertical"] .lisn-collapsible__inner-wrapper {
+    min-height: var(--lisn_c-sz);
+    height: 1000000%; /* or some other large value */
+    transition-property: height;
+    transition-duration: var(--lisn_t-dur);
+    /* force GPU acceleration */
+    transform: translate3d(0px, 0px, 0px);
+    will-change: transform;
+  }
+
+  &[data-lisn-orientation="vertical"][data-lisn-is-open="true"]
+    .lisn-collapsible__inner-wrapper {
+    height: 100%;
+  }
+
+  &[data-lisn-orientation="horizontal"] .lisn-collapsible__inner-wrapper {
+    min-width: var(--lisn_c-sz);
+    overflow: hidden;
+  }
+
+  /* Peek mask and transition duration */
+  &.lisn-peek {
+    --lisn_c-sz: var(--lisn-peek--size, #{$collapsible-peek-size});
+    transition-duration:
+      calc(2 * var(--lisn_t-dur)), var(--lisn_t-dur), var(--lisn_t-dur);
+    @include mask-position(0% 0%);
+    @include mask-repeat(no-repeat);
+    @include mask-gradient("0deg, transparent 0%, white var(--lisn_c-sz)");
+    @include mask-size(100% var(--lisn_c-sz));
+  }
+
+  &.lisn-peek[data-lisn-orientation="horizontal"] {
+    @include mask-gradient("-90deg, transparent 0%, white var(--lisn_c-sz)");
+    @include mask-size(var(--lisn_c-sz) 100%);
+  }
+
+  &.lisn-peek[data-lisn-is-open="true"] {
+    transition-duration:
+      calc(0.75 * var(--lisn_t-dur)), calc(1.5 * var(--lisn_t-dur)),
+      calc(1.5 * var(--lisn_t-dur));
+    @include mask-size(100% calc(100% + var(--lisn_c-sz)));
+  }
+
+  &.lisn-peek[data-lisn-orientation="horizontal"][data-lisn-is-open="true"] {
+    @include mask-size(calc(100% + var(--lisn_c-sz)) 100%);
+  }
+
+  &.lisn-peek .lisn-collapsible__inner-wrapper {
+    transition-duration: calc(2 * var(--lisn_t-dur));
+  }
+
+  &.lisn-peek[data-lisn-is-open="true"] .lisn-collapsible__inner-wrapper {
+    transition-duration: calc(0.75 * var(--lisn_t-dur));
+  }
+
+  /* Content */
+  & .lisn-collapsible__content {
+    transition-property: transform;
+    transition-duration: var(--lisn_t-dur);
+  }
+
+  &.lisn-peek[data-lisn-is-open="false"] .lisn-collapsible__content {
+    transition-duration: calc(2 * var(--lisn_t-dur));
+  }
+
+  /* Content width in horizontal mode */
+  &[data-lisn-orientation="horizontal"] .lisn-collapsible__content {
+    width: var(--lisn-js--collapsible-width, auto);
+  }
+
+  /* Content position in reverse mode */
+  &[data-lisn-reverse="true"][data-lisn-is-open="true"]
+    .lisn-collapsible__content {
+    transform: translate3d(0px, 0px, 0px);
+  }
+
+  &[data-lisn-reverse="true"] .lisn-collapsible__content {
+    transform: translate3d(0px, calc(-100% + var(--lisn_c-sz)), 0px);
+  }
+
+  &[data-lisn-reverse="true"][data-lisn-orientation="horizontal"][data-lisn-is-open="false"]
+    .lisn-collapsible__content {
+    transform: translate3d(calc(-100% + var(--lisn_c-sz)), 0px, 0px);
+  }
+}
+
+.lisn-collapsible__trigger {
+  @include openable-trigger(
+    $transition-duration: var(
+        --animate-duration,
+        #{$collapsible-animate-duration}
+      )
+  );
+}

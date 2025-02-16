@@ -1,0 +1,380 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      .dark-theme a,
+      .dark-theme {
+        color: #fff;
+      }
+
+      .body-outer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100vw;
+        position: absolute;
+        top: 0;
+      }
+
+      .body-inner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      p {
+        min-width: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="body-outer">
+      <div class="body-inner">
+        <div>
+          <div
+            data-lisn-popup="position=top|auto-close=false"
+            class="dark-theme"
+          >
+            <p>
+              T
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span data-lisn-popup-trigger="hover">
+            Hover (no auto-close, open aligned to top, dark)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=top" class="dark-theme">
+            <p>
+              T
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span data-lisn-popup-trigger="hover">
+            Hover (open aligned to top, dark)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=top-left|close-button=true">
+            <p>
+              TL
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to top-left, close button)
+          </span>
+        </div>
+
+        <div>
+          <div
+            data-lisn-popup="position=top-right|close-button=true|auto-close=false"
+          >
+            <p>
+              TR
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to top-right, close button, no auto-close)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=bottom">
+            <p>
+              B
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to bottom)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=bottom-left">
+            <p>
+              BL
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to bottom-left)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=bottom-right">
+            <p>
+              BR
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to bottom-right)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=left">
+            <p>
+              L
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger"> Click (open aligned to left) </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=left-top">
+            <p>
+              LT
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to left-top)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=left-bottom">
+            <p>
+              LB
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to left-bottom)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=right">
+            <p>
+              R
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to right)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=right-top">
+            <p>
+              RT
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to right-top)
+          </span>
+        </div>
+
+        <div>
+          <div data-lisn-popup="position=right-bottom">
+            <p>
+              RB
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger">
+            Click (open aligned to right-bottom)
+          </span>
+        </div>
+
+        <div>
+          <div class="lisn-popup" id="foo">
+            <p>
+              AUTO
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span class="lisn-popup-trigger"> Click (open aligned to auto) </span>
+        </div>
+
+        <div>
+          <div id="content">
+            <p>
+              TOP, created by JS
+              <a target="_blank" href="https://google.com"
+                >Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+                enim ad minim veniam, quis nostrud exercitation ullamco laboris
+                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+                sunt</a
+              >
+              in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+          <span id="trigger">
+            Click (open aligned to top, no auto-close, created by JS)
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <script charset="utf-8">
+      const content = document.getElementById("content");
+      const trigger = document.getElementById("trigger");
+      new LISN.widgets.Popup(content, {
+        triggers: [trigger],
+        closeButton: true,
+        autoClose: false,
+        position: "top",
+      });
+    </script>
+  </body>
+</html>

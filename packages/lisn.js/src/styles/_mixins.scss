@@ -1,0 +1,173 @@
+@use "sass:list";
+
+@mixin abs {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+@mixin abs-full-width {
+  @include abs;
+  width: 100%;
+}
+
+@mixin abs-full-size {
+  @include abs-full-width;
+  height: 100%;
+}
+
+@mixin backdrop-filter($filter) {
+  --lisn_bdf: #{$filter}; /* minification optimization */
+  -webkit-backdrop-filter: var(--lisn_bdf);
+  backdrop-filter: var(--lisn_bdf);
+}
+
+@mixin mask-image($image) {
+  --lisn_mimg: #{$image}; /* minification optimization */
+  -webkit-mask-image: var(--lisn_mimg);
+  mask-image: var(--lisn_mimg);
+}
+
+@mixin mask-gradient($gradients...) {
+  $formatted-gradients-webkit: ();
+  $formatted-gradients: ();
+
+  @each $gradient in $gradients {
+    $formatted-gradients-webkit: list.append(
+      $formatted-gradients-webkit,
+      -webkit-linear-gradient(#{$gradient}),
+      $separator: comma
+    );
+
+    $formatted-gradients: list.append(
+      $formatted-gradients,
+      linear-gradient(#{$gradient}),
+      $separator: comma
+    );
+  }
+
+  -webkit-mask-image: $formatted-gradients-webkit;
+  mask-image: $formatted-gradients;
+}
+
+@mixin mask-position($position) {
+  -webkit-mask-position: $position;
+  mask-position: $position;
+}
+
+@mixin mask-size($size) {
+  -webkit-mask-size: $size;
+  mask-size: $size;
+}
+
+@mixin mask-repeat($repeat) {
+  -webkit-mask-repeat: $repeat;
+  mask-repeat: $repeat;
+}
+
+@mixin modal-or-offcanvas(
+  $prefix,
+  $bg: none,
+  $overlay-bg: none,
+  $h-padding: 0,
+  $v-padding: 0,
+  $x-color: currentColor,
+  $transition-duration: 0s
+) {
+  @include openable(
+    $x-color: $x-color,
+    $transition-duration: $transition-duration
+  );
+
+  & {
+    position: fixed;
+    background: $bg;
+    z-index: 999999;
+    pointer-events: none;
+    visibility: hidden;
+    display: flex;
+    align-items: stretch;
+  }
+
+  &[data-lisn-is-open="true"] {
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  & .lisn-#{$prefix}__overlay,
+  & .lisn-#{$prefix}__outer-wrapper {
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: $transition-duration;
+  }
+
+  &[data-lisn-is-open="true"] .lisn-#{$prefix}__overlay,
+  &[data-lisn-is-open="true"] .lisn-#{$prefix}__outer-wrapper {
+    opacity: 1;
+  }
+
+  & .lisn-close-button {
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.1s;
+  }
+
+  &[data-lisn-is-open="true"] .lisn-close-button {
+    opacity: 0.4;
+  }
+
+  &[data-lisn-is-open="true"] .lisn-close-button:hover {
+    opacity: 1;
+  }
+
+  & .lisn-#{$prefix}__overlay {
+    @include abs-full-size;
+    @include backdrop-filter(blur(6px));
+    background: $overlay-bg;
+    z-index: -1;
+  }
+
+  & .lisn-#{$prefix}__outer-wrapper {
+    --lisn_hpad: #{$h-padding}; /* minification optimization */
+    --lisn_vpad: #{$v-padding}; /* minification optimization */
+    width: 100%;
+    height: auto;
+    overflow: auto;
+    padding: var(--lisn_vpad) var(--lisn_hpad);
+    mask-mode: alpha;
+    @include mask-gradient(
+      // vertical fade out
+      "180deg, black calc(100% - 1.1 * var(--lisn_vpad)), transparent calc(100% - 0.4 * var(--lisn_vpad))",
+      // crop mask on the right to prevent scrollbar from being faded out on the bottom
+      "-90deg, black var(--lisn_hpad), transparent var(--lisn_hpad)"
+    );
+  }
+
+  & .lisn-#{$prefix}__inner-wrapper {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+}
+
+@mixin openable($x-color: currentColor, $transition-duration: 0s) {
+  & {
+    transition-duration: $transition-duration;
+  }
+
+  &,
+  & * {
+    box-sizing: border-box;
+  }
+
+  & .lisn-close-button {
+    --lisn-close-button--bg: #{$x-color};
+  }
+}
+
+@mixin openable-trigger($transition-duration: 0s) {
+  --openable-icon--animate-duration: #{$transition-duration};
+  cursor: pointer;
+}

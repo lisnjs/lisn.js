@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .box {
+        width: 200px;
+        height: 200px;
+        background: lightblue;
+      }
+
+      .outline {
+        border: solid 1px grey;
+      }
+    </style>
+  </head>
+  <body>
+    <button type="button" id="startBtn">Click to toggle display</button>
+    <button type="button" id="startHBtn">Hover to display</button>
+
+    <div class="outline">
+      <div
+        class="box"
+        data-lisn-on-click="@display+target=#startBtn"
+        data-lisn-on-hover="@display+target=#startHBtn"
+      ></div>
+    </div>
+  </body>
+</html>

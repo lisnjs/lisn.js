@@ -1,0 +1,72 @@
+.pager {
+  font-size: 14px;
+}
+
+.pager .tabs {
+  margin-bottom: -5px;
+  display: flex;
+  gap: 2px;
+}
+
+.pager .tabs .tab {
+  --btn-color: #2f323c;
+  color: #ddd;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  background: var(--btn-color);
+  padding: 8px;
+  padding-bottom: 11px;
+  border: none;
+  border-radius: 5px;
+  transform: scale(0.8);
+  transition-property: transform;
+  transition-duration: 0.3s;
+  transform-origin: 50% 100%;
+}
+
+.pager .tabs .tab:hover {
+  --btn-color: #3e414c;
+}
+
+.pager .tabs .tab[data-lisn-page-state="current"] {
+  --btn-color: #282c34;
+  color: #fff;
+  font-weight: 600;
+  transform: scale(1);
+}
+
+.pager .pages {
+  width: 100%;
+  max-height: 550px;
+  box-shadow: var(--lisn-shadow);
+  overflow: auto;
+}
+
+.pager .page {
+  box-shadow: none;
+  background: #282c34;
+  transform: none !important;
+  overflow: auto;
+  position: relative;
+  display: none;
+}
+
+.pager.multi .page {
+  padding: 1.5em;
+  background: #21212e;
+}
+
+.pager.fixedH,
+.pager.fixedH .pages,
+.pager.fixedH .page {
+  height: 100%;
+}
+
+.pager.multi pre {
+  margin: 15px 0;
+}
+
+.pager .page[data-lisn-page-state="current"] {
+  display: block;
+}

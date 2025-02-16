@@ -1,0 +1,42 @@
+.lisn-close-button {
+  color: inherit;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  height: clamp(15px, 10%, 30px);
+  aspect-ratio: 1;
+  width: auto;
+  opacity: 0.4;
+  cursor: pointer;
+  margin-top: 1em;
+  margin-right: 2em;
+  margin-bottom: 1em;
+  margin-left: 1em;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: none;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &::after,
+  &::before {
+    content: "";
+    background: var(--lisn-close-button--bg, currentColor);
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    top: 0px;
+    left: 50%;
+  }
+
+  &::before {
+    transform: translateX(-50%) rotate(45deg);
+  }
+
+  &::after {
+    transform: translateX(-50%) rotate(-45deg);
+  }
+}

@@ -1,0 +1,48 @@
+@use "./_variables.scss" as *;
+
+.lisn-show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.lisn-hide {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.lisn-show,
+.lisn-hide,
+.lisn-transition {
+  transition-duration: var(--animate-duration, #{$animate-duration});
+}
+
+.lisn-show,
+.lisn-hide {
+  transition-property: opacity, visibility;
+  /* old iOS webkit (and possibly other?) bug; even if it gets transpiled to rotate, it still works */
+  transform: rotateZ(360deg);
+}
+
+.lisn-transition {
+  transition-property: all;
+}
+
+.lisn-transition__disable {
+  transition-property: none !important;
+}
+
+.lisn-animate__disable {
+  animation-name: none !important;
+}
+
+.lisn-animate__pause {
+  animation-play-state: paused;
+}
+
+.lisn-animate__reverse {
+  animation-direction: reverse;
+}
+
+.lisn-animate__infinite {
+  animation-iteration-count: infinite;
+}

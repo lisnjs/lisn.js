@@ -1,0 +1,213 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Track view: Parallax (JS API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="assets/css/common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+    </script>
+
+    <script id="main-js" charset="utf-8">
+      document.addEventListener("DOMContentLoaded", () => {
+        const main = document.getElementById("demo");
+        const watcher = LISN.watchers.ViewWatcher.reuse({
+          root: main,
+          rootMargin: "200px",
+        });
+
+        for (const section of main.querySelectorAll(".section")) {
+          watcher.trackView(section, null, {
+            debounceWindow: 0,
+            resizeThreshold: 0,
+            scrollThreshold: 0,
+          });
+        }
+      });
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      /* Container and sections */
+      #demo {
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+      }
+
+      #demo .section {
+        width: 100%;
+        height: 80%;
+        position: relative;
+      }
+
+      #demo .section:first-of-type {
+        margin-top: 40vh;
+      }
+
+      #demo .section:last-of-type {
+        max-height: 60%;
+      }
+
+      /* Section background */
+      #demo .section .background {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      #demo .section .background img {
+        --max-offset: 0.4;
+        --rel-top: var(--lisn-js--r-top, 0);
+        pointer-events: none;
+        position: absolute;
+        z-index: -1;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: calc(100% * (1 + var(--max-offset)));
+        object-fit: cover;
+        overflow-clip-margin: unset;
+        transform: translate3d(
+          0,
+          calc(-100% * var(--max-offset) * var(--rel-top)),
+          0
+        );
+        will-change: transform;
+      }
+
+      /* Section content */
+      #demo .section .content {
+        width: 100%;
+        height: 20px;
+        background-image: linear-gradient(
+          0deg,
+          transparent -150%,
+          var(--bg-color-lightest) 40%,
+          var(--bg-color-lightest) 60%,
+          transparent 250%
+        );
+        transform: translateY(-50%);
+      }
+
+      #demo .section .content .card {
+        --max-scale-down: 0.3;
+        position: absolute;
+        width: 80vw;
+        max-width: 400px;
+        top: 0;
+        left: 50%;
+        padding: 3vh 3vw;
+        border-radius: 20px;
+        background-image: linear-gradient(
+          0deg,
+          transparent -100%,
+          var(--bg-color-lightest) 30%,
+          var(--bg-color-lightest) 70%,
+          transparent 200%
+        );
+        color: var(--text-color);
+        text-align: center;
+        /* Because the section is full-screen height, --lisn-js--r-v-middle will
+           range between approximately 1.5 and approximately 0.5 */
+        transform: translate(-50%, -50%)
+          scale(
+            calc(
+              1 - var(--max-scale-down) * 2 *
+                max(
+                  var(--lisn-js--r-v-middle, 0) - 1,
+                  1 - var(--lisn-js--r-v-middle, 0)
+                )
+            )
+          );
+        will-change: transform;
+        transition-property: transform;
+        transition-duration: 0.1s;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <main id="main-html" class="light-theme">
+      <div id="demo">
+        <div class="section">
+          <!-- https://unsplash.com/photos/a-close-up-of-a-red-and-black-substance-OOFSqPWjCt0 -->
+          <div class="background">
+            <img src="images/abstract-1.jpg" alt="" />
+          </div>
+
+          <div class="content">
+            <div class="card">
+              <h1>Lean</h1>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <!-- https://unsplash.com/photos/a-purple-and-green-abstract-background-with-lots-of-lines-pEgsWN0kwbQ -->
+          <div class="background">
+            <img src="images/abstract-4.jpg" alt="" />
+          </div>
+
+          <div class="content">
+            <div class="card">
+              <h1>Ingenious</h1>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <!-- https://unsplash.com/photos/purple-black-and-orange-abstract-paintin-arwTpnIUHdM -->
+          <div class="background">
+            <img src="images/abstract-3.jpg" alt="" />
+          </div>
+
+          <div class="content">
+            <div class="card">
+              <h1>Skillful</h1>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <!-- https://unsplash.com/photos/a-very-long-line-of-yellow-lines-on-a-black-background-YeUVDKZWSZ4 -->
+          <div class="background">
+            <img src="images/abstract-2.jpg" alt="" />
+          </div>
+
+          <div class="content">
+            <div class="card">
+              <h1>Natty</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

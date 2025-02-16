@@ -1,0 +1,198 @@
+{
+  "name": "lisn.js",
+  "version": "1.0.0",
+  "description": "Simply handle user gestures and actions. Includes widgets.",
+  "keywords": [
+    "lisn",
+    "lisn.js",
+    "gesture",
+    "interaction",
+    "interactive",
+    "user action",
+    "action trigger",
+    "event",
+    "scrollbar",
+    "pager",
+    "slider",
+    "carousel",
+    "modal",
+    "popup",
+    "collapsible",
+    "sortable"
+  ],
+  "author": "Aayla Secura <aayla.secura.1138@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://lisnjs.github.io/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lisnjs/lisn.js"
+  },
+  "bugs": {
+    "url": "https://github.com/lisnjs/lisn.js/issues"
+  },
+  "type": "module",
+  "files": [
+    "dist/",
+    "src/styles"
+  ],
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "style": "./dist/styles/index.css",
+  "exports": {
+    ".": {
+      "module": "./dist/esm/index.js",
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.cjs"
+      },
+      "default": "./dist/esm/index.js"
+    },
+    "./actions": {
+      "module": "./dist/esm/actions/index.js",
+      "import": {
+        "types": "./dist/esm/actions/index.d.ts",
+        "default": "./dist/esm/actions/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/actions/index.d.ts",
+        "default": "./dist/cjs/actions/index.cjs"
+      },
+      "default": "./dist/esm/actions/index.js"
+    },
+    "./debug": {
+      "module": "./dist/esm/debug/index.js",
+      "import": {
+        "types": "./dist/esm/debug/index.d.ts",
+        "default": "./dist/esm/debug/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/debug/index.d.ts",
+        "default": "./dist/cjs/debug/index.cjs"
+      },
+      "default": "./dist/esm/debug/index.js"
+    },
+    "./globals": {
+      "module": "./dist/esm/globals/index.js",
+      "import": {
+        "types": "./dist/esm/globals/index.d.ts",
+        "default": "./dist/esm/globals/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/globals/index.d.ts",
+        "default": "./dist/cjs/globals/index.cjs"
+      },
+      "default": "./dist/esm/globals/index.js"
+    },
+    "./modules": {
+      "module": "./dist/esm/modules/index.js",
+      "import": {
+        "types": "./dist/esm/modules/index.d.ts",
+        "default": "./dist/esm/modules/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/modules/index.d.ts",
+        "default": "./dist/cjs/modules/index.cjs"
+      },
+      "default": "./dist/esm/modules/index.js"
+    },
+    "./triggers": {
+      "module": "./dist/esm/triggers/index.js",
+      "import": {
+        "types": "./dist/esm/triggers/index.d.ts",
+        "default": "./dist/esm/triggers/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/triggers/index.d.ts",
+        "default": "./dist/cjs/triggers/index.cjs"
+      },
+      "default": "./dist/esm/triggers/index.js"
+    },
+    "./utils": {
+      "module": "./dist/esm/utils/index.js",
+      "import": {
+        "types": "./dist/esm/utils/index.d.ts",
+        "default": "./dist/esm/utils/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/utils/index.d.ts",
+        "default": "./dist/cjs/utils/index.cjs"
+      },
+      "default": "./dist/esm/utils/index.js"
+    },
+    "./watchers": {
+      "module": "./dist/esm/watchers/index.js",
+      "import": {
+        "types": "./dist/esm/watchers/index.d.ts",
+        "default": "./dist/esm/watchers/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/watchers/index.d.ts",
+        "default": "./dist/cjs/watchers/index.cjs"
+      },
+      "default": "./dist/esm/watchers/index.js"
+    },
+    "./widgets": {
+      "module": "./dist/esm/widgets/index.js",
+      "import": {
+        "types": "./dist/esm/widgets/index.d.ts",
+        "default": "./dist/esm/widgets/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/widgets/index.d.ts",
+        "default": "./dist/cjs/widgets/index.cjs"
+      },
+      "default": "./dist/esm/widgets/index.js"
+    },
+    "./types": "./dist/esm/index.d.ts",
+    "./*.css": "./dist/styles/*.css",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss",
+    "**/bundle*.*",
+    "**/utils/scroll.*"
+  ],
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test:passive": "npx eslint src/ts ; npx eslint tests/unit-tests",
+    "test:unit": "node scripts/jest",
+    "test": "npm run test:passive && npm run test:unit",
+    "dist:styles": "npx sass src/styles/:dist/styles/ --no-source-map && npx postcss --replace dist/styles/*.css",
+    "dist:styles-bundles": "npx sass src/styles/:bundles/styles/ --no-source-map && npx postcss --replace bundles/styles/*.css",
+    "dist:esm": "npx babel src/ts --env-name=esm --out-dir dist/esm --extensions .ts --out-file-extension .js",
+    "dist:cjs": "npx babel src/ts --env-name=cjs --out-dir dist/cjs --extensions .ts --out-file-extension .cjs",
+    "dist:types-esm": "npx tsc --module es2022 --outDir dist/esm && npx tsc-alias --outDir dist/esm --resolve-full-paths --resolve-full-extension .js",
+    "dist:types-cjs": "npx tsc --module commonjs --outDir dist/cjs && npx tsc-alias --outDir dist/cjs --resolve-full-paths --resolve-full-extension .cjs",
+    "dist:types": "npm run dist:types-esm && npm run dist:types-cjs",
+    "dist:bundle": "npx rollup -c",
+    "dist:bundle-min": "node scripts/uglify",
+    "dist": "npm run dist:styles && npm run dist:esm && npm run dist:cjs && npm run dist:types && npm run dist:bundle && npm run dist:bundle-min",
+    "doc": "npx typedoc && npx remark INTRO.md --use remark-toc --output README.md"
+  },
+  "devDependencies": {
+    "bufferutil": "^4.0.8",
+    "eiows": "^7.1.2",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "utf-8-validate": "^6.0.5",
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-strip": "^3.0.4",
+    "rollup": "^4.28.1",
+    "rollup-plugin-postcss": "^4.0.2",
+    "uglify-js": "^3.19.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-matcher-deep-close-to": "^3.0.2",
+    "ts-jest": "^29.2.5"
+  }
+}

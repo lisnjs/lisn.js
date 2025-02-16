@@ -1,0 +1,39 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+@use "./_close-button.scss";
+
+.lisn-modal__root {
+  @include modal-or-offcanvas(
+    "modal",
+    $overlay-bg: var(--lisn-modal--bg, #{$modal-bg}),
+    $h-padding: var(--lisn-modal--h-padding, #{$modal-h-padding}),
+    $v-padding: var(--lisn-modal--v-padding, #{$modal-v-padding}),
+    $x-color: var(--lisn-modal--x-color, #{$modal-x-color}),
+    $transition-duration: var(--animate-duration, #{$modal-animate-duration})
+  );
+
+  & {
+    top: var(--lisn-window--top);
+    left: 0px;
+    width: 100%;
+    height: calc(100vh - var(--lisn-window--top)); /* fallback */
+    height: calc(100dvh - var(--lisn-window--top));
+  }
+
+  & .lisn-modal__content {
+    box-shadow: var(--lisn-modal--shadow, #{$modal-shadow});
+    background: var(--lisn-modal--content-bg, #{$modal-content-bg});
+    padding: var(--lisn-modal--content-v-padding, #{$modal-content-v-padding})
+      var(--lisn-modal--content-h-padding, #{$modal-content-h-padding});
+    border-style: none;
+    border-radius: 8px;
+  }
+}
+
+.lisn-modal__trigger {
+  @include openable-trigger(
+    $transition-duration: var(--animate-duration, #{$modal-animate-duration})
+  );
+}

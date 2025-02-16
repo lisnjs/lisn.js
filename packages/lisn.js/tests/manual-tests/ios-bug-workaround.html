@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <style type="text/css" media="screen">
+      .shown,
+      .hidden {
+        /* Transition is required for bug to manifest */
+        transition-property: opacity, visibility;
+        transition-duration: 1s;
+        /* Fix */
+        -webkit-transform: rotate(360deg);
+        -moz-transform: rotate(360deg);
+        -ms-transform: rotate(360deg);
+        transform: rotate(360deg);
+      }
+
+      .shown {
+        /* Using only one of opacity or visibility makes no difference */
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .scrollable {
+        height: 200px;
+        /* Scrollable is required for bug to manifest */
+        overflow: auto;
+        border: 2px solid purple;
+      }
+
+      .button {
+        padding: 20px;
+        max-width: 200px;
+        margin: 0 auto;
+        border-radius: 10px;
+        background: pink;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scrollable">
+      <div class="button" onclick="toggleFoo();">Show/hide text</div>
+      <h3 id="foo">This is toggled by button</h3>
+      <div>
+        Lorem ipsum odor amet, consectetuer adipiscing elit. Integer cras aenean
+        mus fringilla, cursus viverra arcu ornare pretium. Mi per pharetra
+        malesuada platea primis suspendisse. Nibh duis duis sit suscipit porta
+        duis semper fermentum. Aliquam ut pretium potenti nisi porta.
+        Condimentum habitasse sagittis himenaeos mollis proin dapibus interdum
+        rhoncus vitae. Gravida curabitur in adipiscing cubilia curabitur mattis.
+        Per leo semper himenaeos tincidunt litora turpis. Porttitor molestie
+        penatibus semper diam porta habitasse aenean aptent. Maximus odio
+        hendrerit per faucibus eleifend sapien. Scelerisque velit sollicitudin
+        libero adipiscing mus lobortis. Libero nam neque maecenas, nostra
+        aliquet magnis interdum nisl. Scelerisque fusce nulla montes taciti
+        conubia. Fermentum iaculis id potenti fermentum interdum nascetur platea
+        pulvinar. Augue eleifend nostra nam phasellus molestie felis. Nisi
+        sagittis dolor fames; pulvinar integer lacus cras. Efficitur gravida sit
+        hac malesuada viverra fusce. Penatibus curae facilisis dictum tincidunt
+        sodales mollis. Commodo mi est luctus lacus facilisis euismod a
+        imperdiet. Felis et etiam metus ut aliquam scelerisque. Molestie
+        ullamcorper per molestie lorem leo euismod mus sed. Fames odio auctor
+        commodo viverra habitasse molestie hac rhoncus. Vivamus praesent metus
+        amet scelerisque curabitur hendrerit. Suspendisse imperdiet velit
+        tristique phasellus tincidunt dignissim tempor. Orci ac sed aliquet
+        velit volutpat et. Imperdiet rhoncus purus quisque velit libero auctor
+        vitae mauris. Leo purus sed habitant aliquet dictum cursus velit lorem.
+        Aliquam vehicula ligula fringilla ad lorem id dui donec enim. Enim
+        parturient semper rhoncus congue quis cubilia. Etiam porttitor nam
+        consequat pulvinar quisque penatibus iaculis porttitor. Auctor duis
+        fusce gravida litora ultrices; etiam fusce. Id congue auctor feugiat ad
+        felis vehicula dis. Turpis quam pellentesque mi lacus sagittis suscipit
+        nulla. Platea rhoncus nibh pharetra leo nibh tristique. Nisl nascetur
+        convallis ex euismod nisi. Lacus sed consequat parturient nunc donec ut
+        natoque. Fringilla est feugiat ante lacus orci elementum amet, consequat
+        mauris. Amet erat sagittis dolor cubilia eu nunc. Quis ipsum ornare sem
+        mus per tincidunt tempus eu sagittis.
+      </div>
+    </div>
+
+    <script charset="utf-8">
+      const logger = new LISN.debug.Logger({ name: "test" });
+      function toggleFoo() {
+        const foo = document.getElementById("foo");
+        if (foo.classList.contains("hidden")) {
+          foo.classList.remove("hidden");
+          foo.classList.add("shown");
+          logger.info("showing foo");
+        } else {
+          foo.classList.add("hidden");
+          foo.classList.remove("shown");
+          logger.info("hiding foo");
+        }
+      }
+    </script>
+  </body>
+</html>

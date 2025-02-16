@@ -1,0 +1,115 @@
+/* Container */
+.wrapper {
+  --animate-duration: 0.4s;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Pager and pages */
+.demo {
+  width: 800px;
+  max-width: 100%;
+  box-shadow: var(--lisn-shadow);
+  position: relative;
+}
+
+.pages {
+  height: 400px;
+  max-height: 100%;
+}
+
+.demo,
+.background {
+  border-radius: 15px;
+}
+
+.background {
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  overflow-clip-margin: unset;
+}
+
+/* Buttons (common) */
+.switches {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  display: flex;
+}
+
+.switch {
+  --btn-color: #ddd;
+  background: none;
+  padding: 0;
+  margin: 10px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.switch:hover {
+  --btn-color: #fff;
+}
+
+.switch[data-lisn-page-state="current"],
+.switch[data-lisn-page-state="disabled"] {
+  --btn-color: #777;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Page select circles */
+.switches[data-switches="select"] .switch {
+  border-width: 7px;
+  border-radius: 50%;
+  border-color: var(--btn-color);
+}
+
+.switches[data-switches="select"] {
+  bottom: 10px;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* Prev/next arrows */
+.demo[data-lisn-current-page-is-first-enabled="true"] [data-switch="prev"],
+.demo[data-lisn-current-page-is-last-enabled="true"] [data-switch="next"] {
+  visibility: hidden;
+}
+
+.switches[data-switches="prev-next"] {
+  top: 45%;
+  justify-content: space-between;
+}
+
+.switches[data-switches="prev-next"] .switch {
+  border-width: 13px;
+  border-color: transparent var(--btn-color);
+}
+
+.switch[data-switch="prev"] {
+  border-left: none !important;
+}
+
+.switch[data-switch="next"] {
+  border-right: none !important;
+}

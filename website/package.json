@@ -1,0 +1,24 @@
+{
+  "name": "lisnjs.github.io",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx next dev",
+    "build": "npx next build",
+    "start": "npx next start",
+    "serve": "node server",
+    "deploy": "npx gh-pages --dist out --nojekyll --repo https://github.com/lisnjs/lisnjs.github.io.git --branch main"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "next": "^15.1.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@lisn.js/react": "file:../packages/lisn.js-react"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.8",
+    "express": "^4.21.2",
+    "gh-pages": "^6.3.0"
+  }
+}

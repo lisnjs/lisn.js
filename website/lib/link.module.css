@@ -1,0 +1,5 @@
+.external {
+  display: inline-block;
+  margin-left: 4px;
+  transform: translateY(-5px);
+}

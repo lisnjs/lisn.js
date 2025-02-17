@@ -99,7 +99,7 @@ class RemoteConsole {
     (async () => {
       let socket;
       try {
-        socket = await import("socket.io-client");
+        socket = await import(/* webpackIgnore: true */"socket.io-client");
       } catch (e__ignored) {
         // module doesn't exist
         cleanup();

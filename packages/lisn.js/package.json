@@ -1,6 +1,6 @@
 {
   "name": "lisn.js",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Simply handle user gestures and actions. Includes widgets.",
   "keywords": [
     "lisn",
@@ -18,7 +18,10 @@
     "modal",
     "popup",
     "collapsible",
-    "sortable"
+    "sortable",
+    "same-height",
+    "equal-height",
+    "widgets"
   ],
   "author": "Aayla Secura <aayla.secura.1138@gmail.com>",
   "license": "MIT",

@@ -7,7 +7,7 @@ export type SectionProps = {
   shadow?: boolean; // default true if opaque, otherwise false
   fullWidth?: boolean;
   textCenter?: boolean;
-} & ComponentPropsWithRef<"div">;
+} & ComponentPropsWithRef<"section">;
 
 export const Section = ({
   children,

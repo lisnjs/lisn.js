@@ -9,7 +9,7 @@ Object.keys(_types).forEach(function (key) {
   if (key in exports && exports[key] === _types[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _types[key];
     }
   });
@@ -20,7 +20,7 @@ Object.keys(_useWidget).forEach(function (key) {
   if (key in exports && exports[key] === _useWidget[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _useWidget[key];
     }
   });
@@ -31,7 +31,7 @@ Object.keys(_AutoHideComponent).forEach(function (key) {
   if (key in exports && exports[key] === _AutoHideComponent[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _AutoHideComponent[key];
     }
   });
@@ -42,7 +42,7 @@ Object.keys(_OpenableComponent).forEach(function (key) {
   if (key in exports && exports[key] === _OpenableComponent[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _OpenableComponent[key];
     }
   });
@@ -53,7 +53,7 @@ Object.keys(_PagerComponent).forEach(function (key) {
   if (key in exports && exports[key] === _PagerComponent[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _PagerComponent[key];
     }
   });
@@ -64,7 +64,7 @@ Object.keys(_PageLoaderComponent).forEach(function (key) {
   if (key in exports && exports[key] === _PageLoaderComponent[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _PageLoaderComponent[key];
     }
   });
@@ -75,7 +75,7 @@ Object.keys(_SameHeightComponent).forEach(function (key) {
   if (key in exports && exports[key] === _SameHeightComponent[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _SameHeightComponent[key];
     }
   });
@@ -86,7 +86,7 @@ Object.keys(_ScrollToTopComponent).forEach(function (key) {
   if (key in exports && exports[key] === _ScrollToTopComponent[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _ScrollToTopComponent[key];
     }
   });
@@ -97,7 +97,7 @@ Object.keys(_ScrollbarComponent).forEach(function (key) {
   if (key in exports && exports[key] === _ScrollbarComponent[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _ScrollbarComponent[key];
     }
   });
@@ -108,7 +108,7 @@ Object.keys(_SortableComponent).forEach(function (key) {
   if (key in exports && exports[key] === _SortableComponent[key]) return;
   Object.defineProperty(exports, key, {
     enumerable: true,
-    get: function get() {
+    get: function () {
       return _SortableComponent[key];
     }
   });

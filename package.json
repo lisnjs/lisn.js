@@ -58,7 +58,7 @@
         }
       ]
     },
-    "favicon": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 version=%221.1%22 viewBox=%220 0 500 500%22> <defs> <style> .st0 { fill: #fff; stroke: #fff; stroke-miterlimit: 10; } </style> </defs> <rect width=%22500%22 height=%22500%22/> <polygon class=%22st0%22 points=%22191.6 181.2 340.6 20.7 172.1 177.3 173.6 178.7 173.3 179 313 318.6 163.8 479.3 324.4 330 324.5 330.1 326.4 328.2 332.3 322.7 332.1 322.5 332.5 322.1 191.6 181.2%22/> <rect class=%22st0%22 x=%22341.3%22 y=%22167%22 width=%2211.5%22 height=%22157.3%22/> <rect class=%22st0%22 x=%22147.2%22 y=%22176.2%22 width=%2211.5%22 height=%22157.3%22/> <rect class=%22st0%22 x=%22168.2%22 y=%22311.1%22 width=%2211.5%22 height=%2233.2%22 transform=%22translate(501.6 153.7) rotate(90)%22/> <rect class=%22st0%22 x=%22147.2%22 y=%22155.2%22 width=%2211.5%22 height=%2211.5%22/></svg>",
+    "favicon": "data:image/svg+xml,<svg id=%22Layer_1%22 xmlns=%22http://www.w3.org/2000/svg%22 version=%221.1%22 viewBox=%220 0 500 500%22> <defs> <style> .st0 { fill: #fff; } </style> </defs> <rect width=%22500%22 height=%22500%22/> <rect class=%22st0%22 x=%22341.3%22 y=%22180.7%22 width=%2211.5%22 height=%22138.6%22/> <rect class=%22st0%22 x=%22147.2%22 y=%22160.9%22 width=%2211.5%22 height=%2211.5%22/> <polygon class=%22st0%22 points=%22173 464.2 328.5 319.4 191 181.9 327 35.8 171.5 180.6 309 318.1 173 464.2%22/> <polygon class=%22st0%22 points=%22158.7 307.8 158.7 180.7 147.2 180.7 147.2 307.8 147.2 319.3 158.7 319.3 199.9 319.3 199.9 307.8 158.7 307.8%22/></svg>",
     "github-corners": "https://github.com/lisnjs/lisn.js",
     "reurls": {
       "README.md": "https://lisnjs/github.io/"

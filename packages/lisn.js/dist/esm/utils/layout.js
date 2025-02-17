@@ -111,6 +111,8 @@ export const NUM_LAYOUTS = MH.lengthOf(ORDERED_DEVICE_NAMES) + MH.lengthOf(ORDER
 
 const S_DEVICES = "devices";
 const S_ASPECTRS_CAMEL = "aspectRatios";
+
+// Don't use capture groups for old browser support
 const LAYOUT_RANGE_REGEX = RegExp("^ *(?:" + "([a-z-]+) +to +([a-z-]+)|" + "min +([a-z-]+)|" + "max +([a-z-]+)" + ") *$");
 const getLayoutsFromBitmask = (keyName, bitmask, bitSpace) => {
   const layouts = [];

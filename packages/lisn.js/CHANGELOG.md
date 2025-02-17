@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2025-17-02
+
+### Improved compatibility with older environments
+
+- Removed use of named regex capture groups to support older browsers (though
+  said browsers would still need polyfills for ResizeObserver)
+- Added a `/* webpackIgnore: true */` in front of dynamic import of socket.io to
+  make it work with Webpack (and hence Next.js pre version 15). Prior to this
+  version, Webpack would throw an error about module not found even though it's
+  wrapped in a try/catch block.
+
 ## [1.0.1] - 2025-16-02
 
 ### Updated build to remove unnecessary transpiling

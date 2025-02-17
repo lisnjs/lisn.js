@@ -185,6 +185,7 @@ const VIEWS_SPACE = exports.VIEWS_SPACE = (0, _bitSpaces.createBitSpace)((0, _bi
 
 // --------------------
 
+// Don't use capture groups for old browser support
 const OFFSET_REGEX = RegExp("(top|bottom|left|right): *([^ ].+)");
 const getViewsFromBitmask = bitmask => {
   const views = [];

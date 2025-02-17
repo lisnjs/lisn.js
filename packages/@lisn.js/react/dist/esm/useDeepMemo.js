@@ -2,9 +2,9 @@
 
 import { useRef, useMemo } from "react";
 import { dequal } from "dequal";
-export var useDeepMemo = function useDeepMemo(value) {
-  var valueRef = useRef(value);
-  return useMemo(function () {
+export const useDeepMemo = value => {
+  const valueRef = useRef(value);
+  return useMemo(() => {
     if (!dequal(value, valueRef.current)) {
       valueRef.current = value;
     }

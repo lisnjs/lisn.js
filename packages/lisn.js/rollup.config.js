@@ -47,7 +47,6 @@ const getBabelConf = () => {
     babelHelpers: "bundled",
     extensions: [".ts"],
     sourceMaps: true,
-    comments: false,
   };
 };
 

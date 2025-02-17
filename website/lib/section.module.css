@@ -5,8 +5,8 @@
 .section .content:not(.wide) {
   padding: 20px 10vw;
   margin: 0 auto;
-  display: table;
-  max-width: 1000px;
+  width: fit-content;
+  max-width: calc(min(100%, 1000px));
 }
 
 .section.opaque {

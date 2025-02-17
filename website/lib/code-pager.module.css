@@ -2,13 +2,13 @@
   font-size: clamp(13px, calc(8px + 1vw), 16px);
 }
 
-.pager .tabs {
+.tabs {
   margin-bottom: -5px;
   display: flex;
   gap: 2px;
 }
 
-.pager .tabs .tab {
+.tabs .tab {
   --btn-color: var(--bg-color);
   color: var(--text-color);
   font-weight: 500;
@@ -25,30 +25,34 @@
   transform-origin: 50% 100%;
 }
 
-.pager .tabs .tab:hover {
+.tabs .tab:hover {
   --btn-color: var(--bg-color-lighter);
 }
 
-.pager .tabs .tab[data-lisn-page-state="current"] {
+.tabs .tab[data-lisn-page-state="current"] {
   --btn-color: var(--bg-color-lighter);
   font-weight: 600;
   transform: scale(1);
 }
 
-.pager .pages {
+.pages {
   width: 100%;
   max-height: 100%;
   box-shadow: var(--lisn-shadow);
   overflow: auto;
 }
 
-.pager .page {
+.page {
   box-shadow: none;
   background: var(--hljs-bg-color);
   transform: none !important;
   overflow: auto;
   position: relative;
   display: none;
+}
+
+.page[data-lisn-page-state="current"] {
+  display: block;
 }
 
 .pager.multi .page {
@@ -64,8 +68,4 @@
 
 .pager.multi pre {
   margin: 15px 0;
-}
-
-.pager .page[data-lisn-page-state="current"] {
-  display: block;
 }

@@ -139,7 +139,7 @@ ul.checked li::before {
 }
 
 .fit {
-  display: table;
+  width: fit-content;
 }
 
 .text-center {

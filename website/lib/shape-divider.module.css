@@ -1,8 +1,9 @@
 .divider {
   position: absolute;
   top: 0;
-  left: 0;
+  right: 0;
   width: 100%;
+  min-width: 600px;
   overflow: hidden;
   line-height: 0;
   z-index: -1;

@@ -11,9 +11,17 @@ export type CodeCollection = {
   key: string;
   title: string;
   tabs: CodeTab[];
+  sandbox: SandboxInfo | null;
 };
 
-export const fetchCodeCollections = async (dirname: string) => {
+export type SandboxInfo = { name: string; url: string };
+
+export type SupportedTypes = keyof typeof supported;
+
+export const fetchCodeCollections = async (
+  dirname: string,
+  sandboxes: { [K in SupportedTypes]?: SandboxInfo } = {},
+) => {
   const collections: CodeCollection[] = [];
   const cached = new Map<string, string>();
 
@@ -39,10 +47,12 @@ export const fetchCodeCollections = async (dirname: string) => {
       }
     }
 
+    const sandbox = sandboxes[key] ?? null;
     collections.push({
       key,
       title,
       tabs: codeTabs,
+      sandbox,
     });
   }
 

@@ -9,6 +9,7 @@ import "lisn.js/modal.css";
 
 import { CodePager, CodePagerPage } from "./CodePager";
 import { CodeCollection } from "./fetchCodeCollections";
+import Link from "./Link";
 
 import styles from "./demo-header.module.css";
 
@@ -41,6 +42,7 @@ export const DemoHeader = ({
                 key={c.key}
                 title={c.title}
                 tabs={c.tabs}
+                sandbox={c.sandbox}
               ></ModalPager>
             );
           })}
@@ -50,7 +52,7 @@ export const DemoHeader = ({
   );
 };
 
-const ModalPager = ({ title, tabs }: CodeCollection) => {
+const ModalPager = ({ title, tabs, sandbox }: CodeCollection) => {
   return (
     <div>
       <ModalTriggerComponent as="button" className={styles.trigger}>
@@ -60,6 +62,14 @@ const ModalPager = ({ title, tabs }: CodeCollection) => {
         className={styles.content}
         config={{ className: styles.modal }} /* wrapper */
       >
+        {sandbox && (
+          <p className="text-center">
+            Edit on{" "}
+            <Link href={sandbox.url} external={true}>
+              {sandbox.name}
+            </Link>
+          </p>
+        )}
         <CodePager
           className={styles.pager}
           tabNames={tabs.map((t) => t.title)}

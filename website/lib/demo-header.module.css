@@ -3,11 +3,12 @@
   position: fixed;
   right: 0;
   top: 0;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .popupTrigger {
   padding: 7px;
+  font-size: 1em;
   background: var(--bg-color);
   cursor: default;
   outline: none;
@@ -30,6 +31,7 @@
 .trigger {
   white-space: nowrap;
   opacity: 0.8;
+  font-size: 1em;
   outline: none;
   background: none;
   border: none;

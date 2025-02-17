@@ -44,7 +44,9 @@ export default function Page() {
           <li>No layout thrashing.</li>
           <li>Optimal performance.</li>
           <li>Server-side rendering.</li>
+          <li>Flexible and customizable.</li>
           <li>Simple to use.</li>
+          <li>HTML-only human-readable mode.</li>
         </ul>
 
         <div className="bold flex i-center gap-3">
@@ -90,12 +92,13 @@ export default function Page() {
           <li>Layout watcher</li>
           <li>DOM watcher</li>
           <li>Pointer watcher</li>
-          <div className="hrule center"></div>
+          <li className="hrule center"></li>
           <li>Collapsible</li>
           <li>Floating popup</li>
           <li>Modal</li>
           <li>Offcanvas menu</li>
           <li>Pager (carousel/slider/tabs)</li>
+          <li>Flex same-height</li>
           <li>Scrollbars (native scrolling)</li>
           <li>Sortable</li>
           <li>Scroll-to-top button</li>
@@ -104,16 +107,14 @@ export default function Page() {
         </ul>
       </Section>
 
-      <Section textCenter={true}>
+      <Section opaque={true} textCenter={true}>
         <h2>Powerful and intuitive API.</h2>
         <p>
           The JavaScript API is super easy to use, but you can also use LISN
           without writing a single line of JS using its powerful HTML-only API.
         </p>
-      </Section>
 
-      <Section textCenter={true} opaque={true}>
-        <div className="flex gap-3">
+        <div className="flex gap-3 j-center">
           <h3>
             <Link href="/demos">Demos</Link>
           </h3>
@@ -125,7 +126,7 @@ export default function Page() {
         </div>
       </Section>
 
-      <Section id="get-started">
+      <Section id="quick-start">
         <h2 className="text-center">Getting started.</h2>
 
         <CodePager
@@ -189,6 +190,20 @@ LISN.watchers.ScrollWatcher.onScroll(
   {/* config... */}
 );`}</code>
             </pre>
+            or alternatively, just start using the triggers and widgets in
+            HTML-only mode:
+            <pre>
+              <code className="language-html">{`<div data-lisn-modal
+     data-lisn-on-view="@open +target=top: 50% +rootMargin=-48%,0px +once"
+>
+  <p>
+    Here's a modal popping up to tell you you've reached the middle of the page!
+  </p>
+  <p class="footnote">
+    P.S. Don't do that, popups are annoying.
+  </p>
+</div>`}</code>
+            </pre>
           </CodePagerPage>
         </CodePager>
 
@@ -217,7 +232,9 @@ LISN.watchers.ScrollWatcher.onScroll(
 
         <div>
           <div className="bold flex i-center gap-s">
-            <span>Default</span>
+            <span>
+              Default: <code>lisn.min.js</code>
+            </span>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.min.js"
@@ -231,7 +248,9 @@ LISN.watchers.ScrollWatcher.onScroll(
 
         <div>
           <div className="bold flex i-center gap-s">
-            <span>Slim</span>
+            <span>
+              Slim: <code>lisn.slim.min.js</code>
+            </span>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.slim.min.js"
@@ -245,7 +264,9 @@ LISN.watchers.ScrollWatcher.onScroll(
 
         <div>
           <div className="bold flex i-center gap-s">
-            <span>Essentials</span>
+            <span>
+              Essentials: <code>lisn.essentials.min.js</code>
+            </span>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.essentials.min.js"
@@ -256,15 +277,18 @@ LISN.watchers.ScrollWatcher.onScroll(
 
         <div>
           <div className="bold flex i-center gap-s">
-            <span>Debug/dev (not minified)</span>
+            <span>
+              Debug/dev (not minified): <code>lisn.debug.js</code>
+            </span>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.debug.js"
             />
           </div>
           <p className="small">
-            Includes everything the default bundle does <em>plus</em> utility
-            functions and logging functionality including remote logging via{" "}
+            You likely won't be using it but it's there. Includes everything the
+            default bundle does <em>plus</em> utility functions and logging
+            functionality including remote logging via{" "}
             <Link href="https://socket.io/" external={true}>
               socket.io
             </Link>{" "}

@@ -3,9 +3,9 @@
 }
 
 :root {
-  --dark-color: #1e1e31;
-  --dark-color-l: #2e2e4c;
-  --dark-color-ll: #414168;
+  --dark-color: #21212d;
+  --dark-color-l: #292938;
+  --dark-color-ll: #4c4c68;
   --light-color: #eef2f3;
   --light-color-l: #fafafa;
   --light-color-ll: #fff;
@@ -19,7 +19,7 @@
   --bg-color: var(--light-color);
   --bg-color-lighter: var(--light-color-l);
   --bg-color-lightest: var(--light-color-ll);
-  --accent-color: #cfb3e7;
+  --accent-color: #d5c1f1;
   --hljs-bg-color: #fafafa;
 }
 
@@ -29,7 +29,7 @@
   --bg-color: var(--dark-color);
   --bg-color-lighter: var(--dark-color-l);
   --bg-color-lightest: var(--dark-color-ll);
-  --accent-color: #60578c;
+  --accent-color: #614487;
   --hljs-bg-color: #282c34;
 }
 
@@ -41,11 +41,19 @@
   display: none;
 }
 
-body {
-  --lisn-color-dark: var(--dark-color);
-  --lisn-color-dark-t: color-mix(in hsl, var(--dark-color), transparent 5%);
-  --lisn-color-light: var(--light-color);
-  --lisn-color-light-t: color-mix(in hsl, var(--light-color), transparent 5%);
+:root {
+  --lisn-color-dark: var(--dark-color) !important;
+  --lisn-color-dark-t: color-mix(
+    in hsl,
+    var(--dark-color),
+    transparent 5%
+  ) !important;
+  --lisn-color-light: var(--light-color) !important;
+  --lisn-color-light-t: color-mix(
+    in hsl,
+    var(--light-color),
+    transparent 5%
+  ) !important;
 }
 
 * {
@@ -156,7 +164,7 @@ ul.checked li::before {
   width: 50%;
   margin-top: 10px;
   margin-bottom: 10px;
-  background: var(--bg-color-l);
+  background: var(--bg-color-lightest);
 }
 
 .flex {

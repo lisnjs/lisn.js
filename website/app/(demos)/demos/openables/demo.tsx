@@ -21,13 +21,14 @@ import {
   ScrollToTopComponent,
 } from "@lisn.js/react";
 
-import "lisn.js/collapsible.css";
-import "lisn.js/popup.css";
-import "lisn.js/modal.css";
-import "lisn.js/offcanvas.css";
-import "lisn.js/scrollbar.css";
-import "lisn.js/scroll-to-top.css";
+// import "lisn.js/collapsible.css";
+// import "lisn.js/popup.css";
+// import "lisn.js/modal.css";
+// import "lisn.js/offcanvas.css";
+// import "lisn.js/scrollbar.css";
+// import "lisn.js/scroll-to-top.css";
 // ^^ Or we could just import "lisn.js/lisn.css" which contains all CSS
+import "lisn.js/lisn.css";
 
 import Link from "@lib/Link";
 
@@ -251,7 +252,7 @@ const DemoIntro = () => {
   return (
     <>
       <div className={styles.section}>
-        <p>
+        <p className="text-center">
           This demo includes all four types of openables with several types of
           triggers for opening them.
         </p>

@@ -12,6 +12,14 @@ export const Header = ({ className = "" }) => {
 
   return (
     <header className={className}>
+      <Link
+        className={styles.github}
+        href="https://github.com/lisnjs/lisn.js"
+        target="_blank"
+      >
+        <GitHubCorner />
+      </Link>
+
       <div className={styles.header}>
         <div className={styles.version}>
           <Badge
@@ -27,8 +35,8 @@ export const Header = ({ className = "" }) => {
         </div>
 
         <div className={styles.links}>
-          <Link href={(pathname === "/" ? "" : "/") + "#get-started"}>
-            Get started
+          <Link href={(pathname === "/" ? "" : "/") + "#quick-start"}>
+            Quick start
           </Link>
           <Link href="/demos">Demos</Link>
           <Link href="/docs" external={true}>
@@ -36,13 +44,6 @@ export const Header = ({ className = "" }) => {
           </Link>
           <Link href="/changelog" external={true}>
             Changelog
-          </Link>
-          <Link
-            className={styles.github}
-            href="https://github.com/lisnjs/lisn.js"
-            target="_blank"
-          >
-            <GitHubCorner />
           </Link>
         </div>
       </div>

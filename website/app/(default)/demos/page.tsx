@@ -15,79 +15,79 @@ export default function Page() {
         </p>
         <ul className="fit center">
           <li>
-            <Link href="openables" target="_blank">
+            <Link href="openables" external={true}>
               Openables: popup, modal, offcanvas, collapsible
             </Link>
           </li>
 
           <li>
-            <Link href="sortable" target="_blank">
+            <Link href="sortable" external={true}>
               Sortable: a puzzle game
             </Link>
           </li>
 
           <li>
-            <Link href="pager-unconventional" target="_blank">
+            <Link href="pager-unconventional" external={true}>
               An unconventional pager
             </Link>
           </li>
 
           <li>
-            <Link href="pager-slider" target="_blank">
+            <Link href="pager-slider" external={true}>
               Slider pager
             </Link>
           </li>
 
           <li>
-            <Link href="pager-carousel" target="_blank">
+            <Link href="pager-carousel" external={true}>
               Carousel pager
             </Link>
           </li>
 
           <li>
-            <Link href="pager-tabs" target="_blank">
+            <Link href="pager-tabs" external={true}>
               Tabbed pager
             </Link>
           </li>
 
           <li>
-            <Link href="scrollbar" target="_blank">
+            <Link href="scrollbar" external={true}>
               Custom scrollbar: progress bar
             </Link>
           </li>
 
           <li>
-            <Link href="scrollbar-handles" target="_blank">
+            <Link href="scrollbar-handles" external={true}>
               Custom scrollbar: traditional handles
             </Link>
           </li>
 
           <li>
-            <Link href="view-trigger" target="_blank">
+            <Link href="view-trigger" external={true}>
               View trigger: implementing scroll sections
             </Link>
           </li>
 
           <li>
-            <Link href="track-gesture" target="_blank">
+            <Link href="track-gesture" external={true}>
               Track scroll/zoom gestures: full page parallax effect
             </Link>
           </li>
 
           <li>
-            <Link href="track-scroll" target="_blank">
+            <Link href="track-scroll" external={true}>
               Track scroll offset: background effect
             </Link>
           </li>
 
           <li>
-            <Link href="track-view" target="_blank">
+            <Link href="track-view" external={true}>
               Track view: parallax effect
             </Link>
           </li>
 
           <li>
-            <Link href="layout-trigger" target="_blank">
+            <Link href="layout-trigger" external={true}>
               Layout trigger
             </Link>
           </li>

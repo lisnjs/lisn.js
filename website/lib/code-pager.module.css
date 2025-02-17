@@ -1,5 +1,5 @@
 .pager {
-  font-size: 14px;
+  font-size: clamp(13px, calc(8px + 1vw), 16px);
 }
 
 .pager .tabs {
@@ -12,7 +12,7 @@
   --btn-color: var(--bg-color);
   color: var(--text-color);
   font-weight: 500;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
   background: var(--btn-color);
   padding: 8px;
@@ -37,7 +37,7 @@
 
 .pager .pages {
   width: 100%;
-  max-height: 550px;
+  max-height: 100%;
   box-shadow: var(--lisn-shadow);
   overflow: auto;
 }

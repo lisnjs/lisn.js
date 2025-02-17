@@ -28,7 +28,7 @@ export default function Page() {
         <PagerComponent className={styles.demo} config={{ fullscreen: true }}>
           {/* https://www.pexels.com/photo/yellow-black-and-purple-colored-papers-2457284/ */}
           <PagerPageComponent className={styles.page} data-slide="intro">
-            <h1>Scroll down</h1>
+            <h1>Scroll down (or swipe/drag up)</h1>
           </PagerPageComponent>
 
           <PagerPageComponent className={styles.page} data-slide="think">

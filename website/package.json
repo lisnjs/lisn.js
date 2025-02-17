@@ -10,7 +10,7 @@
     "deploy": "npx gh-pages --dist out --nojekyll --repo git@github.com:lisnjs/lisnjs.github.io.git --branch main"
   },
   "dependencies": {
-    "@lisn.js/react": "file:../packages/lisn.js-react",
+    "@lisn.js/react": "file:../packages/@lisn.js/react",
     "highlight.js": "^11.11.1",
     "next": "^15.1.7",
     "react": "^19.0.0",

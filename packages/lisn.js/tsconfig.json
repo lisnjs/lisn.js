@@ -28,7 +28,7 @@
   },
   "include": ["src/ts/"],
   "typedocOptions": {
-    "name": "LISN.js | Docs",
+    "name": "LISN.js",
     "titleLink": "https://lisnjs.github.io",
     "entryPoints": ["src/ts/"],
     "readme": "INTRO.md",

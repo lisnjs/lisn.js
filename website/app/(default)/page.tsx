@@ -27,7 +27,7 @@ export default function Page() {
             <p>Lightweight and simple. Powerful and flexible.</p>
             <p>
               LISN handles all complexities so you can simply handle user
-              gestures, actions and events.
+              gestures, interactions and layout events.
             </p>
           </div>
           <div className={`${styles.title} ${josefinSans.className}`}>

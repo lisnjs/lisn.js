@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/lisnjs/lisn.js"><img src="https://raw.githubusercontent.com/lisnjs/lisn.js/master/website/LISN%20logo.png" width="160" height="160" alt="LISN.js"></a>
+  <a href="https://lisnjs.github.io/"><img src="https://raw.githubusercontent.com/lisnjs/lisn.js/master/website/LISN%20logo.png" width="160" height="160" alt="LISN.js"></a>
 </div>
 
 <h2 align="center">
@@ -13,7 +13,7 @@ gestures and interactions (like scrolling) as well as observing elements for
 changes in viewport position, size and so on.
 
 LISN handles all complexities (and browser quirks) so you can simply handle user
-gestures, actions and layout events.
+gestures, interactions and layout events.
 
 There are React wrappers available as a separate package. It works in
 server-side rendering environments like Next.js.

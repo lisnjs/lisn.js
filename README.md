@@ -1,10 +1,10 @@
-<div style="text-align: center">
+<div align="center">
   <a href="https://github.com/lisnjs/lisn.js"><img src="https://raw.githubusercontent.com/lisnjs/lisn.js/master/website/LISN%20logo.png" width="160" height="160" alt="LISN.js"></a>
 </div>
 
-<div style="text-align: center">
-  <h2><a href="https://lisnjs.github.io/">Official site</a> | <a href="https://lisnjs.github.io/demos/">Demos</a> | <a href="https://lisnjs.github.io/docs/">Docs</a>
-</div>
+<h2 align="center">
+ <a href="https://lisnjs.github.io/">Official site</a>&nbsp;|&nbsp;<a href="https://lisnjs.github.io/demos/">Demos</a>&nbsp;|&nbsp;<a href="https://lisnjs.github.io/docs/">Docs</a>
+</h2>
 
 # Intro
 

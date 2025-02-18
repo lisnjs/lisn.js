@@ -93,8 +93,8 @@ a:visited {
 }
 
 pre {
-  display: table;
   width: 100%;
+  overflow: auto;
 }
 
 pre,

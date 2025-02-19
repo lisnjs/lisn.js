@@ -46,7 +46,7 @@ export default function Page() {
           <li>Server-side rendering.</li>
           <li>Flexible and customizable.</li>
           <li>Simple to use.</li>
-          <li>HTML-only human-readable mode.</li>
+          <li>HTML-only mode.</li>
         </ul>
 
         <div className="bold flex i-center gap-3">

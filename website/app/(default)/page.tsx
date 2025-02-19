@@ -44,7 +44,7 @@ export default function Page() {
           LISN makes it super simple and easy to implement any kind of scroll,
           view, size, layout or user gesture triggered actions or animations
           with minimal boilerplate, and even if you wish, with zero JavaScript,
-          using the HTML-only more. It also comes with many customizable
+          using the HTML-only mode. It also comes with many customizable
           widgets.
         </p>
       </Section>

@@ -1,22 +1,22 @@
 ## Contents
 
-* [Intro](#intro)
-* [Basic concepts](#basic-concepts)
-  * [Watchers](#watchers)
-  * [Triggers](#triggers)
-  * [Actions](#actions)
-  * [Widgets](#widgets)
-* [Loading LISN](#loading-lisn)
-  * [Importing it](#importing-it)
-  * [Embedding the bundle](#embedding-the-bundle)
-* [HTML-only mode (aka auto-widgets)](#html-only-mode-aka-auto-widgets)
-  * [In browser bundles](#in-browser-bundles)
-  * [In modules](#in-modules)
-* [Customizing](#customizing)
-  * [Settings](#settings)
-  * [CSS](#css)
-    * [Light/dark theme](#lightdark-theme)
-* [Examples/demos](#examplesdemos)
+- [Intro](#intro)
+- [Basic concepts](#basic-concepts)
+  - [Watchers](#watchers)
+  - [Triggers](#triggers)
+  - [Actions](#actions)
+  - [Widgets](#widgets)
+- [Loading LISN](#loading-lisn)
+  - [Importing it](#importing-it)
+  - [Embedding the bundle](#embedding-the-bundle)
+- [HTML-only mode (aka auto-widgets)](#html-only-mode-aka-auto-widgets)
+  - [In browser bundles](#in-browser-bundles)
+  - [In modules](#in-modules)
+- [Customizing](#customizing)
+  - [Settings](#settings)
+  - [CSS](#css)
+    - [Light/dark theme](#lightdark-theme)
+- [Examples/demos](#examplesdemos)
 
 # Intro
 
@@ -25,7 +25,11 @@ gestures and interactions (like scrolling) as well as observing elements for
 changes in viewport position, size and so on.
 
 LISN handles all complexities (and browser quirks) so you can simply handle user
-gestures, actions and layout events.
+gestures, interactions and layout events. It makes it super simple and easy to
+implement any kind of scroll, view, size, layout or user gesture triggered
+actions or animations with minimal boilerplate, and even if you wish, with zero
+JavaScript, using the HTML-only more. It also comes with many customizable
+widgets
 
 There are React wrappers available as a separate package. It works in
 server-side rendering environments like Next.js.
@@ -85,14 +89,14 @@ Triggers are actually a special kind of a widget.
 Everything is available for importing from the main entry point `"lisn.js"`, but
 there are also sub-exports available, that correspond to the respective group:
 
-* `"lisn.js/watchers"`
-* `"lisn.js/triggers"`
-* `"lisn.js/actions"`
-* `"lisn.js/widgets"`
-* `"lisn.js/globals"`
-* `"lisn.js/modules"`
-* `"lisn.js/utils"`
-* `"lisn.js/debug"`
+- `"lisn.js/watchers"`
+- `"lisn.js/triggers"`
+- `"lisn.js/actions"`
+- `"lisn.js/widgets"`
+- `"lisn.js/globals"`
+- `"lisn.js/modules"`
+- `"lisn.js/utils"`
+- `"lisn.js/debug"`
 
 ## Embedding the bundle
 
@@ -169,7 +173,7 @@ import { settings as lisnSettings } from "lisn.js";
 lisnSettings.autoWidgets = true;
 ```
 
-***
+---
 
 Then you can use auto-widgets for example like so:
 

@@ -38,6 +38,17 @@ export default function Page() {
         </div>
       </Section>
 
+      <Section>
+        <h2 className="text-center">Why LISN?</h2>
+        <p>
+          LISN makes it super simple and easy to implement any kind of scroll,
+          view, size, layout or user gesture triggered actions or animations
+          with minimal boilerplate, and even if you wish, with zero JavaScript,
+          using the HTML-only more. It also comes with many customizable
+          widgets.
+        </p>
+      </Section>
+
       <Section opaque={true}>
         <ul className="checked bold center fit">
           <li>100% vanilla TypeScript.</li>

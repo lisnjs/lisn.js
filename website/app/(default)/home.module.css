@@ -3,10 +3,12 @@
   flex-wrap: wrap-reverse;
   justify-content: space-between;
   gap: 3vw;
-  padding: 10vh 10vw;
+  padding-top: 10vh;
+  padding-left: 10vw;
+  padding-right: 10vw;
+  padding-bottom: 5vh;
   font-size: 22px;
   font-size: clamp(20px, calc(13px + 2vw), 24px);
-  min-height: 80vh;
 }
 
 .banner .intro {

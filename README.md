@@ -13,7 +13,11 @@ gestures and interactions (like scrolling) as well as observing elements for
 changes in viewport position, size and so on.
 
 LISN handles all complexities (and browser quirks) so you can simply handle user
-gestures, interactions and layout events.
+gestures, interactions and layout events. It makes it super simple and easy to
+implement any kind of scroll, view, size, layout or user gesture triggered
+actions or animations with minimal boilerplate, and even if you wish, with zero
+JavaScript, using the HTML-only more. It also comes with many customizable
+widgets
 
 There are React wrappers available as a separate package. It works in
 server-side rendering environments like Next.js.

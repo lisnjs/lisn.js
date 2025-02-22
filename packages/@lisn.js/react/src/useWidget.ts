@@ -19,7 +19,7 @@ export const useWidget = <
 >(
   newWidget: (element: Element, config?: C) => W | null,
   config?: C,
-  widgetRef?: RefObject<WidgetComponentRef<W>>,
+  widgetRef?: RefObject<WidgetComponentRef<W> | null>,
 ) => {
   const elementRef = useRef<ComponentRef<T>>(null);
   const widgetRefInternal = useRef<W>(null);

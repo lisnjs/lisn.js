@@ -6,7 +6,7 @@ export type WidgetComponentRef<W extends Widget> = {
 export type WidgetComponentProps<T extends ElementType, W extends Widget, C> = {
     as?: T;
     config?: C;
-    widgetRef?: RefObject<WidgetComponentRef<W>>;
+    widgetRef?: RefObject<WidgetComponentRef<W> | null>;
 } & ComponentPropsWithoutRef<T>;
 export type GenericComponentProps<T extends ElementType> = {
     as?: T;

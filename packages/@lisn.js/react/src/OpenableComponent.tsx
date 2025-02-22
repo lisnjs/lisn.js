@@ -277,7 +277,7 @@ const useOpenable = <
 >(
   newWidget: (element: Element, config?: C) => W | null,
   config?: C,
-  widgetRef?: RefObject<WidgetComponentRef<W>>,
+  widgetRef?: RefObject<WidgetComponentRef<W> | null>,
 ) => {
   const elementRef = useWidget<T, W, C>(newWidget, config, widgetRef);
 

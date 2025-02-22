@@ -244,10 +244,10 @@ LISN.watchers.ScrollWatcher.onScroll(
         </p>
 
         <div>
-          <div className="bold flex i-center gap-s">
-            <span>
-              Default: <code>lisn.min.js</code>
-            </span>
+          <h4>
+            Default: <code>lisn.min.js</code>
+          </h4>
+          <div>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.min.js"
@@ -260,10 +260,10 @@ LISN.watchers.ScrollWatcher.onScroll(
         </div>
 
         <div>
-          <div className="bold flex i-center gap-s">
-            <span>
-              Slim: <code>lisn.slim.min.js</code>
-            </span>
+          <h4>
+            Slim: <code>lisn.slim.min.js</code>
+          </h4>
+          <div>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.slim.min.js"
@@ -276,10 +276,10 @@ LISN.watchers.ScrollWatcher.onScroll(
         </div>
 
         <div>
-          <div className="bold flex i-center gap-s">
-            <span>
-              Essentials: <code>lisn.essentials.min.js</code>
-            </span>
+          <h4>
+            Essentials: <code>lisn.essentials.min.js</code>
+          </h4>
+          <div>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.essentials.min.js"
@@ -289,10 +289,10 @@ LISN.watchers.ScrollWatcher.onScroll(
         </div>
 
         <div>
-          <div className="bold flex i-center gap-s">
-            <span>
-              Debug/dev (not minified): <code>lisn.debug.js</code>
-            </span>
+          <h4>
+            Debug/dev (not minified): <code>lisn.debug.js</code>
+          </h4>
+          <div>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.debug.js"

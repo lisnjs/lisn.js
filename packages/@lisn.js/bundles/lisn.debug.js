@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.0.2
+ * LISN.js v1.0.3
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -1159,14 +1159,6 @@
   const keyExists = (obj, key) => isNonPrimitive(obj) && key in obj;
   const toArrayIfSingle = value => isArray(value) ? value : !isNullish(value) ? [value] : [];
   const toBool = value => value === true || value === "true" || value === "" ? true : isNullish(value) || value === false || value === "false" ? false : null;
-  const tryImport = async path => {
-    try {
-      return await import(path);
-    } catch (e__ignored) {
-      // module doesn't exist
-      return null;
-    }
-  };
 
   /**
    * @module Utils
@@ -2195,8 +2187,11 @@
         }
       };
       (async () => {
-        const socket = await tryImport("socket.io-client");
-        if (!socket) {
+        let socket;
+        const moduleName = "socket.io-client"; // suppress Vite static analysis
+        try {
+          socket = await import(/* webpackIgnore: true */moduleName);
+        } catch (e__ignored) {
           // module doesn't exist
           cleanup();
           return;
@@ -19019,7 +19014,6 @@
     tryGetMainScrollableElement: tryGetMainScrollableElement,
     tryGetScrollableElement: tryGetScrollableElement,
     tryGetViewportOverlay: tryGetViewportOverlay,
-    tryImport: tryImport,
     undisplayElement: undisplayElement,
     undisplayElementNow: undisplayElementNow,
     undoPreventSelect: undoPreventSelect,

@@ -10,5 +10,4 @@ export declare const compareValuesIn: <T extends object>(objA: T, objB: T, round
 export declare const keyExists: <T extends object>(obj: T, key: string | number | symbol) => key is keyof T;
 export declare const toArrayIfSingle: <T>(value?: T | T[] | null | undefined) => T[];
 export declare const toBool: (value: unknown) => boolean | null;
-export declare const tryImport: <T>(path: string) => Promise<T | null>;
 //# sourceMappingURL=misc.d.ts.map

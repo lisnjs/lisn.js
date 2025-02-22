@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] - 2025-22-02
+
+### Improved compatibility with Vite and Webpack
+
+- Conditional import of socket.io-client now uses a method that doesn't result
+  in even a warning with Webpack.
+
 ## [1.0.3] - 2025-22-02
 
 ### Improved compatibility with Vite

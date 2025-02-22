@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.tryImport = exports.toBool = exports.toArrayIfSingle = exports.omitKeys = exports.keyExists = exports.isTouchScreen = exports.copyExistingKeys = exports.compareValuesIn = void 0;
+exports.toBool = exports.toArrayIfSingle = exports.omitKeys = exports.keyExists = exports.isTouchScreen = exports.copyExistingKeys = exports.compareValuesIn = void 0;
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _math = require("./math.cjs");
 function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
@@ -77,13 +77,4 @@ const toArrayIfSingle = value => MH.isArray(value) ? value : !MH.isNullish(value
 exports.toArrayIfSingle = toArrayIfSingle;
 const toBool = value => value === true || value === "true" || value === "" ? true : MH.isNullish(value) || value === false || value === "false" ? false : null;
 exports.toBool = toBool;
-const tryImport = async path => {
-  try {
-    return await import(path);
-  } catch (e__ignored) {
-    // module doesn't exist
-    return null;
-  }
-};
-exports.tryImport = tryImport;
 //# sourceMappingURL=misc.cjs.map

@@ -1,6 +1,6 @@
 {
   "name": "@lisn.js/bundles",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "LISN.js browser bundles.",
   "publishConfig": {
     "access": "public"

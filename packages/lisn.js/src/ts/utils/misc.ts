@@ -93,12 +93,3 @@ export const toBool = (value: unknown) =>
     : MH.isNullish(value) || value === false || value === "false"
       ? false
       : null;
-
-export const tryImport = async <T>(path: string): Promise<T | null> => {
-  try {
-    return (await import(path)) as T;
-  } catch (e__ignored) {
-    // module doesn't exist
-    return null;
-  }
-};

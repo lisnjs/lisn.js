@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.0.2
+ * LISN.js v1.0.3
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */

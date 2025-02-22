@@ -5,7 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.RemoteConsole = void 0;
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-var _misc = require("../utils/misc.cjs");
 var _text = require("../utils/text.cjs");
 var _xMap = require("../modules/x-map.cjs");
 function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
@@ -98,8 +97,11 @@ class RemoteConsole {
       }
     };
     (async () => {
-      const socket = await (0, _misc.tryImport)("socket.io-client");
-      if (!socket) {
+      let socket;
+      const moduleName = "socket.io-client"; // suppress Vite static analysis
+      try {
+        socket = await import(/* webpackIgnore: true */moduleName);
+      } catch (e__ignored) {
         // module doesn't exist
         cleanup();
         return;

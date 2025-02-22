@@ -53,3 +53,13 @@
 .modal .content {
   height: 100%;
 }
+
+.modal .pager,
+.modal .content {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal pre {
+  height: 100%;
+}

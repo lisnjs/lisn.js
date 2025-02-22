@@ -67,6 +67,13 @@ const matchers = {
 
 const supported = {
   react: {
+    title: "React",
+    tabs: [
+      { title: "TSX", file: "demo-react.tsx" },
+      { title: "CSS", file: "demo.module.css" },
+    ],
+  },
+  next: {
     title: "React (Next.js)",
     tabs: [
       { title: "TSX", file: "demo.tsx" },

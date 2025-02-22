@@ -6,6 +6,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  */
 
 import * as MH from "../globals/minification-helpers.js";
+import { tryImport } from "../utils/misc.js";
 import { joinAsString } from "../utils/text.js";
 import { newXMap } from "../modules/x-map.js";
 /* ******************************
@@ -91,10 +92,8 @@ export class RemoteConsole {
       }
     };
     (async () => {
-      let socket;
-      try {
-        socket = await import(/* webpackIgnore: true */"socket.io-client");
-      } catch (e__ignored) {
+      const socket = await tryImport("socket.io-client");
+      if (!socket) {
         // module doesn't exist
         cleanup();
         return;

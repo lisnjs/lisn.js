@@ -6,6 +6,7 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { LogFunction } from "@lisn/globals/types";
 
+import { tryImport } from "@lisn/utils/misc";
 import { joinAsString } from "@lisn/utils/text";
 
 import { newXMap } from "@lisn/modules/x-map";
@@ -105,10 +106,9 @@ export class RemoteConsole implements ConsoleInterface {
     };
 
     (async () => {
-      let socket;
-      try {
-        socket = await import(/* webpackIgnore: true */ "socket.io-client");
-      } catch (e__ignored) {
+      const socket =
+        await tryImport<typeof import("socket.io-client")>("socket.io-client");
+      if (!socket) {
         // module doesn't exist
         cleanup();
         return;

@@ -62,4 +62,12 @@ export const compareValuesIn = (objA, objB, roundTo = 3) => {
 export const keyExists = (obj, key) => MH.isNonPrimitive(obj) && key in obj;
 export const toArrayIfSingle = value => MH.isArray(value) ? value : !MH.isNullish(value) ? [value] : [];
 export const toBool = value => value === true || value === "true" || value === "" ? true : MH.isNullish(value) || value === false || value === "false" ? false : null;
+export const tryImport = async path => {
+  try {
+    return await import(path);
+  } catch (e__ignored) {
+    // module doesn't exist
+    return null;
+  }
+};
 //# sourceMappingURL=misc.js.map

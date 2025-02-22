@@ -8,7 +8,7 @@ import {
 // properties. We need to set custom style for everything anyway.
 // import "lisn.js/pager.css";
 
-import Image from "@lib/Image";
+import Image from "next/image";
 
 import styles from "./demo.module.css";
 

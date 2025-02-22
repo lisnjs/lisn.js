@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 
 import { ViewWatcher } from "lisn.js";
 
-import Image from "@lib/Image";
+import Image from "next/image";
 
 import styles from "./demo.module.css";
 

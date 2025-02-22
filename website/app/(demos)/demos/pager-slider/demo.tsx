@@ -8,7 +8,7 @@ import {
 } from "@lisn.js/react";
 import "lisn.js/pager.css";
 
-import Image from "@lib/Image";
+import Image from "next/image";
 
 import styles from "./demo.module.css";
 

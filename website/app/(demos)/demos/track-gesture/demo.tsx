@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 
 import { GestureWatcher } from "lisn.js";
 
-import Image from "@lib/Image";
-import Link from "@lib/Link";
+import Image from "next/image";
+import Link from "next/link";
 
 import styles from "./demo.module.css";
 

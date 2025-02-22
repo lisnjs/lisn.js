@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Improved compatibility with Vite
 
 - Conditional import of socket.io-client now uses a dynamic import with
-  non-literal string in order to work with Vite. The downside is that in older
-  Webpack versions (and in Next.js 13) there is a warning (but not a fatal error).
+  non-literal string in order to work with Vite. The downside is that in
+  Webpack there is a warning (but not a fatal error).
 
 ## [1.0.2] - 2025-17-02
 

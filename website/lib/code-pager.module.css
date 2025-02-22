@@ -39,6 +39,7 @@
   width: 100%;
   max-height: 100%;
   box-shadow: var(--lisn-shadow);
+  position: relative;
 }
 
 .page {
@@ -53,15 +54,36 @@
   display: block;
 }
 
+.pager pre {
+  overflow: auto !important;
+}
+
+.pager code {
+  overflow: visible !important;
+}
+
 .pager.multi .page {
   padding: 1.5em;
   background: var(--bg-color);
 }
 
-.pager.fixedH,
-.pager.fixedH .pages,
-.pager.fixedH .page {
+.pager.fillSpace {
+  display: flex;
+  flex-direction: column;
+}
+
+.pager.fillSpace,
+.pager.fillSpace .pages {
+  flex-basis: 0;
+  flex-grow: 1;
+}
+
+.pager.fillSpace .page {
+  position: absolute;
+  top: 0;
+  left: 0;
   height: 100%;
+  width: 100%;
 }
 
 .pager.multi pre {

@@ -14,7 +14,7 @@ import styles from "./code-pager.module.css";
 export type CodePagerProps = {
   tabNames: string[];
   multiBlocks?: boolean;
-  fixedHeight?: boolean;
+  fillSpace?: boolean;
 } & ComponentPropsWithRef<"div">;
 
 export const CodePagerPage = ({
@@ -36,7 +36,7 @@ export const CodePager = ({
   children,
   tabNames,
   multiBlocks = false,
-  fixedHeight = false,
+  fillSpace = false,
   className = "",
   ...props
 }: CodePagerProps) => {
@@ -58,7 +58,7 @@ export const CodePager = ({
           className,
           styles.pager,
           multiBlocks ? styles.multi : "",
-          fixedHeight ? styles.fixedH : "",
+          fillSpace ? styles.fillSpace : "",
         ].join(" ")}
         config={{ useGestures: false }}
         {...props}

@@ -73,7 +73,7 @@ const ModalPager = ({ title, tabs, sandbox }: CodeCollection) => {
         <CodePager
           className={styles.pager}
           tabNames={tabs.map((t) => t.title)}
-          fixedHeight={true}
+          fillSpace={true}
         >
           {tabs.map((t) => {
             return (

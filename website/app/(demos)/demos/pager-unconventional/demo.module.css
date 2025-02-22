@@ -28,7 +28,13 @@
 }
 
 .page[data-slide] {
+  transition-property: opacity, transform;
   box-shadow: none;
+  opacity: 1;
+}
+
+.page[data-slide][data-lisn-page-state="next"] {
+  opacity: 0;
 }
 
 .page[data-slide="think"] {

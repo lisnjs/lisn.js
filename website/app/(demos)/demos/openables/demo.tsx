@@ -32,8 +32,6 @@ import {
 // ^^ Or we could just import "lisn.js/lisn.css" which contains all CSS
 import "lisn.js/lisn.css";
 
-import Link from "next/link";
-
 import styles from "./demo.module.css";
 
 export default function Page() {
@@ -147,15 +145,15 @@ const DemoMenu = () => {
       config={{ position: "top", closeButton: false, triggers: [] }}
       widgetRef={menuWidgetRef}
     >
-      <Link href="/demos" target="_blank">
+      <a href="/demos" target="_blank">
         More demos
-      </Link>
-      <Link href="/#get-started" target="_blank">
+      </a>
+      <a href="/#get-started" target="_blank">
         Getting started
-      </Link>
-      <Link href="https://github.com/lisnjs/lisn.js" target="_blank">
+      </a>
+      <a href="https://github.com/lisnjs/lisn.js" target="_blank">
         Source code
-      </Link>
+      </a>
     </OffcanvasComponent>
   );
 };

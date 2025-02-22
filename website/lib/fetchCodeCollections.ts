@@ -70,13 +70,6 @@ const supported = {
   react: {
     title: "React",
     tabs: [
-      { title: "TSX", file: "demo-react.tsx", matcher: null },
-      { title: "CSS", file: "demo.module.css", matcher: null },
-    ],
-  },
-  next: {
-    title: "React (Next.js)",
-    tabs: [
       { title: "TSX", file: "demo.tsx", matcher: null },
       { title: "CSS", file: "demo.module.css", matcher: null },
     ],

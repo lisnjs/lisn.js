@@ -59,7 +59,13 @@
 
       /* Individual pages */
       #demo .page {
+        transition-property: opacity, transform;
         box-shadow: none;
+        opacity: 1;
+      }
+
+      #demo .page[data-lisn-page-state="next"] {
+        opacity: 0;
       }
 
       #demo .page .background {

@@ -11,8 +11,8 @@ export type SectionProps = {
 
 export const Section = ({
   children,
+  shadow,
   opaque = false,
-  shadow = null,
   fullWidth = false,
   textCenter = false,
   className = "",

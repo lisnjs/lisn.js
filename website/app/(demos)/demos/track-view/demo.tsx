@@ -11,12 +11,14 @@ export default function Page() {
   const demoRef = useRef(null);
   const sectionRefs = useRef(new Set<Element>());
 
-  const addSectionRef = (section) => {
-    sectionRefs.current.add(section);
+  const addSectionRef = (section: Element | null) => {
+    if (section) {
+      sectionRefs.current.add(section);
+    }
   };
 
   useEffect(() => {
-    let watcher;
+    let watcher: ViewWatcher;
     const main = demoRef.current;
     const sections = [...sectionRefs.current];
 

@@ -40,7 +40,7 @@ export const CodePager = ({
   className = "",
   ...props
 }: CodePagerProps) => {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   useHighlightJs(ref);
 
   const tabs = tabNames.map((t) => {

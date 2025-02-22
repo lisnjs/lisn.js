@@ -1,11 +1,18 @@
 import styles from "./theme-switch.module.css";
 
+export type ThemeSwitchProps = {
+  theme: string;
+  setTheme: (theme: string) => void;
+  size?: number;
+  color?: string;
+};
+
 export const ThemeSwitch = ({
   theme,
   setTheme,
   size = 22,
   color = "var(--text-color)",
-}) => {
+}: ThemeSwitchProps) => {
   const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
 
   return (

@@ -16,11 +16,11 @@ export default async function Page() {
   const collections = await fetchCodeCollections(dirname, {
     react: {
       name: "StackBlitz",
-      url: "https://stackblitz.com/edit/vitejs-vite-koohz4tb?file=src%2FApp.tsx",
+      url: "https://stackblitz.com/edit/lisnjs-demo-openables-react?file=src%2FApp.tsx",
     },
     next: {
       name: "StackBlitz",
-      url: "https://stackblitz.com/edit/stackblitz-starters-nohuatdg?file=app%2Fpage.tsx",
+      url: "https://stackblitz.com/edit/lisnjs-demo-openables-next?file=app%2Fpage.tsx",
     },
     jsApi: {
       name: "CodePen",

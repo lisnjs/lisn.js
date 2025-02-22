@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,6 +9,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Layout({ children }) {
+export default function Layout({ children }: { children: ReactNode }) {
   return children;
 }

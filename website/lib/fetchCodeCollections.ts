@@ -25,7 +25,8 @@ export const fetchCodeCollections = async (
   const collections: CodeCollection[] = [];
   const cached = new Map<string, string>();
 
-  for (const key in supported) {
+  let key: SupportedTypes;
+  for (key in supported) {
     const { title, tabs } = supported[key];
     const codeTabs: CodeTab[] = [];
 
@@ -40,7 +41,7 @@ export const fetchCodeCollections = async (
 
       if (code) {
         codeTabs.push({
-          key: tab.key ?? tab.title,
+          key: tab.title,
           title: tab.title,
           code,
         });
@@ -69,15 +70,15 @@ const supported = {
   react: {
     title: "React",
     tabs: [
-      { title: "TSX", file: "demo-react.tsx" },
-      { title: "CSS", file: "demo.module.css" },
+      { title: "TSX", file: "demo-react.tsx", matcher: null },
+      { title: "CSS", file: "demo.module.css", matcher: null },
     ],
   },
   next: {
     title: "React (Next.js)",
     tabs: [
-      { title: "TSX", file: "demo.tsx" },
-      { title: "CSS", file: "demo.module.css" },
+      { title: "TSX", file: "demo.tsx", matcher: null },
+      { title: "CSS", file: "demo.module.css", matcher: null },
     ],
   },
   jsApi: {
@@ -97,7 +98,7 @@ const supported = {
   },
 } as const;
 
-const readCode = async (filename) => {
+const readCode = async (filename: string) => {
   let code = "";
   try {
     code = await fs.readFile(filename, { encoding: "utf8" });

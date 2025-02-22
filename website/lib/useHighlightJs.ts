@@ -16,7 +16,7 @@ hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("typescript", typescript);
 hljs.registerLanguage("css", css);
 
-export const useHighlightJs = (ref?: RefObject<HTMLElement>) => {
+export const useHighlightJs = (ref?: RefObject<HTMLElement | null>) => {
   useEffect(() => {
     const element = ref?.current;
     if (element) {

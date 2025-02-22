@@ -1,9 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 
 import ThemeSwitch from "./ThemeSwitch";
 
-export const ThemedRoot = ({ className = "", children }) => {
+export const ThemedRoot = ({
+  className = "",
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) => {
   // no need for context
   const [theme, setTheme] = useState("dark");
 

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, MouseEventHandler } from "react";
 
 import {
   ViewWatcher,
@@ -9,23 +9,27 @@ import {
   AutoHide,
   ViewData,
 } from "lisn.js";
-import { ScrollbarComponent } from "@lisn.js/react";
+import { ScrollbarComponent, ScrollbarComponentRef } from "@lisn.js/react";
 import "lisn.js/scrollbar.css";
 
 import styles from "./demo.module.css";
 
 export default function Page() {
-  const msgRef = useRef(null);
-  const scrollableRef = useRef(null);
-  const triggerRefs = useRef([]);
-  const tabRefs = useRef([]);
+  const msgRef = useRef<HTMLParagraphElement>(null);
+  const scrollableRef = useRef<ScrollbarComponentRef>(null);
+  const triggerRefs = useRef<Element[]>([]);
+  const tabRefs = useRef<Element[]>([]);
 
-  const addTriggerRef = (trigger) => {
-    triggerRefs.current.push(trigger);
+  const addTriggerRef = (trigger: Element | null) => {
+    if (trigger) {
+      triggerRefs.current.push(trigger);
+    }
   };
 
-  const addTabRef = (tab) => {
-    tabRefs.current.push(tab);
+  const addTabRef = (tab: Element | null) => {
+    if (tab) {
+      tabRefs.current.push(tab);
+    }
   };
 
   const getTabForTrigger = (trigger: Element) =>
@@ -34,9 +38,9 @@ export default function Page() {
   const getTriggerForTab = (tab: Element) =>
     triggerRefs.current[tabRefs.current.indexOf(tab)];
 
-  const onTabSelect = (event) => {
+  const onTabSelect: MouseEventHandler<HTMLDivElement> = (event) => {
     const tab = event.target;
-    const scrollable = scrollableRef.current.getWidget()?.getScrollable();
+    const scrollable = scrollableRef.current?.getWidget()?.getScrollable();
     if (scrollable && tab instanceof Element) {
       const trigger = getTriggerForTab(tab);
       if (trigger) {
@@ -49,8 +53,8 @@ export default function Page() {
   };
 
   useEffect(() => {
-    let viewWatcher;
-    const scrollable = scrollableRef.current.getWidget()?.getScrollable();
+    let viewWatcher: ViewWatcher;
+    const scrollable = scrollableRef.current?.getWidget()?.getScrollable();
     const triggers = [...triggerRefs.current];
 
     const onViewHandler = (trigger: Element, viewData: ViewData) => {
@@ -85,7 +89,7 @@ export default function Page() {
 
   useEffect(() => {
     const msg = msgRef.current;
-    let widget;
+    let widget: AutoHide;
     if (msg) {
       new LoadTrigger(msg, [new Show(msg)], {
         delay: 1000,

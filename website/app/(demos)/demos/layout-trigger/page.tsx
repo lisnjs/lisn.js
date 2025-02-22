@@ -13,7 +13,24 @@ const dirname =
   import.meta.dirname ?? path.dirname(new URL(import.meta.url).pathname);
 
 export default async function Page() {
-  const collections = await fetchCodeCollections(dirname);
+  const collections = await fetchCodeCollections(dirname, {
+    react: {
+      name: "StackBlitz",
+      url: "https://stackblitz.com/edit/lisnjs-demo-layout-trigger-react?file=src%2FApp.tsx",
+    },
+    next: {
+      name: "StackBlitz",
+      url: "https://stackblitz.com/edit/lisnjs-demo-layout-trigger-next?file=app%2Fpage.tsx",
+    },
+    jsApi: {
+      name: "CodePen",
+      url: "https://codepen.io/AaylaSecura/pen/NPWrqzK",
+    },
+    htmlApi: {
+      name: "CodePen",
+      url: "https://codepen.io/AaylaSecura/pen/qEBNdYp",
+    },
+  });
 
   return (
     <>

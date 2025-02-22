@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 
@@ -39,7 +41,7 @@ const roboto = Roboto({
 
 import "@app/global.css";
 
-export default function Layout({ children }) {
+export default function Layout({ children }: { children: ReactNode }) {
   return (
     <ThemedRoot className={[roboto.className, "lisn-hide-scroll"].join(" ")}>
       {children}

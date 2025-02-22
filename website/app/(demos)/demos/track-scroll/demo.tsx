@@ -30,7 +30,7 @@ export default function Page() {
 
   useEffect(() => {
     const msg = msgRef.current;
-    let widget;
+    let widget: AutoHide;
     if (msg) {
       new LoadTrigger(msg, [new Show(msg)], {
         delay: 1000,

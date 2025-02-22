@@ -1,7 +1,13 @@
 import Image from "@lib/Image";
 
-export const Badge = ({ path, label = "", extra = "" }) => {
-  const getURL = (color) =>
+export type BadgeProps = {
+  path: string;
+  label?: string;
+  extra?: string;
+};
+
+export const Badge = ({ path, label = "", extra = "" }: BadgeProps) => {
+  const getURL = (color: string) =>
     `https://img.shields.io/${path}?style=flat-square&labelColor=${color}&color=${color}${extra ? "&" + extra : ""}`;
 
   return (

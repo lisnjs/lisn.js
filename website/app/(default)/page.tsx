@@ -71,6 +71,7 @@ export default function Page() {
         </div>
       </Section>
 
+      {/*
       <Section>
         <h2 className="text-center">Take action when...</h2>
         <ul>
@@ -92,6 +93,7 @@ export default function Page() {
           <li>... and lots more.</li>
         </ul>
       </Section>
+			*/}
 
       <Section textCenter={true}>
         <h2>Do anything with the watchers/triggers, actions and widgets:</h2>

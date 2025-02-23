@@ -77,6 +77,4 @@ yarn add @lisn.js/react
 import { useScrollbar, PagerComponent } from "@lisn.js/react";
 ```
 
-<h2 align="center">
- <a href="https://github.com/lisnjs/lisn.js/blob/main/CONTRIBUTING.md">Contributing</a>
-</h2>
+## [Contributing >>](https://github.com/lisnjs/lisn.js/blob/main/CONTRIBUTING.md)

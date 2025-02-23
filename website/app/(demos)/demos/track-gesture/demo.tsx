@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import { GestureWatcher } from "lisn.js";
 
 import Image from "next/image";
-import Link from "next/link";
 
 import styles from "./demo.module.css";
 
@@ -82,9 +81,9 @@ export default function Page() {
 
       <div className={styles.license}>
         Image by{" "}
-        <Link href="http://www.freepik.com/" target="_blank">
+        <a href="http://www.freepik.com/" target="_blank">
           Freepik
-        </Link>
+        </a>
       </div>
     </>
   );

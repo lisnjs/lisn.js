@@ -6,7 +6,7 @@ import { fetchCodeCollections } from "@lib/fetchCodeCollections";
 import DemoHeader from "@lib/DemoHeader";
 import Demo from "./demo";
 
-export const metadata: Metadata = { title: "Funky pager" };
+export const metadata: Metadata = { title: "Unconventional pager" };
 
 // https://github.com/vercel/next.js/issues/60879
 const dirname =

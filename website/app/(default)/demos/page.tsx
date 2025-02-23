@@ -10,9 +10,28 @@ export default function Page() {
     <>
       <Section>
         <p className="text-center">
-          Note: to view the code of each demo in various formats click "View
-          code" on the top of each demo page.
+          To view the code of each demo in various formats click "View code" on
+          the top of each demo page.
         </p>
+        <p>
+          The demos are available to view also on{" "}
+          <Link
+            href="https://codepen.io/collection/qBOjZa?grid_type=list"
+            external={true}
+          >
+            CodePen
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="https://stackblitz.com/@AaylaSecura/collections/lisn-js"
+            external={true}
+          >
+            StackBlitz
+          </Link>
+        </p>
+
+        <div className="hrule"></div>
+
         <ul className="fit center">
           <li>
             <Link href="openables" external={true}>

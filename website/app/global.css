@@ -162,8 +162,7 @@ ul.checked li::before {
 .hrule {
   height: 1px;
   width: 50%;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin: 10px auto;
   background: var(--bg-color-lightest);
 }
 

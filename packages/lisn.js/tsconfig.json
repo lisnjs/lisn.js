@@ -30,7 +30,18 @@
   "typedocOptions": {
     "name": "LISN.js",
     "titleLink": "https://lisnjs.github.io",
-    "entryPoints": ["src/ts/"],
+    "entryPoints": [
+      "src/ts/globals/settings.ts",
+      "src/ts/watchers/",
+      "src/ts/widgets/",
+      "src/ts/triggers/",
+      "src/ts/actions/",
+      "src/ts/modules/",
+      "src/ts/utils/",
+      "src/ts/globals/",
+      "src/ts/"
+    ],
+    "sortEntryPoints": false,
     "readme": "INTRO.md",
     "entryPointStrategy": "expand",
     "groupOrder": ["Methods", "Constructors", "Properties", "*"],

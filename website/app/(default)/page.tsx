@@ -129,10 +129,10 @@ export default function Page() {
 
         <div className="flex gap-3 j-center">
           <h3>
-            <Link href="/demos">Demos</Link>
+            <Link href="/demos/">Demos</Link>
           </h3>
           <h3>
-            <Link href="/docs" external={true}>
+            <Link href="/docs/" external={true}>
               Docs
             </Link>
           </h3>
@@ -221,7 +221,7 @@ LISN.watchers.ScrollWatcher.onScroll(
         </CodePager>
 
         <h5 className="text-center">
-          <Link href="/docs" external={true}>
+          <Link href="/docs/" external={true}>
             Next steps: basic concepts and the API reference &#x00bb;
           </Link>
         </h5>

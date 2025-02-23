@@ -38,11 +38,11 @@ export const Header = ({ className = "" }) => {
           <Link href={(pathname === "/" ? "" : "/") + "#quick-start"}>
             Quick start
           </Link>
-          <Link href="/demos">Demos</Link>
-          <Link href="/docs" external={true}>
+          <Link href="/demos/">Demos</Link>
+          <Link href="/docs/" external={true}>
             Docs
           </Link>
-          <Link href="/changelog" external={true}>
+          <Link href="/changelog/" external={true}>
             Changelog
           </Link>
         </div>

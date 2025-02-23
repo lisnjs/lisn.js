@@ -13,7 +13,7 @@ export default function Page() {
           To view the code of each demo in various formats click "View code" on
           the top of each demo page.
         </p>
-        <p>
+        <p className="text-center">
           The demos are available to view also on{" "}
           <Link
             href="https://codepen.io/collection/qBOjZa?grid_type=list"

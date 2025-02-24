@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 import { fetchCodeCollections } from "@lib/fetchCodeCollections";
 import DemoHeader from "@lib/DemoHeader";
+import DemoFooter from "@lib/DemoFooter";
 import Demo from "./demo";
 
 export const metadata: Metadata = { title: "Scrollbar (progressbar)" };
@@ -32,6 +33,7 @@ export default async function Page() {
     <>
       <DemoHeader collections={collections} />
       <Demo />
+      <DemoFooter />
     </>
   );
 }

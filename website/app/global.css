@@ -131,6 +131,20 @@ ul.checked li::before {
   font-size: 0.6em;
 }
 
+button.plain {
+  padding: 0;
+  margin: 0;
+  font-size: 100%;
+  font-style: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  cursor: default;
+  outline: none;
+  border: none;
+  color: inherit;
+  background: none;
+}
+
 /* Utility */
 
 .center {

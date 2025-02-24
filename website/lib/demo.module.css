@@ -1,20 +1,41 @@
-.header {
+.header,
+.footer {
   z-index: 100;
   position: fixed;
   right: 0;
-  top: 0;
   font-size: 15px;
+  background: var(--lisn-color-bg-t);
+  border-radius: 7px;
+  padding: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
 }
 
-.popupTrigger {
-  padding: 7px;
-  font-size: 1em;
-  background: var(--bg-color);
-  cursor: default;
-  outline: none;
-  border: none;
-  color: inherit;
-  border-radius: 7px;
+.header {
+  top: 0;
+}
+
+.footer {
+  bottom: 0;
+}
+
+:is(.header, .footer) > *:not(:last-child) {
+  position: relative;
+}
+
+:is(.header, .footer) > *:not(:last-child)::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translate(calc(10px + 50%), -50%);
+  height: 4px;
+  width: 4px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .menu {

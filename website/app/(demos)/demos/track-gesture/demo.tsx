@@ -78,13 +78,6 @@ export default function Page() {
           />
         </div>
       </div>
-
-      <div className={styles.license}>
-        Image by{" "}
-        <a href="http://www.freepik.com/" target="_blank">
-          Freepik
-        </a>
-      </div>
     </>
   );
 }

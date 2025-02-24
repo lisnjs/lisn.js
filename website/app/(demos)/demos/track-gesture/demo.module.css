@@ -91,11 +91,3 @@
   margin-left: 4vw;
   mix-blend-mode: multiply;
 }
-
-.license {
-  position: fixed;
-  bottom: 10px;
-  right: 20px;
-  color: #6bb6c4;
-  font-size: 14px;
-}

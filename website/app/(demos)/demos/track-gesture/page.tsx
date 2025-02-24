@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 
 import { fetchCodeCollections } from "@lib/fetchCodeCollections";
 import DemoHeader from "@lib/DemoHeader";
+import DemoFooter from "@lib/DemoFooter";
+import Link from "@lib/Link";
 import Demo from "./demo";
 
 export const metadata: Metadata = { title: "Track gesture" };
@@ -32,6 +34,13 @@ export default async function Page() {
     <>
       <DemoHeader collections={collections} />
       <Demo />
+      <DemoFooter>
+        <div>
+          <Link href="http://www.freepik.com/" external={true}>
+            Image by Freepik
+          </Link>
+        </div>
+      </DemoFooter>
     </>
   );
 }

@@ -11,7 +11,7 @@ import { CodePager, CodePagerPage } from "./CodePager";
 import { CodeCollection } from "./fetchCodeCollections";
 import Link from "./Link";
 
-import styles from "./demo-header.module.css";
+import styles from "./demo.module.css";
 
 export type DemoHeaderProps = {
   className?: string;
@@ -25,28 +25,28 @@ export const DemoHeader = ({
   return (
     <header className={className}>
       <div className={styles.header}>
-        <PopupTriggerComponent
-          as="button"
-          className={styles.popupTrigger}
-          config={{ hover: true }}
-        >
-          View code
-        </PopupTriggerComponent>
-        <PopupComponent
-          className={styles.menu}
-          config={{ position: "bottom-right" }}
-        >
-          {collections.map((c) => {
-            return (
-              <ModalPager
-                key={c.key}
-                title={c.title}
-                tabs={c.tabs}
-                sandbox={c.sandbox}
-              ></ModalPager>
-            );
-          })}
-        </PopupComponent>
+        <Link href="/">LISN.js</Link>
+        <div className={styles.menu}>
+          <PopupTriggerComponent
+            as="button"
+            className="plain"
+            config={{ hover: true }}
+          >
+            View code
+          </PopupTriggerComponent>
+          <PopupComponent config={{ position: "bottom-right" }}>
+            {collections.map((c) => {
+              return (
+                <ModalPager
+                  key={c.key}
+                  title={c.title}
+                  tabs={c.tabs}
+                  sandbox={c.sandbox}
+                ></ModalPager>
+              );
+            })}
+          </PopupComponent>
+        </div>
       </div>
     </header>
   );

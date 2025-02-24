@@ -54,14 +54,6 @@
   display: block;
 }
 
-.pager pre {
-  overflow: auto !important;
-}
-
-.pager code {
-  overflow: visible !important;
-}
-
 .pager.multi .page {
   padding: 1.5em;
   background: var(--bg-color);

@@ -92,15 +92,16 @@ a:visited {
   text-underline-position: under;
 }
 
-pre {
-  width: 100%;
-  overflow: auto;
-}
-
 pre,
 code {
+  width: 100%;
   margin: 0;
   padding: 0;
+}
+
+code {
+  max-height: 100%;
+  overflow: auto !important;
 }
 
 ul {

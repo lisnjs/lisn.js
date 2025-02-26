@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.0.4
+ * LISN.js v1.1.1
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -14467,6 +14467,10 @@
   };
   const init$3 = (widget, element, components, config, methods) => {
     var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
+    const logger = debug ? new debug.Logger({
+      name: `Pager-${formatAsString(element)}`,
+      logAtCreation: config
+    }) : null;
     const pages = components._pages;
     const toggles = components._toggles;
     const switches = components._switches;
@@ -14511,6 +14515,11 @@
           // add the "peek" will make it smaller than the min.
           numVisiblePages = getNumVisiblePages(true);
         }
+        logger === null || logger === void 0 || logger.debug8("Pager resized", {
+          gap,
+          containerSize,
+          numVisiblePages
+        });
       } // otherwise just a page transition
 
       const currPageNum = widget.getCurrentPageNum();
@@ -14536,6 +14545,15 @@
       }
       const numVisibleGaps = !hasPeek ? numVisiblePages - 1 : isAtEdge || numVisiblePages % 2 === 0 ? numVisiblePages : numVisiblePages + 1;
       const fractionalNumVisiblePages = hasPeek ? numVisiblePages + 0.5 : numVisiblePages;
+      logger === null || logger === void 0 || logger.debug8("Carousel calculations", {
+        currPageNum,
+        prevPageNum,
+        visibleStart,
+        isAtEdge,
+        numVisiblePages,
+        numVisibleGaps,
+        numTranslated
+      });
       setData(element, PREFIX_VISIBLE_PAGES, fractionalNumVisiblePages + "");
       setStyleProp(element, VAR_VISIBLE_PAGES, fractionalNumVisiblePages + "");
       setStyleProp(element, VAR_VISIBLE_GAPS, numVisibleGaps + "");

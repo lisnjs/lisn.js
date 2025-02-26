@@ -15,6 +15,7 @@ import { isValidInputDevice } from "../utils/gesture.js";
 import { toInt } from "../utils/math.js";
 import { toBool } from "../utils/misc.js";
 import { getClosestScrollable } from "../utils/scroll.js";
+import { formatAsString } from "../utils/text.js";
 import { validateStrList, validateNumber, validateString, validateBoolean } from "../utils/validation.js";
 import { wrapCallback } from "../modules/callback.js";
 import { GestureWatcher } from "../watchers/gesture-watcher.js";
@@ -22,6 +23,7 @@ import { ScrollWatcher } from "../watchers/scroll-watcher.js";
 import { SizeWatcher } from "../watchers/size-watcher.js";
 import { ViewWatcher } from "../watchers/view-watcher.js";
 import { Widget, registerWidget, getDefaultWidgetSelector } from "./widget.js";
+import debug from "../debug/debug.js";
 
 /**
  * Configures the given element as a {@link Pager} widget.
@@ -482,6 +484,10 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
 };
 const init = (widget, element, components, config, methods) => {
   var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
+  const logger = debug ? new debug.Logger({
+    name: `Pager-${formatAsString(element)}`,
+    logAtCreation: config
+  }) : null;
   const pages = components._pages;
   const toggles = components._toggles;
   const switches = components._switches;
@@ -526,6 +532,11 @@ const init = (widget, element, components, config, methods) => {
         // add the "peek" will make it smaller than the min.
         numVisiblePages = getNumVisiblePages(true);
       }
+      logger === null || logger === void 0 || logger.debug8("Pager resized", {
+        gap,
+        containerSize,
+        numVisiblePages
+      });
     } // otherwise just a page transition
 
     const currPageNum = widget.getCurrentPageNum();
@@ -551,6 +562,15 @@ const init = (widget, element, components, config, methods) => {
     }
     const numVisibleGaps = !hasPeek ? numVisiblePages - 1 : isAtEdge || numVisiblePages % 2 === 0 ? numVisiblePages : numVisiblePages + 1;
     const fractionalNumVisiblePages = hasPeek ? numVisiblePages + 0.5 : numVisiblePages;
+    logger === null || logger === void 0 || logger.debug8("Carousel calculations", {
+      currPageNum,
+      prevPageNum,
+      visibleStart,
+      isAtEdge,
+      numVisiblePages,
+      numVisibleGaps,
+      numTranslated
+    });
     setData(element, PREFIX_VISIBLE_PAGES, fractionalNumVisiblePages + "");
     setStyleProp(element, VAR_VISIBLE_PAGES, fractionalNumVisiblePages + "");
     setStyleProp(element, VAR_VISIBLE_GAPS, numVisibleGaps + "");

@@ -8,7 +8,6 @@
   & .lisn-pager__page-container {
     --gap: var(--lisn-pager--gap, 3vmin);
     display: flex;
-    flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
     justify-content: flex-start;
@@ -16,10 +15,19 @@
     overflow: hidden;
   }
 
+  &[data-lisn-orientation="vertical"] {
+    &.lisn-pager__page-container,
+    & .lisn-pager__page-container {
+      flex-direction: column;
+      max-height: 100%;
+    }
+  }
+
   &[data-lisn-orientation="horizontal"] {
     &.lisn-pager__page-container,
     & .lisn-pager__page-container {
       flex-direction: row;
+      max-width: 100%;
     }
   }
 

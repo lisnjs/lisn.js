@@ -33,6 +33,7 @@ import { isValidInputDevice } from "@lisn/utils/gesture";
 import { toInt } from "@lisn/utils/math";
 import { toBool } from "@lisn/utils/misc";
 import { getClosestScrollable } from "@lisn/utils/scroll";
+import { formatAsString } from "@lisn/utils/text";
 import {
   validateStrList,
   validateNumber,
@@ -59,6 +60,8 @@ import {
   registerWidget,
   getDefaultWidgetSelector,
 } from "@lisn/widgets/widget";
+
+import debug from "@lisn/debug/debug";
 
 /**
  * Configures the given element as a {@link Pager} widget.
@@ -832,6 +835,13 @@ const init = (
   config: PagerConfig | undefined,
   methods: ReturnType<typeof getMethods>,
 ) => {
+  const logger = debug
+    ? new debug.Logger({
+        name: `Pager-${formatAsString(element)}`,
+        logAtCreation: config,
+      })
+    : null;
+
   const pages = components._pages;
   const toggles = components._toggles;
   const switches = components._switches;
@@ -889,6 +899,8 @@ const init = (
         // add the "peek" will make it smaller than the min.
         numVisiblePages = getNumVisiblePages(true);
       }
+
+      logger?.debug8("Pager resized", { gap, containerSize, numVisiblePages });
     } // otherwise just a page transition
 
     const currPageNum = widget.getCurrentPageNum();
@@ -925,6 +937,16 @@ const init = (
     const fractionalNumVisiblePages = hasPeek
       ? numVisiblePages + 0.5
       : numVisiblePages;
+
+    logger?.debug8("Carousel calculations", {
+      currPageNum,
+      prevPageNum,
+      visibleStart,
+      isAtEdge,
+      numVisiblePages,
+      numVisibleGaps,
+      numTranslated,
+    });
 
     setData(element, PREFIX_VISIBLE_PAGES, fractionalNumVisiblePages + "");
     setStyleProp(element, VAR_VISIBLE_PAGES, fractionalNumVisiblePages + "");

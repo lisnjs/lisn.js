@@ -14,6 +14,7 @@ var _gesture = require("../utils/gesture.cjs");
 var _math = require("../utils/math.cjs");
 var _misc = require("../utils/misc.cjs");
 var _scroll = require("../utils/scroll.cjs");
+var _text = require("../utils/text.cjs");
 var _validation = require("../utils/validation.cjs");
 var _callback = require("../modules/callback.cjs");
 var _gestureWatcher = require("../watchers/gesture-watcher.cjs");
@@ -21,6 +22,8 @@ var _scrollWatcher = require("../watchers/scroll-watcher.cjs");
 var _sizeWatcher = require("../watchers/size-watcher.cjs");
 var _viewWatcher = require("../watchers/view-watcher.cjs");
 var _widget = require("./widget.cjs");
+var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
 function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
@@ -487,6 +490,10 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
 };
 const init = (widget, element, components, config, methods) => {
   var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
+  const logger = _debug.default ? new _debug.default.Logger({
+    name: `Pager-${(0, _text.formatAsString)(element)}`,
+    logAtCreation: config
+  }) : null;
   const pages = components._pages;
   const toggles = components._toggles;
   const switches = components._switches;
@@ -531,6 +538,11 @@ const init = (widget, element, components, config, methods) => {
         // add the "peek" will make it smaller than the min.
         numVisiblePages = getNumVisiblePages(true);
       }
+      logger === null || logger === void 0 || logger.debug8("Pager resized", {
+        gap,
+        containerSize,
+        numVisiblePages
+      });
     } // otherwise just a page transition
 
     const currPageNum = widget.getCurrentPageNum();
@@ -556,6 +568,15 @@ const init = (widget, element, components, config, methods) => {
     }
     const numVisibleGaps = !hasPeek ? numVisiblePages - 1 : isAtEdge || numVisiblePages % 2 === 0 ? numVisiblePages : numVisiblePages + 1;
     const fractionalNumVisiblePages = hasPeek ? numVisiblePages + 0.5 : numVisiblePages;
+    logger === null || logger === void 0 || logger.debug8("Carousel calculations", {
+      currPageNum,
+      prevPageNum,
+      visibleStart,
+      isAtEdge,
+      numVisiblePages,
+      numVisibleGaps,
+      numTranslated
+    });
     (0, _cssAlter.setData)(element, PREFIX_VISIBLE_PAGES, fractionalNumVisiblePages + "");
     (0, _cssAlter.setStyleProp)(element, VAR_VISIBLE_PAGES, fractionalNumVisiblePages + "");
     (0, _cssAlter.setStyleProp)(element, VAR_VISIBLE_GAPS, numVisibleGaps + "");

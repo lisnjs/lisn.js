@@ -753,6 +753,7 @@ export type GestureData = {
    * sufficient for them.
    */
   time: number;
+  // TODO totalTime, velocity (bound by max), averageVelocity (bound by max)
 
   /**
    * Delta in the horizontal direction since the callback was added.

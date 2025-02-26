@@ -6,9 +6,7 @@ import {
   PagerPrevSwitchComponent,
   PagerNextSwitchComponent,
 } from "@lisn.js/react";
-// Don't load the default pager CSS otherwise we'd have to override quite a few
-// properties. We need to set custom style for everything anyway.
-// import "lisn.js/pager.css";
+import "lisn.js/pager-carousel.css";
 
 import styles from "./demo.module.css";
 
@@ -19,7 +17,11 @@ export default function Page() {
         <PagerComponent
           className={styles.demo}
           config={{
+            style: "carousel",
+            peek: true,
+            pageSize: 250,
             horizontal: true,
+            parallax: true,
             useGestures: "touch,wheel",
             alignGestureDirection: true,
             preventDefault: false,

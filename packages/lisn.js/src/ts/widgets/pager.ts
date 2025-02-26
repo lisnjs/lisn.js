@@ -19,6 +19,7 @@ import {
   setData,
   setBoolData,
   delDataNow,
+  getComputedStyleProp,
   setStyleProp,
   delStylePropNow,
 } from "@lisn/utils/css-alter";
@@ -47,6 +48,7 @@ import {
   GestureData,
 } from "@lisn/watchers/gesture-watcher";
 import { ScrollWatcher, ScrollOptions } from "@lisn/watchers/scroll-watcher";
+import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 import { ViewWatcher } from "@lisn/watchers/view-watcher";
 
 import {
@@ -73,8 +75,9 @@ import {
  * "toggle" elements which correspond one-to-one to each page. Switches go to
  * the given page and toggles toggle the enabled/disabled state of the page.
  *
- * **IMPORTANT:** The page elements will be positioned absolutely, and
- * therefore the pager likely needs to have an explicit height. If you enable
+ * **IMPORTANT:** Unless the {@link PagerStyle.style} is set to "carousel", the
+ * page elements will be positioned absolutely, and therefore the pager likely
+ * needs to have an explicit height. If you enable
  * {@link PagerConfig.fullscreen}, then the element will get `height: 100vh`
  * set. Otherwise, you need to set its height in your CSS.
  *
@@ -91,6 +94,8 @@ import {
  * - `data-lisn-orientation`: `"horizontal"` or `"vertical"`
  * - `data-lisn-use-parallax`: `"true"` or `"false"`
  * - `data-lisn-total-pages`: the number of pages
+ * - `data-lisn-visible-pages`: **for carousel only** the number of visible pages;
+ *   can be fractional if {@link PagerConfig.peek} is enabled
  * - `data-lisn-current-page`: the current page number
  * - `data-lisn-current-page-is-last`: `"true"` or `"false"`
  * - `data-lisn-current-page-is-first-enabled`: `"true"` or `"false"`
@@ -98,6 +103,7 @@ import {
  *
  * The following dynamic CSS properties are also set on the pager element's style:
  * - `--lisn-js--total-pages`: the number of pages
+ * - `--lisn-js--visible-pages`: **for carousel only** the number of visible pages
  * - `--lisn-js--current-page`: the current page number
  *
  * The following dynamic attributes are set on each page, toggle or switch element:
@@ -454,11 +460,11 @@ export type PagerConfig = {
    *    widget element (other than `script` and `style` elements) are taken as
    *    the pages.
    *
-   * **IMPORTANT:** The page elements will be positioned absolutely relative to
-   * their immediate parent, but their parent likely needs to have an explicit
-   * height. If you enable {@link PagerConfig.fullscreen}, then the page parent
-   * will get `height: 100vh` set. Otherwise, you need to set its height in
-   * your CSS.
+   * **IMPORTANT:** Unless the {@link style} is set to "carousel", the page
+   * elements will be positioned absolutely, and therefore the pager likely
+   * needs to have an explicit height. If you enable {@link fullscreen}, then
+   * the element will get `height: 100vh` set. Otherwise, you need to set its
+   * height in your CSS.
    *
    * @defaultValue undefined
    */
@@ -527,23 +533,68 @@ export type PagerConfig = {
   initialPage?: number;
 
   /**
+   * Set the style of the widget. This determines the basic CSS applied.
+   *
+   * When importing the stylesheets in your project, if not using the full
+   * stylesheet (lisn.css) you can import either pager.css which contains all
+   * three pager styles, or only `pager-<style>.css`.
+   *
+   * **NOTE:** The base css only includes the minimum required for positioning
+   * and transitioning pages. The switches and toggles are intentionally not
+   * styled for flexibility. You should style those in your CSS.
+   *
+   * **IMPORTANT:** Unless the {@link style} is set to "carousel", the page
+   * elements will be positioned absolutely, and therefore the pager likely
+   * needs to have an explicit height. If you enable {@link fullscreen}, then
+   * the element will get `height: 100vh` set. Otherwise, you need to set its
+   * height in your CSS.
+   *
+   * @defaultValue "slider"
+   */
+  style?: "slider" | "carousel" | "tabs";
+
+  /**
+   * Only relevant is {@link style} is "carousel".
+   *
+   * The *minimum* page height (or width in {@link horizontal} mode) in pixels.
+   * This will determine the number of visible slides at any one width of the
+   * pager. Pages will still grow to fill the size of the carousel itself.
+   *
+   * @defaultValue 300
+   */
+  pageSize?: number;
+
+  /**
+   * Only relevant is {@link style} is "carousel".
+   *
+   * Whether to show a bit of the upcoming and/or previous pages that are
+   * hidden when not all fit.
+   *
+   * @defaultValue false
+   */
+  peek?: boolean;
+
+  /**
    * If true, then:
-   * - the pager's height will be set to the viewport height (100vh)
+   * - if the pager {@link style} is "slider", the pager's height will be set
+   *   to the viewport height (100vh)
    * - the pager's scrolling ancestor will be scrolled to the top of the pager
    *   when 30% of it is in view
    * - scrolling beyond the first or last page will initiate scroll up/left or
    *   down/right the pager's scrolling ancestor in order to allow "leaving"
    *   the pager
    *
-   * Note that since the pager's pages will be positioned absolutely, if you do
-   * _not_ enable this option, you will need to manually set the height of the
-   * page parent element via CSS.
+   * Note that except in "carousel" {@link style} the pager's pages will be
+   * positioned absolutely, and so if you do _not_ enable this option, you will
+   * need to manually set the height of the page parent element via CSS.
    *
    * @defaultValue false
    */
   fullscreen?: boolean;
 
   /**
+   * Only relevant is {@link style} is "slider" (default) or "carousel".
+   *
    * Use a parallax effect for switching pages.
    *
    * @defaultValue false
@@ -551,6 +602,8 @@ export type PagerConfig = {
   parallax?: boolean;
 
   /**
+   * Only relevant is {@link style} is "slider" (default) or "carousel".
+   *
    * Transition pages sideways instead of vertically.
    *
    * @defaultValue false
@@ -575,8 +628,9 @@ export type PagerConfig = {
    * gesture direction is horizontal or vertical.
    *
    * If false then, a gesture will go to the next page only if its direction is
-   * down (or right if {@link horizontal}), and to the previous page only if
-   * the gesture direction is up (or left if {@link horizontal}).
+   * down if {@link horizontal} is false/right if {@link horizontal} is true,
+   * and to the previous page only if the gesture direction is up if
+   * {@link horizontal} is false/left if {@link horizontal} is true.
    *
    * **IMPORTANT:**
    * If {@link fullscreen}, {@link preventDefault} and
@@ -622,6 +676,7 @@ const S_ARIA_CURRENT = MC.ARIA_PREFIX + S_CURRENT;
 const S_COVERED = "covered";
 const S_NEXT = "next";
 const S_TOTAL_PAGES = "total-pages";
+const S_VISIBLE_PAGES = "visible-pages";
 const S_CURRENT_PAGE = "current-page";
 const S_PAGE_NUMBER = "page-number";
 const WIDGET_NAME = "pager";
@@ -639,25 +694,40 @@ const PREFIX_SWITCH__FOR_SELECT = `${PREFIXED_NAME}-switch`;
 const PREFIX_NEXT_SWITCH__FOR_SELECT = `${PREFIXED_NAME}-next-switch`;
 const PREFIX_PREV_SWITCH__FOR_SELECT = `${PREFIXED_NAME}-prev-switch`;
 
+const PREFIX_STYLE = `${PREFIXED_NAME}-style`;
 const PREFIX_IS_FULLSCREEN = MH.prefixName("is-fullscreen");
 const PREFIX_USE_PARALLAX = MH.prefixName("use-parallax");
 const PREFIX_TOTAL_PAGES = MH.prefixName(S_TOTAL_PAGES);
+const PREFIX_VISIBLE_PAGES = MH.prefixName(S_VISIBLE_PAGES);
 const PREFIX_CURRENT_PAGE = MH.prefixName(S_CURRENT_PAGE);
 const PREFIX_CURRENT_PAGE_IS_LAST = `${PREFIX_CURRENT_PAGE}-is-last`;
 const PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED = `${PREFIX_CURRENT_PAGE}-is-first-enabled`;
 const PREFIX_CURRENT_PAGE_IS_LAST_ENABLED = `${PREFIX_CURRENT_PAGE_IS_LAST}-enabled`;
 const PREFIX_PAGE_STATE = MH.prefixName("page-state");
 const PREFIX_PAGE_NUMBER = MH.prefixName(S_PAGE_NUMBER);
-const VAR_TOTAL_PAGES = MH.prefixCssJsVar(S_TOTAL_PAGES);
 const VAR_CURRENT_PAGE = MH.prefixCssJsVar(S_CURRENT_PAGE);
+const VAR_TOTAL_PAGES = MH.prefixCssJsVar(S_TOTAL_PAGES);
+const VAR_VISIBLE_PAGES = MH.prefixCssJsVar(S_VISIBLE_PAGES);
+const VAR_VISIBLE_GAPS = MH.prefixCssJsVar("visible-gaps");
+const VAR_TRANSLATED_PAGES = MH.prefixCssJsVar("translated-pages");
+const VAR_TRANSLATED_GAPS = MH.prefixCssJsVar("translated-gaps");
 const VAR_PAGE_NUMBER = MH.prefixCssJsVar(S_PAGE_NUMBER);
 
 // Only one Pager widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID = PREFIXED_NAME;
 
+const SUPPORTED_STYLES = ["slider", "carousel", "tabs"] as const;
+type PagerStyle = (typeof SUPPORTED_STYLES)[number];
+
+const isValidStyle = (value: string): value is PagerStyle =>
+  MH.includes(SUPPORTED_STYLES, value);
+
 const configValidator: WidgetConfigValidatorObject<PagerConfig> = {
   initialPage: validateNumber,
+  style: (key, value) => validateString(key, value, isValidStyle),
+  pageSize: validateNumber,
+  peek: validateBoolean,
   fullscreen: validateBoolean,
   parallax: validateBoolean,
   horizontal: validateBoolean,
@@ -704,35 +774,6 @@ const setPageNumber = (components: Components, pageNum: number) => {
   return lastPromise;
 };
 
-const setCurrentPage = (
-  pagerEl: Element,
-  currPageNum: number,
-  numPages: number,
-  isPageDisabled: (pageNum: number) => boolean,
-) => {
-  let isFirstEnabled = true;
-  let isLastEnabled = true;
-  for (let n = 1; n <= numPages; n++) {
-    if (!isPageDisabled(n)) {
-      if (n < currPageNum) {
-        isFirstEnabled = false;
-      } else if (n > currPageNum) {
-        isLastEnabled = false;
-      }
-    }
-  }
-
-  setStyleProp(pagerEl, VAR_CURRENT_PAGE, currPageNum + "");
-  setData(pagerEl, PREFIX_CURRENT_PAGE, currPageNum + "");
-  setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, numPages === numPages);
-  setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
-  return setBoolData(
-    pagerEl,
-    PREFIX_CURRENT_PAGE_IS_LAST_ENABLED,
-    isLastEnabled,
-  );
-};
-
 const setPageState = async (
   components: Components,
   pageNum: number,
@@ -747,6 +788,41 @@ const setPageState = async (
       await setData(el, PREFIX_PAGE_STATE, state);
     }
   }
+};
+
+const setCurrentPage = (
+  pagerEl: Element,
+  pageNumbers: {
+    _current: number;
+    _total: number;
+  },
+  isPageDisabled: (pageNum: number) => boolean,
+) => {
+  let isFirstEnabled = true;
+  let isLastEnabled = true;
+  for (let n = 1; n <= pageNumbers._total; n++) {
+    if (!isPageDisabled(n)) {
+      if (n < pageNumbers._current) {
+        isFirstEnabled = false;
+      } else if (n > pageNumbers._current) {
+        isLastEnabled = false;
+      }
+    }
+  }
+
+  setStyleProp(pagerEl, VAR_CURRENT_PAGE, pageNumbers._current + "");
+  setData(pagerEl, PREFIX_CURRENT_PAGE, pageNumbers._current + "");
+  setBoolData(
+    pagerEl,
+    PREFIX_CURRENT_PAGE_IS_LAST,
+    pageNumbers._current === pageNumbers._total,
+  );
+  setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
+  return setBoolData(
+    pagerEl,
+    PREFIX_CURRENT_PAGE_IS_LAST_ENABLED,
+    isLastEnabled,
+  );
 };
 
 const init = (
@@ -764,6 +840,10 @@ const init = (
   const pageContainer = pages[0]?.parentElement;
 
   let initialPage = toInt(config?.initialPage ?? 1);
+  const pagerStyle = config?.style ?? "slider";
+  const isCarousel = pagerStyle === "carousel";
+  const minPageSize = config?.pageSize ?? 300;
+  const enablePeek = config?.peek ?? false;
   const isFullscreen = config?.fullscreen ?? false;
   const isParallax = config?.parallax ?? false;
   const isHorizontal = config?.horizontal ?? false;
@@ -773,15 +853,85 @@ const init = (
   const preventDefault = config?.preventDefault ?? true;
 
   const scrollWatcher = ScrollWatcher.reuse();
-  let gestureWatcher: GestureWatcher | null = null;
-  let viewWatcher: ViewWatcher | null = null;
-  if (isFullscreen) {
-    viewWatcher = ViewWatcher.reuse({ rootMargin: "0px", threshold: 0.3 });
-  }
+  const sizeWatcher = isCarousel
+    ? SizeWatcher.reuse({ resizeThreshold: 10 })
+    : null;
+  const gestureWatcher = useGestures ? GestureWatcher.reuse() : null;
+  const viewWatcher = isFullscreen
+    ? ViewWatcher.reuse({ rootMargin: "0px", threshold: 0.3 })
+    : null;
 
-  if (useGestures) {
-    gestureWatcher = GestureWatcher.reuse();
-  }
+  const recalculateCarouselProps = async (t?: Element, data?: SizeData) => {
+    if (data) {
+      // there's been a resize
+      const gap =
+        MH.parseFloat(await getComputedStyleProp(element, "gap")) || 0;
+      const containerSize =
+        data.content[isHorizontal ? MC.S_WIDTH : MC.S_HEIGHT];
+
+      const getNumVisiblePages = (addPeek = false) =>
+        (numVisiblePages = MH.max(
+          1, // at least 1
+          MH.min(
+            MH.floor(
+              (containerSize + gap - (addPeek ? 0.5 * minPageSize : 0)) /
+                (minPageSize + gap),
+            ),
+            numPages, // and at most total number
+          ),
+        ));
+
+      numVisiblePages = getNumVisiblePages();
+      if (enablePeek && numVisiblePages < numPages) {
+        // Not all pages fit now and we will add a "peek" from the pages on the
+        // edge.
+        // Re-calculate with peek added in case the resultant page size when we
+        // add the "peek" will make it smaller than the min.
+        numVisiblePages = getNumVisiblePages(true);
+      }
+    } // otherwise just a page transition
+
+    const currPageNum = widget.getCurrentPageNum();
+    const prevPageNum = widget.getPreviousPageNum();
+    const numHidden = numPages - numVisiblePages;
+    const hasPeek = enablePeek && numVisiblePages < numPages;
+
+    // centre the current page as much as possible
+    let visibleStart = currPageNum - (numVisiblePages - 1) / 2;
+    let isAtEdge = false;
+
+    if (visibleStart >= numHidden + 1) {
+      visibleStart = numHidden + 1;
+      isAtEdge = true;
+    } else if (visibleStart <= 1) {
+      visibleStart = 1;
+      isAtEdge = true;
+    }
+
+    let numTranslated = 0;
+    if (hasPeek) {
+      numTranslated = MH.max(0, visibleStart - 1 - (isAtEdge ? 0.5 : 0.25));
+    } else {
+      numTranslated =
+        (prevPageNum > currPageNum ? MH.floor : MH.ceil)(visibleStart) - 1;
+    }
+
+    const numVisibleGaps = !hasPeek
+      ? numVisiblePages - 1
+      : isAtEdge || numVisiblePages % 2 === 0
+        ? numVisiblePages
+        : numVisiblePages + 1;
+
+    const fractionalNumVisiblePages = hasPeek
+      ? numVisiblePages + 0.5
+      : numVisiblePages;
+
+    setData(element, PREFIX_VISIBLE_PAGES, fractionalNumVisiblePages + "");
+    setStyleProp(element, VAR_VISIBLE_PAGES, fractionalNumVisiblePages + "");
+    setStyleProp(element, VAR_VISIBLE_GAPS, numVisibleGaps + "");
+    setStyleProp(element, VAR_TRANSLATED_PAGES, numTranslated + "");
+    setStyleProp(element, VAR_TRANSLATED_GAPS, MH.floor(numTranslated) + "");
+  };
 
   const getGestureOptions = (
     directions: Direction | Direction[] | undefined,
@@ -813,7 +963,7 @@ const init = (
     }
   };
 
-  const addWatcher = () => {
+  const addWatchers = () => {
     gestureWatcher?.onGesture(
       element,
       transitionOnGesture,
@@ -826,7 +976,14 @@ const init = (
       ),
     );
 
+    sizeWatcher?.onResize(recalculateCarouselProps, { target: element });
     viewWatcher?.onView(element, scrollToPager, { views: "at" });
+  };
+
+  const removeWatchers = () => {
+    gestureWatcher?.offGesture(element, transitionOnGesture);
+    sizeWatcher?.offResize(recalculateCarouselProps, element);
+    viewWatcher?.offView(element, scrollToPager);
   };
 
   const getPageNumForEvent = (event: Event) => {
@@ -849,20 +1006,15 @@ const init = (
   const nextSwitchClickListener = () => methods._nextPage();
   const prevSwitchClickListener = () => methods._prevPage();
 
-  const removeWatcher = () => {
-    gestureWatcher?.offGesture(element, transitionOnGesture);
-
-    viewWatcher?.offView(element, scrollToPager);
-  };
-
   // SETUP ------------------------------
 
-  widget.onDisable(removeWatcher);
-  widget.onEnable(addWatcher);
+  widget.onDisable(removeWatchers);
+  widget.onEnable(addWatchers);
 
   widget.onDestroy(async () => {
     await waitForMutateTime();
     delDataNow(element, MC.PREFIX_ORIENTATION);
+    delDataNow(element, PREFIX_STYLE);
     delDataNow(element, PREFIX_IS_FULLSCREEN);
     delDataNow(element, PREFIX_USE_PARALLAX);
     delDataNow(element, PREFIX_CURRENT_PAGE);
@@ -870,8 +1022,13 @@ const init = (
     delDataNow(element, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED);
     delDataNow(element, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED);
     delDataNow(element, PREFIX_TOTAL_PAGES);
+    delDataNow(element, PREFIX_VISIBLE_PAGES);
     delStylePropNow(element, VAR_CURRENT_PAGE);
     delStylePropNow(element, VAR_TOTAL_PAGES);
+    delStylePropNow(element, VAR_VISIBLE_PAGES);
+    delStylePropNow(element, VAR_VISIBLE_GAPS);
+    delStylePropNow(element, VAR_TRANSLATED_PAGES);
+    delStylePropNow(element, VAR_TRANSLATED_GAPS);
 
     for (let idx = 0; idx < MH.lengthOf(pages); idx++) {
       removeClassesNow(pages[idx], PREFIX_PAGE);
@@ -908,14 +1065,21 @@ const init = (
     }
   });
 
-  addWatcher();
+  if (isCarousel) {
+    widget.onTransition(() => recalculateCarouselProps());
+  }
+
+  addWatchers();
   addClasses(element, PREFIX_ROOT);
   if (pageContainer) {
     addClasses(pageContainer, PREFIX_PAGE_CONTAINER);
   }
 
   const numPages = MH.lengthOf(pages);
+  let numVisiblePages = numPages;
+
   setData(element, MC.PREFIX_ORIENTATION, orientation);
+  setData(element, PREFIX_STYLE, pagerStyle);
   setBoolData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
   setBoolData(element, PREFIX_USE_PARALLAX, isParallax);
   setData(element, PREFIX_TOTAL_PAGES, numPages + "");
@@ -1051,7 +1215,11 @@ const getMethods = (
       }
     }
 
-    setCurrentPage(element, currPageNum, numPages, isPageDisabled);
+    setCurrentPage(
+      element,
+      { _current: currPageNum, _total: numPages },
+      isPageDisabled,
+    );
     MH.setAttr(pages[currPageNum - 1], S_ARIA_CURRENT);
     await setPageState(components, currPageNum, S_CURRENT);
   };
@@ -1089,16 +1257,22 @@ const getMethods = (
       await prevPage();
 
       if (pageNum === currPageNum) {
+        // was the first enabled one
         await nextPage();
 
         if (pageNum === currPageNum) {
+          // was the only enabled one
           disabledPages[pageNum] = false;
-          return; // only enabled one
+          return;
         }
       }
     }
 
-    setCurrentPage(element, currPageNum, MH.lengthOf(pages), isPageDisabled);
+    setCurrentPage(
+      element,
+      { _current: currPageNum, _total: MH.lengthOf(pages) },
+      isPageDisabled,
+    );
     await setPageState(components, pageNum, MC.S_DISABLED);
   };
 
@@ -1111,7 +1285,11 @@ const getMethods = (
     // set immediately for toggle to work without awaiting on it
     disabledPages[pageNum] = false;
 
-    setCurrentPage(element, currPageNum, MH.lengthOf(pages), isPageDisabled);
+    setCurrentPage(
+      element,
+      { _current: currPageNum, _total: MH.lengthOf(pages) },
+      isPageDisabled,
+    );
     await setPageState(
       components,
       pageNum,

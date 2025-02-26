@@ -1,0 +1,62 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+
+[data-lisn-pager-style="carousel"] {
+  &.lisn-pager__page-container,
+  & .lisn-pager__page-container {
+    --gap: var(--lisn-pager--gap, 3vmin);
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: var(--gap);
+    overflow: hidden;
+  }
+
+  &[data-lisn-orientation="horizontal"] {
+    &.lisn-pager__page-container,
+    & .lisn-pager__page-container {
+      flex-direction: row;
+    }
+  }
+
+  & .lisn-pager__page {
+    --vis_pg: var(--lisn-js--visible-pages, 1);
+    --vis_gp: var(--lisn-js--visible-gaps, 0);
+    --page_sz: calc(
+      (100% - var(--vis_gp) * var(--gap)) / var(--vis_pg)
+    ); /* 100% here is parent size */
+    --tr_sz: calc(
+      /* 100% here is page size */ 100% * var(--lisn-js--translated-pages, 0) +
+        var(--gap) * var(--lisn-js--translated-gaps, 0)
+    );
+    --tr_x: 0px;
+    --tr_y: 0px;
+    --scale: 1;
+    flex: 0 0 var(--page_sz);
+    transition-property: transform, flex-basis;
+    transition-duration: var(--animate-duration, #{$animate-duration});
+    transform: translate(calc(-1 * var(--tr_x)), calc(-1 * var(--tr_y)))
+      scale(var(--scale));
+  }
+
+  &[data-lisn-orientation="vertical"] .lisn-pager__page {
+    --tr_y: var(--tr_sz);
+  }
+
+  &[data-lisn-orientation="horizontal"] .lisn-pager__page {
+    --tr_x: var(--tr_sz);
+  }
+
+  &[data-lisn-use-parallax="true"] .lisn-pager__page {
+    --scale: 0.92;
+  }
+
+  &[data-lisn-use-parallax="true"]
+    .lisn-pager__page[data-lisn-page-state="current"] {
+    --scale: 1;
+  }
+}

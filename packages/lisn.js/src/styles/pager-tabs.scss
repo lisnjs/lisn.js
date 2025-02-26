@@ -1,0 +1,32 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+
+[data-lisn-pager-style="tabs"] {
+  &.lisn-pager__page-container,
+  & .lisn-pager__page-container {
+    position: relative;
+    width: 100%;
+    /* height must be set explicitly by user unless it's fullscreen */
+  }
+
+  &[data-lisn-is-fullscreen="true"] {
+    &.lisn-pager__page-container,
+    & .lisn-pager__page-container {
+      height: var(--lisn-window--height);
+    }
+  }
+
+  & .lisn-pager__page {
+    @include abs-full-size;
+    transition-duration: var(--animate-duration, #{$pager-animate-duration});
+    transition-property: opacity;
+    opacity: 0;
+  }
+
+  /* Active page */
+  & .lisn-pager__page[data-lisn-page-state="current"] {
+    opacity: 1;
+  }
+}

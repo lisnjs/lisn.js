@@ -18,8 +18,9 @@ import { Widget, WidgetHandler } from "../widgets/widget.cjs";
  * "toggle" elements which correspond one-to-one to each page. Switches go to
  * the given page and toggles toggle the enabled/disabled state of the page.
  *
- * **IMPORTANT:** The page elements will be positioned absolutely, and
- * therefore the pager likely needs to have an explicit height. If you enable
+ * **IMPORTANT:** Unless the {@link PagerStyle.style} is set to "carousel", the
+ * page elements will be positioned absolutely, and therefore the pager likely
+ * needs to have an explicit height. If you enable
  * {@link PagerConfig.fullscreen}, then the element will get `height: 100vh`
  * set. Otherwise, you need to set its height in your CSS.
  *
@@ -36,6 +37,8 @@ import { Widget, WidgetHandler } from "../widgets/widget.cjs";
  * - `data-lisn-orientation`: `"horizontal"` or `"vertical"`
  * - `data-lisn-use-parallax`: `"true"` or `"false"`
  * - `data-lisn-total-pages`: the number of pages
+ * - `data-lisn-visible-pages`: **for carousel only** the number of visible pages;
+ *   can be fractional if {@link PagerConfig.peek} is enabled
  * - `data-lisn-current-page`: the current page number
  * - `data-lisn-current-page-is-last`: `"true"` or `"false"`
  * - `data-lisn-current-page-is-first-enabled`: `"true"` or `"false"`
@@ -43,6 +46,7 @@ import { Widget, WidgetHandler } from "../widgets/widget.cjs";
  *
  * The following dynamic CSS properties are also set on the pager element's style:
  * - `--lisn-js--total-pages`: the number of pages
+ * - `--lisn-js--visible-pages`: **for carousel only** the number of visible pages
  * - `--lisn-js--current-page`: the current page number
  *
  * The following dynamic attributes are set on each page, toggle or switch element:
@@ -270,11 +274,11 @@ export type PagerConfig = {
      *    widget element (other than `script` and `style` elements) are taken as
      *    the pages.
      *
-     * **IMPORTANT:** The page elements will be positioned absolutely relative to
-     * their immediate parent, but their parent likely needs to have an explicit
-     * height. If you enable {@link PagerConfig.fullscreen}, then the page parent
-     * will get `height: 100vh` set. Otherwise, you need to set its height in
-     * your CSS.
+     * **IMPORTANT:** Unless the {@link style} is set to "carousel", the page
+     * elements will be positioned absolutely, and therefore the pager likely
+     * needs to have an explicit height. If you enable {@link fullscreen}, then
+     * the element will get `height: 100vh` set. Otherwise, you need to set its
+     * height in your CSS.
      *
      * @defaultValue undefined
      */
@@ -337,28 +341,72 @@ export type PagerConfig = {
      */
     initialPage?: number;
     /**
+     * Set the style of the widget. This determines the basic CSS applied.
+     *
+     * When importing the stylesheets in your project, if not using the full
+     * stylesheet (lisn.css) you can import either pager.css which contains all
+     * three pager styles, or only `pager-<style>.css`.
+     *
+     * **NOTE:** The base css only includes the minimum required for positioning
+     * and transitioning pages. The switches and toggles are intentionally not
+     * styled for flexibility. You should style those in your CSS.
+     *
+     * **IMPORTANT:** Unless the {@link style} is set to "carousel", the page
+     * elements will be positioned absolutely, and therefore the pager likely
+     * needs to have an explicit height. If you enable {@link fullscreen}, then
+     * the element will get `height: 100vh` set. Otherwise, you need to set its
+     * height in your CSS.
+     *
+     * @defaultValue "slider"
+     */
+    style?: "slider" | "carousel" | "tabs";
+    /**
+     * Only relevant is {@link style} is "carousel".
+     *
+     * The *minimum* page height (or width in {@link horizontal} mode) in pixels.
+     * This will determine the number of visible slides at any one width of the
+     * pager. Pages will still grow to fill the size of the carousel itself.
+     *
+     * @defaultValue 300
+     */
+    pageSize?: number;
+    /**
+     * Only relevant is {@link style} is "carousel".
+     *
+     * Whether to show a bit of the upcoming and/or previous pages that are
+     * hidden when not all fit.
+     *
+     * @defaultValue false
+     */
+    peek?: boolean;
+    /**
      * If true, then:
-     * - the pager's height will be set to the viewport height (100vh)
+     * - if the pager {@link style} is "slider", the pager's height will be set
+     *   to the viewport height (100vh)
      * - the pager's scrolling ancestor will be scrolled to the top of the pager
      *   when 30% of it is in view
      * - scrolling beyond the first or last page will initiate scroll up/left or
      *   down/right the pager's scrolling ancestor in order to allow "leaving"
      *   the pager
      *
-     * Note that since the pager's pages will be positioned absolutely, if you do
-     * _not_ enable this option, you will need to manually set the height of the
-     * page parent element via CSS.
+     * Note that except in "carousel" {@link style} the pager's pages will be
+     * positioned absolutely, and so if you do _not_ enable this option, you will
+     * need to manually set the height of the page parent element via CSS.
      *
      * @defaultValue false
      */
     fullscreen?: boolean;
     /**
+     * Only relevant is {@link style} is "slider" (default) or "carousel".
+     *
      * Use a parallax effect for switching pages.
      *
      * @defaultValue false
      */
     parallax?: boolean;
     /**
+     * Only relevant is {@link style} is "slider" (default) or "carousel".
+     *
      * Transition pages sideways instead of vertically.
      *
      * @defaultValue false
@@ -381,8 +429,9 @@ export type PagerConfig = {
      * gesture direction is horizontal or vertical.
      *
      * If false then, a gesture will go to the next page only if its direction is
-     * down (or right if {@link horizontal}), and to the previous page only if
-     * the gesture direction is up (or left if {@link horizontal}).
+     * down if {@link horizontal} is false/right if {@link horizontal} is true,
+     * and to the previous page only if the gesture direction is up if
+     * {@link horizontal} is false/left if {@link horizontal} is true.
      *
      * **IMPORTANT:**
      * If {@link fullscreen}, {@link preventDefault} and

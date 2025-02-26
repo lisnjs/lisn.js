@@ -23,7 +23,7 @@
 
     <link
       rel="stylesheet"
-      href="assets/css/common.css"
+      href="common.css"
       type="text/css"
       media="screen"
       charset="utf-8"
@@ -45,7 +45,11 @@
           switches,
           prevSwitch,
           nextSwitch,
+          style: "carousel",
+          peek: true,
+          pageSize: 250,
           horizontal: true,
+          parallax: true,
           useGestures: "touch,wheel",
           alignGestureDirection: true,
           preventDefault: false,
@@ -57,67 +61,23 @@
       /* Pager and page container */
       #demo {
         width: 100%;
-        padding: 0 3vmax;
-      }
-
-      #demo .pages {
-        --gap: 3vmin;
-        --tot-p: var(--lisn-js--total-pages, 1);
-        --curr-p: var(--lisn-js--current-page, 1);
-        --vis-p: min(6, var(--tot-p));
-        --page-w: calc(
-          min(
-            320px,
-            (100% - var(--gap) * (var(--vis-p) - 1)) /
-              (var(--vis-p) + min(var(--tot-p) - var(--vis-p), 0.5))
-          )
-        );
-        max-width: calc(
-          var(--tot-p) * var(--page-w) + (var(--vis-p) - 1) * var(--gap)
-        );
+        max-width: 1460px;
         margin: 0 auto;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        align-items: stretch;
-        justify-content: flex-start;
-        gap: var(--gap);
-        overflow: visible;
-        transition-duration: 0.7s;
-        transition-property: transform;
-        transform: translateX(
-          calc(
-            -1 * (var(--page-w) + var(--gap)) *
-              max(
-                0,
-                min(
-                  var(--tot-p) - var(--vis-p) - 0.5,
-                  var(--curr-p) - 1.25 - (var(--vis-p) - 1) / 2
-                )
-              )
-          )
-        );
       }
 
       /* Individual pages */
       #demo .page {
-        padding: 5vh 3vmin;
+        padding: 5vh 2vmin;
         border-radius: 15px;
         background: var(--bg-color-lighter);
-        flex: 0 0 var(--page-w);
-        height: auto;
-        position: relative;
-        transform: scale(0.92);
+        box-shadow: rgba(0, 0, 0, 0.2) 4px 5px 5px 0px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        transition-property: transform, flex-basis;
-        box-shadow: rgba(0, 0, 0, 0.2) 4px 5px 5px 0px;
       }
 
       #demo .page[data-lisn-page-state="current"] {
         background: var(--bg-color-lightest);
-        transform: scale(1);
       }
 
       #demo .switch {
@@ -167,37 +127,6 @@
 
       #demo .next-switch {
         border-right: none !important;
-      }
-
-      /* Number of visible pages on smaller screens */
-      @media (max-width: 1810px) {
-        #demo .pages {
-          --vis-p: min(5, var(--tot-p));
-        }
-      }
-
-      @media (max-width: 1530px) {
-        #demo .pages {
-          --vis-p: min(4, var(--tot-p));
-        }
-      }
-
-      @media (max-width: 1250px) {
-        #demo .pages {
-          --vis-p: min(3, var(--tot-p));
-        }
-      }
-
-      @media (max-width: 970px) {
-        #demo .pages {
-          --vis-p: min(2, var(--tot-p));
-        }
-      }
-
-      @media (max-width: 750px) {
-        #demo .pages {
-          --vis-p: 1;
-        }
       }
 
       /* Page content */

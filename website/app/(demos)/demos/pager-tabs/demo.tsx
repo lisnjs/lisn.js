@@ -4,9 +4,7 @@ import {
   PagerPageComponent,
   PagerSwitchComponent,
 } from "@lisn.js/react";
-// Don't load the default pager CSS otherwise we'd have to override quite a few
-// properties. We need to set custom style for everything anyway.
-// import "lisn.js/pager.css";
+import "lisn.js/pager-tabs.css";
 
 import Image from "next/image";
 
@@ -16,7 +14,10 @@ export default function Page() {
   return (
     <>
       <div className={styles.wrapper}>
-        <PagerComponent className={styles.demo} config={{ useGestures: false }}>
+        <PagerComponent
+          className={styles.demo}
+          config={{ style: "tabs", useGestures: false }}
+        >
           <div className={styles.tabs}>
             <PagerSwitchComponent className={styles.tab}>
               Limitless

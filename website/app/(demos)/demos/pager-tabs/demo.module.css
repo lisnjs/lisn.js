@@ -26,22 +26,6 @@
 .pages {
   height: 400px;
   box-shadow: var(--lisn-shadow);
-  position: relative;
-}
-
-.page {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  transition-property: opacity;
-  transition-duration: 0.3s;
-  opacity: 0;
-}
-
-.page[data-lisn-page-state="current"] {
-  opacity: 1;
 }
 
 /* Tabs */

@@ -29,7 +29,6 @@
 
 .page[data-slide] {
   transition-property: opacity, transform;
-  box-shadow: none;
   opacity: 1;
 }
 

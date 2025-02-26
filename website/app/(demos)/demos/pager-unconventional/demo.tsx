@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 import { SizeWatcher } from "lisn.js";
 import { PagerComponent, PagerPageComponent } from "@lisn.js/react";
-import "lisn.js/pager.css";
+import "lisn.js/pager-slider.css";
 
 import Image from "next/image";
 

@@ -3,17 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var _globals = require("./globals/index.cjs");
-Object.keys(_globals).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  if (key in exports && exports[key] === _globals[key]) return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function () {
-      return _globals[key];
-    }
-  });
-});
 var _actions = require("./actions/index.cjs");
 Object.keys(_actions).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
@@ -33,6 +22,17 @@ Object.keys(_debug).forEach(function (key) {
     enumerable: true,
     get: function () {
       return _debug[key];
+    }
+  });
+});
+var _globals = require("./globals/index.cjs");
+Object.keys(_globals).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _globals[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _globals[key];
     }
   });
 });

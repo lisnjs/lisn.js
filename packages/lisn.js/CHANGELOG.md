@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2025-26-02
+
+### Added built-in pager styles
+
+- Basic CSS for slider (still the default), carousel and tabs.
+- Removed page box-shadow from pager CSS.
+- Bug fix: data-lisn-current-page-is-last was set incorrectly
+
 ## [1.0.4] - 2025-22-02
 
 ### Improved compatibility with Vite and Webpack

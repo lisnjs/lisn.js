@@ -1,6 +1,6 @@
 {
   "name": "lisn.js",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Simply handle user gestures and actions. Includes widgets.",
   "keywords": [
     "lisn",
@@ -168,8 +168,7 @@
     "test:passive": "npx eslint src/ts ; npx eslint tests/unit-tests",
     "test:unit": "node scripts/jest",
     "test": "npm run test:passive && npm run test:unit",
-    "dist:styles": "npx sass src/styles/:dist/styles/ --no-source-map && npx postcss --replace dist/styles/*.css",
-    "dist:styles-bundles": "npx sass src/styles/:bundles/styles/ --no-source-map && npx postcss --replace bundles/styles/*.css",
+    "dist:styles": "npx sass src/styles/:dist/styles/ --no-source-map && npx postcss --replace dist/styles/*.css && cp -r dist/styles/* ../@lisn.js/bundles/styles/",
     "dist:esm": "npx babel src/ts --env-name=esm --out-dir dist/esm --extensions .ts --out-file-extension .js",
     "dist:cjs": "npx babel src/ts --env-name=cjs --out-dir dist/cjs --extensions .ts --out-file-extension .cjs",
     "dist:types-esm": "npx tsc --module es2022 --outDir dist/esm && npx tsc-alias --outDir dist/esm --resolve-full-paths --resolve-full-extension .js",

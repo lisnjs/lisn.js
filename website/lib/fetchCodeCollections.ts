@@ -48,13 +48,15 @@ export const fetchCodeCollections = async (
       }
     }
 
-    const sandbox = sandboxes[key] ?? null;
-    collections.push({
-      key,
-      title,
-      tabs: codeTabs,
-      sandbox,
-    });
+    if (codeTabs.length > 0) {
+      const sandbox = sandboxes[key] ?? null;
+      collections.push({
+        key,
+        title,
+        tabs: codeTabs,
+        sandbox,
+      });
+    }
   }
 
   return collections;

@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>LISN | Pager: Slider (JS API)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="assets/js/lisn.debug.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <link
+      rel="stylesheet"
+      href="common.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+
+    <script charset="utf-8">
+      LISN.widgets.PageLoader.enableMain();
+    </script>
+
+    <script id="main-js" charset="utf-8">
+      document.addEventListener("DOMContentLoaded", () => {
+        const main = document.getElementById("demo");
+        const mainPagerEl = demo.querySelector(".preview");
+        const thumbPagerEl = demo.querySelector(".slider");
+
+        const mainPager = new LISN.widgets.Pager(mainPagerEl, {
+          pages: mainPagerEl.querySelectorAll(".page"),
+          style: "tabs",
+          useGestures: false,
+        });
+
+        const thumbnailEls = thumbPagerEl.querySelectorAll(".page");
+        const thumbPager = new LISN.widgets.Pager(thumbPagerEl, {
+          pages: thumbnailEls,
+          switches: thumbnailEls,
+          style: "carousel",
+          peek: true,
+          pageSize: 150,
+          horizontal: true,
+          parallax: true,
+          useGestures: "wheel,touch",
+        });
+
+        thumbPager.onTransition(() =>
+          mainPager.goToPage(thumbPager.getCurrentPageNum()),
+        );
+      });
+    </script>
+
+    <style id="main-css" type="text/css" media="screen">
+      #demo {
+        width: 600px;
+        margin: 0 auto;
+      }
+
+      #demo .preview {
+        height: 300px;
+      }
+
+      #demo .slider {
+        --lisn-pager--gap: 10px;
+      }
+
+      #demo .preview img,
+      #demo .slider img {
+        width: 100%;
+      }
+
+      #demo .slider img {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="dark-theme">
+    <main id="main-html">
+      <div id="demo">
+        <div class="preview">
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=1" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=2" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=3" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=4" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=5" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=6" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=7" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=8" />
+          </div>
+        </div>
+
+        <div class="slider">
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=1" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=2" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=3" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=4" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=5" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=6" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=7" />
+          </div>
+
+          <div class="page">
+            <img src="https://picsum.photos/600/300?p=8" />
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

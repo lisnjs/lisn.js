@@ -1,5 +1,5 @@
 .header {
-  z-index: 100;
+  z-index: 90;
   position: relative;
   font-size: 0.8em;
   padding: 12px 50px 12px 12px;
@@ -26,7 +26,7 @@
 
 .github {
   position: absolute;
-  z-index: 1000;
+  z-index: 100;
   top: 0;
   right: 0;
 }

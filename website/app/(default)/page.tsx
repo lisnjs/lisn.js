@@ -334,6 +334,10 @@ LISN.watchers.ScrollWatcher.onScroll(
           <li>Wrappers for more frameworks.</li>
           <li>SmoothScroller widget.</li>
           <li>Radio/checkbox trigger.</li>
+          <li>
+            Pager wheel transition to respond to quick successive scrolls (known
+            bug).
+          </li>
           <li>Default pager transitions to use gesture momentum.</li>
           <li>Custom duration for ScrollTo action.</li>
           <li>Passing information on elements spanned by a gesture.</li>

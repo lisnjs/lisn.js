@@ -1,0 +1,30 @@
+/* Container */
+.wrapper {
+  --animate-duration: 0.4s;
+  width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Main preview pager */
+.preview {
+  height: 300px;
+}
+
+.slider {
+  --lisn-pager--gap: 10px;
+}
+
+.preview img,
+.slider img {
+  width: 100%;
+}
+
+.slider img {
+  cursor: pointer;
+}

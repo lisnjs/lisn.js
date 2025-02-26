@@ -1,6 +1,6 @@
 .header,
 .footer {
-  z-index: 100;
+  z-index: 90;
   position: fixed;
   right: 0;
   font-size: 15px;

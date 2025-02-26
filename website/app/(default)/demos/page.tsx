@@ -70,6 +70,12 @@ export default function Page() {
           </li>
 
           <li>
+            <Link href="pagers-gallery/" external={true}>
+              Related pagers as a slider preview gallery
+            </Link>
+          </li>
+
+          <li>
             <Link href="scrollbar/" external={true}>
               Custom scrollbar: progress bar
             </Link>

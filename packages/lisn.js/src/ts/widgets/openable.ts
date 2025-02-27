@@ -17,13 +17,13 @@ import {
   removeClasses,
   removeClassesNow,
   getData,
-  getBoolData,
+  getBooleanData,
   setData,
   setDataNow,
-  setBoolData,
-  setBoolDataNow,
-  unsetBoolData,
-  unsetBoolDataNow,
+  setBooleanData,
+  setBooleanDataNow,
+  unsetBooleanData,
+  unsetBooleanDataNow,
   delData,
   delDataNow,
   setHasModal,
@@ -51,7 +51,7 @@ import { isInlineTag } from "@lisn/utils/dom-query";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
 import { keyWithMaxVal } from "@lisn/utils/math";
-import { toBool, toArrayIfSingle } from "@lisn/utils/misc";
+import { toBoolean, toArrayIfSingle } from "@lisn/utils/misc";
 import { waitForDelay } from "@lisn/utils/tasks";
 import { isValidPosition, isValidTwoFoldPosition } from "@lisn/utils/position";
 import { fetchViewportSize } from "@lisn/utils/size";
@@ -242,7 +242,7 @@ export abstract class Openable extends Widget {
         setHasModal();
       }
 
-      await setBoolData(root, PREFIX_IS_OPEN);
+      await setBooleanData(root, PREFIX_IS_OPEN);
     };
 
     // ----------
@@ -266,7 +266,7 @@ export abstract class Openable extends Widget {
         scrollWrapperToTop(); // no need to await
       }
 
-      await unsetBoolData(root, PREFIX_IS_OPEN);
+      await unsetBooleanData(root, PREFIX_IS_OPEN);
     };
 
     // ----------
@@ -710,7 +710,7 @@ export class Collapsible extends Openable {
     const wrapper = MH.childrenOf(root)[0];
 
     setData(root, MC.PREFIX_ORIENTATION, orientation);
-    setBoolData(root, PREFIX_REVERSE, config?.reverse ?? false);
+    setBooleanData(root, PREFIX_REVERSE, config?.reverse ?? false);
 
     // -------------------- Transitions
     disableInitialTransition(element, 100);
@@ -1693,7 +1693,7 @@ const triggerConfigValidator: WidgetConfigValidatorObject<OpenableTriggerConfig>
     className: (key, value) => validateStrList(key, toArrayIfSingle(value)),
     autoClose: validateBoolean,
     icon: (key, value) =>
-      value && toBool(value) === false
+      value && toBoolean(value) === false
         ? false
         : validateString(key, value, isValidPosition),
     iconClosed: (key, value) => validateString(key, value, isValidIconClosed),
@@ -1710,7 +1710,7 @@ const collapsibleConfigValidator: WidgetConfigValidatorObject<CollapsibleConfig>
     peek: validateBooleanOrString,
     autoClose: validateBoolean,
     icon: (key, value) =>
-      toBool(value) === false
+      toBoolean(value) === false
         ? false
         : validateString(key, value, isValidPosition),
     iconClosed: (key, value) => validateString(key, value, isValidIconClosed),
@@ -1924,7 +1924,7 @@ const setupElements = (
     addClassesNow(root, ...toArrayIfSingle(properties.className));
   }
 
-  unsetBoolData(root, PREFIX_IS_OPEN);
+  unsetBooleanData(root, PREFIX_IS_OPEN);
   const domID = getOrAssignID(root, properties.name);
 
   if (properties.isModal) {
@@ -1975,7 +1975,7 @@ const setupElements = (
     for (const trigger of triggers.keys()) {
       delData(trigger, PREFIX_OPENS_ON_HOVER);
       MH.unsetAttr(trigger, S_ARIA_EXPANDED);
-      await unsetBoolData(trigger, PREFIX_IS_OPEN);
+      await unsetBooleanData(trigger, PREFIX_IS_OPEN);
     }
   });
 
@@ -2068,12 +2068,12 @@ const setupElements = (
         MH.setAttr(trigger, MC.S_ARIA_CONTROLS, domID);
         MH.unsetAttr(trigger, S_ARIA_EXPANDED);
 
-        setBoolDataNow(
+        setBooleanDataNow(
           trigger,
           PREFIX_OPENS_ON_HOVER,
           triggerConfig[MC.S_HOVER],
         );
-        unsetBoolDataNow(trigger, PREFIX_IS_OPEN);
+        unsetBooleanDataNow(trigger, PREFIX_IS_OPEN);
 
         addClassesNow(
           trigger,
@@ -2147,7 +2147,7 @@ const setupListeners = (
         // open it
         activeTrigger = trigger;
         MH.setAttr(trigger, S_ARIA_EXPANDED); // will be unset on close
-        setBoolData(trigger, PREFIX_IS_OPEN); // will be unset on close
+        setBooleanData(trigger, PREFIX_IS_OPEN); // will be unset on close
 
         widget.open(); // no need to await
 
@@ -2319,7 +2319,7 @@ const insertCollapsibleIcon = (
     moveElement(icon, { to: trigger, ignoreMove: true });
 
     widget.onOpen(() => {
-      if (getBoolData(trigger, PREFIX_IS_OPEN)) {
+      if (getBooleanData(trigger, PREFIX_IS_OPEN)) {
         setData(icon, PREFIX_TRIGGER_ICON, iconOpen);
       }
     });

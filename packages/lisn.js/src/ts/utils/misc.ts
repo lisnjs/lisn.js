@@ -87,9 +87,14 @@ export const keyExists = <T extends object>(
 export const toArrayIfSingle = <T>(value?: T | T[] | null | undefined): T[] =>
   MH.isArray(value) ? value : !MH.isNullish(value) ? [value] : [];
 
-export const toBool = (value: unknown) =>
+export const toBoolean = (value: unknown) =>
   value === true || value === "true" || value === ""
     ? true
     : MH.isNullish(value) || value === false || value === "false"
       ? false
       : null;
+
+/**
+ * @deprecated
+ */
+export const toBool = toBoolean;

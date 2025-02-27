@@ -61,5 +61,10 @@ export const compareValuesIn = (objA, objB, roundTo = 3) => {
 };
 export const keyExists = (obj, key) => MH.isNonPrimitive(obj) && key in obj;
 export const toArrayIfSingle = value => MH.isArray(value) ? value : !MH.isNullish(value) ? [value] : [];
-export const toBool = value => value === true || value === "true" || value === "" ? true : MH.isNullish(value) || value === false || value === "false" ? false : null;
+export const toBoolean = value => value === true || value === "true" || value === "" ? true : MH.isNullish(value) || value === false || value === "false" ? false : null;
+
+/**
+ * @deprecated
+ */
+export const toBool = toBoolean;
 //# sourceMappingURL=misc.js.map

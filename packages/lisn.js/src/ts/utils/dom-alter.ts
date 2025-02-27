@@ -18,7 +18,7 @@ import {
   hasClass,
   addClassesNow,
   setDataNow,
-  setBoolData,
+  setBooleanData,
 } from "@lisn/utils/css-alter";
 import { waitForMutateTime } from "@lisn/utils/dom-optimize";
 import { isInlineTag } from "@lisn/utils/dom-query";
@@ -369,7 +369,7 @@ export const wrapScrollingContent = async (element: Element) => {
  */
 export const cloneElement = <E extends Element>(element: E) => {
   const clone = element.cloneNode(true) as E;
-  setBoolData(clone, MH.prefixName("clone"));
+  setBooleanData(clone, MH.prefixName("clone"));
   return clone;
 };
 

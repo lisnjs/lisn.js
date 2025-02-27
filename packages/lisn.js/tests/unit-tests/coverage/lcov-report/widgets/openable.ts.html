@@ -4956,13 +4956,13 @@ import {
   removeClasses,
   removeClassesNow,
   getData,
-  getBoolData,
+  getBooleanData,
   setData,
   setDataNow,
-  setBoolData,
-  setBoolDataNow,
-  unsetBoolData,
-  unsetBoolDataNow,
+  setBooleanData,
+  setBooleanDataNow,
+  unsetBooleanData,
+  unsetBooleanDataNow,
   delData,
   delDataNow,
   setHasModal,
@@ -4990,7 +4990,7 @@ import { isInlineTag } from "@lisn/utils/dom-query";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
 import { keyWithMaxVal } from "@lisn/utils/math";
-import { toBool, toArrayIfSingle } from "@lisn/utils/misc";
+import { toBoolean, toArrayIfSingle } from "@lisn/utils/misc";
 import { waitForDelay } from "@lisn/utils/tasks";
 import { isValidPosition, isValidTwoFoldPosition } from "@lisn/utils/position";
 import { fetchViewportSize } from "@lisn/utils/size";
@@ -5181,7 +5181,7 @@ export abstract class Openable extends Widget {
         setHasModal();
       }
 &nbsp;
-      await setBoolData(root, PREFIX_IS_OPEN);
+      await setBooleanData(root, PREFIX_IS_OPEN);
     };
 &nbsp;
     // ----------
@@ -5205,7 +5205,7 @@ export abstract class Openable extends Widget {
         scrollWrapperToTop(); // no need to await
       }
 &nbsp;
-      await unsetBoolData(root, PREFIX_IS_OPEN);
+      await unsetBooleanData(root, PREFIX_IS_OPEN);
     };
 &nbsp;
     // ----------
@@ -5649,7 +5649,7 @@ export class Collapsible extends Openable {
     const wrapper = MH.childrenOf(root)[0];
 &nbsp;
     setData(root, MC.PREFIX_ORIENTATION, orientation);
-    setBoolData(root, PREFIX_REVERSE, config?.reverse ?? false);
+    setBooleanData(root, PREFIX_REVERSE, config?.reverse ?? false);
 &nbsp;
     // -------------------- Transitions
     disableInitialTransition(element, 100);
@@ -6632,7 +6632,7 @@ const triggerConfigValidator: WidgetConfigValidatorObject&lt;OpenableTriggerConf
     className: (key, value) =&gt; validateStrList(key, toArrayIfSingle(value)),
     autoClose: validateBoolean,
     icon: (key, value) =&gt;
-      value &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >toBool(value) === false</span>
+      value &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >toBoolean(value) === false</span>
         ? <span class="branch-0 cbranch-no" title="branch not covered" >false</span>
         : validateString(key, value, isValidPosition),
     iconClosed: (key, value) =&gt; validateString(key, value, isValidIconClosed),
@@ -6649,7 +6649,7 @@ const collapsibleConfigValidator: WidgetConfigValidatorObject&lt;CollapsibleConf
     peek: validateBooleanOrString,
     autoClose: validateBoolean,
     icon: (key, value) =&gt;
-      toBool(value) === false
+      toBoolean(value) === false
         ? false
         : <span class="branch-1 cbranch-no" title="branch not covered" >validateString(key, value, isValidPosition),</span>
     iconClosed: (key, value) =&gt; validateString(key, value, isValidIconClosed),
@@ -6863,7 +6863,7 @@ const setupElements = (
     addClassesNow(root, ...toArrayIfSingle(properties.className));
   }
 &nbsp;
-  unsetBoolData(root, PREFIX_IS_OPEN);
+  unsetBooleanData(root, PREFIX_IS_OPEN);
   const domID = getOrAssignID(root, properties.name);
 &nbsp;
   if (properties.isModal) {
@@ -6914,7 +6914,7 @@ const setupElements = (
     for (const trigger of triggers.keys()) {
       delData(trigger, PREFIX_OPENS_ON_HOVER);
       MH.unsetAttr(trigger, S_ARIA_EXPANDED);
-      await unsetBoolData(trigger, PREFIX_IS_OPEN);
+      await unsetBooleanData(trigger, PREFIX_IS_OPEN);
     }
   });
 &nbsp;
@@ -7007,12 +7007,12 @@ const setupElements = (
         MH.setAttr(trigger, MC.S_ARIA_CONTROLS, domID);
         MH.unsetAttr(trigger, S_ARIA_EXPANDED);
 &nbsp;
-        setBoolDataNow(
+        setBooleanDataNow(
           trigger,
           PREFIX_OPENS_ON_HOVER,
           triggerConfig[MC.S_HOVER],
         );
-        unsetBoolDataNow(trigger, PREFIX_IS_OPEN);
+        unsetBooleanDataNow(trigger, PREFIX_IS_OPEN);
 &nbsp;
         addClassesNow(
           trigger,
@@ -7086,7 +7086,7 @@ const setupListeners = (
         // open it
         activeTrigger = trigger;
         MH.setAttr(trigger, S_ARIA_EXPANDED); // will be unset on close
-        setBoolData(trigger, PREFIX_IS_OPEN); // will be unset on close
+        setBooleanData(trigger, PREFIX_IS_OPEN); // will be unset on close
 &nbsp;
         widget.open(); // no need to await
 &nbsp;
@@ -7258,7 +7258,7 @@ const insertCollapsibleIcon = (
     moveElement(icon, { to: trigger, ignoreMove: true });
 &nbsp;
     widget.onOpen(<span class="fstat-no" title="function not covered" >() =</span>&gt; {
-<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (getBoolData(trigger, PREFIX_IS_OPEN)) {</span>
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (getBooleanData(trigger, PREFIX_IS_OPEN)) {</span>
 <span class="cstat-no" title="statement not covered" >        setData(icon, PREFIX_TRIGGER_ICON, iconOpen);</span>
       }
     });
@@ -7381,7 +7381,7 @@ const fetchPopupPlacement = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-02-26T11:34:31.531Z
+                at 2025-02-27T12:49:28.111Z
             </div>
         <script src="../prettify.js"></script>
         <script>

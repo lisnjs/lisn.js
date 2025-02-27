@@ -21,8 +21,8 @@ import {
   removeClassesNow,
   getData,
   setData,
-  setBoolData,
-  setBoolDataNow,
+  setBooleanData,
+  setBooleanDataNow,
   setDataNow,
   delData,
   delDataNow,
@@ -553,11 +553,11 @@ const init = (
     if (useHandle) {
       handle = MH.createElement("div");
       addClassesNow(handle, PREFIX_HANDLE);
-      setBoolDataNow(handle, PREFIX_DRAGGABLE, dragScroll);
+      setBooleanDataNow(handle, PREFIX_DRAGGABLE, dragScroll);
     }
 
-    setBoolDataNow(scrollbar, PREFIX_DRAGGABLE, dragScroll && !useHandle);
-    setBoolDataNow(scrollbar, PREFIX_CLICKABLE, clickScroll);
+    setBooleanDataNow(scrollbar, PREFIX_DRAGGABLE, dragScroll && !useHandle);
+    setBooleanDataNow(scrollbar, PREFIX_CLICKABLE, clickScroll);
 
     moveElementNow(fill, { to: scrollbar });
 
@@ -607,7 +607,7 @@ const init = (
 
     const scrollAxis = tracksH ? "x" : "y";
     if (isScrollable(scrollable, { axis: scrollAxis }) && viewFraction < 1) {
-      setBoolData(containerElement, hasBarPrefix);
+      setBooleanData(containerElement, hasBarPrefix);
       displayElement(scrollbar);
     } else {
       delData(containerElement, hasBarPrefix);
@@ -825,7 +825,7 @@ const init = (
     addClasses(containerElement, PREFIX_CONTAINER);
   }
 
-  setBoolData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
 
   // Wrap children if needed
   if (contentWrapper) {
@@ -835,9 +835,9 @@ const init = (
       ignoreMove: true,
     }); // no need to await here
 
-    setBoolData(containerElement, PREFIX_HAS_WRAPPER);
+    setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
     if (hasFixedHeight) {
-      setBoolData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
+      setBooleanData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
     }
   }
 

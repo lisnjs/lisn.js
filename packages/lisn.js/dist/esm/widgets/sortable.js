@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { addClasses, removeClasses, getBoolData, setBoolData, unsetBoolData, delData, copyStyle, setNumericStyleProps } from "../utils/css-alter.js";
+import { addClasses, removeClasses, getBooleanData, setBooleanData, unsetBooleanData, delData, copyStyle, setNumericStyleProps } from "../utils/css-alter.js";
 import { moveElement, swapElements, cloneElement } from "../utils/dom-alter.js";
 import { waitForMeasureTime } from "../utils/dom-optimize.js";
 import { getVisibleContentChildren } from "../utils/dom-query.js";
@@ -206,7 +206,7 @@ const touchMoveOptions = {
   passive: false,
   capture: true
 };
-const isItemDraggable = item => getBoolData(item, PREFIX_IS_DRAGGABLE);
+const isItemDraggable = item => getBooleanData(item, PREFIX_IS_DRAGGABLE);
 const init = (widget, element, items, methods) => {
   let currentDraggedItem = null;
   let floatingClone = null;
@@ -309,7 +309,7 @@ const init = (widget, element, items, methods) => {
 
   for (const item of items) {
     addClasses(item, PREFIX_ITEM);
-    setBoolData(item, PREFIX_IS_DRAGGABLE);
+    setBooleanData(item, PREFIX_IS_DRAGGABLE);
   }
   widget.onEnable(setupEvents);
   widget.onDisable(() => {
@@ -349,7 +349,7 @@ const getMethods = (widget, items, config) => {
 
     // set immediately for toggle to work without awaiting on it
     disabledItems[itemNum] = true;
-    await unsetBoolData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
+    await unsetBooleanData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
   };
   const enableItem = async (itemNum, currentOrder = false) => {
     itemNum = getOrigItemNumber(toInt(itemNum), currentOrder);
@@ -359,7 +359,7 @@ const getMethods = (widget, items, config) => {
 
     // set immediately for toggle to work without awaiting on it
     disabledItems[itemNum] = false;
-    await setBoolData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
+    await setBooleanData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
   };
   const toggleItem = (itemNum, currentOrder = false) => isItemDisabled(itemNum, currentOrder) ? enableItem(itemNum, currentOrder) : disableItem(itemNum, currentOrder);
   const onMove = handler => callbacks.add(wrapCallback(handler));

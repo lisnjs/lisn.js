@@ -211,7 +211,7 @@ const touchMoveOptions = {
   passive: false,
   capture: true
 };
-const isItemDraggable = item => (0, _cssAlter.getBoolData)(item, PREFIX_IS_DRAGGABLE);
+const isItemDraggable = item => (0, _cssAlter.getBooleanData)(item, PREFIX_IS_DRAGGABLE);
 const init = (widget, element, items, methods) => {
   let currentDraggedItem = null;
   let floatingClone = null;
@@ -314,7 +314,7 @@ const init = (widget, element, items, methods) => {
 
   for (const item of items) {
     (0, _cssAlter.addClasses)(item, PREFIX_ITEM);
-    (0, _cssAlter.setBoolData)(item, PREFIX_IS_DRAGGABLE);
+    (0, _cssAlter.setBooleanData)(item, PREFIX_IS_DRAGGABLE);
   }
   widget.onEnable(setupEvents);
   widget.onDisable(() => {
@@ -354,7 +354,7 @@ const getMethods = (widget, items, config) => {
 
     // set immediately for toggle to work without awaiting on it
     disabledItems[itemNum] = true;
-    await (0, _cssAlter.unsetBoolData)(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
+    await (0, _cssAlter.unsetBooleanData)(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
   };
   const enableItem = async (itemNum, currentOrder = false) => {
     itemNum = getOrigItemNumber((0, _math.toInt)(itemNum), currentOrder);
@@ -364,7 +364,7 @@ const getMethods = (widget, items, config) => {
 
     // set immediately for toggle to work without awaiting on it
     disabledItems[itemNum] = false;
-    await (0, _cssAlter.setBoolData)(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
+    await (0, _cssAlter.setBooleanData)(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
   };
   const toggleItem = (itemNum, currentOrder = false) => isItemDisabled(itemNum, currentOrder) ? enableItem(itemNum, currentOrder) : disableItem(itemNum, currentOrder);
   const onMove = handler => callbacks.add((0, _callback.wrapCallback)(handler));

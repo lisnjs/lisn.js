@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.1.1
+ * LISN.js v1.1.2
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -1086,7 +1086,7 @@ var LISN = (function (exports) {
     return true;
   };
   const toArrayIfSingle = value => isArray(value) ? value : !isNullish(value) ? [value] : [];
-  const toBool = value => value === true || value === "true" || value === "" ? true : isNullish(value) || value === false || value === "false" ? false : null;
+  const toBoolean = value => value === true || value === "true" || value === "" ? true : isNullish(value) || value === false || value === "false" ? false : null;
 
   /**
    * @module Utils
@@ -1465,7 +1465,7 @@ var LISN = (function (exports) {
     if (isNullish(value)) {
       return;
     }
-    const boolVal = toBool(value);
+    const boolVal = toBoolean(value);
     if (boolVal === null) {
       throw usageError(`'${key}' must be ${'"true" or "false"'}`);
     }
@@ -2420,14 +2420,14 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering
    */
-  const setBoolDataNow = (el, name, value = true) => setAttr(el, prefixData(name), value + "");
+  const setBooleanDataNow = (el, name, value = true) => setAttr(el, prefixData(name), value + "");
 
   /**
-   * Like {@link setBoolDataNow} except it will {@link waitForMutateTime}.
+   * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
    *
    * @category CSS: Altering (optimized)
    */
-  const setBoolData = (el, name, value = true) => waitForMutateTime().then(() => setBoolDataNow(el, name, value));
+  const setBooleanData = (el, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(el, name, value));
 
   /**
    * Sets the given data attribute with value "false".
@@ -2437,14 +2437,14 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering
    */
-  const unsetBoolDataNow = (el, name) => unsetAttr(el, prefixData(name));
+  const unsetBooleanDataNow = (el, name) => unsetAttr(el, prefixData(name));
 
   /**
-   * Like {@link unsetBoolDataNow} except it will {@link waitForMutateTime}.
+   * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
    *
    * @category CSS: Altering (optimized)
    */
-  const unsetBoolData = (el, name) => waitForMutateTime().then(() => unsetBoolDataNow(el, name));
+  const unsetBooleanData = (el, name) => waitForMutateTime().then(() => unsetBooleanDataNow(el, name));
 
   /**
    * Deletes the given data attribute.
@@ -2564,7 +2564,7 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    */
-  const setHasModal = () => setBoolData(getBody(), PREFIX_HAS_MODAL);
+  const setHasModal = () => setBooleanData(getBody(), PREFIX_HAS_MODAL);
 
   /**
    * @ignore
@@ -2852,7 +2852,7 @@ var LISN = (function (exports) {
    */
   const cloneElement = element => {
     const clone = element.cloneNode(true);
-    setBoolData(clone, prefixName("clone"));
+    setBooleanData(clone, prefixName("clone"));
     return clone;
   };
 
@@ -11491,7 +11491,7 @@ var LISN = (function (exports) {
         if (isModal) {
           setHasModal();
         }
-        await setBoolData(root, PREFIX_IS_OPEN);
+        await setBooleanData(root, PREFIX_IS_OPEN);
       };
 
       // ----------
@@ -11510,7 +11510,7 @@ var LISN = (function (exports) {
         if (isOffcanvas) {
           scrollWrapperToTop(); // no need to await
         }
-        await unsetBoolData(root, PREFIX_IS_OPEN);
+        await unsetBooleanData(root, PREFIX_IS_OPEN);
       };
 
       // ----------
@@ -11577,7 +11577,7 @@ var LISN = (function (exports) {
     id: validateString,
     className: (key, value) => validateStrList(key, toArrayIfSingle(value)),
     autoClose: validateBoolean,
-    icon: (key, value) => value && toBool(value) === false ? false : validateString(key, value, isValidPosition),
+    icon: (key, value) => value && toBoolean(value) === false ? false : validateString(key, value, isValidPosition),
     iconClosed: (key, value) => validateString(key, value, isValidIconClosed),
     iconOpen: (key, value) => validateString(key, value, isValidIconOpen),
     hover: validateBoolean
@@ -11702,7 +11702,7 @@ var LISN = (function (exports) {
     if (properties.className) {
       addClassesNow(root, ...toArrayIfSingle(properties.className));
     }
-    unsetBoolData(root, PREFIX_IS_OPEN);
+    unsetBooleanData(root, PREFIX_IS_OPEN);
     const domID = getOrAssignID(root, properties.name);
     if (properties.isModal) {
       setAttr(root, S_ROLE, "dialog");
@@ -11748,7 +11748,7 @@ var LISN = (function (exports) {
       for (const trigger of triggers.keys()) {
         delData(trigger, PREFIX_OPENS_ON_HOVER);
         unsetAttr(trigger, S_ARIA_EXPANDED);
-        await unsetBoolData(trigger, PREFIX_IS_OPEN);
+        await unsetBooleanData(trigger, PREFIX_IS_OPEN);
       }
     });
     widget.onDestroy(async () => {
@@ -11824,8 +11824,8 @@ var LISN = (function (exports) {
       for (const [trigger, triggerConfig] of triggers.entries()) {
         setAttr(trigger, S_ARIA_CONTROLS, domID);
         unsetAttr(trigger, S_ARIA_EXPANDED);
-        setBoolDataNow(trigger, PREFIX_OPENS_ON_HOVER, triggerConfig[S_HOVER]);
-        unsetBoolDataNow(trigger, PREFIX_IS_OPEN);
+        setBooleanDataNow(trigger, PREFIX_OPENS_ON_HOVER, triggerConfig[S_HOVER]);
+        unsetBooleanDataNow(trigger, PREFIX_IS_OPEN);
         addClassesNow(trigger, prefixedNames._trigger, ...((triggerConfig === null || triggerConfig === void 0 ? void 0 : triggerConfig.className) || []));
         if (triggerConfig !== null && triggerConfig !== void 0 && triggerConfig.id) {
           trigger.id = triggerConfig.id;
@@ -11884,7 +11884,7 @@ var LISN = (function (exports) {
           // open it
           activeTrigger = trigger;
           setAttr(trigger, S_ARIA_EXPANDED); // will be unset on close
-          setBoolData(trigger, PREFIX_IS_OPEN); // will be unset on close
+          setBooleanData(trigger, PREFIX_IS_OPEN); // will be unset on close
 
           widget.open(); // no need to await
 
@@ -12476,7 +12476,7 @@ var LISN = (function (exports) {
       if (isNullish(value)) {
         return undefined;
       }
-      const bool = toBool(value);
+      const bool = toBoolean(value);
       if (bool !== null) {
         return bool;
       }
@@ -12522,9 +12522,9 @@ var LISN = (function (exports) {
     }
     setStyleProp(pagerEl, VAR_CURRENT_PAGE, pageNumbers._current + "");
     setData(pagerEl, PREFIX_CURRENT_PAGE, pageNumbers._current + "");
-    setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, pageNumbers._current === pageNumbers._total);
-    setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
-    return setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
+    setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, pageNumbers._current === pageNumbers._total);
+    setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
+    return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
   };
   const init = (widget, element, components, config, methods) => {
     var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
@@ -12716,8 +12716,8 @@ var LISN = (function (exports) {
     let numVisiblePages = numPages;
     setData(element, PREFIX_ORIENTATION, orientation);
     setData(element, PREFIX_STYLE, pagerStyle);
-    setBoolData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
-    setBoolData(element, PREFIX_USE_PARALLAX, isParallax);
+    setBooleanData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
+    setBooleanData(element, PREFIX_USE_PARALLAX, isParallax);
     setData(element, PREFIX_TOTAL_PAGES, numPages + "");
     setStyleProp(element, VAR_TOTAL_PAGES, (numPages || 1) + "");
     for (const page of pages) {

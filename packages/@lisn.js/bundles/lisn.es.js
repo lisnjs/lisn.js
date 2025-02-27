@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.1.1
+ * LISN.js v1.1.2
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -1117,7 +1117,7 @@ const compareValuesIn = (objA, objB, roundTo = 3) => {
   return true;
 };
 const toArrayIfSingle = value => isArray(value) ? value : !isNullish(value) ? [value] : [];
-const toBool = value => value === true || value === "true" || value === "" ? true : isNullish(value) || value === false || value === "false" ? false : null;
+const toBoolean = value => value === true || value === "true" || value === "" ? true : isNullish(value) || value === false || value === "false" ? false : null;
 
 /**
  * @module Utils
@@ -1515,7 +1515,7 @@ const _validateBoolean = (key, value, typeDescription) => {
   if (isNullish(value)) {
     return;
   }
-  const boolVal = toBool(value);
+  const boolVal = toBoolean(value);
   if (boolVal === null) {
     throw usageError(`'${key}' must be ${'"true" or "false"'}`);
   }
@@ -1536,7 +1536,7 @@ const _validateBooleanOrString = (key, value, stringCheckFn, typeDescription) =>
   if (isNullish(value)) {
     return;
   }
-  const boolVal = toBool(value);
+  const boolVal = toBoolean(value);
   if (boolVal !== null) {
     return boolVal;
   }
@@ -2468,7 +2468,7 @@ const getData = (el, name) => getAttr(el, prefixData(name));
  *
  * @category CSS: Altering (optimized)
  */
-const getBoolData = (el, name) => {
+const getBooleanData = (el, name) => {
   const value = getData(el, name);
   return value !== null && value !== "false";
 };
@@ -2498,14 +2498,14 @@ const setData = (el, name, value) => waitForMutateTime().then(() => setDataNow(e
  *
  * @category CSS: Altering
  */
-const setBoolDataNow = (el, name, value = true) => setAttr(el, prefixData(name), value + "");
+const setBooleanDataNow = (el, name, value = true) => setAttr(el, prefixData(name), value + "");
 
 /**
- * Like {@link setBoolDataNow} except it will {@link waitForMutateTime}.
+ * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const setBoolData = (el, name, value = true) => waitForMutateTime().then(() => setBoolDataNow(el, name, value));
+const setBooleanData = (el, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(el, name, value));
 
 /**
  * Sets the given data attribute with value "false".
@@ -2515,14 +2515,14 @@ const setBoolData = (el, name, value = true) => waitForMutateTime().then(() => s
  *
  * @category CSS: Altering
  */
-const unsetBoolDataNow = (el, name) => unsetAttr(el, prefixData(name));
+const unsetBooleanDataNow = (el, name) => unsetAttr(el, prefixData(name));
 
 /**
- * Like {@link unsetBoolDataNow} except it will {@link waitForMutateTime}.
+ * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const unsetBoolData = (el, name) => waitForMutateTime().then(() => unsetBoolDataNow(el, name));
+const unsetBooleanData = (el, name) => waitForMutateTime().then(() => unsetBooleanDataNow(el, name));
 
 /**
  * Deletes the given data attribute.
@@ -2642,7 +2642,7 @@ const disableInitialTransition = async (element, delay = 0) => {
  * @ignore
  * @internal
  */
-const setHasModal = () => setBoolData(getBody(), PREFIX_HAS_MODAL);
+const setHasModal = () => setBooleanData(getBody(), PREFIX_HAS_MODAL);
 
 /**
  * @ignore
@@ -3002,7 +3002,7 @@ const wrapScrollingContent = async element => {
  */
 const cloneElement = element => {
   const clone = element.cloneNode(true);
-  setBoolData(clone, prefixName("clone"));
+  setBooleanData(clone, prefixName("clone"));
   return clone;
 };
 
@@ -11709,7 +11709,7 @@ class Openable extends Widget {
       if (isModal) {
         setHasModal();
       }
-      await setBoolData(root, PREFIX_IS_OPEN);
+      await setBooleanData(root, PREFIX_IS_OPEN);
     };
 
     // ----------
@@ -11728,7 +11728,7 @@ class Openable extends Widget {
       if (isOffcanvas) {
         scrollWrapperToTop(); // no need to await
       }
-      await unsetBoolData(root, PREFIX_IS_OPEN);
+      await unsetBooleanData(root, PREFIX_IS_OPEN);
     };
 
     // ----------
@@ -11988,7 +11988,7 @@ class Collapsible extends Openable {
     const root = this.getRoot();
     const wrapper = childrenOf(root)[0];
     setData(root, PREFIX_ORIENTATION, orientation);
-    setBoolData(root, PREFIX_REVERSE, (_config$reverse = config === null || config === void 0 ? void 0 : config.reverse) !== null && _config$reverse !== void 0 ? _config$reverse : false);
+    setBooleanData(root, PREFIX_REVERSE, (_config$reverse = config === null || config === void 0 ? void 0 : config.reverse) !== null && _config$reverse !== void 0 ? _config$reverse : false);
 
     // -------------------- Transitions
     disableInitialTransition(element, 100);
@@ -12595,7 +12595,7 @@ const triggerConfigValidator = {
   id: validateString,
   className: (key, value) => validateStrList(key, toArrayIfSingle(value)),
   autoClose: validateBoolean,
-  icon: (key, value) => value && toBool(value) === false ? false : validateString(key, value, isValidPosition),
+  icon: (key, value) => value && toBoolean(value) === false ? false : validateString(key, value, isValidPosition),
   iconClosed: (key, value) => validateString(key, value, isValidIconClosed),
   iconOpen: (key, value) => validateString(key, value, isValidIconOpen),
   hover: validateBoolean
@@ -12607,7 +12607,7 @@ const collapsibleConfigValidator = {
   reverse: validateBoolean,
   peek: validateBooleanOrString,
   autoClose: validateBoolean,
-  icon: (key, value) => toBool(value) === false ? false : validateString(key, value, isValidPosition),
+  icon: (key, value) => toBoolean(value) === false ? false : validateString(key, value, isValidPosition),
   iconClosed: (key, value) => validateString(key, value, isValidIconClosed),
   iconOpen: (key, value) => validateString(key, value, isValidIconOpen)
 };
@@ -12751,7 +12751,7 @@ const setupElements = (widget, content, properties) => {
   if (properties.className) {
     addClassesNow(root, ...toArrayIfSingle(properties.className));
   }
-  unsetBoolData(root, PREFIX_IS_OPEN);
+  unsetBooleanData(root, PREFIX_IS_OPEN);
   const domID = getOrAssignID(root, properties.name);
   if (properties.isModal) {
     setAttr(root, S_ROLE, "dialog");
@@ -12797,7 +12797,7 @@ const setupElements = (widget, content, properties) => {
     for (const trigger of triggers.keys()) {
       delData(trigger, PREFIX_OPENS_ON_HOVER);
       unsetAttr(trigger, S_ARIA_EXPANDED);
-      await unsetBoolData(trigger, PREFIX_IS_OPEN);
+      await unsetBooleanData(trigger, PREFIX_IS_OPEN);
     }
   });
   widget.onDestroy(async () => {
@@ -12873,8 +12873,8 @@ const setupElements = (widget, content, properties) => {
     for (const [trigger, triggerConfig] of triggers.entries()) {
       setAttr(trigger, S_ARIA_CONTROLS, domID);
       unsetAttr(trigger, S_ARIA_EXPANDED);
-      setBoolDataNow(trigger, PREFIX_OPENS_ON_HOVER, triggerConfig[S_HOVER]);
-      unsetBoolDataNow(trigger, PREFIX_IS_OPEN);
+      setBooleanDataNow(trigger, PREFIX_OPENS_ON_HOVER, triggerConfig[S_HOVER]);
+      unsetBooleanDataNow(trigger, PREFIX_IS_OPEN);
       addClassesNow(trigger, prefixedNames._trigger, ...((triggerConfig === null || triggerConfig === void 0 ? void 0 : triggerConfig.className) || []));
       if (triggerConfig !== null && triggerConfig !== void 0 && triggerConfig.id) {
         trigger.id = triggerConfig.id;
@@ -12933,7 +12933,7 @@ const setupListeners = (widget, elements, properties, prefixedNames) => {
         // open it
         activeTrigger = trigger;
         setAttr(trigger, S_ARIA_EXPANDED); // will be unset on close
-        setBoolData(trigger, PREFIX_IS_OPEN); // will be unset on close
+        setBooleanData(trigger, PREFIX_IS_OPEN); // will be unset on close
 
         widget.open(); // no need to await
 
@@ -13084,7 +13084,7 @@ const insertCollapsibleIcon = (trigger, triggerConfig, widget, widgetConfig) => 
       ignoreMove: true
     });
     widget.onOpen(() => {
-      if (getBoolData(trigger, PREFIX_IS_OPEN)) {
+      if (getBooleanData(trigger, PREFIX_IS_OPEN)) {
         setData(icon, PREFIX_TRIGGER_ICON, iconOpen);
       }
     });
@@ -13650,7 +13650,7 @@ const configValidator$7 = {
     if (isNullish(value)) {
       return undefined;
     }
-    const bool = toBool(value);
+    const bool = toBoolean(value);
     if (bool !== null) {
       return bool;
     }
@@ -13696,9 +13696,9 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
   }
   setStyleProp(pagerEl, VAR_CURRENT_PAGE, pageNumbers._current + "");
   setData(pagerEl, PREFIX_CURRENT_PAGE, pageNumbers._current + "");
-  setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, pageNumbers._current === pageNumbers._total);
-  setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
-  return setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
+  setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, pageNumbers._current === pageNumbers._total);
+  setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
+  return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
 };
 const init$3 = (widget, element, components, config, methods) => {
   var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
@@ -13890,8 +13890,8 @@ const init$3 = (widget, element, components, config, methods) => {
   let numVisiblePages = numPages;
   setData(element, PREFIX_ORIENTATION, orientation);
   setData(element, PREFIX_STYLE, pagerStyle);
-  setBoolData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
-  setBoolData(element, PREFIX_USE_PARALLAX, isParallax);
+  setBooleanData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
+  setBooleanData(element, PREFIX_USE_PARALLAX, isParallax);
   setData(element, PREFIX_TOTAL_PAGES, numPages + "");
   setStyleProp(element, VAR_TOTAL_PAGES, (numPages || 1) + "");
   for (const page of pages) {
@@ -16700,10 +16700,10 @@ const init$1 = (widget, containerElement, props, config) => {
     if (useHandle) {
       handle = createElement("div");
       addClassesNow(handle, PREFIX_HANDLE);
-      setBoolDataNow(handle, PREFIX_DRAGGABLE, dragScroll);
+      setBooleanDataNow(handle, PREFIX_DRAGGABLE, dragScroll);
     }
-    setBoolDataNow(scrollbar, PREFIX_DRAGGABLE, dragScroll && !useHandle);
-    setBoolDataNow(scrollbar, PREFIX_CLICKABLE, clickScroll);
+    setBooleanDataNow(scrollbar, PREFIX_DRAGGABLE, dragScroll && !useHandle);
+    setBooleanDataNow(scrollbar, PREFIX_CLICKABLE, clickScroll);
     moveElementNow(fill, {
       to: scrollbar
     });
@@ -16740,7 +16740,7 @@ const init$1 = (widget, containerElement, props, config) => {
     if (isScrollable(scrollable, {
       axis: scrollAxis
     }) && viewFraction < 1) {
-      setBoolData(containerElement, hasBarPrefix);
+      setBooleanData(containerElement, hasBarPrefix);
       displayElement(scrollbar);
     } else {
       delData(containerElement, hasBarPrefix);
@@ -16904,7 +16904,7 @@ const init$1 = (widget, containerElement, props, config) => {
   if (!isMainScrollable && !isBody) {
     addClasses(containerElement, PREFIX_CONTAINER);
   }
-  setBoolData(containerElement, PREFIX_ALLOW_COLLAPSE, !IS_MOBILE);
+  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !IS_MOBILE);
 
   // Wrap children if needed
   if (contentWrapper) {
@@ -16912,9 +16912,9 @@ const init$1 = (widget, containerElement, props, config) => {
     wrapChildren(containerElement, {
       wrapper: contentWrapper}); // no need to await here
 
-    setBoolData(containerElement, PREFIX_HAS_WRAPPER);
+    setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
     if (hasFixedHeight) {
-      setBoolData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
+      setBooleanData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
     }
   }
   maybeSetNativeHidden();
@@ -17432,7 +17432,7 @@ const touchMoveOptions = {
   passive: false,
   capture: true
 };
-const isItemDraggable = item => getBoolData(item, PREFIX_IS_DRAGGABLE);
+const isItemDraggable = item => getBooleanData(item, PREFIX_IS_DRAGGABLE);
 const init = (widget, element, items, methods) => {
   let currentDraggedItem = null;
   let floatingClone = null;
@@ -17535,7 +17535,7 @@ const init = (widget, element, items, methods) => {
 
   for (const item of items) {
     addClasses(item, PREFIX_ITEM);
-    setBoolData(item, PREFIX_IS_DRAGGABLE);
+    setBooleanData(item, PREFIX_IS_DRAGGABLE);
   }
   widget.onEnable(setupEvents);
   widget.onDisable(() => {
@@ -17575,7 +17575,7 @@ const getMethods = (widget, items, config) => {
 
     // set immediately for toggle to work without awaiting on it
     disabledItems[itemNum] = true;
-    await unsetBoolData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
+    await unsetBooleanData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
   };
   const enableItem = async (itemNum, currentOrder = false) => {
     itemNum = getOrigItemNumber(toInt(itemNum), currentOrder);
@@ -17585,7 +17585,7 @@ const getMethods = (widget, items, config) => {
 
     // set immediately for toggle to work without awaiting on it
     disabledItems[itemNum] = false;
-    await setBoolData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
+    await setBooleanData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
   };
   const toggleItem = (itemNum, currentOrder = false) => isItemDisabled(itemNum, currentOrder) ? enableItem(itemNum, currentOrder) : disableItem(itemNum, currentOrder);
   const onMove = handler => callbacks.add(wrapCallback(handler));

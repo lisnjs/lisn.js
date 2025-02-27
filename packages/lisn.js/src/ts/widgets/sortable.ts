@@ -8,9 +8,9 @@ import * as MH from "@lisn/globals/minification-helpers";
 import {
   addClasses,
   removeClasses,
-  getBoolData,
-  setBoolData,
-  unsetBoolData,
+  getBooleanData,
+  setBooleanData,
+  unsetBooleanData,
   delData,
   copyStyle,
   setNumericStyleProps,
@@ -291,7 +291,7 @@ const configValidator: WidgetConfigValidatorObject<SortableConfig> = {
 const touchMoveOptions = { passive: false, capture: true };
 
 const isItemDraggable = (item: Element) =>
-  getBoolData(item, PREFIX_IS_DRAGGABLE);
+  getBooleanData(item, PREFIX_IS_DRAGGABLE);
 
 const init = (
   widget: Sortable,
@@ -441,7 +441,7 @@ const init = (
 
   for (const item of items) {
     addClasses(item, PREFIX_ITEM);
-    setBoolData(item, PREFIX_IS_DRAGGABLE);
+    setBooleanData(item, PREFIX_IS_DRAGGABLE);
   }
 
   widget.onEnable(setupEvents);
@@ -503,7 +503,7 @@ const getMethods = (
 
     // set immediately for toggle to work without awaiting on it
     disabledItems[itemNum] = true;
-    await unsetBoolData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
+    await unsetBooleanData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
   };
 
   const enableItem = async (itemNum: number, currentOrder = false) => {
@@ -514,7 +514,7 @@ const getMethods = (
 
     // set immediately for toggle to work without awaiting on it
     disabledItems[itemNum] = false;
-    await setBoolData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
+    await setBooleanData(items[itemNum - 1], PREFIX_IS_DRAGGABLE);
   };
 
   const toggleItem = (itemNum: number, currentOrder = false) =>

@@ -12,7 +12,7 @@
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { hideElement, hasClass, addClassesNow, setDataNow, setBoolData } from "./css-alter.js";
+import { hideElement, hasClass, addClassesNow, setDataNow, setBooleanData } from "./css-alter.js";
 import { waitForMutateTime } from "./dom-optimize.js";
 import { isInlineTag } from "./dom-query.js";
 import { randId } from "./text.js";
@@ -262,7 +262,7 @@ export const wrapScrollingContent = async element => {
  */
 export const cloneElement = element => {
   const clone = element.cloneNode(true);
-  setBoolData(clone, MH.prefixName("clone"));
+  setBooleanData(clone, MH.prefixName("clone"));
   return clone;
 };
 

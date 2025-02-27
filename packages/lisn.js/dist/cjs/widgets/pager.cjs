@@ -438,7 +438,7 @@ const configValidator = {
     if (MH.isNullish(value)) {
       return undefined;
     }
-    const bool = (0, _misc.toBool)(value);
+    const bool = (0, _misc.toBoolean)(value);
     if (bool !== null) {
       return bool;
     }
@@ -484,9 +484,9 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
   }
   (0, _cssAlter.setStyleProp)(pagerEl, VAR_CURRENT_PAGE, pageNumbers._current + "");
   (0, _cssAlter.setData)(pagerEl, PREFIX_CURRENT_PAGE, pageNumbers._current + "");
-  (0, _cssAlter.setBoolData)(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, pageNumbers._current === pageNumbers._total);
-  (0, _cssAlter.setBoolData)(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
-  return (0, _cssAlter.setBoolData)(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
+  (0, _cssAlter.setBooleanData)(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, pageNumbers._current === pageNumbers._total);
+  (0, _cssAlter.setBooleanData)(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
+  return (0, _cssAlter.setBooleanData)(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
 };
 const init = (widget, element, components, config, methods) => {
   var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
@@ -696,8 +696,8 @@ const init = (widget, element, components, config, methods) => {
   let numVisiblePages = numPages;
   (0, _cssAlter.setData)(element, MC.PREFIX_ORIENTATION, orientation);
   (0, _cssAlter.setData)(element, PREFIX_STYLE, pagerStyle);
-  (0, _cssAlter.setBoolData)(element, PREFIX_IS_FULLSCREEN, isFullscreen);
-  (0, _cssAlter.setBoolData)(element, PREFIX_USE_PARALLAX, isParallax);
+  (0, _cssAlter.setBooleanData)(element, PREFIX_IS_FULLSCREEN, isFullscreen);
+  (0, _cssAlter.setBooleanData)(element, PREFIX_USE_PARALLAX, isParallax);
   (0, _cssAlter.setData)(element, PREFIX_TOTAL_PAGES, numPages + "");
   (0, _cssAlter.setStyleProp)(element, VAR_TOTAL_PAGES, (numPages || 1) + "");
   for (const page of pages) {

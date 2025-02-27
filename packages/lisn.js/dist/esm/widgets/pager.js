@@ -7,13 +7,13 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { disableInitialTransition, addClasses, removeClassesNow, getData, setData, setBoolData, delDataNow, getComputedStyleProp, setStyleProp, delStylePropNow } from "../utils/css-alter.js";
+import { disableInitialTransition, addClasses, removeClassesNow, getData, setData, setBooleanData, delDataNow, getComputedStyleProp, setStyleProp, delStylePropNow } from "../utils/css-alter.js";
 import { waitForMeasureTime, waitForMutateTime } from "../utils/dom-optimize.js";
 import { getVisibleContentChildren } from "../utils/dom-query.js";
 import { addEventListenerTo, removeEventListenerFrom } from "../utils/event.js";
 import { isValidInputDevice } from "../utils/gesture.js";
 import { toInt } from "../utils/math.js";
-import { toBool } from "../utils/misc.js";
+import { toBoolean } from "../utils/misc.js";
 import { getClosestScrollable } from "../utils/scroll.js";
 import { formatAsString } from "../utils/text.js";
 import { validateStrList, validateNumber, validateString, validateBoolean } from "../utils/validation.js";
@@ -432,7 +432,7 @@ const configValidator = {
     if (MH.isNullish(value)) {
       return undefined;
     }
-    const bool = toBool(value);
+    const bool = toBoolean(value);
     if (bool !== null) {
       return bool;
     }
@@ -478,9 +478,9 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
   }
   setStyleProp(pagerEl, VAR_CURRENT_PAGE, pageNumbers._current + "");
   setData(pagerEl, PREFIX_CURRENT_PAGE, pageNumbers._current + "");
-  setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, pageNumbers._current === pageNumbers._total);
-  setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
-  return setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
+  setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST, pageNumbers._current === pageNumbers._total);
+  setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
+  return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
 };
 const init = (widget, element, components, config, methods) => {
   var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
@@ -690,8 +690,8 @@ const init = (widget, element, components, config, methods) => {
   let numVisiblePages = numPages;
   setData(element, MC.PREFIX_ORIENTATION, orientation);
   setData(element, PREFIX_STYLE, pagerStyle);
-  setBoolData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
-  setBoolData(element, PREFIX_USE_PARALLAX, isParallax);
+  setBooleanData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
+  setBooleanData(element, PREFIX_USE_PARALLAX, isParallax);
   setData(element, PREFIX_TOTAL_PAGES, numPages + "");
   setStyleProp(element, VAR_TOTAL_PAGES, (numPages || 1) + "");
   for (const page of pages) {

@@ -1,3 +1,11 @@
+<div align="center">
+  <a href="https://lisnjs.github.io/"><img src="https://raw.githubusercontent.com/lisnjs/lisn.js/master/website/LISN%20logo.png" width="160" height="160" alt="LISN.js"></a>
+</div>
+
+<h2 align="center">
+ <a href="https://lisnjs.github.io/">Official site</a>&nbsp;|&nbsp;<a href="https://lisnjs.github.io/demos/">Demos</a>&nbsp;|&nbsp;<a href="https://lisnjs.github.io/docs/">Docs</a>
+</h2>
+
 ## Contents
 
 * [Intro](#intro)
@@ -28,17 +36,37 @@ LISN handles all complexities (and browser quirks) so you can simply handle user
 gestures, interactions and layout events. It makes it super simple and easy to
 implement any kind of scroll, view, size, layout or user gesture triggered
 actions or animations with minimal boilerplate, and even if you wish, with zero
-JavaScript, using the HTML-only mode. It also comes with many customizable
-widgets.
+JavaScript, using the HTML-only mode (perfect for Wordpress for example!).
 
-There are React wrappers available as a separate package. It works in
+* 100% vanilla TypeScript.
+* No layout thrashing.
+* Optimal performance.
+* Server-side rendering.
+* Flexible and customizable.
+* Easy and simple to use.
+* No dependencies.
+* HTML-only mode.
+
+There are **React wrappers** available as a separate package. It works in
 server-side rendering environments like Next.js.
 
-LISN also comes with many awesome widgets, like collapsible, floating popup, modal,
-offcanvas menu, pager (carousel/slider/tabs), flex same-height, scrollbars
-(native scrolling), sortable, scroll-to-top button and page loader.
+LISN also comes with many awesome widgets, like:
 
-**This documentation is for the vanilla JavaScript package. React documentation coming soon!**
+* Collapsible
+* Floating popup/tooltip
+* Modal
+* Offcanvas menu
+* Pager (carousel/slider/tabs)
+* Flex same-height
+* Scrollbars (native scrolling)
+* Sortable
+* Auto-hide/remove matching elements
+* Scroll-to-top button
+* Page loader
+
+Coming soon:
+
+* SmoothScroller (native scroll)
 
 # Basic concepts
 

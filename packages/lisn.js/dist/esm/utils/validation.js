@@ -5,7 +5,7 @@
 import * as MH from "../globals/minification-helpers.js";
 import { LisnUsageError } from "../globals/errors.js";
 import { toNum } from "./math.js";
-import { toBool } from "./misc.js";
+import { toBoolean } from "./misc.js";
 import { splitOn } from "./text.js";
 
 /**
@@ -195,7 +195,7 @@ const _validateBoolean = (key, value, typeDescription) => {
   if (MH.isNullish(value)) {
     return;
   }
-  const boolVal = toBool(value);
+  const boolVal = toBoolean(value);
   if (boolVal === null) {
     throw MH.usageError(`'${key}' must be ${typeDescription !== null && typeDescription !== void 0 ? typeDescription : '"true" or "false"'}`);
   }
@@ -216,7 +216,7 @@ const _validateBooleanOrString = (key, value, stringCheckFn, typeDescription) =>
   if (MH.isNullish(value)) {
     return;
   }
-  const boolVal = toBool(value);
+  const boolVal = toBoolean(value);
   if (boolVal !== null) {
     return boolVal;
   }

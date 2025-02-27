@@ -8,7 +8,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
-import { showElement, hideElement, displayElement, undisplayElement, hasClass, addClasses, addClassesNow, removeClasses, removeClassesNow, getData, setData, setBoolData, setBoolDataNow, setDataNow, delData, delDataNow, getComputedStyleProp, getComputedStylePropNow, setStyleProp, setNumericStyleProps } from "../utils/css-alter.js";
+import { showElement, hideElement, displayElement, undisplayElement, hasClass, addClasses, addClassesNow, removeClasses, removeClassesNow, getData, setData, setBooleanData, setBooleanDataNow, setDataNow, delData, delDataNow, getComputedStyleProp, getComputedStylePropNow, setStyleProp, setNumericStyleProps } from "../utils/css-alter.js";
 import { moveElementNow, moveElement, moveChildrenNow, wrapChildren, getOrAssignID } from "../utils/dom-alter.js";
 import { waitForMeasureTime, waitForMutateTime } from "../utils/dom-optimize.js";
 import { addEventListenerTo, removeEventListenerFrom, preventSelect } from "../utils/event.js";
@@ -347,10 +347,10 @@ const init = (widget, containerElement, props, config) => {
     if (useHandle) {
       handle = MH.createElement("div");
       addClassesNow(handle, PREFIX_HANDLE);
-      setBoolDataNow(handle, PREFIX_DRAGGABLE, dragScroll);
+      setBooleanDataNow(handle, PREFIX_DRAGGABLE, dragScroll);
     }
-    setBoolDataNow(scrollbar, PREFIX_DRAGGABLE, dragScroll && !useHandle);
-    setBoolDataNow(scrollbar, PREFIX_CLICKABLE, clickScroll);
+    setBooleanDataNow(scrollbar, PREFIX_DRAGGABLE, dragScroll && !useHandle);
+    setBooleanDataNow(scrollbar, PREFIX_CLICKABLE, clickScroll);
     moveElementNow(fill, {
       to: scrollbar
     });
@@ -392,7 +392,7 @@ const init = (widget, containerElement, props, config) => {
     if (isScrollable(scrollable, {
       axis: scrollAxis
     }) && viewFraction < 1) {
-      setBoolData(containerElement, hasBarPrefix);
+      setBooleanData(containerElement, hasBarPrefix);
       displayElement(scrollbar);
     } else {
       delData(containerElement, hasBarPrefix);
@@ -568,7 +568,7 @@ const init = (widget, containerElement, props, config) => {
   if (!isMainScrollable && !isBody) {
     addClasses(containerElement, PREFIX_CONTAINER);
   }
-  setBoolData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
 
   // Wrap children if needed
   if (contentWrapper) {
@@ -578,9 +578,9 @@ const init = (widget, containerElement, props, config) => {
       ignoreMove: true
     }); // no need to await here
 
-    setBoolData(containerElement, PREFIX_HAS_WRAPPER);
+    setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
     if (hasFixedHeight) {
-      setBoolData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
+      setBooleanData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
     }
   }
   maybeSetNativeHidden();

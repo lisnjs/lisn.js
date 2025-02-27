@@ -284,7 +284,7 @@ const wrapScrollingContent = async element => {
 exports.wrapScrollingContent = wrapScrollingContent;
 const cloneElement = element => {
   const clone = element.cloneNode(true);
-  (0, _cssAlter.setBoolData)(clone, MH.prefixName("clone"));
+  (0, _cssAlter.setBooleanData)(clone, MH.prefixName("clone"));
   return clone;
 };
 

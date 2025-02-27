@@ -209,7 +209,7 @@ const _validateBoolean = (key, value, typeDescription) => {
   if (MH.isNullish(value)) {
     return;
   }
-  const boolVal = (0, _misc.toBool)(value);
+  const boolVal = (0, _misc.toBoolean)(value);
   if (boolVal === null) {
     throw MH.usageError(`'${key}' must be ${typeDescription !== null && typeDescription !== void 0 ? typeDescription : '"true" or "false"'}`);
   }
@@ -230,7 +230,7 @@ const _validateBooleanOrString = (key, value, stringCheckFn, typeDescription) =>
   if (MH.isNullish(value)) {
     return;
   }
-  const boolVal = (0, _misc.toBool)(value);
+  const boolVal = (0, _misc.toBoolean)(value);
   if (boolVal !== null) {
     return boolVal;
   }

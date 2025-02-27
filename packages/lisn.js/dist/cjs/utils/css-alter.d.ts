@@ -260,6 +260,11 @@ export declare const getData: (el: Element, name: string) => string | null;
  *
  * @category CSS: Altering (optimized)
  */
+export declare const getBooleanData: (el: Element, name: string) => boolean;
+/**
+ * @ignore
+ * @deprecated
+ */
 export declare const getBoolData: (el: Element, name: string) => boolean;
 /**
  * Sets the given data attribute.
@@ -284,11 +289,21 @@ export declare const setData: (el: Element, name: string, value: string) => Prom
  *
  * @category CSS: Altering
  */
+export declare const setBooleanDataNow: (el: Element, name: string, value?: boolean) => void;
+/**
+ * @ignore
+ * @deprecated
+ */
 export declare const setBoolDataNow: (el: Element, name: string, value?: boolean) => void;
 /**
- * Like {@link setBoolDataNow} except it will {@link waitForMutateTime}.
+ * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
+ */
+export declare const setBooleanData: (el: Element, name: string, value?: boolean) => Promise<void>;
+/**
+ * @ignore
+ * @deprecated
  */
 export declare const setBoolData: (el: Element, name: string, value?: boolean) => Promise<void>;
 /**
@@ -299,11 +314,21 @@ export declare const setBoolData: (el: Element, name: string, value?: boolean) =
  *
  * @category CSS: Altering
  */
+export declare const unsetBooleanDataNow: (el: Element, name: string) => void;
+/**
+ * @ignore
+ * @deprecated
+ */
 export declare const unsetBoolDataNow: (el: Element, name: string) => void;
 /**
- * Like {@link unsetBoolDataNow} except it will {@link waitForMutateTime}.
+ * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
+ */
+export declare const unsetBooleanData: (el: Element, name: string) => Promise<void>;
+/**
+ * @ignore
+ * @deprecated
  */
 export declare const unsetBoolData: (el: Element, name: string) => Promise<void>;
 /**

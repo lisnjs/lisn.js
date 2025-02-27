@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleProps = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.getStylePropNow = exports.getStyleProp = exports.getMaxTransitionDuration = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
+exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleProps = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.getStylePropNow = exports.getStyleProp = exports.getMaxTransitionDuration = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _domOptimize = require("./dom-optimize.cjs");
@@ -364,10 +364,17 @@ const getData = (el, name) => MH.getAttr(el, MH.prefixData(name));
  * @category CSS: Altering (optimized)
  */
 exports.getData = getData;
-const getBoolData = (el, name) => {
+const getBooleanData = (el, name) => {
   const value = getData(el, name);
   return value !== null && value !== "false";
 };
+
+/**
+ * @ignore
+ * @deprecated
+ */
+exports.getBooleanData = getBooleanData;
+const getBoolData = exports.getBoolData = getBooleanData;
 
 /**
  * Sets the given data attribute.
@@ -377,7 +384,6 @@ const getBoolData = (el, name) => {
  *
  * @category CSS: Altering
  */
-exports.getBoolData = getBoolData;
 const setDataNow = (el, name, value) => MH.setAttr(el, MH.prefixData(name), value);
 
 /**
@@ -397,15 +403,28 @@ const setData = (el, name, value) => (0, _domOptimize.waitForMutateTime)().then(
  * @category CSS: Altering
  */
 exports.setData = setData;
-const setBoolDataNow = (el, name, value = true) => MH.setAttr(el, MH.prefixData(name), value + "");
+const setBooleanDataNow = (el, name, value = true) => MH.setAttr(el, MH.prefixData(name), value + "");
 
 /**
- * Like {@link setBoolDataNow} except it will {@link waitForMutateTime}.
+ * @ignore
+ * @deprecated
+ */
+exports.setBooleanDataNow = setBooleanDataNow;
+const setBoolDataNow = exports.setBoolDataNow = setBooleanDataNow;
+
+/**
+ * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-exports.setBoolDataNow = setBoolDataNow;
-const setBoolData = (el, name, value = true) => (0, _domOptimize.waitForMutateTime)().then(() => setBoolDataNow(el, name, value));
+const setBooleanData = (el, name, value = true) => (0, _domOptimize.waitForMutateTime)().then(() => setBooleanDataNow(el, name, value));
+
+/**
+ * @ignore
+ * @deprecated
+ */
+exports.setBooleanData = setBooleanData;
+const setBoolData = exports.setBoolData = setBooleanData;
 
 /**
  * Sets the given data attribute with value "false".
@@ -415,16 +434,28 @@ const setBoolData = (el, name, value = true) => (0, _domOptimize.waitForMutateTi
  *
  * @category CSS: Altering
  */
-exports.setBoolData = setBoolData;
-const unsetBoolDataNow = (el, name) => MH.unsetAttr(el, MH.prefixData(name));
+const unsetBooleanDataNow = (el, name) => MH.unsetAttr(el, MH.prefixData(name));
 
 /**
- * Like {@link unsetBoolDataNow} except it will {@link waitForMutateTime}.
+ * @ignore
+ * @deprecated
+ */
+exports.unsetBooleanDataNow = unsetBooleanDataNow;
+const unsetBoolDataNow = exports.unsetBoolDataNow = unsetBooleanDataNow;
+
+/**
+ * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-exports.unsetBoolDataNow = unsetBoolDataNow;
-const unsetBoolData = (el, name) => (0, _domOptimize.waitForMutateTime)().then(() => unsetBoolDataNow(el, name));
+const unsetBooleanData = (el, name) => (0, _domOptimize.waitForMutateTime)().then(() => unsetBooleanDataNow(el, name));
+
+/**
+ * @ignore
+ * @deprecated
+ */
+exports.unsetBooleanData = unsetBooleanData;
+const unsetBoolData = exports.unsetBoolData = unsetBooleanData;
 
 /**
  * Deletes the given data attribute.
@@ -434,7 +465,6 @@ const unsetBoolData = (el, name) => (0, _domOptimize.waitForMutateTime)().then((
  *
  * @category CSS: Altering
  */
-exports.unsetBoolData = unsetBoolData;
 const delDataNow = (el, name) => MH.delAttr(el, MH.prefixData(name));
 
 /**
@@ -557,7 +587,7 @@ const disableInitialTransition = async (element, delay = 0) => {
  * @internal
  */
 exports.disableInitialTransition = disableInitialTransition;
-const setHasModal = () => setBoolData(MH.getBody(), PREFIX_HAS_MODAL);
+const setHasModal = () => setBooleanData(MH.getBody(), PREFIX_HAS_MODAL);
 
 /**
  * @ignore

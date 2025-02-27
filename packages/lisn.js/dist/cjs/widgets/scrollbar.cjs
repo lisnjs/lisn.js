@@ -353,10 +353,10 @@ const init = (widget, containerElement, props, config) => {
     if (useHandle) {
       handle = MH.createElement("div");
       (0, _cssAlter.addClassesNow)(handle, PREFIX_HANDLE);
-      (0, _cssAlter.setBoolDataNow)(handle, PREFIX_DRAGGABLE, dragScroll);
+      (0, _cssAlter.setBooleanDataNow)(handle, PREFIX_DRAGGABLE, dragScroll);
     }
-    (0, _cssAlter.setBoolDataNow)(scrollbar, PREFIX_DRAGGABLE, dragScroll && !useHandle);
-    (0, _cssAlter.setBoolDataNow)(scrollbar, PREFIX_CLICKABLE, clickScroll);
+    (0, _cssAlter.setBooleanDataNow)(scrollbar, PREFIX_DRAGGABLE, dragScroll && !useHandle);
+    (0, _cssAlter.setBooleanDataNow)(scrollbar, PREFIX_CLICKABLE, clickScroll);
     (0, _domAlter.moveElementNow)(fill, {
       to: scrollbar
     });
@@ -398,7 +398,7 @@ const init = (widget, containerElement, props, config) => {
     if ((0, _scroll.isScrollable)(scrollable, {
       axis: scrollAxis
     }) && viewFraction < 1) {
-      (0, _cssAlter.setBoolData)(containerElement, hasBarPrefix);
+      (0, _cssAlter.setBooleanData)(containerElement, hasBarPrefix);
       (0, _cssAlter.displayElement)(scrollbar);
     } else {
       (0, _cssAlter.delData)(containerElement, hasBarPrefix);
@@ -574,7 +574,7 @@ const init = (widget, containerElement, props, config) => {
   if (!isMainScrollable && !isBody) {
     (0, _cssAlter.addClasses)(containerElement, PREFIX_CONTAINER);
   }
-  (0, _cssAlter.setBoolData)(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  (0, _cssAlter.setBooleanData)(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
 
   // Wrap children if needed
   if (contentWrapper) {
@@ -584,9 +584,9 @@ const init = (widget, containerElement, props, config) => {
       ignoreMove: true
     }); // no need to await here
 
-    (0, _cssAlter.setBoolData)(containerElement, PREFIX_HAS_WRAPPER);
+    (0, _cssAlter.setBooleanData)(containerElement, PREFIX_HAS_WRAPPER);
     if (hasFixedHeight) {
-      (0, _cssAlter.setBoolData)(containerElement, PREFIX_HAS_FIXED_HEIGHT);
+      (0, _cssAlter.setBooleanData)(containerElement, PREFIX_HAS_FIXED_HEIGHT);
     }
   }
   maybeSetNativeHidden();

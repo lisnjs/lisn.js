@@ -9,5 +9,9 @@ export declare const omitKeys: <O extends object, R extends { [K in keyof O]?: u
 export declare const compareValuesIn: <T extends object>(objA: T, objB: T, roundTo?: number) => boolean;
 export declare const keyExists: <T extends object>(obj: T, key: string | number | symbol) => key is keyof T;
 export declare const toArrayIfSingle: <T>(value?: T | T[] | null | undefined) => T[];
+export declare const toBoolean: (value: unknown) => boolean | null;
+/**
+ * @deprecated
+ */
 export declare const toBool: (value: unknown) => boolean | null;
 //# sourceMappingURL=misc.d.ts.map

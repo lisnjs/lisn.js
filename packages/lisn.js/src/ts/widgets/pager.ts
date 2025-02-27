@@ -17,7 +17,7 @@ import {
   removeClassesNow,
   getData,
   setData,
-  setBoolData,
+  setBooleanData,
   delDataNow,
   getComputedStyleProp,
   setStyleProp,
@@ -31,7 +31,7 @@ import { getVisibleContentChildren } from "@lisn/utils/dom-query";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { isValidInputDevice } from "@lisn/utils/gesture";
 import { toInt } from "@lisn/utils/math";
-import { toBool } from "@lisn/utils/misc";
+import { toBoolean } from "@lisn/utils/misc";
 import { getClosestScrollable } from "@lisn/utils/scroll";
 import { formatAsString } from "@lisn/utils/text";
 import {
@@ -552,6 +552,8 @@ export type PagerConfig = {
    * the element will get `height: 100vh` set. Otherwise, you need to set its
    * height in your CSS.
    *
+   * @since Introduced in v1.1.0.
+   *
    * @defaultValue "slider"
    */
   style?: "slider" | "carousel" | "tabs";
@@ -563,6 +565,8 @@ export type PagerConfig = {
    * This will determine the number of visible slides at any one width of the
    * pager. Pages will still grow to fill the size of the carousel itself.
    *
+   * @since Introduced in v1.1.0.
+   *
    * @defaultValue 300
    */
   pageSize?: number;
@@ -572,6 +576,8 @@ export type PagerConfig = {
    *
    * Whether to show a bit of the upcoming and/or previous pages that are
    * hidden when not all fit.
+   *
+   * @since Introduced in v1.1.0.
    *
    * @defaultValue false
    */
@@ -739,7 +745,7 @@ const configValidator: WidgetConfigValidatorObject<PagerConfig> = {
       return undefined;
     }
 
-    const bool = toBool(value);
+    const bool = toBoolean(value);
     if (bool !== null) {
       return bool;
     }
@@ -815,13 +821,13 @@ const setCurrentPage = (
 
   setStyleProp(pagerEl, VAR_CURRENT_PAGE, pageNumbers._current + "");
   setData(pagerEl, PREFIX_CURRENT_PAGE, pageNumbers._current + "");
-  setBoolData(
+  setBooleanData(
     pagerEl,
     PREFIX_CURRENT_PAGE_IS_LAST,
     pageNumbers._current === pageNumbers._total,
   );
-  setBoolData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
-  return setBoolData(
+  setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
+  return setBooleanData(
     pagerEl,
     PREFIX_CURRENT_PAGE_IS_LAST_ENABLED,
     isLastEnabled,
@@ -1102,8 +1108,8 @@ const init = (
 
   setData(element, MC.PREFIX_ORIENTATION, orientation);
   setData(element, PREFIX_STYLE, pagerStyle);
-  setBoolData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
-  setBoolData(element, PREFIX_USE_PARALLAX, isParallax);
+  setBooleanData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
+  setBooleanData(element, PREFIX_USE_PARALLAX, isParallax);
   setData(element, PREFIX_TOTAL_PAGES, numPages + "");
   setStyleProp(element, VAR_TOTAL_PAGES, (numPages || 1) + "");
 

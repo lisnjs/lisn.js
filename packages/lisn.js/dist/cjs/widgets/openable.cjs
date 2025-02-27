@@ -167,7 +167,7 @@ class Openable extends _widget.Widget {
       if (isModal) {
         (0, _cssAlter.setHasModal)();
       }
-      await (0, _cssAlter.setBoolData)(root, PREFIX_IS_OPEN);
+      await (0, _cssAlter.setBooleanData)(root, PREFIX_IS_OPEN);
     };
 
     // ----------
@@ -186,7 +186,7 @@ class Openable extends _widget.Widget {
       if (isOffcanvas) {
         scrollWrapperToTop(); // no need to await
       }
-      await (0, _cssAlter.unsetBoolData)(root, PREFIX_IS_OPEN);
+      await (0, _cssAlter.unsetBooleanData)(root, PREFIX_IS_OPEN);
     };
 
     // ----------
@@ -446,7 +446,7 @@ class Collapsible extends Openable {
     const root = this.getRoot();
     const wrapper = MH.childrenOf(root)[0];
     (0, _cssAlter.setData)(root, MC.PREFIX_ORIENTATION, orientation);
-    (0, _cssAlter.setBoolData)(root, PREFIX_REVERSE, (_config$reverse = config === null || config === void 0 ? void 0 : config.reverse) !== null && _config$reverse !== void 0 ? _config$reverse : false);
+    (0, _cssAlter.setBooleanData)(root, PREFIX_REVERSE, (_config$reverse = config === null || config === void 0 ? void 0 : config.reverse) !== null && _config$reverse !== void 0 ? _config$reverse : false);
 
     // -------------------- Transitions
     (0, _cssAlter.disableInitialTransition)(element, 100);
@@ -1053,7 +1053,7 @@ const triggerConfigValidator = {
   id: _validation.validateString,
   className: (key, value) => (0, _validation.validateStrList)(key, (0, _misc.toArrayIfSingle)(value)),
   autoClose: _validation.validateBoolean,
-  icon: (key, value) => value && (0, _misc.toBool)(value) === false ? false : (0, _validation.validateString)(key, value, _position.isValidPosition),
+  icon: (key, value) => value && (0, _misc.toBoolean)(value) === false ? false : (0, _validation.validateString)(key, value, _position.isValidPosition),
   iconClosed: (key, value) => (0, _validation.validateString)(key, value, isValidIconClosed),
   iconOpen: (key, value) => (0, _validation.validateString)(key, value, isValidIconOpen),
   hover: _validation.validateBoolean
@@ -1065,7 +1065,7 @@ const collapsibleConfigValidator = {
   reverse: _validation.validateBoolean,
   peek: _validation.validateBooleanOrString,
   autoClose: _validation.validateBoolean,
-  icon: (key, value) => (0, _misc.toBool)(value) === false ? false : (0, _validation.validateString)(key, value, _position.isValidPosition),
+  icon: (key, value) => (0, _misc.toBoolean)(value) === false ? false : (0, _validation.validateString)(key, value, _position.isValidPosition),
   iconClosed: (key, value) => (0, _validation.validateString)(key, value, isValidIconClosed),
   iconOpen: (key, value) => (0, _validation.validateString)(key, value, isValidIconOpen)
 };
@@ -1209,7 +1209,7 @@ const setupElements = (widget, content, properties) => {
   if (properties.className) {
     (0, _cssAlter.addClassesNow)(root, ...(0, _misc.toArrayIfSingle)(properties.className));
   }
-  (0, _cssAlter.unsetBoolData)(root, PREFIX_IS_OPEN);
+  (0, _cssAlter.unsetBooleanData)(root, PREFIX_IS_OPEN);
   const domID = (0, _domAlter.getOrAssignID)(root, properties.name);
   if (properties.isModal) {
     MH.setAttr(root, MC.S_ROLE, "dialog");
@@ -1255,7 +1255,7 @@ const setupElements = (widget, content, properties) => {
     for (const trigger of triggers.keys()) {
       (0, _cssAlter.delData)(trigger, PREFIX_OPENS_ON_HOVER);
       MH.unsetAttr(trigger, S_ARIA_EXPANDED);
-      await (0, _cssAlter.unsetBoolData)(trigger, PREFIX_IS_OPEN);
+      await (0, _cssAlter.unsetBooleanData)(trigger, PREFIX_IS_OPEN);
     }
   });
   widget.onDestroy(async () => {
@@ -1331,8 +1331,8 @@ const setupElements = (widget, content, properties) => {
     for (const [trigger, triggerConfig] of triggers.entries()) {
       MH.setAttr(trigger, MC.S_ARIA_CONTROLS, domID);
       MH.unsetAttr(trigger, S_ARIA_EXPANDED);
-      (0, _cssAlter.setBoolDataNow)(trigger, PREFIX_OPENS_ON_HOVER, triggerConfig[MC.S_HOVER]);
-      (0, _cssAlter.unsetBoolDataNow)(trigger, PREFIX_IS_OPEN);
+      (0, _cssAlter.setBooleanDataNow)(trigger, PREFIX_OPENS_ON_HOVER, triggerConfig[MC.S_HOVER]);
+      (0, _cssAlter.unsetBooleanDataNow)(trigger, PREFIX_IS_OPEN);
       (0, _cssAlter.addClassesNow)(trigger, prefixedNames._trigger, ...((triggerConfig === null || triggerConfig === void 0 ? void 0 : triggerConfig.className) || []));
       if (triggerConfig !== null && triggerConfig !== void 0 && triggerConfig.id) {
         trigger.id = triggerConfig.id;
@@ -1391,7 +1391,7 @@ const setupListeners = (widget, elements, properties, prefixedNames) => {
         // open it
         activeTrigger = trigger;
         MH.setAttr(trigger, S_ARIA_EXPANDED); // will be unset on close
-        (0, _cssAlter.setBoolData)(trigger, PREFIX_IS_OPEN); // will be unset on close
+        (0, _cssAlter.setBooleanData)(trigger, PREFIX_IS_OPEN); // will be unset on close
 
         widget.open(); // no need to await
 
@@ -1542,7 +1542,7 @@ const insertCollapsibleIcon = (trigger, triggerConfig, widget, widgetConfig) => 
       ignoreMove: true
     });
     widget.onOpen(() => {
-      if ((0, _cssAlter.getBoolData)(trigger, PREFIX_IS_OPEN)) {
+      if ((0, _cssAlter.getBooleanData)(trigger, PREFIX_IS_OPEN)) {
         (0, _cssAlter.setData)(icon, PREFIX_TRIGGER_ICON, iconOpen);
       }
     });

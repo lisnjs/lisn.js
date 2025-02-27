@@ -9,7 +9,7 @@ import { LisnUsageError } from "@lisn/globals/errors";
 import { CommaSeparatedStr } from "@lisn/globals/types";
 
 import { toNum } from "@lisn/utils/math";
-import { toBool } from "@lisn/utils/misc";
+import { toBoolean } from "@lisn/utils/misc";
 import { splitOn } from "@lisn/utils/text";
 
 /**
@@ -246,7 +246,7 @@ const _validateBoolean = (
     return;
   }
 
-  const boolVal = toBool(value);
+  const boolVal = toBoolean(value);
   if (boolVal === null) {
     throw MH.usageError(
       `'${key}' must be ${typeDescription ?? '"true" or "false"'}`,
@@ -285,7 +285,7 @@ const _validateBooleanOrString = <T extends string = string>(
     return;
   }
 
-  const boolVal = toBool(value);
+  const boolVal = toBoolean(value);
   if (boolVal !== null) {
     return boolVal;
   }

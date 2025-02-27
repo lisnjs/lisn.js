@@ -387,10 +387,16 @@ export const getData = (el: Element, name: string) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const getBoolData = (el: Element, name: string) => {
+export const getBooleanData = (el: Element, name: string) => {
   const value = getData(el, name);
   return value !== null && value !== "false";
 };
+
+/**
+ * @ignore
+ * @deprecated
+ */
+export const getBoolData = getBooleanData;
 
 /**
  * Sets the given data attribute.
@@ -419,16 +425,28 @@ export const setData = (el: Element, name: string, value: string) =>
  *
  * @category CSS: Altering
  */
-export const setBoolDataNow = (el: Element, name: string, value = true) =>
+export const setBooleanDataNow = (el: Element, name: string, value = true) =>
   MH.setAttr(el, MH.prefixData(name), value + "");
 
 /**
- * Like {@link setBoolDataNow} except it will {@link waitForMutateTime}.
+ * @ignore
+ * @deprecated
+ */
+export const setBoolDataNow = setBooleanDataNow;
+
+/**
+ * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const setBoolData = (el: Element, name: string, value = true) =>
-  waitForMutateTime().then(() => setBoolDataNow(el, name, value));
+export const setBooleanData = (el: Element, name: string, value = true) =>
+  waitForMutateTime().then(() => setBooleanDataNow(el, name, value));
+
+/**
+ * @ignore
+ * @deprecated
+ */
+export const setBoolData = setBooleanData;
 
 /**
  * Sets the given data attribute with value "false".
@@ -438,16 +456,28 @@ export const setBoolData = (el: Element, name: string, value = true) =>
  *
  * @category CSS: Altering
  */
-export const unsetBoolDataNow = (el: Element, name: string) =>
+export const unsetBooleanDataNow = (el: Element, name: string) =>
   MH.unsetAttr(el, MH.prefixData(name));
 
 /**
- * Like {@link unsetBoolDataNow} except it will {@link waitForMutateTime}.
+ * @ignore
+ * @deprecated
+ */
+export const unsetBoolDataNow = unsetBooleanDataNow;
+
+/**
+ * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const unsetBoolData = (el: Element, name: string) =>
-  waitForMutateTime().then(() => unsetBoolDataNow(el, name));
+export const unsetBooleanData = (el: Element, name: string) =>
+  waitForMutateTime().then(() => unsetBooleanDataNow(el, name));
+
+/**
+ * @ignore
+ * @deprecated
+ */
+export const unsetBoolData = unsetBooleanData;
 
 /**
  * Deletes the given data attribute.
@@ -577,7 +607,7 @@ export const disableInitialTransition = async (element: Element, delay = 0) => {
  * @ignore
  * @internal
  */
-export const setHasModal = () => setBoolData(MH.getBody(), PREFIX_HAS_MODAL);
+export const setHasModal = () => setBooleanData(MH.getBody(), PREFIX_HAS_MODAL);
 
 /**
  * @ignore

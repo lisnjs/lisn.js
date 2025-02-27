@@ -56,7 +56,8 @@ export default function Page() {
           <li>Optimal performance.</li>
           <li>Server-side rendering.</li>
           <li>Flexible and customizable.</li>
-          <li>Simple to use.</li>
+          <li>Easy and simple to use.</li>
+          <li>No dependencies.</li>
           <li>HTML-only mode.</li>
         </ul>
 
@@ -107,16 +108,19 @@ export default function Page() {
           <li>Pointer watcher</li>
           <li className="hrule center"></li>
           <li>Collapsible</li>
-          <li>Floating popup</li>
+          <li>Floating popup/tooltip</li>
           <li>Modal</li>
           <li>Offcanvas menu</li>
           <li>Pager (carousel/slider/tabs)</li>
           <li>Flex same-height</li>
           <li>Scrollbars (native scrolling)</li>
           <li>Sortable</li>
+          <li>Auto-hide/remove matching elements</li>
           <li>Scroll-to-top button</li>
           <li>Page loader</li>
-          <li>... and more.</li>
+          <li>
+            <em>Coming soon:</em> SmoothScroller (native scroll)
+          </li>
         </ul>
       </Section>
 
@@ -330,15 +334,18 @@ LISN.watchers.ScrollWatcher.onScroll(
 
       <Section>
         <h2 className="text-center">Future plans.</h2>
-        <ul className="checked bold center fit">
+        <ul className="center fit">
           <li>Wrappers for more frameworks.</li>
           <li>SmoothScroller widget.</li>
           <li>Radio/checkbox trigger.</li>
           <li>
-            Pager wheel transition to respond to quick successive scrolls (known
-            bug).
+            Pager wheel transition to respond to quick successive scrolls.
           </li>
           <li>Default pager transitions to use gesture momentum.</li>
+          <li>
+            Sortable to support a child element of each sortable item to
+            function as the drag handle.
+          </li>
           <li>Custom duration for ScrollTo action.</li>
           <li>Passing information on elements spanned by a gesture.</li>
           <li>

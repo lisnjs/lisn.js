@@ -7,18 +7,19 @@ import ThemedRoot from "@lib/ThemedRoot";
 
 import lisnPkgJson from "lisn.js/package.json";
 
+const description =
+  "Lightweight, easy-to use and powerful library for handling user gestures, actions and events. Includes widgets: collapsible, popup, modal, offcanvas menu, carousel, slider, tabbed pager, custom scrollbars, sortable, scroll-to-top button, page loader.";
+
 export const metadata: Metadata = {
   title: {
     template: "%s | LISN.js",
     default: "LISN.js",
   },
-  description:
-    "Lightweight and simple. Powerful and flexible. LISN handles all complexities so you can simply handle user gestures, actions and events.",
+  description,
   keywords: lisnPkgJson.keywords,
   openGraph: {
     title: "LISN.js",
-    description:
-      "Lightweight and simple. Powerful and flexible. LISN handles all complexities so you can simply handle user gestures, actions and events.",
+    description,
     url: "https://lisnjs.github.io/",
     siteName: "LISN.js",
     images: [

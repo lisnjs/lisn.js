@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "npx next dev",
-    "build": "npx next build",
+    "build": "npx next build && npx next-sitemap",
     "start": "npx next start",
     "serve": "node server",
     "deploy": "npx gh-pages --dist out --nojekyll --repo git@github.com:lisnjs/lisnjs.github.io.git --branch main"

@@ -6,16 +6,20 @@ import {
   ScrollWatcher,
   LoadTrigger,
   Show,
-  AutoHide,
   ViewData,
 } from "lisn.js";
-import { ScrollbarComponent, ScrollbarComponentRef } from "@lisn.js/react";
+import {
+  ScrollbarComponent,
+  ScrollbarComponentRef,
+  AutoHideComponent,
+  AutoHideComponentRef,
+} from "@lisn.js/react";
 import "lisn.js/scrollbar.css";
 
 import styles from "./demo.module.css";
 
 export default function Page() {
-  const msgRef = useRef<HTMLParagraphElement>(null);
+  const msgRef = useRef<AutoHideComponentRef>(null);
   const scrollableRef = useRef<ScrollbarComponentRef>(null);
   const triggerRefs = useRef<Element[]>([]);
   const tabRefs = useRef<Element[]>([]);
@@ -88,27 +92,25 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    const msg = msgRef.current;
-    let widget: AutoHide;
+    const msg = msgRef.current?.getWidget()?.getElement();
     if (msg) {
       new LoadTrigger(msg, [new Show(msg)], {
         delay: 1000,
       });
-      widget = new AutoHide(msg, { delay: 2500 });
     }
-
-    return () => {
-      // cleanup
-      widget?.destroy();
-    };
   }, []);
 
   return (
     <>
       <div className={styles.wrapper}>
-        <p ref={msgRef} className={[styles.msg, "lisn-hide"].join(" ")}>
+        <AutoHideComponent
+          widgetRef={msgRef}
+          className={[styles.msg, "lisn-hide"].join(" ")}
+          as="p"
+          config={{ delay: 2500 }} // you can also pass an array of configs for multiple AutoHides
+        >
           Scroll the box
-        </p>
+        </AutoHideComponent>
 
         <div className={styles.demo}>
           <div className={styles.tabs}>

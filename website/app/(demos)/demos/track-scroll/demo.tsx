@@ -1,14 +1,15 @@
 "use client";
 import { useEffect, useRef } from "react";
 
-import { ScrollWatcher, LoadTrigger, Show, AutoHide } from "lisn.js";
+import { ScrollWatcher, LoadTrigger, Show } from "lisn.js";
+import { AutoHideComponent, AutoHideComponentRef } from "@lisn.js/react";
 import "lisn.js/base.css";
 
 import styles from "./demo.module.css";
 
 export default function Page() {
-  const msgRef = useRef(null);
-  const demoRef = useRef(null);
+  const msgRef = useRef<AutoHideComponentRef>(null);
+  const demoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const watcher = ScrollWatcher.reuse();
@@ -29,27 +30,25 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    const msg = msgRef.current;
-    let widget: AutoHide;
+    const msg = msgRef.current?.getWidget()?.getElement();
     if (msg) {
       new LoadTrigger(msg, [new Show(msg)], {
         delay: 1000,
       });
-      widget = new AutoHide(msg, { delay: 2500 });
     }
-
-    return () => {
-      // cleanup
-      widget?.destroy();
-    };
   }, []);
 
   return (
     <>
       <div className={styles.wrapper}>
-        <p ref={msgRef} className={[styles.msg, "lisn-hide"].join(" ")}>
+        <AutoHideComponent
+          widgetRef={msgRef}
+          className={[styles.msg, "lisn-hide"].join(" ")}
+          as="p"
+          config={{ delay: 2500 }} // you can also pass an array of configs for multiple AutoHides
+        >
           Scroll the box
-        </p>
+        </AutoHideComponent>
 
         <div ref={demoRef} className={styles.demo}>
           <div className={styles.spotlight}></div>

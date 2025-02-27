@@ -16,15 +16,37 @@ LISN handles all complexities (and browser quirks) so you can simply handle user
 gestures, interactions and layout events. It makes it super simple and easy to
 implement any kind of scroll, view, size, layout or user gesture triggered
 actions or animations with minimal boilerplate, and even if you wish, with zero
-JavaScript, using the HTML-only mode. It also comes with many customizable
-widgets.
+JavaScript, using the HTML-only mode (perfect for Wordpress for example!).
 
-There are React wrappers available as a separate package. It works in
+- 100% vanilla TypeScript.
+- No layout thrashing.
+- Optimal performance.
+- Server-side rendering.
+- Flexible and customizable.
+- Easy and simple to use.
+- No dependencies.
+- HTML-only mode.
+
+There are **React wrappers** available as a separate package. It works in
 server-side rendering environments like Next.js.
 
-LISN also comes with many awesome widgets, like collapsible, floating popup, modal,
-offcanvas menu, pager (carousel/slider/tabs), flex same-height, scrollbars
-(native scrolling), sortable, scroll-to-top button and page loader.
+LISN also comes with many awesome widgets, like:
+
+- Collapsible
+- Floating popup/tooltip
+- Modal
+- Offcanvas menu
+- Pager (carousel/slider/tabs)
+- Flex same-height
+- Scrollbars (native scrolling)
+- Sortable
+- Auto-hide/remove matching elements
+- Scroll-to-top button
+- Page loader
+
+Coming soon:
+
+- SmoothScroller (native scroll)
 
 # Installing
 

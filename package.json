@@ -22,6 +22,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "globals": "^15.13.0",
     "markdown-to-html-cli": "^5.0.3",
+    "next-sitemap": "^4.2.3",
     "postcss": "^8.4.49",
     "postcss-cli": "^11.0.0",
     "postcss-import": "^16.1.0",

@@ -18,26 +18,39 @@ export const useWidget = <
   C extends object,
 >(
   newWidget: (element: Element, config?: C) => W | null,
-  config?: C,
+  config?: C | C[],
   widgetRef?: RefObject<WidgetComponentRef<W> | null>,
 ) => {
+  const configs = config instanceof Array ? config : config ? [config] : [];
+
   const elementRef = useRef<ComponentRef<T>>(null);
-  const widgetRefInternal = useRef<W>(null);
-  const configMemo = useDeepMemo(config);
+  const widgetRefsInternal = useRef<W[]>([]);
+  const configsMemo = useDeepMemo(configs);
 
   useEffect(() => {
     if (elementRef.current instanceof Element) {
-      widgetRefInternal.current = newWidget(elementRef.current, configMemo);
+      for (const thisConfig of configsMemo) {
+        const widget = newWidget(elementRef.current, thisConfig);
+
+        if (widget) {
+          widgetRefsInternal.current.push(widget);
+        }
+      }
     }
+    const widgets = widgetRefsInternal.current;
 
     return () => {
-      widgetRefInternal.current?.destroy();
+      for (const widget of widgets) {
+        widget.destroy();
+      }
+      widgetRefsInternal.current = [];
     };
-  }, [configMemo, newWidget]);
+  }, [configsMemo, newWidget]);
 
   useImperativeHandle(widgetRef, () => {
     return {
-      getWidget: () => widgetRefInternal.current,
+      getWidget: () => widgetRefsInternal.current[0] ?? null,
+      getWidgets: () => widgetRefsInternal.current,
     };
   });
 

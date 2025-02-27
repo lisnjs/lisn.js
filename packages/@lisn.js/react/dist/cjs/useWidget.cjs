@@ -8,21 +8,34 @@ exports.useWidget = void 0;
 var _react = require("react");
 var _useDeepMemo = require("./useDeepMemo");
 const useWidget = (newWidget, config, widgetRef) => {
+  const configs = config instanceof Array ? config : config ? [config] : [];
   const elementRef = (0, _react.useRef)(null);
-  const widgetRefInternal = (0, _react.useRef)(null);
-  const configMemo = (0, _useDeepMemo.useDeepMemo)(config);
+  const widgetRefsInternal = (0, _react.useRef)([]);
+  const configsMemo = (0, _useDeepMemo.useDeepMemo)(configs);
   (0, _react.useEffect)(() => {
     if (elementRef.current instanceof Element) {
-      widgetRefInternal.current = newWidget(elementRef.current, configMemo);
+      for (const thisConfig of configsMemo) {
+        const widget = newWidget(elementRef.current, thisConfig);
+        if (widget) {
+          widgetRefsInternal.current.push(widget);
+        }
+      }
     }
+    const widgets = widgetRefsInternal.current;
     return () => {
-      var _widgetRefInternal$cu;
-      (_widgetRefInternal$cu = widgetRefInternal.current) === null || _widgetRefInternal$cu === void 0 || _widgetRefInternal$cu.destroy();
+      for (const widget of widgets) {
+        widget.destroy();
+      }
+      widgetRefsInternal.current = [];
     };
-  }, [configMemo, newWidget]);
+  }, [configsMemo, newWidget]);
   (0, _react.useImperativeHandle)(widgetRef, () => {
     return {
-      getWidget: () => widgetRefInternal.current
+      getWidget: () => {
+        var _widgetRefsInternal$c;
+        return (_widgetRefsInternal$c = widgetRefsInternal.current[0]) !== null && _widgetRefsInternal$c !== void 0 ? _widgetRefsInternal$c : null;
+      },
+      getWidgets: () => widgetRefsInternal.current
     };
   });
   return elementRef;

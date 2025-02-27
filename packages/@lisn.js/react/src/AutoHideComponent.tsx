@@ -4,14 +4,14 @@ import { createElement, ElementType } from "react";
 import { AutoHide, AutoHideConfig } from "lisn.js";
 
 import { useWidget } from "./useWidget";
-import { WidgetComponentRef, WidgetComponentProps } from "./types";
+import { WidgetComponentRef, MultiWidgetComponentProps } from "./types";
 
 export type AutoHideComponentRef = WidgetComponentRef<AutoHide>;
 
 export type AutoHideComponentConfig = AutoHideConfig;
 
 export type AutoHideComponentProps<T extends ElementType> =
-  WidgetComponentProps<T, AutoHide, AutoHideComponentConfig>;
+  MultiWidgetComponentProps<T, AutoHide, AutoHideComponentConfig>;
 
 export const AutoHideComponent = <T extends ElementType = "div">({
   as,

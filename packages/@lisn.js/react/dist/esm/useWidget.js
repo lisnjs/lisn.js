@@ -3,21 +3,34 @@
 import { useRef, useEffect, useImperativeHandle } from "react";
 import { useDeepMemo } from "./useDeepMemo";
 export const useWidget = (newWidget, config, widgetRef) => {
+  const configs = config instanceof Array ? config : config ? [config] : [];
   const elementRef = useRef(null);
-  const widgetRefInternal = useRef(null);
-  const configMemo = useDeepMemo(config);
+  const widgetRefsInternal = useRef([]);
+  const configsMemo = useDeepMemo(configs);
   useEffect(() => {
     if (elementRef.current instanceof Element) {
-      widgetRefInternal.current = newWidget(elementRef.current, configMemo);
+      for (const thisConfig of configsMemo) {
+        const widget = newWidget(elementRef.current, thisConfig);
+        if (widget) {
+          widgetRefsInternal.current.push(widget);
+        }
+      }
     }
+    const widgets = widgetRefsInternal.current;
     return () => {
-      var _widgetRefInternal$cu;
-      (_widgetRefInternal$cu = widgetRefInternal.current) === null || _widgetRefInternal$cu === void 0 || _widgetRefInternal$cu.destroy();
+      for (const widget of widgets) {
+        widget.destroy();
+      }
+      widgetRefsInternal.current = [];
     };
-  }, [configMemo, newWidget]);
+  }, [configsMemo, newWidget]);
   useImperativeHandle(widgetRef, () => {
     return {
-      getWidget: () => widgetRefInternal.current
+      getWidget: () => {
+        var _widgetRefsInternal$c;
+        return (_widgetRefsInternal$c = widgetRefsInternal.current[0]) !== null && _widgetRefsInternal$c !== void 0 ? _widgetRefsInternal$c : null;
+      },
+      getWidgets: () => widgetRefsInternal.current
     };
   });
   return elementRef;

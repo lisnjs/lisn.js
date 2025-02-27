@@ -8,7 +8,7 @@ exports.useWidget = void 0;
 var _react = require("react");
 var _useDeepMemo = require("./useDeepMemo");
 const useWidget = (newWidget, config, widgetRef) => {
-  const configs = config instanceof Array ? config : config ? [config] : [];
+  const configs = config instanceof Array ? config : [config];
   const elementRef = (0, _react.useRef)(null);
   const widgetRefsInternal = (0, _react.useRef)([]);
   const configsMemo = (0, _useDeepMemo.useDeepMemo)(configs);

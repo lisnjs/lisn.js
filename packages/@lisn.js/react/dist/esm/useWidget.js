@@ -3,7 +3,7 @@
 import { useRef, useEffect, useImperativeHandle } from "react";
 import { useDeepMemo } from "./useDeepMemo";
 export const useWidget = (newWidget, config, widgetRef) => {
-  const configs = config instanceof Array ? config : config ? [config] : [];
+  const configs = config instanceof Array ? config : [config];
   const elementRef = useRef(null);
   const widgetRefsInternal = useRef([]);
   const configsMemo = useDeepMemo(configs);

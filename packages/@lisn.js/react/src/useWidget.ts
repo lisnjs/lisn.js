@@ -21,7 +21,7 @@ export const useWidget = <
   config?: C | C[],
   widgetRef?: RefObject<WidgetComponentRef<W> | null>,
 ) => {
-  const configs = config instanceof Array ? config : config ? [config] : [];
+  const configs = config instanceof Array ? config : [config];
 
   const elementRef = useRef<ComponentRef<T>>(null);
   const widgetRefsInternal = useRef<W[]>([]);

@@ -172,8 +172,8 @@ export class Callback<Args extends unknown[] = []> {
     this.isRemoved = () => isRemoved;
 
     this.remove = () => {
-      debug: logger?.debug8("Removing");
       if (!isRemoved) {
+        debug: logger?.debug8("Removing");
         isRemoved = true;
 
         for (const rmFn of onRemove) {

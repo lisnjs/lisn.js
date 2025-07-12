@@ -74,7 +74,7 @@ describe("ScrollTrigger", () => {
     };
 
     const element = document.createElement("div");
-    new ScrollTrigger(document.body, [action], {
+    new ScrollTrigger(element, [action], {
       scrollable: element,
       directions: "up,down",
     });
@@ -123,7 +123,7 @@ describe("ScrollTrigger", () => {
     };
 
     const element = document.createElement("div");
-    new ScrollTrigger(document.body, [action], {
+    new ScrollTrigger(element, [action], {
       scrollable: element,
       directions: "up,left",
     });
@@ -210,6 +210,36 @@ describe("ScrollTrigger", () => {
 
     expect(action.do).toHaveBeenCalledTimes(1);
     expect(action.undo).toHaveBeenCalledTimes(1);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+  });
+
+  test("destroy", async () => {
+    const action = {
+      do: jest.fn(),
+      undo: jest.fn(),
+      toggle: jest.fn(),
+    };
+
+    const element = document.createElement("div");
+    const trigger = new ScrollTrigger(element, [action], {
+      scrollable: element,
+      directions: "up",
+    });
+
+    await window.waitForAF();
+
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+
+    await trigger.destroy();
+
+    element.scrollTo(0, 100); // down
+    await window.waitFor(100); // debounce window + a bit
+
+    // no new calls
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
     expect(action.toggle).toHaveBeenCalledTimes(0);
   });
 });

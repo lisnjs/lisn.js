@@ -75,25 +75,51 @@ describe("LayoutTrigger", () => {
     const { overlays, observer } = await getOverlays();
 
     await window.waitForMO();
-    expect(action.do).toHaveBeenCalledTimes(1); // deskop layout
+    expect(action.do).toHaveBeenCalledTimes(1); // desktop layout (initial)
     expect(action.undo).toHaveBeenCalledTimes(0);
     expect(action.toggle).toHaveBeenCalledTimes(0);
 
-    // to mobile-wide
-    observer.trigger(overlays.desktop, ["at"]);
-    observer.trigger(overlays.tablet, ["at"]);
+    // to mobile-wide (desktop and tablet widths intersecting)
+    observer.trigger(overlays.desktop, ["at"]); // to tablet
+    observer.trigger(overlays.tablet, ["at"]); // to mobile-wide
     await window.waitForMO();
 
     expect(action.do).toHaveBeenCalledTimes(1);
     expect(action.undo).toHaveBeenCalledTimes(1); // mobile wide, undone
     expect(action.toggle).toHaveBeenCalledTimes(0);
 
-    // to tablet
+    // back to tablet (only desktop now intersecting)
     observer.trigger(overlays.tablet, ["right"]);
     await window.waitForMO();
 
     expect(action.do).toHaveBeenCalledTimes(2);
     expect(action.undo).toHaveBeenCalledTimes(1);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+  });
+
+  test("destroy", async () => {
+    const { action, root, element } = newDummies();
+
+    const trigger = new LayoutTrigger(element, [action], {
+      layout: "desktop",
+      root,
+    });
+    const { overlays, observer } = await getOverlays(root);
+
+    await window.waitForMO();
+    expect(action.do).toHaveBeenCalledTimes(1); // desktop layout (initial)
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+
+    await trigger.destroy();
+
+    // to tablet (desktop)
+    observer.trigger(overlays.desktop, ["at"]);
+    await window.waitForMO();
+
+    // no new calls
+    expect(action.do).toHaveBeenCalledTimes(1);
+    expect(action.undo).toHaveBeenCalledTimes(0);
     expect(action.toggle).toHaveBeenCalledTimes(0);
   });
 });
@@ -121,12 +147,12 @@ describe("auto-widgets", () => {
     expect(LayoutTrigger.get(element, "foo")).toBe(null);
   });
 
-  test("basic: desktop", async () => {
-    const { element, action, actionName } = newDummies();
-    element.dataset.lisnOnLayout = `desktop @${actionName} +id=foo`;
+  test("basic: desktop +root=", async () => {
+    const { element, root, action, actionName } = newDummies();
+    element.dataset.lisnOnLayout = `desktop @${actionName} +id=foo +root=#${root.id}`;
     document.body.append(element);
 
-    const { overlays, observer } = await getOverlays();
+    const { overlays, observer } = await getOverlays(root);
     await window.waitForMO();
 
     const trigger = LayoutTrigger.get(element, "foo");
@@ -134,11 +160,12 @@ describe("auto-widgets", () => {
     expect(trigger.getActions()).toEqual([action]);
     expect(trigger.getConfig()).toEqual({
       layout: "desktop",
+      root,
       id: "foo",
     });
 
     await window.waitForMO();
-    expect(action.do).toHaveBeenCalledTimes(1); // deskop layout
+    expect(action.do).toHaveBeenCalledTimes(1); // desktop layout
     expect(action.undo).toHaveBeenCalledTimes(0);
     expect(action.toggle).toHaveBeenCalledTimes(0);
 
@@ -182,7 +209,7 @@ describe("auto-widgets", () => {
 
     await window.waitFor(800);
     expect(action.do).toHaveBeenCalledTimes(0);
-    expect(action.undo).toHaveBeenCalledTimes(1); // deskop layout, no match
+    expect(action.undo).toHaveBeenCalledTimes(1); // desktop layout, no match
     expect(action.toggle).toHaveBeenCalledTimes(0);
 
     // to tablet
@@ -250,7 +277,7 @@ describe("auto-widgets", () => {
 
     await window.waitFor(800);
     expect(action.do).toHaveBeenCalledTimes(0);
-    expect(action.undo).toHaveBeenCalledTimes(1); // deskop layout, no match
+    expect(action.undo).toHaveBeenCalledTimes(1); // desktop layout, no match
     expect(action.toggle).toHaveBeenCalledTimes(0);
 
     // to mobile wide first this time

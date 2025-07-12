@@ -117,6 +117,35 @@ describe("ViewTrigger", () => {
     expect(action.undo).toHaveBeenCalledTimes(3); // TODO ideally we don't get a call here
     expect(action.toggle).toHaveBeenCalledTimes(0);
   });
+
+  test("destroy", async () => {
+    const action = {
+      do: jest.fn(),
+      undo: jest.fn(),
+      toggle: jest.fn(),
+    };
+
+    const { element, getObserver } = newElement();
+
+    const trigger = new ViewTrigger(element, [action]);
+
+    await window.waitForVW();
+    const observer = getObserver();
+
+    expect(action.do).toHaveBeenCalledTimes(1); // default initial view is at
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+
+    await trigger.destroy();
+
+    observer.trigger(element, ["above"]);
+    await window.waitForVW();
+
+    // no new calls
+    expect(action.do).toHaveBeenCalledTimes(1);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+  });
 });
 
 describe("auto-widgets", () => {

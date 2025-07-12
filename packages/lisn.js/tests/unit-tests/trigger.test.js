@@ -513,6 +513,45 @@ describe("Trigger", () => {
     expect(action.undo).toHaveBeenCalledTimes(1);
     expect(action.toggle).toHaveBeenCalledTimes(1);
   });
+
+  test("destroy", async () => {
+    const actionA = {
+      do: jest.fn(),
+      undo: jest.fn(),
+      toggle: jest.fn(),
+    };
+
+    const actionB = {
+      do: jest.fn(),
+      undo: jest.fn(),
+      toggle: jest.fn(),
+    };
+
+    const trigger = new Trigger(document.body, [actionA, actionB]);
+
+    await null; // callback is async
+
+    expect(actionA.do).toHaveBeenCalledTimes(0);
+    expect(actionA.undo).toHaveBeenCalledTimes(0);
+    expect(actionA.toggle).toHaveBeenCalledTimes(0);
+    expect(actionB.do).toHaveBeenCalledTimes(0);
+    expect(actionB.undo).toHaveBeenCalledTimes(0);
+    expect(actionB.toggle).toHaveBeenCalledTimes(0);
+
+    await trigger.destroy();
+
+    await expect(trigger.run).rejects.toThrow(/Callback has been removed/);
+    await expect(trigger.reverse).rejects.toThrow(/Callback has been removed/);
+    await expect(trigger.toggle).rejects.toThrow(/Callback has been removed/);
+
+    // no new calls
+    expect(actionA.do).toHaveBeenCalledTimes(0);
+    expect(actionA.undo).toHaveBeenCalledTimes(0);
+    expect(actionA.toggle).toHaveBeenCalledTimes(0);
+    expect(actionB.do).toHaveBeenCalledTimes(0);
+    expect(actionB.undo).toHaveBeenCalledTimes(0);
+    expect(actionB.toggle).toHaveBeenCalledTimes(0);
+  });
 });
 
 describe("Trigger.get", () => {

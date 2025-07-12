@@ -10540,9 +10540,7 @@ var LISN = (function (exports) {
         }
         toggleState = newToggleState;
         if (toggleState && once) {
-          remove(run);
-          remove(reverse);
-          remove(toggle);
+          this.destroy();
         }
       };
       const run = wrapCallback(() => {
@@ -10565,6 +10563,11 @@ var LISN = (function (exports) {
 
       // ----------
 
+      this.onDestroy(() => {
+        remove(run);
+        remove(reverse);
+        remove(toggle);
+      });
       this.run = run.invoke;
       this.reverse = reverse.invoke;
       this[S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
@@ -10989,7 +10992,7 @@ var LISN = (function (exports) {
           scrollable: config === null || config === void 0 ? void 0 : config.scrollable,
           offset
         });
-      }, newConfigValidator$4);
+      }, newConfigValidator$5);
     }
     constructor(element, config) {
       const offset = config === null || config === void 0 ? void 0 : config.offset;
@@ -11054,7 +11057,7 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const newConfigValidator$4 = element => {
+  const newConfigValidator$5 = element => {
     return {
       offsetX: (key, value) => {
         var _validateNumber;
@@ -13241,20 +13244,147 @@ var LISN = (function (exports) {
   /**
    * @module Triggers
    *
+   * @categoryDescription Input
+   * {@link CheckTrigger} allows you to run actions when the user checks a target
+   * checkbox input element, and undo those actions when they uncheck the checkbox.
+   */
+
+  /**
+   * {@link CheckTrigger} allows you to run actions when the user checks a target
+   * checkbox input element, and undo those actions when they uncheck the checkbox.
+   *
+   * -------
+   *
+   * To use with auto-widgets (HTML API), see {@link registerTrigger} for the
+   * specification.
+   *
+   * - Arguments: none
+   * - Additional trigger options: none
+   *   - `target`: A string element specification.
+   *     See {@link Utils.getReferenceElement | getReferenceElement}.
+   *
+   * @example
+   * Add classes `active` and `checked` when the user checks the checkbox,
+   * remove them when unchecked.
+   *
+   * ```html
+   * <input type="checkbox" data-lisn-on-check="@add-class=active,checked"/>
+   * ```
+   *
+   * @example
+   * As above, but using a CSS class instead of data attribute:
+   *
+   * ```html
+   * <input type="checkbox" class="lisn-on-check--@add-class=active,checked"/>
+   * ```
+   *
+   * @example
+   * Play the animations on the element each time the user checks the next
+   * element with class `checkbox` (do nothing when it's unchecked).
+   *
+   * ```html
+   * <div data-lisn-on-check="@animate +one-way +target=next.checkbox"></div>
+   * <input type="checkbox" class="checkbox"/>
+   * ```
+   *
+   * @example
+   * Add class `used` the first time the user checks the next element with class
+   * `checkbox`, and play or reverse the animations 200ms after each time the
+   * user toggles the reference checkbox.
+   *
+   * ```html
+   * <div data-lisn-on-check="@add-class=used +once ;
+   *                          @animate +delay=200 +target=next.checkbox"
+   * ></div>
+   * <input type="checkbox" class="checkbox"/>
+   * ```
+   *
+   * @example
+   * When the user checks the next element with class `checkbox` then add classes `c1`
+   * and `c2` to the element (that the trigger is defined on) and enable trigger
+   * `my-trigger` defined on this same element; undo all of that when the user unchecks
+   * the reference checkbox.
+   *
+   * ```html
+   * <div data-lisn-on-check="@add-class=c1,c2 @enable=my-trigger +target=next.checkbox"
+   *      data-lisn-on-run="@show +id=my-trigger"
+   * ></div>
+   * <input type="checkbox" class="checkbox"/>
+   * ```
+   *
+   * @example
+   * As above, but using `data-lisn-ref` attribute instead of class selector.
+   *
+   * ```html
+   * <div data-lisn-on-check="@add-class=c1,c2 @enable=my-trigger +target=next-checkbox"
+   *      data-lisn-on-run="@show +id=my-trigger"
+   * ></div>
+   * <input type="checkbox" data-lisn-ref="checkbox"/>
+   * ```
+   *
+   * @category Input
+   */
+  class CheckTrigger extends Trigger {
+    static register() {
+      registerTrigger("check", (element, args, actions, config) => new CheckTrigger(element, actions, config), newConfigValidator$4);
+    }
+
+    /**
+     * If no actions are supplied, nothing is done.
+     *
+     * @throws {@link Errors.LisnUsageError | LisnUsageError}
+     *                If the config is invalid.
+     */
+    constructor(element, actions, config = {}) {
+      super(element, actions, config);
+      this.getConfig = () => copyObject(config);
+      if (!lengthOf(actions)) {
+        return;
+      }
+      const target = targetOf(config) || element;
+      if (!isInstanceOf(target, HTMLInputElement)) {
+        return;
+      }
+      const onToggle = () => target.checked ? this.run() : this.reverse();
+      addEventListenerTo(target, "change", onToggle);
+      this.onDestroy(() => {
+        removeEventListenerFrom(target, "change", onToggle);
+      });
+    }
+  }
+
+  /**
+   * @category Input
+   * @interface
+   */
+
+  // --------------------
+
+  const newConfigValidator$4 = element => {
+    return {
+      target: (key, value) => {
+        var _ref;
+        return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
+      }
+    };
+  };
+
+  /**
+   * @module Triggers
+   *
    * @categoryDescription Pointer
    * {@link ClickTrigger} allows you to run actions when a user clicks a target
-   * element (first time and every other time, i.e. odd number of click), and
-   * undo them when a user clicks the target element again (or every even number
-   * of clicks). It always acts as a toggle.
+   * element (first time and every other time, i.e. odd number of click), and undo
+   * those actions when a user clicks the target element again (or every even
+   * number of clicks). It always acts as a toggle.
    *
    * {@link PressTrigger} allows you to run actions when the user presses and
-   * holds a pointing device (or their finger) on a target element, and undo
-   * those actions when they release their pointing device or lift their finger
-   * off.
+   * holds a pointing device (or their finger) on a target element, and undo those
+   * actions when they release their pointing device or lift their finger off.
    *
-   * {@link HoverTrigger} allows you to run actions when the user hovers overs
-   * a target element, and undo those actions when their pointing device moves
-   * off the target. On touch devices it acts just like {@link PressTrigger}.
+   * {@link HoverTrigger} allows you to run actions when the user hovers overs a
+   * target element, and undo those actions when their pointing device moves off
+   * the target. On touch devices it acts just like {@link PressTrigger}.
    */
 
   /**
@@ -13300,9 +13430,9 @@ var LISN = (function (exports) {
    * ```
    *
    * @example
-   * Add class `visited` the first time the user clicks the element, and
-   * play or reverse the animations on the element 1000ms each time the
-   * user clicks it.
+   * Add class `visited` the first time the user clicks the element, and play or
+   * reverse the animations on the element 1000ms after each time the user clicks
+   * it.
    *
    * ```html
    * <div data-lisn-on-click="@add-class=visited +once ;
@@ -14219,6 +14349,7 @@ var LISN = (function (exports) {
 
   var index = /*#__PURE__*/Object.freeze({
     __proto__: null,
+    CheckTrigger: CheckTrigger,
     ClickTrigger: ClickTrigger,
     HoverTrigger: HoverTrigger,
     LayoutTrigger: LayoutTrigger,
@@ -14262,6 +14393,7 @@ var LISN = (function (exports) {
   actions.Run.register();
   LayoutTrigger.register();
   LoadTrigger.register();
+  CheckTrigger.register();
   ClickTrigger.register();
   PressTrigger.register();
   HoverTrigger.register();

@@ -170,13 +170,6 @@ export class Trigger extends Widget {
     // Used for determining delays only.
     let toggleState = false;
 
-    const removeCallbacks = () => {
-      debug: logger?.debug5("Removing callbacks");
-      MH.remove(run);
-      MH.remove(reverse);
-      MH.remove(toggle);
-    };
-
     const callActions = async (
       delay: number,
       callFn: (action: Action) => void,
@@ -212,7 +205,7 @@ export class Trigger extends Widget {
       toggleState = newToggleState;
 
       if (toggleState && once) {
-        removeCallbacks();
+        this.destroy();
       }
     };
 
@@ -250,7 +243,12 @@ export class Trigger extends Widget {
 
     // ----------
 
-    this.onDestroy(removeCallbacks);
+    this.onDestroy(() => {
+      debug: logger?.debug5("Removing callbacks");
+      MH.remove(run);
+      MH.remove(reverse);
+      MH.remove(toggle);
+    });
 
     this.run = run.invoke;
     this.reverse = reverse.invoke;

@@ -6,18 +6,17 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  *
  * @categoryDescription Pointer
  * {@link ClickTrigger} allows you to run actions when a user clicks a target
- * element (first time and every other time, i.e. odd number of click), and
- * undo them when a user clicks the target element again (or every even number
- * of clicks). It always acts as a toggle.
+ * element (first time and every other time, i.e. odd number of click), and undo
+ * those actions when a user clicks the target element again (or every even
+ * number of clicks). It always acts as a toggle.
  *
  * {@link PressTrigger} allows you to run actions when the user presses and
- * holds a pointing device (or their finger) on a target element, and undo
- * those actions when they release their pointing device or lift their finger
- * off.
+ * holds a pointing device (or their finger) on a target element, and undo those
+ * actions when they release their pointing device or lift their finger off.
  *
- * {@link HoverTrigger} allows you to run actions when the user hovers overs
- * a target element, and undo those actions when their pointing device moves
- * off the target. On touch devices it acts just like {@link PressTrigger}.
+ * {@link HoverTrigger} allows you to run actions when the user hovers overs a
+ * target element, and undo those actions when their pointing device moves off
+ * the target. On touch devices it acts just like {@link PressTrigger}.
  */
 
 import * as MC from "../globals/minification-constants.js";
@@ -70,9 +69,9 @@ import { registerTrigger, Trigger } from "./trigger.js";
  * ```
  *
  * @example
- * Add class `visited` the first time the user clicks the element, and
- * play or reverse the animations on the element 1000ms each time the
- * user clicks it.
+ * Add class `visited` the first time the user clicks the element, and play or
+ * reverse the animations on the element 1000ms after each time the user clicks
+ * it.
  *
  * ```html
  * <div data-lisn-on-click="@add-class=visited +once ;

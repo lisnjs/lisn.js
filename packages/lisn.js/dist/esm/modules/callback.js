@@ -107,8 +107,8 @@ export class Callback {
     const onRemove = MH.newSet();
     this.isRemoved = () => isRemoved;
     this.remove = () => {
-      debug: logger === null || logger === void 0 || logger.debug8("Removing");
       if (!isRemoved) {
+        debug: logger === null || logger === void 0 || logger.debug8("Removing");
         isRemoved = true;
         for (const rmFn of onRemove) {
           rmFn();

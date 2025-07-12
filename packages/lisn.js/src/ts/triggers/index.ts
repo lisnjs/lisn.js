@@ -4,6 +4,7 @@
  * @internal
  */
 
+export * from "@lisn/triggers/check-trigger";
 export * from "@lisn/triggers/pointer-trigger";
 export * from "@lisn/triggers/layout-trigger";
 export * from "@lisn/triggers/load-trigger";

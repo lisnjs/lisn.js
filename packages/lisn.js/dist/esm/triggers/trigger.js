@@ -165,9 +165,7 @@ export class Trigger extends Widget {
       }
       toggleState = newToggleState;
       if (toggleState && once) {
-        MH.remove(run);
-        MH.remove(reverse);
-        MH.remove(toggle);
+        this.destroy();
       }
     };
     const run = wrapCallback(() => {
@@ -190,6 +188,12 @@ export class Trigger extends Widget {
 
     // ----------
 
+    this.onDestroy(() => {
+      debug: logger === null || logger === void 0 || logger.debug5("Removing callbacks");
+      MH.remove(run);
+      MH.remove(reverse);
+      MH.remove(toggle);
+    });
     this.run = run.invoke;
     this.reverse = reverse.invoke;
     this[MC.S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;

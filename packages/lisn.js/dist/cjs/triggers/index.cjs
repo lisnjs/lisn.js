@@ -3,6 +3,17 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+var _checkTrigger = require("./check-trigger.cjs");
+Object.keys(_checkTrigger).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _checkTrigger[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _checkTrigger[key];
+    }
+  });
+});
 var _pointerTrigger = require("./pointer-trigger.cjs");
 Object.keys(_pointerTrigger).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;

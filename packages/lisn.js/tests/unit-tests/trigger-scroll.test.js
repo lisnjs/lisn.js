@@ -272,7 +272,7 @@ describe("auto-widgets", () => {
     const element = document.createElement("div");
     element.dataset.lisnOnScroll =
       `up @${actionName} ` +
-      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once`;
+      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once=false`;
     document.body.append(element);
 
     await window.waitForMO();
@@ -286,7 +286,7 @@ describe("auto-widgets", () => {
       delay: 10,
       doDelay: 15,
       undoDelay: 20,
-      once: true,
+      once: false,
     });
   });
 
@@ -294,7 +294,7 @@ describe("auto-widgets", () => {
     const element = document.createElement("div");
     element.dataset.lisnOnScroll =
       `up @${actionName} ` +
-      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once +threshold=50 +scrollable=#${scrollable.id}`;
+      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once=false +threshold=50 +scrollable=#${scrollable.id}`;
     document.body.append(element);
 
     await window.waitForMO();
@@ -310,7 +310,7 @@ describe("auto-widgets", () => {
       delay: 10,
       doDelay: 15,
       undoDelay: 20,
-      once: true,
+      once: false,
     });
   });
 });

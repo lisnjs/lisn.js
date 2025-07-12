@@ -36,7 +36,8 @@ describe("auto-widgets", () => {
   test("basic", async () => {
     const element = document.createElement("div");
     element.dataset.lisnOnLoad =
-      `@${actionName} ` + `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once`;
+      `@${actionName} ` +
+      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once=false`;
     document.body.append(element);
 
     await window.waitForMO();
@@ -49,7 +50,7 @@ describe("auto-widgets", () => {
       delay: 10,
       doDelay: 15,
       undoDelay: 20,
-      once: true,
+      once: false,
     });
   });
 });

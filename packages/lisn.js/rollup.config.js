@@ -11,7 +11,7 @@ const customResolver = resolve({
 });
 
 const srcRoot = "src/ts";
-const outDir = "../@lisn.js/bundles/";
+const outDir = "../@lisn.js/bundles";
 
 import pkgJson from "./package.json" with { type: "json" };
 const banner = `/*!

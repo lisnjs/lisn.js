@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.link.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/lisn/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .msg {
+        height: 20px;
+        color: lightgrey;
+        border: solid 1px black;
+      }
+
+      .msg:has(.active) {
+        color: black;
+      }
+
+      .box {
+        height: 200px;
+        width: 200px;
+        background: lightblue;
+      }
+
+      .box.active {
+        background: lightyellow;
+      }
+    </style>
+  </head>
+  <body>
+    <label class="msg">
+      <input
+        type="checkbox"
+        id="click"
+        data-lisn-on-check="@add-class:active +once"
+      />
+      Toggle me </label
+    ><br />
+
+    <label>
+      <input type="checkbox" class="checkbox" />
+      Toggle me to toggle activate next box (via class)
+    </label>
+    <div
+      class="box lisn-on-check--@add-class:active+once+target=prev.checkbox"
+    ></div>
+
+    <label>
+      <input type="checkbox" class="checkbox" />
+      Toggle me to toggle activate next box (via attr)
+    </label>
+    <div
+      class="box"
+      data-lisn-on-check="@add-class:active +once +target=prev.checkbox"
+    ></div>
+  </body>
+</html>

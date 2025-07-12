@@ -85,7 +85,7 @@ export class LayoutWatcher {
    * Creates a new instance of LayoutWatcher with the given
    * {@link LayoutWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new LayoutWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -96,7 +96,7 @@ export class LayoutWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -308,6 +308,7 @@ const VAR_BORDER_HEIGHT = MH.prefixCssJsVar("border-height");
 const PREFIX_DEVICE = MH.prefixName("device");
 const PREFIX_ASPECTR = MH.prefixName("aspect-ratio");
 const getConfig = config => {
+  var _config$root;
   const deviceBreakpoints = MH.copyObject(settings.deviceBreakpoints);
   if (config !== null && config !== void 0 && config.deviceBreakpoints) {
     copyExistingKeys(config.deviceBreakpoints, deviceBreakpoints);
@@ -317,7 +318,7 @@ const getConfig = config => {
     copyExistingKeys(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
   }
   return {
-    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
     _deviceBreakpoints: deviceBreakpoints,
     _aspectRatioBreakpoints: aspectRatioBreakpoints
   };

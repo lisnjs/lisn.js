@@ -6,7 +6,6 @@
 
 import * as MH from "../globals/minification-helpers.js";
 import { roundNumTo } from "./math.js";
-export const isTouchScreen = () => MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
 export const copyExistingKeys = (fromObj, toObj) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {

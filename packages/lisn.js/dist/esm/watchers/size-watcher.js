@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { setNumericStyleProps } from "../utils/css-alter.js";
+import { setNumericStyleJsVars } from "../utils/css-alter.js";
 import { logError } from "../utils/log.js";
 import { toNonNegNum } from "../utils/math.js";
 import { isValidBox, isValidDimension, getEntryBorderBox, getEntryContentBox, tryGetViewportOverlay, fetchViewportOverlay } from "../utils/size.js";
@@ -31,7 +31,7 @@ export class SizeWatcher {
    * Creates a new instance of SizeWatcher with the given
    * {@link SizeWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new SizeWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -42,7 +42,7 @@ export class SizeWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances.get(configStrKey);
@@ -219,7 +219,7 @@ export class SizeWatcher {
     // ----------
 
     const setupOnResize = async (handler, userOptions) => {
-      const options = await fetchOptions(userOptions || {});
+      const options = await fetchOptions(userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const element = options._element;
 
       // Don't await for the size data before creating the callback so that
@@ -355,6 +355,7 @@ export class SizeWatcher {
 const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = MH.newMap();
 const getConfig = config => {
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -407,7 +408,7 @@ const setSizeCssProps = (element, sizeData) => {
     contentWidth: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[MC.S_WIDTH],
     contentHeight: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[MC.S_HEIGHT]
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: prefix
   }); // don't await here
 };

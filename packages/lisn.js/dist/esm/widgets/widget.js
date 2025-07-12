@@ -58,8 +58,8 @@ export class Widget {
    * Retrieve an existing widget by element and ID.
    */
   static get(element, id) {
-    var _instances$get;
-    return ((_instances$get = instances.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) || null;
+    var _instances$get$get, _instances$get;
+    return (_instances$get$get = (_instances$get = instances.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) !== null && _instances$get$get !== void 0 ? _instances$get$get : null;
   }
 
   /**
@@ -219,26 +219,25 @@ export class Widget {
  * **IMPORTANT:** If a widget by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name       The name of the widget. Should be in kebab-case.
- * @param {} newWidget  Called for every element matching the widget selector.
- * @param {} configValidator
- *                      A validator object, or a function that returns such an
- *                      object, for all options supported by the widget. If
- *                      given, then the `newWidget` function will also be
- *                      passed a configuration object constructed from the
- *                      element's data attribute.
- * @param {} [options.selector]
- *                      The selector to match elements for. If not given, then
- *                      uses a default value of `[data-lisn-<name>], .lisn-<name>`
- * @param {} [options.supportsMultiple]
- *                      If true, and if `configValidator` is given, then the
- *                      value of the element's widget specific data attribute
- *                      will be split on ";" and each one parsed individually
- *                      as a configuration. Then the `newWidget` function will
- *                      be called once for each configuration.
+ * @param name      The name of the widget. Should be in kebab-case.
+ * @param newWidget Called for every element matching the widget selector.
+ * @param configValidator
+ *                  A validator object, or a function that returns such an
+ *                  object, for all options supported by the widget. If
+ *                  given, then the `newWidget` function will also be
+ *                  passed a configuration object constructed from the
+ *                  element's data attribute.
+ * @param [options.selector]
+ *                  The selector to match elements for. If not given, then
+ *                  uses a default value of `[data-lisn-<name>], .lisn-<name>`
+ * @param [options.supportsMultiple]
+ *                  If true, and if `configValidator` is given, then the
+ *                  value of the element's widget specific data attribute
+ *                  will be split on ";" and each one parsed individually
+ *                  as a configuration. Then the `newWidget` function will
+ *                  be called once for each configuration.
  */
 export const registerWidget = async (name, newWidget, configValidator, options) => {
-  var _options$selector;
   if (registeredWidgets.has(name)) {
     return;
   }
@@ -248,7 +247,7 @@ export const registerWidget = async (name, newWidget, configValidator, options) 
   // straight after loading LISN.js
   await waitForInteractive();
   const prefixedName = MH.prefixName(name);
-  const selector = (_options$selector = options === null || options === void 0 ? void 0 : options.selector) !== null && _options$selector !== void 0 ? _options$selector : getDefaultWidgetSelector(prefixedName);
+  const selector = (options === null || options === void 0 ? void 0 : options.selector) || getDefaultWidgetSelector(prefixedName);
   if (settings.autoWidgets) {
     const domWatcher = DOMWatcher.reuse();
     domWatcher.onMutation(async operation => {

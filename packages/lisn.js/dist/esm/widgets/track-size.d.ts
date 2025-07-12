@@ -28,10 +28,38 @@ import { Widget } from "../widgets/widget.js";
  * ```html
  * <div class="lisn-track-size"></div>
  * ```
+ *
+ * @example
+ * As above but with custom options
+ *
+ * ```html
+ * <div data-lisn-track-size="threshold=0 | debounce-window=0"></div>
+ * ```
  */
 export declare class TrackSize extends Widget {
     static get(element: Element): TrackSize | null;
     static register(): void;
-    constructor(element: Element);
+    constructor(element: Element, config?: TrackSizeConfig);
 }
+/**
+ * @interface
+ *
+ * @since v1.2.0
+ */
+export type TrackSizeConfig = {
+    /**
+     * Corresponds to
+     * {@link Watchers/SizeWatcher.OnResizeOptions.threshold | OnResizeOptions.threshold}.
+     *
+     * @defaultValue undefined // SizeWatcher default
+     */
+    threshold?: number;
+    /**
+     * Corresponds to
+     * {@link Watchers/SizeWatcher.OnResizeOptions.debounceWindow | OnResizeOptions.debounceWindow}.
+     *
+     * @defaultValue undefined // SizeWatcher default
+     */
+    debounceWindow?: number;
+};
 //# sourceMappingURL=track-size.d.ts.map

@@ -24,8 +24,7 @@ var _viewWatcher = require("../watchers/view-watcher.cjs");
 var _widget = require("./widget.cjs");
 var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -46,7 +45,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * "toggle" elements which correspond one-to-one to each page. Switches go to
  * the given page and toggles toggle the enabled/disabled state of the page.
  *
- * **IMPORTANT:** Unless the {@link PagerStyle.style} is set to "carousel", the
+ * **IMPORTANT:** Unless the {@link PagerConfig.style} is set to "carousel", the
  * page elements will be positioned absolutely, and therefore the pager likely
  * needs to have an explicit height. If you enable
  * {@link PagerConfig.fullscreen}, then the element will get `height: 100vh`
@@ -205,7 +204,7 @@ class Pager extends _widget.Widget {
    *                page is not a descendant of the main pager element.
    */
   constructor(element, config) {
-    var _Pager$get;
+    var _Pager$get, _config$nextSwitch, _config$prevSwitch;
     const destroyPromise = (_Pager$get = Pager.get(element)) === null || _Pager$get === void 0 ? void 0 : _Pager$get.destroy();
     super(element, {
       id: DUMMY_ID
@@ -304,8 +303,8 @@ class Pager extends _widget.Widget {
     const toggles = (config === null || config === void 0 ? void 0 : config.toggles) || [];
     const switches = (config === null || config === void 0 ? void 0 : config.switches) || [];
     const nextPrevSwitch = {
-      _next: (config === null || config === void 0 ? void 0 : config.nextSwitch) || null,
-      _prev: (config === null || config === void 0 ? void 0 : config.prevSwitch) || null
+      _next: (_config$nextSwitch = config === null || config === void 0 ? void 0 : config.nextSwitch) !== null && _config$nextSwitch !== void 0 ? _config$nextSwitch : null,
+      _prev: (_config$prevSwitch = config === null || config === void 0 ? void 0 : config.prevSwitch) !== null && _config$prevSwitch !== void 0 ? _config$prevSwitch : null
     };
     const pageSelector = (0, _widget.getDefaultWidgetSelector)(PREFIX_PAGE__FOR_SELECT);
     const toggleSelector = (0, _widget.getDefaultWidgetSelector)(PREFIX_TOGGLE__FOR_SELECT);
@@ -489,7 +488,7 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
   return (0, _cssAlter.setBooleanData)(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
 };
 const init = (widget, element, components, config, methods) => {
-  var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
+  var _config$initialPage, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
   const logger = _debug.default ? new _debug.default.Logger({
     name: `Pager-${(0, _text.formatAsString)(element)}`,
     logAtCreation: config
@@ -499,9 +498,9 @@ const init = (widget, element, components, config, methods) => {
   const switches = components._switches;
   const nextSwitch = components._nextPrevSwitch._next;
   const prevSwitch = components._nextPrevSwitch._prev;
-  const pageContainer = (_pages$ = pages[0]) === null || _pages$ === void 0 ? void 0 : _pages$.parentElement;
+  const pageContainer = MH.parentOf(pages[0]);
   let initialPage = (0, _math.toInt)((_config$initialPage = config === null || config === void 0 ? void 0 : config.initialPage) !== null && _config$initialPage !== void 0 ? _config$initialPage : 1);
-  const pagerStyle = (_config$style = config === null || config === void 0 ? void 0 : config.style) !== null && _config$style !== void 0 ? _config$style : "slider";
+  const pagerStyle = (config === null || config === void 0 ? void 0 : config.style) || "slider";
   const isCarousel = pagerStyle === "carousel";
   const minPageSize = (_config$pageSize = config === null || config === void 0 ? void 0 : config.pageSize) !== null && _config$pageSize !== void 0 ? _config$pageSize : 300;
   const enablePeek = (_config$peek = config === null || config === void 0 ? void 0 : config.peek) !== null && _config$peek !== void 0 ? _config$peek : false;
@@ -538,7 +537,7 @@ const init = (widget, element, components, config, methods) => {
         // add the "peek" will make it smaller than the min.
         numVisiblePages = getNumVisiblePages(true);
       }
-      logger === null || logger === void 0 || logger.debug8("Pager resized", {
+      debug: logger === null || logger === void 0 || logger.debug8("Pager resized", {
         gap,
         containerSize,
         numVisiblePages
@@ -568,7 +567,7 @@ const init = (widget, element, components, config, methods) => {
     }
     const numVisibleGaps = !hasPeek ? numVisiblePages - 1 : isAtEdge || numVisiblePages % 2 === 0 ? numVisiblePages : numVisiblePages + 1;
     const fractionalNumVisiblePages = hasPeek ? numVisiblePages + 0.5 : numVisiblePages;
-    logger === null || logger === void 0 || logger.debug8("Carousel calculations", {
+    debug: logger === null || logger === void 0 || logger.debug8("Carousel calculations", {
       currPageNum,
       prevPageNum,
       visibleStart,

@@ -25,8 +25,20 @@ import { Widget } from "../widgets/widget.cjs";
  * possible (before the scrollbar widget has time to initialize.
  *
  * **IMPORTANT:** If you are using the Scrollbar on an element other than the
- * main scrollable element, it's highly recommended to enable (it is enabled by
- * default) {@link settings.contentWrappingAllowed}.
+ * main scrollable element, it's highly recommended to
+ * {@link settings.contentWrappingAllowed | enable content wrapping} (it is
+ * enabled by default). Otherwise, Scrollbar will rely on position: sticky. If
+ * you want to instead manually create the wrappers yourself, ensure your
+ * structure is as follows:
+ * ```html
+ * <div class="scrollable"><!-- Element you instantiate as Scrollbar -->
+ *   <div class="lisn-scrollbar__content"><!-- Optional wrapper to avoid relying on sticky -->
+ *     <div class="lisn-wrapper"><!-- Optional wrapper to enable efficient scroll tracking -->
+ *       <!-- YOUR CONTENT -->
+ *     </div>
+ *   </div>
+ * </div>
+ * ```
  *
  * **IMPORTANT:** You should not instantiate more than one {@link Scrollbar}
  * widget on a given element. Use {@link Scrollbar.get} to get an existing
@@ -60,8 +72,8 @@ import { Widget } from "../widgets/widget.cjs";
  * in order to modify the configuration of the automatically created widget.
  *
  * @example
- * This will create custom scrollbars for the main scrolling element
- * (see {@link settings.mainScrollableElementSelector}).
+ * This will create custom scrollbars for
+ * {@link settings.mainScrollableElementSelector | the main scrolling element}.
  *
  * This will work even if {@link settings.autoWidgets}) is false
  *
@@ -111,9 +123,13 @@ import { Widget } from "../widgets/widget.cjs";
  */
 export declare class Scrollbar extends Widget {
     /**
-     * Returns the actual scrollable element created by us which will be a
-     * descendant of the original element passed to the constructor (unless
-     * {@link settings.contentWrappingAllowed} is false).
+     * Returns the actual scrollable element us which, unless the scrollable you
+     * passed to the constructor is the
+     * {@link settings.mainScrollableElementSelector | the main scrolling element}
+     * or unless
+     * {@link settings.contentWrappingAllowed | you've disabled content wrapping},
+     * this will be a new element created by us that is a descendant of the
+     * original element you passed.
      */
     readonly getScrollable: () => Element;
     /**
@@ -122,10 +138,11 @@ export declare class Scrollbar extends Widget {
      */
     static get(scrollable?: Element): Scrollbar | null;
     /**
-     * Enables scrollbars on the {@link settings.mainScrollableElementSelector}.
+     * Enables scrollbars on the
+     * {@link settings.mainScrollableElementSelector | the main scrolling element}.
      *
      * **NOTE:** It returns a Promise to a widget because it will wait for the
-     * main element to be present in the DOM if not already.
+     * main scrollable element to be present in the DOM if not already.
      */
     static enableMain(config?: ScrollbarConfig): Promise<Scrollbar>;
     static register(): void;
@@ -140,22 +157,27 @@ export declare class Scrollbar extends Widget {
  */
 export type ScrollbarConfig = {
     /**
-     * The DOM ID of the scrollable element. Will result in the scrollable wrapper
-     * element that's created by us getting this ID.
+     * The DOM ID to set on the
+     * {@link Scrollbar.getScrollable | scrollable element}. Will result in the
+     * scrollable element getting this ID. This is useful if the scrollable is a
+     * wrapper created by us and you want it to be assigned an ID.
      *
-     * **IMPORTANT:** If you've disabled {@link settings.contentWrappingAllowed},
+     * **IMPORTANT:** If the scrollable is the
+     * {@link settings.mainScrollableElementSelector | the main scrolling element}
+     * or {@link settings.contentWrappingAllowed | if you've disabled content wrapping},
      * then the scrollable element provided as the widget element will _not_ have
      * its content wrapped and will remain the actual scrollable. In this case,
-     * it's ID will be set to this, so if it already has an ID, it will be
+     * its ID will be set to this, so if it already has an ID, it will be
      * overridden with this value.
      *
      * @defaultValue undefined
      */
     id?: string;
     /**
-     * A class name or a list of class names of the scrollable element. Will
-     * result in the scrollable wrapper element that's created by us getting
-     * these classes.
+     * A class name or a list of class names to set on the
+     * {@link Scrollbar.getScrollable | scrollable element}. Will result in the
+     * scrollable element getting these classes. This is useful if the scrollable
+     * is a wrapper created by us and you want it to be assigned classes.
      *
      * See explanation for {@link id}.
      *

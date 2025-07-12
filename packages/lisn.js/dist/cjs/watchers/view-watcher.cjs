@@ -24,8 +24,7 @@ var _scrollWatcher = require("./scroll-watcher.cjs");
 var _sizeWatcher = require("./size-watcher.cjs");
 var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -46,7 +45,7 @@ class ViewWatcher {
    * Creates a new instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -57,7 +56,7 @@ class ViewWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig(config);
     const configStrKey = (0, _text.objToStrKey)((0, _misc.omitKeys)(myConfig, {
@@ -160,9 +159,9 @@ class ViewWatcher {
      * Get the current view relative to the target. By default, it will
      * {@link waitForMeasureTime} and so will be delayed by one frame.
      *
-     * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-     *                    this only when doing realtime scroll-based animations
-     *                    as it may cause a forced layout.
+     * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+     *                 this only when doing realtime scroll-based animations
+     *                 as it may cause a forced layout.
      */
     _defineProperty(this, "fetchCurrentView", void 0);
     if (key !== CONSTRUCTOR_KEY) {
@@ -498,11 +497,11 @@ exports.ViewWatcher = ViewWatcher;
 const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = (0, _xMap.newXMap)(() => MH.newMap());
 const getConfig = config => {
-  var _config$rootMargin;
+  var _config$root, _config$rootMargin, _config$threshold;
   return {
-    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
     _rootMargin: (_config$rootMargin = config === null || config === void 0 ? void 0 : config.rootMargin) !== null && _config$rootMargin !== void 0 ? _config$rootMargin : "0px 0px 0px 0px",
-    _threshold: (config === null || config === void 0 ? void 0 : config.threshold) || 0
+    _threshold: (_config$threshold = config === null || config === void 0 ? void 0 : config.threshold) !== null && _config$threshold !== void 0 ? _config$threshold : 0
   };
 };
 const TRACK_REGULAR = 1; // only entering/leaving root
@@ -715,7 +714,8 @@ const fetchViews = async (intersection, realtime, useScrollingAncestor) => {
   return [MC.S_AT];
 };
 const setViewCssProps = (element, viewData) => {
-  const relative = (viewData === null || viewData === void 0 ? void 0 : viewData.relative) || {};
+  var _viewData$relative;
+  const relative = (_viewData$relative = viewData === null || viewData === void 0 ? void 0 : viewData.relative) !== null && _viewData$relative !== void 0 ? _viewData$relative : {};
   const props = {
     top: relative.top,
     bottom: relative.bottom,
@@ -726,7 +726,7 @@ const setViewCssProps = (element, viewData) => {
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle
   };
-  (0, _cssAlter.setNumericStyleProps)(element, props, {
+  (0, _cssAlter.setNumericStyleJsVars)(element, props, {
     _prefix: "r-",
     _numDecimal: 4
   }); // don't await here

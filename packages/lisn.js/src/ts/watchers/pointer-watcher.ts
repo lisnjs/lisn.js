@@ -63,7 +63,7 @@ export class PointerWatcher {
    * Creates a new instance of PointerWatcher with the given
    * {@link PointerWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: PointerWatcherConfig = {}) {
+  static create(config?: PointerWatcherConfig) {
     return new PointerWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -74,7 +74,7 @@ export class PointerWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: PointerWatcherConfig = {}) {
+  static reuse(config?: PointerWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(myConfig);
 

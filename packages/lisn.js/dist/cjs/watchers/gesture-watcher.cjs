@@ -23,8 +23,7 @@ var _callback2 = require("../modules/callback.cjs");
 var _xMap = require("../modules/x-map.cjs");
 var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -44,7 +43,7 @@ class GestureWatcher {
    * Creates a new instance of GestureWatcher with the given
    * {@link GestureWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new GestureWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -55,7 +54,7 @@ class GestureWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig(config);
     const configStrKey = (0, _text.objToStrKey)(myConfig);
     let instance = instances.get(configStrKey);
@@ -148,10 +147,10 @@ class GestureWatcher {
     // async for consistency with other watchers and future compatibility in
     // case of change needed
     const setupOnGesture = async (target, handler, userOptions) => {
-      const options = getOptions(config, userOptions || {});
+      const options = getOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       createCallback(target, handler, options);
-      for (const device of options._devices || _gesture.DEVICES) {
-        var _allListeners$get;
+      for (const device of (_options$_devices = options._devices) !== null && _options$_devices !== void 0 ? _options$_devices : _gesture.DEVICES) {
+        var _options$_devices, _allListeners$get;
         let listeners = (_allListeners$get = allListeners.get(target)) === null || _allListeners$get === void 0 ? void 0 : _allListeners$get.get(device);
         if (listeners) {
           debug: logger === null || logger === void 0 || logger.debug4(`Listeners already added for ${device}`, target, options);
@@ -172,8 +171,8 @@ class GestureWatcher {
     const deleteHandler = (target, handler, options) => {
       MH.deleteKey(allCallbacks.get(target), handler);
       allCallbacks.prune(target);
-      for (const device of options._devices || _gesture.DEVICES) {
-        var _allListeners$get2;
+      for (const device of (_options$_devices2 = options._devices) !== null && _options$_devices2 !== void 0 ? _options$_devices2 : _gesture.DEVICES) {
+        var _options$_devices2, _allListeners$get2;
         const listeners = (_allListeners$get2 = allListeners.get(target)) === null || _allListeners$get2 === void 0 ? void 0 : _allListeners$get2.get(device);
         if (listeners) {
           listeners._nCallbacks--;
@@ -192,8 +191,8 @@ class GestureWatcher {
     // ----------
 
     const invokeCallbacks = (target, device, event) => {
-      var _allListeners$get3;
-      const preventDefault = (((_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) || 0) > 0;
+      var _allListeners$get$get, _allListeners$get3;
+      const preventDefault = ((_allListeners$get$get = (_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) !== null && _allListeners$get$get !== void 0 ? _allListeners$get$get : 0) > 0;
       let isTerminated = false;
       for (const {
         _wrapper
@@ -343,6 +342,7 @@ const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = MH.newMap();
 const getConfig = config => {
   var _config$preventDefaul, _config$naturalTouchS, _config$touchDragHold, _config$touchDragNumF;
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _preventDefault: (_config$preventDefaul = config.preventDefault) !== null && _config$preventDefaul !== void 0 ? _config$preventDefaul : true,
     _debounceWindow: (0, _math.toNonNegNum)(config[MC.S_DEBOUNCE_WINDOW], 150),
@@ -386,14 +386,14 @@ const fragmentGetters = {
   [MC.S_WHEEL]: _gestureWheel.getWheelGestureFragment
 };
 const getOptions = (config, options) => {
-  var _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
+  var _validateStrList, _validateStrList2, _validateStrList3, _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
   const debounceWindow = (0, _math.toNonNegNum)(options[MC.S_DEBOUNCE_WINDOW], config._debounceWindow // watcher is never debounced, so apply default here
   );
   const deltaThreshold = (0, _math.toNonNegNum)(options.deltaThreshold, config._deltaThreshold);
   return {
-    _devices: (0, _validation.validateStrList)("devices", options.devices, _gesture.isValidInputDevice) || null,
-    _directions: (0, _validation.validateStrList)("directions", options.directions, _directions.isValidDirection) || null,
-    _intents: (0, _validation.validateStrList)("intents", options.intents, _gesture.isValidIntent) || null,
+    _devices: (_validateStrList = (0, _validation.validateStrList)("devices", options.devices, _gesture.isValidInputDevice)) !== null && _validateStrList !== void 0 ? _validateStrList : null,
+    _directions: (_validateStrList2 = (0, _validation.validateStrList)("directions", options.directions, _directions.isValidDirection)) !== null && _validateStrList2 !== void 0 ? _validateStrList2 : null,
+    _intents: (_validateStrList3 = (0, _validation.validateStrList)("intents", options.intents, _gesture.isValidIntent)) !== null && _validateStrList3 !== void 0 ? _validateStrList3 : null,
     _minTotalDeltaX: (_options$minTotalDelt = options.minTotalDeltaX) !== null && _options$minTotalDelt !== void 0 ? _options$minTotalDelt : null,
     _maxTotalDeltaX: (_options$maxTotalDelt = options.maxTotalDeltaX) !== null && _options$maxTotalDelt !== void 0 ? _options$maxTotalDelt : null,
     _minTotalDeltaY: (_options$minTotalDelt2 = options.minTotalDeltaY) !== null && _options$minTotalDelt2 !== void 0 ? _options$minTotalDelt2 : null,
@@ -576,14 +576,14 @@ const setGestureCssProps = (target, data) => {
   }
   const prefix = `${intent}-`;
   if (intent === MC.S_ZOOM) {
-    (0, _cssAlter.setNumericStyleProps)(target, {
+    (0, _cssAlter.setNumericStyleJsVars)(target, {
       deltaZ: data.totalDeltaZ
     }, {
       _prefix: prefix,
       _numDecimal: 2
     }); // don't await here
   } else {
-    (0, _cssAlter.setNumericStyleProps)(target, {
+    (0, _cssAlter.setNumericStyleJsVars)(target, {
       deltaX: data.totalDeltaX,
       deltaY: data.totalDeltaY
     }, {

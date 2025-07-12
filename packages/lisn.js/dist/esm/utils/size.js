@@ -29,11 +29,11 @@ export const getEntryContentBox = entry => {
  * Returns the border box size of the given
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry | ResizeObserverEntry}.
  *
- * @param {} fallbackToContent If the entry does not contain border box
- *                             measurements (depending on browser), then fall
- *                             back to using the content box size. Otherwise
- *                             (by default) will return `NaN` values for width
- *                             and height.
+ * @param fallbackToContent If the entry does not contain border box
+ *                          measurements (depending on browser), then fall back
+ *                          to using the content box size. Otherwise (by
+ *                          default) will return `NaN` values for width and
+ *                          height.
  *
  * @category Size measurements
  */
@@ -86,14 +86,14 @@ export const fetchViewportOverlay = async () => {
  * @internal
  */
 export const fetchViewportSize = async (realtime = false) => {
-  var _MH$getDocScrollingEl;
+  var _MH$getDocScrollingEl, _root$clientWidth, _root$clientHeight;
   if (!realtime) {
     await waitForMeasureTime();
   }
   const root = MH.hasDOM() ? (_MH$getDocScrollingEl = MH.getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : MH.getBody() : null;
   return {
-    [MC.S_WIDTH]: (root === null || root === void 0 ? void 0 : root.clientWidth) || 0,
-    [MC.S_HEIGHT]: (root === null || root === void 0 ? void 0 : root.clientHeight) || 0
+    [MC.S_WIDTH]: (_root$clientWidth = root === null || root === void 0 ? void 0 : root.clientWidth) !== null && _root$clientWidth !== void 0 ? _root$clientWidth : 0,
+    [MC.S_HEIGHT]: (_root$clientHeight = root === null || root === void 0 ? void 0 : root.clientHeight) !== null && _root$clientHeight !== void 0 ? _root$clientHeight : 0
   };
 };
 

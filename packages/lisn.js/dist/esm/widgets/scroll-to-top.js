@@ -4,9 +4,11 @@
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { showElement, hideElement, displayElement, undisplayElement, disableInitialTransition, addClasses, removeClasses, setData, delData } from "../utils/css-alter.js";
-import { moveElement, insertArrow } from "../utils/dom-alter.js";
+import { showElement, hideElement, displayElement, displayElementNow, undisplayElement, disableInitialTransition, addClassesNow, removeClassesNow, setDataNow, setBooleanDataNow, delDataNow, getParentFlexDirection } from "../utils/css-alter.js";
+import { replaceElementNow, wrapElementNow, moveElement, moveElementNow, insertArrow } from "../utils/dom-alter.js";
 import { waitForElement } from "../utils/dom-events.js";
+import { waitForMutateTime } from "../utils/dom-optimize.js";
+import { waitForReferenceElement } from "../utils/dom-search.js";
 import { addEventListenerTo, removeEventListenerFrom } from "../utils/event.js";
 import { validateString } from "../utils/validation.js";
 import { isValidScrollOffset } from "../utils/views.js";
@@ -24,9 +26,16 @@ import { Widget, registerWidget } from "./widget.js";
  * The button is only shown when the scroll offset from the top is more than a
  * given configurable amount.
  *
- * **NOTE:** Currently the widget only supports fixed positioned button that
- * scrolls the main scrolling element (see
- * {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector}).
+ * **IMPORTANT:** When configuring an existing element as the button (i.e. using
+ * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
+ * - if using
+ *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+ *   as the scrollable, the button element will have it's CSS position set to `fixed`;
+ * - otherwise, if using a custom scrollable element, the button element may be
+ *   moved in the DOM tree in order to position it on top of the scrollable
+ * If you don't want the button element changed in any way, then consider using
+ * the {@link Triggers.ClickTrigger | ClickTrigger} with a
+ * {@link Actions.ScrollTo | ScrollTo} action.
  *
  * **IMPORTANT:** You should not instantiate more than one {@link ScrollToTop}
  * widget on a given element. Use {@link ScrollToTop.get} to get an existing
@@ -80,19 +89,53 @@ import { Widget, registerWidget } from "./widget.js";
  * ```
  *
  * @example
- * This will create a scroll-to-top button for the main scrolling element
- * using an existing element for the button with default
+ * This will configure the given element as a scroll-to-top button for the main
+ * scrolling element using an existing element for the button with default
  * {@link ScrollToTopConfig}.
  *
  * ```html
- * <div class="lisn-scroll-to-top"></div>
+ * <button class="lisn-scroll-to-top"></button>
  * ```
- *
  * @example
  * As above but with custom settings.
  *
  * ```html
- * <div data-lisn-scroll-to-top="position=left | offset=top:300vh"></div>
+ * <button data-lisn-scroll-to-top="position=left | offset=top:300vh"></button>
+ * ```
+ *
+ * @example
+ * This will configure the given element as a scroll-to-top button for a custom
+ * scrolling element (i.e. one with overflow "auto" or "scroll").
+ *
+ * ```html
+ * <div id="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=#scrollable"></button>
+ * ```
+ *
+ * @example
+ * As above, but using a reference specification with a class name to find the
+ * scrollable.
+ *
+ * ```html
+ * <div class="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=prev.scrollable"></button>
+ * ```
+ *
+ * @example
+ * As above but with all custom settings.
+ *
+ * ```html
+ * <div class="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=prev.scrollable
+ *                               | position=left
+ *                               | offset=top:300vh
+ * "></button>
  * ```
  */
 export class ScrollToTop extends Widget {
@@ -116,7 +159,7 @@ export class ScrollToTop extends Widget {
         return new ScrollToTop(element, config);
       }
       return null;
-    }, configValidator);
+    }, newConfigValidator);
   }
 
   /**
@@ -148,30 +191,69 @@ export class ScrollToTop extends Widget {
     super(element, {
       id: DUMMY_ID
     });
-    const scrollWatcher = ScrollWatcher.reuse();
-    const viewWatcher = ViewWatcher.reuse();
     const offset = (config === null || config === void 0 ? void 0 : config.offset) || `${MC.S_TOP}: var(${MH.prefixCssVar("scroll-to-top--offset")}, 200vh)`;
     const position = (config === null || config === void 0 ? void 0 : config.position) || MC.S_RIGHT;
+    const scrollable = config === null || config === void 0 ? void 0 : config.scrollable;
+    const hasCustomScrollable = scrollable && scrollable !== MH.getDocElement() && scrollable !== MH.getBody();
+    const scrollWatcher = ScrollWatcher.reuse();
+    const viewWatcher = ViewWatcher.reuse(hasCustomScrollable ? {
+      root: scrollable
+    } : {});
     const clickListener = () => scrollWatcher.scrollTo({
-      top: 0
+      top: 0,
+      left: 0
+    }, {
+      scrollable
     });
-    const arrow = insertArrow(element, MC.S_UP);
+    let arrow;
+    let placeholder;
+    let root = element;
     const showIt = () => {
-      showElement(element);
+      showElement(root);
     };
     const hideIt = () => {
-      hideElement(element);
+      hideElement(root);
     };
 
     // SETUP ------------------------------
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || MH.promiseResolve()).then(async () => {
+      const flexDirection = scrollable ? await getParentFlexDirection(scrollable) : null;
+      await waitForMutateTime();
       if (this.isDestroyed()) {
         return;
       }
-      disableInitialTransition(element);
-      addClasses(element, PREFIX_ROOT);
-      setData(element, MC.PREFIX_PLACE, position);
+      if (hasCustomScrollable) {
+        // Add a placeholder to restore its position on destroy.
+        placeholder = MH.createElement("div");
+        moveElementNow(placeholder, {
+          to: element,
+          position: "before",
+          ignoreMove: true
+        });
+
+        // Then move it to immediately after the scrollable.
+        // If the parent is a horizontal flexbox and position is left, then
+        // we need to insert it before the scrollable.
+        const shouldInsertBefore = flexDirection === "column-reverse" || position === MC.S_LEFT && flexDirection === "row" || position === MC.S_RIGHT && flexDirection === "row-reverse";
+        moveElementNow(element, {
+          to: scrollable,
+          position: shouldInsertBefore ? "before" : "after",
+          ignoreMove: true
+        });
+
+        // Wrap the button.
+        root = wrapElementNow(element, {
+          wrapper: "div",
+          ignoreMove: true
+        });
+      }
+      disableInitialTransition(root);
+      addClassesNow(root, PREFIX_ROOT);
+      addClassesNow(element, PREFIX_BTN);
+      setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
+      setDataNow(root, MC.PREFIX_PLACE, position);
+      arrow = insertArrow(element, MC.S_UP);
       hideIt(); // initial
 
       addEventListenerTo(element, MC.S_CLICK, clickListener);
@@ -182,17 +264,35 @@ export class ScrollToTop extends Widget {
         views: [MC.S_ABOVE]
       });
       this.onDisable(() => {
-        undisplayElement(element);
+        undisplayElement(root);
       });
       this.onEnable(() => {
-        displayElement(element);
+        displayElement(root);
       });
       this.onDestroy(async () => {
+        await waitForMutateTime();
         removeEventListenerFrom(element, MC.S_CLICK, clickListener);
-        await delData(element, MC.PREFIX_PLACE);
-        await moveElement(arrow); // remove
-        await removeClasses(element, PREFIX_ROOT);
-        await displayElement(element); // revert undisplay by onDisable
+        removeClassesNow(root, PREFIX_ROOT);
+        removeClassesNow(element, PREFIX_BTN);
+        delDataNow(root, PREFIX_FIXED);
+        delDataNow(root, MC.PREFIX_PLACE);
+        displayElementNow(root); // revert undisplay by onDisable
+
+        if (arrow) {
+          moveElementNow(arrow); // remove
+        }
+        if (root !== element) {
+          // Unwrap the button.
+          replaceElementNow(root, element, {
+            ignoreMove: true
+          });
+        }
+        if (placeholder) {
+          // Move it back into its original position.
+          replaceElementNow(placeholder, element, {
+            ignoreMove: true
+          });
+        }
         viewWatcher.offView(offset, showIt);
         viewWatcher.offView(offset, hideIt);
       });
@@ -208,15 +308,21 @@ export class ScrollToTop extends Widget {
 
 const WIDGET_NAME = "scroll-to-top";
 const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
-const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 // Only one ScrollToTop widget per element is allowed, but Widget requires a
 // non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
+const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
+const PREFIX_BTN = `${PREFIXED_NAME}__btn`;
+const PREFIX_FIXED = MH.prefixName("fixed");
 let mainWidget = null;
-const configValidator = {
-  offset: (key, value) => validateString(key, value, isValidScrollOffset),
-  position: (key, value) => validateString(key, value, v => v === MC.S_LEFT || v === MC.S_RIGHT)
+const newConfigValidator = element => {
+  return {
+    offset: (key, value) => validateString(key, value, isValidScrollOffset),
+    position: (key, value) => validateString(key, value, v => v === MC.S_LEFT || v === MC.S_RIGHT),
+    scrollable: (key, value) => {
+      var _ref;
+      return (_ref = MH.isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
+    }
+  };
 };
 //# sourceMappingURL=scroll-to-top.js.map

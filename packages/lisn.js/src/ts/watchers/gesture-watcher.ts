@@ -15,7 +15,7 @@ import {
 import {
   addClasses,
   removeClasses,
-  setNumericStyleProps,
+  setNumericStyleJsVars,
 } from "@lisn/utils/css-alter";
 import { isValidDirection } from "@lisn/utils/directions";
 import {
@@ -133,7 +133,7 @@ export class GestureWatcher {
    * Creates a new instance of GestureWatcher with the given
    * {@link GestureWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: GestureWatcherConfig = {}) {
+  static create(config?: GestureWatcherConfig) {
     return new GestureWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -144,7 +144,7 @@ export class GestureWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: GestureWatcherConfig = {}) {
+  static reuse(config?: GestureWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(myConfig);
 
@@ -224,10 +224,10 @@ export class GestureWatcher {
       handler: OnGestureHandler,
       userOptions: OnGestureOptions | undefined,
     ) => {
-      const options = getOptions(config, userOptions || {});
+      const options = getOptions(config, userOptions ?? {});
       createCallback(target, handler, options);
 
-      for (const device of options._devices || DEVICES) {
+      for (const device of options._devices ?? DEVICES) {
         let listeners = allListeners.get(target)?.get(device);
         if (listeners) {
           debug: logger?.debug4(
@@ -263,7 +263,7 @@ export class GestureWatcher {
       MH.deleteKey(allCallbacks.get(target), handler);
       allCallbacks.prune(target);
 
-      for (const device of options._devices || DEVICES) {
+      for (const device of options._devices ?? DEVICES) {
         const listeners = allListeners.get(target)?.get(device);
         if (listeners) {
           listeners._nCallbacks--;
@@ -292,7 +292,7 @@ export class GestureWatcher {
       event: Event,
     ): boolean /* true if terminated */ => {
       const preventDefault =
-        (allListeners.get(target)?.get(device)?._nPreventDefault || 0) > 0;
+        (allListeners.get(target)?.get(device)?._nPreventDefault ?? 0) > 0;
 
       let isTerminated = false;
       for (const { _wrapper } of allCallbacks.get(target)?.values() || []) {
@@ -821,8 +821,9 @@ const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
 const instances = MH.newMap<string, GestureWatcher>();
 
 const getConfig = (
-  config: GestureWatcherConfig,
+  config: GestureWatcherConfig | undefined,
 ): GestureWatcherConfigInternal => {
+  config ??= {};
   return {
     _preventDefault: config.preventDefault ?? true,
     _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 150),
@@ -899,12 +900,12 @@ const getOptions = (
 
   return {
     _devices:
-      validateStrList("devices", options.devices, isValidInputDevice) || null,
+      validateStrList("devices", options.devices, isValidInputDevice) ?? null,
     _directions:
-      validateStrList("directions", options.directions, isValidDirection) ||
+      validateStrList("directions", options.directions, isValidDirection) ??
       null,
     _intents:
-      validateStrList("intents", options.intents, isValidIntent) || null,
+      validateStrList("intents", options.intents, isValidIntent) ?? null,
     _minTotalDeltaX: options.minTotalDeltaX ?? null,
     _maxTotalDeltaX: options.maxTotalDeltaX ?? null,
     _minTotalDeltaY: options.minTotalDeltaY ?? null,
@@ -1166,7 +1167,7 @@ const setGestureCssProps = (
   const prefix = `${intent}-`;
 
   if (intent === MC.S_ZOOM) {
-    setNumericStyleProps(
+    setNumericStyleJsVars(
       target,
       {
         deltaZ: data.totalDeltaZ,
@@ -1177,7 +1178,7 @@ const setGestureCssProps = (
       },
     ); // don't await here
   } else {
-    setNumericStyleProps(
+    setNumericStyleJsVars(
       target,
       {
         deltaX: data.totalDeltaX,

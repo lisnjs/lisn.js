@@ -16,22 +16,26 @@ import {
   Offset,
 } from "@lisn/globals/types";
 
+import {
+  newAnimationFrameIterator,
+  ElapsedTimes,
+} from "@lisn/utils/animations";
 import { getComputedStylePropNow } from "@lisn/utils/css-alter";
 import { SCROLL_DIRECTIONS } from "@lisn/utils/directions";
 import {
   waitForInteractive,
   waitForElementOrInteractive,
 } from "@lisn/utils/dom-events";
-import {
-  waitForMeasureTime,
-  waitForMutateTime,
-} from "@lisn/utils/dom-optimize";
+import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
-import { maxAbs, easeInOutQuad } from "@lisn/utils/math";
+import { maxAbs, criticallyDamped } from "@lisn/utils/math";
+import { randId, formatAsString } from "@lisn/utils/text";
 import { isValidStrList } from "@lisn/utils/validation";
 
 import { newXMap } from "@lisn/modules/x-map";
+
+import debug from "@lisn/debug/debug";
 
 /**
  * @category Scrolling
@@ -68,9 +72,10 @@ export type ScrollToOptions = {
    */
   offset?: CoordinateOffset;
 
-  // TODO maybe support fixed velocity as an alternative to fixed duration?
+  // TODO maybe support fixed average velocity as an alternative to fixed duration?
   /**
-   * The duration of the scroll animation. If not given, it is instant.
+   * The duration of the scroll animation in milliseconds. If not given, it is
+   * instant.
    *
    * @defaultValue 0
    */
@@ -117,29 +122,35 @@ export type ScrollToOptions = {
  * Returns true if the given element is scrollable in the given direction, or
  * in either direction (if `axis` is not given).
  *
- * **IMPORTANT:** If you enable `active` then be aware that:
- * 1. It may attempt to scroll the target in order to determine whether it's
- *    scrollable in a more reliable way than the default method of comparing
- *    clientWidth/Height to scrollWidth/Height. If there is currently any
- *    ongoing scroll on the target, this will stop it, so never use that inside
- *    scroll-triggered handlers.
- * 2. If the layout has been invalidated and not yet recalculated,
- *    this will cause a forced layout, so always {@link waitForMeasureTime}
- *    before calling this function when possible.
+ * It first checks whether the current scroll offset on the target along the
+ * given axis is non-0, and if so returns true immediately. Otherwise it will
+ * attempt to determine if it's scrollable using one of these methods
+ * (controlled by `options.active`):
+ * - passive check (default): Will examine `clientWidth/Height`,
+ *   `scrollWidth/Height` as well as the computed `overflow` CSS property to try
+ *   to determine if the target is scrollable. This is not 100% reliable but is
+ *   safer than the active check
+ * - active check: Will attempt to scroll the target by 1px and examine if the
+ *   scroll offset had changed, then revert it back to 0. This is a more
+ *   reliable check, however it can cause issues in certain contexts. In
+ *   particular, if a scroll on the target had just been initiated (but it's
+ *   scroll offset was still 0), the scroll may be cancelled. Never use that
+ *   inside scroll-based handlers.
  *
- * @param {} [options.axis]    One of "x" or "y" for horizontal or vertical
- *                             scroll respectively. If not given, it checks
- *                             both.
- * @param {} [options.active]  If true, then if the target's current scroll
- *                             offset is 0, it will attempt to scroll it rather
- *                             than looking at the clientWidth/Height to
- *                             scrollWidth/Height. This is more reliable but can
- *                             cause issues, see note above.
- * @param {} [options.noCache] By default the result of a check is cached for
- *                             1s and if there's already a cached result for
- *                             this element, it is returns. Set this to true to
- *                             disable checking the cache and also saving the
- *                             result into the cache.
+ * **NOTE:** If the layout has been invalidated and not yet recalculated, this
+ * will cause a forced layout, so always {@link waitForMeasureTime} before
+ * calling this function when possible.
+ *
+ * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
+ *                          respectively. If not given, it checks both.
+ * @param [options.active]  If true, then if the target's current scroll offset
+ *                          is 0, it will attempt to scroll it rather than
+ *                          looking at its overflow.
+ * @param [options.noCache] By default the result of a check is cached for 1s
+ *                          and if there's already a cached result for this
+ *                          element, it is returned. Set this to true to disable
+ *                          checking the cache and also saving the result into
+ *                          the cache.
  *
  * @category Scrolling
  */
@@ -151,7 +162,7 @@ export const isScrollable = (
     noCache?: boolean;
   },
 ): boolean => {
-  const { axis, active, noCache } = options || {};
+  const { axis, active, noCache } = options ?? {};
   if (!axis) {
     return (
       isScrollable(element, { axis: "y", active, noCache }) ||
@@ -168,7 +179,6 @@ export const isScrollable = (
 
   const offset = axis === "x" ? "Left" : "Top";
   let result = false;
-  let doCache = !noCache;
 
   if (element[`scroll${offset}`]) {
     result = true;
@@ -182,12 +192,21 @@ export const isScrollable = (
     result = canScroll;
   } else {
     const dimension = axis === "x" ? "Width" : "Height";
-    result = element[`scroll${dimension}`] > element[`client${dimension}`];
-    // No need to cache a passive check.
-    doCache = false;
+    const isDocScrollable = element === MH.getDocScrollingElement();
+
+    const hasOverflow =
+      element[`scroll${dimension}`] > element[`client${dimension}`];
+    const overflowProp = getComputedStylePropNow(element, "overflow");
+    const scrollingOverflows = [
+      MC.S_SCROLL,
+      MC.S_AUTO,
+      ...(isDocScrollable ? [MC.S_VISIBLE] : []),
+    ];
+
+    result = hasOverflow && MH.includes(scrollingOverflows, overflowProp);
   }
 
-  if (doCache) {
+  if (!noCache) {
     isScrollableCache.sGet(element).set(axis, result);
     MH.setTimer(() => {
       MH.deleteKey(isScrollableCache.get(element), axis);
@@ -202,9 +221,9 @@ export const isScrollable = (
  * Returns the closest scrollable ancestor of the given element, _not including
  * it_.
  *
- * @param {} options See {@link isScrollable}
+ * @param options See {@link isScrollable}
  *
- * @return {} `null` if no scrollable ancestors are found.
+ * @returns `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -236,9 +255,9 @@ export const getCurrentScrollAction = (
   scrollable?: Element,
 ): ScrollAction | null => {
   scrollable = toScrollableOrDefault(scrollable);
-  const action = currentScrollAction.get(scrollable);
-  if (action) {
-    return MH.copyObject(action);
+  const info = currentScrollInfos.get(scrollable);
+  if (info) {
+    return MH.copyObject(info._action);
   }
   return null;
 };
@@ -254,11 +273,11 @@ export const getCurrentScrollAction = (
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *               If the target coordinates are invalid.
  *
- * @param {} to  If this is an element, then its top-left position is used as
- *               the target coordinates. If it is a string, then it is treated
- *               as a selector for an element using `querySelector`.
+ * @param to If this is an element, then its top-left position is used as
+ *           the target coordinates. If it is a string, then it is treated
+ *           as a selector for an element using `querySelector`.
  *
- * @return {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling
@@ -271,9 +290,9 @@ export const scrollTo = (
   const scrollable = options._scrollable;
 
   // cancel current scroll action if any
-  const currentScroll = currentScrollAction.get(scrollable);
-  if (currentScroll) {
-    if (!currentScroll.cancel()) {
+  const info = currentScrollInfos.get(scrollable);
+  if (info) {
+    if (!info._action.cancel()) {
       // current scroll action is not cancellable by us
       return null;
     }
@@ -308,16 +327,16 @@ export const scrollTo = (
     }
   }
 
-  const promise = initiateScroll(options, () => isCancelled);
-
-  const thisScrollAction: ScrollAction = {
-    waitFor: () => promise,
-    cancel: cancelFn,
+  const thisInfo: ScrollInfo = {
+    _action: {
+      waitFor: () => scrollActionPromise,
+      cancel: cancelFn,
+    },
   };
 
   const cleanup = () => {
-    if (currentScrollAction.get(scrollable) === thisScrollAction) {
-      MH.deleteKey(currentScrollAction, scrollable);
+    if (currentScrollInfos.get(scrollable)?._action === thisInfo._action) {
+      MH.deleteKey(currentScrollInfos, scrollable);
     }
 
     if (preventScrollHandler) {
@@ -329,10 +348,11 @@ export const scrollTo = (
     }
   };
 
-  thisScrollAction.waitFor().then(cleanup).catch(cleanup);
+  const scrollActionPromise = initiateScroll(options, () => isCancelled);
+  thisInfo._action.waitFor().then(cleanup).catch(cleanup);
 
-  currentScrollAction.set(scrollable, thisScrollAction);
-  return thisScrollAction;
+  updateCurrentScrollInfo(scrollable, thisInfo);
+  return thisInfo._action;
 };
 
 /**
@@ -433,7 +453,7 @@ export const fetchMainScrollableElement = async (): Promise<HTMLElement> => {
  */
 export const getDefaultScrollingElement = () => {
   const body = MH.getBody();
-  return isScrollable(body) ? body : MH.getDocScrollingElement() || body;
+  return isScrollable(body) ? body : (MH.getDocScrollingElement() ?? body);
 };
 
 /**
@@ -465,6 +485,15 @@ type ScrollToOptionsInternal = {
   _userCanInterrupt: boolean;
 };
 
+type Velocity = { top: number; left: number };
+
+type ScrollInfo = {
+  _action: ScrollAction;
+  _position?: ScrollPosition;
+  _velocity?: Velocity;
+  _elapsed?: ElapsedTimes;
+};
+
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
 
 const isScrollableCache = newXMap<Element, Map<"x" | "y", boolean>>(() =>
@@ -473,18 +502,28 @@ const isScrollableCache = newXMap<Element, Map<"x" | "y", boolean>>(() =>
 
 const mappedScrollables = MH.newMap<Element, Element>();
 
-const currentScrollAction = MH.newMap<Element, ScrollAction>();
+const currentScrollInfos = MH.newMap<Element, ScrollInfo>();
 
 const DIFF_THRESHOLD = 5;
-const arePositionsDifferent = (start: ScrollPosition, end: ScrollPosition) =>
-  maxAbs(start.top - end.top, start.left - end.left) >= DIFF_THRESHOLD;
+const arePositionsDifferent = (
+  start: ScrollPosition,
+  end: ScrollPosition,
+  threshold = DIFF_THRESHOLD,
+) => maxAbs(start.top - end.top, start.left - end.left) > threshold;
+
+// must be called in "measure time"
+const getBorderWidth = (element: Element, side: Offset) =>
+  MH.ceil(MH.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+
+const isScrollableBodyInQuirks = (element: Element): element is HTMLElement =>
+  element === MH.getBody() && MH.getDocScrollingElement() === null;
 
 const toScrollableOrMain = <R>(
   target: ScrollTarget | null | undefined,
   getMain: () => R,
 ): Element | R => {
   if (MH.isElement(target)) {
-    return mappedScrollables.get(target) || target;
+    return mappedScrollables.get(target) ?? target;
   }
 
   if (!target || target === MH.getWindow() || target === MH.getDoc()) {
@@ -509,21 +548,35 @@ const getOptions = (
 
   return {
     _target: target,
-    _offset: options?.offset || null,
+    _offset: options?.offset ?? null,
     _altTarget: altTarget,
-    _altOffset: options?.altOffset || null,
+    _altOffset: options?.altOffset ?? null,
     _scrollable: scrollable,
-    _duration: options?.duration || 0,
+    _duration: options?.duration ?? 0,
     _weCanInterrupt: options?.weCanInterrupt ?? false,
     _userCanInterrupt: options?.userCanInterrupt ?? false,
   };
+};
+
+const updateCurrentScrollInfo = (
+  scrollable: Element,
+  newInfo: Partial<ScrollInfo>,
+) => {
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
+  const _action = newInfo._action ?? existingScrollInfo?._action;
+  if (_action) {
+    currentScrollInfos.set(
+      scrollable,
+      MH.merge(existingScrollInfo, newInfo, { _action }),
+    );
+  }
 };
 
 const getTargetCoordinates = (
   scrollable: Element,
   target: TargetCoordinates | Element | string,
 ): TargetCoordinates => {
-  const docScrollingElement = MH.getDocScrollingElement();
+  const isDocScrollingElement = scrollable === MH.getDocScrollingElement();
 
   if (MH.isElement(target)) {
     if (scrollable === target || !scrollable.contains(target)) {
@@ -532,17 +585,13 @@ const getTargetCoordinates = (
 
     return {
       top: () =>
-        scrollable[MC.S_SCROLL_TOP] +
         MH.getBoundingClientRect(target).top -
-        (scrollable === docScrollingElement
-          ? 0
-          : MH.getBoundingClientRect(scrollable).top),
+        MH.getBoundingClientRect(scrollable).top +
+        (isDocScrollingElement ? 0 : scrollable[MC.S_SCROLL_TOP]),
       left: () =>
-        scrollable[MC.S_SCROLL_LEFT] +
         MH.getBoundingClientRect(target).left -
-        (scrollable === docScrollingElement
-          ? 0
-          : MH.getBoundingClientRect(scrollable).left),
+        MH.getBoundingClientRect(scrollable).left +
+        (isDocScrollingElement ? 0 : scrollable[MC.S_SCROLL_LEFT]),
     };
   }
 
@@ -564,15 +613,15 @@ const getTargetCoordinates = (
 
 const getStartEndPosition = async (
   options: ScrollToOptionsInternal,
-): Promise<{ start: ScrollPosition; end: ScrollPosition }> => {
+): Promise<{ _start: ScrollPosition; _end: ScrollPosition }> => {
   await waitForMeasureTime();
 
   const applyOffset = (
     position: ScrollPosition,
     offset: CoordinateOffset | null,
   ) => {
-    position.top += offset?.top || 0;
-    position.left += offset?.left || 0;
+    position.top += offset?.top ?? 0;
+    position.left += offset?.left ?? 0;
   };
 
   const scrollable = options._scrollable;
@@ -589,7 +638,7 @@ const getStartEndPosition = async (
     applyOffset(end, options._altOffset);
   }
 
-  return { start, end };
+  return { _start: start, _end: end };
 };
 
 // must be called in "measure time"
@@ -638,68 +687,79 @@ const initiateScroll = async (
   const position = await getStartEndPosition(options);
   const duration = options._duration;
   const scrollable = options._scrollable;
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
 
-  let startTime: number, previousTimeStamp: number;
-  let currentPosition: ScrollPosition = position.start;
+  const currentPosition = existingScrollInfo?._position ?? position._start;
+  const currentVelocity = existingScrollInfo?._velocity ?? {
+    [MC.S_TOP]: 0,
+    [MC.S_LEFT]: 0,
+  };
+  let elapsed = existingScrollInfo?._elapsed;
 
-  const step = async () => {
-    await waitForMutateTime(); // effectively next animation frame
+  const logger = debug
+    ? new debug.Logger({
+        name: `scroll-${formatAsString(scrollable)}-${randId()}`,
+        logAtCreation: {
+          options,
+          position,
+          elapsed,
+          currentPosition: MH.copyObject(currentPosition),
+          currentVelocity: MH.copyObject(currentVelocity),
+        },
+      })
+    : null;
+
+  for await (elapsed of newAnimationFrameIterator(elapsed)) {
+    const deltaTime = elapsed.sinceLast;
+    if (deltaTime === 0) {
+      // First time
+      continue;
+    }
+
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
     await waitForMeasureTime();
-    const timeStamp = MH.timeNow();
 
     if (isCancelled()) {
       // Reject the promise
+      logger?.debug8("Cancelled");
       throw currentPosition;
     }
 
-    if (!startTime) {
-      // If it's very close to the target, no need to scroll smoothly
-      if (
-        duration === 0 ||
-        !arePositionsDifferent(currentPosition, position.end)
-      ) {
-        MH.elScrollTo(scrollable, position.end);
-        return position.end;
-      }
+    for (const s of [MC.S_LEFT, MC.S_TOP] as const) {
+      const { l, v } = criticallyDamped({
+        l: currentPosition[s],
+        v: currentVelocity[s],
+        lTarget: position._end[s],
+        dt: deltaTime,
+        lag: duration,
+      });
 
-      startTime = timeStamp;
+      currentPosition[s] = l;
+      currentVelocity[s] = v;
     }
 
-    if (startTime !== timeStamp && previousTimeStamp !== timeStamp) {
-      const elapsed = timeStamp - startTime;
-      const progress = easeInOutQuad(MH.min(1, elapsed / duration));
+    updateCurrentScrollInfo(scrollable, {
+      _position: currentPosition,
+      _velocity: currentVelocity,
+      _elapsed: elapsed,
+    });
 
-      currentPosition = {
-        top:
-          position.start.top +
-          (position.end.top - position.start.top) * progress,
-        left:
-          position.start.left +
-          (position.end.left - position.start.left) * progress,
-      };
-
-      MH.elScrollTo(scrollable, currentPosition);
-
-      if (progress === 1) {
-        return currentPosition;
-      }
+    const isDone = !arePositionsDifferent(currentPosition, position._end, 0.5);
+    if (isDone) {
+      MH.assign(currentPosition, position._end); // use exact final coordinates
     }
 
-    previousTimeStamp = timeStamp;
-    return step();
-  };
+    MH.elScrollTo(scrollable, currentPosition);
 
-  return step();
+    if (isDone) {
+      logger?.debug8("Done");
+      break;
+    }
+  }
+
+  return currentPosition;
 };
-
-const isScrollableBodyInQuirks = (element: Element): element is HTMLElement =>
-  element === MH.getBody() && MH.getDocScrollingElement() === null;
-
-// must be called in "measure time"
-const getBorderWidth = (element: Element, side: Offset) =>
-  MH.ceil(MH.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
 
 // ------------------------------
 

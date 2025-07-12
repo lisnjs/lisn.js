@@ -5,8 +5,6 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { settings } from "@lisn/globals/settings";
-
 import { XYDirection, ScrollDirection, SizeTarget } from "@lisn/globals/types";
 
 import {
@@ -16,9 +14,9 @@ import {
   CommaSeparatedStr,
 } from "@lisn/globals/types";
 
-import { getData, setNumericStyleProps } from "@lisn/utils/css-alter";
+import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { getMaxDeltaDirection } from "@lisn/utils/directions";
-import { moveElement, wrapScrollingContent } from "@lisn/utils/dom-alter";
+import { moveElement, tryWrapContent } from "@lisn/utils/dom-alter";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
@@ -120,7 +118,7 @@ export class ScrollWatcher {
    * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
    *   or is `null`, `window` or `document`, the following CSS variables are
    *   set on the root (`html`) element and represent the scroll of the
-   *   {@link fetchMainScrollableElement}:
+   *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
    *   - `--lisn-js--page-scroll-top`
    *   - `--lisn-js--page-scroll-top-fraction`
    *   - `--lisn-js--page-scroll-left`
@@ -160,9 +158,9 @@ export class ScrollWatcher {
    * Get the scroll offset of the given scrollable. By default, it will
    * {@link waitForMeasureTime} and so will be delayed by one frame.
    *
-   * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-   *                    this only when doing realtime scroll-based animations
-   *                    as it may cause a forced layout.
+   * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+   *                 this only when doing realtime scroll-based animations
+   *                 as it may cause a forced layout.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -194,13 +192,14 @@ export class ScrollWatcher {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the "to" coordinates or options are invalid.
    *
-   * @param {} to  If this is an element, then its top-left position is used as
-   *               the target coordinates. If it is a string, then it is treated
-   *               as a selector for an element using `querySelector`.
-   * @param {} [options.scrollable]
-   *               If not given, it defaults to {@link fetchMainScrollableElement}
+   * @param to If this is an element, then its top-left position is used as
+   *           the target coordinates. If it is a string, then it is treated
+   *           as a selector for an element using `querySelector`.
+   * @param [options.scrollable]
+   *           If not given, it defaults to
+   *           {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
-   * @return {} `null` if there's an ongoing scroll that is not cancellable,
+   * @returns `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
    */
   readonly scrollTo: (
@@ -211,8 +210,8 @@ export class ScrollWatcher {
   /**
    * Returns the current {@link ScrollAction} if any.
    *
-   * @param {} scrollable
-   *               If not given, it defaults to {@link fetchMainScrollableElement}
+   * @param scrollable If not given, it defaults to
+   *                   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -228,10 +227,10 @@ export class ScrollWatcher {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
    *
-   * @param {} [options.immediate]  If true, then it will not use
-   *                                {@link waitForMeasureTime} or
-   *                                {@link Utils.waitForMutateTime | waitForMutateTime}.
-   *                                Warning: this will likely result in forced layout.
+   * @param [options.immediate] If true, then it will not use
+   *                            {@link waitForMeasureTime} or
+   *                            {@link Utils.waitForMutateTime | waitForMutateTime}.
+   *                            Warning: this will likely result in forced layout.
    */
   readonly stopUserScrolling: (options?: {
     scrollable?: ScrollTarget;
@@ -241,7 +240,7 @@ export class ScrollWatcher {
   /**
    * Returns the element that holds the main page content. By default it's
    * `document.body` but is overridden by
-   * {@link settings.mainScrollableElementSelector}.
+   * {@link Settings.settings.mainScrollableElementSelector}.
    *
    * It will wait for the element to be available if not already.
    */
@@ -253,7 +252,7 @@ export class ScrollWatcher {
    * Returns the scrollable element that holds the wrapper around the main page
    * content. By default it's `document.scrollable` (unless `document.body` is
    * actually scrollable, in which case it will be used) but it will be
-   * different if {@link settings.mainScrollableElementSelector} is set.
+   * different if {@link Settings.settings.mainScrollableElementSelector} is set.
    *
    * It will wait for the element to be available if not already.
    */
@@ -265,7 +264,7 @@ export class ScrollWatcher {
    * Creates a new instance of ScrollWatcher with the given
    * {@link ScrollWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: ScrollWatcherConfig = {}) {
+  static create(config?: ScrollWatcherConfig) {
     return new ScrollWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -276,7 +275,7 @@ export class ScrollWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: ScrollWatcherConfig = {}) {
+  static reuse(config?: ScrollWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(myConfig);
 
@@ -369,7 +368,7 @@ export class ScrollWatcher {
       userOptions: OnScrollOptions | undefined,
       trackType: TrackType,
     ) => {
-      const options = await fetchOnScrollOptions(config, userOptions || {});
+      const options = await fetchOnScrollOptions(config, userOptions ?? {});
       const element = options._element;
 
       // Don't await for the scroll data before creating the callback so that
@@ -467,6 +466,7 @@ export class ScrollWatcher {
         MH.deleteKey(allScrollData, element);
         removeEventListenerFrom(eventTarget, MC.S_SCROLL, scrollHandler);
         MH.deleteKey(activeListeners, eventTarget);
+        // TODO: Should we unwrap children if previously WE wrapped them?
       }
     };
 
@@ -539,16 +539,11 @@ export class ScrollWatcher {
       // Observe the scrolling element
       setupOnResize(element);
 
-      // And also its children (if possible, single wrapper around children
-      const allowedToWrap =
-        settings.contentWrappingAllowed === true &&
-        element !== docScrollingElement &&
-        getData(element, MC.PREFIX_NO_WRAP) === null;
-
-      let wrapper: Element;
-      if (allowedToWrap) {
-        // Wrap the content and observe the wrapper
-        wrapper = await wrapScrollingContent(element);
+      // And also its children (if possible, a single wrapper around them
+      const wrapper = await tryWrapContent(element, {
+        _classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
+      });
+      if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
 
@@ -572,7 +567,7 @@ export class ScrollWatcher {
         // If we've just added the wrapper, it will be in DOMWatcher's queue,
         // so check.
         if (child !== wrapper) {
-          if (allowedToWrap) {
+          if (wrapper) {
             // Move this child into the wrapper. If this results in change of size
             // for wrapper, SizeWatcher will call us.
             moveElement(child, { to: wrapper, ignoreMove: true });
@@ -612,7 +607,7 @@ export class ScrollWatcher {
       }
 
       const element = await fetchScrollableElement(scrollable);
-      const realtime = (activeListeners.get(scrollable)?._nRealtime || 0) > 0;
+      const realtime = (activeListeners.get(scrollable)?._nRealtime ?? 0) > 0;
       const latestData = await fetchCurrentScroll(element, realtime, true);
       allScrollData.set(element, latestData);
 
@@ -665,7 +660,7 @@ export class ScrollWatcher {
 
     // ----------
 
-    this.scroll = (direction, options = {}) => {
+    this.scroll = (direction, options) => {
       if (!isValidScrollDirection(direction)) {
         throw MH.usageError(`Unknown scroll direction: '${direction}'`);
       }
@@ -674,8 +669,8 @@ export class ScrollWatcher {
       const sign = direction === MC.S_UP || direction === MC.S_LEFT ? -1 : 1;
       let targetCoordinate: TargetCoordinate;
 
-      const amount = options.amount ?? 100;
-      const asFractionOf = options.asFractionOf;
+      const amount = options?.amount ?? 100;
+      const asFractionOf = options?.asFractionOf;
 
       if (asFractionOf === "visible") {
         targetCoordinate = isVertical
@@ -718,16 +713,13 @@ export class ScrollWatcher {
 
     // ----------
 
-    this.scrollTo = async (to, options = {}) =>
+    this.scrollTo = async (to, options) =>
       scrollTo(
         to,
-        MH.merge(
-          { duration: config._scrollDuration }, // default
-          options,
-          {
-            scrollable: await fetchScrollableElement(options.scrollable),
-          }, // override
-        ),
+        MH.merge(options, {
+          duration: options?.duration ?? config._scrollDuration, // default
+          scrollable: await fetchScrollableElement(options?.scrollable), // override
+        }),
       );
 
     // ----------
@@ -739,15 +731,15 @@ export class ScrollWatcher {
 
     // ----------
 
-    this.stopUserScrolling = async (options = {}) => {
-      const element = await fetchScrollableElement(options.scrollable);
+    this.stopUserScrolling = async (options) => {
+      const element = await fetchScrollableElement(options?.scrollable);
       const stopScroll = () =>
         MH.elScrollTo(element, {
           top: element[MC.S_SCROLL_TOP],
           left: element[MC.S_SCROLL_LEFT],
         });
 
-      if (options.immediate) {
+      if (options?.immediate) {
         stopScroll();
       } else {
         waitForMeasureTime().then(stopScroll);
@@ -825,7 +817,8 @@ export type ScrollWatcherConfig = {
 export type OnScrollOptions = {
   /**
    * If it is not given, or is `null`, `window` or `document`, then it will
-   * track the scroll of the {@link ScrollWatcher.fetchMainScrollableElement}.
+   * track the scroll of the
+   * {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * Other values must be an `Element` and are taken literally.
    *
@@ -957,6 +950,8 @@ export type OnScrollHandler =
 export type ScrollData = {
   clientWidth: number;
   clientHeight: number;
+  scrollWidth: number;
+  scrollHeight: number;
 
   scrollTop: number;
 
@@ -973,9 +968,6 @@ export type ScrollData = {
    * `clientWidth`, ranging from 0 to 1.
    */
   scrollLeftFraction: number;
-
-  scrollWidth: number;
-  scrollHeight: number;
 
   /**
    * This is the direction of the last scroll action, i.e. _compared to the
@@ -1013,9 +1005,12 @@ type TrackType = typeof TRACK_REGULAR | typeof TRACK_FULL;
 const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
 const instances = MH.newMap<string, ScrollWatcher>();
 
+const PREFIX_WRAPPER = MH.prefixName("scroll-watcher-wrapper");
+
 const getConfig = (
-  config: ScrollWatcherConfig,
+  config: ScrollWatcherConfig | undefined,
 ): ScrollWatcherConfigInternal => {
+  config ??= {};
   return {
     _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -1129,8 +1124,8 @@ const fetchScrollData = async (
   const scrollLeftFraction =
     MH.round(scrollLeft) / (scrollWidth - clientWidth || MC.INFINITY);
 
-  const prevScrollTop = previousEventData?.scrollTop || 0;
-  const prevScrollLeft = previousEventData?.scrollLeft || 0;
+  const prevScrollTop = previousEventData?.scrollTop ?? 0;
+  const prevScrollLeft = previousEventData?.scrollLeft ?? 0;
 
   const direction = getMaxDeltaDirection(
     scrollLeft - prevScrollLeft,
@@ -1139,14 +1134,14 @@ const fetchScrollData = async (
 
   return {
     direction,
+    [MC.S_CLIENT_WIDTH]: clientWidth,
+    [MC.S_CLIENT_HEIGHT]: clientHeight,
+    [MC.S_SCROLL_WIDTH]: scrollWidth,
+    [MC.S_SCROLL_HEIGHT]: scrollHeight,
     [MC.S_SCROLL_TOP]: scrollTop,
     [MC.S_SCROLL_TOP_FRACTION]: scrollTopFraction,
     [MC.S_SCROLL_LEFT]: scrollLeft,
     [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-    [MC.S_SCROLL_WIDTH]: scrollWidth,
-    [MC.S_SCROLL_HEIGHT]: scrollHeight,
-    [MC.S_CLIENT_WIDTH]: clientWidth,
-    [MC.S_CLIENT_HEIGHT]: clientHeight,
   };
 };
 
@@ -1161,7 +1156,7 @@ const setScrollCssProps = (
     prefix = "page-";
   }
 
-  scrollData = scrollData || {};
+  scrollData ??= {};
   const props = {
     [MC.S_SCROLL_TOP]: scrollData[MC.S_SCROLL_TOP],
     [MC.S_SCROLL_TOP_FRACTION]: scrollData[MC.S_SCROLL_TOP_FRACTION],
@@ -1170,7 +1165,7 @@ const setScrollCssProps = (
     [MC.S_SCROLL_WIDTH]: scrollData[MC.S_SCROLL_WIDTH],
     [MC.S_SCROLL_HEIGHT]: scrollData[MC.S_SCROLL_HEIGHT],
   };
-  setNumericStyleProps(element, props, { _prefix: prefix });
+  setNumericStyleJsVars(element, props, { _prefix: prefix });
 };
 
 const getEventTarget = (element: Element): ScrollTarget => {

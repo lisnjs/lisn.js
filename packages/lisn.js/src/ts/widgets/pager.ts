@@ -78,7 +78,7 @@ import debug from "@lisn/debug/debug";
  * "toggle" elements which correspond one-to-one to each page. Switches go to
  * the given page and toggles toggle the enabled/disabled state of the page.
  *
- * **IMPORTANT:** Unless the {@link PagerStyle.style} is set to "carousel", the
+ * **IMPORTANT:** Unless the {@link PagerConfig.style} is set to "carousel", the
  * page elements will be positioned absolutely, and therefore the pager likely
  * needs to have an explicit height. If you enable
  * {@link PagerConfig.fullscreen}, then the element will get `height: 100vh`
@@ -354,8 +354,8 @@ export class Pager extends Widget {
     const toggles = config?.toggles || [];
     const switches = config?.switches || [];
     const nextPrevSwitch = {
-      _next: config?.nextSwitch || null,
-      _prev: config?.prevSwitch || null,
+      _next: config?.nextSwitch ?? null,
+      _prev: config?.prevSwitch ?? null,
     };
 
     const pageSelector = getDefaultWidgetSelector(PREFIX_PAGE__FOR_SELECT);
@@ -552,7 +552,7 @@ export type PagerConfig = {
    * the element will get `height: 100vh` set. Otherwise, you need to set its
    * height in your CSS.
    *
-   * @since Introduced in v1.1.0.
+   * @since v1.1.0
    *
    * @defaultValue "slider"
    */
@@ -853,10 +853,10 @@ const init = (
   const switches = components._switches;
   const nextSwitch = components._nextPrevSwitch._next;
   const prevSwitch = components._nextPrevSwitch._prev;
-  const pageContainer = pages[0]?.parentElement;
+  const pageContainer = MH.parentOf(pages[0]);
 
   let initialPage = toInt(config?.initialPage ?? 1);
-  const pagerStyle = config?.style ?? "slider";
+  const pagerStyle = config?.style || "slider";
   const isCarousel = pagerStyle === "carousel";
   const minPageSize = config?.pageSize ?? 300;
   const enablePeek = config?.peek ?? false;
@@ -906,7 +906,11 @@ const init = (
         numVisiblePages = getNumVisiblePages(true);
       }
 
-      logger?.debug8("Pager resized", { gap, containerSize, numVisiblePages });
+      debug: logger?.debug8("Pager resized", {
+        gap,
+        containerSize,
+        numVisiblePages,
+      });
     } // otherwise just a page transition
 
     const currPageNum = widget.getCurrentPageNum();
@@ -944,7 +948,7 @@ const init = (
       ? numVisiblePages + 0.5
       : numVisiblePages;
 
-    logger?.debug8("Carousel calculations", {
+    debug: logger?.debug8("Carousel calculations", {
       currPageNum,
       prevPageNum,
       visibleStart,

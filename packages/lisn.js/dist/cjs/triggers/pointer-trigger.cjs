@@ -11,8 +11,7 @@ var _misc = require("../utils/misc.cjs");
 var _validation = require("../utils/validation.cjs");
 var _pointerWatcher = require("../watchers/pointer-watcher.cjs");
 var _trigger = require("./trigger.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -20,18 +19,17 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  *
  * @categoryDescription Pointer
  * {@link ClickTrigger} allows you to run actions when a user clicks a target
- * element (first time and every other time, i.e. odd number of click), and
- * undo them when a user clicks the target element again (or every even number
- * of clicks). It always acts as a toggle.
+ * element (first time and every other time, i.e. odd number of click), and undo
+ * those actions when a user clicks the target element again (or every even
+ * number of clicks). It always acts as a toggle.
  *
  * {@link PressTrigger} allows you to run actions when the user presses and
- * holds a pointing device (or their finger) on a target element, and undo
- * those actions when they release their pointing device or lift their finger
- * off.
+ * holds a pointing device (or their finger) on a target element, and undo those
+ * actions when they release their pointing device or lift their finger off.
  *
- * {@link HoverTrigger} allows you to run actions when the user hovers overs
- * a target element, and undo those actions when their pointing device moves
- * off the target. On touch devices it acts just like {@link PressTrigger}.
+ * {@link HoverTrigger} allows you to run actions when the user hovers overs a
+ * target element, and undo those actions when their pointing device moves off
+ * the target. On touch devices it acts just like {@link PressTrigger}.
  */
 /**
  * {@link ClickTrigger} allows you to run actions when a user clicks a target
@@ -76,9 +74,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * ```
  *
  * @example
- * Add class `visited` the first time the user clicks the element, and
- * play or reverse the animations on the element 1000ms each time the
- * user clicks it.
+ * Add class `visited` the first time the user clicks the element, and play or
+ * reverse the animations on the element 1000ms after each time the user clicks
+ * it.
  *
  * ```html
  * <div data-lisn-on-click="@add-class=visited +once ;
@@ -122,7 +120,7 @@ class ClickTrigger extends _trigger.Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     this.getConfig = () => MH.copyObject(config);
@@ -222,7 +220,7 @@ class PressTrigger extends _trigger.Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     this.getConfig = () => MH.copyObject(config);
@@ -319,7 +317,7 @@ class HoverTrigger extends _trigger.Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     this.getConfig = () => MH.copyObject(config);
@@ -345,10 +343,12 @@ const newConfigValidator = element => {
   };
 };
 const setupWatcher = (widget, element, actions, config, action) => {
+  var _MH$targetOf;
   if (!MH.lengthOf(actions)) {
     return;
   }
-  const target = MH.targetOf(config) || element;
+  config !== null && config !== void 0 ? config : config = {};
+  const target = (_MH$targetOf = MH.targetOf(config)) !== null && _MH$targetOf !== void 0 ? _MH$targetOf : element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS
   // state rather than the odd/even clicks. Otherwise if the trigger is

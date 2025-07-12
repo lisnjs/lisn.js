@@ -9,8 +9,7 @@ var _errors = require("../globals/errors.cjs");
 var _math = require("./math.cjs");
 var _misc = require("./misc.cjs");
 var _text = require("./text.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * @module Utils
  */
@@ -19,7 +18,7 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  * Returns true if the input is a string array or comma-separated string, whose
  * elements are valid according to the `validator` function.
  *
- * @param {} allowEmpty If `false`, then input without any entries is
+ * @param allowEmpty If `false`, then input without any entries is
  * considered _invalid_.
  *
  * @category Validation
@@ -47,9 +46,9 @@ const isValidStrList = (value, checkFn, allowEmpty = true) => {
  *                If the input is not a string or array of strings, or if any
  *                entries do not pass `checkFn`.
  *
- * @param {} key Used in the error message thrown
+ * @param key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -71,9 +70,9 @@ const validateStrList = (key, value, checkFn) => {
  *                If the input is not a number or array of numbers. Numerical
  *                strings are accepted.
  *
- * @param {} key Used in the error message thrown
+ * @param key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -92,7 +91,7 @@ const validateNumList = (key, value) => {
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -112,7 +111,7 @@ const validateNumber = (key, value) => _validateNumber(key, value);
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is not a valid boolean or boolean string.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -126,14 +125,12 @@ const validateBoolean = (key, value) => _validateBoolean(key, value);
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @param {} checkFn      If given and the supplied value is a string, then it
- *                        is called with the value as a single argument. It
- *                        must return true if the value is valid and false
- *                        otherwise.
- *                        If it is not given, then any literal string is
- *                        accepted.
+ * @param checkFn If given and the supplied value is a string, then it is
+ *                called with the value as a single argument. It must return
+ *                true if the value is valid and false otherwise. If it is not
+ *                given, then any literal string is accepted.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -166,12 +163,11 @@ const validateStringRequired = (key, value, checkFn) => {
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @param {} stringCheckFn If given and the supplied value is a string _other
- *                         than a boolean string_, then it is called with the
- *                         value as a single argument. It must return true if
- *                         the value is valid and false otherwise.
- *                         If it is not given, then any literal string is
- *                         accepted.
+ * @param stringCheckFn If given and the supplied value is a string _other than
+ *                      a boolean string_, then it is called with the value as
+ *                      a single argument. It must return true if the value is
+ *                      valid and false otherwise. If it is not given, then any
+ *                      literal string is accepted.
  *
  * @category Validation
  */

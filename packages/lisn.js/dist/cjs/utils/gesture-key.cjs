@@ -9,8 +9,7 @@ var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"))
 var _settings = require("../globals/settings.cjs");
 var _directions = require("./directions.cjs");
 var _gesture = require("./gesture.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * @module Utils
  */
@@ -68,11 +67,11 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  * press of + or - steps up by 15% or down by ~13% (`1 / 1.15` to be exact)
  * since the previous one.
  *
- * @param {} [options.angleDiffThreshold]
- *                                  See {@link getVectorDirection}
- * @param {} [options.scrollHeight] Use this as deltaY when Home/End is pressed
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.scrollHeight]       Use this as deltaY when Home/End is
+ *                                     pressed.
  *
- * @return {} `false` if there are no "keydown" events in the list, otherwise a
+ * @returns `false` if there are no "keydown" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures
@@ -97,6 +96,7 @@ const getKeyGestureFragment = (events, options) => {
     deltaY = 0,
     deltaZ = 1;
   for (const event of events) {
+    var _deltasForKey$event$k;
     if (!MH.isKeyboardEvent(event) || event.type !== MC.S_KEYDOWN) {
       continue;
     }
@@ -118,7 +118,7 @@ const getKeyGestureFragment = (events, options) => {
       "=": event.ctrlKey ? deltasIn : null,
       "-": deltasOut
     };
-    const theseDeltas = deltasForKey[event.key] || null;
+    const theseDeltas = (_deltasForKey$event$k = deltasForKey[event.key]) !== null && _deltasForKey$event$k !== void 0 ? _deltasForKey$event$k : null;
     if (!theseDeltas) {
       // not a relevant key
       continue;

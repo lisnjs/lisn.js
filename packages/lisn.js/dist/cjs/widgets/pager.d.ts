@@ -18,7 +18,7 @@ import { Widget, WidgetHandler } from "../widgets/widget.cjs";
  * "toggle" elements which correspond one-to-one to each page. Switches go to
  * the given page and toggles toggle the enabled/disabled state of the page.
  *
- * **IMPORTANT:** Unless the {@link PagerStyle.style} is set to "carousel", the
+ * **IMPORTANT:** Unless the {@link PagerConfig.style} is set to "carousel", the
  * page elements will be positioned absolutely, and therefore the pager likely
  * needs to have an explicit height. If you enable
  * {@link PagerConfig.fullscreen}, then the element will get `height: 100vh`
@@ -357,6 +357,8 @@ export type PagerConfig = {
      * the element will get `height: 100vh` set. Otherwise, you need to set its
      * height in your CSS.
      *
+     * @since v1.1.0
+     *
      * @defaultValue "slider"
      */
     style?: "slider" | "carousel" | "tabs";
@@ -367,6 +369,8 @@ export type PagerConfig = {
      * This will determine the number of visible slides at any one width of the
      * pager. Pages will still grow to fill the size of the carousel itself.
      *
+     * @since Introduced in v1.1.0.
+     *
      * @defaultValue 300
      */
     pageSize?: number;
@@ -375,6 +379,8 @@ export type PagerConfig = {
      *
      * Whether to show a bit of the upcoming and/or previous pages that are
      * hidden when not all fit.
+     *
+     * @since Introduced in v1.1.0.
      *
      * @defaultValue false
      */

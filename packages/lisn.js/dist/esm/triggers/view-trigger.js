@@ -13,10 +13,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { settings } from "../globals/settings.js";
-import { hasClass, addClasses, getData } from "../utils/css-alter.js";
-import { wrapElement, insertGhostClone } from "../utils/dom-alter.js";
-import { isInlineTag } from "../utils/dom-query.js";
+import { hasClass } from "../utils/css-alter.js";
+import { insertGhostClone, tryWrap } from "../utils/dom-alter.js";
 import { waitForReferenceElement } from "../utils/dom-search.js";
 import { formatAsString } from "../utils/text.js";
 import { validateStrList, validateString, validateNumList } from "../utils/validation.js";
@@ -150,13 +148,13 @@ export class ViewTrigger extends Trigger {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    var _config$rootMargin;
+    var _config$rootMargin, _config$target;
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     const logger = debug ? new debug.Logger({
       name: `ViewTrigger-${formatAsString(element)}`
     }) : null;
-    this.getConfig = () => MH.copyObject(config || {});
+    this.getConfig = () => MH.copyObject(config);
     if (!MH.lengthOf(actions)) {
       return;
     }
@@ -165,7 +163,7 @@ export class ViewTrigger extends Trigger {
       rootMargin: config === null || config === void 0 || (_config$rootMargin = config.rootMargin) === null || _config$rootMargin === void 0 ? void 0 : _config$rootMargin.replace(/,/g, " "),
       threshold: config === null || config === void 0 ? void 0 : config.threshold
     });
-    const target = (config === null || config === void 0 ? void 0 : config.target) || element;
+    const target = (_config$target = config === null || config === void 0 ? void 0 : config.target) !== null && _config$target !== void 0 ? _config$target : element;
     const views = (config === null || config === void 0 ? void 0 : config.views) || MC.S_AT;
     const oppositeViews = getOppositeViews(views);
     const setupWatcher = target => {
@@ -222,29 +220,17 @@ const newConfigValidator = element => {
   };
 };
 const setupRepresentative = async element => {
-  var _MH$classList;
-  const allowedToWrap = settings.contentWrappingAllowed === true && getData(element, MC.PREFIX_NO_WRAP) === null &&
-  // Done by another animate action?
-  !((_MH$classList = MH.classList(MH.parentOf(element))) !== null && _MH$classList !== void 0 && _MH$classList.contains(MC.PREFIX_WRAPPER));
-  let target;
-  if (allowedToWrap) {
-    target = await wrapElement(element, {
-      ignoreMove: true
-    });
-    addClasses(target, MC.PREFIX_WRAPPER);
-    if (isInlineTag(MH.tagName(target))) {
-      addClasses(target, MC.PREFIX_INLINE_WRAPPER);
-    }
-  } else {
-    // Otherwise create a dummy hidden clone that's not animated and position
-    // it absolutely in a wrapper of size 0 that's inserted just before the
-    // actual element, so that the hidden clone overlaps the actual element's
-    // regular (pre-transformed) position.
+  let target = await tryWrap(element);
+  if (!target) {
+    // Not allowed to wrap. Create a dummy hidden clone that's not animated and
+    // position it absolutely in a wrapper of size 0 that's inserted just
+    // before the actual element, so that the hidden clone overlaps the actual
+    // element's regular (pre-transformed) position.
 
     const prev = element.previousElementSibling;
     const prevChild = MH.childrenOf(prev)[0];
     if (prev && hasClass(prev, MC.PREFIX_WRAPPER) && prevChild && hasClass(prevChild, MC.PREFIX_GHOST)) {
-      // Done by a previous animate action?
+      // Already cloned by a previous animate action?
       target = prevChild;
     } else {
       target = (await insertGhostClone(element))._clone;

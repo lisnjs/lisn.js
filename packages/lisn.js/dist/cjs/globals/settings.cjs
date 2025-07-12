@@ -5,8 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.settings = void 0;
 var MH = _interopRequireWildcard(require("./minification-helpers.cjs"));
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * @module Settings
  */
@@ -49,7 +48,7 @@ const settings = exports.settings = MH.preventExtensions({
    * etc. If you are using the HTML API, then you must set this before the
    * document `readyState` becomes interactive.
    *
-   * @defaultValue null
+   * @defaultValue null // document.scrollingElement
    * @category Generic
    */
   mainScrollableElementSelector: null,
@@ -107,14 +106,20 @@ const settings = exports.settings = MH.preventExtensions({
    *
    * ----------
    *
-   * If you can, it's recommended to leave this setting ON. You can still
+   * **IMPORTANT:** Certain widgets always require wrapping of elements or their
+   * children. This setting only applies in cases where wrapping is optional.
+   * If you can, it's recommended to leave this setting ON. You can still try to
    * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
-   * attribute on it.
+   * attribute on it. Alternatively, if the elements that need wrapping are
+   * already wrapped in an element with a class `lisn-wrapper`, this will be
+   * used as the wrapper.
    *
    * @defaultValue true
    * @category Generic
    */
   contentWrappingAllowed: true,
+  // [TODO v2] rename this setting
+
   /**
    * The timeout in milliseconds for waiting for the `document.readyState` to
    * become `complete`. The timer begins _once the `readyState` becomes

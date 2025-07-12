@@ -6,7 +6,7 @@ const verbosityLevel = process.env.npm_config_verbosity ?? "0";
 const useMin = process.env.npm_config_use_min === "true";
 const coverage = !useMin || process.env.npm_config_coverage === "true";
 
-const command = `npx jest --globals='{"verbosityLevel": ${verbosityLevel}, "useMinVersion": ${useMin}}' --maxWorkers=3 --coverage=${coverage}`;
+const command = `npx jest --globals='{"verbosityLevel": ${verbosityLevel}, "useMinVersion": ${useMin}}' --coverage=${coverage}`;
 
 console.log(command);
 execSync(command, { stdio: [0, 1, 2] });

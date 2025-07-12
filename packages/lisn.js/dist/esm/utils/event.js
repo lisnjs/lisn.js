@@ -16,9 +16,11 @@ import { newXMapGetter, newXWeakMap } from "../modules/x-map.js";
  */
 export const callEventListener = (handler, event) => {
   if (MH.isFunction(handler)) {
-    handler.call(event.currentTarget || self, event);
+    var _event$currentTarget;
+    handler.call((_event$currentTarget = event.currentTarget) !== null && _event$currentTarget !== void 0 ? _event$currentTarget : self, event);
   } else {
-    handler.handleEvent.call(event.currentTarget || self, event);
+    var _event$currentTarget2;
+    handler.handleEvent.call((_event$currentTarget2 = event.currentTarget) !== null && _event$currentTarget2 !== void 0 ? _event$currentTarget2 : self, event);
   }
 };
 
@@ -29,12 +31,13 @@ export const callEventListener = (handler, event) => {
  * but it handles `options` object in case the browser does not support those.
  * Does not support the `signal` option unless browser natively supports that.
  *
- * @return {} `true` if successfully added, or `false` if the same handler has
+ * @returns `true` if successfully added, or `false` if the same handler has
  * already been added by us, or if the handler is not a valid event listener.
  *
  * @category Events: Generic
  */
-export const addEventListenerTo = (target, eventType, handler, options = {}) => {
+export const addEventListenerTo = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   if (getEventHandlerData(target, eventType, handler, options)) {
     // already added
@@ -77,12 +80,13 @@ export const addEventListenerTo = (target, eventType, handler, options = {}) => 
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener | EventTarget:removeEventListener},
  * to remove it, not this function.
  *
- * @return {} `true` if successfully removed, or `false` if the handler has not
+ * @returns `true` if successfully removed, or `false` if the handler has not
  * been added by us.
  *
  * @category Events: Generic
  */
-export const removeEventListenerFrom = (target, eventType, handler, options = {}) => {
+export const removeEventListenerFrom = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   const data = getEventHandlerData(target, eventType, handler, options);
   if (!data) {

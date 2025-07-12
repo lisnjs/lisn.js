@@ -12,8 +12,10 @@ import { DOMElement } from "@lisn/globals/types";
  *
  * @category DOM: Querying
  */
-export const getVisibleContentChildren = (el: Element) =>
-  MH.filter([...MH.childrenOf(el)], (e) => isVisibleContentTag(MH.tagName(e)));
+export const getVisibleContentChildren = (element: Element) =>
+  MH.filter([...MH.childrenOf(element)], (ch) =>
+    isVisibleContentTag(MH.tagName(ch)),
+  );
 
 /**
  * Returns whether the given tag is _not_ `script` or `style`. Comparison is

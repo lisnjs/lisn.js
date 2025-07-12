@@ -19,7 +19,6 @@
  * debug messages that identifies the instance.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { settings } from "@lisn/globals/settings";
@@ -58,7 +57,8 @@ export class Logger implements LoggerInterface {
   readonly getVerbosityLevel: () => number;
   readonly setVerbosityLevel: (level: number) => void;
 
-  constructor(config: LoggerConfig = {}) {
+  constructor(config?: LoggerConfig) {
+    config ??= {};
     const myConfig = MH.merge(
       {
         // set defaults
@@ -75,10 +75,10 @@ export class Logger implements LoggerInterface {
       !getBooleanURLParam("disableRemoteLog") &&
       (myConfig.remoteLoggerOnMobileOnly === false || isMobile())
     ) {
-      remoteLoggerURL = myConfig.remoteLoggerURL || "";
+      remoteLoggerURL = myConfig.remoteLoggerURL ?? "";
     }
 
-    const name = myConfig.name || "";
+    const name = myConfig.name ?? "";
     const myConsole = new Console(
       remoteLoggerURL,
       myConfig.remoteLoggerConnectTimeout,
@@ -96,7 +96,7 @@ export class Logger implements LoggerInterface {
       verbosityLevel = l;
     };
 
-    this.setVerbosityLevel(myConfig.verbosityLevel || 0);
+    this.setVerbosityLevel(myConfig.verbosityLevel ?? 0);
 
     this.debug1 = (...args) => logDebugN(this, 1, debugPrefix, ...args);
     this.debug2 = (...args) => logDebugN(this, 2, debugPrefix, ...args);
@@ -147,7 +147,7 @@ const logDebugN = (logger: Logger, level: number, ...args: unknown[]) => {
 const isMobile = () => {
   const regex =
     /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-  return regex.test(MC.USER_AGENT);
+  return regex.test(MH.userAgent);
 };
 
 const getBooleanURLParam = (name: string) => {

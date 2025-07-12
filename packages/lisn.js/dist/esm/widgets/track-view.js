@@ -44,7 +44,10 @@ import { Widget, registerWidget } from "./widget.js";
  * <div id="myRoot"></div>
  * <div data-lisn-track-view="root=#myRoot
  *                            | root-margin=100px,50px
- *                            | threshold=0,0.5"
+ *                            | threshold=0,0.5
+ *                            | debounce-window=0
+ *                            | resize-threshold=0
+ *                            | scroll-threshold=0"
  * ></div>
  * ```
  */

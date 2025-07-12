@@ -3,40 +3,45 @@
  *
  * @categoryDescription DOM: Altering
  * These functions alter the DOM tree, but could lead to forced layout if not
- * scheduled using {@link waitForMutateTime}.
+ * scheduled using {@link Utils.waitForMutateTime}.
  *
  * @categoryDescription DOM: Altering (optimized)
  * These functions alter the DOM tree in an optimized way using
- * {@link waitForMutateTime} and so are asynchronous.
+ * {@link Utils.waitForMutateTime} and so are asynchronous.
  */
 
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
+import { settings } from "@lisn/globals/settings";
+
 import {
   hideElement,
-  hasClass,
+  hasAnyClass,
   addClassesNow,
+  removeClassesNow,
+  getData,
   setDataNow,
   setBooleanData,
 } from "@lisn/utils/css-alter";
-import { waitForMutateTime } from "@lisn/utils/dom-optimize";
+import { asyncMutatorFor } from "@lisn/utils/dom-optimize";
 import { isInlineTag } from "@lisn/utils/dom-query";
+import { logWarn } from "@lisn/utils/log";
 import { randId } from "@lisn/utils/text";
 
 /**
  * Wraps the element in the given wrapper, or a newly created element if not given.
  *
- * @param {} [options.wrapper]
+ * @param [options.wrapper]
  *              If it's an element, it is used as the wrapper. If it's a string
  *              tag name, then a new element with this tag is created as the
  *              wrapper. If not given, then `div` is used if the element to be
  *              wrapped has an block-display tag, or otherwise `span` (if the
  *              element to be wrapped has an inline tag name).
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
- * @returns {} The wrapper element that was either passed in options or created.
+ * @returns The wrapper element that was either passed in options or created.
  *
  * @category DOM: Altering
  */
@@ -67,17 +72,11 @@ export const wrapElementNow = (
 };
 
 /**
- * Like {@link wrapElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const wrapElement = async (
-  element: Element,
-  options?: {
-    wrapper?: HTMLElement | keyof HTMLElementTagNameMap;
-    ignoreMove?: boolean;
-  },
-) => waitForMutateTime().then(() => wrapElementNow(element, options));
+export const wrapElement = asyncMutatorFor(wrapElementNow);
 
 /**
  * Wraps the element's children in the given wrapper, or a newly created element
@@ -95,33 +94,28 @@ export const wrapChildrenNow = (
   },
 ) => {
   const wrapper = createWrapperFor(element, options?.wrapper);
+  const { ignoreMove } = options ?? {};
 
-  moveChildrenNow(element, wrapper, { ignoreMove: true });
+  moveChildrenNow(element, wrapper, { ignoreMove });
   moveElementNow(wrapper, {
     to: element,
-    ignoreMove: true,
+    ignoreMove,
   });
 
   return wrapper;
 };
 
 /**
- * Like {@link wrapChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const wrapChildren = async (
-  element: Element,
-  options?: {
-    wrapper?: HTMLElement | keyof HTMLElementTagNameMap;
-    ignoreMove?: boolean;
-  },
-) => waitForMutateTime().then(() => wrapChildrenNow(element, options));
+export const wrapChildren = asyncMutatorFor(wrapChildrenNow);
 
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -152,25 +146,16 @@ export const replaceElementNow = (
 };
 
 /**
- * Like {@link replaceElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link replaceElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const replaceElement = async (
-  element: Element,
-  newElement: Element,
-  options?: {
-    ignoreMove?: boolean;
-  },
-) =>
-  waitForMutateTime().then(() =>
-    replaceElementNow(element, newElement, options),
-  );
+export const replaceElement = asyncMutatorFor(replaceElementNow);
 
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -190,23 +175,18 @@ export const swapElementsNow = (
 };
 
 /**
- * Like {@link swapElementsNow} except it will {@link waitForMutateTime}.
+ * Like {@link swapElementsNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const swapElements = async (
-  elementA: Element,
-  elementB: Element,
-  options?: {
-    ignoreMove?: boolean;
-  },
-) =>
-  waitForMutateTime().then(() => swapElementsNow(elementA, elementB, options));
+export const swapElements = asyncMutatorFor(swapElementsNow);
+
+// [TODO v2]: moveChildren to accept newParent as options.to
 
 /**
  * Move an element's children to a new element
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the children (so as to not trigger relevant callbacks).
  *
@@ -232,34 +212,25 @@ export const moveChildrenNow = (
 };
 
 /**
- * Like {@link moveChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const moveChildren = async (
-  oldParent: Element,
-  newParent: Element,
-  options?: {
-    ignoreMove?: boolean;
-  },
-) =>
-  waitForMutateTime().then(() =>
-    moveChildrenNow(oldParent, newParent, options),
-  );
+export const moveChildren = asyncMutatorFor(moveChildrenNow);
 
 /**
  * Moves an element to a new position.
  *
- * @param {} [options.to]         The new parent or sibling (depending on
- *                                `options.position`). If not given, the
- *                                element is removed from the DOM.
- * @param {} [options.position]   - append (default): append to `options.to`
- *                                - prepend: prepend to `options.to`
- *                                - before: insert before `options.to`
- *                                - after: insert after `options.to`
- * @param {} [options.ignoreMove] If true, the DOM watcher instances will
- *                                ignore the operation of moving the element
- *                                (so as to not trigger relevant callbacks).
+ * @param [options.to]         The new parent or sibling (depending on
+ *                             `options.position`). If not given, the
+ *                             element is removed from the DOM.
+ * @param [options.position]   - append (default): append to `options.to`
+ *                             - prepend: prepend to `options.to`
+ *                             - before: insert before `options.to`
+ *                             - after: insert after `options.to`
+ * @param [options.ignoreMove] If true, the DOM watcher instances will
+ *                             ignore the operation of moving the element
+ *                             (so as to not trigger relevant callbacks).
  *
  * @category DOM: Altering
  */
@@ -271,7 +242,7 @@ export const moveElementNow = (
     ignoreMove?: boolean;
   },
 ) => {
-  let parentEl = options?.to || null;
+  let parentEl = options?.to ?? null;
   const position = options?.position || "append";
   if (position === "before" || position === "after") {
     parentEl = MH.parentOf(options?.to);
@@ -292,23 +263,16 @@ export const moveElementNow = (
 };
 
 /**
- * Like {@link moveElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const moveElement = async (
-  element: Element,
-  options?: {
-    to?: Element;
-    position?: "append" | "prepend" | "before" | "after";
-    ignoreMove?: boolean;
-  },
-) => waitForMutateTime().then(() => moveElementNow(element, options));
+export const moveElement = asyncMutatorFor(moveElementNow);
 
 /**
  * It will {@link hideElement} and then remove it from the DOM.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
  *
@@ -342,26 +306,139 @@ export const getOrAssignID = (element: Element, prefix = "") => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
-export const wrapScrollingContent = async (element: Element) => {
-  await waitForMutateTime();
+export const isAllowedToWrap = (element: Element) =>
+  settings.contentWrappingAllowed === true &&
+  getData(element, MC.PREFIX_NO_WRAP) === null;
 
-  let wrapper: HTMLElement;
+/**
+ * @ignore
+ * @internal
+ *
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
+ *
+ * @since v1.2.0
+ */
+export const getWrapper = (
+  element: Element,
+  options?: {
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
+  },
+) => {
+  const { _tagName: tagName, _classNames: classNames = [MC.PREFIX_WRAPPER] } =
+    options ?? {};
+  const parent = MH.parentOf(element);
+  if (
+    MH.lengthOf(MH.childrenOf(parent)) === 1 &&
+    MH.isHTMLElement(parent) &&
+    (!tagName || MH.hasTagName(parent, tagName)) &&
+    (!classNames || hasAnyClass(parent, ...classNames))
+  ) {
+    // Already wrapped
+    return parent;
+  }
+
+  return null; // don't check the element itself, only its parent
+};
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
+ *
+ * @since v1.2.0
+ */
+export const getContentWrapper = (
+  element: Element,
+  options?: {
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
+  },
+) => {
+  const { _tagName: tagName, _classNames: classNames = [MC.PREFIX_WRAPPER] } =
+    options ?? {};
   const firstChild = MH.childrenOf(element)[0];
   if (
     MH.lengthOf(MH.childrenOf(element)) === 1 &&
     MH.isHTMLElement(firstChild) &&
-    hasClass(firstChild, PREFIX_CONTENT_WRAPPER)
+    (!tagName || MH.hasTagName(firstChild, tagName)) &&
+    (!classNames || hasAnyClass(firstChild, ...classNames))
   ) {
-    // Another concurrent call has just wrapped it
-    wrapper = firstChild;
-  } else {
-    wrapper = wrapChildrenNow(element, { ignoreMove: true });
-    addClassesNow(wrapper, PREFIX_CONTENT_WRAPPER);
+    // Already wrapped
+    return firstChild;
   }
 
-  return wrapper;
+  return null;
 };
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export const tryWrapNow = <O extends ContentWrappingOptions>(
+  element: Element,
+  options?: O,
+) => _tryWrapNow(element, options);
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export const tryWrap = asyncMutatorFor(tryWrapNow);
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export const tryWrapContentNow = <O extends ContentWrappingOptions>(
+  element: Element,
+  options?: O,
+) => _tryWrapNow(element, options, true);
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export const tryWrapContent = asyncMutatorFor(tryWrapContentNow);
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export const unwrapContentNow = (wrapper: Element, classNames?: string[]) => {
+  const parent = wrapper.parentElement;
+  if (parent) {
+    moveChildrenNow(wrapper, parent, { ignoreMove: true });
+    moveElementNow(wrapper, { ignoreMove: true });
+    if (classNames) {
+      removeClassesNow(wrapper, ...classNames);
+    }
+  }
+};
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export const unwrapContent = asyncMutatorFor(unwrapContentNow);
 
 /**
  * @ignore
@@ -401,11 +478,10 @@ export const insertGhostCloneNow = <E extends Element>(
     MC.PREFIX_ANIMATE_DISABLE,
   );
 
-  const wrapper = wrapElementNow(clone);
-  addClassesNow(wrapper, MC.PREFIX_WRAPPER);
+  const wrapper = _tryWrapNow(clone, { _required: true });
 
   moveElementNow(wrapper, {
-    to: insertBefore || element,
+    to: insertBefore ?? element,
     position: "before",
     ignoreMove: true,
   });
@@ -419,10 +495,7 @@ export const insertGhostCloneNow = <E extends Element>(
  *
  * Exposed via DOMWatcher
  */
-export const insertGhostClone = <E extends Element>(
-  element: E,
-  insertBefore: Element | null = null,
-) => waitForMutateTime().then(() => insertGhostCloneNow(element, insertBefore));
+export const insertGhostClone = asyncMutatorFor(insertGhostCloneNow);
 
 /**
  * @ignore
@@ -435,8 +508,8 @@ export const ignoreMove = (
   options: { from?: Element | null; to?: Element | null },
 ) =>
   recordsToSkipOnce.set(target, {
-    from: options.from || null,
-    to: options.to || null,
+    from: options.from ?? null,
+    to: options.to ?? null,
   });
 
 /**
@@ -446,7 +519,7 @@ export const ignoreMove = (
 export const getIgnoreMove = (
   target: Element,
 ): { from: Element | null; to: Element | null } | null =>
-  recordsToSkipOnce.get(target) || null;
+  recordsToSkipOnce.get(target) ?? null;
 
 /**
  * @ignore
@@ -480,7 +553,13 @@ export const insertArrow = (
 
 // ----------------------------------------
 
-const PREFIX_CONTENT_WRAPPER = MH.prefixName("content-wrapper");
+type ContentWrappingOptions = {
+  _tagName?: keyof HTMLElementTagNameMap;
+  _classNames?: string[]; // if the wrapper has any one of these, it will be re-used
+  _ignoreMove?: boolean; // default is true here
+  _required?: boolean; // if true, will ignore contentWrappingAllowed and data-lisn-no-wrap
+  _requiredBy?: string; // for logging purposes
+};
 
 const recordsToSkipOnce = MH.newMap<
   /* target being moved */ Element,
@@ -505,4 +584,43 @@ const createWrapperFor = (
   }
 
   return MH.createElement(tag);
+};
+
+const _tryWrapNow = <O extends ContentWrappingOptions>(
+  element: Element,
+  options: O | undefined,
+  wrapContent = false, // if true, wrap its children, otherwise given element
+) => {
+  const {
+    _tagName: tagName,
+    _classNames: classNames = [MC.PREFIX_WRAPPER],
+    _ignoreMove: ignoreMove = true,
+    _required: required = false,
+    _requiredBy: requiredBy = "",
+  } = options ?? {};
+
+  const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
+  const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
+  const allowedToWrap = isAllowedToWrap(element);
+
+  let wrapper = getWrapperFn(element, options);
+  if (!wrapper && (required || allowedToWrap)) {
+    wrapper = wrapFn(element, { wrapper: tagName, ignoreMove });
+    if (classNames) {
+      addClassesNow(wrapper, ...classNames);
+    }
+    if (isInlineTag(MH.tagName(wrapper))) {
+      addClassesNow(wrapper, MC.PREFIX_INLINE_WRAPPER);
+    }
+
+    if (!allowedToWrap && requiredBy) {
+      logWarn(
+        `content wrapping is disabled for element but wrapping is required by ${requiredBy}`,
+      );
+    }
+  }
+
+  return wrapper as O extends { _required: true }
+    ? HTMLElement
+    : HTMLElement | null;
 };

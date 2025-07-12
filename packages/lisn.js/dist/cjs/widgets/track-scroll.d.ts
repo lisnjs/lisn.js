@@ -23,6 +23,13 @@ import { Widget } from "../widgets/widget.cjs";
  * ```html
  * <div class="lisn-track-scroll"></div>
  * ```
+ *
+ * @example
+ * As above but with custom options
+ *
+ * ```html
+ * <div data-lisn-track-scroll="threshold=0 | debounce-window=0"></div>
+ * ```
  */
 export declare class TrackScroll extends Widget {
     static get(element: Element): TrackScroll | null;

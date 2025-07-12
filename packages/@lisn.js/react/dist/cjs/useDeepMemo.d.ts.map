@@ -1,1 +1,1 @@
-{"version":3,"file":"useDeepMemo.d.ts","sourceRoot":"","sources":["../../src/useDeepMemo.ts"],"names":[],"mappings":"AAKA,eAAO,MAAM,WAAW,GAAI,CAAC,SAAS,CAAC,MAStC,CAAC"}
+{"version":3,"file":"useDeepMemo.d.ts","sourceRoot":"","sources":["../../src/useDeepMemo.ts"],"names":[],"mappings":"AAKA,eAAO,MAAM,WAAW,GAAI,CAAC,EAAE,OAAO,CAAC,MAStC,CAAC"}

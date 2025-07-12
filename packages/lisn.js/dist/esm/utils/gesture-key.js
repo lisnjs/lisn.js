@@ -61,11 +61,11 @@ import { addDeltaZ } from "./gesture.js";
  * press of + or - steps up by 15% or down by ~13% (`1 / 1.15` to be exact)
  * since the previous one.
  *
- * @param {} [options.angleDiffThreshold]
- *                                  See {@link getVectorDirection}
- * @param {} [options.scrollHeight] Use this as deltaY when Home/End is pressed
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.scrollHeight]       Use this as deltaY when Home/End is
+ *                                     pressed.
  *
- * @return {} `false` if there are no "keydown" events in the list, otherwise a
+ * @returns `false` if there are no "keydown" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures
@@ -90,6 +90,7 @@ export const getKeyGestureFragment = (events, options) => {
     deltaY = 0,
     deltaZ = 1;
   for (const event of events) {
+    var _deltasForKey$event$k;
     if (!MH.isKeyboardEvent(event) || event.type !== MC.S_KEYDOWN) {
       continue;
     }
@@ -111,7 +112,7 @@ export const getKeyGestureFragment = (events, options) => {
       "=": event.ctrlKey ? deltasIn : null,
       "-": deltasOut
     };
-    const theseDeltas = deltasForKey[event.key] || null;
+    const theseDeltas = (_deltasForKey$event$k = deltasForKey[event.key]) !== null && _deltasForKey$event$k !== void 0 ? _deltasForKey$event$k : null;
     if (!theseDeltas) {
       // not a relevant key
       continue;

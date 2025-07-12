@@ -12,7 +12,7 @@ import {
   CommaSeparatedStr,
 } from "@lisn/globals/types";
 
-import { setNumericStyleProps } from "@lisn/utils/css-alter";
+import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { waitForInteractive } from "@lisn/utils/dom-events";
 import {
   waitForMeasureTime,
@@ -159,9 +159,9 @@ export class ViewWatcher {
    * Get the current view relative to the target. By default, it will
    * {@link waitForMeasureTime} and so will be delayed by one frame.
    *
-   * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-   *                    this only when doing realtime scroll-based animations
-   *                    as it may cause a forced layout.
+   * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+   *                 this only when doing realtime scroll-based animations
+   *                 as it may cause a forced layout.
    */
   readonly fetchCurrentView: (
     target: ViewTarget,
@@ -172,7 +172,7 @@ export class ViewWatcher {
    * Creates a new instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: ViewWatcherConfig = {}) {
+  static create(config?: ViewWatcherConfig) {
     return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -183,7 +183,7 @@ export class ViewWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: ViewWatcherConfig = {}) {
+  static reuse(config?: ViewWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, { _root: null }));
 
@@ -809,9 +809,9 @@ const getConfig = (
   config: ViewWatcherConfig | undefined,
 ): ViewWatcherConfigInternal => {
   return {
-    _root: config?.root || null,
+    _root: config?.root ?? null,
     _rootMargin: config?.rootMargin ?? "0px 0px 0px 0px",
-    _threshold: config?.threshold || 0,
+    _threshold: config?.threshold ?? 0,
   };
 };
 
@@ -1089,7 +1089,7 @@ const setViewCssProps = (
   element: Element,
   viewData: ViewData | undefined | null,
 ) => {
-  const relative: Record<string, number> = viewData?.relative || {};
+  const relative: Record<string, number> = viewData?.relative ?? {};
   const props = {
     top: relative.top,
     bottom: relative.bottom,
@@ -1100,7 +1100,7 @@ const setViewCssProps = (
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle,
   };
-  setNumericStyleProps(element, props, { _prefix: "r-", _numDecimal: 4 }); // don't await here
+  setNumericStyleJsVars(element, props, { _prefix: "r-", _numDecimal: 4 }); // don't await here
 };
 
 const fetchElement = async (

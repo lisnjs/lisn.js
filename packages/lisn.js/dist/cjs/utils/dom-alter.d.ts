@@ -3,25 +3,25 @@
  *
  * @categoryDescription DOM: Altering
  * These functions alter the DOM tree, but could lead to forced layout if not
- * scheduled using {@link waitForMutateTime}.
+ * scheduled using {@link Utils.waitForMutateTime}.
  *
  * @categoryDescription DOM: Altering (optimized)
  * These functions alter the DOM tree in an optimized way using
- * {@link waitForMutateTime} and so are asynchronous.
+ * {@link Utils.waitForMutateTime} and so are asynchronous.
  */
 /**
  * Wraps the element in the given wrapper, or a newly created element if not given.
  *
- * @param {} [options.wrapper]
+ * @param [options.wrapper]
  *              If it's an element, it is used as the wrapper. If it's a string
  *              tag name, then a new element with this tag is created as the
  *              wrapper. If not given, then `div` is used if the element to be
  *              wrapped has an block-display tag, or otherwise `span` (if the
  *              element to be wrapped has an inline tag name).
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
- * @returns {} The wrapper element that was either passed in options or created.
+ * @returns The wrapper element that was either passed in options or created.
  *
  * @category DOM: Altering
  */
@@ -30,14 +30,14 @@ export declare const wrapElementNow: (element: Element, options?: {
     ignoreMove?: boolean;
 }) => HTMLElement;
 /**
- * Like {@link wrapElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const wrapElement: (element: Element, options?: {
     wrapper?: HTMLElement | keyof HTMLElementTagNameMap;
     ignoreMove?: boolean;
-}) => Promise<HTMLElement>;
+} | undefined) => Promise<HTMLElement>;
 /**
  * Wraps the element's children in the given wrapper, or a newly created element
  * if not given.
@@ -51,18 +51,18 @@ export declare const wrapChildrenNow: (element: Element, options?: {
     ignoreMove?: boolean;
 }) => HTMLElement;
 /**
- * Like {@link wrapChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const wrapChildren: (element: Element, options?: {
     wrapper?: HTMLElement | keyof HTMLElementTagNameMap;
     ignoreMove?: boolean;
-}) => Promise<HTMLElement>;
+} | undefined) => Promise<HTMLElement>;
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -72,17 +72,17 @@ export declare const replaceElementNow: (element: Element, newElement: Element, 
     ignoreMove?: boolean;
 }) => void;
 /**
- * Like {@link replaceElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link replaceElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const replaceElement: (element: Element, newElement: Element, options?: {
     ignoreMove?: boolean;
-}) => Promise<void>;
+} | undefined) => Promise<void>;
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -92,17 +92,17 @@ export declare const swapElementsNow: (elementA: Element, elementB: Element, opt
     ignoreMove?: boolean;
 }) => void;
 /**
- * Like {@link swapElementsNow} except it will {@link waitForMutateTime}.
+ * Like {@link swapElementsNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const swapElements: (elementA: Element, elementB: Element, options?: {
     ignoreMove?: boolean;
-}) => Promise<void>;
+} | undefined) => Promise<void>;
 /**
  * Move an element's children to a new element
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the children (so as to not trigger relevant callbacks).
  *
@@ -112,26 +112,26 @@ export declare const moveChildrenNow: (oldParent: Element, newParent: Element, o
     ignoreMove?: boolean;
 }) => void;
 /**
- * Like {@link moveChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const moveChildren: (oldParent: Element, newParent: Element, options?: {
     ignoreMove?: boolean;
-}) => Promise<void>;
+} | undefined) => Promise<void>;
 /**
  * Moves an element to a new position.
  *
- * @param {} [options.to]         The new parent or sibling (depending on
- *                                `options.position`). If not given, the
- *                                element is removed from the DOM.
- * @param {} [options.position]   - append (default): append to `options.to`
- *                                - prepend: prepend to `options.to`
- *                                - before: insert before `options.to`
- *                                - after: insert after `options.to`
- * @param {} [options.ignoreMove] If true, the DOM watcher instances will
- *                                ignore the operation of moving the element
- *                                (so as to not trigger relevant callbacks).
+ * @param [options.to]         The new parent or sibling (depending on
+ *                             `options.position`). If not given, the
+ *                             element is removed from the DOM.
+ * @param [options.position]   - append (default): append to `options.to`
+ *                             - prepend: prepend to `options.to`
+ *                             - before: insert before `options.to`
+ *                             - after: insert after `options.to`
+ * @param [options.ignoreMove] If true, the DOM watcher instances will
+ *                             ignore the operation of moving the element
+ *                             (so as to not trigger relevant callbacks).
  *
  * @category DOM: Altering
  */
@@ -141,7 +141,7 @@ export declare const moveElementNow: (element: Element, options?: {
     ignoreMove?: boolean;
 }) => void;
 /**
- * Like {@link moveElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
@@ -149,11 +149,11 @@ export declare const moveElement: (element: Element, options?: {
     to?: Element;
     position?: "append" | "prepend" | "before" | "after";
     ignoreMove?: boolean;
-}) => Promise<void>;
+} | undefined) => Promise<void>;
 /**
  * It will {@link hideElement} and then remove it from the DOM.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
  *
@@ -170,8 +170,86 @@ export declare const getOrAssignID: (element: Element, prefix?: string) => strin
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
-export declare const wrapScrollingContent: (element: Element) => Promise<HTMLElement>;
+export declare const isAllowedToWrap: (element: Element) => boolean;
+/**
+ * @ignore
+ * @internal
+ *
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
+ *
+ * @since v1.2.0
+ */
+export declare const getWrapper: (element: Element, options?: {
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
+}) => HTMLElement | null;
+/**
+ * @ignore
+ * @internal
+ *
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
+ *
+ * @since v1.2.0
+ */
+export declare const getContentWrapper: (element: Element, options?: {
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
+}) => HTMLElement | null;
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export declare const tryWrapNow: <O extends ContentWrappingOptions>(element: Element, options?: O) => O extends {
+    _required: true;
+} ? HTMLElement : HTMLElement | null;
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export declare const tryWrap: <O extends ContentWrappingOptions>(element: Element, options?: O | undefined) => Promise<O extends {
+    _required: true;
+} ? HTMLElement : HTMLElement | null>;
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export declare const tryWrapContentNow: <O extends ContentWrappingOptions>(element: Element, options?: O) => O extends {
+    _required: true;
+} ? HTMLElement : HTMLElement | null;
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export declare const tryWrapContent: <O extends ContentWrappingOptions>(element: Element, options?: O | undefined) => Promise<O extends {
+    _required: true;
+} ? HTMLElement : HTMLElement | null>;
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export declare const unwrapContentNow: (wrapper: Element, classNames?: string[]) => void;
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+export declare const unwrapContent: (wrapper: Element, classNames?: string[] | undefined) => Promise<void>;
 /**
  * @ignore
  * @internal
@@ -201,7 +279,7 @@ export declare const insertGhostCloneNow: <E extends Element>(element: E, insert
  *
  * Exposed via DOMWatcher
  */
-export declare const insertGhostClone: <E extends Element>(element: E, insertBefore?: Element | null) => Promise<{
+export declare const insertGhostClone: <E extends Element>(element: E, insertBefore?: Element | null | undefined) => Promise<{
     _wrapper: HTMLElement;
     _clone: E;
 }>;
@@ -236,4 +314,12 @@ export declare const clearIgnoreMove: (target: Element) => void;
  * @internal
  */
 export declare const insertArrow: (target: Element, direction: "up" | "down" | "left" | "right", position?: "prepend" | "append" | "before" | "after", tag?: string) => HTMLElement;
+type ContentWrappingOptions = {
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[];
+    _ignoreMove?: boolean;
+    _required?: boolean;
+    _requiredBy?: string;
+};
+export {};
 //# sourceMappingURL=dom-alter.d.ts.map

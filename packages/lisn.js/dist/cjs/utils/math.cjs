@@ -3,19 +3,16 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.toPosNum = exports.toNumWithBounds = exports.toNum = exports.toNonNegNum = exports.toInt = exports.sortedKeysByVal = exports.roundNumTo = exports.radToDeg = exports.quadraticRoots = exports.normalizeAngle = exports.minAbs = exports.maxAbs = exports.keyWithMinVal = exports.keyWithMaxVal = exports.isValidNum = exports.havingMinAbs = exports.havingMaxAbs = exports.hAngle = exports.getBitmask = exports.easeInOutQuad = exports.distanceBetween = exports.degToRad = exports.areParallel = exports.areAntiParallel = void 0;
+exports.toPosNum = exports.toNumWithBounds = exports.toNum = exports.toNonNegNum = exports.toInt = exports.sortedKeysByVal = exports.roundNumTo = exports.radToDeg = exports.quadraticRoots = exports.normalizeAngle = exports.minAbs = exports.maxAbs = exports.keyWithMinVal = exports.keyWithMaxVal = exports.isValidNum = exports.havingMinAbs = exports.havingMaxAbs = exports.hAngle = exports.getBitmask = exports.easeInOutQuad = exports.distanceBetween = exports.degToRad = exports.criticallyDamped = exports.areParallel = exports.areAntiParallel = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * @module Utils
  */
 
 /**
- * Round a number to the given decimal precision (default is 0).
- *
- * @param {} [numDecimal = 0]
+ * Round a number to the given decimal precision.
  *
  * @category Math
  */
@@ -210,7 +207,7 @@ const radToDeg = a => a * 180 / MC.PI;
 /**
  * Returns true if the given vectors point in the same direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 5 degrees of each other are
@@ -232,7 +229,7 @@ const areParallel = (vA, vB, angleDiffThreshold = 0) => {
 /**
  * Returns true if the given vectors point in the opposite direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 175-185 degrees of each other are
@@ -274,17 +271,82 @@ const quadraticRoots = (a, b, c) => {
  *
  * @see https://easings.net/#easeInOutQuad
  *
+ * @param x Must be between 0 and 1.
+ *
+ * @returns The current y-axis value between 0 and 1.
+ *
  * @category Math
  */
 exports.quadraticRoots = quadraticRoots;
 const easeInOutQuad = x => x < 0.5 ? 2 * x * x : 1 - MH.pow(-2 * x + 2, 2) / 2;
 
 /**
- * Returns an array of object's keys sorted by the numeric value they hold.
+ * Returns the new position and velocity for a critically damped user-driven
+ * spring state toward a current target position.
+ *
+ * @param [settings.lTarget]       Target final position.
+ * @param [settings.dt]            Time step in milliseconds since the last call.
+ *                                 Must be small for the returned values to be
+ *                                 meaningful.
+ * @param [settings.lag]           Lag in milliseconds (how long it should take
+ *                                 for it to reach the final position). Must be
+ *                                 positive.
+ * @param [settings.l = 0]         Current position (starting or one returned by
+ *                                 previous call).
+ * @param [settings.v = 0]         Current velocity (returned by previous call).
+ * @param [settings.precision = 2] Number of decimal places to round position to
+ *                                 in order to determine when it's "done".
+ * @returns Updated position and velocity
+ *
+ * @since v1.2.0
  *
  * @category Math
  */
 exports.easeInOutQuad = easeInOutQuad;
+const criticallyDamped = settings => {
+  const {
+    lTarget,
+    precision = 2
+  } = settings;
+  const lag = toNumWithBounds(settings.lag, {
+    min: 1
+  }) / 1000; // to seconds
+
+  // Since the position only approaches asymptotically the target it never truly
+  // reaches it exactly we need an approximation to calculate w0. N determines
+  // how far away from the target position we are after `lag` milliseconds.
+  const N = 7;
+  const w0 = N / lag;
+  let {
+    l = 0,
+    v = 0,
+    dt
+  } = settings;
+  dt /= 1000; // to seconds
+
+  if (roundNumTo(l - lTarget, precision) === 0) {
+    // we're done
+    l = lTarget;
+    v = 0;
+  } else if (dt > 0) {
+    const A = l - lTarget;
+    const B = v + w0 * A;
+    const e = MH.exp(-w0 * dt);
+    l = lTarget + (A + B * dt) * e;
+    v = (B - w0 * (A + B * dt)) * e;
+  }
+  return {
+    l,
+    v
+  };
+};
+
+/**
+ * Returns an array of object's keys sorted by the numeric value they hold.
+ *
+ * @category Math
+ */
+exports.criticallyDamped = criticallyDamped;
 const sortedKeysByVal = (obj, descending = false) => {
   if (descending) {
     return MH.keysOf(obj).sort((x, y) => obj[y] - obj[x]);
@@ -301,7 +363,7 @@ const sortedKeysByVal = (obj, descending = false) => {
  */
 exports.sortedKeysByVal = sortedKeysByVal;
 const keyWithMaxVal = obj => {
-  return sortedKeysByVal(obj).slice(-1)[0];
+  return MH.lastOf(sortedKeysByVal(obj));
 };
 
 /**
@@ -313,7 +375,7 @@ const keyWithMaxVal = obj => {
  */
 exports.keyWithMaxVal = keyWithMaxVal;
 const keyWithMinVal = obj => {
-  return sortedKeysByVal(obj).slice(0, 1)[0];
+  return MH.firstOf(sortedKeysByVal(obj));
 };
 
 /**

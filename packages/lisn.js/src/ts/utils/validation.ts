@@ -16,7 +16,7 @@ import { splitOn } from "@lisn/utils/text";
  * Returns true if the input is a string array or comma-separated string, whose
  * elements are valid according to the `validator` function.
  *
- * @param {} allowEmpty If `false`, then input without any entries is
+ * @param allowEmpty If `false`, then input without any entries is
  * considered _invalid_.
  *
  * @category Validation
@@ -48,9 +48,9 @@ export const isValidStrList = <T extends string = string>(
  *                If the input is not a string or array of strings, or if any
  *                entries do not pass `checkFn`.
  *
- * @param {} key Used in the error message thrown
+ * @param key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -77,9 +77,9 @@ export const validateStrList = <T extends string = string>(
  *                If the input is not a number or array of numbers. Numerical
  *                strings are accepted.
  *
- * @param {} key Used in the error message thrown
+ * @param key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -102,7 +102,7 @@ export const validateNumList = (
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -122,7 +122,7 @@ export const validateNumber = (key: string, value: unknown) =>
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is not a valid boolean or boolean string.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -136,14 +136,12 @@ export const validateBoolean = (key: string, value: unknown) =>
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @param {} checkFn      If given and the supplied value is a string, then it
- *                        is called with the value as a single argument. It
- *                        must return true if the value is valid and false
- *                        otherwise.
- *                        If it is not given, then any literal string is
- *                        accepted.
+ * @param checkFn If given and the supplied value is a string, then it is
+ *                called with the value as a single argument. It must return
+ *                true if the value is valid and false otherwise. If it is not
+ *                given, then any literal string is accepted.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -184,12 +182,11 @@ export const validateStringRequired = <T extends string = string>(
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @param {} stringCheckFn If given and the supplied value is a string _other
- *                         than a boolean string_, then it is called with the
- *                         value as a single argument. It must return true if
- *                         the value is valid and false otherwise.
- *                         If it is not given, then any literal string is
- *                         accepted.
+ * @param stringCheckFn If given and the supplied value is a string _other than
+ *                      a boolean string_, then it is called with the value as
+ *                      a single argument. It must return true if the value is
+ *                      valid and false otherwise. If it is not given, then any
+ *                      literal string is accepted.
  *
  * @category Validation
  */

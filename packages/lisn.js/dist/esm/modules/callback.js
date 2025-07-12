@@ -12,7 +12,7 @@ import { getDebouncedHandler } from "../utils/tasks.js";
 import debug from "../debug/debug.js";
 
 /**
- * @typeParam Args  See {@link Callback}
+ * @typeParam Args See {@link Callback}
  */
 
 /**
@@ -54,12 +54,12 @@ export const wrapCallback = (handlerOrCallback, debounceWindow = 0) => {
  * - awaiting on an asynchronous handler and ensuring that the handler does not
  *  run concurrently to itself, i.e. subsequent {@link invoke}s will be queued
  *
- * @typeParam Args  The type of arguments that the callback expects.
+ * @typeParam Args The type of arguments that the callback expects.
  */
 export class Callback {
   /**
-   * @param {} handler     The actual function to call. This should return one of
-   *                       the known {@link CallbackReturnType} values.
+   * @param handler The actual function to call. This should return one of
+   *                the known {@link CallbackReturnType} values.
    */
   constructor(handler) {
     /**
@@ -107,8 +107,8 @@ export class Callback {
     const onRemove = MH.newSet();
     this.isRemoved = () => isRemoved;
     this.remove = () => {
-      debug: logger === null || logger === void 0 || logger.debug8("Removing");
       if (!isRemoved) {
+        debug: logger === null || logger === void 0 || logger.debug8("Removing");
         isRemoved = true;
         for (const rmFn of onRemove) {
           rmFn();
@@ -169,10 +169,10 @@ _defineProperty(Callback, "REMOVE", MC.SYMBOL("REMOVE"));
  * Note that if the argument is a callback that's already debounced by a
  * _larger_ window, then `debounceWindow` will have no effect.
  *
- * @param {} debounceWindow  If non-0, the callback will be called at most
- *                           every `debounceWindow` ms. The arguments it will
- *                           be called with will be the last arguments the
- *                           wrapper was called with.
+ * @param debounceWindow If non-0, the callback will be called at most
+ *                       every `debounceWindow` ms. The arguments it will
+ *                       be called with will be the last arguments the
+ *                       wrapper was called with.
  */
 _defineProperty(Callback, "wrap", wrapCallback);
 const callablesMap = MH.newWeakMap();

@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { addClasses, removeClasses, getBooleanData, setBooleanData, unsetBooleanData, delData, copyStyle, setNumericStyleProps } from "../utils/css-alter.js";
+import { addClasses, removeClasses, getBooleanData, setBooleanData, unsetBooleanData, delData, copyStyle, setNumericStyleJsVars } from "../utils/css-alter.js";
 import { moveElement, swapElements, cloneElement } from "../utils/dom-alter.js";
 import { waitForMeasureTime } from "../utils/dom-optimize.js";
 import { getVisibleContentChildren } from "../utils/dom-query.js";
@@ -100,35 +100,35 @@ export class Sortable extends Widget {
     /**
      * Disables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "disableItem", void 0);
     /**
      * Re-enables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "enableItem", void 0);
     /**
      * Re-enables the given item number if it is disabled, otherwise disables it.
      * Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "toggleItem", void 0);
     /**
      * Returns true if the given item number is disabled. Note that item numbers
      * start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "isItemDisabled", void 0);
     /**
@@ -143,9 +143,9 @@ export class Sortable extends Widget {
     /**
      * Returns the item elements.
      *
-     * @param {} currentOrder If false (default), returns the items in the
-     *                        original order. If true, they are returned in the
-     *                        current document order.
+     * @param currentOrder If false (default), returns the items in the
+     *                     original order. If true, they are returned in the
+     *                     current document order.
      */
     _defineProperty(this, "getItems", void 0);
     const items = (config === null || config === void 0 ? void 0 : config.items) || [];
@@ -196,8 +196,6 @@ const PREFIX_FLOATING_CLONE = `${PREFIXED_NAME}__ghost`;
 
 // Only one Sortable widget per element is allowed, but Widget requires a
 // non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
 const configValidator = {
   mode: (key, value) => validateString(key, value, v => v === "swap" || v === "move")
@@ -269,7 +267,7 @@ const init = (widget, element, items, methods) => {
           });
         }
         if (floatingClone) {
-          setNumericStyleProps(floatingClone, {
+          setNumericStyleJsVars(floatingClone, {
             clientX: clientX - grabOffset[0],
             clientY: clientY - grabOffset[1]
           }, {

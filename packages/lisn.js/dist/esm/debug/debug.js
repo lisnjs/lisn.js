@@ -10,9 +10,10 @@
 import { Logger } from "./logger.js";
 import { Console } from "./console.js";
 import { RemoteConsole } from "./remote-console.js";
-export default {
+const result = {
   Logger,
   Console,
   RemoteConsole
 };
+export default result;
 //# sourceMappingURL=debug.js.map

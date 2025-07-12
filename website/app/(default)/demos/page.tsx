@@ -59,7 +59,7 @@ export default function Page() {
 
           <li>
             <Link href="pager-carousel/" external={true}>
-              Carousel pager
+              Responsive carousel pager
             </Link>
           </li>
 

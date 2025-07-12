@@ -12,6 +12,7 @@ import * as MC from "@lisn/globals/minification-constants";
 import { CoordinateOffset } from "@lisn/globals/types";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
+import { omitKeys } from "@lisn/utils/misc";
 import { validateNumber } from "@lisn/utils/validation";
 
 import { ScrollWatcher } from "@lisn/watchers/scroll-watcher";
@@ -31,6 +32,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * - Accepted options:
  *   - `offsetX`: A number.
  *   - `offsetY`: A number.
+ *   - `duration`: A number.
  *   - `scrollable`: A string element specification for an element (see
  *     {@link Utils.getReferenceElement | getReferenceElement}). Note that,
  *     unless it's a DOM ID, the specification is parsed relative to the
@@ -61,11 +63,11 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  *
  * @example
  * When the user clicks the button, scroll the main scrolling element to
- * element's position 10px _down_ and 50px _left_:
+ * element's position 10px _down_ and 50px _left_, with a duration of 200ms:
  *
  * ```html
  * <button id="btn">Scroll to/back</button>
- * <div data-lisn-on-click="@scroll-to: offsetY=10, offsetX=-50 +target=#btn"></div>
+ * <div data-lisn-on-click="@scroll-to: offsetY=10, offsetX=-50, duration=200 +target=#btn"></div>
  * ```
  *
  * @example
@@ -122,8 +124,9 @@ export class ScrollTo implements Action {
           : undefined;
 
         return new ScrollTo(element, {
-          scrollable: config?.scrollable,
           offset,
+          duration: config?.duration,
+          scrollable: config?.scrollable,
         });
       },
       newConfigValidator,
@@ -131,46 +134,44 @@ export class ScrollTo implements Action {
   }
 
   constructor(element: Element, config?: ScrollToConfig) {
-    const offset = config?.offset;
-    const scrollable = config?.scrollable;
-
     const watcher = ScrollWatcher.reuse();
+    const { scrollable } = config ?? {};
     let prevScrollTop = -1,
       prevScrollLeft = -1;
 
     this.do = async () => {
-      const current = await watcher.fetchCurrentScroll();
+      const current = await watcher.fetchCurrentScroll(scrollable);
       prevScrollTop = current[MC.S_SCROLL_TOP];
       prevScrollLeft = current[MC.S_SCROLL_LEFT];
 
-      const action = await watcher.scrollTo(element, {
-        offset,
-        scrollable,
-      });
+      const action = await watcher.scrollTo(element, config);
       await action?.waitFor();
     };
 
     this.undo = async () => {
       if (prevScrollTop !== -1) {
-        const action = await watcher.scrollTo({
-          top: prevScrollTop,
-          left: prevScrollLeft,
-        });
+        const action = await watcher.scrollTo(
+          {
+            top: prevScrollTop,
+            left: prevScrollLeft,
+          },
+          omitKeys(config ?? {}, { offset: true }), // no offset when undoing
+        );
         await action?.waitFor();
       }
     };
 
     this[MC.S_TOGGLE] = async () => {
-      const start = await watcher.fetchCurrentScroll();
+      const start = await watcher.fetchCurrentScroll(scrollable);
 
       const canReverse = prevScrollTop !== -1;
       let hasReversed = false;
 
-      // Try to scroll to the element, but if we're already at it, then reverse
-      // to previous position if any.
+      // Try to scroll to the element, but if we're already close to it, then
+      // reverse to previous position if any.
       const altTarget = {
         top: () => {
-          hasReversed = true;
+          hasReversed = true; // detect if we have reversed
           return prevScrollTop;
         },
         left: prevScrollLeft,
@@ -178,7 +179,12 @@ export class ScrollTo implements Action {
 
       const action = await watcher.scrollTo(
         element,
-        canReverse ? { altTarget, offset } : { offset },
+        MH.merge(
+          config,
+          canReverse
+            ? { altTarget } // no altOffset when reversing
+            : {},
+        ),
       );
       await action?.waitFor();
 
@@ -205,7 +211,14 @@ export type ScrollToConfig = {
   offset?: CoordinateOffset;
 
   /**
-   * See {@link Utils.ScrollToOptions.scrollable}.
+   * The duration in milliseconds of the scroll animation.
+   *
+   * @defaultValue {@link ScrollWatcher} default
+   */
+  duration?: number;
+
+  /**
+   * The element that should be scrolled.
    *
    * @defaultValue {@link ScrollWatcher} default
    */
@@ -217,11 +230,13 @@ export type ScrollToConfig = {
 const newConfigValidator: WidgetConfigValidatorFunc<{
   offsetX: number;
   offsetY: number;
+  duration: number | undefined;
   scrollable?: Element;
 }> = (element) => {
   return {
     offsetX: (key, value) => validateNumber(key, value) ?? 0,
     offsetY: (key, value) => validateNumber(key, value) ?? 0,
+    duration: (key, value) => validateNumber(key, value),
     scrollable: (key, value) =>
       (MH.isLiteralString(value)
         ? waitForReferenceElement(value, element)

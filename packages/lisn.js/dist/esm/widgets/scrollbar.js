@@ -5,11 +5,17 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * @module Widgets
  */
 
+// [TODO v2]: Instead of wrapping children and changing which element is the
+// actual scrollable (and having to mapScrollable, etc), use the provided
+// element as the scrolling one but wrap IT (not its children) and insert the
+// scrollbars before it. Then remove, "id" and "className" config options.
+
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
-import { showElement, hideElement, displayElement, undisplayElement, hasClass, addClasses, addClassesNow, removeClasses, removeClassesNow, getData, setData, setBooleanData, setBooleanDataNow, setDataNow, delData, delDataNow, getComputedStyleProp, getComputedStylePropNow, setStyleProp, setNumericStyleProps } from "../utils/css-alter.js";
-import { moveElementNow, moveElement, moveChildrenNow, wrapChildren, getOrAssignID } from "../utils/dom-alter.js";
+import { supportsSticky, isMobile, isInQuirksMode } from "../utils/browser.js";
+import { showElement, hideElement, displayElement, undisplayElement, hasClass, addClasses, addClassesNow, removeClasses, removeClassesNow, getData, setData, setBooleanData, setBooleanDataNow, setDataNow, delData, delDataNow, getComputedStyleProp, getComputedStylePropNow, setStyleProp, setNumericStyleJsVars } from "../utils/css-alter.js";
+import { moveElementNow, moveElement, isAllowedToWrap, getContentWrapper, wrapChildren, unwrapContentNow, getOrAssignID } from "../utils/dom-alter.js";
 import { waitForMeasureTime, waitForMutateTime } from "../utils/dom-optimize.js";
 import { addEventListenerTo, removeEventListenerFrom, preventSelect } from "../utils/event.js";
 import { logError, logWarn } from "../utils/log.js";
@@ -44,8 +50,20 @@ import debug from "../debug/debug.js";
  * possible (before the scrollbar widget has time to initialize.
  *
  * **IMPORTANT:** If you are using the Scrollbar on an element other than the
- * main scrollable element, it's highly recommended to enable (it is enabled by
- * default) {@link settings.contentWrappingAllowed}.
+ * main scrollable element, it's highly recommended to
+ * {@link settings.contentWrappingAllowed | enable content wrapping} (it is
+ * enabled by default). Otherwise, Scrollbar will rely on position: sticky. If
+ * you want to instead manually create the wrappers yourself, ensure your
+ * structure is as follows:
+ * ```html
+ * <div class="scrollable"><!-- Element you instantiate as Scrollbar -->
+ *   <div class="lisn-scrollbar__content"><!-- Optional wrapper to avoid relying on sticky -->
+ *     <div class="lisn-wrapper"><!-- Optional wrapper to enable efficient scroll tracking -->
+ *       <!-- YOUR CONTENT -->
+ *     </div>
+ *   </div>
+ * </div>
+ * ```
  *
  * **IMPORTANT:** You should not instantiate more than one {@link Scrollbar}
  * widget on a given element. Use {@link Scrollbar.get} to get an existing
@@ -79,8 +97,8 @@ import debug from "../debug/debug.js";
  * in order to modify the configuration of the automatically created widget.
  *
  * @example
- * This will create custom scrollbars for the main scrolling element
- * (see {@link settings.mainScrollableElementSelector}).
+ * This will create custom scrollbars for
+ * {@link settings.mainScrollableElementSelector | the main scrolling element}.
  *
  * This will work even if {@link settings.autoWidgets}) is false
  *
@@ -148,22 +166,27 @@ export class Scrollbar extends Widget {
   }
 
   /**
-   * Enables scrollbars on the {@link settings.mainScrollableElementSelector}.
+   * Enables scrollbars on the
+   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * **NOTE:** It returns a Promise to a widget because it will wait for the
-   * main element to be present in the DOM if not already.
+   * main scrollable element to be present in the DOM if not already.
    */
-  static enableMain(config) {
-    return ScrollWatcher.fetchMainScrollableElement().then(main => {
-      const widget = new Scrollbar(main, config);
-      widget.onDestroy(() => {
-        if (mainWidget === widget) {
-          mainWidget = null;
-        }
-      });
-      mainWidget = widget;
-      return widget;
+  static async enableMain(config) {
+    // [TODO v2]: enableMain should be synchronous and the constructor should
+    // wait for the scrollable, allowing users who want to use the main
+    // scrollable to just pass null/undefined/window. Then getScrollable should
+    // return null or the actual scrollable if available + add fetchScrollable
+    // to return a Promise.
+    const scrollable = await ScrollWatcher.fetchMainScrollableElement();
+    const widget = new Scrollbar(scrollable, config);
+    widget.onDestroy(() => {
+      if (mainWidget === widget) {
+        mainWidget = null;
+      }
     });
+    mainWidget = widget;
+    return widget;
   }
   static register() {
     registerWidget(WIDGET_NAME, (element, config) => {
@@ -192,18 +215,22 @@ export class Scrollbar extends Widget {
       id: DUMMY_ID
     });
     /**
-     * Returns the actual scrollable element created by us which will be a
-     * descendant of the original element passed to the constructor (unless
-     * {@link settings.contentWrappingAllowed} is false).
+     * Returns the actual scrollable element us which, unless the scrollable you
+     * passed to the constructor is the
+     * {@link settings.mainScrollableElementSelector | the main scrolling element}
+     * or unless
+     * {@link settings.contentWrappingAllowed | you've disabled content wrapping},
+     * this will be a new element created by us that is a descendant of the
+     * original element you passed.
      */
     _defineProperty(this, "getScrollable", void 0);
     const props = getScrollableProps(scrollable);
     const ourScrollable = props.scrollable;
-    (destroyPromise || MH.promiseResolve()).then(async () => {
+    (destroyPromise || MH.promiseResolve()).then(() => {
       if (this.isDestroyed()) {
         return;
       }
-      await init(this, scrollable, props, config);
+      init(this, scrollable, props, config);
     });
     this.getScrollable = () => ourScrollable;
   }
@@ -219,8 +246,6 @@ const WIDGET_NAME = "scrollbar";
 const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
 // Only one Scrollbar widget per element is allowed, but Widget
 // requires a non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 const PREFIX_CONTAINER = `${PREFIXED_NAME}__container`;
@@ -234,7 +259,7 @@ const PREFIX_DRAGGABLE = MH.prefixName("draggable");
 const PREFIX_CLICKABLE = MH.prefixName("clickable");
 const PREFIX_HAS_WRAPPER = MH.prefixName("has-wrapper");
 const PREFIX_ALLOW_COLLAPSE = MH.prefixName("allow-collapse");
-const PREFIX_HAS_FIXED_HEIGHT = MH.prefixName("has-fixed-height");
+const PREFIX_HAS_V_SCROLL = MH.prefixName("has-v-scroll");
 const PREFIX_HAS_SCROLLBAR = MH.prefixName("has-scrollbar");
 const PREFIX_HIDE_SCROLL = MH.prefixName("hide-scroll");
 const S_SET_POINTER_CAPTURE = "setPointerCapture";
@@ -265,38 +290,54 @@ const getScrollableProps = containerElement => {
   const root = isMainScrollable ? mainScrollableElement : isBody ? defaultScrollable : containerElement;
 
   // check if we're using body in quirks mode
-  const isBodyInQuirks = root === body && defaultScrollable === body;
-  const allowedToWrap = settings.contentWrappingAllowed && getData(containerElement, MC.PREFIX_NO_WRAP) === null;
-  const needsSticky = !isMainScrollable && !allowedToWrap;
+  const isBodyInQuirks = isBody && isInQuirksMode();
+  const allowedToWrap = isAllowedToWrap(containerElement);
   const barParent = isMainScrollable ? body : containerElement;
-  const hasFixedHeight = isScrollable(root, {
+  const hasVScroll = isScrollable(root, {
     axis: "y"
   });
   let contentWrapper = null;
-  let scrollable = root;
-  if (!isMainScrollable && !isBody && allowedToWrap) {
-    if (allowedToWrap) {
-      contentWrapper = MH.createElement("div");
-      scrollable = contentWrapper;
-    } else {
-      logWarn("Scrollbar on elements other than the main scrollable " + "when settings.contentWrappingAllowed is false relies on " + "position: sticky, is experimental and may not work properly");
+  let supported = true;
+  let hasExistingWrapper = true;
+  if (!isMainScrollable && !isBody) {
+    // we need to wrap if possible
+    contentWrapper = getContentWrapper(containerElement, {
+      _classNames: [PREFIX_CONTENT]
+    });
+    hasExistingWrapper = !MH.isNullish(contentWrapper);
+    if (!contentWrapper) {
+      const warnMsgPrefix = "Scrollbar on elements other than " + "the main scrollable when content wrapping is " + "disabled relies on position: sticky";
+      if (allowedToWrap) {
+        // we'll wrap later, but create the wrapper now as it will be the actual
+        // scrollable
+        contentWrapper = MH.createElement("div");
+      } else if (supportsSticky()) {
+        logWarn(`${warnMsgPrefix}, is experimental and may not work properly.`);
+      } else {
+        logError(`${warnMsgPrefix}, but this browser does not support sticky.`);
+        supported = false;
+      }
     }
   }
+  const needsSticky = !isMainScrollable && !allowedToWrap && !hasExistingWrapper;
   return {
+    supported,
     isMainScrollable,
     isBody,
     isBodyInQuirks,
     root,
-    scrollable,
+    scrollable: contentWrapper !== null && contentWrapper !== void 0 ? contentWrapper : root,
     barParent,
     contentWrapper,
+    hasExistingWrapper,
     needsSticky,
-    hasFixedHeight
+    hasVScroll
   };
 };
 const init = (widget, containerElement, props, config) => {
   var _ref, _config$onMobile, _ref2, _config$hideNative, _config$autoHide, _config$clickScroll, _ref3, _config$dragScroll, _ref4, _config$useHandle;
   const {
+    supported,
     isMainScrollable,
     isBody,
     isBodyInQuirks,
@@ -304,8 +345,9 @@ const init = (widget, containerElement, props, config) => {
     scrollable,
     barParent,
     contentWrapper,
+    hasExistingWrapper,
     needsSticky,
-    hasFixedHeight
+    hasVScroll
   } = props;
   const logger = debug ? new debug.Logger({
     name: `Scrollbar-${formatAsString(root)}`,
@@ -324,9 +366,13 @@ const init = (widget, containerElement, props, config) => {
   const clickScroll = (_config$clickScroll = config === null || config === void 0 ? void 0 : config.clickScroll) !== null && _config$clickScroll !== void 0 ? _config$clickScroll : settings.scrollbarClickScroll;
   const dragScroll = (_ref3 = (_config$dragScroll = config === null || config === void 0 ? void 0 : config.dragScroll) !== null && _config$dragScroll !== void 0 ? _config$dragScroll : settings.scrollbarDragScroll) !== null && _ref3 !== void 0 ? _ref3 : false;
   const useHandle = (_ref4 = (_config$useHandle = config === null || config === void 0 ? void 0 : config.useHandle) !== null && _config$useHandle !== void 0 ? _config$useHandle : settings.scrollbarUseHandle) !== null && _ref4 !== void 0 ? _ref4 : false;
-  if (MC.IS_MOBILE && !onMobile) {
+  if (isMobile() && !onMobile) {
     return;
   }
+
+  // Ensure scroll tracking that will be setup on the original element uses the
+  // new scrollable we create.
+  // XXX TODO But this still breaks any existing scroll tracking
   mapScrollable(root, scrollable);
 
   // ----------
@@ -371,27 +417,33 @@ const init = (widget, containerElement, props, config) => {
 
   // ----------
 
-  const setProgress = async (scrollData, tracksH) => {
+  const setProgress = (scrollData, tracksH) => {
     const scrollbar = tracksH ? scrollbarH : scrollbarV;
     const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
     const completeFraction = tracksH ? scrollData[MC.S_SCROLL_LEFT_FRACTION] : scrollData[MC.S_SCROLL_TOP_FRACTION];
     const viewFraction = tracksH ? scrollData[MC.S_CLIENT_WIDTH] / scrollData[MC.S_SCROLL_WIDTH] : scrollData[MC.S_CLIENT_HEIGHT] / scrollData[MC.S_SCROLL_HEIGHT];
-    logger === null || logger === void 0 || logger.debug9("Updating progress", {
+    debug: logger === null || logger === void 0 || logger.debug9("Updating progress", {
       tracksH,
       completeFraction,
       viewFraction
     });
     MH.setAttr(scrollbar, S_ARIA_VALUENOW, MH.round(completeFraction * 100) + "");
-    setNumericStyleProps(scrollbar, {
+    setNumericStyleJsVars(scrollbar, {
       viewFr: viewFraction,
       completeFr: completeFraction
     }, {
       _numDecimal: 4
     });
     const scrollAxis = tracksH ? "x" : "y";
-    if (isScrollable(scrollable, {
-      axis: scrollAxis
-    }) && viewFraction < 1) {
+    // TODO When using content-box, reading scrollWidth/Height even on the
+    // subsequent measure time still shows the "old" value that includes the
+    // border width before it seems to adjust. So sometimes it gives false
+    // positives for it being scrollable.
+    const canScroll = viewFraction < 0.99 && (completeFraction > 0 || isScrollable(scrollable, {
+      axis: scrollAxis,
+      noCache: true
+    }));
+    if (canScroll) {
       setBooleanData(containerElement, hasBarPrefix);
       displayElement(scrollbar);
     } else {
@@ -403,18 +455,18 @@ const init = (widget, containerElement, props, config) => {
   // ----------
 
   const updateProgress = (target, scrollData) => {
-    setProgress(scrollData, true);
-    setProgress(scrollData, false);
     if (!isMainScrollable && !isBody) {
       setBoxMeasureProps(containerElement);
     }
+    setProgress(scrollData, true);
+    setProgress(scrollData, false);
     if (autoHideDelay > 0) {
       showElement(wrapper).then(() => hideElement(wrapper, autoHideDelay));
     }
   };
   const updatePropsOnResize = (target, sizeData) => {
     setBoxMeasureProps(containerElement);
-    setNumericStyleProps(containerElement, {
+    setNumericStyleJsVars(containerElement, {
       barHeight: sizeData.border[MC.S_HEIGHT]
     }, {
       _units: "px",
@@ -444,7 +496,7 @@ const init = (widget, containerElement, props, config) => {
       isDragging = true;
       setOrReleasePointerCapture(event, scrollbar, S_SET_POINTER_CAPTURE);
     }
-    logger === null || logger === void 0 || logger.debug10("Click or drag", {
+    debug: logger === null || logger === void 0 || logger.debug10("Click or drag", {
       eventType,
       isClick,
       isHandleClick,
@@ -467,7 +519,7 @@ const init = (widget, containerElement, props, config) => {
     // event target is and what transforms is has applied.
     const rect = MH.getBoundingClientRect(scrollbar);
     const offset = barIsHorizontal ? event.clientX - rect.left : event.clientY - rect.top;
-    logger === null || logger === void 0 || logger.debug10("Pointer offset", offset);
+    debug: logger === null || logger === void 0 || logger.debug10("Pointer offset", offset);
     if (offset === lastOffset) {
       return;
     }
@@ -493,7 +545,7 @@ const init = (widget, containerElement, props, config) => {
     } : {
       top: targetScrollOffset
     };
-    logger === null || logger === void 0 || logger.debug10("Scroll target offset", {
+    debug: logger === null || logger === void 0 || logger.debug10("Scroll target offset", {
       lastTargetFraction,
       targetCoordinates
     });
@@ -565,25 +617,33 @@ const init = (widget, containerElement, props, config) => {
 
   // SETUP ------------------------------
 
+  if (!supported) {
+    setNativeShown();
+    return;
+  }
+  const scrollWatcher = ScrollWatcher.reuse({
+    [MC.S_DEBOUNCE_WINDOW]: 0
+  });
+  const sizeWatcher = SizeWatcher.reuse({
+    [MC.S_DEBOUNCE_WINDOW]: 0
+  });
   if (!isMainScrollable && !isBody) {
     addClasses(containerElement, PREFIX_CONTAINER);
   }
-  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !isMobile());
+  setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
+  setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, !!contentWrapper && hasVScroll);
 
   // Wrap children if needed
-  if (contentWrapper) {
-    addClasses(contentWrapper, PREFIX_CONTENT);
+  if (contentWrapper && !hasExistingWrapper) {
     wrapChildren(containerElement, {
       wrapper: contentWrapper,
       ignoreMove: true
     }); // no need to await here
-
-    setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
-    if (hasFixedHeight) {
-      setBooleanData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-    }
+    addClasses(contentWrapper, PREFIX_CONTENT);
   }
   maybeSetNativeHidden();
+  const origDomID = scrollable.id;
   if (config !== null && config !== void 0 && config.id) {
     scrollable.id = config.id;
   }
@@ -593,12 +653,6 @@ const init = (widget, containerElement, props, config) => {
   const scrollDomID =
   // for ARIA
   clickScroll || dragScroll ? getOrAssignID(scrollable, S_SCROLLBAR) : "";
-  const scrollWatcher = ScrollWatcher.reuse({
-    [MC.S_DEBOUNCE_WINDOW]: 0
-  });
-  const sizeWatcher = SizeWatcher.reuse({
-    [MC.S_DEBOUNCE_WINDOW]: 0
-  });
   addClasses(barParent, PREFIX_ROOT);
   const wrapper = MH.createElement("div");
   preventSelect(wrapper);
@@ -648,12 +702,13 @@ const init = (widget, containerElement, props, config) => {
   });
   widget.onDestroy(async () => {
     unmapScrollable(root);
+    scrollable.id = origDomID;
+    if (config !== null && config !== void 0 && config.className) {
+      removeClasses(scrollable, ...toArrayIfSingle(config.className));
+    }
     await waitForMutateTime();
-    if (contentWrapper) {
-      moveChildrenNow(contentWrapper, containerElement, {
-        ignoreMove: true
-      });
-      moveElementNow(contentWrapper); // remove
+    if (contentWrapper && !hasExistingWrapper) {
+      unwrapContentNow(contentWrapper, [PREFIX_CONTENT]);
     }
     moveElementNow(wrapper); // remove
 
@@ -672,18 +727,17 @@ const init = (widget, containerElement, props, config) => {
     for (const position of [MC.S_TOP, MC.S_BOTTOM, MC.S_LEFT, MC.S_RIGHT]) {
       delDataNow(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
     }
+    delDataNow(containerElement, PREFIX_ALLOW_COLLAPSE);
     delDataNow(containerElement, PREFIX_HAS_WRAPPER);
-    if (hasFixedHeight) {
-      delDataNow(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-    }
+    delDataNow(containerElement, PREFIX_HAS_V_SCROLL);
   });
 };
 const isHorizontal = scrollbar => getData(scrollbar, MC.PREFIX_ORIENTATION) === MC.S_HORIZONTAL;
 const setBoxMeasureProps = async element => {
   for (const side of [MC.S_TOP, MC.S_RIGHT, MC.S_BOTTOM, MC.S_LEFT]) {
     for (const key of [`padding-${side}`, `border-${side}-width`]) {
-      const padding = await getComputedStyleProp(element, key);
-      setStyleProp(element, MH.prefixCssJsVar(key), padding);
+      const value = await getComputedStyleProp(element, key);
+      setStyleProp(element, MH.prefixCssJsVar(key), value);
     }
   }
 };

@@ -114,8 +114,9 @@ import { registerTrigger, Trigger } from "./trigger.js";
 export class LayoutTrigger extends Trigger {
   static register() {
     registerTrigger("layout", (element, args, actions, config) => {
+      var _args$;
       return new LayoutTrigger(element, actions, MH.assign(config, {
-        layout: validateStringRequired("layout", MH.strReplace(MH.strReplace(args[0] || "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => isValidDeviceList(value) || isValidAspectRatioList(value))
+        layout: validateStringRequired("layout", MH.strReplace(MH.strReplace((_args$ = args[0]) !== null && _args$ !== void 0 ? _args$ : "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => isValidDeviceList(value) || isValidAspectRatioList(value))
       }));
     }, newConfigValidator);
   }
@@ -127,7 +128,8 @@ export class LayoutTrigger extends Trigger {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    const layout = (config === null || config === void 0 ? void 0 : config.layout) || "";
+    var _config$layout;
+    const layout = (_config$layout = config === null || config === void 0 ? void 0 : config.layout) !== null && _config$layout !== void 0 ? _config$layout : "";
     if (!layout) {
       throw MH.usageError("'layout' is required");
     }

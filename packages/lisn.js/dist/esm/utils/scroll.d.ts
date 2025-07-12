@@ -34,7 +34,8 @@ export type ScrollToOptions = {
      */
     offset?: CoordinateOffset;
     /**
-     * The duration of the scroll animation. If not given, it is instant.
+     * The duration of the scroll animation in milliseconds. If not given, it is
+     * instant.
      *
      * @defaultValue 0
      */
@@ -74,29 +75,35 @@ export type ScrollToOptions = {
  * Returns true if the given element is scrollable in the given direction, or
  * in either direction (if `axis` is not given).
  *
- * **IMPORTANT:** If you enable `active` then be aware that:
- * 1. It may attempt to scroll the target in order to determine whether it's
- *    scrollable in a more reliable way than the default method of comparing
- *    clientWidth/Height to scrollWidth/Height. If there is currently any
- *    ongoing scroll on the target, this will stop it, so never use that inside
- *    scroll-triggered handlers.
- * 2. If the layout has been invalidated and not yet recalculated,
- *    this will cause a forced layout, so always {@link waitForMeasureTime}
- *    before calling this function when possible.
+ * It first checks whether the current scroll offset on the target along the
+ * given axis is non-0, and if so returns true immediately. Otherwise it will
+ * attempt to determine if it's scrollable using one of these methods
+ * (controlled by `options.active`):
+ * - passive check (default): Will examine `clientWidth/Height`,
+ *   `scrollWidth/Height` as well as the computed `overflow` CSS property to try
+ *   to determine if the target is scrollable. This is not 100% reliable but is
+ *   safer than the active check
+ * - active check: Will attempt to scroll the target by 1px and examine if the
+ *   scroll offset had changed, then revert it back to 0. This is a more
+ *   reliable check, however it can cause issues in certain contexts. In
+ *   particular, if a scroll on the target had just been initiated (but it's
+ *   scroll offset was still 0), the scroll may be cancelled. Never use that
+ *   inside scroll-based handlers.
  *
- * @param {} [options.axis]    One of "x" or "y" for horizontal or vertical
- *                             scroll respectively. If not given, it checks
- *                             both.
- * @param {} [options.active]  If true, then if the target's current scroll
- *                             offset is 0, it will attempt to scroll it rather
- *                             than looking at the clientWidth/Height to
- *                             scrollWidth/Height. This is more reliable but can
- *                             cause issues, see note above.
- * @param {} [options.noCache] By default the result of a check is cached for
- *                             1s and if there's already a cached result for
- *                             this element, it is returns. Set this to true to
- *                             disable checking the cache and also saving the
- *                             result into the cache.
+ * **NOTE:** If the layout has been invalidated and not yet recalculated, this
+ * will cause a forced layout, so always {@link waitForMeasureTime} before
+ * calling this function when possible.
+ *
+ * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
+ *                          respectively. If not given, it checks both.
+ * @param [options.active]  If true, then if the target's current scroll offset
+ *                          is 0, it will attempt to scroll it rather than
+ *                          looking at its overflow.
+ * @param [options.noCache] By default the result of a check is cached for 1s
+ *                          and if there's already a cached result for this
+ *                          element, it is returned. Set this to true to disable
+ *                          checking the cache and also saving the result into
+ *                          the cache.
  *
  * @category Scrolling
  */
@@ -109,9 +116,9 @@ export declare const isScrollable: (element: Element, options?: {
  * Returns the closest scrollable ancestor of the given element, _not including
  * it_.
  *
- * @param {} options See {@link isScrollable}
+ * @param options See {@link isScrollable}
  *
- * @return {} `null` if no scrollable ancestors are found.
+ * @returns `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -137,11 +144,11 @@ export declare const getCurrentScrollAction: (scrollable?: Element) => ScrollAct
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *               If the target coordinates are invalid.
  *
- * @param {} to  If this is an element, then its top-left position is used as
- *               the target coordinates. If it is a string, then it is treated
- *               as a selector for an element using `querySelector`.
+ * @param to If this is an element, then its top-left position is used as
+ *           the target coordinates. If it is a string, then it is treated
+ *           as a selector for an element using `querySelector`.
  *
- * @return {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling

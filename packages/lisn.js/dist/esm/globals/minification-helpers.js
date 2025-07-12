@@ -10,7 +10,8 @@ import * as MC from "./minification-constants.js";
 import { LisnUsageError, LisnBugError } from "./errors.js";
 
 // credit: underscore.js
-const root = typeof self === "object" && self.self === self && self || typeof global == "object" && global.global === global && global || Function("return this")() || {};
+export const root = typeof self === "object" && self.self === self && self || typeof global == "object" && global.global === global && global || Function("return this")() || {};
+export const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
 export const kebabToCamelCase = str => str.replace(/-./g, m => toUpperCase(m.charAt(1)));
 export const camelToKebabCase = str => str.replace(/[A-Z][a-z]/g, m => "-" + toLowerCase(m)).replace(/[A-Z]+/, m => "-" + toLowerCase(m));
 export const prefixName = name => `${MC.PREFIX}-${name}`;
@@ -30,7 +31,7 @@ export const getDocScrollingElement = () => getDoc().scrollingElement;
 export const getBody = () => getDoc().body;
 export const getReadyState = () => getDoc().readyState;
 export const getPointerType = event => isPointerEvent(event) ? event.pointerType : isMouseEvent(event) ? "mouse" : null;
-export const onAnimationFrame = hasDOM() ? root.requestAnimationFrame.bind(root) : () => {};
+export const onAnimationFrame = callback => requestAnimationFrame(callback);
 export const createElement = (tagName, options) => getDoc().createElement(tagName, options);
 export const createButton = (label = "", tag = "button") => {
   const btn = createElement(tag);
@@ -70,7 +71,7 @@ export const isNodeBAfterA = (nodeA, nodeB) => (nodeA.compareDocumentPosition(no
 export const strReplace = (s, match, replacement) => s.replace(match, replacement);
 export const setTimer = root.setTimeout.bind(root);
 export const clearTimer = root.clearTimeout.bind(root);
-export const getBoundingClientRect = el => el.getBoundingClientRect();
+export const getBoundingClientRect = element => element.getBoundingClientRect();
 
 // Copy size properties explicitly to another object so they can be used with
 // the spread operator (DOMRect/DOMRectReadOnly's properties are not enumerable)
@@ -91,11 +92,13 @@ export const querySelectorAll = (root, selector) => root.querySelectorAll(select
 export const docQuerySelector = selector => querySelector(getDoc(), selector);
 export const docQuerySelectorAll = selector => querySelectorAll(getDoc(), selector);
 export const getElementById = id => getDoc().getElementById(id);
-export const getAttr = (el, name) => el.getAttribute(name);
-export const setAttr = (el, name, value = "true") => el.setAttribute(name, value);
-export const unsetAttr = (el, name) => el.setAttribute(name, "false");
-export const delAttr = (el, name) => el.removeAttribute(name);
+export const getAttr = (element, name) => element.getAttribute(name);
+export const setAttr = (element, name, value = "true") => element.setAttribute(name, value);
+export const unsetAttr = (element, name) => element.setAttribute(name, "false");
+export const delAttr = (element, name) => element.removeAttribute(name);
 export const includes = (arr, v, startAt) => arr.indexOf(v, startAt) >= 0;
+export const every = (array, predicate) => array.every(predicate);
+export const some = (array, predicate) => array.some(predicate);
 export const filter = (array, filterFn) => array.filter(filterFn);
 export const filterBlank = array => {
   const result = array ? filter(array, v => !isEmpty(v)) : undefined;
@@ -109,7 +112,10 @@ export const lengthOf = obj => {
   var _obj$length;
   return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
 };
-export const tagName = el => el.tagName;
+export const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
+export const firstOf = a => a === null || a === void 0 ? void 0 : a.slice(0, 1)[0];
+export const tagName = element => element.tagName;
+export const hasTagName = (element, tag) => toLowerCase(tagName(element)) === toLowerCase(tag);
 export const preventDefault = event => event.preventDefault();
 export const arrayFrom = MC.ARRAY.from.bind(MC.ARRAY);
 export const keysOf = obj => MC.OBJECT.keys(obj);
@@ -136,6 +142,7 @@ export const min = MC.MATH.min.bind(MC.MATH);
 export const abs = MC.MATH.abs.bind(MC.MATH);
 export const round = MC.MATH.round.bind(MC.MATH);
 export const pow = MC.MATH.pow.bind(MC.MATH);
+export const exp = MC.MATH.exp.bind(MC.MATH);
 export const parseFloat = MC.NUMBER.parseFloat.bind(MC.NUMBER);
 export const isNaN = MC.NUMBER.isNaN.bind(MC.NUMBER);
 export const isInstanceOf = (value, Class) => value instanceof Class;
@@ -145,22 +152,25 @@ export const typeOrClassOf = obj => {
   var _constructorOf;
   return isObject(obj) ? (_constructorOf = constructorOf(obj)) === null || _constructorOf === void 0 ? void 0 : _constructorOf.name : typeOf(obj);
 };
-export const parentOf = element => (element === null || element === void 0 ? void 0 : element.parentElement) || null;
+export const parentOf = element => {
+  var _element$parentElemen;
+  return (_element$parentElemen = element === null || element === void 0 ? void 0 : element.parentElement) !== null && _element$parentElemen !== void 0 ? _element$parentElemen : null;
+};
 export const childrenOf = element => (element === null || element === void 0 ? void 0 : element.children) || [];
 export const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
 export const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;
-export const classList = el => el === null || el === void 0 ? void 0 : el.classList;
+export const classList = element => element === null || element === void 0 ? void 0 : element.classList;
 const S_TABINDEX = "tabindex";
-export const getTabIndex = el => getAttr(el, S_TABINDEX);
-export const setTabIndex = (el, index = "0") => setAttr(el, S_TABINDEX, index);
-export const unsetTabIndex = el => delAttr(el, S_TABINDEX);
+export const getTabIndex = element => getAttr(element, S_TABINDEX);
+export const setTabIndex = (element, index = "0") => setAttr(element, S_TABINDEX, index);
+export const unsetTabIndex = element => delAttr(element, S_TABINDEX);
 export const remove = obj => obj === null || obj === void 0 ? void 0 : obj.remove();
 export const deleteObjKey = (obj, key) => delete obj[key];
 export const deleteKey = (map, key) => map === null || map === void 0 ? void 0 : map.delete(key);
-export const elScrollTo = (el, coords, behavior = "instant") => el.scrollTo(merge({
+export const elScrollTo = (element, coords, behavior = "instant") => element.scrollTo(merge({
   behavior
 }, coords));
-export const elScrollBy = (el, coords, behavior = "instant") => el.scrollBy(merge({
+export const elScrollBy = (element, coords, behavior = "instant") => element.scrollBy(merge({
   behavior
 }, coords));
 export const newPromise = executor => new Promise(executor);

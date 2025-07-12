@@ -6,18 +6,17 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  *
  * @categoryDescription Pointer
  * {@link ClickTrigger} allows you to run actions when a user clicks a target
- * element (first time and every other time, i.e. odd number of click), and
- * undo them when a user clicks the target element again (or every even number
- * of clicks). It always acts as a toggle.
+ * element (first time and every other time, i.e. odd number of click), and undo
+ * those actions when a user clicks the target element again (or every even
+ * number of clicks). It always acts as a toggle.
  *
  * {@link PressTrigger} allows you to run actions when the user presses and
- * holds a pointing device (or their finger) on a target element, and undo
- * those actions when they release their pointing device or lift their finger
- * off.
+ * holds a pointing device (or their finger) on a target element, and undo those
+ * actions when they release their pointing device or lift their finger off.
  *
- * {@link HoverTrigger} allows you to run actions when the user hovers overs
- * a target element, and undo those actions when their pointing device moves
- * off the target. On touch devices it acts just like {@link PressTrigger}.
+ * {@link HoverTrigger} allows you to run actions when the user hovers overs a
+ * target element, and undo those actions when their pointing device moves off
+ * the target. On touch devices it acts just like {@link PressTrigger}.
  */
 
 import * as MC from "../globals/minification-constants.js";
@@ -70,9 +69,9 @@ import { registerTrigger, Trigger } from "./trigger.js";
  * ```
  *
  * @example
- * Add class `visited` the first time the user clicks the element, and
- * play or reverse the animations on the element 1000ms each time the
- * user clicks it.
+ * Add class `visited` the first time the user clicks the element, and play or
+ * reverse the animations on the element 1000ms after each time the user clicks
+ * it.
  *
  * ```html
  * <div data-lisn-on-click="@add-class=visited +once ;
@@ -116,7 +115,7 @@ export class ClickTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     this.getConfig = () => MH.copyObject(config);
@@ -215,7 +214,7 @@ export class PressTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     this.getConfig = () => MH.copyObject(config);
@@ -311,7 +310,7 @@ export class HoverTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     this.getConfig = () => MH.copyObject(config);
@@ -337,10 +336,12 @@ const newConfigValidator = element => {
   };
 };
 const setupWatcher = (widget, element, actions, config, action) => {
+  var _MH$targetOf;
   if (!MH.lengthOf(actions)) {
     return;
   }
-  const target = MH.targetOf(config) || element;
+  config !== null && config !== void 0 ? config : config = {};
+  const target = (_MH$targetOf = MH.targetOf(config)) !== null && _MH$targetOf !== void 0 ? _MH$targetOf : element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS
   // state rather than the odd/even clicks. Otherwise if the trigger is

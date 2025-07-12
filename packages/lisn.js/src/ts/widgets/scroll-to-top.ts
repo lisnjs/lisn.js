@@ -11,15 +11,26 @@ import {
   showElement,
   hideElement,
   displayElement,
+  displayElementNow,
   undisplayElement,
   disableInitialTransition,
-  addClasses,
-  removeClasses,
-  setData,
-  delData,
+  addClassesNow,
+  removeClassesNow,
+  setDataNow,
+  setBooleanDataNow,
+  delDataNow,
+  getParentFlexDirection,
 } from "@lisn/utils/css-alter";
-import { moveElement, insertArrow } from "@lisn/utils/dom-alter";
+import {
+  replaceElementNow,
+  wrapElementNow,
+  moveElement,
+  moveElementNow,
+  insertArrow,
+} from "@lisn/utils/dom-alter";
 import { waitForElement } from "@lisn/utils/dom-events";
+import { waitForMutateTime } from "@lisn/utils/dom-optimize";
+import { waitForReferenceElement } from "@lisn/utils/dom-search";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { validateString } from "@lisn/utils/validation";
 import { isValidScrollOffset } from "@lisn/utils/views";
@@ -29,7 +40,7 @@ import { ViewWatcher } from "@lisn/watchers/view-watcher";
 
 import {
   Widget,
-  WidgetConfigValidatorObject,
+  WidgetConfigValidatorFunc,
   registerWidget,
 } from "@lisn/widgets/widget";
 
@@ -43,9 +54,16 @@ import {
  * The button is only shown when the scroll offset from the top is more than a
  * given configurable amount.
  *
- * **NOTE:** Currently the widget only supports fixed positioned button that
- * scrolls the main scrolling element (see
- * {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector}).
+ * **IMPORTANT:** When configuring an existing element as the button (i.e. using
+ * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
+ * - if using
+ *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+ *   as the scrollable, the button element will have it's CSS position set to `fixed`;
+ * - otherwise, if using a custom scrollable element, the button element may be
+ *   moved in the DOM tree in order to position it on top of the scrollable
+ * If you don't want the button element changed in any way, then consider using
+ * the {@link Triggers.ClickTrigger | ClickTrigger} with a
+ * {@link Actions.ScrollTo | ScrollTo} action.
  *
  * **IMPORTANT:** You should not instantiate more than one {@link ScrollToTop}
  * widget on a given element. Use {@link ScrollToTop.get} to get an existing
@@ -99,19 +117,53 @@ import {
  * ```
  *
  * @example
- * This will create a scroll-to-top button for the main scrolling element
- * using an existing element for the button with default
+ * This will configure the given element as a scroll-to-top button for the main
+ * scrolling element using an existing element for the button with default
  * {@link ScrollToTopConfig}.
  *
  * ```html
- * <div class="lisn-scroll-to-top"></div>
+ * <button class="lisn-scroll-to-top"></button>
  * ```
- *
  * @example
  * As above but with custom settings.
  *
  * ```html
- * <div data-lisn-scroll-to-top="position=left | offset=top:300vh"></div>
+ * <button data-lisn-scroll-to-top="position=left | offset=top:300vh"></button>
+ * ```
+ *
+ * @example
+ * This will configure the given element as a scroll-to-top button for a custom
+ * scrolling element (i.e. one with overflow "auto" or "scroll").
+ *
+ * ```html
+ * <div id="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=#scrollable"></button>
+ * ```
+ *
+ * @example
+ * As above, but using a reference specification with a class name to find the
+ * scrollable.
+ *
+ * ```html
+ * <div class="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=prev.scrollable"></button>
+ * ```
+ *
+ * @example
+ * As above but with all custom settings.
+ *
+ * ```html
+ * <div class="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=prev.scrollable
+ *                               | position=left
+ *                               | offset=top:300vh
+ * "></button>
  * ```
  */
 export class ScrollToTop extends Widget {
@@ -140,7 +192,7 @@ export class ScrollToTop extends Widget {
         }
         return null;
       },
-      configValidator,
+      newConfigValidator,
     );
   }
 
@@ -172,36 +224,82 @@ export class ScrollToTop extends Widget {
     const destroyPromise = ScrollToTop.get(element)?.destroy();
     super(element, { id: DUMMY_ID });
 
-    const scrollWatcher = ScrollWatcher.reuse();
-    const viewWatcher = ViewWatcher.reuse();
-
     const offset: ScrollOffset =
       config?.offset ||
       `${MC.S_TOP}: var(${MH.prefixCssVar("scroll-to-top--offset")}, 200vh)`;
     const position: "left" | "right" = config?.position || MC.S_RIGHT;
+    const scrollable = config?.scrollable;
+    const hasCustomScrollable =
+      scrollable &&
+      scrollable !== MH.getDocElement() &&
+      scrollable !== MH.getBody();
 
-    const clickListener = () => scrollWatcher.scrollTo({ top: 0 });
+    const scrollWatcher = ScrollWatcher.reuse();
+    const viewWatcher = ViewWatcher.reuse(
+      hasCustomScrollable ? { root: scrollable } : {},
+    );
 
-    const arrow = insertArrow(element, MC.S_UP);
+    const clickListener = () =>
+      scrollWatcher.scrollTo({ top: 0, left: 0 }, { scrollable });
+
+    let arrow: Element;
+    let placeholder: Element;
+    let root = element;
 
     const showIt = () => {
-      showElement(element);
+      showElement(root);
     };
 
     const hideIt = () => {
-      hideElement(element);
+      hideElement(root);
     };
 
     // SETUP ------------------------------
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || MH.promiseResolve()).then(async () => {
+      const flexDirection = scrollable
+        ? await getParentFlexDirection(scrollable)
+        : null;
+
+      await waitForMutateTime();
       if (this.isDestroyed()) {
         return;
       }
 
-      disableInitialTransition(element);
-      addClasses(element, PREFIX_ROOT);
-      setData(element, MC.PREFIX_PLACE, position);
+      if (hasCustomScrollable) {
+        // Add a placeholder to restore its position on destroy.
+        placeholder = MH.createElement("div");
+        moveElementNow(placeholder, {
+          to: element,
+          position: "before",
+          ignoreMove: true,
+        });
+
+        // Then move it to immediately after the scrollable.
+        // If the parent is a horizontal flexbox and position is left, then
+        // we need to insert it before the scrollable.
+        const shouldInsertBefore =
+          flexDirection === "column-reverse" ||
+          (position === MC.S_LEFT && flexDirection === "row") ||
+          (position === MC.S_RIGHT && flexDirection === "row-reverse");
+
+        moveElementNow(element, {
+          to: scrollable,
+          position: shouldInsertBefore ? "before" : "after",
+          ignoreMove: true,
+        });
+
+        // Wrap the button.
+        root = wrapElementNow(element, { wrapper: "div", ignoreMove: true });
+      }
+
+      disableInitialTransition(root);
+      addClassesNow(root, PREFIX_ROOT);
+      addClassesNow(element, PREFIX_BTN);
+      setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
+      setDataNow(root, MC.PREFIX_PLACE, position);
+
+      arrow = insertArrow(element, MC.S_UP);
 
       hideIt(); // initial
 
@@ -216,21 +314,37 @@ export class ScrollToTop extends Widget {
       });
 
       this.onDisable(() => {
-        undisplayElement(element);
+        undisplayElement(root);
       });
 
       this.onEnable(() => {
-        displayElement(element);
+        displayElement(root);
       });
 
       this.onDestroy(async () => {
+        await waitForMutateTime();
         removeEventListenerFrom(element, MC.S_CLICK, clickListener);
 
-        await delData(element, MC.PREFIX_PLACE);
-        await moveElement(arrow); // remove
-        await removeClasses(element, PREFIX_ROOT);
+        removeClassesNow(root, PREFIX_ROOT);
+        removeClassesNow(element, PREFIX_BTN);
+        delDataNow(root, PREFIX_FIXED);
+        delDataNow(root, MC.PREFIX_PLACE);
+        displayElementNow(root); // revert undisplay by onDisable
 
-        await displayElement(element); // revert undisplay by onDisable
+        if (arrow) {
+          moveElementNow(arrow); // remove
+        }
+
+        if (root !== element) {
+          // Unwrap the button.
+          replaceElementNow(root, element, { ignoreMove: true });
+        }
+
+        if (placeholder) {
+          // Move it back into its original position.
+          replaceElementNow(placeholder, element, { ignoreMove: true });
+        }
+
         viewWatcher.offView(offset, showIt);
         viewWatcher.offView(offset, hideIt);
       });
@@ -262,22 +376,38 @@ export type ScrollToTopConfig = {
    * @defaultValue "right"
    */
   position?: "left" | "right";
+
+  /**
+   * The element that should be scrolled.
+   *
+   * @defaultValue {@link ScrollWatcher} default
+   */
+  scrollable?: Element;
 };
 
 // --------------------
 
 const WIDGET_NAME = "scroll-to-top";
 const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
-const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 // Only one ScrollToTop widget per element is allowed, but Widget requires a
 // non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
+const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
+const PREFIX_BTN = `${PREFIXED_NAME}__btn`;
+const PREFIX_FIXED = MH.prefixName("fixed");
+
 let mainWidget: ScrollToTop | null = null;
 
-const configValidator: WidgetConfigValidatorObject<ScrollToTopConfig> = {
-  offset: (key, value) => validateString(key, value, isValidScrollOffset),
-  position: (key, value) =>
-    validateString(key, value, (v) => v === MC.S_LEFT || v === MC.S_RIGHT),
+const newConfigValidator: WidgetConfigValidatorFunc<ScrollToTopConfig> = (
+  element,
+) => {
+  return {
+    offset: (key, value) => validateString(key, value, isValidScrollOffset),
+    position: (key, value) =>
+      validateString(key, value, (v) => v === MC.S_LEFT || v === MC.S_RIGHT),
+    scrollable: (key, value) =>
+      (MH.isLiteralString(value)
+        ? waitForReferenceElement(value, element)
+        : null) ?? undefined,
+  };
 };

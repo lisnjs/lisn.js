@@ -7,6 +7,8 @@
  */
 import { BoundingRect, IterableObject, Constructor, InstanceType, MapBase, SetBase, Spread } from "../globals/types.js";
 import { LisnUsageError, LisnBugError } from "../globals/errors.js";
+export declare const root: any;
+export declare const userAgent: string;
 export declare const kebabToCamelCase: (str: string) => string;
 export declare const camelToKebabCase: (str: string) => string;
 export declare const prefixName: (name: string) => string;
@@ -26,7 +28,7 @@ export declare const getDocScrollingElement: () => HTMLElement | null;
 export declare const getBody: () => HTMLElement;
 export declare const getReadyState: () => DocumentReadyState;
 export declare const getPointerType: (event: Event) => string | null;
-export declare const onAnimationFrame: any;
+export declare const onAnimationFrame: (callback: FrameRequestCallback) => number;
 export declare const createElement: (tagName: string, options?: ElementCreationOptions) => HTMLElement;
 export declare const createButton: (label?: string, tag?: string) => HTMLElement;
 export declare const isNullish: (v: unknown) => v is null | undefined;
@@ -54,19 +56,21 @@ export declare const isNodeBAfterA: (nodeA: Node, nodeB: Node) => boolean;
 export declare const strReplace: (s: string, match: string | RegExp, replacement: string) => string;
 export declare const setTimer: any;
 export declare const clearTimer: any;
-export declare const getBoundingClientRect: (el: Element) => DOMRect;
+export declare const getBoundingClientRect: (element: Element) => DOMRect;
 export declare const copyBoundingRectProps: (rect: BoundingRect) => BoundingRect;
 export declare const querySelector: (root: Element | Document, selector: string) => Element | null;
 export declare const querySelectorAll: (root: Element | Document, selector: string) => NodeListOf<Element>;
 export declare const docQuerySelector: (selector: string) => Element | null;
 export declare const docQuerySelectorAll: (selector: string) => NodeListOf<Element>;
 export declare const getElementById: (id: string) => HTMLElement | null;
-export declare const getAttr: (el: Element, name: string) => string | null;
-export declare const setAttr: (el: Element, name: string, value?: string) => void;
-export declare const unsetAttr: (el: Element, name: string) => void;
-export declare const delAttr: (el: Element, name: string) => void;
+export declare const getAttr: (element: Element, name: string) => string | null;
+export declare const setAttr: (element: Element, name: string, value?: string) => void;
+export declare const unsetAttr: (element: Element, name: string) => void;
+export declare const delAttr: (element: Element, name: string) => void;
 export declare const includes: (arr: readonly unknown[] | string, v: unknown, startAt?: number) => boolean;
-export declare const filter: <A extends readonly unknown[], T extends A[number], C extends FilterFn<A[number]> | FilterFnTypeP<A[number], T>>(array: A, filterFn: C) => FilteredType<C, A[number], T>[];
+export declare const every: <A extends readonly unknown[], C extends ArrayCallbackFn<A[number]>>(array: A, predicate: C) => boolean;
+export declare const some: <A extends readonly unknown[], C extends ArrayCallbackFn<A[number]>>(array: A, predicate: C) => boolean;
+export declare const filter: <A extends readonly unknown[], T extends A[number], C extends ArrayCallbackFn<A[number]> | FilterFnTypeP<A[number], T>>(array: A, filterFn: C) => FilteredType<C, A[number], T>[];
 export declare const filterBlank: <A extends readonly unknown[]>(array: A | null | undefined) => NonNullable<A[number]>[] | undefined;
 export declare const sizeOf: (obj: {
     size: number;
@@ -74,7 +78,10 @@ export declare const sizeOf: (obj: {
 export declare const lengthOf: (obj: {
     length: number;
 } | null | undefined) => number;
-export declare const tagName: (el: Element) => string;
+export declare const lastOf: <A extends readonly unknown[]>(a: A | null | undefined) => LastElement<A>;
+export declare const firstOf: <A extends readonly unknown[]>(a: A | null | undefined) => FirstElement<A>;
+export declare const tagName: (element: Element) => string;
+export declare const hasTagName: (element: Element, tag: string) => boolean;
 export declare const preventDefault: (event: Event) => void;
 export declare const arrayFrom: {
     <T>(arrayLike: ArrayLike<T>): T[];
@@ -84,8 +91,8 @@ export declare const arrayFrom: {
 };
 export declare const keysOf: <T extends Record<string | symbol, unknown>>(obj: T) => Array<keyof T & string>;
 export declare const defineProperty: <T>(o: T, p: PropertyKey, attributes: PropertyDescriptor & ThisType<any>) => T;
-export declare const merge: <A extends readonly (object | null | undefined)[]>(...a: A) => Spread<A>;
-export declare const copyObject: <T extends object>(obj: T) => Pick<T, Exclude<keyof T, never>> & Pick<unknown, never> & {} extends infer T_1 ? T_1 extends Pick<T, Exclude<keyof T, never>> & Pick<unknown, never> & {} ? T_1 extends infer U ? { [K in keyof U]: U[K]; } : never : never : never;
+export declare const merge: <A extends readonly (object | null | undefined)[]>(...a: [...A]) => Spread<A>;
+export declare const copyObject: <T extends object | undefined>(obj: T) => Pick<T, Exclude<keyof T, never>> & Pick<unknown, never> & {} extends infer T_1 ? T_1 extends Pick<T, Exclude<keyof T, never>> & Pick<unknown, never> & {} ? T_1 extends infer U ? { [K in keyof U]: U[K]; } : never : never : never;
 export declare const promiseResolve: {
     (): Promise<void>;
     <T>(value: T): Promise<Awaited<T>>;
@@ -123,6 +130,7 @@ export declare const min: (...values: number[]) => number;
 export declare const abs: (x: number) => number;
 export declare const round: (x: number) => number;
 export declare const pow: (x: number, y: number) => number;
+export declare const exp: (x: number) => number;
 export declare const parseFloat: (string: string) => number;
 export declare const isNaN: (number: unknown) => boolean;
 export declare const isInstanceOf: <C extends Constructor<unknown>>(value: unknown, Class: C) => value is InstanceType<C>;
@@ -145,20 +153,20 @@ export declare const currentTargetOf: <O extends {
 } ? T : O extends {
     currentTarget?: infer T;
 } ? T | undefined : undefined;
-export declare const classList: <T extends Element | null | undefined>(el: T) => T extends Element ? DOMTokenList : undefined;
-export declare const getTabIndex: (el: Element) => string | null;
-export declare const setTabIndex: (el: Element, index?: string) => void;
-export declare const unsetTabIndex: (el: Element) => void;
+export declare const classList: <T extends Element | null | undefined>(element: T) => T extends Element ? DOMTokenList : undefined;
+export declare const getTabIndex: (element: Element) => string | null;
+export declare const setTabIndex: (element: Element, index?: string) => void;
+export declare const unsetTabIndex: (element: Element) => void;
 export declare const remove: (obj: {
     remove: () => void;
 } | null | undefined) => void | undefined;
 export declare const deleteObjKey: <O extends object>(obj: O, key: keyof O) => boolean;
 export declare const deleteKey: <K, V>(map: MapBase<K, V> | SetBase<K> | null | undefined, key: K) => void | undefined;
-export declare const elScrollTo: (el: Element, coords: {
+export declare const elScrollTo: (element: Element, coords: {
     top?: number;
     left?: number;
 }, behavior?: ScrollBehavior) => void;
-export declare const elScrollBy: (el: Element, coords: {
+export declare const elScrollBy: (element: Element, coords: {
     top?: number;
     left?: number;
 }, behavior?: ScrollBehavior) => void;
@@ -193,8 +201,16 @@ export declare const consoleError: {
     (...data: any[]): void;
     (message?: any, ...optionalParams: any[]): void;
 };
-type FilterFn<V> = (value: V, index: number, array: readonly V[]) => unknown;
+type FirstElement<T extends readonly unknown[]> = T extends readonly [
+    infer Head,
+    ...infer Last__ignored
+] ? Head : T[number] | undefined;
+type LastElement<T extends readonly unknown[]> = T extends readonly [
+    ...infer Head__ignored,
+    infer Last
+] ? Last : T[number] | undefined;
+type ArrayCallbackFn<V> = (value: V, index: number, array: readonly V[]) => unknown;
 type FilterFnTypeP<V, T extends V> = (value: V, index: number, array: readonly V[]) => value is T;
-type FilteredType<C extends FilterFn<V> | FilterFnTypeP<V, T>, V, T extends V> = C extends FilterFnTypeP<V, infer T> ? T : V;
+type FilteredType<C extends ArrayCallbackFn<V> | FilterFnTypeP<V, T>, V, T extends V> = C extends FilterFnTypeP<V, infer T> ? T : V;
 export {};
 //# sourceMappingURL=minification-helpers.d.ts.map

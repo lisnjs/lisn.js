@@ -3,18 +3,17 @@
  *
  * @categoryDescription Pointer
  * {@link ClickTrigger} allows you to run actions when a user clicks a target
- * element (first time and every other time, i.e. odd number of click), and
- * undo them when a user clicks the target element again (or every even number
- * of clicks). It always acts as a toggle.
+ * element (first time and every other time, i.e. odd number of click), and undo
+ * those actions when a user clicks the target element again (or every even
+ * number of clicks). It always acts as a toggle.
  *
  * {@link PressTrigger} allows you to run actions when the user presses and
- * holds a pointing device (or their finger) on a target element, and undo
- * those actions when they release their pointing device or lift their finger
- * off.
+ * holds a pointing device (or their finger) on a target element, and undo those
+ * actions when they release their pointing device or lift their finger off.
  *
- * {@link HoverTrigger} allows you to run actions when the user hovers overs
- * a target element, and undo those actions when their pointing device moves
- * off the target. On touch devices it acts just like {@link PressTrigger}.
+ * {@link HoverTrigger} allows you to run actions when the user hovers overs a
+ * target element, and undo those actions when their pointing device moves off
+ * the target. On touch devices it acts just like {@link PressTrigger}.
  */
 
 import * as MC from "@lisn/globals/minification-constants";
@@ -82,9 +81,9 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * ```
  *
  * @example
- * Add class `visited` the first time the user clicks the element, and
- * play or reverse the animations on the element 1000ms each time the
- * user clicks it.
+ * Add class `visited` the first time the user clicks the element, and play or
+ * reverse the animations on the element 1000ms after each time the user clicks
+ * it.
  *
  * ```html
  * <div data-lisn-on-click="@add-class=visited +once ;
@@ -138,7 +137,7 @@ export class ClickTrigger extends Trigger {
   constructor(
     element: Element,
     actions: Action[],
-    config: PointerTriggerConfig = {},
+    config?: PointerTriggerConfig,
   ) {
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
@@ -248,7 +247,7 @@ export class PressTrigger extends Trigger {
   constructor(
     element: Element,
     actions: Action[],
-    config: PointerTriggerConfig = {},
+    config?: PointerTriggerConfig,
   ) {
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
@@ -355,7 +354,7 @@ export class HoverTrigger extends Trigger {
   constructor(
     element: Element,
     actions: Action[],
-    config: PointerTriggerConfig = {},
+    config?: PointerTriggerConfig,
   ) {
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
@@ -410,14 +409,15 @@ const setupWatcher = (
   widget: ClickTrigger | HoverTrigger | PressTrigger,
   element: Element,
   actions: Action[],
-  config: PointerTriggerConfig,
+  config: PointerTriggerConfig | undefined,
   action: "click" | "hover" | "press",
 ) => {
   if (!MH.lengthOf(actions)) {
     return;
   }
 
-  const target = MH.targetOf(config) || element;
+  config ??= {};
+  const target = MH.targetOf(config) ?? element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS
   // state rather than the odd/even clicks. Otherwise if the trigger is

@@ -8,8 +8,7 @@ var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"))
 var _cssAlter = require("./css-alter.cjs");
 var _domEvents = require("./dom-events.cjs");
 var _log = require("./log.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * @module Utils
  *
@@ -60,7 +59,7 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  *
  * @category DOM: Searching for reference elements
  *
- * @param {} thisElement The element to search relative to
+ * @param thisElement The element to search relative to
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                        If the specification is invalid or if thisElement is
@@ -90,7 +89,8 @@ const getReferenceElement = (spec, thisElement) => {
     selector = matchOp + refOrCls;
   } else {
     if (!refOrCls) {
-      refOrCls = (0, _cssAlter.getData)(thisElement, PREFIX_REF) || "";
+      var _getData;
+      refOrCls = (_getData = (0, _cssAlter.getData)(thisElement, PREFIX_REF)) !== null && _getData !== void 0 ? _getData : "";
     }
     if (!refOrCls) {
       throw MH.usageError(`No reference name in '${spec}'`);
@@ -145,7 +145,8 @@ const getThisReferenceElement = (selector, thisElement) => thisElement.closest(s
 const getNextReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, false);
 const getPrevReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, true);
 const getNextOrPrevReferenceElement = (selector, thisElement, goBackward) => {
-  thisElement = getThisReferenceElement(selector, thisElement) || thisElement;
+  var _getThisReferenceElem, _allRefs$refIndex;
+  thisElement = (_getThisReferenceElem = getThisReferenceElement(selector, thisElement)) !== null && _getThisReferenceElem !== void 0 ? _getThisReferenceElem : thisElement;
   if (!MH.getDoc().contains(thisElement)) {
     return null;
   }
@@ -172,6 +173,6 @@ const getNextOrPrevReferenceElement = (selector, thisElement, goBackward) => {
       break;
     }
   }
-  return allRefs[refIndex] || null;
+  return (_allRefs$refIndex = allRefs[refIndex]) !== null && _allRefs$refIndex !== void 0 ? _allRefs$refIndex : null;
 };
 //# sourceMappingURL=dom-search.cjs.map

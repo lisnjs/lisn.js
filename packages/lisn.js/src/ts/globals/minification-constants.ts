@@ -65,20 +65,17 @@ export const S_ZOOM = "zoom";
 export const S_DRAG = "drag";
 export const S_UNKNOWN = "unknown";
 
-export const S_SCROLL_TOP = `${S_SCROLL}Top` as `${typeof S_SCROLL}Top`;
-export const S_SCROLL_LEFT = `${S_SCROLL}Left` as `${typeof S_SCROLL}Left`;
+export const S_SCROLL_TOP = `${S_SCROLL}Top`;
+export const S_SCROLL_LEFT = `${S_SCROLL}Left`;
 
-export const S_SCROLL_WIDTH = `${S_SCROLL}Width` as `${typeof S_SCROLL}Width`;
-export const S_SCROLL_HEIGHT =
-  `${S_SCROLL}Height` as `${typeof S_SCROLL}Height`;
+export const S_SCROLL_WIDTH = `${S_SCROLL}Width`;
+export const S_SCROLL_HEIGHT = `${S_SCROLL}Height`;
 
 export const S_CLIENT_WIDTH = "clientWidth";
 export const S_CLIENT_HEIGHT = "clientHeight";
 
-export const S_SCROLL_TOP_FRACTION =
-  `${S_SCROLL}TopFraction` as `${typeof S_SCROLL}TopFraction`;
-export const S_SCROLL_LEFT_FRACTION =
-  `${S_SCROLL}LeftFraction` as `${typeof S_SCROLL}LeftFraction`;
+export const S_SCROLL_TOP_FRACTION = `${S_SCROLL}TopFraction`;
+export const S_SCROLL_LEFT_FRACTION = `${S_SCROLL}LeftFraction`;
 
 export const S_HORIZONTAL = "horizontal";
 export const S_VERTICAL = "vertical";
@@ -88,34 +85,29 @@ export const S_TOGGLE = "toggle";
 
 export const S_CANCEL = "cancel";
 
-export const S_KEYDOWN = (S_KEY + S_DOWN) as `${typeof S_KEY}${typeof S_DOWN}`;
+export const S_KEYDOWN = `${S_KEY}${S_DOWN}`;
 
-export const S_MOUSEUP = (S_MOUSE + S_UP) as `${typeof S_MOUSE}${typeof S_UP}`;
-export const S_MOUSEDOWN = (S_MOUSE +
-  S_DOWN) as `${typeof S_MOUSE}${typeof S_DOWN}`;
-export const S_MOUSEMOVE = `${S_MOUSE}move` as `${typeof S_MOUSE}move`;
+export const S_MOUSEUP = `${S_MOUSE}${S_UP}`;
+export const S_MOUSEDOWN = `${S_MOUSE}${S_DOWN}`;
+export const S_MOUSEMOVE = `${S_MOUSE}move`;
 
-export const S_POINTERUP = (S_POINTER +
-  S_UP) as `${typeof S_POINTER}${typeof S_UP}`;
-export const S_POINTERDOWN = (S_POINTER +
-  S_DOWN) as `${typeof S_POINTER}${typeof S_DOWN}`;
-export const S_POINTERENTER = `${S_POINTER}enter` as `${typeof S_POINTER}enter`;
-export const S_POINTERLEAVE = `${S_POINTER}leave` as `${typeof S_POINTER}leave`;
-export const S_POINTERMOVE = `${S_POINTER}move` as `${typeof S_POINTER}move`;
-export const S_POINTERCANCEL = (S_POINTER +
-  S_CANCEL) as `${typeof S_POINTER}${typeof S_CANCEL}`;
+export const S_POINTERUP = `${S_POINTER}${S_UP}`;
+export const S_POINTERDOWN = `${S_POINTER}${S_DOWN}`;
+export const S_POINTERENTER = `${S_POINTER}enter`;
+export const S_POINTERLEAVE = `${S_POINTER}leave`;
+export const S_POINTERMOVE = `${S_POINTER}move`;
+export const S_POINTERCANCEL = `${S_POINTER}${S_CANCEL}`;
 
-export const S_TOUCHSTART = `${S_TOUCH}start` as `${typeof S_TOUCH}start`;
-export const S_TOUCHEND = `${S_TOUCH}end` as `${typeof S_TOUCH}end`;
-export const S_TOUCHMOVE = `${S_TOUCH}move` as `${typeof S_TOUCH}move`;
-export const S_TOUCHCANCEL = (S_TOUCH +
-  S_CANCEL) as `${typeof S_TOUCH}${typeof S_CANCEL}`;
+export const S_TOUCHSTART = `${S_TOUCH}start`;
+export const S_TOUCHEND = `${S_TOUCH}end`;
+export const S_TOUCHMOVE = `${S_TOUCH}move`;
+export const S_TOUCHCANCEL = `${S_TOUCH}${S_CANCEL}`;
 
-export const S_DRAGSTART = `${S_DRAG}start` as `${typeof S_DRAG}start`;
-export const S_DRAGEND = `${S_DRAG}end` as `${typeof S_DRAG}end`;
-export const S_DRAGENTER = `${S_DRAG}enter` as `${typeof S_DRAG}enter`;
-export const S_DRAGOVER = `${S_DRAG}over` as `${typeof S_DRAG}over`;
-export const S_DRAGLEAVE = `${S_DRAG}leave` as `${typeof S_DRAG}leave`;
+export const S_DRAGSTART = `${S_DRAG}start`;
+export const S_DRAGEND = `${S_DRAG}end`;
+export const S_DRAGENTER = `${S_DRAG}enter`;
+export const S_DRAGOVER = `${S_DRAG}over`;
+export const S_DRAGLEAVE = `${S_DRAG}leave`;
 export const S_DROP = "drop";
 
 export const S_SELECTSTART = "selectstart";
@@ -130,6 +122,9 @@ export const S_DISABLED = "disabled";
 export const S_ARROW = "arrow";
 
 export const S_ROLE = "role";
+
+export const S_AUTO = "auto";
+export const S_VISIBLE = "visible";
 
 export const ARIA_PREFIX = "aria-";
 export const S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
@@ -157,11 +152,3 @@ export const PREFIX_ANIMATE_DISABLE = `${ANIMATE_PREFIX}disable`;
 export const PREFIX_ANIMATE_PAUSE = `${ANIMATE_PREFIX}pause`;
 export const PREFIX_ANIMATE_REVERSE = `${ANIMATE_PREFIX}${S_REVERSE}`;
 export const PREFIX_ANIMATE_INFINITE = `${ANIMATE_PREFIX}infinite`;
-
-export const USER_AGENT =
-  typeof navigator === "undefined" ? "" : navigator.userAgent;
-
-export const IS_MOBILE =
-  USER_AGENT.match(
-    /Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/,
-  ) !== null;

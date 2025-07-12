@@ -4,12 +4,10 @@
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { settings } from "../globals/settings.js";
 import { addClasses, addClassesNow, setDataNow, setStylePropNow } from "./css-alter.js";
-import { moveElement, wrapScrollingContent } from "./dom-alter.js";
+import { moveElement, tryWrapContent } from "./dom-alter.js";
 import { waitForElement } from "./dom-events.js";
 import { waitForMutateTime } from "./dom-optimize.js";
-import { logWarn } from "./log.js";
 import { camelToKebabCase, objToStrKey } from "./text.js";
 import { isScrollable, tryGetMainContentElement, fetchMainContentElement } from "./scroll.js";
 import { newXWeakMap } from "../modules/x-map.js";
@@ -26,12 +24,12 @@ import { newXWeakMap } from "../modules/x-map.js";
  * @category Overlays
  */
 export const getOverlay = userOptions => {
-  var _overlays$get;
+  var _overlays$get$get, _overlays$get;
   const options = tryGetOverlayOptions(userOptions);
   if (!options) {
     return null;
   }
-  return ((_overlays$get = overlays.get(options._parent)) === null || _overlays$get === void 0 ? void 0 : _overlays$get.get(options._overlayKey)) || null;
+  return (_overlays$get$get = (_overlays$get = overlays.get(options._parent)) === null || _overlays$get === void 0 ? void 0 : _overlays$get.get(options._overlayKey)) !== null && _overlays$get$get !== void 0 ? _overlays$get$get : null;
 };
 
 /**
@@ -80,11 +78,14 @@ export const createOverlay = async userOptions => {
     });
   }
   if (needsContentWrapping) {
-    if (settings.contentWrappingAllowed) {
-      parentEl = await wrapScrollingContent(parentEl);
-    } else {
-      logWarn("Percentage offset view trigger with scrolling root requires contentWrappingAllowed");
-    }
+    // TODO Is it possible to unwrap the children when no longer needing this
+    // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
+    // olverlays anyway.
+    parentEl = await tryWrapContent(parentEl, {
+      _classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
+      _required: true,
+      _requiredBy: "percentage offset view trigger with scrolling root"
+    });
   }
   if (options._style.position === MC.S_ABSOLUTE) {
     // Ensure parent has non-static positioning
@@ -98,6 +99,7 @@ export const createOverlay = async userOptions => {
 
 // ----------------------------------------
 
+const PREFIX_WRAPPER = MH.prefixName("overlay-wrapper");
 const overlays = newXWeakMap(() => MH.newMap());
 const tryGetOverlayOptions = userOptions => {
   var _userOptions$data, _userOptions$id;
@@ -130,11 +132,10 @@ const fetchOverlayOptions = async userOptions => {
 };
 const getOverlayKey = (style, data) => objToStrKey(style) + "|" + objToStrKey(data);
 const getCssProperties = style => {
-  const finalCssProperties = MH.merge({
-    position: MC.S_ABSOLUTE
-  },
-  // default
-  style);
+  const finalCssProperties = MH.merge(style, {
+    position: (style === null || style === void 0 ? void 0 : style.position) || MC.S_ABSOLUTE
+  } // default
+  );
   if (finalCssProperties.position === MC.S_ABSOLUTE || finalCssProperties.position === MC.S_FIXED) {
     if (MH.isEmpty(finalCssProperties.top) && MH.isEmpty(finalCssProperties.bottom)) {
       finalCssProperties.top = "0px";

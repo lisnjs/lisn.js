@@ -3,6 +3,7 @@
  * @ignore
  * @internal
  */
+export * from "../triggers/check-trigger.js";
 export * from "../triggers/pointer-trigger.js";
 export * from "../triggers/layout-trigger.js";
 export * from "../triggers/load-trigger.js";

@@ -48,18 +48,18 @@ export type BitSpace<T extends BitPropName> = {
      *   order, increasing in value, as the keys passed to the `BitSpaces.create`,
      *   function.
      *
-     * @param {} pStart  The name of the property that holds the start value.
-     *                   If null the bitmask will cover from the lowest property.
-     * @param {} pEnd    The name of the property that holds the end cut-off
-     *                   value for the bitmask. The bitmask with _not_ include
-     *                   pEnd's value.
-     *                   If null the bitmask will cover to the highest property,
-     *                   _including_.
+     * @param pStart The name of the property that holds the start value.
+     *               If null the bitmask will cover from the lowest property.
+     * @param pEnd   The name of the property that holds the end cut-off value
+     *               for the bitmask. The bitmask with _not_ include pEnd's
+     *               value.
+     *               If null the bitmask will cover to the highest property,
+     *               _including_.
      *
-     * @returns {} Returns a non-0 bitmask containing all values in the space
-     *             between the given ones.
-     *             Returns 0 if one or both of the given properties do not exist
-     *             in the space.
+     * @returns Returns a non-0 bitmask containing all values in the space between
+     *          the given ones.
+     *          Returns 0 if one or both of the given properties do not exist in
+     *          the space.
      */
     bitmaskFor: (pStart?: T | null, pEnd?: T | null) => number;
     /**

@@ -161,7 +161,7 @@ export class Trigger extends Widget {
 
     const once = config?.once ?? false;
     const oneWay = config?.oneWay ?? false;
-    const delay = config?.delay || 0;
+    const delay = config?.delay ?? 0;
     const doDelay = config?.doDelay ?? delay;
     const undoDelay = config?.undoDelay ?? delay;
 
@@ -205,9 +205,7 @@ export class Trigger extends Widget {
       toggleState = newToggleState;
 
       if (toggleState && once) {
-        MH.remove(run);
-        MH.remove(reverse);
-        MH.remove(toggle);
+        this.destroy();
       }
     };
 
@@ -245,11 +243,18 @@ export class Trigger extends Widget {
 
     // ----------
 
+    this.onDestroy(() => {
+      debug: logger?.debug5("Removing callbacks");
+      MH.remove(run);
+      MH.remove(reverse);
+      MH.remove(toggle);
+    });
+
     this.run = run.invoke;
     this.reverse = reverse.invoke;
     this[MC.S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
     this.getActions = () => [...actions]; // copy
-    this.getConfig = () => MH.copyObject(config || {});
+    this.getConfig = () => MH.copyObject(config);
   }
 }
 
@@ -336,17 +341,17 @@ export type TriggerCreateFn<Config extends TriggerConfig> = (
  * **IMPORTANT:** If a trigger by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name       The name of the trigger. Should be in kebab-case.
- * @param {} newTrigger Called for every trigger specification on any element
- *                      that has one or more trigger specifications.
- * @param {} configValidator
- *                      A validator object, or a function that returns such an
- *                      object, for all options that are specific to the
- *                      trigger. Base options (in {@link TriggerConfig}) will
- *                      be parsed automatically and don't need to be handled by
- *                      `configValidator`.
- *                      If the parameter is a function, it will be called with
- *                      the element on which the trigger is being defined.
+ * @param name       The name of the trigger. Should be in kebab-case.
+ * @param newTrigger Called for every trigger specification on any element
+ *                   that has one or more trigger specifications.
+ * @param configValidator
+ *                   A validator object, or a function that returns such an
+ *                   object, for all options that are specific to the
+ *                   trigger. Base options (in {@link TriggerConfig}) will
+ *                   be parsed automatically and don't need to be handled by
+ *                   `configValidator`.
+ *                   If the parameter is a function, it will be called with
+ *                   the element on which the trigger is being defined.
  *
  * @see {@link registerWidget}
  */
@@ -395,7 +400,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
 
       const actions = [];
       for (const actionSpec of splitOn(
-        allActionSpecs || "",
+        allActionSpecs ?? "",
         ACTION_PREF_CHAR,
         true,
       )) {
@@ -408,7 +413,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
 
         try {
           actions.push(
-            await fetchAction(actionTarget, name, actionArgsAndOptions || ""),
+            await fetchAction(actionTarget, name, actionArgsAndOptions ?? ""),
           );
         } catch (err) {
           if (MH.isInstanceOf(err, LisnUsageError)) {

@@ -18,8 +18,7 @@ var _xMap = require("../modules/x-map.cjs");
 var _domWatcher = require("../watchers/dom-watcher.cjs");
 var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -65,8 +64,8 @@ class Widget {
    * Retrieve an existing widget by element and ID.
    */
   static get(element, id) {
-    var _instances$get;
-    return ((_instances$get = instances.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) || null;
+    var _instances$get$get, _instances$get;
+    return (_instances$get$get = (_instances$get = instances.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) !== null && _instances$get$get !== void 0 ? _instances$get$get : null;
   }
 
   /**
@@ -226,26 +225,25 @@ exports.Widget = Widget;
  * **IMPORTANT:** If a widget by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name       The name of the widget. Should be in kebab-case.
- * @param {} newWidget  Called for every element matching the widget selector.
- * @param {} configValidator
- *                      A validator object, or a function that returns such an
- *                      object, for all options supported by the widget. If
- *                      given, then the `newWidget` function will also be
- *                      passed a configuration object constructed from the
- *                      element's data attribute.
- * @param {} [options.selector]
- *                      The selector to match elements for. If not given, then
- *                      uses a default value of `[data-lisn-<name>], .lisn-<name>`
- * @param {} [options.supportsMultiple]
- *                      If true, and if `configValidator` is given, then the
- *                      value of the element's widget specific data attribute
- *                      will be split on ";" and each one parsed individually
- *                      as a configuration. Then the `newWidget` function will
- *                      be called once for each configuration.
+ * @param name      The name of the widget. Should be in kebab-case.
+ * @param newWidget Called for every element matching the widget selector.
+ * @param configValidator
+ *                  A validator object, or a function that returns such an
+ *                  object, for all options supported by the widget. If
+ *                  given, then the `newWidget` function will also be
+ *                  passed a configuration object constructed from the
+ *                  element's data attribute.
+ * @param [options.selector]
+ *                  The selector to match elements for. If not given, then
+ *                  uses a default value of `[data-lisn-<name>], .lisn-<name>`
+ * @param [options.supportsMultiple]
+ *                  If true, and if `configValidator` is given, then the
+ *                  value of the element's widget specific data attribute
+ *                  will be split on ";" and each one parsed individually
+ *                  as a configuration. Then the `newWidget` function will
+ *                  be called once for each configuration.
  */
 const registerWidget = async (name, newWidget, configValidator, options) => {
-  var _options$selector;
   if (registeredWidgets.has(name)) {
     return;
   }
@@ -255,7 +253,7 @@ const registerWidget = async (name, newWidget, configValidator, options) => {
   // straight after loading LISN.js
   await (0, _domEvents.waitForInteractive)();
   const prefixedName = MH.prefixName(name);
-  const selector = (_options$selector = options === null || options === void 0 ? void 0 : options.selector) !== null && _options$selector !== void 0 ? _options$selector : getDefaultWidgetSelector(prefixedName);
+  const selector = (options === null || options === void 0 ? void 0 : options.selector) || getDefaultWidgetSelector(prefixedName);
   if (_settings.settings.autoWidgets) {
     const domWatcher = _domWatcher.DOMWatcher.reuse();
     domWatcher.onMutation(async operation => {

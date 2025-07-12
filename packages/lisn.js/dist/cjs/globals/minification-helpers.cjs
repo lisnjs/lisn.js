@@ -3,12 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.querySelector = exports.promiseResolve = exports.promiseAll = exports.preventExtensions = exports.preventDefault = exports.prefixName = exports.prefixLisnData = exports.prefixData = exports.prefixCssVar = exports.prefixCssJsVar = exports.pow = exports.parseFloat = exports.parentOf = exports.onAnimationFrame = exports.newWeakSet = exports.newWeakMap = exports.newSet = exports.newResizeObserver = exports.newPromise = exports.newMutationObserver = exports.newMap = exports.newIntersectionObserver = exports.min = exports.merge = exports.max = exports.log2 = exports.lengthOf = exports.keysOf = exports.kebabToCamelCase = exports.isWheelEvent = exports.isTouchPointerEvent = exports.isTouchEvent = exports.isString = exports.isPointerEvent = exports.isObject = exports.isNumber = exports.isNullish = exports.isNonPrimitive = exports.isNodeBAfterA = exports.isNode = exports.isNaN = exports.isMouseEvent = exports.isLiteralString = exports.isKeyboardEvent = exports.isIterableObject = exports.isInstanceOf = exports.isHTMLElement = exports.isFunction = exports.isEmpty = exports.isElement = exports.isDoc = exports.isBoolean = exports.isArray = exports.includes = exports.illegalConstructorError = exports.hasOwnProp = exports.hasDOM = exports.getWindow = exports.getTabIndex = exports.getReadyState = exports.getPointerType = exports.getElementById = exports.getDocScrollingElement = exports.getDocElement = exports.getDoc = exports.getBoundingClientRect = exports.getBody = exports.getAttr = exports.freezeObj = exports.floor = exports.filterBlank = exports.filter = exports.elScrollTo = exports.elScrollBy = exports.docQuerySelectorAll = exports.docQuerySelector = exports.deleteObjKey = exports.deleteKey = exports.delAttr = exports.defineProperty = exports.currentTargetOf = exports.createElement = exports.createButton = exports.copyObject = exports.copyBoundingRectProps = exports.constructorOf = exports.consoleWarn = exports.consoleLog = exports.consoleInfo = exports.consoleError = exports.consoleDebug = exports.clearTimer = exports.classList = exports.childrenOf = exports.ceil = exports.camelToKebabCase = exports.bugError = exports.assign = exports.arrayFrom = exports.abs = void 0;
-exports.usageError = exports.unsetTabIndex = exports.unsetAttr = exports.typeOrClassOf = exports.typeOf = exports.toUpperCase = exports.toLowerCase = exports.timeSince = exports.timeNow = exports.targetOf = exports.tagName = exports.stringify = exports.strReplace = exports.sqrt = exports.sizeOf = exports.setTimer = exports.setTabIndex = exports.setAttr = exports.round = exports.remove = exports.querySelectorAll = void 0;
+exports.prefixName = exports.prefixLisnData = exports.prefixData = exports.prefixCssVar = exports.prefixCssJsVar = exports.pow = exports.parseFloat = exports.parentOf = exports.onAnimationFrame = exports.newWeakSet = exports.newWeakMap = exports.newSet = exports.newResizeObserver = exports.newPromise = exports.newMutationObserver = exports.newMap = exports.newIntersectionObserver = exports.min = exports.merge = exports.max = exports.log2 = exports.lengthOf = exports.lastOf = exports.keysOf = exports.kebabToCamelCase = exports.isWheelEvent = exports.isTouchPointerEvent = exports.isTouchEvent = exports.isString = exports.isPointerEvent = exports.isObject = exports.isNumber = exports.isNullish = exports.isNonPrimitive = exports.isNodeBAfterA = exports.isNode = exports.isNaN = exports.isMouseEvent = exports.isLiteralString = exports.isKeyboardEvent = exports.isIterableObject = exports.isInstanceOf = exports.isHTMLElement = exports.isFunction = exports.isEmpty = exports.isElement = exports.isDoc = exports.isBoolean = exports.isArray = exports.includes = exports.illegalConstructorError = exports.hasTagName = exports.hasOwnProp = exports.hasDOM = exports.getWindow = exports.getTabIndex = exports.getReadyState = exports.getPointerType = exports.getElementById = exports.getDocScrollingElement = exports.getDocElement = exports.getDoc = exports.getBoundingClientRect = exports.getBody = exports.getAttr = exports.freezeObj = exports.floor = exports.firstOf = exports.filterBlank = exports.filter = exports.exp = exports.every = exports.elScrollTo = exports.elScrollBy = exports.docQuerySelectorAll = exports.docQuerySelector = exports.deleteObjKey = exports.deleteKey = exports.delAttr = exports.defineProperty = exports.currentTargetOf = exports.createElement = exports.createButton = exports.copyObject = exports.copyBoundingRectProps = exports.constructorOf = exports.consoleWarn = exports.consoleLog = exports.consoleInfo = exports.consoleError = exports.consoleDebug = exports.clearTimer = exports.classList = exports.childrenOf = exports.ceil = exports.camelToKebabCase = exports.bugError = exports.assign = exports.arrayFrom = exports.abs = void 0;
+exports.userAgent = exports.usageError = exports.unsetTabIndex = exports.unsetAttr = exports.typeOrClassOf = exports.typeOf = exports.toUpperCase = exports.toLowerCase = exports.timeSince = exports.timeNow = exports.targetOf = exports.tagName = exports.stringify = exports.strReplace = exports.sqrt = exports.some = exports.sizeOf = exports.setTimer = exports.setTabIndex = exports.setAttr = exports.round = exports.root = exports.remove = exports.querySelectorAll = exports.querySelector = exports.promiseResolve = exports.promiseAll = exports.preventExtensions = exports.preventDefault = void 0;
 var MC = _interopRequireWildcard(require("./minification-constants.cjs"));
 var _errors = require("./errors.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * For minification optimization
  *
@@ -18,7 +17,8 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  */
 
 // credit: underscore.js
-const root = typeof self === "object" && self.self === self && self || typeof global == "object" && global.global === global && global || Function("return this")() || {};
+const root = exports.root = typeof self === "object" && self.self === self && self || typeof global == "object" && global.global === global && global || Function("return this")() || {};
+const userAgent = exports.userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
 const kebabToCamelCase = str => str.replace(/-./g, m => toUpperCase(m.charAt(1)));
 exports.kebabToCamelCase = kebabToCamelCase;
 const camelToKebabCase = str => str.replace(/[A-Z][a-z]/g, m => "-" + toLowerCase(m)).replace(/[A-Z]+/, m => "-" + toLowerCase(m));
@@ -56,7 +56,8 @@ const getReadyState = () => getDoc().readyState;
 exports.getReadyState = getReadyState;
 const getPointerType = event => isPointerEvent(event) ? event.pointerType : isMouseEvent(event) ? "mouse" : null;
 exports.getPointerType = getPointerType;
-const onAnimationFrame = exports.onAnimationFrame = hasDOM() ? root.requestAnimationFrame.bind(root) : () => {};
+const onAnimationFrame = callback => requestAnimationFrame(callback);
+exports.onAnimationFrame = onAnimationFrame;
 const createElement = (tagName, options) => getDoc().createElement(tagName, options);
 exports.createElement = createElement;
 const createButton = (label = "", tag = "button") => {
@@ -121,7 +122,7 @@ const strReplace = (s, match, replacement) => s.replace(match, replacement);
 exports.strReplace = strReplace;
 const setTimer = exports.setTimer = root.setTimeout.bind(root);
 const clearTimer = exports.clearTimer = root.clearTimeout.bind(root);
-const getBoundingClientRect = el => el.getBoundingClientRect();
+const getBoundingClientRect = element => element.getBoundingClientRect();
 
 // Copy size properties explicitly to another object so they can be used with
 // the spread operator (DOMRect/DOMRectReadOnly's properties are not enumerable)
@@ -149,16 +150,20 @@ const docQuerySelectorAll = selector => querySelectorAll(getDoc(), selector);
 exports.docQuerySelectorAll = docQuerySelectorAll;
 const getElementById = id => getDoc().getElementById(id);
 exports.getElementById = getElementById;
-const getAttr = (el, name) => el.getAttribute(name);
+const getAttr = (element, name) => element.getAttribute(name);
 exports.getAttr = getAttr;
-const setAttr = (el, name, value = "true") => el.setAttribute(name, value);
+const setAttr = (element, name, value = "true") => element.setAttribute(name, value);
 exports.setAttr = setAttr;
-const unsetAttr = (el, name) => el.setAttribute(name, "false");
+const unsetAttr = (element, name) => element.setAttribute(name, "false");
 exports.unsetAttr = unsetAttr;
-const delAttr = (el, name) => el.removeAttribute(name);
+const delAttr = (element, name) => element.removeAttribute(name);
 exports.delAttr = delAttr;
 const includes = (arr, v, startAt) => arr.indexOf(v, startAt) >= 0;
 exports.includes = includes;
+const every = (array, predicate) => array.every(predicate);
+exports.every = every;
+const some = (array, predicate) => array.some(predicate);
+exports.some = some;
 const filter = (array, filterFn) => array.filter(filterFn);
 exports.filter = filter;
 const filterBlank = array => {
@@ -176,8 +181,14 @@ const lengthOf = obj => {
   return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
 };
 exports.lengthOf = lengthOf;
-const tagName = el => el.tagName;
+const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
+exports.lastOf = lastOf;
+const firstOf = a => a === null || a === void 0 ? void 0 : a.slice(0, 1)[0];
+exports.firstOf = firstOf;
+const tagName = element => element.tagName;
 exports.tagName = tagName;
+const hasTagName = (element, tag) => toLowerCase(tagName(element)) === toLowerCase(tag);
+exports.hasTagName = hasTagName;
 const preventDefault = event => event.preventDefault();
 exports.preventDefault = preventDefault;
 const arrayFrom = exports.arrayFrom = MC.ARRAY.from.bind(MC.ARRAY);
@@ -209,6 +220,7 @@ const min = exports.min = MC.MATH.min.bind(MC.MATH);
 const abs = exports.abs = MC.MATH.abs.bind(MC.MATH);
 const round = exports.round = MC.MATH.round.bind(MC.MATH);
 const pow = exports.pow = MC.MATH.pow.bind(MC.MATH);
+const exp = exports.exp = MC.MATH.exp.bind(MC.MATH);
 const parseFloat = exports.parseFloat = MC.NUMBER.parseFloat.bind(MC.NUMBER);
 const isNaN = exports.isNaN = MC.NUMBER.isNaN.bind(MC.NUMBER);
 const isInstanceOf = (value, Class) => value instanceof Class;
@@ -222,7 +234,10 @@ const typeOrClassOf = obj => {
   return isObject(obj) ? (_constructorOf = constructorOf(obj)) === null || _constructorOf === void 0 ? void 0 : _constructorOf.name : typeOf(obj);
 };
 exports.typeOrClassOf = typeOrClassOf;
-const parentOf = element => (element === null || element === void 0 ? void 0 : element.parentElement) || null;
+const parentOf = element => {
+  var _element$parentElemen;
+  return (_element$parentElemen = element === null || element === void 0 ? void 0 : element.parentElement) !== null && _element$parentElemen !== void 0 ? _element$parentElemen : null;
+};
 exports.parentOf = parentOf;
 const childrenOf = element => (element === null || element === void 0 ? void 0 : element.children) || [];
 exports.childrenOf = childrenOf;
@@ -230,14 +245,14 @@ const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
 exports.targetOf = targetOf;
 const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;
 exports.currentTargetOf = currentTargetOf;
-const classList = el => el === null || el === void 0 ? void 0 : el.classList;
+const classList = element => element === null || element === void 0 ? void 0 : element.classList;
 exports.classList = classList;
 const S_TABINDEX = "tabindex";
-const getTabIndex = el => getAttr(el, S_TABINDEX);
+const getTabIndex = element => getAttr(element, S_TABINDEX);
 exports.getTabIndex = getTabIndex;
-const setTabIndex = (el, index = "0") => setAttr(el, S_TABINDEX, index);
+const setTabIndex = (element, index = "0") => setAttr(element, S_TABINDEX, index);
 exports.setTabIndex = setTabIndex;
-const unsetTabIndex = el => delAttr(el, S_TABINDEX);
+const unsetTabIndex = element => delAttr(element, S_TABINDEX);
 exports.unsetTabIndex = unsetTabIndex;
 const remove = obj => obj === null || obj === void 0 ? void 0 : obj.remove();
 exports.remove = remove;
@@ -245,11 +260,11 @@ const deleteObjKey = (obj, key) => delete obj[key];
 exports.deleteObjKey = deleteObjKey;
 const deleteKey = (map, key) => map === null || map === void 0 ? void 0 : map.delete(key);
 exports.deleteKey = deleteKey;
-const elScrollTo = (el, coords, behavior = "instant") => el.scrollTo(merge({
+const elScrollTo = (element, coords, behavior = "instant") => element.scrollTo(merge({
   behavior
 }, coords));
 exports.elScrollTo = elScrollTo;
-const elScrollBy = (el, coords, behavior = "instant") => el.scrollBy(merge({
+const elScrollBy = (element, coords, behavior = "instant") => element.scrollBy(merge({
   behavior
 }, coords));
 exports.elScrollBy = elScrollBy;

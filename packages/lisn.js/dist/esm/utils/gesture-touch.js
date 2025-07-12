@@ -28,7 +28,7 @@ import { newXMap } from "../modules/x-map.js";
  * For zoom intents, which necessarily involves exactly two fingers `deltaZ`
  * is based on the relative change in distance between the fingers.
  *
- * @param {} [options.deltaThreshold]
+ * @param [options.deltaThreshold]
  *                          A change of x or y coordinate less than this is
  *                          considered insignificant, for the purposes of
  *                          determining:
@@ -37,22 +37,22 @@ import { newXMap } from "../modules/x-map.js";
  *                          2) whether more than two fingers have moved and
  *                             therefore whether the direction could be zoom or
  *                             not
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
- * @param {} [options.reverseScroll]
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.reverseScroll]
  *                          If set to `true`, will disable natural scroll
  *                          direction.
- * @param {} [options.dragHoldTime]
+ * @param [options.dragHoldTime]
  *                          If the user presses and holds for at least the
  *                          given amount of milliseconds before moving the
  *                          finger(s), gestures other than pinch will be
  *                          treated as a drag instead of scroll as long as the
  *                          number of fingers touching the screen is
  *                          `options.dragNumFingers`. Default is 500ms.
- * @param {} [options.dragNumFingers]
+ * @param [options.dragNumFingers]
  *                          The number of fingers that could be considered a
  *                          drag intent. Default is 1.
  *
- * @return {} `false` if there are less than 2 "touchmove" events in the list,
+ * @returns `false` if there are less than 2 "touchmove" events in the list,
  * `null` if the gesture is terminated, otherwise a {@link GestureFragment}.
  *
  * @category Gestures
@@ -126,7 +126,7 @@ export const getTouchGestureFragment = (events, options) => {
     }
   }
   if (direction === MC.S_NONE) {
-    const lastTouchEvent = events.filter(MH.isTouchEvent).slice(-1)[0];
+    const lastTouchEvent = MH.lastOf(events.filter(MH.isTouchEvent));
     // If all fingers have lifted off, consider it terminated, otherwise wait
     // for more events.
     return MH.lengthOf(lastTouchEvent === null || lastTouchEvent === void 0 ? void 0 : lastTouchEvent.touches) ? false : null;
@@ -151,8 +151,8 @@ export const getTouchGestureFragment = (events, options) => {
  * Note that, `deltaX`/`deltaY` are the end X/Y coordinate minus the start X/Y
  * coordinate. For natural scroll direction you should swap their signs.
  *
- * @param {} deltaThreshold If the change of x and y coordinate are both less
- *                          than this, it is marked as not significant.
+ * @param deltaThreshold If the change of x and y coordinate are both less
+ *                       than this, it is marked as not significant.
  *
  * @category Gestures
  */

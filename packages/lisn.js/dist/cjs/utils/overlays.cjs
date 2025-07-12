@@ -6,17 +6,14 @@ Object.defineProperty(exports, "__esModule", {
 exports.getOverlay = exports.createOverlay = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-var _settings = require("../globals/settings.cjs");
 var _cssAlter = require("./css-alter.cjs");
 var _domAlter = require("./dom-alter.cjs");
 var _domEvents = require("./dom-events.cjs");
 var _domOptimize = require("./dom-optimize.cjs");
-var _log = require("./log.cjs");
 var _text = require("./text.cjs");
 var _scroll = require("./scroll.cjs");
 var _xMap = require("../modules/x-map.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * @module Utils
  */
@@ -33,12 +30,12 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  * @category Overlays
  */
 const getOverlay = userOptions => {
-  var _overlays$get;
+  var _overlays$get$get, _overlays$get;
   const options = tryGetOverlayOptions(userOptions);
   if (!options) {
     return null;
   }
-  return ((_overlays$get = overlays.get(options._parent)) === null || _overlays$get === void 0 ? void 0 : _overlays$get.get(options._overlayKey)) || null;
+  return (_overlays$get$get = (_overlays$get = overlays.get(options._parent)) === null || _overlays$get === void 0 ? void 0 : _overlays$get.get(options._overlayKey)) !== null && _overlays$get$get !== void 0 ? _overlays$get$get : null;
 };
 
 /**
@@ -88,11 +85,14 @@ const createOverlay = async userOptions => {
     });
   }
   if (needsContentWrapping) {
-    if (_settings.settings.contentWrappingAllowed) {
-      parentEl = await (0, _domAlter.wrapScrollingContent)(parentEl);
-    } else {
-      (0, _log.logWarn)("Percentage offset view trigger with scrolling root requires contentWrappingAllowed");
-    }
+    // TODO Is it possible to unwrap the children when no longer needing this
+    // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
+    // olverlays anyway.
+    parentEl = await (0, _domAlter.tryWrapContent)(parentEl, {
+      _classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
+      _required: true,
+      _requiredBy: "percentage offset view trigger with scrolling root"
+    });
   }
   if (options._style.position === MC.S_ABSOLUTE) {
     // Ensure parent has non-static positioning
@@ -106,6 +106,7 @@ const createOverlay = async userOptions => {
 
 // ----------------------------------------
 exports.createOverlay = createOverlay;
+const PREFIX_WRAPPER = MH.prefixName("overlay-wrapper");
 const overlays = (0, _xMap.newXWeakMap)(() => MH.newMap());
 const tryGetOverlayOptions = userOptions => {
   var _userOptions$data, _userOptions$id;
@@ -138,11 +139,10 @@ const fetchOverlayOptions = async userOptions => {
 };
 const getOverlayKey = (style, data) => (0, _text.objToStrKey)(style) + "|" + (0, _text.objToStrKey)(data);
 const getCssProperties = style => {
-  const finalCssProperties = MH.merge({
-    position: MC.S_ABSOLUTE
-  },
-  // default
-  style);
+  const finalCssProperties = MH.merge(style, {
+    position: (style === null || style === void 0 ? void 0 : style.position) || MC.S_ABSOLUTE
+  } // default
+  );
   if (finalCssProperties.position === MC.S_ABSOLUTE || finalCssProperties.position === MC.S_FIXED) {
     if (MH.isEmpty(finalCssProperties.top) && MH.isEmpty(finalCssProperties.bottom)) {
       finalCssProperties.top = "0px";

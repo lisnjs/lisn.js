@@ -38,6 +38,7 @@ actions.Disable.register();
 actions.Run.register();
 triggers.LayoutTrigger.register();
 triggers.LoadTrigger.register();
+triggers.CheckTrigger.register();
 triggers.ClickTrigger.register();
 triggers.PressTrigger.register();
 triggers.HoverTrigger.register();

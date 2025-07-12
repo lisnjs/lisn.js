@@ -9,8 +9,7 @@ var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"))
 var _directions = require("./directions.cjs");
 var _math = require("./math.cjs");
 var _xMap = require("../modules/x-map.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * @module Utils
  */
@@ -35,7 +34,7 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  * For zoom intents, which necessarily involves exactly two fingers `deltaZ`
  * is based on the relative change in distance between the fingers.
  *
- * @param {} [options.deltaThreshold]
+ * @param [options.deltaThreshold]
  *                          A change of x or y coordinate less than this is
  *                          considered insignificant, for the purposes of
  *                          determining:
@@ -44,22 +43,22 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  *                          2) whether more than two fingers have moved and
  *                             therefore whether the direction could be zoom or
  *                             not
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
- * @param {} [options.reverseScroll]
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.reverseScroll]
  *                          If set to `true`, will disable natural scroll
  *                          direction.
- * @param {} [options.dragHoldTime]
+ * @param [options.dragHoldTime]
  *                          If the user presses and holds for at least the
  *                          given amount of milliseconds before moving the
  *                          finger(s), gestures other than pinch will be
  *                          treated as a drag instead of scroll as long as the
  *                          number of fingers touching the screen is
  *                          `options.dragNumFingers`. Default is 500ms.
- * @param {} [options.dragNumFingers]
+ * @param [options.dragNumFingers]
  *                          The number of fingers that could be considered a
  *                          drag intent. Default is 1.
  *
- * @return {} `false` if there are less than 2 "touchmove" events in the list,
+ * @returns `false` if there are less than 2 "touchmove" events in the list,
  * `null` if the gesture is terminated, otherwise a {@link GestureFragment}.
  *
  * @category Gestures
@@ -133,7 +132,7 @@ const getTouchGestureFragment = (events, options) => {
     }
   }
   if (direction === MC.S_NONE) {
-    const lastTouchEvent = events.filter(MH.isTouchEvent).slice(-1)[0];
+    const lastTouchEvent = MH.lastOf(events.filter(MH.isTouchEvent));
     // If all fingers have lifted off, consider it terminated, otherwise wait
     // for more events.
     return MH.lengthOf(lastTouchEvent === null || lastTouchEvent === void 0 ? void 0 : lastTouchEvent.touches) ? false : null;
@@ -158,8 +157,8 @@ const getTouchGestureFragment = (events, options) => {
  * Note that, `deltaX`/`deltaY` are the end X/Y coordinate minus the start X/Y
  * coordinate. For natural scroll direction you should swap their signs.
  *
- * @param {} deltaThreshold If the change of x and y coordinate are both less
- *                          than this, it is marked as not significant.
+ * @param deltaThreshold If the change of x and y coordinate are both less
+ *                       than this, it is marked as not significant.
  *
  * @category Gestures
  */

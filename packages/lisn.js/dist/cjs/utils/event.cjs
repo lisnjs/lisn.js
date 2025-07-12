@@ -9,8 +9,7 @@ var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"))
 var _cssAlter = require("./css-alter.cjs");
 var _misc = require("./misc.cjs");
 var _xMap = require("../modules/x-map.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
  * @module Utils
  */
@@ -23,9 +22,11 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  */
 const callEventListener = (handler, event) => {
   if (MH.isFunction(handler)) {
-    handler.call(event.currentTarget || self, event);
+    var _event$currentTarget;
+    handler.call((_event$currentTarget = event.currentTarget) !== null && _event$currentTarget !== void 0 ? _event$currentTarget : self, event);
   } else {
-    handler.handleEvent.call(event.currentTarget || self, event);
+    var _event$currentTarget2;
+    handler.handleEvent.call((_event$currentTarget2 = event.currentTarget) !== null && _event$currentTarget2 !== void 0 ? _event$currentTarget2 : self, event);
   }
 };
 
@@ -36,13 +37,14 @@ const callEventListener = (handler, event) => {
  * but it handles `options` object in case the browser does not support those.
  * Does not support the `signal` option unless browser natively supports that.
  *
- * @return {} `true` if successfully added, or `false` if the same handler has
+ * @returns `true` if successfully added, or `false` if the same handler has
  * already been added by us, or if the handler is not a valid event listener.
  *
  * @category Events: Generic
  */
 exports.callEventListener = callEventListener;
-const addEventListenerTo = (target, eventType, handler, options = {}) => {
+const addEventListenerTo = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   if (getEventHandlerData(target, eventType, handler, options)) {
     // already added
@@ -85,13 +87,14 @@ const addEventListenerTo = (target, eventType, handler, options = {}) => {
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener | EventTarget:removeEventListener},
  * to remove it, not this function.
  *
- * @return {} `true` if successfully removed, or `false` if the handler has not
+ * @returns `true` if successfully removed, or `false` if the handler has not
  * been added by us.
  *
  * @category Events: Generic
  */
 exports.addEventListenerTo = addEventListenerTo;
-const removeEventListenerFrom = (target, eventType, handler, options = {}) => {
+const removeEventListenerFrom = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   const data = getEventHandlerData(target, eventType, handler, options);
   if (!data) {

@@ -3,6 +3,7 @@
  */
 
 import * as MH from "../globals/minification-helpers.js";
+import { validateNumber } from "../utils/validation.js";
 import { SizeWatcher } from "../watchers/size-watcher.js";
 import { Widget, registerWidget } from "./widget.js";
 
@@ -32,6 +33,13 @@ import { Widget, registerWidget } from "./widget.js";
  * ```html
  * <div class="lisn-track-size"></div>
  * ```
+ *
+ * @example
+ * As above but with custom options
+ *
+ * ```html
+ * <div data-lisn-track-size="threshold=0 | debounce-window=0"></div>
+ * ```
  */
 export class TrackSize extends Widget {
   static get(element) {
@@ -42,24 +50,29 @@ export class TrackSize extends Widget {
     return null;
   }
   static register() {
-    registerWidget(WIDGET_NAME, element => {
+    registerWidget(WIDGET_NAME, (element, config) => {
       if (!TrackSize.get(element)) {
-        return new TrackSize(element);
+        return new TrackSize(element, config);
       }
       return null;
-    });
+    }, configValidator);
   }
-  constructor(element) {
+  constructor(element, config) {
     super(element, {
       id: DUMMY_ID
     });
-    SizeWatcher.reuse().trackSize(null, {
-      target: element,
-      threshold: 0
-    });
+    SizeWatcher.reuse().trackSize(null, MH.assign({
+      target: element
+    }, config));
     this.onDestroy(() => SizeWatcher.reuse().noTrackSize(null, element));
   }
 }
+
+/**
+ * @interface
+ *
+ * @since v1.2.0
+ */
 
 // --------------------
 
@@ -67,4 +80,8 @@ const WIDGET_NAME = "track-size";
 // Only one TrackSize widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID = WIDGET_NAME;
+const configValidator = {
+  threshold: validateNumber,
+  debounceWindow: validateNumber
+};
 //# sourceMappingURL=track-size.js.map

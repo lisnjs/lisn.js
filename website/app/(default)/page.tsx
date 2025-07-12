@@ -119,7 +119,8 @@ export default function Page() {
           <li>Scroll-to-top button</li>
           <li>Page loader</li>
           <li>
-            <em>Coming soon:</em> SmoothScroller (native scroll)
+            <em>Coming soon:</em> <b>Native</b> smooth scrolling and
+            scroll-based transforms
           </li>
         </ul>
       </Section>
@@ -335,19 +336,14 @@ LISN.watchers.ScrollWatcher.onScroll(
       <Section>
         <h2 className="text-center">Future plans.</h2>
         <ul className="center fit">
-          <li>Wrappers for more frameworks.</li>
-          <li>SmoothScroller widget.</li>
-          <li>Radio/checkbox trigger.</li>
-          <li>
-            Pager wheel transition to respond to quick successive scrolls.
-          </li>
-          <li>Default pager transitions to use gesture momentum.</li>
+          <li>SmoothScroll widget (coming in next version).</li>
+          <li>Momentum based Pager transition.</li>
+          <li>Realtime drag to reveal for Pager (slider mode).</li>
           <li>
             Sortable to support a child element of each sortable item to
             function as the drag handle.
           </li>
-          <li>Custom duration for ScrollTo action.</li>
-          <li>Passing information on elements spanned by a gesture.</li>
+          <li>Wrappers for more frameworks.</li>
           <li>
             <Link href="https://github.com/lisnjs/lisn.js/issues">
               You tell me :)

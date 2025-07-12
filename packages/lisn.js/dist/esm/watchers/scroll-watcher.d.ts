@@ -64,7 +64,7 @@ export declare class ScrollWatcher {
      * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
      *   or is `null`, `window` or `document`, the following CSS variables are
      *   set on the root (`html`) element and represent the scroll of the
-     *   {@link fetchMainScrollableElement}:
+     *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
      *   - `--lisn-js--page-scroll-top`
      *   - `--lisn-js--page-scroll-top-fraction`
      *   - `--lisn-js--page-scroll-left`
@@ -96,9 +96,9 @@ export declare class ScrollWatcher {
      * Get the scroll offset of the given scrollable. By default, it will
      * {@link waitForMeasureTime} and so will be delayed by one frame.
      *
-     * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-     *                    this only when doing realtime scroll-based animations
-     *                    as it may cause a forced layout.
+     * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+     *                 this only when doing realtime scroll-based animations
+     *                 as it may cause a forced layout.
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -122,21 +122,22 @@ export declare class ScrollWatcher {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the "to" coordinates or options are invalid.
      *
-     * @param {} to  If this is an element, then its top-left position is used as
-     *               the target coordinates. If it is a string, then it is treated
-     *               as a selector for an element using `querySelector`.
-     * @param {} [options.scrollable]
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     * @param to If this is an element, then its top-left position is used as
+     *           the target coordinates. If it is a string, then it is treated
+     *           as a selector for an element using `querySelector`.
+     * @param [options.scrollable]
+     *           If not given, it defaults to
+     *           {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
-     * @return {} `null` if there's an ongoing scroll that is not cancellable,
+     * @returns `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
      */
     readonly scrollTo: (to: TargetCoordinates | Element | string, options?: ScrollToOptions) => Promise<ScrollAction | null>;
     /**
      * Returns the current {@link ScrollAction} if any.
      *
-     * @param {} scrollable
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     * @param scrollable If not given, it defaults to
+     *                   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -149,10 +150,10 @@ export declare class ScrollWatcher {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
      *
-     * @param {} [options.immediate]  If true, then it will not use
-     *                                {@link waitForMeasureTime} or
-     *                                {@link Utils.waitForMutateTime | waitForMutateTime}.
-     *                                Warning: this will likely result in forced layout.
+     * @param [options.immediate] If true, then it will not use
+     *                            {@link waitForMeasureTime} or
+     *                            {@link Utils.waitForMutateTime | waitForMutateTime}.
+     *                            Warning: this will likely result in forced layout.
      */
     readonly stopUserScrolling: (options?: {
         scrollable?: ScrollTarget;
@@ -161,7 +162,7 @@ export declare class ScrollWatcher {
     /**
      * Returns the element that holds the main page content. By default it's
      * `document.body` but is overridden by
-     * {@link settings.mainScrollableElementSelector}.
+     * {@link Settings.settings.mainScrollableElementSelector}.
      *
      * It will wait for the element to be available if not already.
      */
@@ -170,7 +171,7 @@ export declare class ScrollWatcher {
      * Returns the scrollable element that holds the wrapper around the main page
      * content. By default it's `document.scrollable` (unless `document.body` is
      * actually scrollable, in which case it will be used) but it will be
-     * different if {@link settings.mainScrollableElementSelector} is set.
+     * different if {@link Settings.settings.mainScrollableElementSelector} is set.
      *
      * It will wait for the element to be available if not already.
      */
@@ -225,7 +226,8 @@ export type ScrollWatcherConfig = {
 export type OnScrollOptions = {
     /**
      * If it is not given, or is `null`, `window` or `document`, then it will
-     * track the scroll of the {@link ScrollWatcher.fetchMainScrollableElement}.
+     * track the scroll of the
+     * {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
      * Other values must be an `Element` and are taken literally.
      *
@@ -347,6 +349,8 @@ export type OnScrollHandler = CallbackHandler<OnScrollHandlerArgs> | OnScrollCal
 export type ScrollData = {
     clientWidth: number;
     clientHeight: number;
+    scrollWidth: number;
+    scrollHeight: number;
     scrollTop: number;
     /**
      * This is the `scrollTop` relative to the full `scrollHeight` minus the
@@ -359,8 +363,6 @@ export type ScrollData = {
      * `clientWidth`, ranging from 0 to 1.
      */
     scrollLeftFraction: number;
-    scrollWidth: number;
-    scrollHeight: number;
     /**
      * This is the direction of the last scroll action, i.e. _compared to the
      * last scroll event_, not necessarily based on the deltas compared to the

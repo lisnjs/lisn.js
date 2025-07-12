@@ -9,13 +9,30 @@ Element.prototype.getBoundingClientRect = function () {
   const targetWidth = this.clientWidth || window.CLIENT_WIDTH;
   const targetHeight = this.clientHeightidth || window.CLIENT_HEIGHT;
 
+  const offsetLeft = this.offsetLeft || 0;
+  const offsetTop = this.offsetTop || 0;
+
+  let totalScrollLeft = 0;
+  let totalScrollTop = 0;
+
+  let ancestor = this === document.documentElement ? this : this.parentElement;
+  while (ancestor) {
+    totalScrollTop += ancestor.scrollTop;
+    totalScrollLeft += ancestor.scrollLeft;
+    ancestor = ancestor.parentElement;
+  }
+
+  const x = offsetLeft - totalScrollLeft;
+  const y = offsetTop - totalScrollTop;
+
   const boundingClientRect = {};
-  boundingClientRect.x = boundingClientRect.left =
-    -document.documentElement.scrollLeft;
-  boundingClientRect.y = boundingClientRect.top =
-    -document.documentElement.scrollTop;
-  boundingClientRect.right = boundingClientRect.width = targetWidth;
-  boundingClientRect.bottom = boundingClientRect.height = targetHeight;
+
+  boundingClientRect.x = boundingClientRect.left = x;
+  boundingClientRect.y = boundingClientRect.top = y;
+  boundingClientRect.right = x + targetWidth;
+  boundingClientRect.bottom = y + targetHeight;
+  boundingClientRect.width = targetWidth;
+  boundingClientRect.height = targetHeight;
 
   return boundingClientRect;
 };
@@ -99,6 +116,7 @@ Element.prototype.enableScroll = function () {
 
   this._isScrollable = true;
 
+  this.style.overflow = "auto";
   this.scrollHeight = window.SCROLL_HEIGHT;
   this.scrollWidth = window.SCROLL_WIDTH;
   this.clientHeight = window.CLIENT_HEIGHT;
@@ -136,6 +154,31 @@ Element.prototype.scrollTo = function (...args) {
   }
   eventTarget.dispatchEvent(new Event("scroll"));
 };
+
+HTMLElement.prototype.setOffset = function (x, y) {
+  this._offsetLeft = x;
+  this._offsetTop = y;
+};
+
+// jest doesn't seem to allow us to set offsetTop/Left directly, so need to
+// override the property and create a setter ourselves
+Object.defineProperty(HTMLElement.prototype, "offsetLeft", {
+  get: function () {
+    return this._offsetLeft;
+  },
+  set: function (o) {
+    this._offsetLeft = o;
+  },
+});
+
+Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+  get: function () {
+    return this._offsetTop;
+  },
+  set: function (o) {
+    this._offsetTop = o;
+  },
+});
 
 Element.prototype.resize = function (
   offset = [Math.random() * 1000, Math.random() * 1000],

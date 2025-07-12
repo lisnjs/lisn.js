@@ -18,8 +18,8 @@ import debug from "../debug/debug.js";
  */
 export class XResizeObserver {
   /**
-   * @param {} debounceWindow Debounce the handler so that it's called at most
-   *                          every `debounceWindow` ms.
+   * @param debounceWindow Debounce the handler so that it's called at most
+   *                       every `debounceWindow` ms.
    */
   constructor(callback, debounceWindow) {
     /**
@@ -54,7 +54,7 @@ export class XResizeObserver {
     // a counter of 1 or 2 for how many more calls to ignore.
     const targetsToSkip = MH.newWeakMap();
     let observedTargets = MH.newWeakSet();
-    debounceWindow = debounceWindow || 0;
+    debounceWindow !== null && debounceWindow !== void 0 ? debounceWindow : debounceWindow = 0;
     let timer = null;
     const resizeHandler = entries => {
       // Override entries for previous targets, but keep entries whose targets

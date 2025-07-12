@@ -13,9 +13,16 @@ import { Widget } from "../widgets/widget.js";
  * The button is only shown when the scroll offset from the top is more than a
  * given configurable amount.
  *
- * **NOTE:** Currently the widget only supports fixed positioned button that
- * scrolls the main scrolling element (see
- * {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector}).
+ * **IMPORTANT:** When configuring an existing element as the button (i.e. using
+ * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
+ * - if using
+ *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+ *   as the scrollable, the button element will have it's CSS position set to `fixed`;
+ * - otherwise, if using a custom scrollable element, the button element may be
+ *   moved in the DOM tree in order to position it on top of the scrollable
+ * If you don't want the button element changed in any way, then consider using
+ * the {@link Triggers.ClickTrigger | ClickTrigger} with a
+ * {@link Actions.ScrollTo | ScrollTo} action.
  *
  * **IMPORTANT:** You should not instantiate more than one {@link ScrollToTop}
  * widget on a given element. Use {@link ScrollToTop.get} to get an existing
@@ -69,19 +76,53 @@ import { Widget } from "../widgets/widget.js";
  * ```
  *
  * @example
- * This will create a scroll-to-top button for the main scrolling element
- * using an existing element for the button with default
+ * This will configure the given element as a scroll-to-top button for the main
+ * scrolling element using an existing element for the button with default
  * {@link ScrollToTopConfig}.
  *
  * ```html
- * <div class="lisn-scroll-to-top"></div>
+ * <button class="lisn-scroll-to-top"></button>
  * ```
- *
  * @example
  * As above but with custom settings.
  *
  * ```html
- * <div data-lisn-scroll-to-top="position=left | offset=top:300vh"></div>
+ * <button data-lisn-scroll-to-top="position=left | offset=top:300vh"></button>
+ * ```
+ *
+ * @example
+ * This will configure the given element as a scroll-to-top button for a custom
+ * scrolling element (i.e. one with overflow "auto" or "scroll").
+ *
+ * ```html
+ * <div id="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=#scrollable"></button>
+ * ```
+ *
+ * @example
+ * As above, but using a reference specification with a class name to find the
+ * scrollable.
+ *
+ * ```html
+ * <div class="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=prev.scrollable"></button>
+ * ```
+ *
+ * @example
+ * As above but with all custom settings.
+ *
+ * ```html
+ * <div class="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=prev.scrollable
+ *                               | position=left
+ *                               | offset=top:300vh
+ * "></button>
  * ```
  */
 export declare class ScrollToTop extends Widget {
@@ -121,5 +162,11 @@ export type ScrollToTopConfig = {
      * @defaultValue "right"
      */
     position?: "left" | "right";
+    /**
+     * The element that should be scrolled.
+     *
+     * @defaultValue {@link ScrollWatcher} default
+     */
+    scrollable?: Element;
 };
 //# sourceMappingURL=scroll-to-top.d.ts.map

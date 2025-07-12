@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.1.2
+ * LISN.js v1.2.0
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -73,19 +73,19 @@
   const S_DEBOUNCE_WINDOW = "debounceWindow";
   const S_TOGGLE = "toggle";
   const S_CANCEL = "cancel";
-  const S_KEYDOWN = S_KEY + S_DOWN;
-  const S_MOUSEUP = S_MOUSE + S_UP;
-  const S_MOUSEDOWN = S_MOUSE + S_DOWN;
-  const S_POINTERUP = S_POINTER + S_UP;
-  const S_POINTERDOWN = S_POINTER + S_DOWN;
+  const S_KEYDOWN = `${S_KEY}${S_DOWN}`;
+  const S_MOUSEUP = `${S_MOUSE}${S_UP}`;
+  const S_MOUSEDOWN = `${S_MOUSE}${S_DOWN}`;
+  const S_POINTERUP = `${S_POINTER}${S_UP}`;
+  const S_POINTERDOWN = `${S_POINTER}${S_DOWN}`;
   const S_POINTERENTER = `${S_POINTER}enter`;
   const S_POINTERLEAVE = `${S_POINTER}leave`;
   const S_POINTERMOVE = `${S_POINTER}move`;
-  const S_POINTERCANCEL = S_POINTER + S_CANCEL;
+  const S_POINTERCANCEL = `${S_POINTER}${S_CANCEL}`;
   const S_TOUCHSTART = `${S_TOUCH}start`;
   const S_TOUCHEND = `${S_TOUCH}end`;
   const S_TOUCHMOVE = `${S_TOUCH}move`;
-  const S_TOUCHCANCEL = S_TOUCH + S_CANCEL;
+  const S_TOUCHCANCEL = `${S_TOUCH}${S_CANCEL}`;
   const S_DRAGSTART = `${S_DRAG}start`;
   const S_DRAGEND = `${S_DRAG}end`;
   const S_DRAGENTER = `${S_DRAG}enter`;
@@ -99,10 +99,12 @@
   const S_DISABLED = "disabled";
   const S_ARROW = "arrow";
   const S_ROLE = "role";
+  const S_AUTO$1 = "auto";
+  const S_VISIBLE = "visible";
   const ARIA_PREFIX = "aria-";
   const S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
-  const PREFIX_WRAPPER$1 = `${PREFIX}-wrapper`;
-  const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER$1}-inline`;
+  const PREFIX_WRAPPER$3 = `${PREFIX}-wrapper`;
+  const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER$3}-inline`;
   const PREFIX_TRANSITION = `${PREFIX}-transition`;
   const PREFIX_TRANSITION_DISABLE = `${PREFIX_TRANSITION}__disable`;
   const PREFIX_HIDE = `${PREFIX}-hide`;
@@ -121,8 +123,6 @@
   const PREFIX_ANIMATE_DISABLE = `${ANIMATE_PREFIX}disable`;
   const PREFIX_ANIMATE_PAUSE = `${ANIMATE_PREFIX}pause`;
   const PREFIX_ANIMATE_REVERSE = `${ANIMATE_PREFIX}${S_REVERSE}`;
-  const USER_AGENT = typeof navigator === "undefined" ? "" : navigator.userAgent;
-  const IS_MOBILE = USER_AGENT.match(/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/) !== null;
 
   /**
    * @module Errors
@@ -165,6 +165,7 @@
 
   // credit: underscore.js
   const root = typeof self === "object" && self.self === self && self || typeof global == "object" && global.global === global && global || Function("return this")() || {};
+  const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
   const kebabToCamelCase$1 = str => str.replace(/-./g, m => toUpperCase(m.charAt(1)));
   const camelToKebabCase$1 = str => str.replace(/[A-Z][a-z]/g, m => "-" + toLowerCase(m)).replace(/[A-Z]+/, m => "-" + toLowerCase(m));
   const prefixName = name => `${PREFIX}-${name}`;
@@ -183,7 +184,7 @@
   const getBody = () => getDoc().body;
   const getReadyState = () => getDoc().readyState;
   const getPointerType = event => isPointerEvent(event) ? event.pointerType : isMouseEvent(event) ? "mouse" : null;
-  const onAnimationFrame = hasDOM() ? root.requestAnimationFrame.bind(root) : () => {};
+  const onAnimationFrame = callback => requestAnimationFrame(callback);
   const createElement = (tagName, options) => getDoc().createElement(tagName, options);
   const createButton = (label = "", tag = "button") => {
     const btn = createElement(tag);
@@ -222,7 +223,7 @@
   const strReplace = (s, match, replacement) => s.replace(match, replacement);
   const setTimer = root.setTimeout.bind(root);
   const clearTimer = root.clearTimeout.bind(root);
-  const getBoundingClientRect = el => el.getBoundingClientRect();
+  const getBoundingClientRect = element => element.getBoundingClientRect();
 
   // Copy size properties explicitly to another object so they can be used with
   // the spread operator (DOMRect/DOMRectReadOnly's properties are not enumerable)
@@ -243,11 +244,12 @@
   const docQuerySelector = selector => querySelector(getDoc(), selector);
   const docQuerySelectorAll = selector => querySelectorAll(getDoc(), selector);
   const getElementById = id => getDoc().getElementById(id);
-  const getAttr = (el, name) => el.getAttribute(name);
-  const setAttr = (el, name, value = "true") => el.setAttribute(name, value);
-  const unsetAttr = (el, name) => el.setAttribute(name, "false");
-  const delAttr = (el, name) => el.removeAttribute(name);
+  const getAttr = (element, name) => element.getAttribute(name);
+  const setAttr = (element, name, value = "true") => element.setAttribute(name, value);
+  const unsetAttr = (element, name) => element.setAttribute(name, "false");
+  const delAttr = (element, name) => element.removeAttribute(name);
   const includes = (arr, v, startAt) => arr.indexOf(v, startAt) >= 0;
+  const some = (array, predicate) => array.some(predicate);
   const filter = (array, filterFn) => array.filter(filterFn);
   const filterBlank = array => {
     const result = array ? filter(array, v => !isEmpty(v)) : undefined;
@@ -261,7 +263,10 @@
     var _obj$length;
     return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
   };
-  const tagName = el => el.tagName;
+  const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
+  const firstOf = a => a === null || a === void 0 ? void 0 : a.slice(0, 1)[0];
+  const tagName = element => element.tagName;
+  const hasTagName = (element, tag) => toLowerCase(tagName(element)) === toLowerCase(tag);
   const preventDefault = event => event.preventDefault();
   const arrayFrom = ARRAY.from.bind(ARRAY);
   const keysOf = obj => OBJECT.keys(obj);
@@ -288,6 +293,7 @@
   const abs = MATH.abs.bind(MATH);
   const round = MATH.round.bind(MATH);
   const pow = MATH.pow.bind(MATH);
+  const exp = MATH.exp.bind(MATH);
   const parseFloat = NUMBER.parseFloat.bind(NUMBER);
   const isNaN = NUMBER.isNaN.bind(NUMBER);
   const isInstanceOf = (value, Class) => value instanceof Class;
@@ -297,19 +303,22 @@
     var _constructorOf;
     return isObject(obj) ? (_constructorOf = constructorOf(obj)) === null || _constructorOf === void 0 ? void 0 : _constructorOf.name : typeOf(obj);
   };
-  const parentOf = element => (element === null || element === void 0 ? void 0 : element.parentElement) || null;
+  const parentOf = element => {
+    var _element$parentElemen;
+    return (_element$parentElemen = element === null || element === void 0 ? void 0 : element.parentElement) !== null && _element$parentElemen !== void 0 ? _element$parentElemen : null;
+  };
   const childrenOf = element => (element === null || element === void 0 ? void 0 : element.children) || [];
   const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
   const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;
-  const classList = el => el === null || el === void 0 ? void 0 : el.classList;
+  const classList = element => element === null || element === void 0 ? void 0 : element.classList;
   const S_TABINDEX = "tabindex";
-  const getTabIndex = el => getAttr(el, S_TABINDEX);
-  const setTabIndex = (el, index = "0") => setAttr(el, S_TABINDEX, index);
-  const unsetTabIndex = el => delAttr(el, S_TABINDEX);
+  const getTabIndex = element => getAttr(element, S_TABINDEX);
+  const setTabIndex = (element, index = "0") => setAttr(element, S_TABINDEX, index);
+  const unsetTabIndex = element => delAttr(element, S_TABINDEX);
   const remove = obj => obj === null || obj === void 0 ? void 0 : obj.remove();
   const deleteObjKey = (obj, key) => delete obj[key];
   const deleteKey = (map, key) => map === null || map === void 0 ? void 0 : map.delete(key);
-  const elScrollTo = (el, coords, behavior = "instant") => el.scrollTo(merge({
+  const elScrollTo = (element, coords, behavior = "instant") => element.scrollTo(merge({
     behavior
   }, coords));
   const newPromise = executor => new Promise(executor);
@@ -375,7 +384,7 @@
      * etc. If you are using the HTML API, then you must set this before the
      * document `readyState` becomes interactive.
      *
-     * @defaultValue null
+     * @defaultValue null // document.scrollingElement
      * @category Generic
      */
     mainScrollableElementSelector: null,
@@ -433,14 +442,20 @@
      *
      * ----------
      *
-     * If you can, it's recommended to leave this setting ON. You can still
+     * **IMPORTANT:** Certain widgets always require wrapping of elements or their
+     * children. This setting only applies in cases where wrapping is optional.
+     * If you can, it's recommended to leave this setting ON. You can still try to
      * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
-     * attribute on it.
+     * attribute on it. Alternatively, if the elements that need wrapping are
+     * already wrapped in an element with a class `lisn-wrapper`, this will be
+     * used as the wrapper.
      *
      * @defaultValue true
      * @category Generic
      */
     contentWrappingAllowed: true,
+    // [TODO v2] rename this setting
+
     /**
      * The timeout in milliseconds for waiting for the `document.readyState` to
      * become `complete`. The timer begins _once the `readyState` becomes
@@ -803,9 +818,7 @@
    */
 
   /**
-   * Round a number to the given decimal precision (default is 0).
-   *
-   * @param {} [numDecimal = 0]
+   * Round a number to the given decimal precision.
    *
    * @category Math
    */
@@ -986,7 +999,7 @@
   /**
    * Returns true if the given vectors point in the same direction.
    *
-   * @param {} angleDiffThreshold
+   * @param angleDiffThreshold
    *                  Sets the threshold in degrees when comparing the angles of
    *                  two vectors. E.g. for 5 degrees threshold, directions
    *                  whose vectors are within 5 degrees of each other are
@@ -1007,7 +1020,7 @@
   /**
    * Returns true if the given vectors point in the opposite direction.
    *
-   * @param {} angleDiffThreshold
+   * @param angleDiffThreshold
    *                  Sets the threshold in degrees when comparing the angles of
    *                  two vectors. E.g. for 5 degrees threshold, directions
    *                  whose vectors are within 175-185 degrees of each other are
@@ -1046,9 +1059,73 @@
    *
    * @see https://easings.net/#easeInOutQuad
    *
+   * @param x Must be between 0 and 1.
+   *
+   * @returns The current y-axis value between 0 and 1.
+   *
    * @category Math
    */
   const easeInOutQuad = x => x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;
+
+  /**
+   * Returns the new position and velocity for a critically damped user-driven
+   * spring state toward a current target position.
+   *
+   * @param [settings.lTarget]       Target final position.
+   * @param [settings.dt]            Time step in milliseconds since the last call.
+   *                                 Must be small for the returned values to be
+   *                                 meaningful.
+   * @param [settings.lag]           Lag in milliseconds (how long it should take
+   *                                 for it to reach the final position). Must be
+   *                                 positive.
+   * @param [settings.l = 0]         Current position (starting or one returned by
+   *                                 previous call).
+   * @param [settings.v = 0]         Current velocity (returned by previous call).
+   * @param [settings.precision = 2] Number of decimal places to round position to
+   *                                 in order to determine when it's "done".
+   * @returns Updated position and velocity
+   *
+   * @since v1.2.0
+   *
+   * @category Math
+   */
+  const criticallyDamped = settings => {
+    const {
+      lTarget,
+      precision = 2
+    } = settings;
+    const lag = toNumWithBounds(settings.lag, {
+      min: 1
+    }) / 1000; // to seconds
+
+    // Since the position only approaches asymptotically the target it never truly
+    // reaches it exactly we need an approximation to calculate w0. N determines
+    // how far away from the target position we are after `lag` milliseconds.
+    const N = 7;
+    const w0 = N / lag;
+    let {
+      l = 0,
+      v = 0,
+      dt
+    } = settings;
+    dt /= 1000; // to seconds
+
+    if (roundNumTo(l - lTarget, precision) === 0) {
+      // we're done
+      l = lTarget;
+      v = 0;
+    } else if (dt > 0) {
+      const A = l - lTarget;
+      const B = v + w0 * A;
+      const e = exp(-w0 * dt);
+      l = lTarget + (A + B * dt) * e;
+      v = (B - w0 * (A + B * dt)) * e;
+    }
+    return {
+      l,
+      v
+    };
+  };
 
   /**
    * Returns an array of object's keys sorted by the numeric value they hold.
@@ -1070,7 +1147,7 @@
    * @category Math
    */
   const keyWithMaxVal = obj => {
-    return sortedKeysByVal(obj).slice(-1)[0];
+    return lastOf(sortedKeysByVal(obj));
   };
 
   /**
@@ -1081,7 +1158,7 @@
    * @category Math
    */
   const keyWithMinVal = obj => {
-    return sortedKeysByVal(obj).slice(0, 1)[0];
+    return firstOf(sortedKeysByVal(obj));
   };
 
   /**
@@ -1103,7 +1180,6 @@
    * @internal
    */
 
-  const isTouchScreen = () => hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
   const copyExistingKeys = (fromObj, toObj) => {
     for (const key in toObj) {
       if (!hasOwnProp(toObj, key)) {
@@ -1177,13 +1253,13 @@
    * **NOTE:** This is not intended for serialization of data that needs to be
    * de-serialized. Only for debugging output.
    *
-   * @param {} value     The value to format as string.
-   * @param {} [maxLen]  Maximum length of the returned string. If not given or
-   *                     is <= 0, the string is not truncated. Otherwise, if the
-   *                     result is longer than maxLen, it is truncated to
-   *                     `maxLen - 3` and added a suffix of "...".
-   *                     Note that if `maxLen` is > 0 but <= 3, the result is
-   *                     always "..."
+   * @param value    The value to format as string.
+   * @param [maxLen] Maximum length of the returned string. If not given or
+   *                 is <= 0, the string is not truncated. Otherwise, if the
+   *                 result is longer than maxLen, it is truncated to
+   *                 `maxLen - 3` and added a suffix of "...".
+   *                 Note that if `maxLen` is > 0 but <= 3, the result is
+   *                 always "..."
    *
    * @category Text
    */
@@ -1200,8 +1276,8 @@
    * {@link formatAsString} rather than the default string representation as
    * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join | Array:join} would.
    *
-   * @param {} separator  The separator to use to delimit each argument.
-   * @param {} args       Objects or values to convert to string and join.
+   * @param separator The separator to use to delimit each argument.
+   * @param args      Objects or values to convert to string and join.
    *
    * @category Text
    */
@@ -1226,11 +1302,11 @@
    * splitOn('foo, bar, baz', RegExp(',\\s*'), 3); // -> ['foo', 'bar', 'baz']
    * ```
    *
-   * @param {} trim  If true, entries will be trimmed for whitespace after splitting.
+   * @param trim  If true, entries will be trimmed for whitespace after splitting.
    *
-   * @param {} limit If not given or < 0, the string will be split on every
-   *                 occurrence of `separator`. Otherwise, it will be split on
-   *                 the first `limit` number of occurrences of `separator`.
+   * @param limit If not given or < 0, the string will be split on every
+   *              occurrence of `separator`. Otherwise, it will be split on
+   *              the first `limit` number of occurrences of `separator`.
    *
    * @category Text
    */
@@ -1238,7 +1314,7 @@
     if (!input.trim()) {
       return [];
     }
-    limit = limit !== null && limit !== void 0 ? limit : -1;
+    limit !== null && limit !== void 0 ? limit : limit = -1;
     const output = [];
     const addEntry = s => output.push(trim ? s.trim() : s);
     while (limit--) {
@@ -1286,7 +1362,7 @@
    *
    * **IMPORTANT:** This is _not_ suitable for cryptographic applications.
    *
-   * @param {} [nChars = 8]  The length of the returned stirng.
+   * @param nChars The length of the returned stirng.
    *
    * @category Text
    */
@@ -1314,14 +1390,14 @@
    * `rootMargin`, top/bottom margin is relative to the height of the root, so
    * pass the actual root size.
    *
-   * @return {} [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
+   * @returns [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
    *
    * @category Text
    */
   const toMargins = (value, absoluteSize) => {
     var _parts$, _parts$2, _ref, _parts$3;
     const toPxValue = (strValue, index) => {
-      let margin = parseFloat(strValue || "") || 0;
+      let margin = parseFloat(strValue !== null && strValue !== void 0 ? strValue : "") || 0;
       if (strValue === margin + "%") {
         margin *= index % 2 ? absoluteSize[S_HEIGHT] : absoluteSize[S_WIDTH];
       }
@@ -1402,7 +1478,7 @@
    * Returns true if the input is a string array or comma-separated string, whose
    * elements are valid according to the `validator` function.
    *
-   * @param {} allowEmpty If `false`, then input without any entries is
+   * @param allowEmpty If `false`, then input without any entries is
    * considered _invalid_.
    *
    * @category Validation
@@ -1430,9 +1506,9 @@
    *                If the input is not a string or array of strings, or if any
    *                entries do not pass `checkFn`.
    *
-   * @param {} key Used in the error message thrown
+   * @param key Used in the error message thrown
    *
-   * @return {} `undefined` if the input contains no non-empty values (after
+   * @returns `undefined` if the input contains no non-empty values (after
    * trimming whitespace on left/right from each), otherwise a non-empty array of
    * values.
    *
@@ -1453,9 +1529,9 @@
    *                If the input is not a number or array of numbers. Numerical
    *                strings are accepted.
    *
-   * @param {} key Used in the error message thrown
+   * @param key Used in the error message thrown
    *
-   * @return {} `undefined` if the input contains no non-empty values (after
+   * @returns `undefined` if the input contains no non-empty values (after
    * trimming whitespace on left/right from each), otherwise a non-empty array of
    * values.
    *
@@ -1473,7 +1549,7 @@
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the value is invalid.
    *
-   * @return {} `undefined` if the input is nullish.
+   * @returns `undefined` if the input is nullish.
    *
    * @category Validation
    */
@@ -1492,7 +1568,7 @@
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the value is not a valid boolean or boolean string.
    *
-   * @return {} `undefined` if the input is nullish.
+   * @returns `undefined` if the input is nullish.
    *
    * @category Validation
    */
@@ -1505,14 +1581,12 @@
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the value is invalid.
    *
-   * @param {} checkFn      If given and the supplied value is a string, then it
-   *                        is called with the value as a single argument. It
-   *                        must return true if the value is valid and false
-   *                        otherwise.
-   *                        If it is not given, then any literal string is
-   *                        accepted.
+   * @param checkFn If given and the supplied value is a string, then it is
+   *                called with the value as a single argument. It must return
+   *                true if the value is valid and false otherwise. If it is not
+   *                given, then any literal string is accepted.
    *
-   * @return {} `undefined` if the input is nullish.
+   * @returns `undefined` if the input is nullish.
    *
    * @category Validation
    */
@@ -1543,12 +1617,11 @@
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the value is invalid.
    *
-   * @param {} stringCheckFn If given and the supplied value is a string _other
-   *                         than a boolean string_, then it is called with the
-   *                         value as a single argument. It must return true if
-   *                         the value is valid and false otherwise.
-   *                         If it is not given, then any literal string is
-   *                         accepted.
+   * @param stringCheckFn If given and the supplied value is a string _other than
+   *                      a boolean string_, then it is called with the value as
+   *                      a single argument. It must return true if the value is
+   *                      valid and false otherwise. If it is not given, then any
+   *                      literal string is accepted.
    *
    * @category Validation
    */
@@ -1802,6 +1875,56 @@
    */
   const DOM_CATEGORIES_SPACE = createBitSpace(newBitSpaces(), S_ADDED, S_REMOVED, S_ATTRIBUTE);
 
+  function _OverloadYield(e, d) {
+    this.v = e, this.k = d;
+  }
+  function _asyncIterator(r) {
+    var n,
+      t,
+      o,
+      e = 2;
+    for ("undefined" != typeof Symbol && (t = Symbol.asyncIterator, o = Symbol.iterator); e--;) {
+      if (t && null != (n = r[t])) return n.call(r);
+      if (o && null != (n = r[o])) return new AsyncFromSyncIterator(n.call(r));
+      t = "@@asyncIterator", o = "@@iterator";
+    }
+    throw new TypeError("Object is not async iterable");
+  }
+  function AsyncFromSyncIterator(r) {
+    function AsyncFromSyncIteratorContinuation(r) {
+      if (Object(r) !== r) return Promise.reject(new TypeError(r + " is not an object."));
+      var n = r.done;
+      return Promise.resolve(r.value).then(function (r) {
+        return {
+          value: r,
+          done: n
+        };
+      });
+    }
+    return AsyncFromSyncIterator = function (r) {
+      this.s = r, this.n = r.next;
+    }, AsyncFromSyncIterator.prototype = {
+      s: null,
+      n: null,
+      next: function () {
+        return AsyncFromSyncIteratorContinuation(this.n.apply(this.s, arguments));
+      },
+      return: function (r) {
+        var n = this.s.return;
+        return void 0 === n ? Promise.resolve({
+          value: r,
+          done: true
+        }) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
+      },
+      throw: function (r) {
+        var n = this.s.return;
+        return void 0 === n ? Promise.reject(r) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
+      }
+    }, new AsyncFromSyncIterator(r);
+  }
+  function _awaitAsyncGenerator(e) {
+    return new _OverloadYield(e, 0);
+  }
   function _defineProperty(e, r, t) {
     return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
       value: t,
@@ -1824,6 +1947,73 @@
     var i = _toPrimitive(t, "string");
     return "symbol" == typeof i ? i : i + "";
   }
+  function _wrapAsyncGenerator(e) {
+    return function () {
+      return new AsyncGenerator(e.apply(this, arguments));
+    };
+  }
+  function AsyncGenerator(e) {
+    var r, t;
+    function resume(r, t) {
+      try {
+        var n = e[r](t),
+          o = n.value,
+          u = o instanceof _OverloadYield;
+        Promise.resolve(u ? o.v : o).then(function (t) {
+          if (u) {
+            var i = "return" === r ? "return" : "next";
+            if (!o.k || t.done) return resume(i, t);
+            t = e[i](t).value;
+          }
+          settle(n.done ? "return" : "normal", t);
+        }, function (e) {
+          resume("throw", e);
+        });
+      } catch (e) {
+        settle("throw", e);
+      }
+    }
+    function settle(e, n) {
+      switch (e) {
+        case "return":
+          r.resolve({
+            value: n,
+            done: true
+          });
+          break;
+        case "throw":
+          r.reject(n);
+          break;
+        default:
+          r.resolve({
+            value: n,
+            done: false
+          });
+      }
+      (r = r.next) ? resume(r.key, r.arg) : t = null;
+    }
+    this._invoke = function (e, n) {
+      return new Promise(function (o, u) {
+        var i = {
+          key: e,
+          arg: n,
+          resolve: o,
+          reject: u,
+          next: null
+        };
+        t ? t = t.next = i : (r = t = i, resume(e, n));
+      });
+    }, "function" != typeof e.return && (this.return = void 0);
+  }
+  AsyncGenerator.prototype["function" == typeof Symbol && Symbol.asyncIterator || "@@asyncIterator"] = function () {
+    return this;
+  }, AsyncGenerator.prototype.next = function (e) {
+    return this._invoke("next", e);
+  }, AsyncGenerator.prototype.throw = function (e) {
+    return this._invoke("throw", e);
+  }, AsyncGenerator.prototype.return = function (e) {
+    return this._invoke("return", e);
+  };
 
   /**
    * @module Utils
@@ -1926,9 +2116,9 @@
 
   // ------------------------------
 
-  const isiOS = includes(USER_AGENT, "iPhone OS") || false;
+  const isiOS = includes(userAgent, "iPhone OS");
   const iOSlog = (...args) => consoleInfo(joinAsString(" ", ...args));
-  const isJest = includes(USER_AGENT, " jsdom/") || false;
+  const isJest = includes(userAgent, " jsdom/");
   const jestLog = {
     debug: (...args) => consoleDebug(joinAsString(" ", ...args)),
     log: (...args) => consoleLog(joinAsString(" ", ...args)),
@@ -2030,15 +2220,14 @@
    * except that it supports automatically creating missing entries with
    * {@link sGet} according to a default value getter function.
    *
-   * @typeParam K  The type of the keys the map holds.
-   * @typeParam V  The type of the values the map holds.
+   * @typeParam K The type of the keys the map holds.
+   * @typeParam V The type of the values the map holds.
    */
   class XMap extends XMapBase {
     /**
-     * @param {} getDefaultV  This function is called each time
-     *                        {@link sGet} is called with a non-existent
-     *                        key and must return a value that is then set for
-     *                        that key and returned.
+     * @param getDefaultV This function is called each time {@link sGet} is
+     *                    called with a non-existent key and must return a value
+     *                    that is then set for that key and returned.
      */
     constructor(getDefaultV) {
       const root = newMap();
@@ -2060,8 +2249,8 @@
    * except that it supports automatically creating missing entries with
    * with {@link sGet} according to a default value getter function.
    *
-   * @typeParam K  The type of the keys the map holds.
-   * @typeParam V  The type of the values the map holds.
+   * @typeParam K The type of the keys the map holds.
+   * @typeParam V The type of the values the map holds.
    */
   /**
    * Returns the number of entries in the {@link XMap}.
@@ -2087,10 +2276,9 @@
   _defineProperty(XMap, "newXMapGetter", newXMapGetter);
   class XWeakMap extends XMapBase {
     /**
-     * @param {} getDefaultV  This function is called each time
-     *                        {@link sGet} is called with a non-existent
-     *                        key and must return a value that is then set for
-     *                        that key and returned.
+     * @param getDefaultV This function is called each time {@link sGet} is
+     *                    called with a non-existent key and must return a value
+     *                    that is then set for that key and returned.
      */
     constructor(getDefaultV) {
       const root = newWeakMap();
@@ -2156,9 +2344,9 @@
      * Creates a new {@link RemoteConsole} and attempts to connect to the logger
      * at the given URL.
      *
-     * @param {} url                      The URL of the remote logger.
-     * @param {} [connectTimeout = 1500]  The timeout in ms for a connection
-     *                                    to be considered failed.
+     * @param url                     The URL of the remote logger.
+     * @param [connectTimeout = 1500] The timeout in ms for a connection
+     *                                to be considered failed.
      */
     constructor(url, connectTimeout = DEFAULT_TIMEOUT) {
       let hasFailed = false; // initially
@@ -2247,9 +2435,9 @@
      *
      * If a new one is created, it will be saved for later reuse.
      *
-     * @param {} url               The URL of the remote logger.
-     * @param {} [connectTimeout]  The timeout in ms for a remote connection to
-     *                             be considered failed. Default is 1500.
+     * @param url              The URL of the remote logger.
+     * @param [connectTimeout] The timeout in ms for a remote connection to
+     *                         be considered failed. Default is 1500.
      */
     static reuse(url, connectTimeout = DEFAULT_TIMEOUT) {
       var _instances$get2;
@@ -2275,10 +2463,9 @@
    */
   class Console {
     /**
-     * @param {} remoteUrl         Attempt to use a remote logger at this URL.
-     * @param {} [connectTimeout]  The timeout in ms for a remote connection to
-     *                             be considered failed.
-     *                             See {@link RemoteConsole}.
+     * @param remoteUrl        Attempt to use a remote logger at this URL.
+     * @param [connectTimeout] The timeout in ms for a remote connection to be
+     *                         considered failed. See {@link RemoteConsole}.
      */
     constructor(remoteUrl, connectTimeout) {
       let remoteConsole;
@@ -2334,7 +2521,9 @@
    * @category Logging
    */
   class Logger {
-    constructor(config = {}) {
+    constructor(config) {
+      var _myConfig$name, _myConfig$verbosityLe;
+      config !== null && config !== void 0 ? config : config = {};
       const myConfig = merge({
         // set defaults
         verbosityLevel: settings.verbosityLevel,
@@ -2343,10 +2532,11 @@
         debugID: randId()
       }, config);
       let remoteLoggerURL = "";
-      if (!getBooleanURLParam("disableRemoteLog") && (myConfig.remoteLoggerOnMobileOnly === false || isMobile())) {
-        remoteLoggerURL = myConfig.remoteLoggerURL || "";
+      if (!getBooleanURLParam("disableRemoteLog") && (myConfig.remoteLoggerOnMobileOnly === false || isMobile$1())) {
+        var _myConfig$remoteLogge;
+        remoteLoggerURL = (_myConfig$remoteLogge = myConfig.remoteLoggerURL) !== null && _myConfig$remoteLogge !== void 0 ? _myConfig$remoteLogge : "";
       }
-      const name = myConfig.name || "";
+      const name = (_myConfig$name = myConfig.name) !== null && _myConfig$name !== void 0 ? _myConfig$name : "";
       const myConsole = new Console(remoteLoggerURL, myConfig.remoteLoggerConnectTimeout);
       // use setters bellow to validate value
       let verbosityLevel = 0;
@@ -2358,7 +2548,7 @@
       this.setVerbosityLevel = l => {
         verbosityLevel = l;
       };
-      this.setVerbosityLevel(myConfig.verbosityLevel || 0);
+      this.setVerbosityLevel((_myConfig$verbosityLe = myConfig.verbosityLevel) !== null && _myConfig$verbosityLe !== void 0 ? _myConfig$verbosityLe : 0);
       this.debug1 = (...args) => logDebugN(this, 1, debugPrefix, ...args);
       this.debug2 = (...args) => logDebugN(this, 2, debugPrefix, ...args);
       this.debug3 = (...args) => logDebugN(this, 3, debugPrefix, ...args);
@@ -2396,9 +2586,9 @@
     }
     logger.debug(`[DEBUG ${level}]`, ...args);
   };
-  const isMobile = () => {
+  const isMobile$1 = () => {
     const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-    return regex.test(USER_AGENT);
+    return regex.test(userAgent);
   };
   const getBooleanURLParam = name => {
     const value = getURLParameter(name);
@@ -2431,11 +2621,11 @@
    * @internal
    */
 
-  var debug = {
+  const result = {
     Logger};
 
   /**
-   * @typeParam Args  See {@link Callback}
+   * @typeParam Args See {@link Callback}
    */
 
   /**
@@ -2477,15 +2667,15 @@
    * - awaiting on an asynchronous handler and ensuring that the handler does not
    *  run concurrently to itself, i.e. subsequent {@link invoke}s will be queued
    *
-   * @typeParam Args  The type of arguments that the callback expects.
+   * @typeParam Args The type of arguments that the callback expects.
    */
   class Callback {
     /**
-     * @param {} handler     The actual function to call. This should return one of
-     *                       the known {@link CallbackReturnType} values.
+     * @param handler The actual function to call. This should return one of
+     *                the known {@link CallbackReturnType} values.
      */
     constructor(handler) {
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: "Callback",
         logAtCreation: handler
       }) : null;
@@ -2494,8 +2684,8 @@
       const onRemove = newSet();
       this.isRemoved = () => isRemoved;
       this.remove = () => {
-        logger === null || logger === void 0 || logger.debug8("Removing");
         if (!isRemoved) {
+          logger === null || logger === void 0 || logger.debug8("Removing");
           isRemoved = true;
           for (const rmFn of onRemove) {
             rmFn();
@@ -2553,10 +2743,10 @@
    * Note that if the argument is a callback that's already debounced by a
    * _larger_ window, then `debounceWindow` will have no effect.
    *
-   * @param {} debounceWindow  If non-0, the callback will be called at most
-   *                           every `debounceWindow` ms. The arguments it will
-   *                           be called with will be the last arguments the
-   *                           wrapper was called with.
+   * @param debounceWindow If non-0, the callback will be called at most
+   *                       every `debounceWindow` ms. The arguments it will
+   *                       be called with will be the last arguments the
+   *                       wrapper was called with.
    */
   _defineProperty(Callback, "wrap", wrapCallback);
   const callablesMap = newWeakMap();
@@ -2719,6 +2909,22 @@
    */
   const waitForSubsequentMeasureTime = () => waitForMeasureTime().then(waitForMutateTime).then(waitForMeasureTime);
 
+  /**
+   * @ignore
+   * @internal
+   *
+   * @since v1.2.0
+   */
+  const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() => func(...args));
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @since v1.2.0
+   */
+  const asyncMeasurerFor = func => async (...args) => waitForMeasureTime().then(() => func(...args));
+
   // ----------------------------------------
 
   const scheduledDOMMeasurements = [];
@@ -2785,7 +2991,7 @@
    *
    * @category DOM: Querying
    */
-  const getVisibleContentChildren = el => filter([...childrenOf(el)], e => isVisibleContentTag(tagName(e)));
+  const getVisibleContentChildren = element => filter([...childrenOf(element)], ch => isVisibleContentTag(tagName(ch)));
 
   /**
    * Returns whether the given tag is _not_ `script` or `style`. Comparison is
@@ -2817,14 +3023,24 @@
   /**
    * @module Utils
    *
-   * @categoryDescription CSS: Altering
+   * @categoryDescription DOM: Querying
+   * These functions query the style, attributes or other aspects of elements, but
+   * could lead to forced layout if not scheduled using {@link waitForMeasureTime}.
+   *
+   * @categoryDescription DOM: Querying (optimized)
+   * These functions query the style, attributes or other aspects of elements in
+   * an optimized way. Functions that could cause a forced layout use
+   * {@link waitForMeasureTime} and so are asynchronous. Functions that can
+   * perform the check without forcing a re-layout are synchronous.
+   *
+   * @categoryDescription Style: Altering
    * These functions transition an element from one CSS class to another, but
    * could lead to forced layout if not scheduled using {@link waitForMutateTime}.
    * If a delay is supplied, then the transition is "scheduled" and if the
    * opposite transition is executed before the scheduled one, the original one
    * is cancelled. See {@link transitionElement} for an example.
    *
-   * @categoryDescription CSS: Altering (optimized)
+   * @categoryDescription Style: Altering (optimized)
    * These functions transition an element from one CSS class to another in an
    * optimized way using {@link waitForMutateTime} and so are asynchronous.
    * If a delay is supplied, then the transition is "scheduled" and if the
@@ -2840,10 +3056,10 @@
    * Unlike {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace},
    * this will always add `toCls` even if `fromCls` isn't in the element's class list.
    *
-   * @returns {} True if there was a change made (class removed or added),
-   *             false otherwise.
+   * @returns True if there was a change made (class removed or added), false
+   * otherwise.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const transitionElementNow = (element, fromCls, toCls) => {
     cancelCSSTransitions(element, fromCls, toCls);
@@ -2905,7 +3121,7 @@
    * showElement(someElement, 100);
    * ```
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const transitionElement = async (element, fromCls, toCls, delay = 0) => {
     const thisTransition = scheduleCSSTransition(element, toCls);
@@ -2942,7 +3158,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const displayElementNow = element => transitionElementNow(element, PREFIX_UNDISPLAY, PREFIX_DISPLAY);
 
@@ -2952,7 +3168,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const displayElement = (element, delay = 0) => transitionElement(element, PREFIX_UNDISPLAY, PREFIX_DISPLAY, delay);
 
@@ -2961,7 +3177,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const undisplayElementNow = element => transitionElementNow(element, PREFIX_DISPLAY, PREFIX_UNDISPLAY);
 
@@ -2971,7 +3187,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const undisplayElement = (element, delay = 0) => transitionElement(element, PREFIX_DISPLAY, PREFIX_UNDISPLAY, delay);
 
@@ -2982,7 +3198,7 @@
    *
    * @see {@link transitionElementNow}.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const showElementNow = element => transitionElementNow(element, PREFIX_HIDE, PREFIX_SHOW);
 
@@ -2992,7 +3208,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const showElement = (element, delay = 0) => transitionElement(element, PREFIX_HIDE, PREFIX_SHOW, delay);
 
@@ -3001,7 +3217,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const hideElementNow = element => transitionElementNow(element, PREFIX_SHOW, PREFIX_HIDE);
 
@@ -3011,7 +3227,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const hideElement = (element, delay = 0) => transitionElement(element, PREFIX_SHOW, PREFIX_HIDE, delay);
 
@@ -3021,7 +3237,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const toggleDisplayElementNow = element => isElementUndisplayed(element) ? displayElementNow(element) : undisplayElementNow(element);
 
@@ -3031,7 +3247,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const toggleDisplayElement = (element, delay = 0) => isElementUndisplayed(element) ? displayElement(element, delay) : undisplayElement(element, delay);
 
@@ -3041,7 +3257,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const toggleShowElementNow = element => isElementHidden(element) ? showElementNow(element) : hideElementNow(element);
 
@@ -3051,74 +3267,133 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const toggleShowElement = (element, delay = 0) => isElementHidden(element) ? showElement(element, delay) : hideElement(element, delay);
 
   /**
    * Returns true if the element's class list contains `lisn-hide`.
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const isElementHidden = element => hasClass(element, PREFIX_HIDE);
 
   /**
    * Returns true if the element's class list contains `lisn-undisplay`.
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const isElementUndisplayed = element => hasClass(element, PREFIX_UNDISPLAY);
 
   /**
    * Returns true if the element's class list contains the given class.
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
-  const hasClass = (el, className) => classList(el).contains(className);
+  const hasClass = (element, className) => classList(element).contains(className);
+
+  /**
+   * Returns true if the element's class list contains all of the given classes.
+   *
+   * @since v1.2.0
+   *
+   * @category DOM: Querying (optimized)
+   */
+  const hasAllClasses = (element, ...classNames) => lengthOf(classNames) > 0 && !some(classNames, className => !hasClass(element, className));
+
+  /**
+   * Returns true if the element's class list contains any of the given classes.
+   *
+   * @since v1.2.0
+   *
+   * @category DOM: Querying (optimized)
+   */
+  const hasAnyClass = (element, ...classNames) => some(classNames, className => hasClass(element, className));
 
   /**
    * Adds the given classes to the element.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
-  const addClassesNow = (el, ...classNames) => classList(el).add(...classNames);
+  const addClassesNow = (element, ...classNames) => classList(element).add(...classNames);
 
   /**
    * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
-  const addClasses = (el, ...classNames) => waitForMutateTime().then(() => addClassesNow(el, ...classNames));
+  const addClasses = asyncMutatorFor(addClassesNow);
 
   /**
    * Removes the given classes to the element.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
-  const removeClassesNow = (el, ...classNames) => classList(el).remove(...classNames);
+  const removeClassesNow = (element, ...classNames) => classList(element).remove(...classNames);
 
   /**
    * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
-  const removeClasses = (el, ...classNames) => waitForMutateTime().then(() => removeClassesNow(el, ...classNames));
+  const removeClasses = asyncMutatorFor(removeClassesNow);
 
   /**
    * Toggles the given class on the element.
    *
-   * @param {} force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
+   * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
-  const toggleClassNow = (el, className, force) => classList(el).toggle(className, force);
+  const toggleClassNow = (element, className, force) => classList(element).toggle(className, force);
 
   /**
    * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
-  const toggleClass = (el, className, force) => waitForMutateTime().then(() => toggleClassNow(el, className, force));
+  const toggleClass = asyncMutatorFor(toggleClassNow);
+
+  /**
+   * Toggles the given classes on the element. This function does not accept the
+   * `force` parameter.
+   *
+   * @since v1.2.0
+   *
+   * @category Style: Altering
+   */
+  const toggleClassesNow = (element, ...classNames) => {
+    for (const cls of classNames) {
+      toggleClassNow(element, cls);
+    }
+  };
+
+  /**
+   * Like {@link toggleClassesNow} except it will {@link waitForMutateTime}.
+   *
+   * @since v1.2.0
+   *
+   * @category Style: Altering (optimized)
+   */
+  const toggleClasses = asyncMutatorFor(toggleClassesNow);
+
+  /**
+   * Replaces the given class on the element with a new one.
+   *
+   * @since v1.2.0
+   *
+   * @category Style: Altering
+   */
+  const replaceClassNow = (element, oldClassName, newClassName) => classList(element).replace(oldClassName, newClassName);
+
+  /**
+   * Like {@link replaceClassNow} except it will {@link waitForMutateTime}.
+   *
+   * @since v1.2.0
+   *
+   * @category Style: Altering (optimized)
+   */
+  const replaceClass = asyncMutatorFor(replaceClassNow);
 
   // For *Data: to avoid unnecessary type checking that ensures element is
   // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -3128,9 +3403,9 @@
    * must _not_ start with `data`. It can be in either camelCase or kebab-case,
    * it is converted as needed.
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
-  const getData = (el, name) => getAttr(el, prefixData(name));
+  const getData = (element, name) => getAttr(element, prefixData(name));
 
   /**
    * Returns the value of the given data attribute as a boolean. Its value is
@@ -3140,10 +3415,12 @@
    * The name of the attribute must _not_ start with `data`. It can be in either
    * camelCase or kebab-case, it is converted as needed.
    *
-   * @category CSS: Altering (optimized)
+   * @since v1.2.0
+   *
+   * @category DOM: Querying (optimized)
    */
-  const getBooleanData = (el, name) => {
-    const value = getData(el, name);
+  const getBooleanData = (element, name) => {
+    const value = getData(element, name);
     return value !== null && value !== "false";
   };
 
@@ -3159,16 +3436,16 @@
    * The name of the attribute must _not_ start with `data`. It can be in either
    * camelCase or kebab-case, it is converted as needed.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
-  const setDataNow = (el, name, value) => setAttr(el, prefixData(name), value);
+  const setDataNow = (element, name, value) => setAttr(element, prefixData(name), value);
 
   /**
    * Like {@link setDataNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
-  const setData = (el, name, value) => waitForMutateTime().then(() => setDataNow(el, name, value));
+  const setData = asyncMutatorFor(setDataNow);
 
   /**
    * Sets the given data attribute with value "true" (default) or "false".
@@ -3176,9 +3453,11 @@
    * The name of the attribute must _not_ start with `data`. It can be in either
    * camelCase or kebab-case, it is converted as needed.
    *
-   * @category CSS: Altering
+   * @since v1.2.0
+   *
+   * @category Style: Altering
    */
-  const setBooleanDataNow = (el, name, value = true) => setAttr(el, prefixData(name), value + "");
+  const setBooleanDataNow = (element, name, value = true) => setAttr(element, prefixData(name), value + "");
 
   /**
    * @ignore
@@ -3189,9 +3468,11 @@
   /**
    * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @since v1.2.0
+   *
+   * @category Style: Altering (optimized)
    */
-  const setBooleanData = (el, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(el, name, value));
+  const setBooleanData = asyncMutatorFor(setBooleanDataNow);
 
   /**
    * @ignore
@@ -3205,9 +3486,11 @@
    * The name of the attribute must _not_ start with `data`. It can be in either
    * camelCase or kebab-case, it is converted as needed.
    *
-   * @category CSS: Altering
+   * @since v1.2.0
+   *
+   * @category Style: Altering
    */
-  const unsetBooleanDataNow = (el, name) => unsetAttr(el, prefixData(name));
+  const unsetBooleanDataNow = (element, name) => unsetAttr(element, prefixData(name));
 
   /**
    * @ignore
@@ -3218,9 +3501,11 @@
   /**
    * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @since v1.2.0
+   *
+   * @category Style: Altering (optimized)
    */
-  const unsetBooleanData = (el, name) => waitForMutateTime().then(() => unsetBooleanDataNow(el, name));
+  const unsetBooleanData = asyncMutatorFor(unsetBooleanDataNow);
 
   /**
    * @ignore
@@ -3234,37 +3519,37 @@
    * The name of the attribute must _not_ start with `data`. It can be in either
    * camelCase or kebab-case, it is converted as needed.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
-  const delDataNow = (el, name) => delAttr(el, prefixData(name));
+  const delDataNow = (element, name) => delAttr(element, prefixData(name));
 
   /**
    * Like {@link delDataNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
-  const delData = (el, name) => waitForMutateTime().then(() => delDataNow(el, name));
+  const delData = asyncMutatorFor(delDataNow);
 
   /**
    * Returns the value of the given property from the computed style of the
    * element.
    *
-   * @category DOM: Altering
+   * @category DOM: Querying
    */
   const getComputedStylePropNow = (element, prop) => getComputedStyle(element).getPropertyValue(prop);
 
   /**
    * Like {@link getComputedStylePropNow} except it will {@link waitForMeasureTime}.
    *
-   * @category DOM: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
-  const getComputedStyleProp = (element, prop) => waitForMeasureTime().then(() => getComputedStylePropNow(element, prop));
+  const getComputedStyleProp = asyncMeasurerFor(getComputedStylePropNow);
 
   /**
    * Returns the value of the given property from the inline style of the
    * element.
    *
-   * @category DOM: Altering
+   * @category DOM: Querying
    */
   const getStylePropNow = (element, prop) => {
     var _style;
@@ -3274,9 +3559,9 @@
   /**
    * Like {@link getStylePropNow} except it will {@link waitForMeasureTime}.
    *
-   * @category DOM: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
-  const getStyleProp = (element, prop) => waitForMeasureTime().then(() => getStylePropNow(element, prop));
+  const getStyleProp = asyncMeasurerFor(getStylePropNow);
 
   /**
    * Sets the given property on the inline style of the element.
@@ -3293,7 +3578,7 @@
    *
    * @category DOM: Altering (optimized)
    */
-  const setStyleProp = (element, prop, value) => waitForMutateTime().then(() => setStylePropNow(element, prop, value));
+  const setStyleProp = asyncMutatorFor(setStylePropNow);
 
   /**
    * Deletes the given property on the inline style of the element.
@@ -3310,7 +3595,68 @@
    *
    * @category DOM: Altering (optimized)
    */
-  const delStyleProp = (element, prop) => waitForMutateTime().then(() => delStylePropNow(element, prop));
+  const delStyleProp = asyncMutatorFor(delStylePropNow);
+
+  /**
+   * Returns the flex direction of the given element **if it has a flex layout**.
+   *
+   * @returns `null` if the element does not have a flex layout.
+   *
+   * @category DOM: Querying (optimized)
+   *
+   * @since v1.2.0
+   */
+  const getFlexDirection = async element => {
+    const displayStyle = await getComputedStyleProp(element, "display");
+    if (!displayStyle.includes("flex")) {
+      return null;
+    }
+    return await getComputedStyleProp(element, "flex-direction");
+  };
+
+  /**
+   * Returns the flex direction of the given element's parent **if it has a flex
+   * layout**.
+   *
+   * @returns `null` if the element's parent does not have a flex layout.
+   *
+   * @category DOM: Querying (optimized)
+   *
+   * @since v1.2.0
+   */
+  const getParentFlexDirection = async element => {
+    const parent = parentOf(element);
+    return parent ? getFlexDirection(parent) : null;
+  };
+
+  /**
+   * Returns true if the given element has a flex layout. If direction is given,
+   * then it also needs to match.
+   *
+   * @category DOM: Querying (optimized)
+   *
+   * @since v1.2.0
+   */
+  const isFlex = async (element, direction) => {
+    const flexDirection = await getFlexDirection(element);
+    if (direction) {
+      return direction === flexDirection;
+    }
+    return flexDirection !== null;
+  };
+
+  /**
+   * Returns true if the given element's parent has a flex layout. If direction is
+   * given, then it also needs to match.
+   *
+   * @category DOM: Querying (optimized)
+   *
+   * @since v1.2.0
+   */
+  const isFlexChild = async (element, direction) => {
+    const parent = parentOf(element);
+    return parent ? isFlex(parent, direction) : false;
+  };
 
   /**
    * In milliseconds.
@@ -3390,12 +3736,12 @@
    * @ignore
    * @internal
    */
-  const setNumericStyleProps = async (element, props, options = {}) => {
+  const setNumericStyleJsVarsNow = (element, props, options = {}) => {
+    var _options$_prefix;
     if (!isDOMElement(element)) {
       return;
     }
-    const transformFn = options._transformFn;
-    const varPrefix = prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
+    const varPrefix = prefixCssJsVar((_options$_prefix = options === null || options === void 0 ? void 0 : options._prefix) !== null && _options$_prefix !== void 0 ? _options$_prefix : "");
     for (const prop in props) {
       const cssPropSuffix = camelToKebabCase(prop);
       const varName = `${varPrefix}${cssPropSuffix}`;
@@ -3406,16 +3752,13 @@
         var _options$_numDecimal;
         value = props[prop];
         const thisNumDecimal = (_options$_numDecimal = options === null || options === void 0 ? void 0 : options._numDecimal) !== null && _options$_numDecimal !== void 0 ? _options$_numDecimal : value > 0 && value < 1 ? 2 : 0;
-        if (transformFn) {
-          const currValue = parseFloat(await getStyleProp(element, varName));
-          value = transformFn(prop, currValue || 0, value);
-        }
         value = roundNumTo(value, thisNumDecimal);
       }
       if (value === null) {
-        delStyleProp(element, varName);
+        delStylePropNow(element, varName);
       } else {
-        setStyleProp(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
+        var _options$_units;
+        setStylePropNow(element, varName, value + ((_options$_units = options === null || options === void 0 ? void 0 : options._units) !== null && _options$_units !== void 0 ? _options$_units : ""));
       }
     }
   };
@@ -3424,6 +3767,7 @@
    * @ignore
    * @internal
    */
+  const setNumericStyleJsVars = asyncMutatorFor(setNumericStyleJsVarsNow);
 
   // ----------------------------------------
 
@@ -3468,27 +3812,27 @@
    *
    * @categoryDescription DOM: Altering
    * These functions alter the DOM tree, but could lead to forced layout if not
-   * scheduled using {@link waitForMutateTime}.
+   * scheduled using {@link Utils.waitForMutateTime}.
    *
    * @categoryDescription DOM: Altering (optimized)
    * These functions alter the DOM tree in an optimized way using
-   * {@link waitForMutateTime} and so are asynchronous.
+   * {@link Utils.waitForMutateTime} and so are asynchronous.
    */
 
 
   /**
    * Wraps the element in the given wrapper, or a newly created element if not given.
    *
-   * @param {} [options.wrapper]
+   * @param [options.wrapper]
    *              If it's an element, it is used as the wrapper. If it's a string
    *              tag name, then a new element with this tag is created as the
    *              wrapper. If not given, then `div` is used if the element to be
    *              wrapped has an block-display tag, or otherwise `span` (if the
    *              element to be wrapped has an inline tag name).
-   * @param {} [options.ignoreMove]
+   * @param [options.ignoreMove]
    *              If true, the DOM watcher instances will ignore the operation of
    *              replacing the element (so as to not trigger relevant callbacks).
-   * @returns {} The wrapper element that was either passed in options or created.
+   * @returns The wrapper element that was either passed in options or created.
    *
    * @category DOM: Altering
    */
@@ -3509,11 +3853,11 @@
   };
 
   /**
-   * Like {@link wrapElementNow} except it will {@link waitForMutateTime}.
+   * Like {@link wrapElementNow} except it will {@link Utils.waitForMutateTime}.
    *
    * @category DOM: Altering (optimized)
    */
-  const wrapElement = async (element, options) => waitForMutateTime().then(() => wrapElementNow(element, options));
+  const wrapElement = asyncMutatorFor(wrapElementNow);
 
   /**
    * Wraps the element's children in the given wrapper, or a newly created element
@@ -3525,27 +3869,30 @@
    */
   const wrapChildrenNow = (element, options) => {
     const wrapper = createWrapperFor(element, options === null || options === void 0 ? void 0 : options.wrapper);
+    const {
+      ignoreMove
+    } = options !== null && options !== void 0 ? options : {};
     moveChildrenNow(element, wrapper, {
-      ignoreMove: true
+      ignoreMove
     });
     moveElementNow(wrapper, {
       to: element,
-      ignoreMove: true
+      ignoreMove
     });
     return wrapper;
   };
 
   /**
-   * Like {@link wrapChildrenNow} except it will {@link waitForMutateTime}.
+   * Like {@link wrapChildrenNow} except it will {@link Utils.waitForMutateTime}.
    *
    * @category DOM: Altering (optimized)
    */
-  const wrapChildren = async (element, options) => waitForMutateTime().then(() => wrapChildrenNow(element, options));
+  const wrapChildren = asyncMutatorFor(wrapChildrenNow);
 
   /**
    * Replace an element with another one.
    *
-   * @param {} [options.ignoreMove]
+   * @param [options.ignoreMove]
    *              If true, the DOM watcher instances will ignore the operation of
    *              moving the element (so as to not trigger relevant callbacks).
    *
@@ -3569,16 +3916,16 @@
   };
 
   /**
-   * Like {@link replaceElementNow} except it will {@link waitForMutateTime}.
+   * Like {@link replaceElementNow} except it will {@link Utils.waitForMutateTime}.
    *
    * @category DOM: Altering (optimized)
    */
-  const replaceElement = async (element, newElement, options) => waitForMutateTime().then(() => replaceElementNow(element, newElement, options));
+  const replaceElement = asyncMutatorFor(replaceElementNow);
 
   /**
    * Replace an element with another one.
    *
-   * @param {} [options.ignoreMove]
+   * @param [options.ignoreMove]
    *              If true, the DOM watcher instances will ignore the operation of
    *              moving the element (so as to not trigger relevant callbacks).
    *
@@ -3592,16 +3939,18 @@
   };
 
   /**
-   * Like {@link swapElementsNow} except it will {@link waitForMutateTime}.
+   * Like {@link swapElementsNow} except it will {@link Utils.waitForMutateTime}.
    *
    * @category DOM: Altering (optimized)
    */
-  const swapElements = async (elementA, elementB, options) => waitForMutateTime().then(() => swapElementsNow(elementA, elementB, options));
+  const swapElements = asyncMutatorFor(swapElementsNow);
+
+  // [TODO v2]: moveChildren to accept newParent as options.to
 
   /**
    * Move an element's children to a new element
    *
-   * @param {} [options.ignoreMove]
+   * @param [options.ignoreMove]
    *              If true, the DOM watcher instances will ignore the operation of
    *              moving the children (so as to not trigger relevant callbacks).
    *
@@ -3620,30 +3969,31 @@
   };
 
   /**
-   * Like {@link moveChildrenNow} except it will {@link waitForMutateTime}.
+   * Like {@link moveChildrenNow} except it will {@link Utils.waitForMutateTime}.
    *
    * @category DOM: Altering (optimized)
    */
-  const moveChildren = async (oldParent, newParent, options) => waitForMutateTime().then(() => moveChildrenNow(oldParent, newParent, options));
+  const moveChildren = asyncMutatorFor(moveChildrenNow);
 
   /**
    * Moves an element to a new position.
    *
-   * @param {} [options.to]         The new parent or sibling (depending on
-   *                                `options.position`). If not given, the
-   *                                element is removed from the DOM.
-   * @param {} [options.position]   - append (default): append to `options.to`
-   *                                - prepend: prepend to `options.to`
-   *                                - before: insert before `options.to`
-   *                                - after: insert after `options.to`
-   * @param {} [options.ignoreMove] If true, the DOM watcher instances will
-   *                                ignore the operation of moving the element
-   *                                (so as to not trigger relevant callbacks).
+   * @param [options.to]         The new parent or sibling (depending on
+   *                             `options.position`). If not given, the
+   *                             element is removed from the DOM.
+   * @param [options.position]   - append (default): append to `options.to`
+   *                             - prepend: prepend to `options.to`
+   *                             - before: insert before `options.to`
+   *                             - after: insert after `options.to`
+   * @param [options.ignoreMove] If true, the DOM watcher instances will
+   *                             ignore the operation of moving the element
+   *                             (so as to not trigger relevant callbacks).
    *
    * @category DOM: Altering
    */
   const moveElementNow = (element, options) => {
-    let parentEl = (options === null || options === void 0 ? void 0 : options.to) || null;
+    var _options$to;
+    let parentEl = (_options$to = options === null || options === void 0 ? void 0 : options.to) !== null && _options$to !== void 0 ? _options$to : null;
     const position = (options === null || options === void 0 ? void 0 : options.position) || "append";
     if (position === "before" || position === "after") {
       parentEl = parentOf(options === null || options === void 0 ? void 0 : options.to);
@@ -3662,16 +4012,16 @@
   };
 
   /**
-   * Like {@link moveElementNow} except it will {@link waitForMutateTime}.
+   * Like {@link moveElementNow} except it will {@link Utils.waitForMutateTime}.
    *
    * @category DOM: Altering (optimized)
    */
-  const moveElement = async (element, options) => waitForMutateTime().then(() => moveElementNow(element, options));
+  const moveElement = asyncMutatorFor(moveElementNow);
 
   /**
    * It will {@link hideElement} and then remove it from the DOM.
    *
-   * @param {} [options.ignoreMove]
+   * @param [options.ignoreMove]
    *              If true, the DOM watcher instances will ignore the operation of
    *              replacing the element (so as to not trigger relevant callbacks).
    *
@@ -3698,21 +4048,115 @@
   /**
    * @ignore
    * @internal
+   *
+   * @since v1.2.0
    */
-  const wrapScrollingContent = async element => {
-    await waitForMutateTime();
-    let wrapper;
-    const firstChild = childrenOf(element)[0];
-    if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && hasClass(firstChild, PREFIX_CONTENT_WRAPPER)) {
-      // Another concurrent call has just wrapped it
-      wrapper = firstChild;
-    } else {
-      wrapper = wrapChildrenNow(element, {
-        });
-      addClassesNow(wrapper, PREFIX_CONTENT_WRAPPER);
+  const isAllowedToWrap = element => settings.contentWrappingAllowed === true && getData(element, PREFIX_NO_WRAP) === null;
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+   *                             disable check.
+   *
+   * @since v1.2.0
+   */
+  const getWrapper = (element, options) => {
+    const {
+      _tagName: tagName,
+      _classNames: classNames = [PREFIX_WRAPPER$3]
+    } = options !== null && options !== void 0 ? options : {};
+    const parent = parentOf(element);
+    if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName || hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, ...classNames))) {
+      // Already wrapped
+      return parent;
     }
-    return wrapper;
+    return null; // don't check the element itself, only its parent
   };
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+   *                             disable check.
+   *
+   * @since v1.2.0
+   */
+  const getContentWrapper = (element, options) => {
+    const {
+      _tagName: tagName,
+      _classNames: classNames = [PREFIX_WRAPPER$3]
+    } = options !== null && options !== void 0 ? options : {};
+    const firstChild = childrenOf(element)[0];
+    if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName || hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, ...classNames))) {
+      // Already wrapped
+      return firstChild;
+    }
+    return null;
+  };
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @since v1.2.0
+   */
+  const tryWrapNow = (element, options) => _tryWrapNow(element, options);
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @since v1.2.0
+   */
+  const tryWrap = asyncMutatorFor(tryWrapNow);
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @since v1.2.0
+   */
+  const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @since v1.2.0
+   */
+  const tryWrapContent = asyncMutatorFor(tryWrapContentNow);
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @since v1.2.0
+   */
+  const unwrapContentNow = (wrapper, classNames) => {
+    const parent = wrapper.parentElement;
+    if (parent) {
+      moveChildrenNow(wrapper, parent, {
+        ignoreMove: true
+      });
+      moveElementNow(wrapper, {
+        ignoreMove: true
+      });
+      if (classNames) {
+        removeClassesNow(wrapper, ...classNames);
+      }
+    }
+  };
+
+  /**
+   * @ignore
+   * @internal
+   *
+   * @since v1.2.0
+   */
+  const unwrapContent = asyncMutatorFor(unwrapContentNow);
 
   /**
    * @ignore
@@ -3742,10 +4186,11 @@
     const clone = cloneElement(element);
     clone.id = "";
     addClassesNow(clone, PREFIX_GHOST, PREFIX_TRANSITION_DISABLE, PREFIX_ANIMATE_DISABLE);
-    const wrapper = wrapElementNow(clone);
-    addClassesNow(wrapper, PREFIX_WRAPPER$1);
+    const wrapper = _tryWrapNow(clone, {
+      _required: true
+    });
     moveElementNow(wrapper, {
-      to: insertBefore || element,
+      to: insertBefore !== null && insertBefore !== void 0 ? insertBefore : element,
       position: "before",
       ignoreMove: true
     });
@@ -3761,7 +4206,7 @@
    *
    * Exposed via DOMWatcher
    */
-  const insertGhostClone = (element, insertBefore = null) => waitForMutateTime().then(() => insertGhostCloneNow(element, insertBefore));
+  const insertGhostClone = asyncMutatorFor(insertGhostCloneNow);
 
   /**
    * @ignore
@@ -3769,16 +4214,22 @@
    *
    * Exposed via DOMWatcher
    */
-  const ignoreMove = (target, options) => recordsToSkipOnce.set(target, {
-    from: options.from || null,
-    to: options.to || null
-  });
+  const ignoreMove = (target, options) => {
+    var _options$from, _options$to2;
+    return recordsToSkipOnce.set(target, {
+      from: (_options$from = options.from) !== null && _options$from !== void 0 ? _options$from : null,
+      to: (_options$to2 = options.to) !== null && _options$to2 !== void 0 ? _options$to2 : null
+    });
+  };
 
   /**
    * @ignore
    * @internal
    */
-  const getIgnoreMove = target => recordsToSkipOnce.get(target) || null;
+  const getIgnoreMove = target => {
+    var _recordsToSkipOnce$ge;
+    return (_recordsToSkipOnce$ge = recordsToSkipOnce.get(target)) !== null && _recordsToSkipOnce$ge !== void 0 ? _recordsToSkipOnce$ge : null;
+  };
 
   /**
    * @ignore
@@ -3811,7 +4262,6 @@
 
   // ----------------------------------------
 
-  const PREFIX_CONTENT_WRAPPER = prefixName("content-wrapper");
   const recordsToSkipOnce = newMap();
   const createWrapperFor = (element, wrapper) => {
     if (isElement(wrapper)) {
@@ -3826,6 +4276,36 @@
       }
     }
     return createElement(tag);
+  };
+  const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+  ) => {
+    const {
+      _tagName: tagName$1,
+      _classNames: classNames = [PREFIX_WRAPPER$3],
+      _ignoreMove: ignoreMove = true,
+      _required: required = false,
+      _requiredBy: requiredBy = ""
+    } = options !== null && options !== void 0 ? options : {};
+    const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
+    const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
+    const allowedToWrap = isAllowedToWrap(element);
+    let wrapper = getWrapperFn(element, options);
+    if (!wrapper && (required || allowedToWrap)) {
+      wrapper = wrapFn(element, {
+        wrapper: tagName$1,
+        ignoreMove
+      });
+      if (classNames) {
+        addClassesNow(wrapper, ...classNames);
+      }
+      if (isInlineTag(tagName(wrapper))) {
+        addClassesNow(wrapper, PREFIX_INLINE_WRAPPER);
+      }
+      if (!allowedToWrap && requiredBy) {
+        logWarn(`content wrapping is disabled for element but wrapping is required by ${requiredBy}`);
+      }
+    }
+    return wrapper;
   };
 
   /**
@@ -3842,8 +4322,8 @@
    * the DOM children. Uses
    * {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver | MutationObserver}.
    *
-   * @param {} timeout If given, then if no such element is present after this
-   *                    many milliseconds, the promise will resolve to `null`.
+   * @param timeout If given, then if no such element is present after this many
+   *                milliseconds, the promise will resolve to `null`.
    *
    * @category DOM: Events
    */
@@ -4077,7 +4557,7 @@
      * Creates a new instance of DOMWatcher with the given
      * {@link DOMWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new DOMWatcher(getConfig$6(config), CONSTRUCTOR_KEY$6);
     }
 
@@ -4088,7 +4568,7 @@
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       var _instances$get;
       const myConfig = getConfig$6(config);
       const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -4106,7 +4586,7 @@
       if (key !== CONSTRUCTOR_KEY$6) {
         throw illegalConstructorError("DOMWatcher.create");
       }
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: "DOMWatcher",
         logAtCreation: config
       }) : null;
@@ -4202,9 +4682,10 @@
       // ----------
 
       const setupOnMutation = async (handler, userOptions) => {
-        const options = getOptions$3(userOptions || {});
+        var _config$_root;
+        const options = getOptions$3(userOptions !== null && userOptions !== void 0 ? userOptions : {});
         const callback = createCallback(handler, options);
-        let root = config._root || getBody();
+        let root = (_config$_root = config._root) !== null && _config$_root !== void 0 ? _config$_root : getBody();
         if (!root) {
           root = await waitForElement(getBody);
         } else {
@@ -4331,6 +4812,7 @@
       // ----------
 
       const shouldSkipOperation = operation => {
+        var _config$_root2;
         const target = operation._target;
         const requestToSkip = getIgnoreMove(target);
         if (!requestToSkip) {
@@ -4340,7 +4822,7 @@
         const addedTo = parentOf(target);
         const requestFrom = requestToSkip.from;
         const requestTo = requestToSkip.to;
-        const root = config._root || getBody();
+        const root = (_config$_root2 = config._root) !== null && _config$_root2 !== void 0 ? _config$_root2 : getBody();
         // If "from" is currently outside our root, we may not have seen a
         // removal operation.
         if ((removedFrom === requestFrom || !root.contains(requestFrom)) && addedTo === requestTo) {
@@ -4392,10 +4874,10 @@
   const CONSTRUCTOR_KEY$6 = SYMBOL();
   const instances$8 = newXMap(() => newMap());
   const getConfig$6 = config => {
-    var _config$subtree;
+    var _config$root, _config$subtree;
     return {
-      _root: config.root || null,
-      _subtree: (_config$subtree = config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
+      _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
     };
   };
   const CATEGORIES_BITS = DOM_CATEGORIES_SPACE.bit;
@@ -4406,6 +4888,7 @@
   // ----------------------------------------
 
   const getOptions$3 = options => {
+    var _options$selector, _options$target;
     let categoryBitmask = 0;
     const categories = validateStrList("categories", options.categories, DOM_CATEGORIES_SPACE.has);
     if (categories) {
@@ -4415,14 +4898,14 @@
     } else {
       categoryBitmask = DOM_CATEGORIES_SPACE.bitmask; // default: all
     }
-    const selector = options.selector || "";
+    const selector = (_options$selector = options.selector) !== null && _options$selector !== void 0 ? _options$selector : "";
     if (!isString(selector)) {
       throw usageError("'selector' must be a string");
     }
     return {
       _categoryBitmask: categoryBitmask,
-      _target: options.target || null,
-      _selector: options.selector || ""
+      _target: (_options$target = options.target) !== null && _options$target !== void 0 ? _options$target : null,
+      _selector: selector
     };
   };
   const getDiffOperation = (operationA, operationB) => {
@@ -4496,15 +4979,15 @@
    * Returns the approximate direction of the given 2D vector as one of the
    * cardinal (XY plane) ones: "up", "down", "left" or "right"; or "ambiguous".
    *
-   * @param {} angleDiffThreshold  See {@link areParallel} or
-   *                               {@link Utils.areAntiParallel | areAntiParallel}.
-   *                               This determines whether the inferred direction
-   *                               is ambiguous. For it to _not_ be ambiguous it
-   *                               must align with one of the four cardinal
-   *                               directions to within `angleDiffThreshold`.
-   *                               It doesn't make sense for this value to be < 0
-   *                               or >= 45 degrees. If it is, it's forced to be
-   *                               positive (absolute) and <= 44.99.
+   * @param angleDiffThreshold See {@link areParallel} or
+   *                           {@link Utils.areAntiParallel | areAntiParallel}.
+   *                           This determines whether the inferred direction is
+   *                           ambiguous. For it to _not_ be ambiguous it must
+   *                           align with one of the four cardinal directions to
+   *                           within `angleDiffThreshold`. It doesn't make
+   *                           sense for this value to be < 0 or >= 45 degrees.
+   *                           If it is, it's forced to be positive (absolute)
+   *                           and <= 44.99.
    *
    * @category Directions
    */
@@ -4676,9 +5159,11 @@
    */
   const callEventListener = (handler, event) => {
     if (isFunction(handler)) {
-      handler.call(event.currentTarget || self, event);
+      var _event$currentTarget;
+      handler.call((_event$currentTarget = event.currentTarget) !== null && _event$currentTarget !== void 0 ? _event$currentTarget : self, event);
     } else {
-      handler.handleEvent.call(event.currentTarget || self, event);
+      var _event$currentTarget2;
+      handler.handleEvent.call((_event$currentTarget2 = event.currentTarget) !== null && _event$currentTarget2 !== void 0 ? _event$currentTarget2 : self, event);
     }
   };
 
@@ -4689,12 +5174,13 @@
    * but it handles `options` object in case the browser does not support those.
    * Does not support the `signal` option unless browser natively supports that.
    *
-   * @return {} `true` if successfully added, or `false` if the same handler has
+   * @returns `true` if successfully added, or `false` if the same handler has
    * already been added by us, or if the handler is not a valid event listener.
    *
    * @category Events: Generic
    */
-  const addEventListenerTo = (target, eventType, handler, options = {}) => {
+  const addEventListenerTo = (target, eventType, handler, options) => {
+    options !== null && options !== void 0 ? options : options = false;
     eventType = transformEventType(eventType);
     if (getEventHandlerData(target, eventType, handler, options)) {
       // already added
@@ -4737,12 +5223,13 @@
    * {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener | EventTarget:removeEventListener},
    * to remove it, not this function.
    *
-   * @return {} `true` if successfully removed, or `false` if the handler has not
+   * @returns `true` if successfully removed, or `false` if the handler has not
    * been added by us.
    *
    * @category Events: Generic
    */
-  const removeEventListenerFrom = (target, eventType, handler, options = {}) => {
+  const removeEventListenerFrom = (target, eventType, handler, options) => {
+    options !== null && options !== void 0 ? options : options = false;
     eventType = transformEventType(eventType);
     const data = getEventHandlerData(target, eventType, handler, options);
     if (!data) {
@@ -5004,11 +5491,11 @@
    * press of + or - steps up by 15% or down by ~13% (`1 / 1.15` to be exact)
    * since the previous one.
    *
-   * @param {} [options.angleDiffThreshold]
-   *                                  See {@link getVectorDirection}
-   * @param {} [options.scrollHeight] Use this as deltaY when Home/End is pressed
+   * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+   * @param [options.scrollHeight]       Use this as deltaY when Home/End is
+   *                                     pressed.
    *
-   * @return {} `false` if there are no "keydown" events in the list, otherwise a
+   * @returns `false` if there are no "keydown" events in the list, otherwise a
    * {@link GestureFragment}.
    *
    * @category Gestures
@@ -5033,6 +5520,7 @@
       deltaY = 0,
       deltaZ = 1;
     for (const event of events) {
+      var _deltasForKey$event$k;
       if (!isKeyboardEvent(event) || event.type !== S_KEYDOWN) {
         continue;
       }
@@ -5054,7 +5542,7 @@
         "=": event.ctrlKey ? deltasIn : null,
         "-": deltasOut
       };
-      const theseDeltas = deltasForKey[event.key] || null;
+      const theseDeltas = (_deltasForKey$event$k = deltasForKey[event.key]) !== null && _deltasForKey$event$k !== void 0 ? _deltasForKey$event$k : null;
       if (!theseDeltas) {
         // not a relevant key
         continue;
@@ -5124,9 +5612,9 @@
    * Pointer gestures always require the primary button to be pressed and the
    * resulting intent is always "drag", and `deltaZ` is always 1.
    *
-   * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
+   * @param [options.angleDiffThreshold] See {@link getVectorDirection}
    *
-   * @return {} `false` if there are less than 2 "pointermove"/"mousemove" events
+   * @returns `false` if there are less than 2 "pointermove"/"mousemove" events
    * in the list, `null` if the gesture is terminated, otherwise a
    * {@link GestureFragment}.
    *
@@ -5206,7 +5694,7 @@
    * For zoom intents, which necessarily involves exactly two fingers `deltaZ`
    * is based on the relative change in distance between the fingers.
    *
-   * @param {} [options.deltaThreshold]
+   * @param [options.deltaThreshold]
    *                          A change of x or y coordinate less than this is
    *                          considered insignificant, for the purposes of
    *                          determining:
@@ -5215,22 +5703,22 @@
    *                          2) whether more than two fingers have moved and
    *                             therefore whether the direction could be zoom or
    *                             not
-   * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
-   * @param {} [options.reverseScroll]
+   * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+   * @param [options.reverseScroll]
    *                          If set to `true`, will disable natural scroll
    *                          direction.
-   * @param {} [options.dragHoldTime]
+   * @param [options.dragHoldTime]
    *                          If the user presses and holds for at least the
    *                          given amount of milliseconds before moving the
    *                          finger(s), gestures other than pinch will be
    *                          treated as a drag instead of scroll as long as the
    *                          number of fingers touching the screen is
    *                          `options.dragNumFingers`. Default is 500ms.
-   * @param {} [options.dragNumFingers]
+   * @param [options.dragNumFingers]
    *                          The number of fingers that could be considered a
    *                          drag intent. Default is 1.
    *
-   * @return {} `false` if there are less than 2 "touchmove" events in the list,
+   * @returns `false` if there are less than 2 "touchmove" events in the list,
    * `null` if the gesture is terminated, otherwise a {@link GestureFragment}.
    *
    * @category Gestures
@@ -5304,7 +5792,7 @@
       }
     }
     if (direction === S_NONE) {
-      const lastTouchEvent = events.filter(isTouchEvent).slice(-1)[0];
+      const lastTouchEvent = lastOf(events.filter(isTouchEvent));
       // If all fingers have lifted off, consider it terminated, otherwise wait
       // for more events.
       return lengthOf(lastTouchEvent === null || lastTouchEvent === void 0 ? void 0 : lastTouchEvent.touches) ? false : null;
@@ -5329,8 +5817,8 @@
    * Note that, `deltaX`/`deltaY` are the end X/Y coordinate minus the start X/Y
    * coordinate. For natural scroll direction you should swap their signs.
    *
-   * @param {} deltaThreshold If the change of x and y coordinate are both less
-   *                          than this, it is marked as not significant.
+   * @param deltaThreshold If the change of x and y coordinate are both less
+   *                       than this, it is marked as not significant.
    *
    * @category Gestures
    */
@@ -5634,10 +6122,10 @@
    * `deltaY`, which in most browsers roughly corresponds to a percentage zoom
    * factor.
    *
-   * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}.
-   *                                        Default is 5.
+   * @param [options.angleDiffThreshold] See {@link getVectorDirection}.
+   *                                     Default is 5.
    *
-   * @return {} `false` if there are no "wheel" events in the list, otherwise a
+   * @returns `false` if there are no "wheel" events in the list, otherwise a
    * {@link GestureFragment}.
    *
    * @category Gestures
@@ -5771,7 +6259,7 @@
      * Creates a new instance of GestureWatcher with the given
      * {@link GestureWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new GestureWatcher(getConfig$5(config), CONSTRUCTOR_KEY$5);
     }
 
@@ -5782,7 +6270,7 @@
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       const myConfig = getConfig$5(config);
       const configStrKey = objToStrKey(myConfig);
       let instance = instances$7.get(configStrKey);
@@ -5796,7 +6284,7 @@
       if (key !== CONSTRUCTOR_KEY$5) {
         throw illegalConstructorError("GestureWatcher.create");
       }
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: "GestureWatcher",
         logAtCreation: config
       }) : null;
@@ -5830,10 +6318,10 @@
       // async for consistency with other watchers and future compatibility in
       // case of change needed
       const setupOnGesture = async (target, handler, userOptions) => {
-        const options = getOptions$2(config, userOptions || {});
+        const options = getOptions$2(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
         createCallback(target, handler, options);
-        for (const device of options._devices || DEVICES) {
-          var _allListeners$get;
+        for (const device of (_options$_devices = options._devices) !== null && _options$_devices !== void 0 ? _options$_devices : DEVICES) {
+          var _options$_devices, _allListeners$get;
           let listeners = (_allListeners$get = allListeners.get(target)) === null || _allListeners$get === void 0 ? void 0 : _allListeners$get.get(device);
           if (listeners) {
             logger === null || logger === void 0 || logger.debug4(`Listeners already added for ${device}`, target, options);
@@ -5854,8 +6342,8 @@
       const deleteHandler = (target, handler, options) => {
         deleteKey(allCallbacks.get(target), handler);
         allCallbacks.prune(target);
-        for (const device of options._devices || DEVICES) {
-          var _allListeners$get2;
+        for (const device of (_options$_devices2 = options._devices) !== null && _options$_devices2 !== void 0 ? _options$_devices2 : DEVICES) {
+          var _options$_devices2, _allListeners$get2;
           const listeners = (_allListeners$get2 = allListeners.get(target)) === null || _allListeners$get2 === void 0 ? void 0 : _allListeners$get2.get(device);
           if (listeners) {
             listeners._nCallbacks--;
@@ -5874,8 +6362,8 @@
       // ----------
 
       const invokeCallbacks = (target, device, event) => {
-        var _allListeners$get3;
-        const preventDefault = (((_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) || 0) > 0;
+        var _allListeners$get$get, _allListeners$get3;
+        const preventDefault = ((_allListeners$get$get = (_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) !== null && _allListeners$get$get !== void 0 ? _allListeners$get$get : 0) > 0;
         let isTerminated = false;
         for (const {
           _wrapper
@@ -6025,6 +6513,7 @@
   const instances$7 = newMap();
   const getConfig$5 = config => {
     var _config$preventDefaul, _config$naturalTouchS, _config$touchDragHold, _config$touchDragNumF;
+    config !== null && config !== void 0 ? config : config = {};
     return {
       _preventDefault: (_config$preventDefaul = config.preventDefault) !== null && _config$preventDefaul !== void 0 ? _config$preventDefaul : true,
       _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 150),
@@ -6068,14 +6557,14 @@
     [S_WHEEL]: getWheelGestureFragment
   };
   const getOptions$2 = (config, options) => {
-    var _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
+    var _validateStrList, _validateStrList2, _validateStrList3, _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
     const debounceWindow = toNonNegNum(options[S_DEBOUNCE_WINDOW], config._debounceWindow // watcher is never debounced, so apply default here
     );
     const deltaThreshold = toNonNegNum(options.deltaThreshold, config._deltaThreshold);
     return {
-      _devices: validateStrList("devices", options.devices, isValidInputDevice) || null,
-      _directions: validateStrList("directions", options.directions, isValidDirection) || null,
-      _intents: validateStrList("intents", options.intents, isValidIntent) || null,
+      _devices: (_validateStrList = validateStrList("devices", options.devices, isValidInputDevice)) !== null && _validateStrList !== void 0 ? _validateStrList : null,
+      _directions: (_validateStrList2 = validateStrList("directions", options.directions, isValidDirection)) !== null && _validateStrList2 !== void 0 ? _validateStrList2 : null,
+      _intents: (_validateStrList3 = validateStrList("intents", options.intents, isValidIntent)) !== null && _validateStrList3 !== void 0 ? _validateStrList3 : null,
       _minTotalDeltaX: (_options$minTotalDelt = options.minTotalDeltaX) !== null && _options$minTotalDelt !== void 0 ? _options$minTotalDelt : null,
       _maxTotalDeltaX: (_options$maxTotalDelt = options.maxTotalDeltaX) !== null && _options$maxTotalDelt !== void 0 ? _options$maxTotalDelt : null,
       _minTotalDeltaY: (_options$minTotalDelt2 = options.minTotalDeltaY) !== null && _options$minTotalDelt2 !== void 0 ? _options$minTotalDelt2 : null,
@@ -6258,14 +6747,14 @@
     }
     const prefix = `${intent}-`;
     if (intent === S_ZOOM) {
-      setNumericStyleProps(target, {
+      setNumericStyleJsVars(target, {
         deltaZ: data.totalDeltaZ
       }, {
         _prefix: prefix,
         _numDecimal: 2
       }); // don't await here
     } else {
-      setNumericStyleProps(target, {
+      setNumericStyleJsVars(target, {
         deltaX: data.totalDeltaX,
         deltaY: data.totalDeltaY
       }, {
@@ -6446,9 +6935,308 @@
   };
 
   /**
-   * @module Utils
+   * @since v1.2.0
+   *
+   * @category Animations
    */
 
+  /**
+   * The callback is as an argument the {@link ElapsedTimes | elapsed times}:
+   * - The total elapsed time in milliseconds since the start
+   * - The elapsed time in milliseconds since the previous frame
+   *
+   * The first time this callback is called both of these will be 0 unless seed
+   * values were provided.
+   *
+   * The callback must return `true` if it wants to animate again on the next
+   * frame and `false` if done.
+   *
+   * @since v1.2.0
+   *
+   * @category Animations
+   */
+
+  /**
+   * Returns a promise that resolves at the next animation frame. Async/await
+   * version of
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame | requestAnimationFrame}.
+   *
+   * @returns The timestamp gotten from `requestAnimationFrame`
+   *
+   * @category Animations
+   */
+  const waitForAnimationFrame = async () => newPromise(resolve => {
+    onAnimationFrame(resolve);
+  });
+
+  /**
+   * Calls the given callback on every animation frame.
+   *
+   * The returned Promise resolves when the callback is done (returns `false`).
+   *
+   * @param callback  See {@link AnimationCallback}.
+   * @param elapsed   Seed values to use as the total elapsed and elapsed since
+   *                  last. Otherwise it will use the timestamp of the first frame
+   *                  as the start, which will result in those values being 0 the
+   *                  first time.
+   *
+   * @since v1.2.0
+   *
+   * @category Animations
+   */
+  const onEveryAnimationFrame = async (callback, elapsed) => {
+    var _iteratorAbruptCompletion = false;
+    var _didIteratorError = false;
+    var _iteratorError;
+    try {
+      for (var _iterator = _asyncIterator(newAnimationFrameIterator(elapsed)), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
+        elapsed = _step.value;
+        {
+          const shouldRepeat = callback(elapsed);
+          if (!shouldRepeat) {
+            break;
+          }
+        }
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (_iteratorAbruptCompletion && _iterator.return != null) {
+          await _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+  };
+
+  /**
+   * Generator version of {@link onEveryAnimationFrame}.
+   *
+   * Returns a new async iterator which yields the total elapsed time and elapsed
+   * time since the last call on every animation frame.
+   *
+   * @example
+   * ```javascript
+   * for await (const elapsed of newAnimationFrameIterator()) {
+   *   // ... do something
+   *   if (done) break;
+   * }
+   * ```
+   *
+   * @since v1.2.0
+   *
+   * @category Animations
+   */
+  function newAnimationFrameIterator(_x) {
+    return _newAnimationFrameIterator.apply(this, arguments);
+  }
+
+  /**
+   * Returns an animation iterator based on {@link criticallyDamped} that starts
+   * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
+   * the new position and velocity, and total time at every animation frame.
+   *
+   * @param [settings.lTarget]   The initial target position. Can be updated when
+   *                             calling next().
+   * @param [settings.lag]       See {@link criticallyDamped}.
+   * @param [settings.l = 0]     The initial starting position.
+   * @param [settings.precision] See {@link criticallyDamped}.
+   *
+   * @returns An iterator whose `next` method accepts an optional new `lTarget`.
+   * The iterator yields an object containing successive values for:
+   * - position (`l`)
+   * - velocity (`v`)
+   * - total time elapsed (`t`)
+   *
+   * @example
+   * If you never need to update the target you can use a for await loop:
+   *
+   * ```javascript
+   * const iterator = newCriticallyDampedAnimationIterator({
+   *   l: 10,
+   *   lTarget: 100,
+   *   lag: 1500
+   * });
+   *
+   * for await (const { l, v, t } of iterator) {
+   *   console.log({ l, v, t });
+   * }
+   * ```
+   *
+   * @example
+   * If you do need to update the target, then call `next` explicitly:
+   *
+   * ```javascript
+   * const iterator = newCriticallyDampedAnimationIterator({
+   *   l: 10,
+   *   lTarget: 100,
+   *   lag: 1500
+   * });
+   *
+   * let { value: { l, v, t } } = await iterator.next();
+   * ({ value: { l, v, t } } = await iterator.next()); // updated
+   * ({ value: { l, v, t } } = await iterator.next(200)); // updated towards a new target
+   * ```
+   *
+   * @since v1.2.0
+   *
+   * @category Animations
+   */
+  function _newAnimationFrameIterator() {
+    _newAnimationFrameIterator = _wrapAsyncGenerator(function* (elapsed) {
+      let startTime, previousTimeStamp;
+      const {
+        total: totalSeed = 0,
+        sinceLast: sinceLastSeed = 0
+      } = elapsed !== null && elapsed !== void 0 ? elapsed : {};
+      const step = async () => {
+        const timeStamp = await waitForAnimationFrame();
+        if (!startTime || !previousTimeStamp) {
+          // First time
+          startTime = timeStamp - totalSeed;
+          previousTimeStamp = timeStamp - sinceLastSeed;
+        }
+        const totalElapsed = timeStamp - startTime;
+        const elapsedSinceLast = timeStamp - previousTimeStamp;
+        previousTimeStamp = timeStamp;
+        return {
+          total: totalElapsed,
+          sinceLast: elapsedSinceLast
+        };
+      };
+      while (true) {
+        yield step();
+      }
+    });
+    return _newAnimationFrameIterator.apply(this, arguments);
+  }
+  function newCriticallyDampedAnimationIterator(_x2) {
+    return _newCriticallyDampedAnimationIterator.apply(this, arguments);
+  }
+
+  /**
+   * @param webAnimationCallback This function is called for each
+   *                             {@link https://developer.mozilla.org/en-US/docs/Web/API/Animation | Animation}
+   *                             on the element. It {@link waitForMeasureTime}
+   *                             before reading the animations.
+   * @param legacyCallback       This function is called if the browser does not
+   *                             support the Web Animations API. It is called
+   *                             after {@link waitForMutateTime} so it can safely
+   *                             modify styles.
+   * @param realtime             If true, then it does not
+   *                             {@link waitForMeasureTime} or
+   *                             {@link waitForMutateTime} and runs
+   *                             synchronously.
+   *
+   * @category Animations
+   */
+  function _newCriticallyDampedAnimationIterator() {
+    _newCriticallyDampedAnimationIterator = _wrapAsyncGenerator(function* (settings) {
+      let {
+        l,
+        lTarget
+      } = settings;
+      const {
+        lag,
+        precision
+      } = settings;
+      let v = 0,
+        t = 0,
+        dt = 0;
+      const next = async () => {
+        ({
+          l,
+          v
+        } = criticallyDamped({
+          lTarget,
+          dt,
+          lag,
+          l,
+          v,
+          precision
+        }));
+        return {
+          l,
+          v,
+          t
+        };
+      };
+      var _iteratorAbruptCompletion2 = false;
+      var _didIteratorError2 = false;
+      var _iteratorError2;
+      try {
+        for (var _iterator2 = _asyncIterator(newAnimationFrameIterator()), _step2; _iteratorAbruptCompletion2 = !(_step2 = yield _awaitAsyncGenerator(_iterator2.next())).done; _iteratorAbruptCompletion2 = false) {
+          ({
+            total: t,
+            sinceLast: dt
+          } = _step2.value);
+          {
+            var _next;
+            if (dt === 0) {
+              continue;
+            }
+            lTarget = yield (_next = next()) !== null && _next !== void 0 ? _next : lTarget;
+          }
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (_iteratorAbruptCompletion2 && _iterator2.return != null) {
+            yield _awaitAsyncGenerator(_iterator2.return());
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+      throw null; // tell TypeScript it will never end
+    });
+    return _newCriticallyDampedAnimationIterator.apply(this, arguments);
+  }
+  const iterateAnimations = async (element, webAnimationCallback, legacyCallback, realtime = false) => {
+    /* istanbul ignore next */ // jsdom doesn't support Web Animations
+    if ("getAnimations" in element && getData(element, prefixName("test-legacy")) === null) {
+      if (!realtime) {
+        await waitForMeasureTime();
+      }
+      for (const animation of element.getAnimations()) {
+        webAnimationCallback(animation);
+      }
+
+      // Old browsers, no Animation API
+    } else {
+      if (!realtime) {
+        await waitForMutateTime();
+      }
+      legacyCallback(element);
+    }
+  };
+
+  /**
+   * @ignore
+   * @internal
+   */
+  const resetCssAnimationsNow = element => {
+    addClassesNow(element, PREFIX_ANIMATE_DISABLE); // cause it to reset
+    // If we remove the disable class immediately, then it will not have the
+    // effect to reset the animation, since the browser won't see any change in
+    // the classList at the start of the frame. So we ideally need to remove the
+    // disable class after the next paint. However, depending on the animation,
+    // and its state, disabling animation and waiting for the next animation
+    // frame may cause a visible glitch, so we need to force layout now.
+    /* eslint-disable-next-line @typescript-eslint/no-unused-expressions */
+    element[S_CLIENT_WIDTH]; // forces layout
+
+    removeClassesNow(element, PREFIX_ANIMATE_DISABLE);
+  };
 
   /**
    * @category Scrolling
@@ -6465,29 +7253,35 @@
    * Returns true if the given element is scrollable in the given direction, or
    * in either direction (if `axis` is not given).
    *
-   * **IMPORTANT:** If you enable `active` then be aware that:
-   * 1. It may attempt to scroll the target in order to determine whether it's
-   *    scrollable in a more reliable way than the default method of comparing
-   *    clientWidth/Height to scrollWidth/Height. If there is currently any
-   *    ongoing scroll on the target, this will stop it, so never use that inside
-   *    scroll-triggered handlers.
-   * 2. If the layout has been invalidated and not yet recalculated,
-   *    this will cause a forced layout, so always {@link waitForMeasureTime}
-   *    before calling this function when possible.
+   * It first checks whether the current scroll offset on the target along the
+   * given axis is non-0, and if so returns true immediately. Otherwise it will
+   * attempt to determine if it's scrollable using one of these methods
+   * (controlled by `options.active`):
+   * - passive check (default): Will examine `clientWidth/Height`,
+   *   `scrollWidth/Height` as well as the computed `overflow` CSS property to try
+   *   to determine if the target is scrollable. This is not 100% reliable but is
+   *   safer than the active check
+   * - active check: Will attempt to scroll the target by 1px and examine if the
+   *   scroll offset had changed, then revert it back to 0. This is a more
+   *   reliable check, however it can cause issues in certain contexts. In
+   *   particular, if a scroll on the target had just been initiated (but it's
+   *   scroll offset was still 0), the scroll may be cancelled. Never use that
+   *   inside scroll-based handlers.
    *
-   * @param {} [options.axis]    One of "x" or "y" for horizontal or vertical
-   *                             scroll respectively. If not given, it checks
-   *                             both.
-   * @param {} [options.active]  If true, then if the target's current scroll
-   *                             offset is 0, it will attempt to scroll it rather
-   *                             than looking at the clientWidth/Height to
-   *                             scrollWidth/Height. This is more reliable but can
-   *                             cause issues, see note above.
-   * @param {} [options.noCache] By default the result of a check is cached for
-   *                             1s and if there's already a cached result for
-   *                             this element, it is returns. Set this to true to
-   *                             disable checking the cache and also saving the
-   *                             result into the cache.
+   * **NOTE:** If the layout has been invalidated and not yet recalculated, this
+   * will cause a forced layout, so always {@link waitForMeasureTime} before
+   * calling this function when possible.
+   *
+   * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
+   *                          respectively. If not given, it checks both.
+   * @param [options.active]  If true, then if the target's current scroll offset
+   *                          is 0, it will attempt to scroll it rather than
+   *                          looking at its overflow.
+   * @param [options.noCache] By default the result of a check is cached for 1s
+   *                          and if there's already a cached result for this
+   *                          element, it is returned. Set this to true to disable
+   *                          checking the cache and also saving the result into
+   *                          the cache.
    *
    * @category Scrolling
    */
@@ -6496,7 +7290,7 @@
       axis,
       active,
       noCache
-    } = options || {};
+    } = options !== null && options !== void 0 ? options : {};
     if (!axis) {
       return isScrollable(element, {
         axis: "y",
@@ -6517,7 +7311,6 @@
     }
     const offset = axis === "x" ? "Left" : "Top";
     let result = false;
-    let doCache = !noCache;
     if (element[`scroll${offset}`]) {
       result = true;
     } else if (active) {
@@ -6534,11 +7327,13 @@
       result = canScroll;
     } else {
       const dimension = axis === "x" ? "Width" : "Height";
-      result = element[`scroll${dimension}`] > element[`client${dimension}`];
-      // No need to cache a passive check.
-      doCache = false;
+      const isDocScrollable = element === getDocScrollingElement();
+      const hasOverflow = element[`scroll${dimension}`] > element[`client${dimension}`];
+      const overflowProp = getComputedStylePropNow(element, "overflow");
+      const scrollingOverflows = [S_SCROLL, S_AUTO$1, ...(isDocScrollable ? [S_VISIBLE] : [])];
+      result = hasOverflow && includes(scrollingOverflows, overflowProp);
     }
-    if (doCache) {
+    if (!noCache) {
       isScrollableCache.sGet(element).set(axis, result);
       setTimer(() => {
         deleteKey(isScrollableCache.get(element), axis);
@@ -6552,9 +7347,9 @@
    * Returns the closest scrollable ancestor of the given element, _not including
    * it_.
    *
-   * @param {} options See {@link isScrollable}
+   * @param options See {@link isScrollable}
    *
-   * @return {} `null` if no scrollable ancestors are found.
+   * @returns `null` if no scrollable ancestors are found.
    *
    * @category Scrolling
    */
@@ -6576,9 +7371,9 @@
    */
   const getCurrentScrollAction = scrollable => {
     scrollable = toScrollableOrDefault(scrollable);
-    const action = currentScrollAction.get(scrollable);
-    if (action) {
-      return copyObject(action);
+    const info = currentScrollInfos.get(scrollable);
+    if (info) {
+      return copyObject(info._action);
     }
     return null;
   };
@@ -6594,11 +7389,11 @@
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *               If the target coordinates are invalid.
    *
-   * @param {} to  If this is an element, then its top-left position is used as
-   *               the target coordinates. If it is a string, then it is treated
-   *               as a selector for an element using `querySelector`.
+   * @param to If this is an element, then its top-left position is used as
+   *           the target coordinates. If it is a string, then it is treated
+   *           as a selector for an element using `querySelector`.
    *
-   * @return {} `null` if there's an ongoing scroll that is not cancellable,
+   * @returns `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
    *
    * @category Scrolling
@@ -6608,9 +7403,9 @@
     const scrollable = options._scrollable;
 
     // cancel current scroll action if any
-    const currentScroll = currentScrollAction.get(scrollable);
-    if (currentScroll) {
-      if (!currentScroll.cancel()) {
+    const info = currentScrollInfos.get(scrollable);
+    if (info) {
+      if (!info._action.cancel()) {
         // current scroll action is not cancellable by us
         return null;
       }
@@ -6635,14 +7430,16 @@
         });
       }
     }
-    const promise = initiateScroll(options, () => isCancelled);
-    const thisScrollAction = {
-      waitFor: () => promise,
-      cancel: cancelFn
+    const thisInfo = {
+      _action: {
+        waitFor: () => scrollActionPromise,
+        cancel: cancelFn
+      }
     };
     const cleanup = () => {
-      if (currentScrollAction.get(scrollable) === thisScrollAction) {
-        deleteKey(currentScrollAction, scrollable);
+      var _currentScrollInfos$g;
+      if (((_currentScrollInfos$g = currentScrollInfos.get(scrollable)) === null || _currentScrollInfos$g === void 0 ? void 0 : _currentScrollInfos$g._action) === thisInfo._action) {
+        deleteKey(currentScrollInfos, scrollable);
       }
       if (preventScrollHandler) {
         for (const eventType of scrollEvents) {
@@ -6652,9 +7449,10 @@
         }
       }
     };
-    thisScrollAction.waitFor().then(cleanup).catch(cleanup);
-    currentScrollAction.set(scrollable, thisScrollAction);
-    return thisScrollAction;
+    const scrollActionPromise = initiateScroll(options, () => isCancelled);
+    thisInfo._action.waitFor().then(cleanup).catch(cleanup);
+    updateCurrentScrollInfo(scrollable, thisInfo);
+    return thisInfo._action;
   };
 
   /**
@@ -6735,8 +7533,9 @@
    * @internal
    */
   const getDefaultScrollingElement = () => {
+    var _MH$getDocScrollingEl;
     const body = getBody();
-    return isScrollable(body) ? body : getDocScrollingElement() || body;
+    return isScrollable(body) ? body : (_MH$getDocScrollingEl = getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : body;
   };
 
   /**
@@ -6756,12 +7555,17 @@
   const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
   const isScrollableCache = newXMap(() => newMap());
   const mappedScrollables = newMap();
-  const currentScrollAction = newMap();
+  const currentScrollInfos = newMap();
   const DIFF_THRESHOLD = 5;
-  const arePositionsDifferent = (start, end) => maxAbs(start.top - end.top, start.left - end.left) >= DIFF_THRESHOLD;
+  const arePositionsDifferent = (start, end, threshold = DIFF_THRESHOLD) => maxAbs(start.top - end.top, start.left - end.left) > threshold;
+
+  // must be called in "measure time"
+  const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+  const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
   const toScrollableOrMain = (target, getMain) => {
     if (isElement(target)) {
-      return mappedScrollables.get(target) || target;
+      var _mappedScrollables$ge;
+      return (_mappedScrollables$ge = mappedScrollables.get(target)) !== null && _mappedScrollables$ge !== void 0 ? _mappedScrollables$ge : target;
     }
     if (!target || target === getWindow() || target === getDoc()) {
       return getMain();
@@ -6770,30 +7574,40 @@
   };
   const toScrollableOrDefault = scrollable => scrollable !== null && scrollable !== void 0 ? scrollable : getDefaultScrollingElement();
   const getOptions$1 = (to, options) => {
-    var _options$weCanInterru, _options$userCanInter;
+    var _options$offset, _options$altOffset, _options$duration, _options$weCanInterru, _options$userCanInter;
     const scrollable = toScrollableOrDefault(options === null || options === void 0 ? void 0 : options.scrollable);
     const target = getTargetCoordinates(scrollable, to);
     const altTarget = options !== null && options !== void 0 && options.altTarget ? getTargetCoordinates(scrollable, options === null || options === void 0 ? void 0 : options.altTarget) : null;
     return {
       _target: target,
-      _offset: (options === null || options === void 0 ? void 0 : options.offset) || null,
+      _offset: (_options$offset = options === null || options === void 0 ? void 0 : options.offset) !== null && _options$offset !== void 0 ? _options$offset : null,
       _altTarget: altTarget,
-      _altOffset: (options === null || options === void 0 ? void 0 : options.altOffset) || null,
+      _altOffset: (_options$altOffset = options === null || options === void 0 ? void 0 : options.altOffset) !== null && _options$altOffset !== void 0 ? _options$altOffset : null,
       _scrollable: scrollable,
-      _duration: (options === null || options === void 0 ? void 0 : options.duration) || 0,
+      _duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : 0,
       _weCanInterrupt: (_options$weCanInterru = options === null || options === void 0 ? void 0 : options.weCanInterrupt) !== null && _options$weCanInterru !== void 0 ? _options$weCanInterru : false,
       _userCanInterrupt: (_options$userCanInter = options === null || options === void 0 ? void 0 : options.userCanInterrupt) !== null && _options$userCanInter !== void 0 ? _options$userCanInter : false
     };
   };
+  const updateCurrentScrollInfo = (scrollable, newInfo) => {
+    var _newInfo$_action;
+    const existingScrollInfo = currentScrollInfos.get(scrollable);
+    const _action = (_newInfo$_action = newInfo._action) !== null && _newInfo$_action !== void 0 ? _newInfo$_action : existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._action;
+    if (_action) {
+      currentScrollInfos.set(scrollable, merge(existingScrollInfo, newInfo, {
+        _action
+      }));
+    }
+  };
   const getTargetCoordinates = (scrollable, target) => {
-    const docScrollingElement = getDocScrollingElement();
+    const isDocScrollingElement = scrollable === getDocScrollingElement();
     if (isElement(target)) {
       if (scrollable === target || !scrollable.contains(target)) {
         throw usageError("Target must be a descendant of the scrollable one");
       }
       return {
-        top: () => scrollable[S_SCROLL_TOP] + getBoundingClientRect(target).top - (scrollable === docScrollingElement ? 0 : getBoundingClientRect(scrollable).top),
-        left: () => scrollable[S_SCROLL_LEFT] + getBoundingClientRect(target).left - (scrollable === docScrollingElement ? 0 : getBoundingClientRect(scrollable).left)
+        top: () => getBoundingClientRect(target).top - getBoundingClientRect(scrollable).top + (isDocScrollingElement ? 0 : scrollable[S_SCROLL_TOP]),
+        left: () => getBoundingClientRect(target).left - getBoundingClientRect(scrollable).left + (isDocScrollingElement ? 0 : scrollable[S_SCROLL_LEFT])
       };
     }
     if (isString(target)) {
@@ -6811,8 +7625,9 @@
   const getStartEndPosition = async options => {
     await waitForMeasureTime();
     const applyOffset = (position, offset) => {
-      position.top += (offset === null || offset === void 0 ? void 0 : offset.top) || 0;
-      position.left += (offset === null || offset === void 0 ? void 0 : offset.left) || 0;
+      var _offset$top, _offset$left;
+      position.top += (_offset$top = offset === null || offset === void 0 ? void 0 : offset.top) !== null && _offset$top !== void 0 ? _offset$top : 0;
+      position.left += (_offset$left = offset === null || offset === void 0 ? void 0 : offset.left) !== null && _offset$left !== void 0 ? _offset$left : 0;
     };
     const scrollable = options._scrollable;
     const start = {
@@ -6826,8 +7641,8 @@
       applyOffset(end, options._altOffset);
     }
     return {
-      start,
-      end
+      _start: start,
+      _end: end
     };
   };
 
@@ -6862,50 +7677,94 @@
     return endPosition;
   };
   const initiateScroll = async (options, isCancelled) => {
+    var _existingScrollInfo$_, _existingScrollInfo$_2;
     const position = await getStartEndPosition(options);
     const duration = options._duration;
     const scrollable = options._scrollable;
-    let startTime, previousTimeStamp;
-    let currentPosition = position.start;
-    const step = async () => {
-      await waitForMutateTime(); // effectively next animation frame
-      // Element.scrollTo equates to a measurement and needs to run after
-      // painting to avoid forced layout.
-      await waitForMeasureTime();
-      const timeStamp = timeNow();
-      if (isCancelled()) {
-        // Reject the promise
-        throw currentPosition;
-      }
-      if (!startTime) {
-        // If it's very close to the target, no need to scroll smoothly
-        if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
-          elScrollTo(scrollable, position.end);
-          return position.end;
-        }
-        startTime = timeStamp;
-      }
-      if (startTime !== timeStamp && previousTimeStamp !== timeStamp) {
-        const elapsed = timeStamp - startTime;
-        const progress = easeInOutQuad(min(1, elapsed / duration));
-        currentPosition = {
-          top: position.start.top + (position.end.top - position.start.top) * progress,
-          left: position.start.left + (position.end.left - position.start.left) * progress
-        };
-        elScrollTo(scrollable, currentPosition);
-        if (progress === 1) {
-          return currentPosition;
-        }
-      }
-      previousTimeStamp = timeStamp;
-      return step();
+    const existingScrollInfo = currentScrollInfos.get(scrollable);
+    const currentPosition = (_existingScrollInfo$_ = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._position) !== null && _existingScrollInfo$_ !== void 0 ? _existingScrollInfo$_ : position._start;
+    const currentVelocity = (_existingScrollInfo$_2 = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._velocity) !== null && _existingScrollInfo$_2 !== void 0 ? _existingScrollInfo$_2 : {
+      [S_TOP]: 0,
+      [S_LEFT]: 0
     };
-    return step();
-  };
-  const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
+    let elapsed = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._elapsed;
+    const logger = result ? new result.Logger({
+      name: `scroll-${formatAsString(scrollable)}-${randId()}`,
+      logAtCreation: {
+        options,
+        position,
+        elapsed,
+        currentPosition: copyObject(currentPosition),
+        currentVelocity: copyObject(currentVelocity)
+      }
+    }) : null;
+    var _iteratorAbruptCompletion = false;
+    var _didIteratorError = false;
+    var _iteratorError;
+    try {
+      for (var _iterator = _asyncIterator(newAnimationFrameIterator(elapsed)), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
+        elapsed = _step.value;
+        {
+          const deltaTime = elapsed.sinceLast;
+          if (deltaTime === 0) {
+            // First time
+            continue;
+          }
 
-  // must be called in "measure time"
-  const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+          // Element.scrollTo equates to a measurement and needs to run after
+          // painting to avoid forced layout.
+          await waitForMeasureTime();
+          if (isCancelled()) {
+            // Reject the promise
+            logger === null || logger === void 0 || logger.debug8("Cancelled");
+            throw currentPosition;
+          }
+          for (const s of [S_LEFT, S_TOP]) {
+            const {
+              l,
+              v
+            } = criticallyDamped({
+              l: currentPosition[s],
+              v: currentVelocity[s],
+              lTarget: position._end[s],
+              dt: deltaTime,
+              lag: duration
+            });
+            currentPosition[s] = l;
+            currentVelocity[s] = v;
+          }
+          updateCurrentScrollInfo(scrollable, {
+            _position: currentPosition,
+            _velocity: currentVelocity,
+            _elapsed: elapsed
+          });
+          const isDone = !arePositionsDifferent(currentPosition, position._end, 0.5);
+          if (isDone) {
+            assign(currentPosition, position._end); // use exact final coordinates
+          }
+          elScrollTo(scrollable, currentPosition);
+          if (isDone) {
+            logger === null || logger === void 0 || logger.debug8("Done");
+            break;
+          }
+        }
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (_iteratorAbruptCompletion && _iterator.return != null) {
+          await _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+    return currentPosition;
+  };
 
   // ------------------------------
 
@@ -6958,12 +7817,12 @@
    * @category Overlays
    */
   const getOverlay = userOptions => {
-    var _overlays$get;
+    var _overlays$get$get, _overlays$get;
     const options = tryGetOverlayOptions(userOptions);
     if (!options) {
       return null;
     }
-    return ((_overlays$get = overlays.get(options._parent)) === null || _overlays$get === void 0 ? void 0 : _overlays$get.get(options._overlayKey)) || null;
+    return (_overlays$get$get = (_overlays$get = overlays.get(options._parent)) === null || _overlays$get === void 0 ? void 0 : _overlays$get.get(options._overlayKey)) !== null && _overlays$get$get !== void 0 ? _overlays$get$get : null;
   };
 
   /**
@@ -7012,11 +7871,14 @@
       });
     }
     if (needsContentWrapping) {
-      if (settings.contentWrappingAllowed) {
-        parentEl = await wrapScrollingContent(parentEl);
-      } else {
-        logWarn("Percentage offset view trigger with scrolling root requires contentWrappingAllowed");
-      }
+      // TODO Is it possible to unwrap the children when no longer needing this
+      // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
+      // olverlays anyway.
+      parentEl = await tryWrapContent(parentEl, {
+        _classNames: [PREFIX_WRAPPER$3, PREFIX_WRAPPER$2],
+        _required: true,
+        _requiredBy: "percentage offset view trigger with scrolling root"
+      });
     }
     if (options._style.position === S_ABSOLUTE) {
       // Ensure parent has non-static positioning
@@ -7030,6 +7892,7 @@
 
   // ----------------------------------------
 
+  const PREFIX_WRAPPER$2 = prefixName("overlay-wrapper");
   const overlays = newXWeakMap(() => newMap());
   const tryGetOverlayOptions = userOptions => {
     var _userOptions$data, _userOptions$id;
@@ -7062,11 +7925,10 @@
   };
   const getOverlayKey = (style, data) => objToStrKey(style) + "|" + objToStrKey(data);
   const getCssProperties = style => {
-    const finalCssProperties = merge({
-      position: S_ABSOLUTE
-    },
-    // default
-    style);
+    const finalCssProperties = merge(style, {
+      position: (style === null || style === void 0 ? void 0 : style.position) || S_ABSOLUTE
+    } // default
+    );
     if (finalCssProperties.position === S_ABSOLUTE || finalCssProperties.position === S_FIXED) {
       if (isEmpty(finalCssProperties.top) && isEmpty(finalCssProperties.bottom)) {
         finalCssProperties.top = "0px";
@@ -7120,11 +7982,11 @@
    * Returns the border box size of the given
    * {@link https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry | ResizeObserverEntry}.
    *
-   * @param {} fallbackToContent If the entry does not contain border box
-   *                             measurements (depending on browser), then fall
-   *                             back to using the content box size. Otherwise
-   *                             (by default) will return `NaN` values for width
-   *                             and height.
+   * @param fallbackToContent If the entry does not contain border box
+   *                          measurements (depending on browser), then fall back
+   *                          to using the content box size. Otherwise (by
+   *                          default) will return `NaN` values for width and
+   *                          height.
    *
    * @category Size measurements
    */
@@ -7177,14 +8039,14 @@
    * @internal
    */
   const fetchViewportSize = async (realtime = false) => {
-    var _MH$getDocScrollingEl;
+    var _MH$getDocScrollingEl, _root$clientWidth, _root$clientHeight;
     if (!realtime) {
       await waitForMeasureTime();
     }
     const root = hasDOM() ? (_MH$getDocScrollingEl = getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : getBody() : null;
     return {
-      [S_WIDTH]: (root === null || root === void 0 ? void 0 : root.clientWidth) || 0,
-      [S_HEIGHT]: (root === null || root === void 0 ? void 0 : root.clientHeight) || 0
+      [S_WIDTH]: (_root$clientWidth = root === null || root === void 0 ? void 0 : root.clientWidth) !== null && _root$clientWidth !== void 0 ? _root$clientWidth : 0,
+      [S_HEIGHT]: (_root$clientHeight = root === null || root === void 0 ? void 0 : root.clientHeight) !== null && _root$clientHeight !== void 0 ? _root$clientHeight : 0
     };
   };
 
@@ -7262,11 +8124,11 @@
      */
 
     /**
-     * @param {} debounceWindow Debounce the handler so that it's called at most
-     *                          every `debounceWindow` ms.
+     * @param debounceWindow Debounce the handler so that it's called at most
+     *                       every `debounceWindow` ms.
      */
     constructor(callback, debounceWindow) {
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: "XResizeObserver"
       }) : null;
 
@@ -7279,7 +8141,7 @@
       // a counter of 1 or 2 for how many more calls to ignore.
       const targetsToSkip = newWeakMap();
       let observedTargets = newWeakSet();
-      debounceWindow = debounceWindow || 0;
+      debounceWindow !== null && debounceWindow !== void 0 ? debounceWindow : debounceWindow = 0;
       let timer = null;
       const resizeHandler = entries => {
         // Override entries for previous targets, but keep entries whose targets
@@ -7451,7 +8313,7 @@
      * Creates a new instance of SizeWatcher with the given
      * {@link SizeWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new SizeWatcher(getConfig$4(config), CONSTRUCTOR_KEY$4);
     }
 
@@ -7462,7 +8324,7 @@
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       const myConfig = getConfig$4(config);
       const configStrKey = objToStrKey(myConfig);
       let instance = instances$6.get(configStrKey);
@@ -7476,7 +8338,7 @@
       if (key !== CONSTRUCTOR_KEY$4) {
         throw illegalConstructorError("SizeWatcher.create");
       }
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: "SizeWatcher",
         logAtCreation: config
       }) : null;
@@ -7571,7 +8433,7 @@
       // ----------
 
       const setupOnResize = async (handler, userOptions) => {
-        const options = await fetchOptions(userOptions || {});
+        const options = await fetchOptions(userOptions !== null && userOptions !== void 0 ? userOptions : {});
         const element = options._element;
 
         // Don't await for the size data before creating the callback so that
@@ -7707,6 +8569,7 @@
   const CONSTRUCTOR_KEY$4 = SYMBOL();
   const instances$6 = newMap();
   const getConfig$4 = config => {
+    config !== null && config !== void 0 ? config : config = {};
     return {
       _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
       // If threshold is 0, internally treat as 1 (pixel)
@@ -7759,7 +8622,7 @@
       contentWidth: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[S_WIDTH],
       contentHeight: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[S_HEIGHT]
     };
-    setNumericStyleProps(element, props, {
+    setNumericStyleJsVars(element, props, {
       _prefix: prefix
     }); // don't await here
   };
@@ -7819,7 +8682,7 @@
      * Creates a new instance of LayoutWatcher with the given
      * {@link LayoutWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new LayoutWatcher(getConfig$3(config), CONSTRUCTOR_KEY$3);
     }
 
@@ -7830,7 +8693,7 @@
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       var _instances$get;
       const myConfig = getConfig$3(config);
       const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -7847,7 +8710,7 @@
       if (key !== CONSTRUCTOR_KEY$3) {
         throw illegalConstructorError("LayoutWatcher.create");
       }
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: "LayoutWatcher",
         logAtCreation: config
       }) : null;
@@ -8020,6 +8883,7 @@
   const PREFIX_DEVICE = prefixName("device");
   const PREFIX_ASPECTR = prefixName("aspect-ratio");
   const getConfig$3 = config => {
+    var _config$root;
     const deviceBreakpoints = copyObject(settings.deviceBreakpoints);
     if (config !== null && config !== void 0 && config.deviceBreakpoints) {
       copyExistingKeys(config.deviceBreakpoints, deviceBreakpoints);
@@ -8029,7 +8893,7 @@
       copyExistingKeys(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
     }
     return {
-      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
       _deviceBreakpoints: deviceBreakpoints,
       _aspectRatioBreakpoints: aspectRatioBreakpoints
     };
@@ -8202,7 +9066,7 @@
      * Creates a new instance of PointerWatcher with the given
      * {@link PointerWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new PointerWatcher(getConfig$2(config), CONSTRUCTOR_KEY$2);
     }
 
@@ -8213,7 +9077,7 @@
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       const myConfig = getConfig$2(config);
       const configStrKey = objToStrKey(myConfig);
       let instance = instances$4.get(configStrKey);
@@ -8441,7 +9305,7 @@
      * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
      *   or is `null`, `window` or `document`, the following CSS variables are
      *   set on the root (`html`) element and represent the scroll of the
-     *   {@link fetchMainScrollableElement}:
+     *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
      *   - `--lisn-js--page-scroll-top`
      *   - `--lisn-js--page-scroll-top-fraction`
      *   - `--lisn-js--page-scroll-left`
@@ -8473,9 +9337,9 @@
      * Get the scroll offset of the given scrollable. By default, it will
      * {@link waitForMeasureTime} and so will be delayed by one frame.
      *
-     * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-     *                    this only when doing realtime scroll-based animations
-     *                    as it may cause a forced layout.
+     * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+     *                 this only when doing realtime scroll-based animations
+     *                 as it may cause a forced layout.
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -8499,21 +9363,22 @@
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the "to" coordinates or options are invalid.
      *
-     * @param {} to  If this is an element, then its top-left position is used as
-     *               the target coordinates. If it is a string, then it is treated
-     *               as a selector for an element using `querySelector`.
-     * @param {} [options.scrollable]
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     * @param to If this is an element, then its top-left position is used as
+     *           the target coordinates. If it is a string, then it is treated
+     *           as a selector for an element using `querySelector`.
+     * @param [options.scrollable]
+     *           If not given, it defaults to
+     *           {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
-     * @return {} `null` if there's an ongoing scroll that is not cancellable,
+     * @returns `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
      */
 
     /**
      * Returns the current {@link ScrollAction} if any.
      *
-     * @param {} scrollable
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     * @param scrollable If not given, it defaults to
+     *                   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -8526,16 +9391,16 @@
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
      *
-     * @param {} [options.immediate]  If true, then it will not use
-     *                                {@link waitForMeasureTime} or
-     *                                {@link Utils.waitForMutateTime | waitForMutateTime}.
-     *                                Warning: this will likely result in forced layout.
+     * @param [options.immediate] If true, then it will not use
+     *                            {@link waitForMeasureTime} or
+     *                            {@link Utils.waitForMutateTime | waitForMutateTime}.
+     *                            Warning: this will likely result in forced layout.
      */
 
     /**
      * Returns the element that holds the main page content. By default it's
      * `document.body` but is overridden by
-     * {@link settings.mainScrollableElementSelector}.
+     * {@link Settings.settings.mainScrollableElementSelector}.
      *
      * It will wait for the element to be available if not already.
      */
@@ -8547,7 +9412,7 @@
      * Returns the scrollable element that holds the wrapper around the main page
      * content. By default it's `document.scrollable` (unless `document.body` is
      * actually scrollable, in which case it will be used) but it will be
-     * different if {@link settings.mainScrollableElementSelector} is set.
+     * different if {@link Settings.settings.mainScrollableElementSelector} is set.
      *
      * It will wait for the element to be available if not already.
      */
@@ -8559,7 +9424,7 @@
      * Creates a new instance of ScrollWatcher with the given
      * {@link ScrollWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new ScrollWatcher(getConfig$1(config), CONSTRUCTOR_KEY$1);
     }
 
@@ -8570,7 +9435,7 @@
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       const myConfig = getConfig$1(config);
       const configStrKey = objToStrKey(myConfig);
       let instance = instances$3.get(configStrKey);
@@ -8584,7 +9449,7 @@
       if (key !== CONSTRUCTOR_KEY$1) {
         throw illegalConstructorError("ScrollWatcher.create");
       }
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: "ScrollWatcher",
         logAtCreation: config
       }) : null;
@@ -8630,7 +9495,7 @@
       // ----------
 
       const setupOnScroll = async (handler, userOptions, trackType) => {
-        const options = await fetchOnScrollOptions(config, userOptions || {});
+        const options = await fetchOnScrollOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
         const element = options._element;
 
         // Don't await for the scroll data before creating the callback so that
@@ -8704,6 +9569,7 @@
           deleteKey(allScrollData, element);
           removeEventListenerFrom(eventTarget, S_SCROLL, scrollHandler);
           deleteKey(activeListeners, eventTarget);
+          // TODO: Should we unwrap children if previously WE wrapped them?
         }
       };
 
@@ -8761,12 +9627,11 @@
         // Observe the scrolling element
         setupOnResize(element);
 
-        // And also its children (if possible, single wrapper around children
-        const allowedToWrap = settings.contentWrappingAllowed === true && element !== docScrollingElement && getData(element, PREFIX_NO_WRAP) === null;
-        let wrapper;
-        if (allowedToWrap) {
-          // Wrap the content and observe the wrapper
-          wrapper = await wrapScrollingContent(element);
+        // And also its children (if possible, a single wrapper around them
+        const wrapper = await tryWrapContent(element, {
+          _classNames: [PREFIX_WRAPPER$3, PREFIX_WRAPPER$1]
+        });
+        if (wrapper) {
           setupOnResize(wrapper);
           observedElements.add(wrapper);
 
@@ -8789,7 +9654,7 @@
           // If we've just added the wrapper, it will be in DOMWatcher's queue,
           // so check.
           if (child !== wrapper) {
-            if (allowedToWrap) {
+            if (wrapper) {
               // Move this child into the wrapper. If this results in change of size
               // for wrapper, SizeWatcher will call us.
               moveElement(child, {
@@ -8813,7 +9678,7 @@
       // ----------
 
       const scrollHandler = async event => {
-        var _activeListeners$get;
+        var _activeListeners$get$, _activeListeners$get;
         // We cannot use event.currentTarget because scrollHandler is called inside
         // a setTimeout so by that time, currentTarget is null or something else.
         //
@@ -8833,7 +9698,7 @@
           return;
         }
         const element = await fetchScrollableElement(scrollable);
-        const realtime = (((_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) || 0) > 0;
+        const realtime = ((_activeListeners$get$ = (_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) !== null && _activeListeners$get$ !== void 0 ? _activeListeners$get$ : 0) > 0;
         const latestData = await fetchCurrentScroll(element, realtime, true);
         allScrollData.set(element, latestData);
         logger === null || logger === void 0 || logger.debug9("Scroll event", element, latestData);
@@ -8866,7 +9731,7 @@
 
       // ----------
 
-      this.scroll = (direction, options = {}) => {
+      this.scroll = (direction, options) => {
         var _options$amount;
         if (!isValidScrollDirection(direction)) {
           throw usageError(`Unknown scroll direction: '${direction}'`);
@@ -8874,8 +9739,8 @@
         const isVertical = direction === S_UP || direction === S_DOWN;
         const sign = direction === S_UP || direction === S_LEFT ? -1 : 1;
         let targetCoordinate;
-        const amount = (_options$amount = options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
-        const asFractionOf = options.asFractionOf;
+        const amount = (_options$amount = options === null || options === void 0 ? void 0 : options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
+        const asFractionOf = options === null || options === void 0 ? void 0 : options.asFractionOf;
         if (asFractionOf === "visible") {
           targetCoordinate = isVertical ? el => el[S_SCROLL_TOP] + sign * amount * getClientHeightNow(el) / 100 : el => el[S_SCROLL_LEFT] + sign * amount * getClientWidthNow(el) / 100;
 
@@ -8901,14 +9766,14 @@
 
       // ----------
 
-      this.scrollTo = async (to, options = {}) => scrollTo(to, merge({
-        duration: config._scrollDuration
-      },
-      // default
-      options, {
-        scrollable: await fetchScrollableElement(options.scrollable)
-      } // override
-      ));
+      this.scrollTo = async (to, options) => {
+        var _options$duration;
+        return scrollTo(to, merge(options, {
+          duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : config._scrollDuration,
+          // default
+          scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable) // override
+        }));
+      };
 
       // ----------
 
@@ -8916,13 +9781,13 @@
 
       // ----------
 
-      this.stopUserScrolling = async (options = {}) => {
-        const element = await fetchScrollableElement(options.scrollable);
+      this.stopUserScrolling = async options => {
+        const element = await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable);
         const stopScroll = () => elScrollTo(element, {
           top: element[S_SCROLL_TOP],
           left: element[S_SCROLL_LEFT]
         });
-        if (options.immediate) {
+        if (options !== null && options !== void 0 && options.immediate) {
           stopScroll();
         } else {
           waitForMeasureTime().then(stopScroll);
@@ -8982,7 +9847,9 @@
 
   const CONSTRUCTOR_KEY$1 = SYMBOL();
   const instances$3 = newMap();
+  const PREFIX_WRAPPER$1 = prefixName("scroll-watcher-wrapper");
   const getConfig$1 = config => {
+    config !== null && config !== void 0 ? config : config = {};
     return {
       _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
       // If threshold is 0, internally treat as 1 (pixel)
@@ -9036,6 +9903,7 @@
     return checkTop && topDiff >= threshold || checkLeft && leftDiff >= threshold;
   };
   const fetchScrollData = async (element, previousEventData, realtime) => {
+    var _previousEventData$sc, _previousEventData$sc2;
     if (!realtime) {
       await waitForMeasureTime();
     }
@@ -9047,19 +9915,19 @@
     const clientHeight = getClientHeightNow(element);
     const scrollTopFraction = round(scrollTop) / (scrollHeight - clientHeight || INFINITY);
     const scrollLeftFraction = round(scrollLeft) / (scrollWidth - clientWidth || INFINITY);
-    const prevScrollTop = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) || 0;
-    const prevScrollLeft = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) || 0;
+    const prevScrollTop = (_previousEventData$sc = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) !== null && _previousEventData$sc !== void 0 ? _previousEventData$sc : 0;
+    const prevScrollLeft = (_previousEventData$sc2 = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) !== null && _previousEventData$sc2 !== void 0 ? _previousEventData$sc2 : 0;
     const direction = getMaxDeltaDirection(scrollLeft - prevScrollLeft, scrollTop - prevScrollTop);
     return {
       direction,
+      [S_CLIENT_WIDTH]: clientWidth,
+      [S_CLIENT_HEIGHT]: clientHeight,
+      [S_SCROLL_WIDTH]: scrollWidth,
+      [S_SCROLL_HEIGHT]: scrollHeight,
       [S_SCROLL_TOP]: scrollTop,
       [S_SCROLL_TOP_FRACTION]: scrollTopFraction,
       [S_SCROLL_LEFT]: scrollLeft,
-      [S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-      [S_SCROLL_WIDTH]: scrollWidth,
-      [S_SCROLL_HEIGHT]: scrollHeight,
-      [S_CLIENT_WIDTH]: clientWidth,
-      [S_CLIENT_HEIGHT]: clientHeight
+      [S_SCROLL_LEFT_FRACTION]: scrollLeftFraction
     };
   };
   const setScrollCssProps = (element, scrollData) => {
@@ -9069,7 +9937,7 @@
       element = getDocElement();
       prefix = "page-";
     }
-    scrollData = scrollData || {};
+    scrollData !== null && scrollData !== void 0 ? scrollData : scrollData = {};
     const props = {
       [S_SCROLL_TOP]: scrollData[S_SCROLL_TOP],
       [S_SCROLL_TOP_FRACTION]: scrollData[S_SCROLL_TOP_FRACTION],
@@ -9078,7 +9946,7 @@
       [S_SCROLL_WIDTH]: scrollData[S_SCROLL_WIDTH],
       [S_SCROLL_HEIGHT]: scrollData[S_SCROLL_HEIGHT]
     };
-    setNumericStyleProps(element, props, {
+    setNumericStyleJsVars(element, props, {
       _prefix: prefix
     });
   };
@@ -9485,16 +10353,16 @@
      * Get the current view relative to the target. By default, it will
      * {@link waitForMeasureTime} and so will be delayed by one frame.
      *
-     * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-     *                    this only when doing realtime scroll-based animations
-     *                    as it may cause a forced layout.
+     * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+     *                 this only when doing realtime scroll-based animations
+     *                 as it may cause a forced layout.
      */
 
     /**
      * Creates a new instance of ViewWatcher with the given
      * {@link ViewWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
     }
 
@@ -9505,7 +10373,7 @@
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       var _instances$get;
       const myConfig = getConfig(config);
       const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -9522,7 +10390,7 @@
       if (key !== CONSTRUCTOR_KEY) {
         throw illegalConstructorError("ViewWatcher.create");
       }
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: "ViewWatcher",
         logAtCreation: config
       }) : null;
@@ -9852,11 +10720,11 @@
   const CONSTRUCTOR_KEY = SYMBOL();
   const instances$2 = newXMap(() => newMap());
   const getConfig = config => {
-    var _config$rootMargin;
+    var _config$root, _config$rootMargin, _config$threshold;
     return {
-      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
       _rootMargin: (_config$rootMargin = config === null || config === void 0 ? void 0 : config.rootMargin) !== null && _config$rootMargin !== void 0 ? _config$rootMargin : "0px 0px 0px 0px",
-      _threshold: (config === null || config === void 0 ? void 0 : config.threshold) || 0
+      _threshold: (_config$threshold = config === null || config === void 0 ? void 0 : config.threshold) !== null && _config$threshold !== void 0 ? _config$threshold : 0
     };
   };
   const TRACK_REGULAR = 1; // only entering/leaving root
@@ -10069,7 +10937,8 @@
     return [S_AT];
   };
   const setViewCssProps = (element, viewData) => {
-    const relative = (viewData === null || viewData === void 0 ? void 0 : viewData.relative) || {};
+    var _viewData$relative;
+    const relative = (_viewData$relative = viewData === null || viewData === void 0 ? void 0 : viewData.relative) !== null && _viewData$relative !== void 0 ? _viewData$relative : {};
     const props = {
       top: relative.top,
       bottom: relative.bottom,
@@ -10080,7 +10949,7 @@
       hMiddle: relative.hMiddle,
       vMiddle: relative.vMiddle
     };
-    setNumericStyleProps(element, props, {
+    setNumericStyleJsVars(element, props, {
       _prefix: "r-",
       _numDecimal: 4
     }); // don't await here
@@ -10230,8 +11099,8 @@
      * Retrieve an existing widget by element and ID.
      */
     static get(element, id) {
-      var _instances$get;
-      return ((_instances$get = instances$1.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) || null;
+      var _instances$get$get, _instances$get;
+      return (_instances$get$get = (_instances$get = instances$1.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) !== null && _instances$get$get !== void 0 ? _instances$get$get : null;
     }
 
     /**
@@ -10239,7 +11108,7 @@
      * this element, it will be destroyed!
      */
     constructor(element, config) {
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: `${this.constructor.name}-${formatAsString(element)}`,
         logAtCreation: this
       }) : null;
@@ -10347,26 +11216,25 @@
    * **IMPORTANT:** If a widget by that name is already registered, the current
    * call does nothing, even if the remaining arguments differ.
    *
-   * @param {} name       The name of the widget. Should be in kebab-case.
-   * @param {} newWidget  Called for every element matching the widget selector.
-   * @param {} configValidator
-   *                      A validator object, or a function that returns such an
-   *                      object, for all options supported by the widget. If
-   *                      given, then the `newWidget` function will also be
-   *                      passed a configuration object constructed from the
-   *                      element's data attribute.
-   * @param {} [options.selector]
-   *                      The selector to match elements for. If not given, then
-   *                      uses a default value of `[data-lisn-<name>], .lisn-<name>`
-   * @param {} [options.supportsMultiple]
-   *                      If true, and if `configValidator` is given, then the
-   *                      value of the element's widget specific data attribute
-   *                      will be split on ";" and each one parsed individually
-   *                      as a configuration. Then the `newWidget` function will
-   *                      be called once for each configuration.
+   * @param name      The name of the widget. Should be in kebab-case.
+   * @param newWidget Called for every element matching the widget selector.
+   * @param configValidator
+   *                  A validator object, or a function that returns such an
+   *                  object, for all options supported by the widget. If
+   *                  given, then the `newWidget` function will also be
+   *                  passed a configuration object constructed from the
+   *                  element's data attribute.
+   * @param [options.selector]
+   *                  The selector to match elements for. If not given, then
+   *                  uses a default value of `[data-lisn-<name>], .lisn-<name>`
+   * @param [options.supportsMultiple]
+   *                  If true, and if `configValidator` is given, then the
+   *                  value of the element's widget specific data attribute
+   *                  will be split on ";" and each one parsed individually
+   *                  as a configuration. Then the `newWidget` function will
+   *                  be called once for each configuration.
    */
   const registerWidget = async (name, newWidget, configValidator, options) => {
-    var _options$selector;
     if (registeredWidgets.has(name)) {
       return;
     }
@@ -10376,7 +11244,7 @@
     // straight after loading LISN.js
     await waitForInteractive();
     const prefixedName = prefixName(name);
-    const selector = (_options$selector = options === null || options === void 0 ? void 0 : options.selector) !== null && _options$selector !== void 0 ? _options$selector : getDefaultWidgetSelector(prefixedName);
+    const selector = (options === null || options === void 0 ? void 0 : options.selector) || getDefaultWidgetSelector(prefixedName);
     if (settings.autoWidgets) {
       const domWatcher = DOMWatcher.reuse();
       domWatcher.onMutation(async operation => {
@@ -10537,9 +11405,9 @@
    * **IMPORTANT:** If an action by that name is already registered, the current
    * call does nothing, even if the remaining arguments differ.
    *
-   * @param {} name      The name of the action. Should be in kebab-case.
-   * @param {} newAction Called for every action specification for a trigger
-   *                     parsed by {@link Triggers.registerTrigger}
+   * @param name      The name of the action. Should be in kebab-case.
+   * @param newAction Called for every action specification for a trigger
+   *                  parsed by {@link Triggers.registerTrigger}
    */
   const registerAction = (name, newAction, configValidator) => {
     if (registeredActions.has(name)) {
@@ -10573,7 +11441,7 @@
     if (!newActionFromSpec) {
       throw usageError(`Unknown action '${name}'`);
     }
-    return await newActionFromSpec(element, argsAndOptions || "");
+    return await newActionFromSpec(element, argsAndOptions !== null && argsAndOptions !== void 0 ? argsAndOptions : "");
   };
 
   // --------------------
@@ -10695,70 +11563,8 @@
     return {
       _add: () => addClasses(element, ...classNames),
       _remove: () => removeClasses(element, ...classNames),
-      _toggle: async () => {
-        for (const cls of classNames) {
-          await toggleClass(element, cls);
-        }
-      }
+      _toggle: () => toggleClasses(element, ...classNames)
     };
-  };
-
-  /**
-   * @module Utils
-   */
-
-
-  /**
-   * @param {} webAnimationCallback This function is called for each
-   *                                {@link https://developer.mozilla.org/en-US/docs/Web/API/Animation | Animation}
-   *                                on the element. It {@link waitForMeasureTime}
-   *                                before reading the animations.
-   * @param {} legacyCallback       This function is called if the browser does
-   *                                not support the Web Animations API. It is
-   *                                called after {@link waitForMutateTime} so it
-   *                                can safely modify styles.
-   * @param {} realtime             If true, then it does not
-   *                                {@link waitForMeasureTime} or
-   *                                {@link waitForMutateTime} and runs
-   *                                synchronously.
-   *
-   * @category Animations
-   */
-  const iterateAnimations = async (element, webAnimationCallback, legacyCallback, realtime = false) => {
-    /* istanbul ignore next */ // jsdom doesn't support Web Animations
-    if ("getAnimations" in element && getData(element, prefixName("test-legacy")) === null) {
-      if (!realtime) {
-        await waitForMeasureTime();
-      }
-      for (const animation of element.getAnimations()) {
-        webAnimationCallback(animation);
-      }
-
-      // Old browsers, no Animation API
-    } else {
-      if (!realtime) {
-        await waitForMutateTime();
-      }
-      legacyCallback(element);
-    }
-  };
-
-  /**
-   * @ignore
-   * @internal
-   */
-  const resetCssAnimationsNow = element => {
-    addClassesNow(element, PREFIX_ANIMATE_DISABLE); // cause it to reset
-    // If we remove the disable class immediately, then it will not have the
-    // effect to reset the animation, since the browser won't see any change in
-    // the classList at the start of the frame. So we ideally need to remove the
-    // disable class after the next paint. However, depending on the animation,
-    // and its state, disabling animation and waiting for the next animation
-    // frame may cause a visible glitch, so we need to force layout now.
-    /* eslint-disable-next-line @typescript-eslint/no-unused-expressions */
-    element[S_CLIENT_WIDTH]; // forces layout
-
-    removeClassesNow(element, PREFIX_ANIMATE_DISABLE);
   };
 
   /**
@@ -10804,7 +11610,7 @@
       registerAction("animate", element => new Animate(element));
     }
     constructor(element) {
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: `Animate-${formatAsString(element)}`
       }) : null;
 
@@ -11252,7 +12058,7 @@
    *
    * @category DOM: Searching for reference elements
    *
-   * @param {} thisElement The element to search relative to
+   * @param thisElement The element to search relative to
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                        If the specification is invalid or if thisElement is
@@ -11282,7 +12088,8 @@
       selector = matchOp + refOrCls;
     } else {
       if (!refOrCls) {
-        refOrCls = getData(thisElement, PREFIX_REF) || "";
+        var _getData;
+        refOrCls = (_getData = getData(thisElement, PREFIX_REF)) !== null && _getData !== void 0 ? _getData : "";
       }
       if (!refOrCls) {
         throw usageError(`No reference name in '${spec}'`);
@@ -11336,7 +12143,8 @@
   const getNextReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, false);
   const getPrevReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, true);
   const getNextOrPrevReferenceElement = (selector, thisElement, goBackward) => {
-    thisElement = getThisReferenceElement(selector, thisElement) || thisElement;
+    var _getThisReferenceElem, _allRefs$refIndex;
+    thisElement = (_getThisReferenceElem = getThisReferenceElement(selector, thisElement)) !== null && _getThisReferenceElem !== void 0 ? _getThisReferenceElem : thisElement;
     if (!getDoc().contains(thisElement)) {
       return null;
     }
@@ -11363,7 +12171,7 @@
         break;
       }
     }
-    return allRefs[refIndex] || null;
+    return (_allRefs$refIndex = allRefs[refIndex]) !== null && _allRefs$refIndex !== void 0 ? _allRefs$refIndex : null;
   };
 
   /**
@@ -11479,9 +12287,9 @@
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
-      var _config$once, _config$oneWay, _config$doDelay, _config$undoDelay;
+      var _config$once, _config$oneWay, _config$delay, _config$doDelay, _config$undoDelay;
       super(element, config);
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: `Trigger-${formatAsString(element)}`,
         logAtCreation: {
           actions,
@@ -11490,7 +12298,7 @@
       }) : null;
       const once = (_config$once = config === null || config === void 0 ? void 0 : config.once) !== null && _config$once !== void 0 ? _config$once : false;
       const oneWay = (_config$oneWay = config === null || config === void 0 ? void 0 : config.oneWay) !== null && _config$oneWay !== void 0 ? _config$oneWay : false;
-      const delay = (config === null || config === void 0 ? void 0 : config.delay) || 0;
+      const delay = (_config$delay = config === null || config === void 0 ? void 0 : config.delay) !== null && _config$delay !== void 0 ? _config$delay : 0;
       const doDelay = (_config$doDelay = config === null || config === void 0 ? void 0 : config.doDelay) !== null && _config$doDelay !== void 0 ? _config$doDelay : delay;
       const undoDelay = (_config$undoDelay = config === null || config === void 0 ? void 0 : config.undoDelay) !== null && _config$undoDelay !== void 0 ? _config$undoDelay : delay;
       let lastCallId;
@@ -11518,9 +12326,7 @@
         }
         toggleState = newToggleState;
         if (toggleState && once) {
-          remove(run);
-          remove(reverse);
-          remove(toggle);
+          this.destroy();
         }
       };
       const run = wrapCallback(() => {
@@ -11543,11 +12349,17 @@
 
       // ----------
 
+      this.onDestroy(() => {
+        logger === null || logger === void 0 || logger.debug5("Removing callbacks");
+        remove(run);
+        remove(reverse);
+        remove(toggle);
+      });
       this.run = run.invoke;
       this.reverse = reverse.invoke;
       this[S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
       this.getActions = () => [...actions]; // copy
-      this.getConfig = () => copyObject(config || {});
+      this.getConfig = () => copyObject(config);
     }
   }
 
@@ -11571,17 +12383,17 @@
    * **IMPORTANT:** If a trigger by that name is already registered, the current
    * call does nothing, even if the remaining arguments differ.
    *
-   * @param {} name       The name of the trigger. Should be in kebab-case.
-   * @param {} newTrigger Called for every trigger specification on any element
-   *                      that has one or more trigger specifications.
-   * @param {} configValidator
-   *                      A validator object, or a function that returns such an
-   *                      object, for all options that are specific to the
-   *                      trigger. Base options (in {@link TriggerConfig}) will
-   *                      be parsed automatically and don't need to be handled by
-   *                      `configValidator`.
-   *                      If the parameter is a function, it will be called with
-   *                      the element on which the trigger is being defined.
+   * @param name       The name of the trigger. Should be in kebab-case.
+   * @param newTrigger Called for every trigger specification on any element
+   *                   that has one or more trigger specifications.
+   * @param configValidator
+   *                   A validator object, or a function that returns such an
+   *                   object, for all options that are specific to the
+   *                   trigger. Base options (in {@link TriggerConfig}) will
+   *                   be parsed automatically and don't need to be handled by
+   *                   `configValidator`.
+   *                   If the parameter is a function, it will be called with
+   *                   the element on which the trigger is being defined.
    *
    * @see {@link registerWidget}
    */
@@ -11606,10 +12418,10 @@
         const config = await fetchWidgetConfig(configSpec, assign(baseConfigValidator, thisConfigValidator), OPTION_PREF_CHAR);
         const actionTarget = (_config$actOn = config.actOn) !== null && _config$actOn !== void 0 ? _config$actOn : element;
         const actions = [];
-        for (const actionSpec of splitOn(allActionSpecs || "", ACTION_PREF_CHAR, true)) {
+        for (const actionSpec of splitOn(allActionSpecs !== null && allActionSpecs !== void 0 ? allActionSpecs : "", ACTION_PREF_CHAR, true)) {
           const [name, actionArgsAndOptions] = splitOn(actionSpec, ACTION_ARGS_PREF_CHAR, true, 1);
           try {
-            actions.push(await fetchAction(actionTarget, name, actionArgsAndOptions || ""));
+            actions.push(await fetchAction(actionTarget, name, actionArgsAndOptions !== null && actionArgsAndOptions !== void 0 ? actionArgsAndOptions : ""));
           } catch (err) {
             if (isInstanceOf(err, LisnUsageError)) {
               // fetchAction would have logged an error
@@ -11881,6 +12693,7 @@
    * - Accepted options:
    *   - `offsetX`: A number.
    *   - `offsetY`: A number.
+   *   - `duration`: A number.
    *   - `scrollable`: A string element specification for an element (see
    *     {@link Utils.getReferenceElement | getReferenceElement}). Note that,
    *     unless it's a DOM ID, the specification is parsed relative to the
@@ -11911,11 +12724,11 @@
    *
    * @example
    * When the user clicks the button, scroll the main scrolling element to
-   * element's position 10px _down_ and 50px _left_:
+   * element's position 10px _down_ and 50px _left_, with a duration of 200ms:
    *
    * ```html
    * <button id="btn">Scroll to/back</button>
-   * <div data-lisn-on-click="@scroll-to: offsetY=10, offsetX=-50 +target=#btn"></div>
+   * <div data-lisn-on-click="@scroll-to: offsetY=10, offsetX=-50, duration=200 +target=#btn"></div>
    * ```
    *
    * @example
@@ -11964,25 +12777,24 @@
           top: config.offsetY
         } : undefined;
         return new ScrollTo(element, {
-          scrollable: config === null || config === void 0 ? void 0 : config.scrollable,
-          offset
+          offset,
+          duration: config === null || config === void 0 ? void 0 : config.duration,
+          scrollable: config === null || config === void 0 ? void 0 : config.scrollable
         });
-      }, newConfigValidator$6);
+      }, newConfigValidator$8);
     }
     constructor(element, config) {
-      const offset = config === null || config === void 0 ? void 0 : config.offset;
-      const scrollable = config === null || config === void 0 ? void 0 : config.scrollable;
       const watcher = ScrollWatcher.reuse();
+      const {
+        scrollable
+      } = config !== null && config !== void 0 ? config : {};
       let prevScrollTop = -1,
         prevScrollLeft = -1;
       this.do = async () => {
-        const current = await watcher.fetchCurrentScroll();
+        const current = await watcher.fetchCurrentScroll(scrollable);
         prevScrollTop = current[S_SCROLL_TOP];
         prevScrollLeft = current[S_SCROLL_LEFT];
-        const action = await watcher.scrollTo(element, {
-          offset,
-          scrollable
-        });
+        const action = await watcher.scrollTo(element, config);
         await (action === null || action === void 0 ? void 0 : action.waitFor());
       };
       this.undo = async () => {
@@ -11990,30 +12802,31 @@
           const action = await watcher.scrollTo({
             top: prevScrollTop,
             left: prevScrollLeft
-          });
+          }, omitKeys(config !== null && config !== void 0 ? config : {}, {
+            offset: true
+          }) // no offset when undoing
+          );
           await (action === null || action === void 0 ? void 0 : action.waitFor());
         }
       };
       this[S_TOGGLE] = async () => {
-        const start = await watcher.fetchCurrentScroll();
+        const start = await watcher.fetchCurrentScroll(scrollable);
         const canReverse = prevScrollTop !== -1;
         let hasReversed = false;
 
-        // Try to scroll to the element, but if we're already at it, then reverse
-        // to previous position if any.
+        // Try to scroll to the element, but if we're already close to it, then
+        // reverse to previous position if any.
         const altTarget = {
           top: () => {
-            hasReversed = true;
+            hasReversed = true; // detect if we have reversed
             return prevScrollTop;
           },
           left: prevScrollLeft
         };
-        const action = await watcher.scrollTo(element, canReverse ? {
-          altTarget,
-          offset
-        } : {
-          offset
-        });
+        const action = await watcher.scrollTo(element, merge(config, canReverse ? {
+          altTarget
+        } // no altOffset when reversing
+        : {}));
         await (action === null || action === void 0 ? void 0 : action.waitFor());
         if (!hasReversed) {
           // We've scrolled to the element, so save the starting position as the
@@ -12032,7 +12845,7 @@
 
   // --------------------
 
-  const newConfigValidator$6 = element => {
+  const newConfigValidator$8 = element => {
     return {
       offsetX: (key, value) => {
         var _validateNumber;
@@ -12042,6 +12855,7 @@
         var _validateNumber2;
         return (_validateNumber2 = validateNumber(key, value)) !== null && _validateNumber2 !== void 0 ? _validateNumber2 : 0;
       },
+      duration: (key, value) => validateNumber(key, value),
       scrollable: (key, value) => {
         var _ref;
         return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
@@ -12170,7 +12984,7 @@
     static register() {
       registerAction("set-attribute", (element, args, config) => {
         return new SetAttribute(element, {
-          [args[0]]: config || {}
+          [args[0]]: config !== null && config !== void 0 ? config : {}
         });
       }, configValidator$8);
     }
@@ -12387,10 +13201,9 @@
    * {@link OpenableProperties.name | options.name} to the
    * {@link Openable.constructor} but it does not need to be the same.
    *
-   * @param {} name        The name of the openable. Should be in kebab-case.
-   * @param {} newOpenable Called for every element matching the selector.
-   * @param {} configValidator
-   *                        A validator object, or a function that returns such
+   * @param name            The name of the openable. Should be in kebab-case.
+   * @param newOpenable     Called for every element matching the selector.
+   * @param configValidator A validator object, or a function that returns such
    *                        an object, for all options supported by the widget.
    *
    * @see {@link registerWidget}
@@ -12482,9 +13295,10 @@
      * created for it will be returned.
      */
     static get(element) {
+      var _instances$get;
       // We manage the instances here since we also map associated elements and
       // not just the main content element that created the widget.
-      return instances.get(element) || null;
+      return (_instances$get = instances.get(element)) !== null && _instances$get !== void 0 ? _instances$get : null;
     }
     constructor(element, properties) {
       super(element);
@@ -13000,7 +13814,7 @@
       registerOpenable(WIDGET_NAME_POPUP, (el, config) => new Popup(el, config), popupConfigValidator);
     }
     constructor(element, config) {
-      var _config$autoClose2, _config$closeButton, _config$position;
+      var _config$autoClose2, _config$closeButton;
       super(element, {
         name: WIDGET_NAME_POPUP,
         id: config === null || config === void 0 ? void 0 : config.id,
@@ -13013,7 +13827,7 @@
       });
       const root = this.getRoot();
       const container = this.getContainer();
-      const position = (_config$position = config === null || config === void 0 ? void 0 : config.position) !== null && _config$position !== void 0 ? _config$position : S_AUTO;
+      const position = (config === null || config === void 0 ? void 0 : config.position) || S_AUTO;
       if (position !== S_AUTO) {
         setData(root, PREFIX_PLACE, position);
       }
@@ -13452,13 +14266,14 @@
     };
   };
   const findContainer = (content, cls) => {
+    var _currWidget$getRoot;
     const currWidget = instances.get(content);
     // If there's an existing widget that we're about to destroy, the content
     // element will be wrapped in several elements and won't be restored until
     // the next mutate time. In that case, to correctly determine the container
     // element, use the current widget's root element, which is located in the
     // content element's original place.
-    let childRef = (currWidget === null || currWidget === void 0 ? void 0 : currWidget.getRoot()) || content;
+    let childRef = (_currWidget$getRoot = currWidget === null || currWidget === void 0 ? void 0 : currWidget.getRoot()) !== null && _currWidget$getRoot !== void 0 ? _currWidget$getRoot : content;
     if (!parentOf(childRef)) {
       // The current widget is not yet initialized (i.e. we are re-creating it
       // immediately after it was constructed)
@@ -13863,10 +14678,10 @@
   // COLLAPSIBLE ------------------------------
 
   const insertCollapsibleIcon = (trigger, triggerConfig, widget, widgetConfig) => {
-    var _triggerConfig$icon, _ref2, _triggerConfig$iconCl, _ref3, _triggerConfig$iconOp;
+    var _triggerConfig$icon, _triggerConfig$iconCl, _triggerConfig$iconOp;
     const iconPosition = (_triggerConfig$icon = triggerConfig.icon) !== null && _triggerConfig$icon !== void 0 ? _triggerConfig$icon : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.icon;
-    const iconClosed = (_ref2 = (_triggerConfig$iconCl = triggerConfig.iconClosed) !== null && _triggerConfig$iconCl !== void 0 ? _triggerConfig$iconCl : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconClosed) !== null && _ref2 !== void 0 ? _ref2 : "plus";
-    const iconOpen = (_ref3 = (_triggerConfig$iconOp = triggerConfig.iconOpen) !== null && _triggerConfig$iconOp !== void 0 ? _triggerConfig$iconOp : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconOpen) !== null && _ref3 !== void 0 ? _ref3 : "minus";
+    const iconClosed = ((_triggerConfig$iconCl = triggerConfig.iconClosed) !== null && _triggerConfig$iconCl !== void 0 ? _triggerConfig$iconCl : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconClosed) || "plus";
+    const iconOpen = ((_triggerConfig$iconOp = triggerConfig.iconOpen) !== null && _triggerConfig$iconOp !== void 0 ? _triggerConfig$iconOp : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconOpen) || "minus";
     if (iconPosition) {
       addClasses(trigger, PREFIX_ICON_WRAPPER);
       setData(trigger, PREFIX_ICON_POSITION, iconPosition);
@@ -14058,7 +14873,7 @@
    * "toggle" elements which correspond one-to-one to each page. Switches go to
    * the given page and toggles toggle the enabled/disabled state of the page.
    *
-   * **IMPORTANT:** Unless the {@link PagerStyle.style} is set to "carousel", the
+   * **IMPORTANT:** Unless the {@link PagerConfig.style} is set to "carousel", the
    * page elements will be positioned absolutely, and therefore the pager likely
    * needs to have an explicit height. If you enable
    * {@link PagerConfig.fullscreen}, then the element will get `height: 100vh`
@@ -14307,7 +15122,7 @@
      *                page is not a descendant of the main pager element.
      */
     constructor(element, config) {
-      var _Pager$get;
+      var _Pager$get, _config$nextSwitch, _config$prevSwitch;
       const destroyPromise = (_Pager$get = Pager.get(element)) === null || _Pager$get === void 0 ? void 0 : _Pager$get.destroy();
       super(element, {
         id: DUMMY_ID$9
@@ -14316,8 +15131,8 @@
       const toggles = (config === null || config === void 0 ? void 0 : config.toggles) || [];
       const switches = (config === null || config === void 0 ? void 0 : config.switches) || [];
       const nextPrevSwitch = {
-        _next: (config === null || config === void 0 ? void 0 : config.nextSwitch) || null,
-        _prev: (config === null || config === void 0 ? void 0 : config.prevSwitch) || null
+        _next: (_config$nextSwitch = config === null || config === void 0 ? void 0 : config.nextSwitch) !== null && _config$nextSwitch !== void 0 ? _config$nextSwitch : null,
+        _prev: (_config$prevSwitch = config === null || config === void 0 ? void 0 : config.prevSwitch) !== null && _config$prevSwitch !== void 0 ? _config$prevSwitch : null
       };
       const pageSelector = getDefaultWidgetSelector(PREFIX_PAGE__FOR_SELECT);
       const toggleSelector = getDefaultWidgetSelector(PREFIX_TOGGLE__FOR_SELECT);
@@ -14501,8 +15316,8 @@
     return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
   };
   const init$3 = (widget, element, components, config, methods) => {
-    var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
-    const logger = debug ? new debug.Logger({
+    var _config$initialPage, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
+    const logger = result ? new result.Logger({
       name: `Pager-${formatAsString(element)}`,
       logAtCreation: config
     }) : null;
@@ -14511,9 +15326,9 @@
     const switches = components._switches;
     const nextSwitch = components._nextPrevSwitch._next;
     const prevSwitch = components._nextPrevSwitch._prev;
-    const pageContainer = (_pages$ = pages[0]) === null || _pages$ === void 0 ? void 0 : _pages$.parentElement;
+    const pageContainer = parentOf(pages[0]);
     let initialPage = toInt((_config$initialPage = config === null || config === void 0 ? void 0 : config.initialPage) !== null && _config$initialPage !== void 0 ? _config$initialPage : 1);
-    const pagerStyle = (_config$style = config === null || config === void 0 ? void 0 : config.style) !== null && _config$style !== void 0 ? _config$style : "slider";
+    const pagerStyle = (config === null || config === void 0 ? void 0 : config.style) || "slider";
     const isCarousel = pagerStyle === "carousel";
     const minPageSize = (_config$pageSize = config === null || config === void 0 ? void 0 : config.pageSize) !== null && _config$pageSize !== void 0 ? _config$pageSize : 300;
     const enablePeek = (_config$peek = config === null || config === void 0 ? void 0 : config.peek) !== null && _config$peek !== void 0 ? _config$peek : false;
@@ -15233,20 +16048,148 @@
   /**
    * @module Triggers
    *
+   * @categoryDescription Input
+   * {@link CheckTrigger} allows you to run actions when the user checks a target
+   * checkbox input element, and undo those actions when they uncheck the checkbox.
+   */
+
+  /**
+   * {@link CheckTrigger} allows you to run actions when the user checks a target
+   * checkbox input element, and undo those actions when they uncheck the checkbox.
+   *
+   * -------
+   *
+   * To use with auto-widgets (HTML API), see {@link registerTrigger} for the
+   * specification.
+   *
+   * - Arguments: none
+   * - Additional trigger options: none
+   *   - `target`: A string element specification.
+   *     See {@link Utils.getReferenceElement | getReferenceElement}.
+   *
+   * @example
+   * Add classes `active` and `checked` when the user checks the checkbox,
+   * remove them when unchecked.
+   *
+   * ```html
+   * <input type="checkbox" data-lisn-on-check="@add-class=active,checked"/>
+   * ```
+   *
+   * @example
+   * As above, but using a CSS class instead of data attribute:
+   *
+   * ```html
+   * <input type="checkbox" class="lisn-on-check--@add-class=active,checked"/>
+   * ```
+   *
+   * @example
+   * Play the animations on the element each time the user checks the next
+   * element with class `checkbox` (do nothing when it's unchecked).
+   *
+   * ```html
+   * <div data-lisn-on-check="@animate +one-way +target=next.checkbox"></div>
+   * <input type="checkbox" class="checkbox"/>
+   * ```
+   *
+   * @example
+   * Add class `used` the first time the user checks the next element with class
+   * `checkbox`, and play or reverse the animations 200ms after each time the
+   * user toggles the reference checkbox.
+   *
+   * ```html
+   * <div data-lisn-on-check="@add-class=used +once ;
+   *                          @animate +delay=200 +target=next.checkbox"
+   * ></div>
+   * <input type="checkbox" class="checkbox"/>
+   * ```
+   *
+   * @example
+   * When the user checks the next element with class `checkbox` then add classes `c1`
+   * and `c2` to the element (that the trigger is defined on) and enable trigger
+   * `my-trigger` defined on this same element; undo all of that when the user unchecks
+   * the reference checkbox.
+   *
+   * ```html
+   * <div data-lisn-on-check="@add-class=c1,c2 @enable=my-trigger +target=next.checkbox"
+   *      data-lisn-on-run="@show +id=my-trigger"
+   * ></div>
+   * <input type="checkbox" class="checkbox"/>
+   * ```
+   *
+   * @example
+   * As above, but using `data-lisn-ref` attribute instead of class selector.
+   *
+   * ```html
+   * <div data-lisn-on-check="@add-class=c1,c2 @enable=my-trigger +target=next-checkbox"
+   *      data-lisn-on-run="@show +id=my-trigger"
+   * ></div>
+   * <input type="checkbox" data-lisn-ref="checkbox"/>
+   * ```
+   *
+   * @category Input
+   */
+  class CheckTrigger extends Trigger {
+    static register() {
+      registerTrigger("check", (element, args, actions, config) => new CheckTrigger(element, actions, config), newConfigValidator$7);
+    }
+
+    /**
+     * If no actions are supplied, nothing is done.
+     *
+     * @throws {@link Errors.LisnUsageError | LisnUsageError}
+     *                If the config is invalid.
+     */
+    constructor(element, actions, config) {
+      var _MH$targetOf;
+      super(element, actions, config);
+      this.getConfig = () => copyObject(config);
+      if (!lengthOf(actions)) {
+        return;
+      }
+      const target = (_MH$targetOf = targetOf(config)) !== null && _MH$targetOf !== void 0 ? _MH$targetOf : element;
+      if (!isInstanceOf(target, HTMLInputElement)) {
+        return;
+      }
+      const onToggle = () => target.checked ? this.run() : this.reverse();
+      addEventListenerTo(target, "change", onToggle);
+      this.onDestroy(() => {
+        removeEventListenerFrom(target, "change", onToggle);
+      });
+    }
+  }
+
+  /**
+   * @category Input
+   * @interface
+   */
+
+  // --------------------
+
+  const newConfigValidator$7 = element => {
+    return {
+      target: (key, value) => {
+        var _ref;
+        return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
+      }
+    };
+  };
+
+  /**
+   * @module Triggers
+   *
    * @categoryDescription Pointer
    * {@link ClickTrigger} allows you to run actions when a user clicks a target
-   * element (first time and every other time, i.e. odd number of click), and
-   * undo them when a user clicks the target element again (or every even number
-   * of clicks). It always acts as a toggle.
+   * element (first time and every other time, i.e. odd number of click), and undo
+   * those actions when a user clicks the target element again (or every even
+   * number of clicks). It always acts as a toggle.
    *
    * {@link PressTrigger} allows you to run actions when the user presses and
-   * holds a pointing device (or their finger) on a target element, and undo
-   * those actions when they release their pointing device or lift their finger
-   * off.
+   * holds a pointing device (or their finger) on a target element, and undo those
+   * actions when they release their pointing device or lift their finger off.
    *
-   * {@link HoverTrigger} allows you to run actions when the user hovers overs
-   * a target element, and undo those actions when their pointing device moves
-   * off the target. On touch devices it acts just like {@link PressTrigger}.
+   * {@link HoverTrigger} allows you to run actions when the user hovers overs a
+   * target element, and undo those actions when their pointing device moves off
+   * the target. On touch devices it acts just like {@link PressTrigger}.
    */
 
   /**
@@ -15292,9 +16235,9 @@
    * ```
    *
    * @example
-   * Add class `visited` the first time the user clicks the element, and
-   * play or reverse the animations on the element 1000ms each time the
-   * user clicks it.
+   * Add class `visited` the first time the user clicks the element, and play or
+   * reverse the animations on the element 1000ms after each time the user clicks
+   * it.
    *
    * ```html
    * <div data-lisn-on-click="@add-class=visited +once ;
@@ -15329,7 +16272,7 @@
    */
   class ClickTrigger extends Trigger {
     static register() {
-      registerTrigger(S_CLICK, (element, args, actions, config) => new ClickTrigger(element, actions, config), newConfigValidator$5);
+      registerTrigger(S_CLICK, (element, args, actions, config) => new ClickTrigger(element, actions, config), newConfigValidator$6);
     }
 
     /**
@@ -15338,7 +16281,7 @@
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the config is invalid.
      */
-    constructor(element, actions, config = {}) {
+    constructor(element, actions, config) {
       super(element, actions, config);
       this.getConfig = () => copyObject(config);
       setupWatcher(this, element, actions, config, S_CLICK);
@@ -15427,7 +16370,7 @@
    */
   class PressTrigger extends Trigger {
     static register() {
-      registerTrigger(S_PRESS, (element, args, actions, config) => new PressTrigger(element, actions, config), newConfigValidator$5);
+      registerTrigger(S_PRESS, (element, args, actions, config) => new PressTrigger(element, actions, config), newConfigValidator$6);
     }
 
     /**
@@ -15436,7 +16379,7 @@
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the config is invalid.
      */
-    constructor(element, actions, config = {}) {
+    constructor(element, actions, config) {
       super(element, actions, config);
       this.getConfig = () => copyObject(config);
       setupWatcher(this, element, actions, config, S_PRESS);
@@ -15522,7 +16465,7 @@
    */
   class HoverTrigger extends Trigger {
     static register() {
-      registerTrigger(S_HOVER, (element, args, actions, config) => new HoverTrigger(element, actions, config), newConfigValidator$5);
+      registerTrigger(S_HOVER, (element, args, actions, config) => new HoverTrigger(element, actions, config), newConfigValidator$6);
     }
 
     /**
@@ -15531,7 +16474,7 @@
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the config is invalid.
      */
-    constructor(element, actions, config = {}) {
+    constructor(element, actions, config) {
       super(element, actions, config);
       this.getConfig = () => copyObject(config);
       setupWatcher(this, element, actions, config, S_HOVER);
@@ -15545,7 +16488,7 @@
 
   // --------------------
 
-  const newConfigValidator$5 = element => {
+  const newConfigValidator$6 = element => {
     return {
       target: (key, value) => {
         var _ref;
@@ -15556,10 +16499,12 @@
     };
   };
   const setupWatcher = (widget, element, actions, config, action) => {
+    var _MH$targetOf;
     if (!lengthOf(actions)) {
       return;
     }
-    const target = targetOf(config) || element;
+    config !== null && config !== void 0 ? config : config = {};
+    const target = (_MH$targetOf = targetOf(config)) !== null && _MH$targetOf !== void 0 ? _MH$targetOf : element;
 
     // For clicks use the trigger's own toggle function so that it remembers ITS
     // state rather than the odd/even clicks. Otherwise if the trigger is
@@ -15686,10 +16631,11 @@
   class LayoutTrigger extends Trigger {
     static register() {
       registerTrigger("layout", (element, args, actions, config) => {
+        var _args$;
         return new LayoutTrigger(element, actions, assign(config, {
-          layout: validateStringRequired("layout", strReplace(strReplace(args[0] || "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => isValidDeviceList(value) || isValidAspectRatioList(value))
+          layout: validateStringRequired("layout", strReplace(strReplace((_args$ = args[0]) !== null && _args$ !== void 0 ? _args$ : "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => isValidDeviceList(value) || isValidAspectRatioList(value))
         }));
-      }, newConfigValidator$4);
+      }, newConfigValidator$5);
     }
 
     /**
@@ -15699,7 +16645,8 @@
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
-      const layout = (config === null || config === void 0 ? void 0 : config.layout) || "";
+      var _config$layout;
+      const layout = (_config$layout = config === null || config === void 0 ? void 0 : config.layout) !== null && _config$layout !== void 0 ? _config$layout : "";
       if (!layout) {
         throw usageError("'layout' is required");
       }
@@ -15743,7 +16690,7 @@
 
   // --------------------
 
-  const newConfigValidator$4 = element => {
+  const newConfigValidator$5 = element => {
     return {
       root: async (key, value) => {
         const root = isLiteralString(value) ? await waitForReferenceElement(value, element) : undefined;
@@ -15915,7 +16862,7 @@
         return new ScrollTrigger(element, actions, assign(config, {
           directions: validateStrList("directions", args, isValidXYDirection)
         }));
-      }, newConfigValidator$3);
+      }, newConfigValidator$4);
     }
 
     /**
@@ -15925,7 +16872,7 @@
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
-      config = config !== null && config !== void 0 ? config : {};
+      config !== null && config !== void 0 ? config : config = {};
       let directions = config.directions;
       if (!directions) {
         config.once = true;
@@ -15962,7 +16909,7 @@
 
   // --------------------
 
-  const newConfigValidator$3 = element => {
+  const newConfigValidator$4 = element => {
     return {
       scrollable: (key, value) => {
         var _ref;
@@ -16096,7 +17043,7 @@
         return new ViewTrigger(element, actions, assign(config, {
           views: validateStrList("views", args, isValidView)
         }));
-      }, newConfigValidator$2);
+      }, newConfigValidator$3);
     }
 
     /**
@@ -16106,12 +17053,12 @@
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
-      var _config$rootMargin;
+      var _config$rootMargin, _config$target;
       super(element, actions, config);
-      const logger = debug ? new debug.Logger({
+      const logger = result ? new result.Logger({
         name: `ViewTrigger-${formatAsString(element)}`
       }) : null;
-      this.getConfig = () => copyObject(config || {});
+      this.getConfig = () => copyObject(config);
       if (!lengthOf(actions)) {
         return;
       }
@@ -16120,7 +17067,7 @@
         rootMargin: config === null || config === void 0 || (_config$rootMargin = config.rootMargin) === null || _config$rootMargin === void 0 ? void 0 : _config$rootMargin.replace(/,/g, " "),
         threshold: config === null || config === void 0 ? void 0 : config.threshold
       });
-      const target = (config === null || config === void 0 ? void 0 : config.target) || element;
+      const target = (_config$target = config === null || config === void 0 ? void 0 : config.target) !== null && _config$target !== void 0 ? _config$target : element;
       const views = (config === null || config === void 0 ? void 0 : config.views) || S_AT;
       const oppositeViews = getOppositeViews(views);
       const setupWatcher = target => {
@@ -16162,7 +17109,7 @@
 
   // ----------
 
-  const newConfigValidator$2 = element => {
+  const newConfigValidator$3 = element => {
     return {
       target: (key, value) => {
         var _ref;
@@ -16177,29 +17124,17 @@
     };
   };
   const setupRepresentative = async element => {
-    var _MH$classList;
-    const allowedToWrap = settings.contentWrappingAllowed === true && getData(element, PREFIX_NO_WRAP) === null &&
-    // Done by another animate action?
-    !((_MH$classList = classList(parentOf(element))) !== null && _MH$classList !== void 0 && _MH$classList.contains(PREFIX_WRAPPER$1));
-    let target;
-    if (allowedToWrap) {
-      target = await wrapElement(element, {
-        ignoreMove: true
-      });
-      addClasses(target, PREFIX_WRAPPER$1);
-      if (isInlineTag(tagName(target))) {
-        addClasses(target, PREFIX_INLINE_WRAPPER);
-      }
-    } else {
-      // Otherwise create a dummy hidden clone that's not animated and position
-      // it absolutely in a wrapper of size 0 that's inserted just before the
-      // actual element, so that the hidden clone overlaps the actual element's
-      // regular (pre-transformed) position.
+    let target = await tryWrap(element);
+    if (!target) {
+      // Not allowed to wrap. Create a dummy hidden clone that's not animated and
+      // position it absolutely in a wrapper of size 0 that's inserted just
+      // before the actual element, so that the hidden clone overlaps the actual
+      // element's regular (pre-transformed) position.
 
       const prev = element.previousElementSibling;
       const prevChild = childrenOf(prev)[0];
-      if (prev && hasClass(prev, PREFIX_WRAPPER$1) && prevChild && hasClass(prevChild, PREFIX_GHOST)) {
-        // Done by a previous animate action?
+      if (prev && hasClass(prev, PREFIX_WRAPPER$3) && prevChild && hasClass(prevChild, PREFIX_GHOST)) {
+        // Already cloned by a previous animate action?
         target = prevChild;
       } else {
         target = (await insertGhostClone(element))._clone;
@@ -16216,6 +17151,7 @@
 
   var index$4 = /*#__PURE__*/Object.freeze({
     __proto__: null,
+    CheckTrigger: CheckTrigger,
     ClickTrigger: ClickTrigger,
     HoverTrigger: HoverTrigger,
     LayoutTrigger: LayoutTrigger,
@@ -16259,6 +17195,7 @@
   actions.Run.register();
   LayoutTrigger.register();
   LoadTrigger.register();
+  CheckTrigger.register();
   ClickTrigger.register();
   PressTrigger.register();
   HoverTrigger.register();
@@ -16354,7 +17291,7 @@
       for (const [name, remove] of [[WIDGET_NAME_HIDE, false], [WIDGET_NAME_REMOVE, true]]) {
         registerWidget(name, (element, config) => {
           return new AutoHide(element, config);
-        }, newConfigValidator$1(remove), {
+        }, newConfigValidator$2(remove), {
           supportsMultiple: true
         });
       }
@@ -16419,7 +17356,7 @@
   const WIDGET_NAME_HIDE = "auto-hide";
   const WIDGET_NAME_REMOVE = "auto-remove";
   const DEFAULT_DELAY = 3000;
-  const newConfigValidator$1 = autoRemove => {
+  const newConfigValidator$2 = autoRemove => {
     return {
       id: validateString,
       remove: () => autoRemove,
@@ -16901,7 +17838,7 @@
     return itemMap;
   };
   const init$2 = (widget, containerElement, items, config) => {
-    const logger = debug ? new debug.Logger({
+    const logger = result ? new result.Logger({
       name: `SameHeight-${formatAsString(containerElement)}`
     }) : null;
     const diffTolerance = config._diffTolerance;
@@ -16998,7 +17935,7 @@
         if (parentOf(element) === containerElement) {
           const width = getWidthAtH(element, properties, height);
           logger === null || logger === void 0 || logger.debug9("Setting width property", element, properties, width);
-          setNumericStyleProps(element, {
+          setNumericStyleJsVars(element, {
             sameHeightW: width
           }, {
             _units: "px"
@@ -17015,7 +17952,7 @@
       for (const element of allItems.keys()) {
         if (parentOf(element) === containerElement) {
           // delete the property and attribute
-          await setNumericStyleProps(element, {
+          await setNumericStyleJsVars(element, {
             sameHeightW: NaN
           });
           await removeClasses(element, PREFIX_ITEM$1);
@@ -17261,6 +18198,47 @@
   };
 
   /**
+   * @module Utils
+   */
+
+
+  /**
+   * Returns true if the device has a touch screen.
+   *
+   * @category Browser info
+   *
+   * @since v1.2.0
+   */
+  const isTouchScreen = () => hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
+
+  /**
+   * Returns true if the browser supports position: sticky.
+   *
+   * @category Browser info
+   *
+   * @since v1.2.0
+   */
+  const supportsSticky = () => hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
+
+  /**
+   * Returns true if the page is in quirks mode.
+   *
+   * @category Browser info
+   *
+   * @since v1.2.0
+   */
+  const isInQuirksMode = () => hasDOM() ? document.compatMode === "BackCompat" : false;
+
+  /**
+   * Returns true if the device is mobile (based on user agent).
+   *
+   * @category Browser info
+   *
+   * @since v1.2.0
+   */
+  const isMobile = () => hasDOM() ? userAgent.match(/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/) !== null : false;
+
+  /**
    * @module Widgets
    */
 
@@ -17287,8 +18265,20 @@
    * possible (before the scrollbar widget has time to initialize.
    *
    * **IMPORTANT:** If you are using the Scrollbar on an element other than the
-   * main scrollable element, it's highly recommended to enable (it is enabled by
-   * default) {@link settings.contentWrappingAllowed}.
+   * main scrollable element, it's highly recommended to
+   * {@link settings.contentWrappingAllowed | enable content wrapping} (it is
+   * enabled by default). Otherwise, Scrollbar will rely on position: sticky. If
+   * you want to instead manually create the wrappers yourself, ensure your
+   * structure is as follows:
+   * ```html
+   * <div class="scrollable"><!-- Element you instantiate as Scrollbar -->
+   *   <div class="lisn-scrollbar__content"><!-- Optional wrapper to avoid relying on sticky -->
+   *     <div class="lisn-wrapper"><!-- Optional wrapper to enable efficient scroll tracking -->
+   *       <!-- YOUR CONTENT -->
+   *     </div>
+   *   </div>
+   * </div>
+   * ```
    *
    * **IMPORTANT:** You should not instantiate more than one {@link Scrollbar}
    * widget on a given element. Use {@link Scrollbar.get} to get an existing
@@ -17322,8 +18312,8 @@
    * in order to modify the configuration of the automatically created widget.
    *
    * @example
-   * This will create custom scrollbars for the main scrolling element
-   * (see {@link settings.mainScrollableElementSelector}).
+   * This will create custom scrollbars for
+   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * This will work even if {@link settings.autoWidgets}) is false
    *
@@ -17373,9 +18363,13 @@
    */
   class Scrollbar extends Widget {
     /**
-     * Returns the actual scrollable element created by us which will be a
-     * descendant of the original element passed to the constructor (unless
-     * {@link settings.contentWrappingAllowed} is false).
+     * Returns the actual scrollable element us which, unless the scrollable you
+     * passed to the constructor is the
+     * {@link settings.mainScrollableElementSelector | the main scrolling element}
+     * or unless
+     * {@link settings.contentWrappingAllowed | you've disabled content wrapping},
+     * this will be a new element created by us that is a descendant of the
+     * original element you passed.
      */
 
     /**
@@ -17397,22 +18391,27 @@
     }
 
     /**
-     * Enables scrollbars on the {@link settings.mainScrollableElementSelector}.
+     * Enables scrollbars on the
+     * {@link settings.mainScrollableElementSelector | the main scrolling element}.
      *
      * **NOTE:** It returns a Promise to a widget because it will wait for the
-     * main element to be present in the DOM if not already.
+     * main scrollable element to be present in the DOM if not already.
      */
-    static enableMain(config) {
-      return ScrollWatcher.fetchMainScrollableElement().then(main => {
-        const widget = new Scrollbar(main, config);
-        widget.onDestroy(() => {
-          if (mainWidget$1 === widget) {
-            mainWidget$1 = null;
-          }
-        });
-        mainWidget$1 = widget;
-        return widget;
+    static async enableMain(config) {
+      // [TODO v2]: enableMain should be synchronous and the constructor should
+      // wait for the scrollable, allowing users who want to use the main
+      // scrollable to just pass null/undefined/window. Then getScrollable should
+      // return null or the actual scrollable if available + add fetchScrollable
+      // to return a Promise.
+      const scrollable = await ScrollWatcher.fetchMainScrollableElement();
+      const widget = new Scrollbar(scrollable, config);
+      widget.onDestroy(() => {
+        if (mainWidget$1 === widget) {
+          mainWidget$1 = null;
+        }
       });
+      mainWidget$1 = widget;
+      return widget;
     }
     static register() {
       registerWidget(WIDGET_NAME$6, (element, config) => {
@@ -17442,11 +18441,11 @@
       });
       const props = getScrollableProps(scrollable);
       const ourScrollable = props.scrollable;
-      (destroyPromise || promiseResolve()).then(async () => {
+      (destroyPromise || promiseResolve()).then(() => {
         if (this.isDestroyed()) {
           return;
         }
-        await init$1(this, scrollable, props, config);
+        init$1(this, scrollable, props, config);
       });
       this.getScrollable = () => ourScrollable;
     }
@@ -17462,8 +18461,6 @@
   const PREFIXED_NAME$2 = prefixName(WIDGET_NAME$6);
   // Only one Scrollbar widget per element is allowed, but Widget
   // requires a non-blank ID.
-  // In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-  // on the whole page, but we support it, hence use a class rather than a DOM ID.
   const DUMMY_ID$6 = PREFIXED_NAME$2;
   const PREFIX_ROOT$1 = `${PREFIXED_NAME$2}__root`;
   const PREFIX_CONTAINER = `${PREFIXED_NAME$2}__container`;
@@ -17477,7 +18474,7 @@
   const PREFIX_CLICKABLE = prefixName("clickable");
   const PREFIX_HAS_WRAPPER = prefixName("has-wrapper");
   const PREFIX_ALLOW_COLLAPSE = prefixName("allow-collapse");
-  const PREFIX_HAS_FIXED_HEIGHT = prefixName("has-fixed-height");
+  const PREFIX_HAS_V_SCROLL = prefixName("has-v-scroll");
   const PREFIX_HAS_SCROLLBAR = prefixName("has-scrollbar");
   const PREFIX_HIDE_SCROLL = prefixName("hide-scroll");
   const S_SET_POINTER_CAPTURE = "setPointerCapture";
@@ -17508,38 +18505,54 @@
     const root = isMainScrollable ? mainScrollableElement : isBody ? defaultScrollable : containerElement;
 
     // check if we're using body in quirks mode
-    const isBodyInQuirks = root === body && defaultScrollable === body;
-    const allowedToWrap = settings.contentWrappingAllowed && getData(containerElement, PREFIX_NO_WRAP) === null;
-    const needsSticky = !isMainScrollable && !allowedToWrap;
+    const isBodyInQuirks = isBody && isInQuirksMode();
+    const allowedToWrap = isAllowedToWrap(containerElement);
     const barParent = isMainScrollable ? body : containerElement;
-    const hasFixedHeight = isScrollable(root, {
+    const hasVScroll = isScrollable(root, {
       axis: "y"
     });
     let contentWrapper = null;
-    let scrollable = root;
-    if (!isMainScrollable && !isBody && allowedToWrap) {
-      if (allowedToWrap) {
-        contentWrapper = createElement("div");
-        scrollable = contentWrapper;
-      } else {
-        logWarn("Scrollbar on elements other than the main scrollable " + "when settings.contentWrappingAllowed is false relies on " + "position: sticky, is experimental and may not work properly");
+    let supported = true;
+    let hasExistingWrapper = true;
+    if (!isMainScrollable && !isBody) {
+      // we need to wrap if possible
+      contentWrapper = getContentWrapper(containerElement, {
+        _classNames: [PREFIX_CONTENT]
+      });
+      hasExistingWrapper = !isNullish(contentWrapper);
+      if (!contentWrapper) {
+        const warnMsgPrefix = "Scrollbar on elements other than " + "the main scrollable when content wrapping is " + "disabled relies on position: sticky";
+        if (allowedToWrap) {
+          // we'll wrap later, but create the wrapper now as it will be the actual
+          // scrollable
+          contentWrapper = createElement("div");
+        } else if (supportsSticky()) {
+          logWarn(`${warnMsgPrefix}, is experimental and may not work properly.`);
+        } else {
+          logError(`${warnMsgPrefix}, but this browser does not support sticky.`);
+          supported = false;
+        }
       }
     }
+    const needsSticky = !isMainScrollable && !allowedToWrap && !hasExistingWrapper;
     return {
+      supported,
       isMainScrollable,
       isBody,
       isBodyInQuirks,
       root,
-      scrollable,
+      scrollable: contentWrapper !== null && contentWrapper !== void 0 ? contentWrapper : root,
       barParent,
       contentWrapper,
+      hasExistingWrapper,
       needsSticky,
-      hasFixedHeight
+      hasVScroll
     };
   };
   const init$1 = (widget, containerElement, props, config) => {
     var _ref, _config$onMobile, _ref2, _config$hideNative, _config$autoHide, _config$clickScroll, _ref3, _config$dragScroll, _ref4, _config$useHandle;
     const {
+      supported,
       isMainScrollable,
       isBody,
       isBodyInQuirks,
@@ -17547,10 +18560,11 @@
       scrollable,
       barParent,
       contentWrapper,
+      hasExistingWrapper,
       needsSticky,
-      hasFixedHeight
+      hasVScroll
     } = props;
-    const logger = debug ? new debug.Logger({
+    const logger = result ? new result.Logger({
       name: `Scrollbar-${formatAsString(root)}`,
       logAtCreation: {
         props,
@@ -17567,9 +18581,13 @@
     const clickScroll = (_config$clickScroll = config === null || config === void 0 ? void 0 : config.clickScroll) !== null && _config$clickScroll !== void 0 ? _config$clickScroll : settings.scrollbarClickScroll;
     const dragScroll = (_ref3 = (_config$dragScroll = config === null || config === void 0 ? void 0 : config.dragScroll) !== null && _config$dragScroll !== void 0 ? _config$dragScroll : settings.scrollbarDragScroll) !== null && _ref3 !== void 0 ? _ref3 : false;
     const useHandle = (_ref4 = (_config$useHandle = config === null || config === void 0 ? void 0 : config.useHandle) !== null && _config$useHandle !== void 0 ? _config$useHandle : settings.scrollbarUseHandle) !== null && _ref4 !== void 0 ? _ref4 : false;
-    if (IS_MOBILE && !onMobile) {
+    if (isMobile() && !onMobile) {
       return;
     }
+
+    // Ensure scroll tracking that will be setup on the original element uses the
+    // new scrollable we create.
+    // XXX TODO But this still breaks any existing scroll tracking
     mapScrollable(root, scrollable);
 
     // ----------
@@ -17614,7 +18632,7 @@
 
     // ----------
 
-    const setProgress = async (scrollData, tracksH) => {
+    const setProgress = (scrollData, tracksH) => {
       const scrollbar = tracksH ? scrollbarH : scrollbarV;
       const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
       const completeFraction = tracksH ? scrollData[S_SCROLL_LEFT_FRACTION] : scrollData[S_SCROLL_TOP_FRACTION];
@@ -17625,16 +18643,22 @@
         viewFraction
       });
       setAttr(scrollbar, S_ARIA_VALUENOW, round(completeFraction * 100) + "");
-      setNumericStyleProps(scrollbar, {
+      setNumericStyleJsVars(scrollbar, {
         viewFr: viewFraction,
         completeFr: completeFraction
       }, {
         _numDecimal: 4
       });
       const scrollAxis = tracksH ? "x" : "y";
-      if (isScrollable(scrollable, {
-        axis: scrollAxis
-      }) && viewFraction < 1) {
+      // TODO When using content-box, reading scrollWidth/Height even on the
+      // subsequent measure time still shows the "old" value that includes the
+      // border width before it seems to adjust. So sometimes it gives false
+      // positives for it being scrollable.
+      const canScroll = viewFraction < 0.99 && (completeFraction > 0 || isScrollable(scrollable, {
+        axis: scrollAxis,
+        noCache: true
+      }));
+      if (canScroll) {
         setBooleanData(containerElement, hasBarPrefix);
         displayElement(scrollbar);
       } else {
@@ -17646,18 +18670,18 @@
     // ----------
 
     const updateProgress = (target, scrollData) => {
-      setProgress(scrollData, true);
-      setProgress(scrollData, false);
       if (!isMainScrollable && !isBody) {
         setBoxMeasureProps(containerElement);
       }
+      setProgress(scrollData, true);
+      setProgress(scrollData, false);
       if (autoHideDelay > 0) {
         showElement(wrapper).then(() => hideElement(wrapper, autoHideDelay));
       }
     };
     const updatePropsOnResize = (target, sizeData) => {
       setBoxMeasureProps(containerElement);
-      setNumericStyleProps(containerElement, {
+      setNumericStyleJsVars(containerElement, {
         barHeight: sizeData.border[S_HEIGHT]
       }, {
         _units: "px",
@@ -17808,23 +18832,33 @@
 
     // SETUP ------------------------------
 
+    if (!supported) {
+      setNativeShown();
+      return;
+    }
+    const scrollWatcher = ScrollWatcher.reuse({
+      [S_DEBOUNCE_WINDOW]: 0
+    });
+    const sizeWatcher = SizeWatcher.reuse({
+      [S_DEBOUNCE_WINDOW]: 0
+    });
     if (!isMainScrollable && !isBody) {
       addClasses(containerElement, PREFIX_CONTAINER);
     }
-    setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !IS_MOBILE);
+    setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !isMobile());
+    setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
+    setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, !!contentWrapper && hasVScroll);
 
     // Wrap children if needed
-    if (contentWrapper) {
-      addClasses(contentWrapper, PREFIX_CONTENT);
+    if (contentWrapper && !hasExistingWrapper) {
       wrapChildren(containerElement, {
-        wrapper: contentWrapper}); // no need to await here
-
-      setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
-      if (hasFixedHeight) {
-        setBooleanData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-      }
+        wrapper: contentWrapper,
+        ignoreMove: true
+      }); // no need to await here
+      addClasses(contentWrapper, PREFIX_CONTENT);
     }
     maybeSetNativeHidden();
+    const origDomID = scrollable.id;
     if (config !== null && config !== void 0 && config.id) {
       scrollable.id = config.id;
     }
@@ -17834,12 +18868,6 @@
     const scrollDomID =
     // for ARIA
     clickScroll || dragScroll ? getOrAssignID(scrollable, S_SCROLLBAR) : "";
-    const scrollWatcher = ScrollWatcher.reuse({
-      [S_DEBOUNCE_WINDOW]: 0
-    });
-    const sizeWatcher = SizeWatcher.reuse({
-      [S_DEBOUNCE_WINDOW]: 0
-    });
     addClasses(barParent, PREFIX_ROOT$1);
     const wrapper = createElement("div");
     preventSelect(wrapper);
@@ -17889,12 +18917,13 @@
     });
     widget.onDestroy(async () => {
       unmapScrollable(root);
+      scrollable.id = origDomID;
+      if (config !== null && config !== void 0 && config.className) {
+        removeClasses(scrollable, ...toArrayIfSingle(config.className));
+      }
       await waitForMutateTime();
-      if (contentWrapper) {
-        moveChildrenNow(contentWrapper, containerElement, {
-          ignoreMove: true
-        });
-        moveElementNow(contentWrapper); // remove
+      if (contentWrapper && !hasExistingWrapper) {
+        unwrapContentNow(contentWrapper, [PREFIX_CONTENT]);
       }
       moveElementNow(wrapper); // remove
 
@@ -17913,18 +18942,17 @@
       for (const position of [S_TOP, S_BOTTOM, S_LEFT, S_RIGHT]) {
         delDataNow(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
       }
+      delDataNow(containerElement, PREFIX_ALLOW_COLLAPSE);
       delDataNow(containerElement, PREFIX_HAS_WRAPPER);
-      if (hasFixedHeight) {
-        delDataNow(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-      }
+      delDataNow(containerElement, PREFIX_HAS_V_SCROLL);
     });
   };
   const isHorizontal = scrollbar => getData(scrollbar, PREFIX_ORIENTATION) === S_HORIZONTAL;
   const setBoxMeasureProps = async element => {
     for (const side of [S_TOP, S_RIGHT, S_BOTTOM, S_LEFT]) {
       for (const key of [`padding-${side}`, `border-${side}-width`]) {
-        const padding = await getComputedStyleProp(element, key);
-        setStyleProp(element, prefixCssJsVar(key), padding);
+        const value = await getComputedStyleProp(element, key);
+        setStyleProp(element, prefixCssJsVar(key), value);
       }
     }
   };
@@ -17949,9 +18977,16 @@
    * The button is only shown when the scroll offset from the top is more than a
    * given configurable amount.
    *
-   * **NOTE:** Currently the widget only supports fixed positioned button that
-   * scrolls the main scrolling element (see
-   * {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector}).
+   * **IMPORTANT:** When configuring an existing element as the button (i.e. using
+   * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
+   * - if using
+   *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+   *   as the scrollable, the button element will have it's CSS position set to `fixed`;
+   * - otherwise, if using a custom scrollable element, the button element may be
+   *   moved in the DOM tree in order to position it on top of the scrollable
+   * If you don't want the button element changed in any way, then consider using
+   * the {@link Triggers.ClickTrigger | ClickTrigger} with a
+   * {@link Actions.ScrollTo | ScrollTo} action.
    *
    * **IMPORTANT:** You should not instantiate more than one {@link ScrollToTop}
    * widget on a given element. Use {@link ScrollToTop.get} to get an existing
@@ -18005,19 +19040,53 @@
    * ```
    *
    * @example
-   * This will create a scroll-to-top button for the main scrolling element
-   * using an existing element for the button with default
+   * This will configure the given element as a scroll-to-top button for the main
+   * scrolling element using an existing element for the button with default
    * {@link ScrollToTopConfig}.
    *
    * ```html
-   * <div class="lisn-scroll-to-top"></div>
+   * <button class="lisn-scroll-to-top"></button>
    * ```
-   *
    * @example
    * As above but with custom settings.
    *
    * ```html
-   * <div data-lisn-scroll-to-top="position=left | offset=top:300vh"></div>
+   * <button data-lisn-scroll-to-top="position=left | offset=top:300vh"></button>
+   * ```
+   *
+   * @example
+   * This will configure the given element as a scroll-to-top button for a custom
+   * scrolling element (i.e. one with overflow "auto" or "scroll").
+   *
+   * ```html
+   * <div id="scrollable">
+   *   <!-- content here... -->
+   * </div>
+   * <button data-lisn-scroll-to-top="scrollable=#scrollable"></button>
+   * ```
+   *
+   * @example
+   * As above, but using a reference specification with a class name to find the
+   * scrollable.
+   *
+   * ```html
+   * <div class="scrollable">
+   *   <!-- content here... -->
+   * </div>
+   * <button data-lisn-scroll-to-top="scrollable=prev.scrollable"></button>
+   * ```
+   *
+   * @example
+   * As above but with all custom settings.
+   *
+   * ```html
+   * <div class="scrollable">
+   *   <!-- content here... -->
+   * </div>
+   * <button data-lisn-scroll-to-top="scrollable=prev.scrollable
+   *                               | position=left
+   *                               | offset=top:300vh
+   * "></button>
    * ```
    */
   class ScrollToTop extends Widget {
@@ -18041,7 +19110,7 @@
           return new ScrollToTop(element, config);
         }
         return null;
-      }, configValidator$3);
+      }, newConfigValidator$1);
     }
 
     /**
@@ -18073,30 +19142,69 @@
       super(element, {
         id: DUMMY_ID$5
       });
-      const scrollWatcher = ScrollWatcher.reuse();
-      const viewWatcher = ViewWatcher.reuse();
       const offset = (config === null || config === void 0 ? void 0 : config.offset) || `${S_TOP}: var(${prefixCssVar("scroll-to-top--offset")}, 200vh)`;
       const position = (config === null || config === void 0 ? void 0 : config.position) || S_RIGHT;
+      const scrollable = config === null || config === void 0 ? void 0 : config.scrollable;
+      const hasCustomScrollable = scrollable && scrollable !== getDocElement() && scrollable !== getBody();
+      const scrollWatcher = ScrollWatcher.reuse();
+      const viewWatcher = ViewWatcher.reuse(hasCustomScrollable ? {
+        root: scrollable
+      } : {});
       const clickListener = () => scrollWatcher.scrollTo({
-        top: 0
+        top: 0,
+        left: 0
+      }, {
+        scrollable
       });
-      const arrow = insertArrow(element, S_UP);
+      let arrow;
+      let placeholder;
+      let root = element;
       const showIt = () => {
-        showElement(element);
+        showElement(root);
       };
       const hideIt = () => {
-        hideElement(element);
+        hideElement(root);
       };
 
       // SETUP ------------------------------
 
-      (destroyPromise || promiseResolve()).then(() => {
+      (destroyPromise || promiseResolve()).then(async () => {
+        const flexDirection = scrollable ? await getParentFlexDirection(scrollable) : null;
+        await waitForMutateTime();
         if (this.isDestroyed()) {
           return;
         }
-        disableInitialTransition(element);
-        addClasses(element, PREFIX_ROOT);
-        setData(element, PREFIX_PLACE, position);
+        if (hasCustomScrollable) {
+          // Add a placeholder to restore its position on destroy.
+          placeholder = createElement("div");
+          moveElementNow(placeholder, {
+            to: element,
+            position: "before",
+            ignoreMove: true
+          });
+
+          // Then move it to immediately after the scrollable.
+          // If the parent is a horizontal flexbox and position is left, then
+          // we need to insert it before the scrollable.
+          const shouldInsertBefore = flexDirection === "column-reverse" || position === S_LEFT && flexDirection === "row" || position === S_RIGHT && flexDirection === "row-reverse";
+          moveElementNow(element, {
+            to: scrollable,
+            position: shouldInsertBefore ? "before" : "after",
+            ignoreMove: true
+          });
+
+          // Wrap the button.
+          root = wrapElementNow(element, {
+            wrapper: "div",
+            ignoreMove: true
+          });
+        }
+        disableInitialTransition(root);
+        addClassesNow(root, PREFIX_ROOT);
+        addClassesNow(element, PREFIX_BTN);
+        setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
+        setDataNow(root, PREFIX_PLACE, position);
+        arrow = insertArrow(element, S_UP);
         hideIt(); // initial
 
         addEventListenerTo(element, S_CLICK, clickListener);
@@ -18107,17 +19215,35 @@
           views: [S_ABOVE]
         });
         this.onDisable(() => {
-          undisplayElement(element);
+          undisplayElement(root);
         });
         this.onEnable(() => {
-          displayElement(element);
+          displayElement(root);
         });
         this.onDestroy(async () => {
+          await waitForMutateTime();
           removeEventListenerFrom(element, S_CLICK, clickListener);
-          await delData(element, PREFIX_PLACE);
-          await moveElement(arrow); // remove
-          await removeClasses(element, PREFIX_ROOT);
-          await displayElement(element); // revert undisplay by onDisable
+          removeClassesNow(root, PREFIX_ROOT);
+          removeClassesNow(element, PREFIX_BTN);
+          delDataNow(root, PREFIX_FIXED);
+          delDataNow(root, PREFIX_PLACE);
+          displayElementNow(root); // revert undisplay by onDisable
+
+          if (arrow) {
+            moveElementNow(arrow); // remove
+          }
+          if (root !== element) {
+            // Unwrap the button.
+            replaceElementNow(root, element, {
+              ignoreMove: true
+            });
+          }
+          if (placeholder) {
+            // Move it back into its original position.
+            replaceElementNow(placeholder, element, {
+              ignoreMove: true
+            });
+          }
           viewWatcher.offView(offset, showIt);
           viewWatcher.offView(offset, hideIt);
         });
@@ -18133,16 +19259,22 @@
 
   const WIDGET_NAME$5 = "scroll-to-top";
   const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
-  const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
   // Only one ScrollToTop widget per element is allowed, but Widget requires a
   // non-blank ID.
-  // In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-  // on the whole page, but we support it, hence use a class rather than a DOM ID.
   const DUMMY_ID$5 = PREFIXED_NAME$1;
+  const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
+  const PREFIX_BTN = `${PREFIXED_NAME$1}__btn`;
+  const PREFIX_FIXED = prefixName("fixed");
   let mainWidget = null;
-  const configValidator$3 = {
-    offset: (key, value) => validateString(key, value, isValidScrollOffset),
-    position: (key, value) => validateString(key, value, v => v === S_LEFT || v === S_RIGHT)
+  const newConfigValidator$1 = element => {
+    return {
+      offset: (key, value) => validateString(key, value, isValidScrollOffset),
+      position: (key, value) => validateString(key, value, v => v === S_LEFT || v === S_RIGHT),
+      scrollable: (key, value) => {
+        var _ref;
+        return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
+      }
+    };
   };
 
   /**
@@ -18207,35 +19339,35 @@
     /**
      * Disables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
 
     /**
      * Re-enables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
 
     /**
      * Re-enables the given item number if it is disabled, otherwise disables it.
      * Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
 
     /**
      * Returns true if the given item number is disabled. Note that item numbers
      * start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
 
     /**
@@ -18250,9 +19382,9 @@
     /**
      * Returns the item elements.
      *
-     * @param {} currentOrder If false (default), returns the items in the
-     *                        original order. If true, they are returned in the
-     *                        current document order.
+     * @param currentOrder If false (default), returns the items in the
+     *                     original order. If true, they are returned in the
+     *                     current document order.
      */
 
     static get(element) {
@@ -18268,7 +19400,7 @@
           return new Sortable(element, config);
         }
         return null;
-      }, configValidator$2);
+      }, configValidator$3);
     }
 
     /**
@@ -18329,10 +19461,8 @@
 
   // Only one Sortable widget per element is allowed, but Widget requires a
   // non-blank ID.
-  // In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-  // on the whole page, but we support it, hence use a class rather than a DOM ID.
   const DUMMY_ID$4 = PREFIXED_NAME;
-  const configValidator$2 = {
+  const configValidator$3 = {
     mode: (key, value) => validateString(key, value, v => v === "swap" || v === "move")
   };
   const touchMoveOptions = {
@@ -18402,7 +19532,7 @@
             });
           }
           if (floatingClone) {
-            setNumericStyleProps(floatingClone, {
+            setNumericStyleJsVars(floatingClone, {
               clientX: clientX - grabOffset[0],
               clientY: clientY - grabOffset[1]
             }, {
@@ -18584,7 +19714,7 @@
           return new TrackGesture(element, config);
         }
         return null;
-      }, configValidator$1);
+      }, configValidator$2);
     }
     constructor(element, config) {
       super(element, {
@@ -18613,7 +19743,7 @@
   // Only one TrackGesture widget per element is allowed, but Widget requires a
   // non-blank ID.
   const DUMMY_ID$3 = WIDGET_NAME$3;
-  const configValidator$1 = {
+  const configValidator$2 = {
     preventDefault: validateBoolean,
     minDeltaX: validateNumber,
     maxDeltaX: validateNumber,
@@ -18649,6 +19779,13 @@
    * ```html
    * <div class="lisn-track-scroll"></div>
    * ```
+   *
+   * @example
+   * As above but with custom options
+   *
+   * ```html
+   * <div data-lisn-track-scroll="threshold=0 | debounce-window=0"></div>
+   * ```
    */
   class TrackScroll extends Widget {
     static get(element) {
@@ -18664,7 +19801,7 @@
           return new TrackScroll(element, config);
         }
         return null;
-      }, configValidator);
+      }, configValidator$1);
     }
     constructor(element, config) {
       super(element, {
@@ -18687,7 +19824,7 @@
   // Only one TrackScroll widget per element is allowed, but Widget requires a
   // non-blank ID.
   const DUMMY_ID$2 = WIDGET_NAME$2;
-  const configValidator = {
+  const configValidator$1 = {
     threshold: validateNumber,
     debounceWindow: validateNumber
   };
@@ -18723,6 +19860,13 @@
    * ```html
    * <div class="lisn-track-size"></div>
    * ```
+   *
+   * @example
+   * As above but with custom options
+   *
+   * ```html
+   * <div data-lisn-track-size="threshold=0 | debounce-window=0"></div>
+   * ```
    */
   class TrackSize extends Widget {
     static get(element) {
@@ -18733,24 +19877,29 @@
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$1, element => {
+      registerWidget(WIDGET_NAME$1, (element, config) => {
         if (!TrackSize.get(element)) {
-          return new TrackSize(element);
+          return new TrackSize(element, config);
         }
         return null;
-      });
+      }, configValidator);
     }
-    constructor(element) {
+    constructor(element, config) {
       super(element, {
         id: DUMMY_ID$1
       });
-      SizeWatcher.reuse().trackSize(null, {
-        target: element,
-        threshold: 0
-      });
+      SizeWatcher.reuse().trackSize(null, assign({
+        target: element
+      }, config));
       this.onDestroy(() => SizeWatcher.reuse().noTrackSize(null, element));
     }
   }
+
+  /**
+   * @interface
+   *
+   * @since v1.2.0
+   */
 
   // --------------------
 
@@ -18758,6 +19907,10 @@
   // Only one TrackSize widget per element is allowed, but Widget requires a
   // non-blank ID.
   const DUMMY_ID$1 = WIDGET_NAME$1;
+  const configValidator = {
+    threshold: validateNumber,
+    debounceWindow: validateNumber
+  };
 
   /**
    * @module Widgets
@@ -18800,7 +19953,10 @@
    * <div id="myRoot"></div>
    * <div data-lisn-track-view="root=#myRoot
    *                            | root-margin=100px,50px
-   *                            | threshold=0,0.5"
+   *                            | threshold=0,0.5
+   *                            | debounce-window=0
+   *                            | resize-threshold=0
+   *                            | scroll-threshold=0"
    * ></div>
    * ```
    */
@@ -18920,6 +20076,7 @@
   Run.register();
   LayoutTrigger.register();
   LoadTrigger.register();
+  CheckTrigger.register();
   ClickTrigger.register();
   PressTrigger.register();
   HoverTrigger.register();
@@ -18982,6 +20139,8 @@
     addEventListenerTo: addEventListenerTo,
     areAntiParallel: areAntiParallel,
     areParallel: areParallel,
+    asyncMeasurerFor: asyncMeasurerFor,
+    asyncMutatorFor: asyncMutatorFor,
     callEventListener: callEventListener,
     camelToKebabCase: camelToKebabCase,
     clearIgnoreMove: clearIgnoreMove,
@@ -18990,6 +20149,7 @@
     copyExistingKeys: copyExistingKeys,
     copyStyle: copyStyle,
     createOverlay: createOverlay,
+    criticallyDamped: criticallyDamped,
     degToRad: degToRad,
     delData: delData,
     delDataNow: delDataNow,
@@ -19016,12 +20176,14 @@
     getClosestScrollable: getClosestScrollable,
     getComputedStyleProp: getComputedStyleProp,
     getComputedStylePropNow: getComputedStylePropNow,
+    getContentWrapper: getContentWrapper,
     getCurrentScrollAction: getCurrentScrollAction,
     getData: getData,
     getDebouncedHandler: getDebouncedHandler,
     getDefaultScrollingElement: getDefaultScrollingElement,
     getEntryBorderBox: getEntryBorderBox,
     getEntryContentBox: getEntryContentBox,
+    getFlexDirection: getFlexDirection,
     getIgnoreMove: getIgnoreMove,
     getKeyGestureFragment: getKeyGestureFragment,
     getLayoutBitmask: getLayoutBitmask,
@@ -19034,6 +20196,7 @@
     getOtherAspectRatios: getOtherAspectRatios,
     getOtherDevices: getOtherDevices,
     getOverlay: getOverlay,
+    getParentFlexDirection: getParentFlexDirection,
     getPointerGestureFragment: getPointerGestureFragment,
     getReferenceElement: getReferenceElement,
     getStyleProp: getStyleProp,
@@ -19044,7 +20207,10 @@
     getViewsBitmask: getViewsBitmask,
     getVisibleContentChildren: getVisibleContentChildren,
     getWheelGestureFragment: getWheelGestureFragment,
+    getWrapper: getWrapper,
     hAngle: hAngle,
+    hasAllClasses: hasAllClasses,
+    hasAnyClass: hasAnyClass,
     hasClass: hasClass,
     havingMaxAbs: havingMaxAbs,
     havingMinAbs: havingMinAbs,
@@ -19055,10 +20221,15 @@
     insertArrow: insertArrow,
     insertGhostClone: insertGhostClone,
     insertGhostCloneNow: insertGhostCloneNow,
+    isAllowedToWrap: isAllowedToWrap,
     isDOMElement: isDOMElement,
     isElementHidden: isElementHidden,
     isElementUndisplayed: isElementUndisplayed,
+    isFlex: isFlex,
+    isFlexChild: isFlexChild,
+    isInQuirksMode: isInQuirksMode,
     isInlineTag: isInlineTag,
+    isMobile: isMobile,
     isPageReady: isPageReady,
     isScrollable: isScrollable,
     isTouchScreen: isTouchScreen,
@@ -19106,9 +20277,13 @@
     moveChildrenNow: moveChildrenNow,
     moveElement: moveElement,
     moveElementNow: moveElementNow,
+    newAnimationFrameIterator: newAnimationFrameIterator,
+    newCriticallyDampedAnimationIterator: newCriticallyDampedAnimationIterator,
     normalizeAngle: normalizeAngle,
+    normalizeWheel: normalizeWheel,
     objToStrKey: objToStrKey,
     omitKeys: omitKeys,
+    onEveryAnimationFrame: onEveryAnimationFrame,
     parseScrollOffset: parseScrollOffset,
     preventSelect: preventSelect,
     quadraticRoots: quadraticRoots,
@@ -19117,6 +20292,8 @@
     removeClasses: removeClasses,
     removeClassesNow: removeClassesNow,
     removeEventListenerFrom: removeEventListenerFrom,
+    replaceClass: replaceClass,
+    replaceClassNow: replaceClassNow,
     replaceElement: replaceElement,
     replaceElementNow: replaceElementNow,
     resetCssAnimationsNow: resetCssAnimationsNow,
@@ -19130,13 +20307,15 @@
     setData: setData,
     setDataNow: setDataNow,
     setHasModal: setHasModal,
-    setNumericStyleProps: setNumericStyleProps,
+    setNumericStyleJsVars: setNumericStyleJsVars,
+    setNumericStyleJsVarsNow: setNumericStyleJsVarsNow,
     setStyleProp: setStyleProp,
     setStylePropNow: setStylePropNow,
     showElement: showElement,
     showElementNow: showElementNow,
     sortedKeysByVal: sortedKeysByVal,
     splitOn: splitOn,
+    supportsSticky: supportsSticky,
     swapElements: swapElements,
     swapElementsNow: swapElementsNow,
     toArrayIfSingle: toArrayIfSingle,
@@ -19150,6 +20329,8 @@
     toPosNum: toPosNum,
     toggleClass: toggleClass,
     toggleClassNow: toggleClassNow,
+    toggleClasses: toggleClasses,
+    toggleClassesNow: toggleClassesNow,
     toggleDisplayElement: toggleDisplayElement,
     toggleDisplayElementNow: toggleDisplayElementNow,
     toggleShowElement: toggleShowElement,
@@ -19160,6 +20341,10 @@
     tryGetMainScrollableElement: tryGetMainScrollableElement,
     tryGetScrollableElement: tryGetScrollableElement,
     tryGetViewportOverlay: tryGetViewportOverlay,
+    tryWrap: tryWrap,
+    tryWrapContent: tryWrapContent,
+    tryWrapContentNow: tryWrapContentNow,
+    tryWrapNow: tryWrapNow,
     undisplayElement: undisplayElement,
     undisplayElementNow: undisplayElementNow,
     undoPreventSelect: undoPreventSelect,
@@ -19168,6 +20353,8 @@
     unsetBoolDataNow: unsetBoolDataNow,
     unsetBooleanData: unsetBooleanData,
     unsetBooleanDataNow: unsetBooleanDataNow,
+    unwrapContent: unwrapContent,
+    unwrapContentNow: unwrapContentNow,
     validateBoolean: validateBoolean,
     validateBooleanOrString: validateBooleanOrString,
     validateNumList: validateNumList,
@@ -19175,6 +20362,7 @@
     validateStrList: validateStrList,
     validateString: validateString,
     validateStringRequired: validateStringRequired,
+    waitForAnimationFrame: waitForAnimationFrame,
     waitForComplete: waitForComplete,
     waitForDelay: waitForDelay,
     waitForElement: waitForElement,
@@ -19189,8 +20377,7 @@
     wrapChildren: wrapChildren,
     wrapChildrenNow: wrapChildrenNow,
     wrapElement: wrapElement,
-    wrapElementNow: wrapElementNow,
-    wrapScrollingContent: wrapScrollingContent
+    wrapElementNow: wrapElementNow
   });
 
   /**

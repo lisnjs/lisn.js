@@ -6,10 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.ViewTrigger = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-var _settings = require("../globals/settings.cjs");
 var _cssAlter = require("../utils/css-alter.cjs");
 var _domAlter = require("../utils/dom-alter.cjs");
-var _domQuery = require("../utils/dom-query.cjs");
 var _domSearch = require("../utils/dom-search.cjs");
 var _text = require("../utils/text.cjs");
 var _validation = require("../utils/validation.cjs");
@@ -20,8 +18,7 @@ var _viewWatcher = require("../watchers/view-watcher.cjs");
 var _trigger = require("./trigger.cjs");
 var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -156,13 +153,13 @@ class ViewTrigger extends _trigger.Trigger {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    var _config$rootMargin;
+    var _config$rootMargin, _config$target;
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     const logger = _debug.default ? new _debug.default.Logger({
       name: `ViewTrigger-${(0, _text.formatAsString)(element)}`
     }) : null;
-    this.getConfig = () => MH.copyObject(config || {});
+    this.getConfig = () => MH.copyObject(config);
     if (!MH.lengthOf(actions)) {
       return;
     }
@@ -171,7 +168,7 @@ class ViewTrigger extends _trigger.Trigger {
       rootMargin: config === null || config === void 0 || (_config$rootMargin = config.rootMargin) === null || _config$rootMargin === void 0 ? void 0 : _config$rootMargin.replace(/,/g, " "),
       threshold: config === null || config === void 0 ? void 0 : config.threshold
     });
-    const target = (config === null || config === void 0 ? void 0 : config.target) || element;
+    const target = (_config$target = config === null || config === void 0 ? void 0 : config.target) !== null && _config$target !== void 0 ? _config$target : element;
     const views = (config === null || config === void 0 ? void 0 : config.views) || MC.S_AT;
     const oppositeViews = (0, _views.getOppositeViews)(views);
     const setupWatcher = target => {
@@ -228,29 +225,17 @@ const newConfigValidator = element => {
   };
 };
 const setupRepresentative = async element => {
-  var _MH$classList;
-  const allowedToWrap = _settings.settings.contentWrappingAllowed === true && (0, _cssAlter.getData)(element, MC.PREFIX_NO_WRAP) === null &&
-  // Done by another animate action?
-  !((_MH$classList = MH.classList(MH.parentOf(element))) !== null && _MH$classList !== void 0 && _MH$classList.contains(MC.PREFIX_WRAPPER));
-  let target;
-  if (allowedToWrap) {
-    target = await (0, _domAlter.wrapElement)(element, {
-      ignoreMove: true
-    });
-    (0, _cssAlter.addClasses)(target, MC.PREFIX_WRAPPER);
-    if ((0, _domQuery.isInlineTag)(MH.tagName(target))) {
-      (0, _cssAlter.addClasses)(target, MC.PREFIX_INLINE_WRAPPER);
-    }
-  } else {
-    // Otherwise create a dummy hidden clone that's not animated and position
-    // it absolutely in a wrapper of size 0 that's inserted just before the
-    // actual element, so that the hidden clone overlaps the actual element's
-    // regular (pre-transformed) position.
+  let target = await (0, _domAlter.tryWrap)(element);
+  if (!target) {
+    // Not allowed to wrap. Create a dummy hidden clone that's not animated and
+    // position it absolutely in a wrapper of size 0 that's inserted just
+    // before the actual element, so that the hidden clone overlaps the actual
+    // element's regular (pre-transformed) position.
 
     const prev = element.previousElementSibling;
     const prevChild = MH.childrenOf(prev)[0];
     if (prev && (0, _cssAlter.hasClass)(prev, MC.PREFIX_WRAPPER) && prevChild && (0, _cssAlter.hasClass)(prevChild, MC.PREFIX_GHOST)) {
-      // Done by a previous animate action?
+      // Already cloned by a previous animate action?
       target = prevChild;
     } else {
       target = (await (0, _domAlter.insertGhostClone)(element))._clone;

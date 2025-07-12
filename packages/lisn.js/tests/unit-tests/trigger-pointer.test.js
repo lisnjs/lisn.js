@@ -82,6 +82,33 @@ describe("ClickTrigger", () => {
     expect(action.undo).toHaveBeenCalledTimes(0);
     expect(action.toggle).toHaveBeenCalledTimes(3);
   });
+
+  test("destroy", async () => {
+    const action = {
+      do: jest.fn(),
+      undo: jest.fn(),
+      toggle: jest.fn(),
+    };
+
+    const element = document.createElement("div");
+    const trigger = new ClickTrigger(element, [action]);
+
+    await window.waitForAF();
+
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+
+    await trigger.destroy();
+
+    element.dispatchEvent(window.newClick());
+    await window.waitFor(10); // callbacks are async
+
+    // no new calls
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+  });
 });
 
 describe("ClickTrigger auto-widgets", () => {
@@ -220,6 +247,33 @@ describe("HoverTrigger", () => {
     expect(action.undo).toHaveBeenCalledTimes(1);
     expect(action.toggle).toHaveBeenCalledTimes(0);
   });
+
+  test("destroy", async () => {
+    const action = {
+      do: jest.fn(),
+      undo: jest.fn(),
+      toggle: jest.fn(),
+    };
+
+    const element = document.createElement("div");
+    const trigger = new HoverTrigger(element, [action]);
+
+    await window.waitForAF();
+
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+
+    await trigger.destroy();
+
+    element.dispatchEvent(window.newMouse("enter"));
+    await window.waitFor(10); // callbacks are async
+
+    // no new calls
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+  });
 });
 
 describe("HoverTrigger auto-widgets", () => {
@@ -356,6 +410,33 @@ describe("PressTrigger", () => {
 
     expect(action.do).toHaveBeenCalledTimes(2);
     expect(action.undo).toHaveBeenCalledTimes(1);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+  });
+
+  test("destroy", async () => {
+    const action = {
+      do: jest.fn(),
+      undo: jest.fn(),
+      toggle: jest.fn(),
+    };
+
+    const element = document.createElement("div");
+    const trigger = new PressTrigger(element, [action]);
+
+    await window.waitForAF();
+
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+
+    await trigger.destroy();
+
+    element.dispatchEvent(window.newMouse("down"));
+    await window.waitFor(10); // callbacks are async
+
+    // no new calls
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
     expect(action.toggle).toHaveBeenCalledTimes(0);
   });
 });

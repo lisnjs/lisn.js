@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.1.2
+ * LISN.js v1.2.0
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -66,25 +66,27 @@ const S_SCROLL_LEFT_FRACTION = `${S_SCROLL}LeftFraction`;
 const S_SKIP_INITIAL = "skipInitial";
 const S_DEBOUNCE_WINDOW = "debounceWindow";
 const S_CANCEL = "cancel";
-const S_KEYDOWN = S_KEY + S_DOWN;
-const S_MOUSEUP = S_MOUSE + S_UP;
-const S_MOUSEDOWN = S_MOUSE + S_DOWN;
-const S_POINTERUP = S_POINTER + S_UP;
-const S_POINTERDOWN = S_POINTER + S_DOWN;
+const S_KEYDOWN = `${S_KEY}${S_DOWN}`;
+const S_MOUSEUP = `${S_MOUSE}${S_UP}`;
+const S_MOUSEDOWN = `${S_MOUSE}${S_DOWN}`;
+const S_POINTERUP = `${S_POINTER}${S_UP}`;
+const S_POINTERDOWN = `${S_POINTER}${S_DOWN}`;
 const S_POINTERMOVE = `${S_POINTER}move`;
-const S_POINTERCANCEL = S_POINTER + S_CANCEL;
+const S_POINTERCANCEL = `${S_POINTER}${S_CANCEL}`;
 const S_TOUCHSTART = `${S_TOUCH}start`;
 const S_TOUCHEND = `${S_TOUCH}end`;
 const S_TOUCHMOVE = `${S_TOUCH}move`;
-const S_TOUCHCANCEL = S_TOUCH + S_CANCEL;
+const S_TOUCHCANCEL = `${S_TOUCH}${S_CANCEL}`;
 const S_SELECTSTART = "selectstart";
 const S_ATTRIBUTES = "attributes";
 const S_CHILD_LIST = "childList";
+const S_AUTO = "auto";
+const S_VISIBLE = "visible";
+const PREFIX_WRAPPER$2 = `${PREFIX}-wrapper`;
+const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER$2}-inline`;
 const PREFIX_NO_SELECT = `${PREFIX}-no-select`;
 const PREFIX_NO_TOUCH_ACTION = `${PREFIX}-no-touch-action`;
 const PREFIX_NO_WRAP = `${PREFIX}-no-wrap`;
-const USER_AGENT = typeof navigator === "undefined" ? "" : navigator.userAgent;
-USER_AGENT.match(/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/) !== null;
 
 /**
  * @module Errors
@@ -133,7 +135,7 @@ const prefixCssVar = name => "--" + prefixName(name);
 const prefixCssJsVar = name => prefixCssVar("js--" + name);
 const prefixData = name => `data-${camelToKebabCase$1(name)}`;
 const toLowerCase = s => s.toLowerCase();
-const timeNow = Date.now.bind(Date);
+Date.now.bind(Date);
 const hasDOM = () => typeof document !== "undefined";
 const getWindow = () => window;
 const getDoc = () => document;
@@ -142,7 +144,7 @@ const getDocScrollingElement = () => getDoc().scrollingElement;
 const getBody = () => getDoc().body;
 const getReadyState = () => getDoc().readyState;
 const getPointerType = event => isPointerEvent(event) ? event.pointerType : isMouseEvent(event) ? "mouse" : null;
-const onAnimationFrame = hasDOM() ? root.requestAnimationFrame.bind(root) : () => {};
+const onAnimationFrame = callback => requestAnimationFrame(callback);
 const createElement = (tagName, options) => getDoc().createElement(tagName, options);
 const isNullish = v => v === undefined || v === null;
 const isEmpty = v => isNullish(v) || v === "";
@@ -172,7 +174,7 @@ const isHTMLElement = target => isInstanceOf(target, HTMLElement);
 const strReplace = (s, match, replacement) => s.replace(match, replacement);
 const setTimer = root.setTimeout.bind(root);
 const clearTimer = root.clearTimeout.bind(root);
-const getBoundingClientRect = el => el.getBoundingClientRect();
+const getBoundingClientRect = element => element.getBoundingClientRect();
 
 // Copy size properties explicitly to another object so they can be used with
 // the spread operator (DOMRect/DOMRectReadOnly's properties are not enumerable)
@@ -191,10 +193,11 @@ const copyBoundingRectProps = rect => {
 const querySelector = (root, selector) => root.querySelector(selector);
 const querySelectorAll = (root, selector) => root.querySelectorAll(selector);
 const docQuerySelector = selector => querySelector(getDoc(), selector);
-const getAttr = (el, name) => el.getAttribute(name);
-const setAttr = (el, name, value = "true") => el.setAttribute(name, value);
-const delAttr = (el, name) => el.removeAttribute(name);
+const getAttr = (element, name) => element.getAttribute(name);
+const setAttr = (element, name, value = "true") => element.setAttribute(name, value);
+const delAttr = (element, name) => element.removeAttribute(name);
 const includes = (arr, v, startAt) => arr.indexOf(v, startAt) >= 0;
+const some = (array, predicate) => array.some(predicate);
 const filter = (array, filterFn) => array.filter(filterFn);
 const filterBlank = array => {
   const result = array ? filter(array, v => !isEmpty(v)) : undefined;
@@ -208,7 +211,9 @@ const lengthOf = obj => {
   var _obj$length;
   return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
 };
-const tagName = el => el.tagName;
+const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
+const tagName = element => element.tagName;
+const hasTagName = (element, tag) => toLowerCase(tagName(element)) === toLowerCase(tag);
 const preventDefault = event => event.preventDefault();
 const arrayFrom = ARRAY.from.bind(ARRAY);
 const keysOf = obj => OBJECT.keys(obj);
@@ -235,6 +240,7 @@ const min = MATH.min.bind(MATH);
 const abs = MATH.abs.bind(MATH);
 const round = MATH.round.bind(MATH);
 const pow = MATH.pow.bind(MATH);
+const exp = MATH.exp.bind(MATH);
 const parseFloat = NUMBER.parseFloat.bind(NUMBER);
 NUMBER.isNaN.bind(NUMBER);
 const isInstanceOf = (value, Class) => value instanceof Class;
@@ -244,18 +250,21 @@ const typeOrClassOf = obj => {
   var _constructorOf;
   return isObject(obj) ? (_constructorOf = constructorOf(obj)) === null || _constructorOf === void 0 ? void 0 : _constructorOf.name : typeOf(obj);
 };
-const parentOf = element => (element === null || element === void 0 ? void 0 : element.parentElement) || null;
+const parentOf = element => {
+  var _element$parentElemen;
+  return (_element$parentElemen = element === null || element === void 0 ? void 0 : element.parentElement) !== null && _element$parentElemen !== void 0 ? _element$parentElemen : null;
+};
 const childrenOf = element => (element === null || element === void 0 ? void 0 : element.children) || [];
 const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
 const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;
-const classList = el => el === null || el === void 0 ? void 0 : el.classList;
+const classList = element => element === null || element === void 0 ? void 0 : element.classList;
 const S_TABINDEX = "tabindex";
-const getTabIndex = el => getAttr(el, S_TABINDEX);
-const setTabIndex = (el, index = "0") => setAttr(el, S_TABINDEX, index);
-const unsetTabIndex = el => delAttr(el, S_TABINDEX);
+const getTabIndex = element => getAttr(element, S_TABINDEX);
+const setTabIndex = (element, index = "0") => setAttr(element, S_TABINDEX, index);
+const unsetTabIndex = element => delAttr(element, S_TABINDEX);
 const remove = obj => obj === null || obj === void 0 ? void 0 : obj.remove();
 const deleteKey = (map, key) => map === null || map === void 0 ? void 0 : map.delete(key);
-const elScrollTo = (el, coords, behavior = "instant") => el.scrollTo(merge({
+const elScrollTo = (element, coords, behavior = "instant") => element.scrollTo(merge({
   behavior
 }, coords));
 const newPromise = executor => new Promise(executor);
@@ -321,7 +330,7 @@ const settings = preventExtensions({
    * etc. If you are using the HTML API, then you must set this before the
    * document `readyState` becomes interactive.
    *
-   * @defaultValue null
+   * @defaultValue null // document.scrollingElement
    * @category Generic
    */
   mainScrollableElementSelector: null,
@@ -379,14 +388,20 @@ const settings = preventExtensions({
    *
    * ----------
    *
-   * If you can, it's recommended to leave this setting ON. You can still
+   * **IMPORTANT:** Certain widgets always require wrapping of elements or their
+   * children. This setting only applies in cases where wrapping is optional.
+   * If you can, it's recommended to leave this setting ON. You can still try to
    * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
-   * attribute on it.
+   * attribute on it. Alternatively, if the elements that need wrapping are
+   * already wrapped in an element with a class `lisn-wrapper`, this will be
+   * used as the wrapper.
    *
    * @defaultValue true
    * @category Generic
    */
   contentWrappingAllowed: true,
+  // [TODO v2] rename this setting
+
   /**
    * The timeout in milliseconds for waiting for the `document.readyState` to
    * become `complete`. The timer begins _once the `readyState` becomes
@@ -749,9 +764,7 @@ const settings = preventExtensions({
  */
 
 /**
- * Round a number to the given decimal precision (default is 0).
- *
- * @param {} [numDecimal = 0]
+ * Round a number to the given decimal precision.
  *
  * @category Math
  */
@@ -892,7 +905,7 @@ const degToRad = a => a * PI / 180;
 /**
  * Returns true if the given vectors point in the same direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 5 degrees of each other are
@@ -913,7 +926,7 @@ const areParallel = (vA, vB, angleDiffThreshold = 0) => {
 /**
  * Returns true if the given vectors point in the opposite direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 175-185 degrees of each other are
@@ -934,14 +947,64 @@ const areAntiParallel = (vA, vB, angleDiffThreshold = 0) => areParallel(vA, [-vB
 const distanceBetween = (ptA, ptB) => sqrt(pow(ptA[0] - ptB[0], 2) + pow(ptA[1] - ptB[1], 2));
 
 /**
- * Returns the value that an "easing" quadratic function would have at the
- * given x.
+ * Returns the new position and velocity for a critically damped user-driven
+ * spring state toward a current target position.
  *
- * @see https://easings.net/#easeInOutQuad
+ * @param [settings.lTarget]       Target final position.
+ * @param [settings.dt]            Time step in milliseconds since the last call.
+ *                                 Must be small for the returned values to be
+ *                                 meaningful.
+ * @param [settings.lag]           Lag in milliseconds (how long it should take
+ *                                 for it to reach the final position). Must be
+ *                                 positive.
+ * @param [settings.l = 0]         Current position (starting or one returned by
+ *                                 previous call).
+ * @param [settings.v = 0]         Current velocity (returned by previous call).
+ * @param [settings.precision = 2] Number of decimal places to round position to
+ *                                 in order to determine when it's "done".
+ * @returns Updated position and velocity
+ *
+ * @since v1.2.0
  *
  * @category Math
  */
-const easeInOutQuad = x => x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;
+const criticallyDamped = settings => {
+  const {
+    lTarget,
+    precision = 2
+  } = settings;
+  const lag = toNumWithBounds(settings.lag, {
+    min: 1
+  }) / 1000; // to seconds
+
+  // Since the position only approaches asymptotically the target it never truly
+  // reaches it exactly we need an approximation to calculate w0. N determines
+  // how far away from the target position we are after `lag` milliseconds.
+  const N = 7;
+  const w0 = N / lag;
+  let {
+    l = 0,
+    v = 0,
+    dt
+  } = settings;
+  dt /= 1000; // to seconds
+
+  if (roundNumTo(l - lTarget, precision) === 0) {
+    // we're done
+    l = lTarget;
+    v = 0;
+  } else if (dt > 0) {
+    const A = l - lTarget;
+    const B = v + w0 * A;
+    const e = exp(-w0 * dt);
+    l = lTarget + (A + B * dt) * e;
+    v = (B - w0 * (A + B * dt)) * e;
+  }
+  return {
+    l,
+    v
+  };
+};
 
 /**
  * Returns an array of object's keys sorted by the numeric value they hold.
@@ -1039,13 +1102,13 @@ const compareValuesIn = (objA, objB, roundTo = 3) => {
  * **NOTE:** This is not intended for serialization of data that needs to be
  * de-serialized. Only for debugging output.
  *
- * @param {} value     The value to format as string.
- * @param {} [maxLen]  Maximum length of the returned string. If not given or
- *                     is <= 0, the string is not truncated. Otherwise, if the
- *                     result is longer than maxLen, it is truncated to
- *                     `maxLen - 3` and added a suffix of "...".
- *                     Note that if `maxLen` is > 0 but <= 3, the result is
- *                     always "..."
+ * @param value    The value to format as string.
+ * @param [maxLen] Maximum length of the returned string. If not given or
+ *                 is <= 0, the string is not truncated. Otherwise, if the
+ *                 result is longer than maxLen, it is truncated to
+ *                 `maxLen - 3` and added a suffix of "...".
+ *                 Note that if `maxLen` is > 0 but <= 3, the result is
+ *                 always "..."
  *
  * @category Text
  */
@@ -1059,8 +1122,8 @@ const formatAsString = (value, maxLen) => {
  * {@link formatAsString} rather than the default string representation as
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join | Array:join} would.
  *
- * @param {} separator  The separator to use to delimit each argument.
- * @param {} args       Objects or values to convert to string and join.
+ * @param separator The separator to use to delimit each argument.
+ * @param args      Objects or values to convert to string and join.
  *
  * @category Text
  */
@@ -1085,11 +1148,11 @@ const joinAsString = (separator, ...args) => args.map(a => formatAsString(a)).jo
  * splitOn('foo, bar, baz', RegExp(',\\s*'), 3); // -> ['foo', 'bar', 'baz']
  * ```
  *
- * @param {} trim  If true, entries will be trimmed for whitespace after splitting.
+ * @param trim  If true, entries will be trimmed for whitespace after splitting.
  *
- * @param {} limit If not given or < 0, the string will be split on every
- *                 occurrence of `separator`. Otherwise, it will be split on
- *                 the first `limit` number of occurrences of `separator`.
+ * @param limit If not given or < 0, the string will be split on every
+ *              occurrence of `separator`. Otherwise, it will be split on
+ *              the first `limit` number of occurrences of `separator`.
  *
  * @category Text
  */
@@ -1097,7 +1160,7 @@ const splitOn = (input, separator, trim, limit) => {
   if (!input.trim()) {
     return [];
   }
-  limit = limit !== null && limit !== void 0 ? limit : -1;
+  limit !== null && limit !== void 0 ? limit : limit = -1;
   const output = [];
   const addEntry = s => output.push(trim ? s.trim() : s);
   while (limit--) {
@@ -1136,7 +1199,7 @@ const camelToKebabCase = camelToKebabCase$1;
  *
  * **IMPORTANT:** This is _not_ suitable for cryptographic applications.
  *
- * @param {} [nChars = 8]  The length of the returned stirng.
+ * @param nChars The length of the returned stirng.
  *
  * @category Text
  */
@@ -1164,14 +1227,14 @@ const randId = (nChars = 8) => {
  * `rootMargin`, top/bottom margin is relative to the height of the root, so
  * pass the actual root size.
  *
- * @return {} [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
+ * @returns [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
  *
  * @category Text
  */
 const toMargins = (value, absoluteSize) => {
   var _parts$, _parts$2, _ref, _parts$3;
   const toPxValue = (strValue, index) => {
-    let margin = parseFloat(strValue || "") || 0;
+    let margin = parseFloat(strValue !== null && strValue !== void 0 ? strValue : "") || 0;
     if (strValue === margin + "%") {
       margin *= index % 2 ? absoluteSize[S_HEIGHT] : absoluteSize[S_WIDTH];
     }
@@ -1259,9 +1322,9 @@ const maybeConvertToString = (value, nested) => {
  *                If the input is not a string or array of strings, or if any
  *                entries do not pass `checkFn`.
  *
- * @param {} key Used in the error message thrown
+ * @param key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -1473,6 +1536,53 @@ const newBitSpace = (counter, propNames) => {
  */
 const DOM_CATEGORIES_SPACE = createBitSpace(newBitSpaces(), S_ADDED, S_REMOVED, S_ATTRIBUTE);
 
+function _OverloadYield(e, d) {
+  this.v = e, this.k = d;
+}
+function _asyncIterator(r) {
+  var n,
+    t,
+    o,
+    e = 2;
+  for ("undefined" != typeof Symbol && (t = Symbol.asyncIterator, o = Symbol.iterator); e--;) {
+    if (t && null != (n = r[t])) return n.call(r);
+    if (o && null != (n = r[o])) return new AsyncFromSyncIterator(n.call(r));
+    t = "@@asyncIterator", o = "@@iterator";
+  }
+  throw new TypeError("Object is not async iterable");
+}
+function AsyncFromSyncIterator(r) {
+  function AsyncFromSyncIteratorContinuation(r) {
+    if (Object(r) !== r) return Promise.reject(new TypeError(r + " is not an object."));
+    var n = r.done;
+    return Promise.resolve(r.value).then(function (r) {
+      return {
+        value: r,
+        done: n
+      };
+    });
+  }
+  return AsyncFromSyncIterator = function (r) {
+    this.s = r, this.n = r.next;
+  }, AsyncFromSyncIterator.prototype = {
+    s: null,
+    n: null,
+    next: function () {
+      return AsyncFromSyncIteratorContinuation(this.n.apply(this.s, arguments));
+    },
+    return: function (r) {
+      var n = this.s.return;
+      return void 0 === n ? Promise.resolve({
+        value: r,
+        done: true
+      }) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
+    },
+    throw: function (r) {
+      var n = this.s.return;
+      return void 0 === n ? Promise.reject(r) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
+    }
+  }, new AsyncFromSyncIterator(r);
+}
 function _defineProperty(e, r, t) {
   return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
     value: t,
@@ -1495,6 +1605,73 @@ function _toPropertyKey(t) {
   var i = _toPrimitive(t, "string");
   return "symbol" == typeof i ? i : i + "";
 }
+function _wrapAsyncGenerator(e) {
+  return function () {
+    return new AsyncGenerator(e.apply(this, arguments));
+  };
+}
+function AsyncGenerator(e) {
+  var r, t;
+  function resume(r, t) {
+    try {
+      var n = e[r](t),
+        o = n.value,
+        u = o instanceof _OverloadYield;
+      Promise.resolve(u ? o.v : o).then(function (t) {
+        if (u) {
+          var i = "return" === r ? "return" : "next";
+          if (!o.k || t.done) return resume(i, t);
+          t = e[i](t).value;
+        }
+        settle(n.done ? "return" : "normal", t);
+      }, function (e) {
+        resume("throw", e);
+      });
+    } catch (e) {
+      settle("throw", e);
+    }
+  }
+  function settle(e, n) {
+    switch (e) {
+      case "return":
+        r.resolve({
+          value: n,
+          done: true
+        });
+        break;
+      case "throw":
+        r.reject(n);
+        break;
+      default:
+        r.resolve({
+          value: n,
+          done: false
+        });
+    }
+    (r = r.next) ? resume(r.key, r.arg) : t = null;
+  }
+  this._invoke = function (e, n) {
+    return new Promise(function (o, u) {
+      var i = {
+        key: e,
+        arg: n,
+        resolve: o,
+        reject: u,
+        next: null
+      };
+      t ? t = t.next = i : (r = t = i, resume(e, n));
+    });
+  }, "function" != typeof e.return && (this.return = void 0);
+}
+AsyncGenerator.prototype["function" == typeof Symbol && Symbol.asyncIterator || "@@asyncIterator"] = function () {
+  return this;
+}, AsyncGenerator.prototype.next = function (e) {
+  return this._invoke("next", e);
+}, AsyncGenerator.prototype.throw = function (e) {
+  return this._invoke("throw", e);
+}, AsyncGenerator.prototype.return = function (e) {
+  return this._invoke("return", e);
+};
 
 /**
  * @module Utils
@@ -1564,7 +1741,7 @@ const getDebouncedHandler = (debounceWindow, handler) => {
 };
 
 /**
- * @typeParam Args  See {@link Callback}
+ * @typeParam Args See {@link Callback}
  */
 
 /**
@@ -1606,12 +1783,12 @@ const wrapCallback = (handlerOrCallback, debounceWindow = 0) => {
  * - awaiting on an asynchronous handler and ensuring that the handler does not
  *  run concurrently to itself, i.e. subsequent {@link invoke}s will be queued
  *
- * @typeParam Args  The type of arguments that the callback expects.
+ * @typeParam Args The type of arguments that the callback expects.
  */
 class Callback {
   /**
-   * @param {} handler     The actual function to call. This should return one of
-   *                       the known {@link CallbackReturnType} values.
+   * @param handler The actual function to call. This should return one of
+   *                the known {@link CallbackReturnType} values.
    */
   constructor(handler) {
     let isRemoved = false;
@@ -1676,10 +1853,10 @@ _defineProperty(Callback, "REMOVE", SYMBOL("REMOVE"));
  * Note that if the argument is a callback that's already debounced by a
  * _larger_ window, then `debounceWindow` will have no effect.
  *
- * @param {} debounceWindow  If non-0, the callback will be called at most
- *                           every `debounceWindow` ms. The arguments it will
- *                           be called with will be the last arguments the
- *                           wrapper was called with.
+ * @param debounceWindow If non-0, the callback will be called at most
+ *                       every `debounceWindow` ms. The arguments it will
+ *                       be called with will be the last arguments the
+ *                       wrapper was called with.
  */
 _defineProperty(Callback, "wrap", wrapCallback);
 const callablesMap = newWeakMap();
@@ -1822,6 +1999,14 @@ const waitForMeasureTime = () => newPromise(resolve => {
  */
 const waitForSubsequentMeasureTime = () => waitForMeasureTime().then(waitForMutateTime).then(waitForMeasureTime);
 
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() => func(...args));
+
 // ----------------------------------------
 
 const scheduledDOMMeasurements = [];
@@ -1905,14 +2090,24 @@ const inlineTags = newSet(["a", "abbr", "acronym", "b", "bdi", "bdo", "big", "bu
 /**
  * @module Utils
  *
- * @categoryDescription CSS: Altering
+ * @categoryDescription DOM: Querying
+ * These functions query the style, attributes or other aspects of elements, but
+ * could lead to forced layout if not scheduled using {@link waitForMeasureTime}.
+ *
+ * @categoryDescription DOM: Querying (optimized)
+ * These functions query the style, attributes or other aspects of elements in
+ * an optimized way. Functions that could cause a forced layout use
+ * {@link waitForMeasureTime} and so are asynchronous. Functions that can
+ * perform the check without forcing a re-layout are synchronous.
+ *
+ * @categoryDescription Style: Altering
  * These functions transition an element from one CSS class to another, but
  * could lead to forced layout if not scheduled using {@link waitForMutateTime}.
  * If a delay is supplied, then the transition is "scheduled" and if the
  * opposite transition is executed before the scheduled one, the original one
  * is cancelled. See {@link transitionElement} for an example.
  *
- * @categoryDescription CSS: Altering (optimized)
+ * @categoryDescription Style: Altering (optimized)
  * These functions transition an element from one CSS class to another in an
  * optimized way using {@link waitForMutateTime} and so are asynchronous.
  * If a delay is supplied, then the transition is "scheduled" and if the
@@ -1924,37 +2119,46 @@ const inlineTags = newSet(["a", "abbr", "acronym", "b", "bdi", "bdo", "big", "bu
 /**
  * Returns true if the element's class list contains the given class.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
-const hasClass = (el, className) => classList(el).contains(className);
+const hasClass = (element, className) => classList(element).contains(className);
+
+/**
+ * Returns true if the element's class list contains any of the given classes.
+ *
+ * @since v1.2.0
+ *
+ * @category DOM: Querying (optimized)
+ */
+const hasAnyClass = (element, ...classNames) => some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
-const addClassesNow = (el, ...classNames) => classList(el).add(...classNames);
+const addClassesNow = (element, ...classNames) => classList(element).add(...classNames);
 
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
-const addClasses = (el, ...classNames) => waitForMutateTime().then(() => addClassesNow(el, ...classNames));
+const addClasses = asyncMutatorFor(addClassesNow);
 
 /**
  * Removes the given classes to the element.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
-const removeClassesNow = (el, ...classNames) => classList(el).remove(...classNames);
+const removeClassesNow = (element, ...classNames) => classList(element).remove(...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
-const removeClasses = (el, ...classNames) => waitForMutateTime().then(() => removeClassesNow(el, ...classNames));
+const removeClasses = asyncMutatorFor(removeClassesNow);
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -1964,9 +2168,9 @@ const removeClasses = (el, ...classNames) => waitForMutateTime().then(() => remo
  * must _not_ start with `data`. It can be in either camelCase or kebab-case,
  * it is converted as needed.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
-const getData = (el, name) => getAttr(el, prefixData(name));
+const getData = (element, name) => getAttr(element, prefixData(name));
 
 /**
  * Sets the given data attribute.
@@ -1974,35 +2178,17 @@ const getData = (el, name) => getAttr(el, prefixData(name));
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
-const setDataNow = (el, name, value) => setAttr(el, prefixData(name), value);
+const setDataNow = (element, name, value) => setAttr(element, prefixData(name), value);
 
 /**
  * Returns the value of the given property from the computed style of the
  * element.
  *
- * @category DOM: Altering
+ * @category DOM: Querying
  */
 const getComputedStylePropNow = (element, prop) => getComputedStyle(element).getPropertyValue(prop);
-
-/**
- * Returns the value of the given property from the inline style of the
- * element.
- *
- * @category DOM: Altering
- */
-const getStylePropNow = (element, prop) => {
-  var _style;
-  return (_style = element.style) === null || _style === void 0 ? void 0 : _style.getPropertyValue(prop);
-};
-
-/**
- * Like {@link getStylePropNow} except it will {@link waitForMeasureTime}.
- *
- * @category DOM: Altering (optimized)
- */
-const getStyleProp = (element, prop) => waitForMeasureTime().then(() => getStylePropNow(element, prop));
 
 /**
  * Sets the given property on the inline style of the element.
@@ -2015,13 +2201,6 @@ const setStylePropNow = (element, prop, value) => {
 };
 
 /**
- * Like {@link setStylePropNow} except it will {@link waitForMutateTime}.
- *
- * @category DOM: Altering (optimized)
- */
-const setStyleProp = (element, prop, value) => waitForMutateTime().then(() => setStylePropNow(element, prop, value));
-
-/**
  * Deletes the given property on the inline style of the element.
  *
  * @category DOM: Altering
@@ -2032,13 +2211,6 @@ const delStylePropNow = (element, prop) => {
 };
 
 /**
- * Like {@link delStylePropNow} except it will {@link waitForMutateTime}.
- *
- * @category DOM: Altering (optimized)
- */
-const delStyleProp = (element, prop) => waitForMutateTime().then(() => delStylePropNow(element, prop));
-
-/**
  * If the props keys are in camelCase they are converted to kebab-case
  *
  * If a value is null or undefined, the property is deleted.
@@ -2046,12 +2218,12 @@ const delStyleProp = (element, prop) => waitForMutateTime().then(() => delStyleP
  * @ignore
  * @internal
  */
-const setNumericStyleProps = async (element, props, options = {}) => {
+const setNumericStyleJsVarsNow = (element, props, options = {}) => {
+  var _options$_prefix;
   if (!isDOMElement(element)) {
     return;
   }
-  const transformFn = options._transformFn;
-  const varPrefix = prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
+  const varPrefix = prefixCssJsVar((_options$_prefix = options === null || options === void 0 ? void 0 : options._prefix) !== null && _options$_prefix !== void 0 ? _options$_prefix : "");
   for (const prop in props) {
     const cssPropSuffix = camelToKebabCase(prop);
     const varName = `${varPrefix}${cssPropSuffix}`;
@@ -2062,19 +2234,22 @@ const setNumericStyleProps = async (element, props, options = {}) => {
       var _options$_numDecimal;
       value = props[prop];
       const thisNumDecimal = (_options$_numDecimal = options === null || options === void 0 ? void 0 : options._numDecimal) !== null && _options$_numDecimal !== void 0 ? _options$_numDecimal : value > 0 && value < 1 ? 2 : 0;
-      if (transformFn) {
-        const currValue = parseFloat(await getStyleProp(element, varName));
-        value = transformFn(prop, currValue || 0, value);
-      }
       value = roundNumTo(value, thisNumDecimal);
     }
     if (value === null) {
-      delStyleProp(element, varName);
+      delStylePropNow(element, varName);
     } else {
-      setStyleProp(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
+      var _options$_units;
+      setStylePropNow(element, varName, value + ((_options$_units = options === null || options === void 0 ? void 0 : options._units) !== null && _options$_units !== void 0 ? _options$_units : ""));
     }
   }
 };
+
+/**
+ * @ignore
+ * @internal
+ */
+const setNumericStyleJsVars = asyncMutatorFor(setNumericStyleJsVarsNow);
 newWeakMap();
 
 /**
@@ -2082,13 +2257,45 @@ newWeakMap();
  *
  * @categoryDescription DOM: Altering
  * These functions alter the DOM tree, but could lead to forced layout if not
- * scheduled using {@link waitForMutateTime}.
+ * scheduled using {@link Utils.waitForMutateTime}.
  *
  * @categoryDescription DOM: Altering (optimized)
  * These functions alter the DOM tree in an optimized way using
- * {@link waitForMutateTime} and so are asynchronous.
+ * {@link Utils.waitForMutateTime} and so are asynchronous.
  */
 
+
+/**
+ * Wraps the element in the given wrapper, or a newly created element if not given.
+ *
+ * @param [options.wrapper]
+ *              If it's an element, it is used as the wrapper. If it's a string
+ *              tag name, then a new element with this tag is created as the
+ *              wrapper. If not given, then `div` is used if the element to be
+ *              wrapped has an block-display tag, or otherwise `span` (if the
+ *              element to be wrapped has an inline tag name).
+ * @param [options.ignoreMove]
+ *              If true, the DOM watcher instances will ignore the operation of
+ *              replacing the element (so as to not trigger relevant callbacks).
+ * @returns The wrapper element that was either passed in options or created.
+ *
+ * @category DOM: Altering
+ */
+const wrapElementNow = (element, options) => {
+  const wrapper = createWrapperFor(element, options === null || options === void 0 ? void 0 : options.wrapper);
+  if ((options === null || options === void 0 ? void 0 : options.ignoreMove) === true) {
+    ignoreMove(element, {
+      from: parentOf(element),
+      to: wrapper
+    });
+    ignoreMove(wrapper, {
+      to: parentOf(element)
+    });
+  }
+  element.replaceWith(wrapper);
+  wrapper.append(element);
+  return wrapper;
+};
 
 /**
  * Wraps the element's children in the given wrapper, or a newly created element
@@ -2100,20 +2307,25 @@ newWeakMap();
  */
 const wrapChildrenNow = (element, options) => {
   const wrapper = createWrapperFor(element, options === null || options === void 0 ? void 0 : options.wrapper);
+  const {
+    ignoreMove
+  } = options !== null && options !== void 0 ? options : {};
   moveChildrenNow(element, wrapper, {
-    ignoreMove: true
+    ignoreMove
   });
   moveElementNow(wrapper, {
     to: element,
-    ignoreMove: true
+    ignoreMove
   });
   return wrapper;
 };
 
+// [TODO v2]: moveChildren to accept newParent as options.to
+
 /**
  * Move an element's children to a new element
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the children (so as to not trigger relevant callbacks).
  *
@@ -2134,21 +2346,22 @@ const moveChildrenNow = (oldParent, newParent, options) => {
 /**
  * Moves an element to a new position.
  *
- * @param {} [options.to]         The new parent or sibling (depending on
- *                                `options.position`). If not given, the
- *                                element is removed from the DOM.
- * @param {} [options.position]   - append (default): append to `options.to`
- *                                - prepend: prepend to `options.to`
- *                                - before: insert before `options.to`
- *                                - after: insert after `options.to`
- * @param {} [options.ignoreMove] If true, the DOM watcher instances will
- *                                ignore the operation of moving the element
- *                                (so as to not trigger relevant callbacks).
+ * @param [options.to]         The new parent or sibling (depending on
+ *                             `options.position`). If not given, the
+ *                             element is removed from the DOM.
+ * @param [options.position]   - append (default): append to `options.to`
+ *                             - prepend: prepend to `options.to`
+ *                             - before: insert before `options.to`
+ *                             - after: insert after `options.to`
+ * @param [options.ignoreMove] If true, the DOM watcher instances will
+ *                             ignore the operation of moving the element
+ *                             (so as to not trigger relevant callbacks).
  *
  * @category DOM: Altering
  */
 const moveElementNow = (element, options) => {
-  let parentEl = (options === null || options === void 0 ? void 0 : options.to) || null;
+  var _options$to;
+  let parentEl = (_options$to = options === null || options === void 0 ? void 0 : options.to) !== null && _options$to !== void 0 ? _options$to : null;
   const position = (options === null || options === void 0 ? void 0 : options.position) || "append";
   if (position === "before" || position === "after") {
     parentEl = parentOf(options === null || options === void 0 ? void 0 : options.to);
@@ -2167,30 +2380,79 @@ const moveElementNow = (element, options) => {
 };
 
 /**
- * Like {@link moveElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-const moveElement = async (element, options) => waitForMutateTime().then(() => moveElementNow(element, options));
+const moveElement = asyncMutatorFor(moveElementNow);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
-const wrapScrollingContent = async element => {
-  await waitForMutateTime();
-  let wrapper;
-  const firstChild = childrenOf(element)[0];
-  if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && hasClass(firstChild, PREFIX_CONTENT_WRAPPER)) {
-    // Another concurrent call has just wrapped it
-    wrapper = firstChild;
-  } else {
-    wrapper = wrapChildrenNow(element, {
-      });
-    addClassesNow(wrapper, PREFIX_CONTENT_WRAPPER);
+const isAllowedToWrap = element => settings.contentWrappingAllowed === true && getData(element, PREFIX_NO_WRAP) === null;
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
+ *
+ * @since v1.2.0
+ */
+const getWrapper = (element, options) => {
+  const {
+    _tagName: tagName,
+    _classNames: classNames = [PREFIX_WRAPPER$2]
+  } = options !== null && options !== void 0 ? options : {};
+  const parent = parentOf(element);
+  if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName || hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, ...classNames))) {
+    // Already wrapped
+    return parent;
   }
-  return wrapper;
+  return null; // don't check the element itself, only its parent
 };
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
+ *
+ * @since v1.2.0
+ */
+const getContentWrapper = (element, options) => {
+  const {
+    _tagName: tagName,
+    _classNames: classNames = [PREFIX_WRAPPER$2]
+  } = options !== null && options !== void 0 ? options : {};
+  const firstChild = childrenOf(element)[0];
+  if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName || hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, ...classNames))) {
+    // Already wrapped
+    return firstChild;
+  }
+  return null;
+};
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
+
+/**
+ * @ignore
+ * @internal
+ *
+ * @since v1.2.0
+ */
+const tryWrapContent = asyncMutatorFor(tryWrapContentNow);
 
 /**
  * @ignore
@@ -2198,16 +2460,22 @@ const wrapScrollingContent = async element => {
  *
  * Exposed via DOMWatcher
  */
-const ignoreMove = (target, options) => recordsToSkipOnce.set(target, {
-  from: options.from || null,
-  to: options.to || null
-});
+const ignoreMove = (target, options) => {
+  var _options$from, _options$to2;
+  return recordsToSkipOnce.set(target, {
+    from: (_options$from = options.from) !== null && _options$from !== void 0 ? _options$from : null,
+    to: (_options$to2 = options.to) !== null && _options$to2 !== void 0 ? _options$to2 : null
+  });
+};
 
 /**
  * @ignore
  * @internal
  */
-const getIgnoreMove = target => recordsToSkipOnce.get(target) || null;
+const getIgnoreMove = target => {
+  var _recordsToSkipOnce$ge;
+  return (_recordsToSkipOnce$ge = recordsToSkipOnce.get(target)) !== null && _recordsToSkipOnce$ge !== void 0 ? _recordsToSkipOnce$ge : null;
+};
 
 /**
  * @ignore
@@ -2224,7 +2492,6 @@ const clearIgnoreMove = target => {
 
 // ----------------------------------------
 
-const PREFIX_CONTENT_WRAPPER = prefixName("content-wrapper");
 const recordsToSkipOnce = newMap();
 const createWrapperFor = (element, wrapper) => {
   if (isElement(wrapper)) {
@@ -2239,6 +2506,36 @@ const createWrapperFor = (element, wrapper) => {
     }
   }
   return createElement(tag);
+};
+const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+) => {
+  const {
+    _tagName: tagName$1,
+    _classNames: classNames = [PREFIX_WRAPPER$2],
+    _ignoreMove: ignoreMove = true,
+    _required: required = false,
+    _requiredBy: requiredBy = ""
+  } = options !== null && options !== void 0 ? options : {};
+  const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
+  const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
+  const allowedToWrap = isAllowedToWrap(element);
+  let wrapper = getWrapperFn(element, options);
+  if (!wrapper && (required || allowedToWrap)) {
+    wrapper = wrapFn(element, {
+      wrapper: tagName$1,
+      ignoreMove
+    });
+    if (classNames) {
+      addClassesNow(wrapper, ...classNames);
+    }
+    if (isInlineTag(tagName(wrapper))) {
+      addClassesNow(wrapper, PREFIX_INLINE_WRAPPER);
+    }
+    if (!allowedToWrap && requiredBy) {
+      logWarn(`content wrapping is disabled for element but wrapping is required by ${requiredBy}`);
+    }
+  }
+  return wrapper;
 };
 
 /**
@@ -2255,8 +2552,8 @@ const createWrapperFor = (element, wrapper) => {
  * the DOM children. Uses
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver | MutationObserver}.
  *
- * @param {} timeout If given, then if no such element is present after this
- *                    many milliseconds, the promise will resolve to `null`.
+ * @param timeout If given, then if no such element is present after this many
+ *                milliseconds, the promise will resolve to `null`.
  *
  * @category DOM: Events
  */
@@ -2499,15 +2796,14 @@ class XMapBase {
  * except that it supports automatically creating missing entries with
  * {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 class XMap extends XMapBase {
   /**
-   * @param {} getDefaultV  This function is called each time
-   *                        {@link sGet} is called with a non-existent
-   *                        key and must return a value that is then set for
-   *                        that key and returned.
+   * @param getDefaultV This function is called each time {@link sGet} is
+   *                    called with a non-existent key and must return a value
+   *                    that is then set for that key and returned.
    */
   constructor(getDefaultV) {
     const root = newMap();
@@ -2529,8 +2825,8 @@ class XMap extends XMapBase {
  * except that it supports automatically creating missing entries with
  * with {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 /**
  * Returns the number of entries in the {@link XMap}.
@@ -2556,10 +2852,9 @@ class XMap extends XMapBase {
 _defineProperty(XMap, "newXMapGetter", newXMapGetter);
 class XWeakMap extends XMapBase {
   /**
-   * @param {} getDefaultV  This function is called each time
-   *                        {@link sGet} is called with a non-existent
-   *                        key and must return a value that is then set for
-   *                        that key and returned.
+   * @param getDefaultV This function is called each time {@link sGet} is
+   *                    called with a non-existent key and must return a value
+   *                    that is then set for that key and returned.
    */
   constructor(getDefaultV) {
     const root = newWeakMap();
@@ -2651,7 +2946,7 @@ class DOMWatcher {
    * Creates a new instance of DOMWatcher with the given
    * {@link DOMWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new DOMWatcher(getConfig$6(config), CONSTRUCTOR_KEY$6);
   }
 
@@ -2662,7 +2957,7 @@ class DOMWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig$6(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -2767,9 +3062,10 @@ class DOMWatcher {
     // ----------
 
     const setupOnMutation = async (handler, userOptions) => {
-      const options = getOptions$3(userOptions || {});
+      var _config$_root;
+      const options = getOptions$3(userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const callback = createCallback(handler, options);
-      let root = config._root || getBody();
+      let root = (_config$_root = config._root) !== null && _config$_root !== void 0 ? _config$_root : getBody();
       if (!root) {
         root = await waitForElement(getBody);
       } else {
@@ -2887,6 +3183,7 @@ class DOMWatcher {
     // ----------
 
     const shouldSkipOperation = operation => {
+      var _config$_root2;
       const target = operation._target;
       const requestToSkip = getIgnoreMove(target);
       if (!requestToSkip) {
@@ -2896,7 +3193,7 @@ class DOMWatcher {
       const addedTo = parentOf(target);
       const requestFrom = requestToSkip.from;
       const requestTo = requestToSkip.to;
-      const root = config._root || getBody();
+      const root = (_config$_root2 = config._root) !== null && _config$_root2 !== void 0 ? _config$_root2 : getBody();
       // If "from" is currently outside our root, we may not have seen a
       // removal operation.
       if ((removedFrom === requestFrom || !root.contains(requestFrom)) && addedTo === requestTo) {
@@ -2947,10 +3244,10 @@ class DOMWatcher {
 const CONSTRUCTOR_KEY$6 = SYMBOL();
 const instances$6 = newXMap(() => newMap());
 const getConfig$6 = config => {
-  var _config$subtree;
+  var _config$root, _config$subtree;
   return {
-    _root: config.root || null,
-    _subtree: (_config$subtree = config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
+    _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
   };
 };
 const CATEGORIES_BITS = DOM_CATEGORIES_SPACE.bit;
@@ -2961,6 +3258,7 @@ const ATTRIBUTE_BIT = CATEGORIES_BITS[S_ATTRIBUTE];
 // ----------------------------------------
 
 const getOptions$3 = options => {
+  var _options$selector, _options$target;
   let categoryBitmask = 0;
   const categories = validateStrList("categories", options.categories, DOM_CATEGORIES_SPACE.has);
   if (categories) {
@@ -2970,14 +3268,14 @@ const getOptions$3 = options => {
   } else {
     categoryBitmask = DOM_CATEGORIES_SPACE.bitmask; // default: all
   }
-  const selector = options.selector || "";
+  const selector = (_options$selector = options.selector) !== null && _options$selector !== void 0 ? _options$selector : "";
   if (!isString(selector)) {
     throw usageError("'selector' must be a string");
   }
   return {
     _categoryBitmask: categoryBitmask,
-    _target: options.target || null,
-    _selector: options.selector || ""
+    _target: (_options$target = options.target) !== null && _options$target !== void 0 ? _options$target : null,
+    _selector: selector
   };
 };
 const getDiffOperation = (operationA, operationB) => {
@@ -3051,15 +3349,15 @@ const getMaxDeltaDirection = (deltaX, deltaY) => {
  * Returns the approximate direction of the given 2D vector as one of the
  * cardinal (XY plane) ones: "up", "down", "left" or "right"; or "ambiguous".
  *
- * @param {} angleDiffThreshold  See {@link areParallel} or
- *                               {@link Utils.areAntiParallel | areAntiParallel}.
- *                               This determines whether the inferred direction
- *                               is ambiguous. For it to _not_ be ambiguous it
- *                               must align with one of the four cardinal
- *                               directions to within `angleDiffThreshold`.
- *                               It doesn't make sense for this value to be < 0
- *                               or >= 45 degrees. If it is, it's forced to be
- *                               positive (absolute) and <= 44.99.
+ * @param angleDiffThreshold See {@link areParallel} or
+ *                           {@link Utils.areAntiParallel | areAntiParallel}.
+ *                           This determines whether the inferred direction is
+ *                           ambiguous. For it to _not_ be ambiguous it must
+ *                           align with one of the four cardinal directions to
+ *                           within `angleDiffThreshold`. It doesn't make
+ *                           sense for this value to be < 0 or >= 45 degrees.
+ *                           If it is, it's forced to be positive (absolute)
+ *                           and <= 44.99.
  *
  * @category Directions
  */
@@ -3123,9 +3421,11 @@ const DIRECTIONS = [...XY_DIRECTIONS, ...Z_DIRECTIONS, S_NONE, S_AMBIGUOUS];
  */
 const callEventListener = (handler, event) => {
   if (isFunction(handler)) {
-    handler.call(event.currentTarget || self, event);
+    var _event$currentTarget;
+    handler.call((_event$currentTarget = event.currentTarget) !== null && _event$currentTarget !== void 0 ? _event$currentTarget : self, event);
   } else {
-    handler.handleEvent.call(event.currentTarget || self, event);
+    var _event$currentTarget2;
+    handler.handleEvent.call((_event$currentTarget2 = event.currentTarget) !== null && _event$currentTarget2 !== void 0 ? _event$currentTarget2 : self, event);
   }
 };
 
@@ -3136,12 +3436,13 @@ const callEventListener = (handler, event) => {
  * but it handles `options` object in case the browser does not support those.
  * Does not support the `signal` option unless browser natively supports that.
  *
- * @return {} `true` if successfully added, or `false` if the same handler has
+ * @returns `true` if successfully added, or `false` if the same handler has
  * already been added by us, or if the handler is not a valid event listener.
  *
  * @category Events: Generic
  */
-const addEventListenerTo = (target, eventType, handler, options = {}) => {
+const addEventListenerTo = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   if (getEventHandlerData(target, eventType, handler, options)) {
     // already added
@@ -3184,12 +3485,13 @@ const addEventListenerTo = (target, eventType, handler, options = {}) => {
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener | EventTarget:removeEventListener},
  * to remove it, not this function.
  *
- * @return {} `true` if successfully removed, or `false` if the handler has not
+ * @returns `true` if successfully removed, or `false` if the handler has not
  * been added by us.
  *
  * @category Events: Generic
  */
-const removeEventListenerFrom = (target, eventType, handler, options = {}) => {
+const removeEventListenerFrom = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   const data = getEventHandlerData(target, eventType, handler, options);
   if (!data) {
@@ -3435,11 +3737,11 @@ const MIN_DELTA_Z = 0.1;
  * press of + or - steps up by 15% or down by ~13% (`1 / 1.15` to be exact)
  * since the previous one.
  *
- * @param {} [options.angleDiffThreshold]
- *                                  See {@link getVectorDirection}
- * @param {} [options.scrollHeight] Use this as deltaY when Home/End is pressed
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.scrollHeight]       Use this as deltaY when Home/End is
+ *                                     pressed.
  *
- * @return {} `false` if there are no "keydown" events in the list, otherwise a
+ * @returns `false` if there are no "keydown" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures
@@ -3464,6 +3766,7 @@ const getKeyGestureFragment = (events, options) => {
     deltaY = 0,
     deltaZ = 1;
   for (const event of events) {
+    var _deltasForKey$event$k;
     if (!isKeyboardEvent(event) || event.type !== S_KEYDOWN) {
       continue;
     }
@@ -3485,7 +3788,7 @@ const getKeyGestureFragment = (events, options) => {
       "=": event.ctrlKey ? deltasIn : null,
       "-": deltasOut
     };
-    const theseDeltas = deltasForKey[event.key] || null;
+    const theseDeltas = (_deltasForKey$event$k = deltasForKey[event.key]) !== null && _deltasForKey$event$k !== void 0 ? _deltasForKey$event$k : null;
     if (!theseDeltas) {
       // not a relevant key
       continue;
@@ -3555,9 +3858,9 @@ const SK_ARROWRIGHT = SK_ARROW + SK_RIGHT;
  * Pointer gestures always require the primary button to be pressed and the
  * resulting intent is always "drag", and `deltaZ` is always 1.
  *
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
  *
- * @return {} `false` if there are less than 2 "pointermove"/"mousemove" events
+ * @returns `false` if there are less than 2 "pointermove"/"mousemove" events
  * in the list, `null` if the gesture is terminated, otherwise a
  * {@link GestureFragment}.
  *
@@ -3637,7 +3940,7 @@ const getPointerGestureFragment = (events, options) => {
  * For zoom intents, which necessarily involves exactly two fingers `deltaZ`
  * is based on the relative change in distance between the fingers.
  *
- * @param {} [options.deltaThreshold]
+ * @param [options.deltaThreshold]
  *                          A change of x or y coordinate less than this is
  *                          considered insignificant, for the purposes of
  *                          determining:
@@ -3646,22 +3949,22 @@ const getPointerGestureFragment = (events, options) => {
  *                          2) whether more than two fingers have moved and
  *                             therefore whether the direction could be zoom or
  *                             not
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
- * @param {} [options.reverseScroll]
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.reverseScroll]
  *                          If set to `true`, will disable natural scroll
  *                          direction.
- * @param {} [options.dragHoldTime]
+ * @param [options.dragHoldTime]
  *                          If the user presses and holds for at least the
  *                          given amount of milliseconds before moving the
  *                          finger(s), gestures other than pinch will be
  *                          treated as a drag instead of scroll as long as the
  *                          number of fingers touching the screen is
  *                          `options.dragNumFingers`. Default is 500ms.
- * @param {} [options.dragNumFingers]
+ * @param [options.dragNumFingers]
  *                          The number of fingers that could be considered a
  *                          drag intent. Default is 1.
  *
- * @return {} `false` if there are less than 2 "touchmove" events in the list,
+ * @returns `false` if there are less than 2 "touchmove" events in the list,
  * `null` if the gesture is terminated, otherwise a {@link GestureFragment}.
  *
  * @category Gestures
@@ -3735,7 +4038,7 @@ const getTouchGestureFragment = (events, options) => {
     }
   }
   if (direction === S_NONE) {
-    const lastTouchEvent = events.filter(isTouchEvent).slice(-1)[0];
+    const lastTouchEvent = lastOf(events.filter(isTouchEvent));
     // If all fingers have lifted off, consider it terminated, otherwise wait
     // for more events.
     return lengthOf(lastTouchEvent === null || lastTouchEvent === void 0 ? void 0 : lastTouchEvent.touches) ? false : null;
@@ -3760,8 +4063,8 @@ const getTouchGestureFragment = (events, options) => {
  * Note that, `deltaX`/`deltaY` are the end X/Y coordinate minus the start X/Y
  * coordinate. For natural scroll direction you should swap their signs.
  *
- * @param {} deltaThreshold If the change of x and y coordinate are both less
- *                          than this, it is marked as not significant.
+ * @param deltaThreshold If the change of x and y coordinate are both less
+ *                       than this, it is marked as not significant.
  *
  * @category Gestures
  */
@@ -4065,10 +4368,10 @@ const normalizeWheel = event => {
  * `deltaY`, which in most browsers roughly corresponds to a percentage zoom
  * factor.
  *
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}.
- *                                        Default is 5.
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}.
+ *                                     Default is 5.
  *
- * @return {} `false` if there are no "wheel" events in the list, otherwise a
+ * @returns `false` if there are no "wheel" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures
@@ -4202,7 +4505,7 @@ class GestureWatcher {
    * Creates a new instance of GestureWatcher with the given
    * {@link GestureWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new GestureWatcher(getConfig$5(config), CONSTRUCTOR_KEY$5);
   }
 
@@ -4213,7 +4516,7 @@ class GestureWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig$5(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances$5.get(configStrKey);
@@ -4256,10 +4559,10 @@ class GestureWatcher {
     // async for consistency with other watchers and future compatibility in
     // case of change needed
     const setupOnGesture = async (target, handler, userOptions) => {
-      const options = getOptions$2(config, userOptions || {});
+      const options = getOptions$2(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       createCallback(target, handler, options);
-      for (const device of options._devices || DEVICES) {
-        var _allListeners$get;
+      for (const device of (_options$_devices = options._devices) !== null && _options$_devices !== void 0 ? _options$_devices : DEVICES) {
+        var _options$_devices, _allListeners$get;
         let listeners = (_allListeners$get = allListeners.get(target)) === null || _allListeners$get === void 0 ? void 0 : _allListeners$get.get(device);
         if (listeners) ; else {
           listeners = setupListeners(target, device, options);
@@ -4277,8 +4580,8 @@ class GestureWatcher {
     const deleteHandler = (target, handler, options) => {
       deleteKey(allCallbacks.get(target), handler);
       allCallbacks.prune(target);
-      for (const device of options._devices || DEVICES) {
-        var _allListeners$get2;
+      for (const device of (_options$_devices2 = options._devices) !== null && _options$_devices2 !== void 0 ? _options$_devices2 : DEVICES) {
+        var _options$_devices2, _allListeners$get2;
         const listeners = (_allListeners$get2 = allListeners.get(target)) === null || _allListeners$get2 === void 0 ? void 0 : _allListeners$get2.get(device);
         if (listeners) {
           listeners._nCallbacks--;
@@ -4296,8 +4599,8 @@ class GestureWatcher {
     // ----------
 
     const invokeCallbacks = (target, device, event) => {
-      var _allListeners$get3;
-      const preventDefault = (((_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) || 0) > 0;
+      var _allListeners$get$get, _allListeners$get3;
+      const preventDefault = ((_allListeners$get$get = (_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) !== null && _allListeners$get$get !== void 0 ? _allListeners$get$get : 0) > 0;
       let isTerminated = false;
       for (const {
         _wrapper
@@ -4445,6 +4748,7 @@ const CONSTRUCTOR_KEY$5 = SYMBOL();
 const instances$5 = newMap();
 const getConfig$5 = config => {
   var _config$preventDefaul, _config$naturalTouchS, _config$touchDragHold, _config$touchDragNumF;
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _preventDefault: (_config$preventDefaul = config.preventDefault) !== null && _config$preventDefaul !== void 0 ? _config$preventDefaul : true,
     _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 150),
@@ -4488,14 +4792,14 @@ const fragmentGetters = {
   [S_WHEEL]: getWheelGestureFragment
 };
 const getOptions$2 = (config, options) => {
-  var _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
+  var _validateStrList, _validateStrList2, _validateStrList3, _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
   const debounceWindow = toNonNegNum(options[S_DEBOUNCE_WINDOW], config._debounceWindow // watcher is never debounced, so apply default here
   );
   const deltaThreshold = toNonNegNum(options.deltaThreshold, config._deltaThreshold);
   return {
-    _devices: validateStrList("devices", options.devices, isValidInputDevice) || null,
-    _directions: validateStrList("directions", options.directions, isValidDirection) || null,
-    _intents: validateStrList("intents", options.intents, isValidIntent) || null,
+    _devices: (_validateStrList = validateStrList("devices", options.devices, isValidInputDevice)) !== null && _validateStrList !== void 0 ? _validateStrList : null,
+    _directions: (_validateStrList2 = validateStrList("directions", options.directions, isValidDirection)) !== null && _validateStrList2 !== void 0 ? _validateStrList2 : null,
+    _intents: (_validateStrList3 = validateStrList("intents", options.intents, isValidIntent)) !== null && _validateStrList3 !== void 0 ? _validateStrList3 : null,
     _minTotalDeltaX: (_options$minTotalDelt = options.minTotalDeltaX) !== null && _options$minTotalDelt !== void 0 ? _options$minTotalDelt : null,
     _maxTotalDeltaX: (_options$maxTotalDelt = options.maxTotalDeltaX) !== null && _options$maxTotalDelt !== void 0 ? _options$maxTotalDelt : null,
     _minTotalDeltaY: (_options$minTotalDelt2 = options.minTotalDeltaY) !== null && _options$minTotalDelt2 !== void 0 ? _options$minTotalDelt2 : null,
@@ -4671,14 +4975,14 @@ const setGestureCssProps = (target, data) => {
   }
   const prefix = `${intent}-`;
   if (intent === S_ZOOM) {
-    setNumericStyleProps(target, {
+    setNumericStyleJsVars(target, {
       deltaZ: data.totalDeltaZ
     }, {
       _prefix: prefix,
       _numDecimal: 2
     }); // don't await here
   } else {
-    setNumericStyleProps(target, {
+    setNumericStyleJsVars(target, {
       deltaX: data.totalDeltaX,
       deltaY: data.totalDeltaY
     }, {
@@ -4764,9 +5068,141 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
 };
 
 /**
- * @module Utils
+ * @since v1.2.0
+ *
+ * @category Animations
  */
 
+/**
+ * The callback is as an argument the {@link ElapsedTimes | elapsed times}:
+ * - The total elapsed time in milliseconds since the start
+ * - The elapsed time in milliseconds since the previous frame
+ *
+ * The first time this callback is called both of these will be 0 unless seed
+ * values were provided.
+ *
+ * The callback must return `true` if it wants to animate again on the next
+ * frame and `false` if done.
+ *
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
+
+/**
+ * Returns a promise that resolves at the next animation frame. Async/await
+ * version of
+ * {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame | requestAnimationFrame}.
+ *
+ * @returns The timestamp gotten from `requestAnimationFrame`
+ *
+ * @category Animations
+ */
+const waitForAnimationFrame = async () => newPromise(resolve => {
+  onAnimationFrame(resolve);
+});
+
+/**
+ * Generator version of {@link onEveryAnimationFrame}.
+ *
+ * Returns a new async iterator which yields the total elapsed time and elapsed
+ * time since the last call on every animation frame.
+ *
+ * @example
+ * ```javascript
+ * for await (const elapsed of newAnimationFrameIterator()) {
+ *   // ... do something
+ *   if (done) break;
+ * }
+ * ```
+ *
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
+function newAnimationFrameIterator(_x) {
+  return _newAnimationFrameIterator.apply(this, arguments);
+}
+
+/**
+ * Returns an animation iterator based on {@link criticallyDamped} that starts
+ * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
+ * the new position and velocity, and total time at every animation frame.
+ *
+ * @param [settings.lTarget]   The initial target position. Can be updated when
+ *                             calling next().
+ * @param [settings.lag]       See {@link criticallyDamped}.
+ * @param [settings.l = 0]     The initial starting position.
+ * @param [settings.precision] See {@link criticallyDamped}.
+ *
+ * @returns An iterator whose `next` method accepts an optional new `lTarget`.
+ * The iterator yields an object containing successive values for:
+ * - position (`l`)
+ * - velocity (`v`)
+ * - total time elapsed (`t`)
+ *
+ * @example
+ * If you never need to update the target you can use a for await loop:
+ *
+ * ```javascript
+ * const iterator = newCriticallyDampedAnimationIterator({
+ *   l: 10,
+ *   lTarget: 100,
+ *   lag: 1500
+ * });
+ *
+ * for await (const { l, v, t } of iterator) {
+ *   console.log({ l, v, t });
+ * }
+ * ```
+ *
+ * @example
+ * If you do need to update the target, then call `next` explicitly:
+ *
+ * ```javascript
+ * const iterator = newCriticallyDampedAnimationIterator({
+ *   l: 10,
+ *   lTarget: 100,
+ *   lag: 1500
+ * });
+ *
+ * let { value: { l, v, t } } = await iterator.next();
+ * ({ value: { l, v, t } } = await iterator.next()); // updated
+ * ({ value: { l, v, t } } = await iterator.next(200)); // updated towards a new target
+ * ```
+ *
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
+function _newAnimationFrameIterator() {
+  _newAnimationFrameIterator = _wrapAsyncGenerator(function* (elapsed) {
+    let startTime, previousTimeStamp;
+    const {
+      total: totalSeed = 0,
+      sinceLast: sinceLastSeed = 0
+    } = elapsed !== null && elapsed !== void 0 ? elapsed : {};
+    const step = async () => {
+      const timeStamp = await waitForAnimationFrame();
+      if (!startTime || !previousTimeStamp) {
+        // First time
+        startTime = timeStamp - totalSeed;
+        previousTimeStamp = timeStamp - sinceLastSeed;
+      }
+      const totalElapsed = timeStamp - startTime;
+      const elapsedSinceLast = timeStamp - previousTimeStamp;
+      previousTimeStamp = timeStamp;
+      return {
+        total: totalElapsed,
+        sinceLast: elapsedSinceLast
+      };
+    };
+    while (true) {
+      yield step();
+    }
+  });
+  return _newAnimationFrameIterator.apply(this, arguments);
+}
 
 /**
  * @category Scrolling
@@ -4783,29 +5219,35 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
  * Returns true if the given element is scrollable in the given direction, or
  * in either direction (if `axis` is not given).
  *
- * **IMPORTANT:** If you enable `active` then be aware that:
- * 1. It may attempt to scroll the target in order to determine whether it's
- *    scrollable in a more reliable way than the default method of comparing
- *    clientWidth/Height to scrollWidth/Height. If there is currently any
- *    ongoing scroll on the target, this will stop it, so never use that inside
- *    scroll-triggered handlers.
- * 2. If the layout has been invalidated and not yet recalculated,
- *    this will cause a forced layout, so always {@link waitForMeasureTime}
- *    before calling this function when possible.
+ * It first checks whether the current scroll offset on the target along the
+ * given axis is non-0, and if so returns true immediately. Otherwise it will
+ * attempt to determine if it's scrollable using one of these methods
+ * (controlled by `options.active`):
+ * - passive check (default): Will examine `clientWidth/Height`,
+ *   `scrollWidth/Height` as well as the computed `overflow` CSS property to try
+ *   to determine if the target is scrollable. This is not 100% reliable but is
+ *   safer than the active check
+ * - active check: Will attempt to scroll the target by 1px and examine if the
+ *   scroll offset had changed, then revert it back to 0. This is a more
+ *   reliable check, however it can cause issues in certain contexts. In
+ *   particular, if a scroll on the target had just been initiated (but it's
+ *   scroll offset was still 0), the scroll may be cancelled. Never use that
+ *   inside scroll-based handlers.
  *
- * @param {} [options.axis]    One of "x" or "y" for horizontal or vertical
- *                             scroll respectively. If not given, it checks
- *                             both.
- * @param {} [options.active]  If true, then if the target's current scroll
- *                             offset is 0, it will attempt to scroll it rather
- *                             than looking at the clientWidth/Height to
- *                             scrollWidth/Height. This is more reliable but can
- *                             cause issues, see note above.
- * @param {} [options.noCache] By default the result of a check is cached for
- *                             1s and if there's already a cached result for
- *                             this element, it is returns. Set this to true to
- *                             disable checking the cache and also saving the
- *                             result into the cache.
+ * **NOTE:** If the layout has been invalidated and not yet recalculated, this
+ * will cause a forced layout, so always {@link waitForMeasureTime} before
+ * calling this function when possible.
+ *
+ * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
+ *                          respectively. If not given, it checks both.
+ * @param [options.active]  If true, then if the target's current scroll offset
+ *                          is 0, it will attempt to scroll it rather than
+ *                          looking at its overflow.
+ * @param [options.noCache] By default the result of a check is cached for 1s
+ *                          and if there's already a cached result for this
+ *                          element, it is returned. Set this to true to disable
+ *                          checking the cache and also saving the result into
+ *                          the cache.
  *
  * @category Scrolling
  */
@@ -4814,7 +5256,7 @@ const isScrollable = (element, options) => {
     axis,
     active,
     noCache
-  } = options || {};
+  } = options !== null && options !== void 0 ? options : {};
   if (!axis) {
     return isScrollable(element, {
       axis: "y",
@@ -4835,7 +5277,6 @@ const isScrollable = (element, options) => {
   }
   const offset = axis === "x" ? "Left" : "Top";
   let result = false;
-  let doCache = !noCache;
   if (element[`scroll${offset}`]) {
     result = true;
   } else if (active) {
@@ -4852,11 +5293,13 @@ const isScrollable = (element, options) => {
     result = canScroll;
   } else {
     const dimension = axis === "x" ? "Width" : "Height";
-    result = element[`scroll${dimension}`] > element[`client${dimension}`];
-    // No need to cache a passive check.
-    doCache = false;
+    const isDocScrollable = element === getDocScrollingElement();
+    const hasOverflow = element[`scroll${dimension}`] > element[`client${dimension}`];
+    const overflowProp = getComputedStylePropNow(element, "overflow");
+    const scrollingOverflows = [S_SCROLL, S_AUTO, ...(isDocScrollable ? [S_VISIBLE] : [])];
+    result = hasOverflow && includes(scrollingOverflows, overflowProp);
   }
-  if (doCache) {
+  if (!noCache) {
     isScrollableCache.sGet(element).set(axis, result);
     setTimer(() => {
       deleteKey(isScrollableCache.get(element), axis);
@@ -4870,9 +5313,9 @@ const isScrollable = (element, options) => {
  * Returns the closest scrollable ancestor of the given element, _not including
  * it_.
  *
- * @param {} options See {@link isScrollable}
+ * @param options See {@link isScrollable}
  *
- * @return {} `null` if no scrollable ancestors are found.
+ * @returns `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -4894,9 +5337,9 @@ const getClosestScrollable = (element, options) => {
  */
 const getCurrentScrollAction = scrollable => {
   scrollable = toScrollableOrDefault(scrollable);
-  const action = currentScrollAction.get(scrollable);
-  if (action) {
-    return copyObject(action);
+  const info = currentScrollInfos.get(scrollable);
+  if (info) {
+    return copyObject(info._action);
   }
   return null;
 };
@@ -4912,11 +5355,11 @@ const getCurrentScrollAction = scrollable => {
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *               If the target coordinates are invalid.
  *
- * @param {} to  If this is an element, then its top-left position is used as
- *               the target coordinates. If it is a string, then it is treated
- *               as a selector for an element using `querySelector`.
+ * @param to If this is an element, then its top-left position is used as
+ *           the target coordinates. If it is a string, then it is treated
+ *           as a selector for an element using `querySelector`.
  *
- * @return {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling
@@ -4926,9 +5369,9 @@ const scrollTo = (to, userOptions) => {
   const scrollable = options._scrollable;
 
   // cancel current scroll action if any
-  const currentScroll = currentScrollAction.get(scrollable);
-  if (currentScroll) {
-    if (!currentScroll.cancel()) {
+  const info = currentScrollInfos.get(scrollable);
+  if (info) {
+    if (!info._action.cancel()) {
       // current scroll action is not cancellable by us
       return null;
     }
@@ -4953,14 +5396,16 @@ const scrollTo = (to, userOptions) => {
       });
     }
   }
-  const promise = initiateScroll(options, () => isCancelled);
-  const thisScrollAction = {
-    waitFor: () => promise,
-    cancel: cancelFn
+  const thisInfo = {
+    _action: {
+      waitFor: () => scrollActionPromise,
+      cancel: cancelFn
+    }
   };
   const cleanup = () => {
-    if (currentScrollAction.get(scrollable) === thisScrollAction) {
-      deleteKey(currentScrollAction, scrollable);
+    var _currentScrollInfos$g;
+    if (((_currentScrollInfos$g = currentScrollInfos.get(scrollable)) === null || _currentScrollInfos$g === void 0 ? void 0 : _currentScrollInfos$g._action) === thisInfo._action) {
+      deleteKey(currentScrollInfos, scrollable);
     }
     if (preventScrollHandler) {
       for (const eventType of scrollEvents) {
@@ -4970,9 +5415,10 @@ const scrollTo = (to, userOptions) => {
       }
     }
   };
-  thisScrollAction.waitFor().then(cleanup).catch(cleanup);
-  currentScrollAction.set(scrollable, thisScrollAction);
-  return thisScrollAction;
+  const scrollActionPromise = initiateScroll(options, () => isCancelled);
+  thisInfo._action.waitFor().then(cleanup).catch(cleanup);
+  updateCurrentScrollInfo(scrollable, thisInfo);
+  return thisInfo._action;
 };
 
 /**
@@ -5027,8 +5473,9 @@ const fetchMainScrollableElement = async () => {
  * @internal
  */
 const getDefaultScrollingElement = () => {
+  var _MH$getDocScrollingEl;
   const body = getBody();
-  return isScrollable(body) ? body : getDocScrollingElement() || body;
+  return isScrollable(body) ? body : (_MH$getDocScrollingEl = getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : body;
 };
 
 /**
@@ -5042,12 +5489,17 @@ const fetchScrollableElement = async target => toScrollableOrMain(target, fetchM
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
 const isScrollableCache = newXMap(() => newMap());
 const mappedScrollables = newMap();
-const currentScrollAction = newMap();
+const currentScrollInfos = newMap();
 const DIFF_THRESHOLD = 5;
-const arePositionsDifferent = (start, end) => maxAbs(start.top - end.top, start.left - end.left) >= DIFF_THRESHOLD;
+const arePositionsDifferent = (start, end, threshold = DIFF_THRESHOLD) => maxAbs(start.top - end.top, start.left - end.left) > threshold;
+
+// must be called in "measure time"
+const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
 const toScrollableOrMain = (target, getMain) => {
   if (isElement(target)) {
-    return mappedScrollables.get(target) || target;
+    var _mappedScrollables$ge;
+    return (_mappedScrollables$ge = mappedScrollables.get(target)) !== null && _mappedScrollables$ge !== void 0 ? _mappedScrollables$ge : target;
   }
   if (!target || target === getWindow() || target === getDoc()) {
     return getMain();
@@ -5056,30 +5508,40 @@ const toScrollableOrMain = (target, getMain) => {
 };
 const toScrollableOrDefault = scrollable => scrollable !== null && scrollable !== void 0 ? scrollable : getDefaultScrollingElement();
 const getOptions$1 = (to, options) => {
-  var _options$weCanInterru, _options$userCanInter;
+  var _options$offset, _options$altOffset, _options$duration, _options$weCanInterru, _options$userCanInter;
   const scrollable = toScrollableOrDefault(options === null || options === void 0 ? void 0 : options.scrollable);
   const target = getTargetCoordinates(scrollable, to);
   const altTarget = options !== null && options !== void 0 && options.altTarget ? getTargetCoordinates(scrollable, options === null || options === void 0 ? void 0 : options.altTarget) : null;
   return {
     _target: target,
-    _offset: (options === null || options === void 0 ? void 0 : options.offset) || null,
+    _offset: (_options$offset = options === null || options === void 0 ? void 0 : options.offset) !== null && _options$offset !== void 0 ? _options$offset : null,
     _altTarget: altTarget,
-    _altOffset: (options === null || options === void 0 ? void 0 : options.altOffset) || null,
+    _altOffset: (_options$altOffset = options === null || options === void 0 ? void 0 : options.altOffset) !== null && _options$altOffset !== void 0 ? _options$altOffset : null,
     _scrollable: scrollable,
-    _duration: (options === null || options === void 0 ? void 0 : options.duration) || 0,
+    _duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : 0,
     _weCanInterrupt: (_options$weCanInterru = options === null || options === void 0 ? void 0 : options.weCanInterrupt) !== null && _options$weCanInterru !== void 0 ? _options$weCanInterru : false,
     _userCanInterrupt: (_options$userCanInter = options === null || options === void 0 ? void 0 : options.userCanInterrupt) !== null && _options$userCanInter !== void 0 ? _options$userCanInter : false
   };
 };
+const updateCurrentScrollInfo = (scrollable, newInfo) => {
+  var _newInfo$_action;
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
+  const _action = (_newInfo$_action = newInfo._action) !== null && _newInfo$_action !== void 0 ? _newInfo$_action : existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._action;
+  if (_action) {
+    currentScrollInfos.set(scrollable, merge(existingScrollInfo, newInfo, {
+      _action
+    }));
+  }
+};
 const getTargetCoordinates = (scrollable, target) => {
-  const docScrollingElement = getDocScrollingElement();
+  const isDocScrollingElement = scrollable === getDocScrollingElement();
   if (isElement(target)) {
     if (scrollable === target || !scrollable.contains(target)) {
       throw usageError("Target must be a descendant of the scrollable one");
     }
     return {
-      top: () => scrollable[S_SCROLL_TOP] + getBoundingClientRect(target).top - (scrollable === docScrollingElement ? 0 : getBoundingClientRect(scrollable).top),
-      left: () => scrollable[S_SCROLL_LEFT] + getBoundingClientRect(target).left - (scrollable === docScrollingElement ? 0 : getBoundingClientRect(scrollable).left)
+      top: () => getBoundingClientRect(target).top - getBoundingClientRect(scrollable).top + (isDocScrollingElement ? 0 : scrollable[S_SCROLL_TOP]),
+      left: () => getBoundingClientRect(target).left - getBoundingClientRect(scrollable).left + (isDocScrollingElement ? 0 : scrollable[S_SCROLL_LEFT])
     };
   }
   if (isString(target)) {
@@ -5097,8 +5559,9 @@ const getTargetCoordinates = (scrollable, target) => {
 const getStartEndPosition = async options => {
   await waitForMeasureTime();
   const applyOffset = (position, offset) => {
-    position.top += (offset === null || offset === void 0 ? void 0 : offset.top) || 0;
-    position.left += (offset === null || offset === void 0 ? void 0 : offset.left) || 0;
+    var _offset$top, _offset$left;
+    position.top += (_offset$top = offset === null || offset === void 0 ? void 0 : offset.top) !== null && _offset$top !== void 0 ? _offset$top : 0;
+    position.left += (_offset$left = offset === null || offset === void 0 ? void 0 : offset.left) !== null && _offset$left !== void 0 ? _offset$left : 0;
   };
   const scrollable = options._scrollable;
   const start = {
@@ -5112,8 +5575,8 @@ const getStartEndPosition = async options => {
     applyOffset(end, options._altOffset);
   }
   return {
-    start,
-    end
+    _start: start,
+    _end: end
   };
 };
 
@@ -5148,50 +5611,85 @@ const getEndPosition = (scrollable, startPosition, targetCoordinates) => {
   return endPosition;
 };
 const initiateScroll = async (options, isCancelled) => {
+  var _existingScrollInfo$_, _existingScrollInfo$_2;
   const position = await getStartEndPosition(options);
   const duration = options._duration;
   const scrollable = options._scrollable;
-  let startTime, previousTimeStamp;
-  let currentPosition = position.start;
-  const step = async () => {
-    await waitForMutateTime(); // effectively next animation frame
-    // Element.scrollTo equates to a measurement and needs to run after
-    // painting to avoid forced layout.
-    await waitForMeasureTime();
-    const timeStamp = timeNow();
-    if (isCancelled()) {
-      // Reject the promise
-      throw currentPosition;
-    }
-    if (!startTime) {
-      // If it's very close to the target, no need to scroll smoothly
-      if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
-        elScrollTo(scrollable, position.end);
-        return position.end;
-      }
-      startTime = timeStamp;
-    }
-    if (startTime !== timeStamp && previousTimeStamp !== timeStamp) {
-      const elapsed = timeStamp - startTime;
-      const progress = easeInOutQuad(min(1, elapsed / duration));
-      currentPosition = {
-        top: position.start.top + (position.end.top - position.start.top) * progress,
-        left: position.start.left + (position.end.left - position.start.left) * progress
-      };
-      elScrollTo(scrollable, currentPosition);
-      if (progress === 1) {
-        return currentPosition;
-      }
-    }
-    previousTimeStamp = timeStamp;
-    return step();
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
+  const currentPosition = (_existingScrollInfo$_ = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._position) !== null && _existingScrollInfo$_ !== void 0 ? _existingScrollInfo$_ : position._start;
+  const currentVelocity = (_existingScrollInfo$_2 = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._velocity) !== null && _existingScrollInfo$_2 !== void 0 ? _existingScrollInfo$_2 : {
+    [S_TOP]: 0,
+    [S_LEFT]: 0
   };
-  return step();
-};
-const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
+  let elapsed = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._elapsed;
+  const logger = null;
+  var _iteratorAbruptCompletion = false;
+  var _didIteratorError = false;
+  var _iteratorError;
+  try {
+    for (var _iterator = _asyncIterator(newAnimationFrameIterator(elapsed)), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
+      elapsed = _step.value;
+      {
+        const deltaTime = elapsed.sinceLast;
+        if (deltaTime === 0) {
+          // First time
+          continue;
+        }
 
-// must be called in "measure time"
-const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+        // Element.scrollTo equates to a measurement and needs to run after
+        // painting to avoid forced layout.
+        await waitForMeasureTime();
+        if (isCancelled()) {
+          // Reject the promise
+          logger === null || logger === void 0 || logger.debug8("Cancelled");
+          throw currentPosition;
+        }
+        for (const s of [S_LEFT, S_TOP]) {
+          const {
+            l,
+            v
+          } = criticallyDamped({
+            l: currentPosition[s],
+            v: currentVelocity[s],
+            lTarget: position._end[s],
+            dt: deltaTime,
+            lag: duration
+          });
+          currentPosition[s] = l;
+          currentVelocity[s] = v;
+        }
+        updateCurrentScrollInfo(scrollable, {
+          _position: currentPosition,
+          _velocity: currentVelocity,
+          _elapsed: elapsed
+        });
+        const isDone = !arePositionsDifferent(currentPosition, position._end, 0.5);
+        if (isDone) {
+          assign(currentPosition, position._end); // use exact final coordinates
+        }
+        elScrollTo(scrollable, currentPosition);
+        if (isDone) {
+          logger === null || logger === void 0 || logger.debug8("Done");
+          break;
+        }
+      }
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (_iteratorAbruptCompletion && _iterator.return != null) {
+        await _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+  return currentPosition;
+};
 
 // ------------------------------
 
@@ -5278,11 +5776,14 @@ const createOverlay = async userOptions => {
     });
   }
   if (needsContentWrapping) {
-    if (settings.contentWrappingAllowed) {
-      parentEl = await wrapScrollingContent(parentEl);
-    } else {
-      logWarn("Percentage offset view trigger with scrolling root requires contentWrappingAllowed");
-    }
+    // TODO Is it possible to unwrap the children when no longer needing this
+    // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
+    // olverlays anyway.
+    parentEl = await tryWrapContent(parentEl, {
+      _classNames: [PREFIX_WRAPPER$2, PREFIX_WRAPPER$1],
+      _required: true,
+      _requiredBy: "percentage offset view trigger with scrolling root"
+    });
   }
   if (options._style.position === S_ABSOLUTE) {
     // Ensure parent has non-static positioning
@@ -5296,6 +5797,7 @@ const createOverlay = async userOptions => {
 
 // ----------------------------------------
 
+const PREFIX_WRAPPER$1 = prefixName("overlay-wrapper");
 const overlays = newXWeakMap(() => newMap());
 const fetchOverlayOptions = async userOptions => {
   var _userOptions$data2, _userOptions$id2;
@@ -5312,11 +5814,10 @@ const fetchOverlayOptions = async userOptions => {
 };
 const getOverlayKey = (style, data) => objToStrKey(style) + "|" + objToStrKey(data);
 const getCssProperties = style => {
-  const finalCssProperties = merge({
-    position: S_ABSOLUTE
-  },
-  // default
-  style);
+  const finalCssProperties = merge(style, {
+    position: (style === null || style === void 0 ? void 0 : style.position) || S_ABSOLUTE
+  } // default
+  );
   if (finalCssProperties.position === S_ABSOLUTE || finalCssProperties.position === S_FIXED) {
     if (isEmpty(finalCssProperties.top) && isEmpty(finalCssProperties.bottom)) {
       finalCssProperties.top = "0px";
@@ -5369,11 +5870,11 @@ const getEntryContentBox = entry => {
  * Returns the border box size of the given
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry | ResizeObserverEntry}.
  *
- * @param {} fallbackToContent If the entry does not contain border box
- *                             measurements (depending on browser), then fall
- *                             back to using the content box size. Otherwise
- *                             (by default) will return `NaN` values for width
- *                             and height.
+ * @param fallbackToContent If the entry does not contain border box
+ *                          measurements (depending on browser), then fall back
+ *                          to using the content box size. Otherwise (by
+ *                          default) will return `NaN` values for width and
+ *                          height.
  *
  * @category Size measurements
  */
@@ -5426,14 +5927,14 @@ const fetchViewportOverlay = async () => {
  * @internal
  */
 const fetchViewportSize = async (realtime = false) => {
-  var _MH$getDocScrollingEl;
+  var _MH$getDocScrollingEl, _root$clientWidth, _root$clientHeight;
   if (!realtime) {
     await waitForMeasureTime();
   }
   const root = hasDOM() ? (_MH$getDocScrollingEl = getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : getBody() : null;
   return {
-    [S_WIDTH]: (root === null || root === void 0 ? void 0 : root.clientWidth) || 0,
-    [S_HEIGHT]: (root === null || root === void 0 ? void 0 : root.clientHeight) || 0
+    [S_WIDTH]: (_root$clientWidth = root === null || root === void 0 ? void 0 : root.clientWidth) !== null && _root$clientWidth !== void 0 ? _root$clientWidth : 0,
+    [S_HEIGHT]: (_root$clientHeight = root === null || root === void 0 ? void 0 : root.clientHeight) !== null && _root$clientHeight !== void 0 ? _root$clientHeight : 0
   };
 };
 
@@ -5511,8 +6012,8 @@ class XResizeObserver {
    */
 
   /**
-   * @param {} debounceWindow Debounce the handler so that it's called at most
-   *                          every `debounceWindow` ms.
+   * @param debounceWindow Debounce the handler so that it's called at most
+   *                       every `debounceWindow` ms.
    */
   constructor(callback, debounceWindow) {
 
@@ -5525,7 +6026,7 @@ class XResizeObserver {
     // a counter of 1 or 2 for how many more calls to ignore.
     const targetsToSkip = newWeakMap();
     let observedTargets = newWeakSet();
-    debounceWindow = debounceWindow || 0;
+    debounceWindow !== null && debounceWindow !== void 0 ? debounceWindow : debounceWindow = 0;
     let timer = null;
     const resizeHandler = entries => {
       // Override entries for previous targets, but keep entries whose targets
@@ -5692,7 +6193,7 @@ class SizeWatcher {
    * Creates a new instance of SizeWatcher with the given
    * {@link SizeWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new SizeWatcher(getConfig$4(config), CONSTRUCTOR_KEY$4);
   }
 
@@ -5703,7 +6204,7 @@ class SizeWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig$4(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances$4.get(configStrKey);
@@ -5807,7 +6308,7 @@ class SizeWatcher {
     // ----------
 
     const setupOnResize = async (handler, userOptions) => {
-      const options = await fetchOptions(userOptions || {});
+      const options = await fetchOptions(userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const element = options._element;
 
       // Don't await for the size data before creating the callback so that
@@ -5939,6 +6440,7 @@ class SizeWatcher {
 const CONSTRUCTOR_KEY$4 = SYMBOL();
 const instances$4 = newMap();
 const getConfig$4 = config => {
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -5991,7 +6493,7 @@ const setSizeCssProps = (element, sizeData) => {
     contentWidth: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[S_WIDTH],
     contentHeight: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[S_HEIGHT]
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: prefix
   }); // don't await here
 };
@@ -6051,7 +6553,7 @@ class LayoutWatcher {
    * Creates a new instance of LayoutWatcher with the given
    * {@link LayoutWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new LayoutWatcher(getConfig$3(config), CONSTRUCTOR_KEY$3);
   }
 
@@ -6062,7 +6564,7 @@ class LayoutWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig$3(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -6242,6 +6744,7 @@ const VAR_BORDER_HEIGHT = prefixCssJsVar("border-height");
 const PREFIX_DEVICE = prefixName("device");
 const PREFIX_ASPECTR = prefixName("aspect-ratio");
 const getConfig$3 = config => {
+  var _config$root;
   const deviceBreakpoints = copyObject(settings.deviceBreakpoints);
   if (config !== null && config !== void 0 && config.deviceBreakpoints) {
     copyExistingKeys(config.deviceBreakpoints, deviceBreakpoints);
@@ -6251,7 +6754,7 @@ const getConfig$3 = config => {
     copyExistingKeys(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
   }
   return {
-    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
     _deviceBreakpoints: deviceBreakpoints,
     _aspectRatioBreakpoints: aspectRatioBreakpoints
   };
@@ -6416,7 +6919,7 @@ class PointerWatcher {
    * Creates a new instance of PointerWatcher with the given
    * {@link PointerWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new PointerWatcher(getConfig$2(config), CONSTRUCTOR_KEY$2);
   }
 
@@ -6427,7 +6930,7 @@ class PointerWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig$2(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances$2.get(configStrKey);
@@ -6655,7 +7158,7 @@ class ScrollWatcher {
    * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
    *   or is `null`, `window` or `document`, the following CSS variables are
    *   set on the root (`html`) element and represent the scroll of the
-   *   {@link fetchMainScrollableElement}:
+   *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
    *   - `--lisn-js--page-scroll-top`
    *   - `--lisn-js--page-scroll-top-fraction`
    *   - `--lisn-js--page-scroll-left`
@@ -6687,9 +7190,9 @@ class ScrollWatcher {
    * Get the scroll offset of the given scrollable. By default, it will
    * {@link waitForMeasureTime} and so will be delayed by one frame.
    *
-   * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-   *                    this only when doing realtime scroll-based animations
-   *                    as it may cause a forced layout.
+   * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+   *                 this only when doing realtime scroll-based animations
+   *                 as it may cause a forced layout.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -6713,21 +7216,22 @@ class ScrollWatcher {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the "to" coordinates or options are invalid.
    *
-   * @param {} to  If this is an element, then its top-left position is used as
-   *               the target coordinates. If it is a string, then it is treated
-   *               as a selector for an element using `querySelector`.
-   * @param {} [options.scrollable]
-   *               If not given, it defaults to {@link fetchMainScrollableElement}
+   * @param to If this is an element, then its top-left position is used as
+   *           the target coordinates. If it is a string, then it is treated
+   *           as a selector for an element using `querySelector`.
+   * @param [options.scrollable]
+   *           If not given, it defaults to
+   *           {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
-   * @return {} `null` if there's an ongoing scroll that is not cancellable,
+   * @returns `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
    */
 
   /**
    * Returns the current {@link ScrollAction} if any.
    *
-   * @param {} scrollable
-   *               If not given, it defaults to {@link fetchMainScrollableElement}
+   * @param scrollable If not given, it defaults to
+   *                   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -6740,16 +7244,16 @@ class ScrollWatcher {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
    *
-   * @param {} [options.immediate]  If true, then it will not use
-   *                                {@link waitForMeasureTime} or
-   *                                {@link Utils.waitForMutateTime | waitForMutateTime}.
-   *                                Warning: this will likely result in forced layout.
+   * @param [options.immediate] If true, then it will not use
+   *                            {@link waitForMeasureTime} or
+   *                            {@link Utils.waitForMutateTime | waitForMutateTime}.
+   *                            Warning: this will likely result in forced layout.
    */
 
   /**
    * Returns the element that holds the main page content. By default it's
    * `document.body` but is overridden by
-   * {@link settings.mainScrollableElementSelector}.
+   * {@link Settings.settings.mainScrollableElementSelector}.
    *
    * It will wait for the element to be available if not already.
    */
@@ -6761,7 +7265,7 @@ class ScrollWatcher {
    * Returns the scrollable element that holds the wrapper around the main page
    * content. By default it's `document.scrollable` (unless `document.body` is
    * actually scrollable, in which case it will be used) but it will be
-   * different if {@link settings.mainScrollableElementSelector} is set.
+   * different if {@link Settings.settings.mainScrollableElementSelector} is set.
    *
    * It will wait for the element to be available if not already.
    */
@@ -6773,7 +7277,7 @@ class ScrollWatcher {
    * Creates a new instance of ScrollWatcher with the given
    * {@link ScrollWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ScrollWatcher(getConfig$1(config), CONSTRUCTOR_KEY$1);
   }
 
@@ -6784,7 +7288,7 @@ class ScrollWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig$1(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances$1.get(configStrKey);
@@ -6839,7 +7343,7 @@ class ScrollWatcher {
     // ----------
 
     const setupOnScroll = async (handler, userOptions, trackType) => {
-      const options = await fetchOnScrollOptions(config, userOptions || {});
+      const options = await fetchOnScrollOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const element = options._element;
 
       // Don't await for the scroll data before creating the callback so that
@@ -6910,6 +7414,7 @@ class ScrollWatcher {
         deleteKey(allScrollData, element);
         removeEventListenerFrom(eventTarget, S_SCROLL, scrollHandler);
         deleteKey(activeListeners, eventTarget);
+        // TODO: Should we unwrap children if previously WE wrapped them?
       }
     };
 
@@ -6964,12 +7469,11 @@ class ScrollWatcher {
       // Observe the scrolling element
       setupOnResize(element);
 
-      // And also its children (if possible, single wrapper around children
-      const allowedToWrap = settings.contentWrappingAllowed === true && element !== docScrollingElement && getData(element, PREFIX_NO_WRAP) === null;
-      let wrapper;
-      if (allowedToWrap) {
-        // Wrap the content and observe the wrapper
-        wrapper = await wrapScrollingContent(element);
+      // And also its children (if possible, a single wrapper around them
+      const wrapper = await tryWrapContent(element, {
+        _classNames: [PREFIX_WRAPPER$2, PREFIX_WRAPPER]
+      });
+      if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
 
@@ -6992,7 +7496,7 @@ class ScrollWatcher {
         // If we've just added the wrapper, it will be in DOMWatcher's queue,
         // so check.
         if (child !== wrapper) {
-          if (allowedToWrap) {
+          if (wrapper) {
             // Move this child into the wrapper. If this results in change of size
             // for wrapper, SizeWatcher will call us.
             moveElement(child, {
@@ -7016,7 +7520,7 @@ class ScrollWatcher {
     // ----------
 
     const scrollHandler = async event => {
-      var _activeListeners$get;
+      var _activeListeners$get$, _activeListeners$get;
       // We cannot use event.currentTarget because scrollHandler is called inside
       // a setTimeout so by that time, currentTarget is null or something else.
       //
@@ -7036,7 +7540,7 @@ class ScrollWatcher {
         return;
       }
       const element = await fetchScrollableElement(scrollable);
-      const realtime = (((_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) || 0) > 0;
+      const realtime = ((_activeListeners$get$ = (_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) !== null && _activeListeners$get$ !== void 0 ? _activeListeners$get$ : 0) > 0;
       const latestData = await fetchCurrentScroll(element, realtime, true);
       allScrollData.set(element, latestData);
       for (const entry of ((_allCallbacks$get3 = allCallbacks.get(element)) === null || _allCallbacks$get3 === void 0 ? void 0 : _allCallbacks$get3.values()) || []) {
@@ -7066,7 +7570,7 @@ class ScrollWatcher {
 
     // ----------
 
-    this.scroll = (direction, options = {}) => {
+    this.scroll = (direction, options) => {
       var _options$amount;
       if (!isValidScrollDirection(direction)) {
         throw usageError(`Unknown scroll direction: '${direction}'`);
@@ -7074,8 +7578,8 @@ class ScrollWatcher {
       const isVertical = direction === S_UP || direction === S_DOWN;
       const sign = direction === S_UP || direction === S_LEFT ? -1 : 1;
       let targetCoordinate;
-      const amount = (_options$amount = options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
-      const asFractionOf = options.asFractionOf;
+      const amount = (_options$amount = options === null || options === void 0 ? void 0 : options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
+      const asFractionOf = options === null || options === void 0 ? void 0 : options.asFractionOf;
       if (asFractionOf === "visible") {
         targetCoordinate = isVertical ? el => el[S_SCROLL_TOP] + sign * amount * getClientHeightNow(el) / 100 : el => el[S_SCROLL_LEFT] + sign * amount * getClientWidthNow(el) / 100;
 
@@ -7101,14 +7605,14 @@ class ScrollWatcher {
 
     // ----------
 
-    this.scrollTo = async (to, options = {}) => scrollTo(to, merge({
-      duration: config._scrollDuration
-    },
-    // default
-    options, {
-      scrollable: await fetchScrollableElement(options.scrollable)
-    } // override
-    ));
+    this.scrollTo = async (to, options) => {
+      var _options$duration;
+      return scrollTo(to, merge(options, {
+        duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : config._scrollDuration,
+        // default
+        scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable) // override
+      }));
+    };
 
     // ----------
 
@@ -7116,13 +7620,13 @@ class ScrollWatcher {
 
     // ----------
 
-    this.stopUserScrolling = async (options = {}) => {
-      const element = await fetchScrollableElement(options.scrollable);
+    this.stopUserScrolling = async options => {
+      const element = await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable);
       const stopScroll = () => elScrollTo(element, {
         top: element[S_SCROLL_TOP],
         left: element[S_SCROLL_LEFT]
       });
-      if (options.immediate) {
+      if (options !== null && options !== void 0 && options.immediate) {
         stopScroll();
       } else {
         waitForMeasureTime().then(stopScroll);
@@ -7182,7 +7686,9 @@ class ScrollWatcher {
 
 const CONSTRUCTOR_KEY$1 = SYMBOL();
 const instances$1 = newMap();
+const PREFIX_WRAPPER = prefixName("scroll-watcher-wrapper");
 const getConfig$1 = config => {
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -7236,6 +7742,7 @@ const hasExceededThreshold = (options, latestData, lastThresholdData) => {
   return checkTop && topDiff >= threshold || checkLeft && leftDiff >= threshold;
 };
 const fetchScrollData = async (element, previousEventData, realtime) => {
+  var _previousEventData$sc, _previousEventData$sc2;
   if (!realtime) {
     await waitForMeasureTime();
   }
@@ -7247,19 +7754,19 @@ const fetchScrollData = async (element, previousEventData, realtime) => {
   const clientHeight = getClientHeightNow(element);
   const scrollTopFraction = round(scrollTop) / (scrollHeight - clientHeight || INFINITY);
   const scrollLeftFraction = round(scrollLeft) / (scrollWidth - clientWidth || INFINITY);
-  const prevScrollTop = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) || 0;
-  const prevScrollLeft = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) || 0;
+  const prevScrollTop = (_previousEventData$sc = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) !== null && _previousEventData$sc !== void 0 ? _previousEventData$sc : 0;
+  const prevScrollLeft = (_previousEventData$sc2 = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) !== null && _previousEventData$sc2 !== void 0 ? _previousEventData$sc2 : 0;
   const direction = getMaxDeltaDirection(scrollLeft - prevScrollLeft, scrollTop - prevScrollTop);
   return {
     direction,
+    [S_CLIENT_WIDTH]: clientWidth,
+    [S_CLIENT_HEIGHT]: clientHeight,
+    [S_SCROLL_WIDTH]: scrollWidth,
+    [S_SCROLL_HEIGHT]: scrollHeight,
     [S_SCROLL_TOP]: scrollTop,
     [S_SCROLL_TOP_FRACTION]: scrollTopFraction,
     [S_SCROLL_LEFT]: scrollLeft,
-    [S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-    [S_SCROLL_WIDTH]: scrollWidth,
-    [S_SCROLL_HEIGHT]: scrollHeight,
-    [S_CLIENT_WIDTH]: clientWidth,
-    [S_CLIENT_HEIGHT]: clientHeight
+    [S_SCROLL_LEFT_FRACTION]: scrollLeftFraction
   };
 };
 const setScrollCssProps = (element, scrollData) => {
@@ -7269,7 +7776,7 @@ const setScrollCssProps = (element, scrollData) => {
     element = getDocElement();
     prefix = "page-";
   }
-  scrollData = scrollData || {};
+  scrollData !== null && scrollData !== void 0 ? scrollData : scrollData = {};
   const props = {
     [S_SCROLL_TOP]: scrollData[S_SCROLL_TOP],
     [S_SCROLL_TOP_FRACTION]: scrollData[S_SCROLL_TOP_FRACTION],
@@ -7278,7 +7785,7 @@ const setScrollCssProps = (element, scrollData) => {
     [S_SCROLL_WIDTH]: scrollData[S_SCROLL_WIDTH],
     [S_SCROLL_HEIGHT]: scrollData[S_SCROLL_HEIGHT]
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: prefix
   });
 };
@@ -7564,16 +8071,16 @@ class ViewWatcher {
    * Get the current view relative to the target. By default, it will
    * {@link waitForMeasureTime} and so will be delayed by one frame.
    *
-   * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-   *                    this only when doing realtime scroll-based animations
-   *                    as it may cause a forced layout.
+   * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+   *                 this only when doing realtime scroll-based animations
+   *                 as it may cause a forced layout.
    */
 
   /**
    * Creates a new instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -7584,7 +8091,7 @@ class ViewWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -7917,11 +8424,11 @@ class ViewWatcher {
 const CONSTRUCTOR_KEY = SYMBOL();
 const instances = newXMap(() => newMap());
 const getConfig = config => {
-  var _config$rootMargin;
+  var _config$root, _config$rootMargin, _config$threshold;
   return {
-    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
     _rootMargin: (_config$rootMargin = config === null || config === void 0 ? void 0 : config.rootMargin) !== null && _config$rootMargin !== void 0 ? _config$rootMargin : "0px 0px 0px 0px",
-    _threshold: (config === null || config === void 0 ? void 0 : config.threshold) || 0
+    _threshold: (_config$threshold = config === null || config === void 0 ? void 0 : config.threshold) !== null && _config$threshold !== void 0 ? _config$threshold : 0
   };
 };
 const TRACK_REGULAR = 1; // only entering/leaving root
@@ -8134,7 +8641,8 @@ const fetchViews = async (intersection, realtime, useScrollingAncestor) => {
   return [S_AT];
 };
 const setViewCssProps = (element, viewData) => {
-  const relative = (viewData === null || viewData === void 0 ? void 0 : viewData.relative) || {};
+  var _viewData$relative;
+  const relative = (_viewData$relative = viewData === null || viewData === void 0 ? void 0 : viewData.relative) !== null && _viewData$relative !== void 0 ? _viewData$relative : {};
   const props = {
     top: relative.top,
     bottom: relative.bottom,
@@ -8145,7 +8653,7 @@ const setViewCssProps = (element, viewData) => {
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: "r-",
     _numDecimal: 4
   }); // don't await here

@@ -3,9 +3,7 @@
  */
 import { Point, Vector, AtLeastOne } from "../globals/types.js";
 /**
- * Round a number to the given decimal precision (default is 0).
- *
- * @param {} [numDecimal = 0]
+ * Round a number to the given decimal precision.
  *
  * @category Math
  */
@@ -126,7 +124,7 @@ export declare const radToDeg: (a: number) => number;
 /**
  * Returns true if the given vectors point in the same direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 5 degrees of each other are
@@ -141,7 +139,7 @@ export declare const areParallel: (vA: Vector, vB: Vector, angleDiffThreshold?: 
 /**
  * Returns true if the given vectors point in the opposite direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 175-185 degrees of each other are
@@ -174,9 +172,46 @@ export declare const quadraticRoots: (a: number, b: number, c: number) => number
  *
  * @see https://easings.net/#easeInOutQuad
  *
+ * @param x Must be between 0 and 1.
+ *
+ * @returns The current y-axis value between 0 and 1.
+ *
  * @category Math
  */
 export declare const easeInOutQuad: (x: number) => number;
+/**
+ * Returns the new position and velocity for a critically damped user-driven
+ * spring state toward a current target position.
+ *
+ * @param [settings.lTarget]       Target final position.
+ * @param [settings.dt]            Time step in milliseconds since the last call.
+ *                                 Must be small for the returned values to be
+ *                                 meaningful.
+ * @param [settings.lag]           Lag in milliseconds (how long it should take
+ *                                 for it to reach the final position). Must be
+ *                                 positive.
+ * @param [settings.l = 0]         Current position (starting or one returned by
+ *                                 previous call).
+ * @param [settings.v = 0]         Current velocity (returned by previous call).
+ * @param [settings.precision = 2] Number of decimal places to round position to
+ *                                 in order to determine when it's "done".
+ * @returns Updated position and velocity
+ *
+ * @since v1.2.0
+ *
+ * @category Math
+ */
+export declare const criticallyDamped: (settings: {
+    lTarget: number;
+    dt: number;
+    lag: number;
+    l?: number;
+    v?: number;
+    precision?: number;
+}) => {
+    l: number;
+    v: number;
+};
 /**
  * Returns an array of object's keys sorted by the numeric value they hold.
  *

@@ -21,9 +21,9 @@ export const callEventListener = (
   event: Event,
 ) => {
   if (MH.isFunction(handler)) {
-    handler.call(event.currentTarget || self, event);
+    handler.call(event.currentTarget ?? self, event);
   } else {
-    handler.handleEvent.call(event.currentTarget || self, event);
+    handler.handleEvent.call(event.currentTarget ?? self, event);
   }
 };
 
@@ -34,7 +34,7 @@ export const callEventListener = (
  * but it handles `options` object in case the browser does not support those.
  * Does not support the `signal` option unless browser natively supports that.
  *
- * @return {} `true` if successfully added, or `false` if the same handler has
+ * @returns `true` if successfully added, or `false` if the same handler has
  * already been added by us, or if the handler is not a valid event listener.
  *
  * @category Events: Generic
@@ -43,8 +43,9 @@ export const addEventListenerTo = (
   target: EventTarget,
   eventType: string,
   handler: EventListenerOrEventListenerObject,
-  options: boolean | AddEventListenerOptions = {},
+  options?: boolean | AddEventListenerOptions,
 ): boolean => {
+  options ??= false;
   eventType = transformEventType(eventType);
   if (getEventHandlerData(target, eventType, handler, options)) {
     // already added
@@ -90,7 +91,7 @@ export const addEventListenerTo = (
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener | EventTarget:removeEventListener},
  * to remove it, not this function.
  *
- * @return {} `true` if successfully removed, or `false` if the handler has not
+ * @returns `true` if successfully removed, or `false` if the handler has not
  * been added by us.
  *
  * @category Events: Generic
@@ -99,8 +100,9 @@ export const removeEventListenerFrom = (
   target: EventTarget,
   eventType: string,
   handler: EventListenerOrEventListenerObject,
-  options: boolean | AddEventListenerOptions = {},
+  options?: boolean | AddEventListenerOptions,
 ) => {
+  options ??= false;
   eventType = transformEventType(eventType);
   const data = getEventHandlerData(target, eventType, handler, options);
 

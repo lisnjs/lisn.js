@@ -55,11 +55,11 @@ import { GestureFragment } from "../utils/gesture.cjs";
  * press of + or - steps up by 15% or down by ~13% (`1 / 1.15` to be exact)
  * since the previous one.
  *
- * @param {} [options.angleDiffThreshold]
- *                                  See {@link getVectorDirection}
- * @param {} [options.scrollHeight] Use this as deltaY when Home/End is pressed
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.scrollHeight]       Use this as deltaY when Home/End is
+ *                                     pressed.
  *
- * @return {} `false` if there are no "keydown" events in the list, otherwise a
+ * @returns `false` if there are no "keydown" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures

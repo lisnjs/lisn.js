@@ -2,7 +2,7 @@
  * @module Modules/Callback
  */
 /**
- * @typeParam Args  See {@link Callback}
+ * @typeParam Args See {@link Callback}
  */
 export type CallbackHandler<Args extends unknown[] = []> = (...args: Args) => CallbackReturnType | Promise<CallbackReturnType>;
 export type CallbackReturnType = typeof Callback.KEEP | typeof Callback.REMOVE | void;
@@ -22,7 +22,7 @@ export declare const wrapCallback: <Args extends unknown[] = []>(handlerOrCallba
  * - awaiting on an asynchronous handler and ensuring that the handler does not
  *  run concurrently to itself, i.e. subsequent {@link invoke}s will be queued
  *
- * @typeParam Args  The type of arguments that the callback expects.
+ * @typeParam Args The type of arguments that the callback expects.
  */
 export declare class Callback<Args extends unknown[] = []> {
     /**
@@ -88,15 +88,15 @@ export declare class Callback<Args extends unknown[] = []> {
      * Note that if the argument is a callback that's already debounced by a
      * _larger_ window, then `debounceWindow` will have no effect.
      *
-     * @param {} debounceWindow  If non-0, the callback will be called at most
-     *                           every `debounceWindow` ms. The arguments it will
-     *                           be called with will be the last arguments the
-     *                           wrapper was called with.
+     * @param debounceWindow If non-0, the callback will be called at most
+     *                       every `debounceWindow` ms. The arguments it will
+     *                       be called with will be the last arguments the
+     *                       wrapper was called with.
      */
     static readonly wrap: <Args_1 extends unknown[] = []>(handlerOrCallback: CallbackHandler<Args_1> | Callback<Args_1>, debounceWindow?: number) => Callback<Args_1>;
     /**
-     * @param {} handler     The actual function to call. This should return one of
-     *                       the known {@link CallbackReturnType} values.
+     * @param handler The actual function to call. This should return one of
+     *                the known {@link CallbackReturnType} values.
      */
     constructor(handler: CallbackHandler<Args>);
 }

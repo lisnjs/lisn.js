@@ -54,7 +54,7 @@ import { logError } from "@lisn/utils/log";
  *
  * @category DOM: Searching for reference elements
  *
- * @param {} thisElement The element to search relative to
+ * @param thisElement The element to search relative to
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                        If the specification is invalid or if thisElement is
@@ -94,7 +94,7 @@ export const getReferenceElement = (
     selector = matchOp + refOrCls;
   } else {
     if (!refOrCls) {
-      refOrCls = getData(thisElement, PREFIX_REF) || "";
+      refOrCls = getData(thisElement, PREFIX_REF) ?? "";
     }
 
     if (!refOrCls) {
@@ -176,7 +176,7 @@ const getNextOrPrevReferenceElement = (
   thisElement: Element,
   goBackward: boolean,
 ): Element | null => {
-  thisElement = getThisReferenceElement(selector, thisElement) || thisElement;
+  thisElement = getThisReferenceElement(selector, thisElement) ?? thisElement;
 
   if (!MH.getDoc().contains(thisElement)) {
     return null;
@@ -207,5 +207,5 @@ const getNextOrPrevReferenceElement = (
     }
   }
 
-  return allRefs[refIndex] || null;
+  return allRefs[refIndex] ?? null;
 };

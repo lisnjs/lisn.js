@@ -17,8 +17,7 @@ var _action = require("../actions/action.cjs");
 var _widget = require("../widgets/widget.cjs");
 var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -112,7 +111,7 @@ class Trigger extends _widget.Widget {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    var _config$once, _config$oneWay, _config$doDelay, _config$undoDelay;
+    var _config$once, _config$oneWay, _config$delay, _config$doDelay, _config$undoDelay;
     super(element, config);
     /**
      * "Do"es all the {@link Action}s linked to the trigger.
@@ -143,7 +142,7 @@ class Trigger extends _widget.Widget {
     }) : null;
     const once = (_config$once = config === null || config === void 0 ? void 0 : config.once) !== null && _config$once !== void 0 ? _config$once : false;
     const oneWay = (_config$oneWay = config === null || config === void 0 ? void 0 : config.oneWay) !== null && _config$oneWay !== void 0 ? _config$oneWay : false;
-    const delay = (config === null || config === void 0 ? void 0 : config.delay) || 0;
+    const delay = (_config$delay = config === null || config === void 0 ? void 0 : config.delay) !== null && _config$delay !== void 0 ? _config$delay : 0;
     const doDelay = (_config$doDelay = config === null || config === void 0 ? void 0 : config.doDelay) !== null && _config$doDelay !== void 0 ? _config$doDelay : delay;
     const undoDelay = (_config$undoDelay = config === null || config === void 0 ? void 0 : config.undoDelay) !== null && _config$undoDelay !== void 0 ? _config$undoDelay : delay;
     let lastCallId;
@@ -171,9 +170,7 @@ class Trigger extends _widget.Widget {
       }
       toggleState = newToggleState;
       if (toggleState && once) {
-        MH.remove(run);
-        MH.remove(reverse);
-        MH.remove(toggle);
+        this.destroy();
       }
     };
     const run = (0, _callback.wrapCallback)(() => {
@@ -196,11 +193,17 @@ class Trigger extends _widget.Widget {
 
     // ----------
 
+    this.onDestroy(() => {
+      debug: logger === null || logger === void 0 || logger.debug5("Removing callbacks");
+      MH.remove(run);
+      MH.remove(reverse);
+      MH.remove(toggle);
+    });
     this.run = run.invoke;
     this.reverse = reverse.invoke;
     this[MC.S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
     this.getActions = () => [...actions]; // copy
-    this.getConfig = () => MH.copyObject(config || {});
+    this.getConfig = () => MH.copyObject(config);
   }
 }
 
@@ -224,17 +227,17 @@ exports.Trigger = Trigger;
  * **IMPORTANT:** If a trigger by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name       The name of the trigger. Should be in kebab-case.
- * @param {} newTrigger Called for every trigger specification on any element
- *                      that has one or more trigger specifications.
- * @param {} configValidator
- *                      A validator object, or a function that returns such an
- *                      object, for all options that are specific to the
- *                      trigger. Base options (in {@link TriggerConfig}) will
- *                      be parsed automatically and don't need to be handled by
- *                      `configValidator`.
- *                      If the parameter is a function, it will be called with
- *                      the element on which the trigger is being defined.
+ * @param name       The name of the trigger. Should be in kebab-case.
+ * @param newTrigger Called for every trigger specification on any element
+ *                   that has one or more trigger specifications.
+ * @param configValidator
+ *                   A validator object, or a function that returns such an
+ *                   object, for all options that are specific to the
+ *                   trigger. Base options (in {@link TriggerConfig}) will
+ *                   be parsed automatically and don't need to be handled by
+ *                   `configValidator`.
+ *                   If the parameter is a function, it will be called with
+ *                   the element on which the trigger is being defined.
  *
  * @see {@link registerWidget}
  */
@@ -259,10 +262,10 @@ const registerTrigger = (name, newTrigger, configValidator) => {
       const config = await (0, _widget.fetchWidgetConfig)(configSpec, MH.assign(baseConfigValidator, thisConfigValidator), OPTION_PREF_CHAR);
       const actionTarget = (_config$actOn = config.actOn) !== null && _config$actOn !== void 0 ? _config$actOn : element;
       const actions = [];
-      for (const actionSpec of (0, _text.splitOn)(allActionSpecs || "", ACTION_PREF_CHAR, true)) {
+      for (const actionSpec of (0, _text.splitOn)(allActionSpecs !== null && allActionSpecs !== void 0 ? allActionSpecs : "", ACTION_PREF_CHAR, true)) {
         const [name, actionArgsAndOptions] = (0, _text.splitOn)(actionSpec, ACTION_ARGS_PREF_CHAR, true, 1);
         try {
-          actions.push(await (0, _action.fetchAction)(actionTarget, name, actionArgsAndOptions || ""));
+          actions.push(await (0, _action.fetchAction)(actionTarget, name, actionArgsAndOptions !== null && actionArgsAndOptions !== void 0 ? actionArgsAndOptions : ""));
         } catch (err) {
           if (MH.isInstanceOf(err, _errors.LisnUsageError)) {
             // fetchAction would have logged an error

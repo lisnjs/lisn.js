@@ -39,7 +39,7 @@ export class DOMWatcher {
    * Creates a new instance of DOMWatcher with the given
    * {@link DOMWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new DOMWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -50,7 +50,7 @@ export class DOMWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -215,9 +215,10 @@ export class DOMWatcher {
     // ----------
 
     const setupOnMutation = async (handler, userOptions) => {
-      const options = getOptions(userOptions || {});
+      var _config$_root;
+      const options = getOptions(userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const callback = createCallback(handler, options);
-      let root = config._root || MH.getBody();
+      let root = (_config$_root = config._root) !== null && _config$_root !== void 0 ? _config$_root : MH.getBody();
       if (!root) {
         root = await waitForElement(MH.getBody);
       } else {
@@ -344,6 +345,7 @@ export class DOMWatcher {
     // ----------
 
     const shouldSkipOperation = operation => {
+      var _config$_root2;
       const target = operation._target;
       const requestToSkip = getIgnoreMove(target);
       if (!requestToSkip) {
@@ -353,7 +355,7 @@ export class DOMWatcher {
       const addedTo = MH.parentOf(target);
       const requestFrom = requestToSkip.from;
       const requestTo = requestToSkip.to;
-      const root = config._root || MH.getBody();
+      const root = (_config$_root2 = config._root) !== null && _config$_root2 !== void 0 ? _config$_root2 : MH.getBody();
       // If "from" is currently outside our root, we may not have seen a
       // removal operation.
       if ((removedFrom === requestFrom || !root.contains(requestFrom)) && addedTo === requestTo) {
@@ -405,10 +407,10 @@ export class DOMWatcher {
 const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = newXMap(() => MH.newMap());
 const getConfig = config => {
-  var _config$subtree;
+  var _config$root, _config$subtree;
   return {
-    _root: config.root || null,
-    _subtree: (_config$subtree = config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
+    _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
   };
 };
 const CATEGORIES_BITS = DOM_CATEGORIES_SPACE.bit;
@@ -419,6 +421,7 @@ const ATTRIBUTE_BIT = CATEGORIES_BITS[MC.S_ATTRIBUTE];
 // ----------------------------------------
 
 const getOptions = options => {
+  var _options$selector, _options$target;
   let categoryBitmask = 0;
   const categories = validateStrList("categories", options.categories, DOM_CATEGORIES_SPACE.has);
   if (categories) {
@@ -428,14 +431,14 @@ const getOptions = options => {
   } else {
     categoryBitmask = DOM_CATEGORIES_SPACE.bitmask; // default: all
   }
-  const selector = options.selector || "";
+  const selector = (_options$selector = options.selector) !== null && _options$selector !== void 0 ? _options$selector : "";
   if (!MH.isString(selector)) {
     throw MH.usageError("'selector' must be a string");
   }
   return {
     _categoryBitmask: categoryBitmask,
-    _target: options.target || null,
-    _selector: options.selector || ""
+    _target: (_options$target = options.target) !== null && _options$target !== void 0 ? _options$target : null,
+    _selector: selector
   };
 };
 const getDiffOperation = (operationA, operationB) => {

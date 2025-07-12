@@ -4,6 +4,7 @@
  * @internal
  */
 
+export * from "./check-trigger.js";
 export * from "./pointer-trigger.js";
 export * from "./layout-trigger.js";
 export * from "./load-trigger.js";

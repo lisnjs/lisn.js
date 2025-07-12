@@ -8,9 +8,6 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { roundNumTo } from "@lisn/utils/math";
 
-export const isTouchScreen = () =>
-  MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
-
 export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {

@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.S_TOGGLE = exports.S_STICKY = exports.S_SKIP_INITIAL = exports.S_SELECTSTART = exports.S_SCROLL_WIDTH = exports.S_SCROLL_TOP_FRACTION = exports.S_SCROLL_TOP = exports.S_SCROLL_LEFT_FRACTION = exports.S_SCROLL_LEFT = exports.S_SCROLL_HEIGHT = exports.S_SCROLL = exports.S_ROLE = exports.S_RIGHT = exports.S_REVERSE = exports.S_REMOVED = exports.S_PRESS = exports.S_POINTERUP = exports.S_POINTERMOVE = exports.S_POINTERLEAVE = exports.S_POINTERENTER = exports.S_POINTERDOWN = exports.S_POINTERCANCEL = exports.S_POINTER = exports.S_OUT = exports.S_NONE = exports.S_MOUSEUP = exports.S_MOUSEMOVE = exports.S_MOUSEDOWN = exports.S_MOUSE = exports.S_LEFT = exports.S_KEYDOWN = exports.S_KEY = exports.S_IN = exports.S_HOVER = exports.S_HORIZONTAL = exports.S_HEIGHT = exports.S_FIXED = exports.S_DROP = exports.S_DRAGSTART = exports.S_DRAGOVER = exports.S_DRAGLEAVE = exports.S_DRAGGABLE = exports.S_DRAGENTER = exports.S_DRAGEND = exports.S_DRAG = exports.S_DOWN = exports.S_DISABLED = exports.S_DEBOUNCE_WINDOW = exports.S_CLIENT_WIDTH = exports.S_CLIENT_HEIGHT = exports.S_CLICK = exports.S_CHILD_LIST = exports.S_CANCEL = exports.S_BOTTOM = exports.S_BELOW = exports.S_ATTRIBUTES = exports.S_ATTRIBUTE = exports.S_AT = exports.S_ARROW = exports.S_ARIA_CONTROLS = exports.S_ANIMATE = exports.S_AMBIGUOUS = exports.S_ADDED = exports.S_ABSOLUTE = exports.S_ABOVE = exports.SYMBOL = exports.STRING = exports.PROMISE = exports.PREFIX_WRAPPER = exports.PREFIX_UNDISPLAY = exports.PREFIX_TRANSITION_DISABLE = exports.PREFIX_TRANSITION = exports.PREFIX_SHOW = exports.PREFIX_POSITION = exports.PREFIX_PLACE = exports.PREFIX_ORIENTATION = exports.PREFIX_NO_WRAP = exports.PREFIX_NO_TOUCH_ACTION = exports.PREFIX_NO_SELECT = exports.PREFIX_INLINE_WRAPPER = exports.PREFIX_HIDE = exports.PREFIX_GHOST = exports.PREFIX_DISPLAY = exports.PREFIX_BORDER_SIZE = exports.PREFIX_ANIMATE_REVERSE = exports.PREFIX_ANIMATE_PAUSE = exports.PREFIX_ANIMATE_INFINITE = exports.PREFIX_ANIMATE_DISABLE = exports.PREFIX = exports.PI = exports.OBJECT = exports.NUMBER = exports.MATH = exports.LOG_PREFIX = exports.IS_MOBILE = exports.INFINITY = exports.FUNCTION = exports.ARRAY = exports.ARIA_PREFIX = exports.ANIMATE_PREFIX = void 0;
-exports.USER_AGENT = exports.S_ZOOM = exports.S_WIDTH = exports.S_WHEEL = exports.S_VERTICAL = exports.S_UP = exports.S_UNKNOWN = exports.S_TOUCHSTART = exports.S_TOUCHMOVE = exports.S_TOUCHEND = exports.S_TOUCHCANCEL = exports.S_TOUCH = exports.S_TOP = void 0;
+exports.S_TOGGLE = exports.S_STICKY = exports.S_SKIP_INITIAL = exports.S_SELECTSTART = exports.S_SCROLL_WIDTH = exports.S_SCROLL_TOP_FRACTION = exports.S_SCROLL_TOP = exports.S_SCROLL_LEFT_FRACTION = exports.S_SCROLL_LEFT = exports.S_SCROLL_HEIGHT = exports.S_SCROLL = exports.S_ROLE = exports.S_RIGHT = exports.S_REVERSE = exports.S_REMOVED = exports.S_PRESS = exports.S_POINTERUP = exports.S_POINTERMOVE = exports.S_POINTERLEAVE = exports.S_POINTERENTER = exports.S_POINTERDOWN = exports.S_POINTERCANCEL = exports.S_POINTER = exports.S_OUT = exports.S_NONE = exports.S_MOUSEUP = exports.S_MOUSEMOVE = exports.S_MOUSEDOWN = exports.S_MOUSE = exports.S_LEFT = exports.S_KEYDOWN = exports.S_KEY = exports.S_IN = exports.S_HOVER = exports.S_HORIZONTAL = exports.S_HEIGHT = exports.S_FIXED = exports.S_DROP = exports.S_DRAGSTART = exports.S_DRAGOVER = exports.S_DRAGLEAVE = exports.S_DRAGGABLE = exports.S_DRAGENTER = exports.S_DRAGEND = exports.S_DRAG = exports.S_DOWN = exports.S_DISABLED = exports.S_DEBOUNCE_WINDOW = exports.S_CLIENT_WIDTH = exports.S_CLIENT_HEIGHT = exports.S_CLICK = exports.S_CHILD_LIST = exports.S_CANCEL = exports.S_BOTTOM = exports.S_BELOW = exports.S_AUTO = exports.S_ATTRIBUTES = exports.S_ATTRIBUTE = exports.S_AT = exports.S_ARROW = exports.S_ARIA_CONTROLS = exports.S_ANIMATE = exports.S_AMBIGUOUS = exports.S_ADDED = exports.S_ABSOLUTE = exports.S_ABOVE = exports.SYMBOL = exports.STRING = exports.PROMISE = exports.PREFIX_WRAPPER = exports.PREFIX_UNDISPLAY = exports.PREFIX_TRANSITION_DISABLE = exports.PREFIX_TRANSITION = exports.PREFIX_SHOW = exports.PREFIX_POSITION = exports.PREFIX_PLACE = exports.PREFIX_ORIENTATION = exports.PREFIX_NO_WRAP = exports.PREFIX_NO_TOUCH_ACTION = exports.PREFIX_NO_SELECT = exports.PREFIX_INLINE_WRAPPER = exports.PREFIX_HIDE = exports.PREFIX_GHOST = exports.PREFIX_DISPLAY = exports.PREFIX_BORDER_SIZE = exports.PREFIX_ANIMATE_REVERSE = exports.PREFIX_ANIMATE_PAUSE = exports.PREFIX_ANIMATE_INFINITE = exports.PREFIX_ANIMATE_DISABLE = exports.PREFIX = exports.PI = exports.OBJECT = exports.NUMBER = exports.MATH = exports.LOG_PREFIX = exports.INFINITY = exports.FUNCTION = exports.ARRAY = exports.ARIA_PREFIX = exports.ANIMATE_PREFIX = void 0;
+exports.S_ZOOM = exports.S_WIDTH = exports.S_WHEEL = exports.S_VISIBLE = exports.S_VERTICAL = exports.S_UP = exports.S_UNKNOWN = exports.S_TOUCHSTART = exports.S_TOUCHMOVE = exports.S_TOUCHEND = exports.S_TOUCHCANCEL = exports.S_TOUCH = exports.S_TOP = void 0;
 /**
  * For minification optimization.
  *
@@ -72,20 +72,20 @@ const S_SKIP_INITIAL = exports.S_SKIP_INITIAL = "skipInitial";
 const S_DEBOUNCE_WINDOW = exports.S_DEBOUNCE_WINDOW = "debounceWindow";
 const S_TOGGLE = exports.S_TOGGLE = "toggle";
 const S_CANCEL = exports.S_CANCEL = "cancel";
-const S_KEYDOWN = exports.S_KEYDOWN = S_KEY + S_DOWN;
-const S_MOUSEUP = exports.S_MOUSEUP = S_MOUSE + S_UP;
-const S_MOUSEDOWN = exports.S_MOUSEDOWN = S_MOUSE + S_DOWN;
+const S_KEYDOWN = exports.S_KEYDOWN = `${S_KEY}${S_DOWN}`;
+const S_MOUSEUP = exports.S_MOUSEUP = `${S_MOUSE}${S_UP}`;
+const S_MOUSEDOWN = exports.S_MOUSEDOWN = `${S_MOUSE}${S_DOWN}`;
 const S_MOUSEMOVE = exports.S_MOUSEMOVE = `${S_MOUSE}move`;
-const S_POINTERUP = exports.S_POINTERUP = S_POINTER + S_UP;
-const S_POINTERDOWN = exports.S_POINTERDOWN = S_POINTER + S_DOWN;
+const S_POINTERUP = exports.S_POINTERUP = `${S_POINTER}${S_UP}`;
+const S_POINTERDOWN = exports.S_POINTERDOWN = `${S_POINTER}${S_DOWN}`;
 const S_POINTERENTER = exports.S_POINTERENTER = `${S_POINTER}enter`;
 const S_POINTERLEAVE = exports.S_POINTERLEAVE = `${S_POINTER}leave`;
 const S_POINTERMOVE = exports.S_POINTERMOVE = `${S_POINTER}move`;
-const S_POINTERCANCEL = exports.S_POINTERCANCEL = S_POINTER + S_CANCEL;
+const S_POINTERCANCEL = exports.S_POINTERCANCEL = `${S_POINTER}${S_CANCEL}`;
 const S_TOUCHSTART = exports.S_TOUCHSTART = `${S_TOUCH}start`;
 const S_TOUCHEND = exports.S_TOUCHEND = `${S_TOUCH}end`;
 const S_TOUCHMOVE = exports.S_TOUCHMOVE = `${S_TOUCH}move`;
-const S_TOUCHCANCEL = exports.S_TOUCHCANCEL = S_TOUCH + S_CANCEL;
+const S_TOUCHCANCEL = exports.S_TOUCHCANCEL = `${S_TOUCH}${S_CANCEL}`;
 const S_DRAGSTART = exports.S_DRAGSTART = `${S_DRAG}start`;
 const S_DRAGEND = exports.S_DRAGEND = `${S_DRAG}end`;
 const S_DRAGENTER = exports.S_DRAGENTER = `${S_DRAG}enter`;
@@ -100,6 +100,8 @@ const S_DRAGGABLE = exports.S_DRAGGABLE = "draggable";
 const S_DISABLED = exports.S_DISABLED = "disabled";
 const S_ARROW = exports.S_ARROW = "arrow";
 const S_ROLE = exports.S_ROLE = "role";
+const S_AUTO = exports.S_AUTO = "auto";
+const S_VISIBLE = exports.S_VISIBLE = "visible";
 const ARIA_PREFIX = exports.ARIA_PREFIX = "aria-";
 const S_ARIA_CONTROLS = exports.S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
 const PREFIX_WRAPPER = exports.PREFIX_WRAPPER = `${PREFIX}-wrapper`;
@@ -124,6 +126,4 @@ const PREFIX_ANIMATE_DISABLE = exports.PREFIX_ANIMATE_DISABLE = `${ANIMATE_PREFI
 const PREFIX_ANIMATE_PAUSE = exports.PREFIX_ANIMATE_PAUSE = `${ANIMATE_PREFIX}pause`;
 const PREFIX_ANIMATE_REVERSE = exports.PREFIX_ANIMATE_REVERSE = `${ANIMATE_PREFIX}${S_REVERSE}`;
 const PREFIX_ANIMATE_INFINITE = exports.PREFIX_ANIMATE_INFINITE = `${ANIMATE_PREFIX}infinite`;
-const USER_AGENT = exports.USER_AGENT = typeof navigator === "undefined" ? "" : navigator.userAgent;
-const IS_MOBILE = exports.IS_MOBILE = USER_AGENT.match(/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/) !== null;
 //# sourceMappingURL=minification-constants.cjs.map

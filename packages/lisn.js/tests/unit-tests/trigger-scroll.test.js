@@ -74,7 +74,7 @@ describe("ScrollTrigger", () => {
     };
 
     const element = document.createElement("div");
-    new ScrollTrigger(document.body, [action], {
+    new ScrollTrigger(element, [action], {
       scrollable: element,
       directions: "up,down",
     });
@@ -123,7 +123,7 @@ describe("ScrollTrigger", () => {
     };
 
     const element = document.createElement("div");
-    new ScrollTrigger(document.body, [action], {
+    new ScrollTrigger(element, [action], {
       scrollable: element,
       directions: "up,left",
     });
@@ -212,6 +212,36 @@ describe("ScrollTrigger", () => {
     expect(action.undo).toHaveBeenCalledTimes(1);
     expect(action.toggle).toHaveBeenCalledTimes(0);
   });
+
+  test("destroy", async () => {
+    const action = {
+      do: jest.fn(),
+      undo: jest.fn(),
+      toggle: jest.fn(),
+    };
+
+    const element = document.createElement("div");
+    const trigger = new ScrollTrigger(element, [action], {
+      scrollable: element,
+      directions: "up",
+    });
+
+    await window.waitForAF();
+
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+
+    await trigger.destroy();
+
+    element.scrollTo(0, 100); // down
+    await window.waitFor(100); // debounce window + a bit
+
+    // no new calls
+    expect(action.do).toHaveBeenCalledTimes(0);
+    expect(action.undo).toHaveBeenCalledTimes(0);
+    expect(action.toggle).toHaveBeenCalledTimes(0);
+  });
 });
 
 describe("auto-widgets", () => {
@@ -242,7 +272,7 @@ describe("auto-widgets", () => {
     const element = document.createElement("div");
     element.dataset.lisnOnScroll =
       `up @${actionName} ` +
-      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once`;
+      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once=false`;
     document.body.append(element);
 
     await window.waitForMO();
@@ -256,7 +286,7 @@ describe("auto-widgets", () => {
       delay: 10,
       doDelay: 15,
       undoDelay: 20,
-      once: true,
+      once: false,
     });
   });
 
@@ -264,7 +294,7 @@ describe("auto-widgets", () => {
     const element = document.createElement("div");
     element.dataset.lisnOnScroll =
       `up @${actionName} ` +
-      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once +threshold=50 +scrollable=#${scrollable.id}`;
+      `+id=foo +delay=10 +do-delay=15 +undo-delay=20 +once=false +threshold=50 +scrollable=#${scrollable.id}`;
     document.body.append(element);
 
     await window.waitForMO();
@@ -280,7 +310,7 @@ describe("auto-widgets", () => {
       delay: 10,
       doDelay: 15,
       undoDelay: 20,
-      once: true,
+      once: false,
     });
   });
 });

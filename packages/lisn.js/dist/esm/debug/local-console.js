@@ -5,7 +5,6 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * @module Debugging
  */
 
-import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { joinAsString } from "../utils/text.js";
 /**
@@ -33,9 +32,9 @@ export class LocalConsole {
 
 // ------------------------------
 
-const isiOS = MH.includes(MC.USER_AGENT, "iPhone OS") || false;
+const isiOS = MH.includes(MH.userAgent, "iPhone OS");
 const iOSlog = (...args) => MH.consoleInfo(joinAsString(" ", ...args));
-const isJest = MH.includes(MC.USER_AGENT, " jsdom/") || false;
+const isJest = MH.includes(MH.userAgent, " jsdom/");
 const jestLog = {
   debug: (...args) => MH.consoleDebug(joinAsString(" ", ...args)),
   log: (...args) => MH.consoleLog(joinAsString(" ", ...args)),

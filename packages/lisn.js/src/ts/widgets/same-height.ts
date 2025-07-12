@@ -338,7 +338,7 @@ import {
   getData,
   setData,
   delData,
-  setNumericStyleProps,
+  setNumericStyleJsVars,
   getComputedStyleProp,
 } from "@lisn/utils/css-alter";
 import { getVisibleContentChildren } from "@lisn/utils/dom-query";
@@ -973,7 +973,11 @@ const init = (
           properties,
           width,
         );
-        setNumericStyleProps(element, { sameHeightW: width }, { _units: "px" });
+        setNumericStyleJsVars(
+          element,
+          { sameHeightW: width },
+          { _units: "px" },
+        );
       }
     }
   };
@@ -987,7 +991,7 @@ const init = (
     for (const element of allItems.keys()) {
       if (MH.parentOf(element) === containerElement) {
         // delete the property and attribute
-        await setNumericStyleProps(element, { sameHeightW: NaN });
+        await setNumericStyleJsVars(element, { sameHeightW: NaN });
         await removeClasses(element, PREFIX_ITEM);
       }
     }

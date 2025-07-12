@@ -4,13 +4,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Logger = void 0;
-var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _settings = require("../globals/settings.cjs");
 var _text = require("../utils/text.cjs");
 var _console = require("./console.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -41,7 +39,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * @category Logging
  */
 class Logger {
-  constructor(config = {}) {
+  constructor(config) {
+    var _myConfig$name, _myConfig$verbosityLe;
     _defineProperty(this, "debug", void 0);
     _defineProperty(this, "log", void 0);
     _defineProperty(this, "info", void 0);
@@ -60,6 +59,7 @@ class Logger {
     _defineProperty(this, "getName", void 0);
     _defineProperty(this, "getVerbosityLevel", void 0);
     _defineProperty(this, "setVerbosityLevel", void 0);
+    config !== null && config !== void 0 ? config : config = {};
     const myConfig = MH.merge({
       // set defaults
       verbosityLevel: _settings.settings.verbosityLevel,
@@ -69,9 +69,10 @@ class Logger {
     }, config);
     let remoteLoggerURL = "";
     if (!getBooleanURLParam("disableRemoteLog") && (myConfig.remoteLoggerOnMobileOnly === false || isMobile())) {
-      remoteLoggerURL = myConfig.remoteLoggerURL || "";
+      var _myConfig$remoteLogge;
+      remoteLoggerURL = (_myConfig$remoteLogge = myConfig.remoteLoggerURL) !== null && _myConfig$remoteLogge !== void 0 ? _myConfig$remoteLogge : "";
     }
-    const name = myConfig.name || "";
+    const name = (_myConfig$name = myConfig.name) !== null && _myConfig$name !== void 0 ? _myConfig$name : "";
     const myConsole = new _console.Console(remoteLoggerURL, myConfig.remoteLoggerConnectTimeout);
     // use setters bellow to validate value
     let verbosityLevel = 0;
@@ -83,7 +84,7 @@ class Logger {
     this.setVerbosityLevel = l => {
       verbosityLevel = l;
     };
-    this.setVerbosityLevel(myConfig.verbosityLevel || 0);
+    this.setVerbosityLevel((_myConfig$verbosityLe = myConfig.verbosityLevel) !== null && _myConfig$verbosityLe !== void 0 ? _myConfig$verbosityLe : 0);
     this.debug1 = (...args) => logDebugN(this, 1, debugPrefix, ...args);
     this.debug2 = (...args) => logDebugN(this, 2, debugPrefix, ...args);
     this.debug3 = (...args) => logDebugN(this, 3, debugPrefix, ...args);
@@ -124,7 +125,7 @@ const logDebugN = (logger, level, ...args) => {
 };
 const isMobile = () => {
   const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-  return regex.test(MC.USER_AGENT);
+  return regex.test(MH.userAgent);
 };
 const getBooleanURLParam = name => {
   const value = getURLParameter(name);

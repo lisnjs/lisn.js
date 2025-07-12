@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.link.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/lisn/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      body {
+        min-height: 600vh;
+        position: relative;
+      }
+
+      .sticky {
+        position: sticky;
+        background: white;
+        z-index: 10;
+        top: 0;
+        left: 0;
+      }
+
+      #scrollable {
+        height: 300px;
+        overflow: auto;
+        background: lightblue;
+      }
+
+      #scrollable div {
+        height: 3000px;
+      }
+
+      .dummy {
+        margin: 200px 0;
+      }
+
+      .flexbox {
+        display: flex;
+        flex-direction: column-reverse;
+        justify-content: stretch;
+        align-items: strech;
+      }
+
+      .flexbox > * {
+        flex-grow: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sticky">
+      <button onclick="disable()">Disable</button>
+      <button onclick="enable()">Enable</button>
+    </div>
+
+    <button id="btnA" data-lisn-scroll-to-top="scrollable=#scrollable"></button>
+
+    <button
+      id="btnB"
+      data-lisn-scroll-to-top="scrollable=#scrollable | position=left | offset=top:300vh"
+    ></button>
+
+    <div class="flexbox">
+      <div class="dummy">Some other content</div>
+
+      <div id="scrollable">
+        <div></div>
+      </div>
+    </div>
+
+    <script charset="utf-8">
+      function disable() {
+        LISN.widgets.ScrollToTop.get(document.getElementById("btnA")).disable();
+        LISN.widgets.ScrollToTop.get(document.getElementById("btnB")).disable();
+      }
+
+      function enable() {
+        LISN.widgets.ScrollToTop.get(document.getElementById("btnA")).enable();
+        LISN.widgets.ScrollToTop.get(document.getElementById("btnB")).enable();
+      }
+    </script>
+  </body>
+</html>

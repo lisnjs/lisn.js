@@ -13,7 +13,7 @@ import {
   unsetBooleanData,
   delData,
   copyStyle,
-  setNumericStyleProps,
+  setNumericStyleJsVars,
 } from "@lisn/utils/css-alter";
 import { moveElement, swapElements, cloneElement } from "@lisn/utils/dom-alter";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
@@ -95,9 +95,9 @@ export class Sortable extends Widget {
   /**
    * Disables the given item number. Note that item numbers start at 1.
    *
-   * @param {} currentOrder If false (default), the item numbers refer to the
-   *                        original order. If true, they refer to the current
-   *                        document order.
+   * @param currentOrder If false (default), the item numbers refer to the
+   *                     original order. If true, they refer to the current
+   *                     document order.
    */
   readonly disableItem: (
     itemNum: number,
@@ -107,9 +107,9 @@ export class Sortable extends Widget {
   /**
    * Re-enables the given item number. Note that item numbers start at 1.
    *
-   * @param {} currentOrder If false (default), the item numbers refer to the
-   *                        original order. If true, they refer to the current
-   *                        document order.
+   * @param currentOrder If false (default), the item numbers refer to the
+   *                     original order. If true, they refer to the current
+   *                     document order.
    */
   readonly enableItem: (
     itemNum: number,
@@ -120,9 +120,9 @@ export class Sortable extends Widget {
    * Re-enables the given item number if it is disabled, otherwise disables it.
    * Note that item numbers start at 1.
    *
-   * @param {} currentOrder If false (default), the item numbers refer to the
-   *                        original order. If true, they refer to the current
-   *                        document order.
+   * @param currentOrder If false (default), the item numbers refer to the
+   *                     original order. If true, they refer to the current
+   *                     document order.
    */
   readonly toggleItem: (
     itemNum: number,
@@ -133,9 +133,9 @@ export class Sortable extends Widget {
    * Returns true if the given item number is disabled. Note that item numbers
    * start at 1.
    *
-   * @param {} currentOrder If false (default), the item numbers refer to the
-   *                        original order. If true, they refer to the current
-   *                        document order.
+   * @param currentOrder If false (default), the item numbers refer to the
+   *                     original order. If true, they refer to the current
+   *                     document order.
    */
   readonly isItemDisabled: (itemNum: number, currentOrder?: boolean) => boolean;
 
@@ -152,9 +152,9 @@ export class Sortable extends Widget {
   /**
    * Returns the item elements.
    *
-   * @param {} currentOrder If false (default), returns the items in the
-   *                        original order. If true, they are returned in the
-   *                        current document order.
+   * @param currentOrder If false (default), returns the items in the
+   *                     original order. If true, they are returned in the
+   *                     current document order.
    */
   readonly getItems: (currentOrder?: boolean) => Element[];
 
@@ -279,8 +279,6 @@ const PREFIX_FLOATING_CLONE = `${PREFIXED_NAME}__ghost`;
 
 // Only one Sortable widget per element is allowed, but Widget requires a
 // non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
 
 const configValidator: WidgetConfigValidatorObject<SortableConfig> = {
@@ -389,7 +387,7 @@ const init = (
         }
 
         if (floatingClone) {
-          setNumericStyleProps(
+          setNumericStyleJsVars(
             floatingClone,
             {
               clientX: clientX - grabOffset[0],

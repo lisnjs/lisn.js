@@ -15,8 +15,7 @@ var _math = require("../utils/math.cjs");
 var _validation = require("../utils/validation.cjs");
 var _callback = require("../modules/callback.cjs");
 var _widget = require("./widget.cjs");
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -105,35 +104,35 @@ class Sortable extends _widget.Widget {
     /**
      * Disables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "disableItem", void 0);
     /**
      * Re-enables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "enableItem", void 0);
     /**
      * Re-enables the given item number if it is disabled, otherwise disables it.
      * Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "toggleItem", void 0);
     /**
      * Returns true if the given item number is disabled. Note that item numbers
      * start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "isItemDisabled", void 0);
     /**
@@ -148,9 +147,9 @@ class Sortable extends _widget.Widget {
     /**
      * Returns the item elements.
      *
-     * @param {} currentOrder If false (default), returns the items in the
-     *                        original order. If true, they are returned in the
-     *                        current document order.
+     * @param currentOrder If false (default), returns the items in the
+     *                     original order. If true, they are returned in the
+     *                     current document order.
      */
     _defineProperty(this, "getItems", void 0);
     const items = (config === null || config === void 0 ? void 0 : config.items) || [];
@@ -201,8 +200,6 @@ const PREFIX_FLOATING_CLONE = `${PREFIXED_NAME}__ghost`;
 
 // Only one Sortable widget per element is allowed, but Widget requires a
 // non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
 const configValidator = {
   mode: (key, value) => (0, _validation.validateString)(key, value, v => v === "swap" || v === "move")
@@ -274,7 +271,7 @@ const init = (widget, element, items, methods) => {
           });
         }
         if (floatingClone) {
-          (0, _cssAlter.setNumericStyleProps)(floatingClone, {
+          (0, _cssAlter.setNumericStyleJsVars)(floatingClone, {
             clientX: clientX - grabOffset[0],
             clientY: clientY - grabOffset[1]
           }, {

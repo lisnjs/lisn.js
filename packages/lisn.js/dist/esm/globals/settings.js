@@ -42,7 +42,7 @@ export const settings = MH.preventExtensions({
    * etc. If you are using the HTML API, then you must set this before the
    * document `readyState` becomes interactive.
    *
-   * @defaultValue null
+   * @defaultValue null // document.scrollingElement
    * @category Generic
    */
   mainScrollableElementSelector: null,
@@ -100,14 +100,20 @@ export const settings = MH.preventExtensions({
    *
    * ----------
    *
-   * If you can, it's recommended to leave this setting ON. You can still
+   * **IMPORTANT:** Certain widgets always require wrapping of elements or their
+   * children. This setting only applies in cases where wrapping is optional.
+   * If you can, it's recommended to leave this setting ON. You can still try to
    * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
-   * attribute on it.
+   * attribute on it. Alternatively, if the elements that need wrapping are
+   * already wrapped in an element with a class `lisn-wrapper`, this will be
+   * used as the wrapper.
    *
    * @defaultValue true
    * @category Generic
    */
   contentWrappingAllowed: true,
+  // [TODO v2] rename this setting
+
   /**
    * The timeout in milliseconds for waiting for the `document.readyState` to
    * become `complete`. The timer begins _once the `readyState` becomes

@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { setNumericStyleProps } from "../utils/css-alter.js";
+import { setNumericStyleJsVars } from "../utils/css-alter.js";
 import { waitForInteractive } from "../utils/dom-events.js";
 import { waitForMeasureTime, waitForSubsequentMeasureTime } from "../utils/dom-optimize.js";
 import { logError } from "../utils/log.js";
@@ -40,7 +40,7 @@ export class ViewWatcher {
    * Creates a new instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -51,7 +51,7 @@ export class ViewWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -154,9 +154,9 @@ export class ViewWatcher {
      * Get the current view relative to the target. By default, it will
      * {@link waitForMeasureTime} and so will be delayed by one frame.
      *
-     * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-     *                    this only when doing realtime scroll-based animations
-     *                    as it may cause a forced layout.
+     * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+     *                 this only when doing realtime scroll-based animations
+     *                 as it may cause a forced layout.
      */
     _defineProperty(this, "fetchCurrentView", void 0);
     if (key !== CONSTRUCTOR_KEY) {
@@ -492,11 +492,11 @@ export class ViewWatcher {
 const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = newXMap(() => MH.newMap());
 const getConfig = config => {
-  var _config$rootMargin;
+  var _config$root, _config$rootMargin, _config$threshold;
   return {
-    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
     _rootMargin: (_config$rootMargin = config === null || config === void 0 ? void 0 : config.rootMargin) !== null && _config$rootMargin !== void 0 ? _config$rootMargin : "0px 0px 0px 0px",
-    _threshold: (config === null || config === void 0 ? void 0 : config.threshold) || 0
+    _threshold: (_config$threshold = config === null || config === void 0 ? void 0 : config.threshold) !== null && _config$threshold !== void 0 ? _config$threshold : 0
   };
 };
 const TRACK_REGULAR = 1; // only entering/leaving root
@@ -709,7 +709,8 @@ const fetchViews = async (intersection, realtime, useScrollingAncestor) => {
   return [MC.S_AT];
 };
 const setViewCssProps = (element, viewData) => {
-  const relative = (viewData === null || viewData === void 0 ? void 0 : viewData.relative) || {};
+  var _viewData$relative;
+  const relative = (_viewData$relative = viewData === null || viewData === void 0 ? void 0 : viewData.relative) !== null && _viewData$relative !== void 0 ? _viewData$relative : {};
   const props = {
     top: relative.top,
     bottom: relative.bottom,
@@ -720,7 +721,7 @@ const setViewCssProps = (element, viewData) => {
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: "r-",
     _numDecimal: 4
   }); // don't await here

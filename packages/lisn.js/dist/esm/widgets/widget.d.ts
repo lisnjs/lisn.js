@@ -138,23 +138,23 @@ export type WidgetConfigValidator<Config extends Record<string, unknown>> = Widg
  * **IMPORTANT:** If a widget by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name       The name of the widget. Should be in kebab-case.
- * @param {} newWidget  Called for every element matching the widget selector.
- * @param {} configValidator
- *                      A validator object, or a function that returns such an
- *                      object, for all options supported by the widget. If
- *                      given, then the `newWidget` function will also be
- *                      passed a configuration object constructed from the
- *                      element's data attribute.
- * @param {} [options.selector]
- *                      The selector to match elements for. If not given, then
- *                      uses a default value of `[data-lisn-<name>], .lisn-<name>`
- * @param {} [options.supportsMultiple]
- *                      If true, and if `configValidator` is given, then the
- *                      value of the element's widget specific data attribute
- *                      will be split on ";" and each one parsed individually
- *                      as a configuration. Then the `newWidget` function will
- *                      be called once for each configuration.
+ * @param name      The name of the widget. Should be in kebab-case.
+ * @param newWidget Called for every element matching the widget selector.
+ * @param configValidator
+ *                  A validator object, or a function that returns such an
+ *                  object, for all options supported by the widget. If
+ *                  given, then the `newWidget` function will also be
+ *                  passed a configuration object constructed from the
+ *                  element's data attribute.
+ * @param [options.selector]
+ *                  The selector to match elements for. If not given, then
+ *                  uses a default value of `[data-lisn-<name>], .lisn-<name>`
+ * @param [options.supportsMultiple]
+ *                  If true, and if `configValidator` is given, then the
+ *                  value of the element's widget specific data attribute
+ *                  will be split on ";" and each one parsed individually
+ *                  as a configuration. Then the `newWidget` function will
+ *                  be called once for each configuration.
  */
 export declare const registerWidget: <Config extends Record<string, unknown>>(name: string, newWidget: WidgetCreateFn<Config>, configValidator?: null | WidgetConfigValidator<Config>, options?: {
     selector?: string;

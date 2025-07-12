@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 exports.ScrollWatcher = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-var _settings = require("../globals/settings.cjs");
 var _cssAlter = require("../utils/css-alter.cjs");
 var _directions = require("../utils/directions.cjs");
 var _domAlter = require("../utils/dom-alter.cjs");
@@ -23,8 +22,7 @@ var _domWatcher = require("./dom-watcher.cjs");
 var _sizeWatcher = require("./size-watcher.cjs");
 var _debug = _interopRequireDefault(require("../debug/debug.cjs"));
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } /**
@@ -42,7 +40,7 @@ class ScrollWatcher {
   /**
    * Returns the element that holds the main page content. By default it's
    * `document.body` but is overridden by
-   * {@link settings.mainScrollableElementSelector}.
+   * {@link Settings.settings.mainScrollableElementSelector}.
    *
    * It will wait for the element to be available if not already.
    */
@@ -54,7 +52,7 @@ class ScrollWatcher {
    * Returns the scrollable element that holds the wrapper around the main page
    * content. By default it's `document.scrollable` (unless `document.body` is
    * actually scrollable, in which case it will be used) but it will be
-   * different if {@link settings.mainScrollableElementSelector} is set.
+   * different if {@link Settings.settings.mainScrollableElementSelector} is set.
    *
    * It will wait for the element to be available if not already.
    */
@@ -66,7 +64,7 @@ class ScrollWatcher {
    * Creates a new instance of ScrollWatcher with the given
    * {@link ScrollWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ScrollWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -77,7 +75,7 @@ class ScrollWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig(config);
     const configStrKey = (0, _text.objToStrKey)(myConfig);
     let instance = instances.get(configStrKey);
@@ -139,7 +137,7 @@ class ScrollWatcher {
      * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
      *   or is `null`, `window` or `document`, the following CSS variables are
      *   set on the root (`html`) element and represent the scroll of the
-     *   {@link fetchMainScrollableElement}:
+     *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
      *   - `--lisn-js--page-scroll-top`
      *   - `--lisn-js--page-scroll-top-fraction`
      *   - `--lisn-js--page-scroll-left`
@@ -171,9 +169,9 @@ class ScrollWatcher {
      * Get the scroll offset of the given scrollable. By default, it will
      * {@link waitForMeasureTime} and so will be delayed by one frame.
      *
-     * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-     *                    this only when doing realtime scroll-based animations
-     *                    as it may cause a forced layout.
+     * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+     *                 this only when doing realtime scroll-based animations
+     *                 as it may cause a forced layout.
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -197,21 +195,22 @@ class ScrollWatcher {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the "to" coordinates or options are invalid.
      *
-     * @param {} to  If this is an element, then its top-left position is used as
-     *               the target coordinates. If it is a string, then it is treated
-     *               as a selector for an element using `querySelector`.
-     * @param {} [options.scrollable]
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     * @param to If this is an element, then its top-left position is used as
+     *           the target coordinates. If it is a string, then it is treated
+     *           as a selector for an element using `querySelector`.
+     * @param [options.scrollable]
+     *           If not given, it defaults to
+     *           {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
-     * @return {} `null` if there's an ongoing scroll that is not cancellable,
+     * @returns `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
      */
     _defineProperty(this, "scrollTo", void 0);
     /**
      * Returns the current {@link ScrollAction} if any.
      *
-     * @param {} scrollable
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     * @param scrollable If not given, it defaults to
+     *                   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -224,10 +223,10 @@ class ScrollWatcher {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
      *
-     * @param {} [options.immediate]  If true, then it will not use
-     *                                {@link waitForMeasureTime} or
-     *                                {@link Utils.waitForMutateTime | waitForMutateTime}.
-     *                                Warning: this will likely result in forced layout.
+     * @param [options.immediate] If true, then it will not use
+     *                            {@link waitForMeasureTime} or
+     *                            {@link Utils.waitForMutateTime | waitForMutateTime}.
+     *                            Warning: this will likely result in forced layout.
      */
     _defineProperty(this, "stopUserScrolling", void 0);
     if (key !== CONSTRUCTOR_KEY) {
@@ -279,7 +278,7 @@ class ScrollWatcher {
     // ----------
 
     const setupOnScroll = async (handler, userOptions, trackType) => {
-      const options = await fetchOnScrollOptions(config, userOptions || {});
+      const options = await fetchOnScrollOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const element = options._element;
 
       // Don't await for the scroll data before creating the callback so that
@@ -353,6 +352,7 @@ class ScrollWatcher {
         MH.deleteKey(allScrollData, element);
         (0, _event.removeEventListenerFrom)(eventTarget, MC.S_SCROLL, scrollHandler);
         MH.deleteKey(activeListeners, eventTarget);
+        // TODO: Should we unwrap children if previously WE wrapped them?
       }
     };
 
@@ -410,12 +410,11 @@ class ScrollWatcher {
       // Observe the scrolling element
       setupOnResize(element);
 
-      // And also its children (if possible, single wrapper around children
-      const allowedToWrap = _settings.settings.contentWrappingAllowed === true && element !== docScrollingElement && (0, _cssAlter.getData)(element, MC.PREFIX_NO_WRAP) === null;
-      let wrapper;
-      if (allowedToWrap) {
-        // Wrap the content and observe the wrapper
-        wrapper = await (0, _domAlter.wrapScrollingContent)(element);
+      // And also its children (if possible, a single wrapper around them
+      const wrapper = await (0, _domAlter.tryWrapContent)(element, {
+        _classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER]
+      });
+      if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
 
@@ -438,7 +437,7 @@ class ScrollWatcher {
         // If we've just added the wrapper, it will be in DOMWatcher's queue,
         // so check.
         if (child !== wrapper) {
-          if (allowedToWrap) {
+          if (wrapper) {
             // Move this child into the wrapper. If this results in change of size
             // for wrapper, SizeWatcher will call us.
             (0, _domAlter.moveElement)(child, {
@@ -462,7 +461,7 @@ class ScrollWatcher {
     // ----------
 
     const scrollHandler = async event => {
-      var _activeListeners$get;
+      var _activeListeners$get$, _activeListeners$get;
       // We cannot use event.currentTarget because scrollHandler is called inside
       // a setTimeout so by that time, currentTarget is null or something else.
       //
@@ -482,7 +481,7 @@ class ScrollWatcher {
         return;
       }
       const element = await (0, _scroll.fetchScrollableElement)(scrollable);
-      const realtime = (((_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) || 0) > 0;
+      const realtime = ((_activeListeners$get$ = (_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) !== null && _activeListeners$get$ !== void 0 ? _activeListeners$get$ : 0) > 0;
       const latestData = await fetchCurrentScroll(element, realtime, true);
       allScrollData.set(element, latestData);
       debug: logger === null || logger === void 0 || logger.debug9("Scroll event", element, latestData);
@@ -515,7 +514,7 @@ class ScrollWatcher {
 
     // ----------
 
-    this.scroll = (direction, options = {}) => {
+    this.scroll = (direction, options) => {
       var _options$amount;
       if (!(0, _scroll.isValidScrollDirection)(direction)) {
         throw MH.usageError(`Unknown scroll direction: '${direction}'`);
@@ -523,8 +522,8 @@ class ScrollWatcher {
       const isVertical = direction === MC.S_UP || direction === MC.S_DOWN;
       const sign = direction === MC.S_UP || direction === MC.S_LEFT ? -1 : 1;
       let targetCoordinate;
-      const amount = (_options$amount = options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
-      const asFractionOf = options.asFractionOf;
+      const amount = (_options$amount = options === null || options === void 0 ? void 0 : options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
+      const asFractionOf = options === null || options === void 0 ? void 0 : options.asFractionOf;
       if (asFractionOf === "visible") {
         targetCoordinate = isVertical ? el => el[MC.S_SCROLL_TOP] + sign * amount * (0, _scroll.getClientHeightNow)(el) / 100 : el => el[MC.S_SCROLL_LEFT] + sign * amount * (0, _scroll.getClientWidthNow)(el) / 100;
 
@@ -550,14 +549,14 @@ class ScrollWatcher {
 
     // ----------
 
-    this.scrollTo = async (to, options = {}) => (0, _scroll.scrollTo)(to, MH.merge({
-      duration: config._scrollDuration
-    },
-    // default
-    options, {
-      scrollable: await (0, _scroll.fetchScrollableElement)(options.scrollable)
-    } // override
-    ));
+    this.scrollTo = async (to, options) => {
+      var _options$duration;
+      return (0, _scroll.scrollTo)(to, MH.merge(options, {
+        duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : config._scrollDuration,
+        // default
+        scrollable: await (0, _scroll.fetchScrollableElement)(options === null || options === void 0 ? void 0 : options.scrollable) // override
+      }));
+    };
 
     // ----------
 
@@ -565,13 +564,13 @@ class ScrollWatcher {
 
     // ----------
 
-    this.stopUserScrolling = async (options = {}) => {
-      const element = await (0, _scroll.fetchScrollableElement)(options.scrollable);
+    this.stopUserScrolling = async options => {
+      const element = await (0, _scroll.fetchScrollableElement)(options === null || options === void 0 ? void 0 : options.scrollable);
       const stopScroll = () => MH.elScrollTo(element, {
         top: element[MC.S_SCROLL_TOP],
         left: element[MC.S_SCROLL_LEFT]
       });
-      if (options.immediate) {
+      if (options !== null && options !== void 0 && options.immediate) {
         stopScroll();
       } else {
         (0, _domOptimize.waitForMeasureTime)().then(stopScroll);
@@ -631,7 +630,9 @@ class ScrollWatcher {
 exports.ScrollWatcher = ScrollWatcher;
 const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = MH.newMap();
+const PREFIX_WRAPPER = MH.prefixName("scroll-watcher-wrapper");
 const getConfig = config => {
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _debounceWindow: (0, _math.toNonNegNum)(config[MC.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -685,6 +686,7 @@ const hasExceededThreshold = (options, latestData, lastThresholdData) => {
   return checkTop && topDiff >= threshold || checkLeft && leftDiff >= threshold;
 };
 const fetchScrollData = async (element, previousEventData, realtime) => {
+  var _previousEventData$sc, _previousEventData$sc2;
   if (!realtime) {
     await (0, _domOptimize.waitForMeasureTime)();
   }
@@ -696,19 +698,19 @@ const fetchScrollData = async (element, previousEventData, realtime) => {
   const clientHeight = (0, _scroll.getClientHeightNow)(element);
   const scrollTopFraction = MH.round(scrollTop) / (scrollHeight - clientHeight || MC.INFINITY);
   const scrollLeftFraction = MH.round(scrollLeft) / (scrollWidth - clientWidth || MC.INFINITY);
-  const prevScrollTop = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) || 0;
-  const prevScrollLeft = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) || 0;
+  const prevScrollTop = (_previousEventData$sc = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) !== null && _previousEventData$sc !== void 0 ? _previousEventData$sc : 0;
+  const prevScrollLeft = (_previousEventData$sc2 = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) !== null && _previousEventData$sc2 !== void 0 ? _previousEventData$sc2 : 0;
   const direction = (0, _directions.getMaxDeltaDirection)(scrollLeft - prevScrollLeft, scrollTop - prevScrollTop);
   return {
     direction,
+    [MC.S_CLIENT_WIDTH]: clientWidth,
+    [MC.S_CLIENT_HEIGHT]: clientHeight,
+    [MC.S_SCROLL_WIDTH]: scrollWidth,
+    [MC.S_SCROLL_HEIGHT]: scrollHeight,
     [MC.S_SCROLL_TOP]: scrollTop,
     [MC.S_SCROLL_TOP_FRACTION]: scrollTopFraction,
     [MC.S_SCROLL_LEFT]: scrollLeft,
-    [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-    [MC.S_SCROLL_WIDTH]: scrollWidth,
-    [MC.S_SCROLL_HEIGHT]: scrollHeight,
-    [MC.S_CLIENT_WIDTH]: clientWidth,
-    [MC.S_CLIENT_HEIGHT]: clientHeight
+    [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction
   };
 };
 const setScrollCssProps = (element, scrollData) => {
@@ -718,7 +720,7 @@ const setScrollCssProps = (element, scrollData) => {
     element = MH.getDocElement();
     prefix = "page-";
   }
-  scrollData = scrollData || {};
+  scrollData !== null && scrollData !== void 0 ? scrollData : scrollData = {};
   const props = {
     [MC.S_SCROLL_TOP]: scrollData[MC.S_SCROLL_TOP],
     [MC.S_SCROLL_TOP_FRACTION]: scrollData[MC.S_SCROLL_TOP_FRACTION],
@@ -727,7 +729,7 @@ const setScrollCssProps = (element, scrollData) => {
     [MC.S_SCROLL_WIDTH]: scrollData[MC.S_SCROLL_WIDTH],
     [MC.S_SCROLL_HEIGHT]: scrollData[MC.S_SCROLL_HEIGHT]
   };
-  (0, _cssAlter.setNumericStyleProps)(element, props, {
+  (0, _cssAlter.setNumericStyleJsVars)(element, props, {
     _prefix: prefix
   });
 };

@@ -22,7 +22,6 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * debug messages that identifies the instance.
  */
 
-import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
 import { randId } from "../utils/text.js";
@@ -36,7 +35,8 @@ import { Console } from "./console.js";
  * @category Logging
  */
 export class Logger {
-  constructor(config = {}) {
+  constructor(config) {
+    var _myConfig$name, _myConfig$verbosityLe;
     _defineProperty(this, "debug", void 0);
     _defineProperty(this, "log", void 0);
     _defineProperty(this, "info", void 0);
@@ -55,6 +55,7 @@ export class Logger {
     _defineProperty(this, "getName", void 0);
     _defineProperty(this, "getVerbosityLevel", void 0);
     _defineProperty(this, "setVerbosityLevel", void 0);
+    config !== null && config !== void 0 ? config : config = {};
     const myConfig = MH.merge({
       // set defaults
       verbosityLevel: settings.verbosityLevel,
@@ -64,9 +65,10 @@ export class Logger {
     }, config);
     let remoteLoggerURL = "";
     if (!getBooleanURLParam("disableRemoteLog") && (myConfig.remoteLoggerOnMobileOnly === false || isMobile())) {
-      remoteLoggerURL = myConfig.remoteLoggerURL || "";
+      var _myConfig$remoteLogge;
+      remoteLoggerURL = (_myConfig$remoteLogge = myConfig.remoteLoggerURL) !== null && _myConfig$remoteLogge !== void 0 ? _myConfig$remoteLogge : "";
     }
-    const name = myConfig.name || "";
+    const name = (_myConfig$name = myConfig.name) !== null && _myConfig$name !== void 0 ? _myConfig$name : "";
     const myConsole = new Console(remoteLoggerURL, myConfig.remoteLoggerConnectTimeout);
     // use setters bellow to validate value
     let verbosityLevel = 0;
@@ -78,7 +80,7 @@ export class Logger {
     this.setVerbosityLevel = l => {
       verbosityLevel = l;
     };
-    this.setVerbosityLevel(myConfig.verbosityLevel || 0);
+    this.setVerbosityLevel((_myConfig$verbosityLe = myConfig.verbosityLevel) !== null && _myConfig$verbosityLe !== void 0 ? _myConfig$verbosityLe : 0);
     this.debug1 = (...args) => logDebugN(this, 1, debugPrefix, ...args);
     this.debug2 = (...args) => logDebugN(this, 2, debugPrefix, ...args);
     this.debug3 = (...args) => logDebugN(this, 3, debugPrefix, ...args);
@@ -118,7 +120,7 @@ const logDebugN = (logger, level, ...args) => {
 };
 const isMobile = () => {
   const regex = /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-  return regex.test(MC.USER_AGENT);
+  return regex.test(MH.userAgent);
 };
 const getBooleanURLParam = name => {
   const value = getURLParameter(name);

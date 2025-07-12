@@ -333,7 +333,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
-import { addClasses, removeClasses, getData, setData, delData, setNumericStyleProps, getComputedStyleProp } from "../utils/css-alter.js";
+import { addClasses, removeClasses, getData, setData, delData, setNumericStyleJsVars, getComputedStyleProp } from "../utils/css-alter.js";
 import { getVisibleContentChildren } from "../utils/dom-query.js";
 import { logError } from "../utils/log.js";
 import { isValidNum, toNumWithBounds, quadraticRoots } from "../utils/math.js";
@@ -747,7 +747,7 @@ const init = (widget, containerElement, items, config) => {
       if (MH.parentOf(element) === containerElement) {
         const width = getWidthAtH(element, properties, height);
         debug: logger === null || logger === void 0 || logger.debug9("Setting width property", element, properties, width);
-        setNumericStyleProps(element, {
+        setNumericStyleJsVars(element, {
           sameHeightW: width
         }, {
           _units: "px"
@@ -764,7 +764,7 @@ const init = (widget, containerElement, items, config) => {
     for (const element of allItems.keys()) {
       if (MH.parentOf(element) === containerElement) {
         // delete the property and attribute
-        await setNumericStyleProps(element, {
+        await setNumericStyleJsVars(element, {
           sameHeightW: NaN
         });
         await removeClasses(element, PREFIX_ITEM);

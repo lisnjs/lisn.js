@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Type fixes for React 19
 
-- widgetRef now expects `WidgetComponentRef<W> | null` to work with React 19 types
+- CHANGED: widgetRef now expects `WidgetComponentRef<W> | null` to work with
+  React 19 types
 
 ---
 
@@ -29,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Stating support for React 18 in deps
 
-- Dropped minimum required React version from 19 to 18.3.1
+- CHANGED: Dropped minimum required React version from 19 to 18.3.1
 
 ---
 

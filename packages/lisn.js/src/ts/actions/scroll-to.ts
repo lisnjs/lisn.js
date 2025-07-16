@@ -205,7 +205,7 @@ export type ScrollToConfig = {
   offset?: CoordinateOffset;
 
   /**
-   * See {@link Utils.ScrollToOptions.scrollable}.
+   * The element that should be scrolled.
    *
    * @defaultValue {@link ScrollWatcher} default
    */

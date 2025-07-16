@@ -11,20 +11,25 @@ import {
   showElement,
   hideElement,
   displayElement,
+  displayElementNow,
   undisplayElement,
   disableInitialTransition,
-  addClasses,
-  removeClasses,
-  setData,
-  setBooleanData,
-  delData,
+  addClassesNow,
+  removeClassesNow,
+  setDataNow,
+  setBooleanDataNow,
+  delDataNow,
+  getParentFlexDirection,
 } from "@lisn/utils/css-alter";
 import {
-  replaceElement,
+  replaceElementNow,
+  wrapElementNow,
   moveElement,
+  moveElementNow,
   insertArrow,
 } from "@lisn/utils/dom-alter";
 import { waitForElement } from "@lisn/utils/dom-events";
+import { waitForMutateTime } from "@lisn/utils/dom-optimize";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { validateString } from "@lisn/utils/validation";
@@ -238,7 +243,8 @@ export class ScrollToTop extends Widget {
       scrollWatcher.scrollTo({ top: 0, left: 0 }, { scrollable });
 
     let arrow: Element;
-    const root = hasCustomScrollable ? MH.createElement("div") : element;
+    let placeholder: Element;
+    let root = element;
 
     const showIt = () => {
       showElement(root);
@@ -250,21 +256,48 @@ export class ScrollToTop extends Widget {
 
     // SETUP ------------------------------
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || MH.promiseResolve()).then(async () => {
+      const flexDirection = scrollable
+        ? await getParentFlexDirection(scrollable)
+        : null;
+
+      await waitForMutateTime();
       if (this.isDestroyed()) {
         return;
       }
 
-      if (root !== element) {
-        // wrap the button
-        replaceElement(element, root, { ignoreMove: true });
-        moveElement(element, { to: root, ignoreMove: true });
+      if (hasCustomScrollable) {
+        // Add a placeholder to restore its position on destroy.
+        placeholder = MH.createElement("div");
+        moveElementNow(placeholder, {
+          to: element,
+          position: "before",
+          ignoreMove: true,
+        });
+
+        // Then move it to immediately after the scrollable.
+        // If the parent is a horizontal flexbox and position is left, then
+        // we need to insert it before the scrollable.
+        const shouldInsertBefore =
+          flexDirection === "column-reverse" ||
+          (position === MC.S_LEFT && flexDirection === "row") ||
+          (position === MC.S_RIGHT && flexDirection === "row-reverse");
+
+        moveElementNow(element, {
+          to: scrollable,
+          position: shouldInsertBefore ? "before" : "after",
+          ignoreMove: true,
+        });
+
+        // Wrap the button.
+        root = wrapElementNow(element, { wrapper: "div", ignoreMove: true });
       }
+
       disableInitialTransition(root);
-      addClasses(root, PREFIX_ROOT);
-      addClasses(element, PREFIX_BTN);
-      setBooleanData(root, PREFIX_FIXED, !hasCustomScrollable);
-      setData(root, MC.PREFIX_PLACE, position);
+      addClassesNow(root, PREFIX_ROOT);
+      addClassesNow(element, PREFIX_BTN);
+      setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
+      setDataNow(root, MC.PREFIX_PLACE, position);
 
       arrow = insertArrow(element, MC.S_UP);
 
@@ -289,20 +322,27 @@ export class ScrollToTop extends Widget {
       });
 
       this.onDestroy(async () => {
+        await waitForMutateTime();
         removeEventListenerFrom(element, MC.S_CLICK, clickListener);
 
-        await removeClasses(root, PREFIX_ROOT);
-        await removeClasses(element, PREFIX_BTN);
-        await delData(root, PREFIX_FIXED);
-        await delData(root, MC.PREFIX_PLACE);
-        await displayElement(root); // revert undisplay by onDisable
+        removeClassesNow(root, PREFIX_ROOT);
+        removeClassesNow(element, PREFIX_BTN);
+        delDataNow(root, PREFIX_FIXED);
+        delDataNow(root, MC.PREFIX_PLACE);
+        displayElementNow(root); // revert undisplay by onDisable
 
         if (arrow) {
-          await moveElement(arrow); // remove
+          moveElementNow(arrow); // remove
         }
+
         if (root !== element) {
-          // unwrap the button
-          replaceElement(root, element, { ignoreMove: true });
+          // Unwrap the button.
+          replaceElementNow(root, element, { ignoreMove: true });
+        }
+
+        if (placeholder) {
+          // Move it back into its original position.
+          replaceElementNow(placeholder, element, { ignoreMove: true });
         }
 
         viewWatcher.offView(offset, showIt);

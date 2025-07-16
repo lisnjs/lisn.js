@@ -49,6 +49,11 @@ export type Offset = "top" | "bottom" | "left" | "right";
 export type Position = Offset;
 
 /**
+ * @category Layout
+ */
+export type FlexDirection = "row" | "column" | "row-reverse" | "column-reverse";
+
+/**
  * @category Views
  */
 export type ViewTarget = Element | ScrollOffset;

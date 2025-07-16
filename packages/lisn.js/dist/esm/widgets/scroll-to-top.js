@@ -4,9 +4,10 @@
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { showElement, hideElement, displayElement, undisplayElement, disableInitialTransition, addClasses, removeClasses, setData, setBooleanData, delData } from "../utils/css-alter.js";
-import { replaceElement, moveElement, insertArrow } from "../utils/dom-alter.js";
+import { showElement, hideElement, displayElement, displayElementNow, undisplayElement, disableInitialTransition, addClassesNow, removeClassesNow, setDataNow, setBooleanDataNow, delDataNow, getParentFlexDirection } from "../utils/css-alter.js";
+import { replaceElementNow, wrapElementNow, moveElement, moveElementNow, insertArrow } from "../utils/dom-alter.js";
 import { waitForElement } from "../utils/dom-events.js";
+import { waitForMutateTime } from "../utils/dom-optimize.js";
 import { waitForReferenceElement } from "../utils/dom-search.js";
 import { addEventListenerTo, removeEventListenerFrom } from "../utils/event.js";
 import { validateString } from "../utils/validation.js";
@@ -27,8 +28,9 @@ import { Widget, registerWidget } from "./widget.js";
  *
  * **IMPORTANT:** When configuring an existing element as the button (i.e. using
  * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
- * - if using {@link settings.mainScrollableElementSelector}, the button element
- *   will have it's CSS position set to `fixed`;
+ * - if using
+ *   {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector},
+ *   the button element will have it's CSS position set to `fixed`;
  * - otherwise, if using a custom scrollable element, the button element may be
  *   moved in the DOM tree in order to position it on top of the scrollable
  * If you don't want the button element changed in any way, then consider using
@@ -204,7 +206,8 @@ export class ScrollToTop extends Widget {
       scrollable
     });
     let arrow;
-    const root = hasCustomScrollable ? MH.createElement("div") : element;
+    let placeholder;
+    let root = element;
     const showIt = () => {
       showElement(root);
     };
@@ -214,25 +217,42 @@ export class ScrollToTop extends Widget {
 
     // SETUP ------------------------------
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || MH.promiseResolve()).then(async () => {
+      const flexDirection = scrollable ? await getParentFlexDirection(scrollable) : null;
+      await waitForMutateTime();
       if (this.isDestroyed()) {
         return;
       }
-      if (root !== element) {
-        // wrap the button
-        replaceElement(element, root, {
+      if (hasCustomScrollable) {
+        // Add a placeholder to restore its position on destroy.
+        placeholder = MH.createElement("div");
+        moveElementNow(placeholder, {
+          to: element,
+          position: "before",
           ignoreMove: true
         });
-        moveElement(element, {
-          to: root,
+
+        // Then move it to immediately after the scrollable.
+        // If the parent is a horizontal flexbox and position is left, then
+        // we need to insert it before the scrollable.
+        const shouldInsertBefore = flexDirection === "column-reverse" || position === MC.S_LEFT && flexDirection === "row" || position === MC.S_RIGHT && flexDirection === "row-reverse";
+        moveElementNow(element, {
+          to: scrollable,
+          position: shouldInsertBefore ? "before" : "after",
+          ignoreMove: true
+        });
+
+        // Wrap the button.
+        root = wrapElementNow(element, {
+          wrapper: "div",
           ignoreMove: true
         });
       }
       disableInitialTransition(root);
-      addClasses(root, PREFIX_ROOT);
-      addClasses(element, PREFIX_BTN);
-      setBooleanData(root, PREFIX_FIXED, !hasCustomScrollable);
-      setData(root, MC.PREFIX_PLACE, position);
+      addClassesNow(root, PREFIX_ROOT);
+      addClassesNow(element, PREFIX_BTN);
+      setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
+      setDataNow(root, MC.PREFIX_PLACE, position);
       arrow = insertArrow(element, MC.S_UP);
       hideIt(); // initial
 
@@ -250,19 +270,26 @@ export class ScrollToTop extends Widget {
         displayElement(root);
       });
       this.onDestroy(async () => {
+        await waitForMutateTime();
         removeEventListenerFrom(element, MC.S_CLICK, clickListener);
-        await removeClasses(root, PREFIX_ROOT);
-        await removeClasses(element, PREFIX_BTN);
-        await delData(root, PREFIX_FIXED);
-        await delData(root, MC.PREFIX_PLACE);
-        await displayElement(root); // revert undisplay by onDisable
+        removeClassesNow(root, PREFIX_ROOT);
+        removeClassesNow(element, PREFIX_BTN);
+        delDataNow(root, PREFIX_FIXED);
+        delDataNow(root, MC.PREFIX_PLACE);
+        displayElementNow(root); // revert undisplay by onDisable
 
         if (arrow) {
-          await moveElement(arrow); // remove
+          moveElementNow(arrow); // remove
         }
         if (root !== element) {
-          // unwrap the button
-          replaceElement(root, element, {
+          // Unwrap the button.
+          replaceElementNow(root, element, {
+            ignoreMove: true
+          });
+        }
+        if (placeholder) {
+          // Move it back into its original position.
+          replaceElementNow(placeholder, element, {
             ignoreMove: true
           });
         }

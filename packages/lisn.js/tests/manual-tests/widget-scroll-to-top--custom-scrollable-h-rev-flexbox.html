@@ -39,6 +39,18 @@
       .dummy {
         margin: 200px 0;
       }
+
+      .flexbox {
+        height: 300px;
+        display: flex;
+        flex-direction: row-reverse;
+        justifycontent: stretch;
+        alignitems: center;
+      }
+
+      .flexbox * {
+        flex-grow: 1;
+      }
     </style>
   </head>
   <body>
@@ -54,10 +66,12 @@
       data-lisn-scroll-to-top="scrollable=#scrollable | position=left | offset=top:300vh"
     ></button>
 
-    <div class="dummy">Some other content</div>
+    <div class="flexbox">
+      <div class="dummy">Some other content</div>
 
-    <div id="scrollable">
-      <div></div>
+      <div id="scrollable">
+        <div></div>
+      </div>
     </div>
 
     <script charset="utf-8">

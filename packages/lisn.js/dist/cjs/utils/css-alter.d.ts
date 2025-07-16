@@ -15,6 +15,7 @@
  * opposite transition is executed before the scheduled one, the original one
  * is cancelled. See {@link transitionElement} for an example.
  */
+import { FlexDirection } from "../globals/types.cjs";
 /**
  * Removes the given `fromCls` class and adds the given `toCls` class to the
  * element.
@@ -396,6 +397,29 @@ export declare const delStylePropNow: (element: Element, prop: string) => string
  * @category DOM: Altering (optimized)
  */
 export declare const delStyleProp: (element: Element, prop: string) => Promise<string>;
+/**
+ * Returns the flex direction of the given element **if it has a flex layout**.
+ *
+ * @returns {} `null` if the element does not have a flex layout.
+ */
+export declare const getFlexDirection: (element: Element) => Promise<FlexDirection | null>;
+/**
+ * Returns the flex direction of the given element's parent **if it has a flex
+ * layout**.
+ *
+ * @returns {} `null` if the element's parent does not have a flex layout.
+ */
+export declare const getParentFlexDirection: (element: Element) => Promise<FlexDirection | null>;
+/**
+ * Returns true if the given element has a flex layout. If direction is given,
+ * then it also needs to match.
+ */
+export declare const isFlex: (element: Element, direction?: FlexDirection) => Promise<boolean>;
+/**
+ * Returns true if the given element's parent has a flex layout. If direction is
+ * given, then it also needs to match.
+ */
+export declare const isFlexChild: (element: Element, direction?: FlexDirection) => Promise<boolean>;
 /**
  * In milliseconds.
  *

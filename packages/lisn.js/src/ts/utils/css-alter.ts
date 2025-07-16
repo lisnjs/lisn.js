@@ -19,7 +19,7 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { DOMElement } from "@lisn/globals/types";
+import { DOMElement, FlexDirection } from "@lisn/globals/types";
 
 import {
   waitForMeasureTime,
@@ -566,6 +566,64 @@ export const delStylePropNow = (element: Element, prop: string) =>
  */
 export const delStyleProp = (element: Element, prop: string) =>
   waitForMutateTime().then(() => delStylePropNow(element, prop));
+
+/**
+ * Returns the flex direction of the given element **if it has a flex layout**.
+ *
+ * @returns {} `null` if the element does not have a flex layout.
+ */
+export const getFlexDirection = async (
+  element: Element,
+): Promise<FlexDirection | null> => {
+  const displayStyle = await getComputedStyleProp(element, "display");
+  if (!displayStyle.includes("flex")) {
+    return null;
+  }
+
+  return (await getComputedStyleProp(
+    element,
+    "flex-direction",
+  )) as FlexDirection;
+};
+
+/**
+ * Returns the flex direction of the given element's parent **if it has a flex
+ * layout**.
+ *
+ * @returns {} `null` if the element's parent does not have a flex layout.
+ */
+export const getParentFlexDirection = async (
+  element: Element,
+): Promise<FlexDirection | null> => {
+  const parent = element.parentElement;
+  return parent ? getFlexDirection(parent) : null;
+};
+
+/**
+ * Returns true if the given element has a flex layout. If direction is given,
+ * then it also needs to match.
+ */
+export const isFlex = async (element: Element, direction?: FlexDirection) => {
+  const flexDirection = await getFlexDirection(element);
+
+  if (direction) {
+    return direction === flexDirection;
+  }
+
+  return flexDirection !== null;
+};
+
+/**
+ * Returns true if the given element's parent has a flex layout. If direction is
+ * given, then it also needs to match.
+ */
+export const isFlexChild = async (
+  element: Element,
+  direction?: FlexDirection,
+) => {
+  const parent = element.parentElement;
+  return parent ? isFlex(parent, direction) : false;
+};
 
 /**
  * In milliseconds.

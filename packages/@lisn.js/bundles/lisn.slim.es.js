@@ -12084,7 +12084,7 @@ class Open {
  * "toggle" elements which correspond one-to-one to each page. Switches go to
  * the given page and toggles toggle the enabled/disabled state of the page.
  *
- * **IMPORTANT:** Unless the {@link PagerStyle.style} is set to "carousel", the
+ * **IMPORTANT:** Unless the {@link PagerConfig.style} is set to "carousel", the
  * page elements will be positioned absolutely, and therefore the pager likely
  * needs to have an explicit height. If you enable
  * {@link PagerConfig.fullscreen}, then the element will get `height: 100vh`

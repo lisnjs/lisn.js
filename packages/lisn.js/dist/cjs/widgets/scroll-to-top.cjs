@@ -9,6 +9,7 @@ var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"))
 var _cssAlter = require("../utils/css-alter.cjs");
 var _domAlter = require("../utils/dom-alter.cjs");
 var _domEvents = require("../utils/dom-events.cjs");
+var _domOptimize = require("../utils/dom-optimize.cjs");
 var _domSearch = require("../utils/dom-search.cjs");
 var _event = require("../utils/event.cjs");
 var _validation = require("../utils/validation.cjs");
@@ -33,8 +34,9 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  *
  * **IMPORTANT:** When configuring an existing element as the button (i.e. using
  * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
- * - if using {@link settings.mainScrollableElementSelector}, the button element
- *   will have it's CSS position set to `fixed`;
+ * - if using
+ *   {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector},
+ *   the button element will have it's CSS position set to `fixed`;
  * - otherwise, if using a custom scrollable element, the button element may be
  *   moved in the DOM tree in order to position it on top of the scrollable
  * If you don't want the button element changed in any way, then consider using
@@ -210,7 +212,8 @@ class ScrollToTop extends _widget.Widget {
       scrollable
     });
     let arrow;
-    const root = hasCustomScrollable ? MH.createElement("div") : element;
+    let placeholder;
+    let root = element;
     const showIt = () => {
       (0, _cssAlter.showElement)(root);
     };
@@ -220,25 +223,42 @@ class ScrollToTop extends _widget.Widget {
 
     // SETUP ------------------------------
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || MH.promiseResolve()).then(async () => {
+      const flexDirection = scrollable ? await (0, _cssAlter.getParentFlexDirection)(scrollable) : null;
+      await (0, _domOptimize.waitForMutateTime)();
       if (this.isDestroyed()) {
         return;
       }
-      if (root !== element) {
-        // wrap the button
-        (0, _domAlter.replaceElement)(element, root, {
+      if (hasCustomScrollable) {
+        // Add a placeholder to restore its position on destroy.
+        placeholder = MH.createElement("div");
+        (0, _domAlter.moveElementNow)(placeholder, {
+          to: element,
+          position: "before",
           ignoreMove: true
         });
-        (0, _domAlter.moveElement)(element, {
-          to: root,
+
+        // Then move it to immediately after the scrollable.
+        // If the parent is a horizontal flexbox and position is left, then
+        // we need to insert it before the scrollable.
+        const shouldInsertBefore = flexDirection === "column-reverse" || position === MC.S_LEFT && flexDirection === "row" || position === MC.S_RIGHT && flexDirection === "row-reverse";
+        (0, _domAlter.moveElementNow)(element, {
+          to: scrollable,
+          position: shouldInsertBefore ? "before" : "after",
+          ignoreMove: true
+        });
+
+        // Wrap the button.
+        root = (0, _domAlter.wrapElementNow)(element, {
+          wrapper: "div",
           ignoreMove: true
         });
       }
       (0, _cssAlter.disableInitialTransition)(root);
-      (0, _cssAlter.addClasses)(root, PREFIX_ROOT);
-      (0, _cssAlter.addClasses)(element, PREFIX_BTN);
-      (0, _cssAlter.setBooleanData)(root, PREFIX_FIXED, !hasCustomScrollable);
-      (0, _cssAlter.setData)(root, MC.PREFIX_PLACE, position);
+      (0, _cssAlter.addClassesNow)(root, PREFIX_ROOT);
+      (0, _cssAlter.addClassesNow)(element, PREFIX_BTN);
+      (0, _cssAlter.setBooleanDataNow)(root, PREFIX_FIXED, !hasCustomScrollable);
+      (0, _cssAlter.setDataNow)(root, MC.PREFIX_PLACE, position);
       arrow = (0, _domAlter.insertArrow)(element, MC.S_UP);
       hideIt(); // initial
 
@@ -256,19 +276,26 @@ class ScrollToTop extends _widget.Widget {
         (0, _cssAlter.displayElement)(root);
       });
       this.onDestroy(async () => {
+        await (0, _domOptimize.waitForMutateTime)();
         (0, _event.removeEventListenerFrom)(element, MC.S_CLICK, clickListener);
-        await (0, _cssAlter.removeClasses)(root, PREFIX_ROOT);
-        await (0, _cssAlter.removeClasses)(element, PREFIX_BTN);
-        await (0, _cssAlter.delData)(root, PREFIX_FIXED);
-        await (0, _cssAlter.delData)(root, MC.PREFIX_PLACE);
-        await (0, _cssAlter.displayElement)(root); // revert undisplay by onDisable
+        (0, _cssAlter.removeClassesNow)(root, PREFIX_ROOT);
+        (0, _cssAlter.removeClassesNow)(element, PREFIX_BTN);
+        (0, _cssAlter.delDataNow)(root, PREFIX_FIXED);
+        (0, _cssAlter.delDataNow)(root, MC.PREFIX_PLACE);
+        (0, _cssAlter.displayElementNow)(root); // revert undisplay by onDisable
 
         if (arrow) {
-          await (0, _domAlter.moveElement)(arrow); // remove
+          (0, _domAlter.moveElementNow)(arrow); // remove
         }
         if (root !== element) {
-          // unwrap the button
-          (0, _domAlter.replaceElement)(root, element, {
+          // Unwrap the button.
+          (0, _domAlter.replaceElementNow)(root, element, {
+            ignoreMove: true
+          });
+        }
+        if (placeholder) {
+          // Move it back into its original position.
+          (0, _domAlter.replaceElementNow)(placeholder, element, {
             ignoreMove: true
           });
         }

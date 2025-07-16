@@ -504,6 +504,51 @@ export const delStylePropNow = (element, prop) => {
 export const delStyleProp = (element, prop) => waitForMutateTime().then(() => delStylePropNow(element, prop));
 
 /**
+ * Returns the flex direction of the given element **if it has a flex layout**.
+ *
+ * @returns {} `null` if the element does not have a flex layout.
+ */
+export const getFlexDirection = async element => {
+  const displayStyle = await getComputedStyleProp(element, "display");
+  if (!displayStyle.includes("flex")) {
+    return null;
+  }
+  return await getComputedStyleProp(element, "flex-direction");
+};
+
+/**
+ * Returns the flex direction of the given element's parent **if it has a flex
+ * layout**.
+ *
+ * @returns {} `null` if the element's parent does not have a flex layout.
+ */
+export const getParentFlexDirection = async element => {
+  const parent = element.parentElement;
+  return parent ? getFlexDirection(parent) : null;
+};
+
+/**
+ * Returns true if the given element has a flex layout. If direction is given,
+ * then it also needs to match.
+ */
+export const isFlex = async (element, direction) => {
+  const flexDirection = await getFlexDirection(element);
+  if (direction) {
+    return direction === flexDirection;
+  }
+  return flexDirection !== null;
+};
+
+/**
+ * Returns true if the given element's parent has a flex layout. If direction is
+ * given, then it also needs to match.
+ */
+export const isFlexChild = async (element, direction) => {
+  const parent = element.parentElement;
+  return parent ? isFlex(parent, direction) : false;
+};
+
+/**
  * In milliseconds.
  *
  * @ignore

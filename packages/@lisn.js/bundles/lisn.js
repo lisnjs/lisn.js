@@ -2612,6 +2612,30 @@ var LISN = (function (exports) {
   const delStyleProp = (element, prop) => waitForMutateTime().then(() => delStylePropNow(element, prop));
 
   /**
+   * Returns the flex direction of the given element **if it has a flex layout**.
+   *
+   * @returns {} `null` if the element does not have a flex layout.
+   */
+  const getFlexDirection = async element => {
+    const displayStyle = await getComputedStyleProp(element, "display");
+    if (!displayStyle.includes("flex")) {
+      return null;
+    }
+    return await getComputedStyleProp(element, "flex-direction");
+  };
+
+  /**
+   * Returns the flex direction of the given element's parent **if it has a flex
+   * layout**.
+   *
+   * @returns {} `null` if the element's parent does not have a flex layout.
+   */
+  const getParentFlexDirection = async element => {
+    const parent = element.parentElement;
+    return parent ? getFlexDirection(parent) : null;
+  };
+
+  /**
    * In milliseconds.
    *
    * @ignore
@@ -2866,13 +2890,6 @@ var LISN = (function (exports) {
     }
     element.replaceWith(newElement);
   };
-
-  /**
-   * Like {@link replaceElementNow} except it will {@link waitForMutateTime}.
-   *
-   * @category DOM: Altering (optimized)
-   */
-  const replaceElement = async (element, newElement, options) => waitForMutateTime().then(() => replaceElementNow(element, newElement, options));
 
   /**
    * Replace an element with another one.
@@ -13271,7 +13288,7 @@ var LISN = (function (exports) {
    * "toggle" elements which correspond one-to-one to each page. Switches go to
    * the given page and toggles toggle the enabled/disabled state of the page.
    *
-   * **IMPORTANT:** Unless the {@link PagerStyle.style} is set to "carousel", the
+   * **IMPORTANT:** Unless the {@link PagerConfig.style} is set to "carousel", the
    * page elements will be positioned absolutely, and therefore the pager likely
    * needs to have an explicit height. If you enable
    * {@link PagerConfig.fullscreen}, then the element will get `height: 100vh`
@@ -17186,8 +17203,9 @@ var LISN = (function (exports) {
    *
    * **IMPORTANT:** When configuring an existing element as the button (i.e. using
    * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
-   * - if using {@link settings.mainScrollableElementSelector}, the button element
-   *   will have it's CSS position set to `fixed`;
+   * - if using
+   *   {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector},
+   *   the button element will have it's CSS position set to `fixed`;
    * - otherwise, if using a custom scrollable element, the button element may be
    *   moved in the DOM tree in order to position it on top of the scrollable
    * If you don't want the button element changed in any way, then consider using
@@ -17363,7 +17381,8 @@ var LISN = (function (exports) {
         scrollable
       });
       let arrow;
-      const root = hasCustomScrollable ? createElement("div") : element;
+      let placeholder;
+      let root = element;
       const showIt = () => {
         showElement(root);
       };
@@ -17373,25 +17392,42 @@ var LISN = (function (exports) {
 
       // SETUP ------------------------------
 
-      (destroyPromise || promiseResolve()).then(() => {
+      (destroyPromise || promiseResolve()).then(async () => {
+        const flexDirection = scrollable ? await getParentFlexDirection(scrollable) : null;
+        await waitForMutateTime();
         if (this.isDestroyed()) {
           return;
         }
-        if (root !== element) {
-          // wrap the button
-          replaceElement(element, root, {
+        if (hasCustomScrollable) {
+          // Add a placeholder to restore its position on destroy.
+          placeholder = createElement("div");
+          moveElementNow(placeholder, {
+            to: element,
+            position: "before",
             ignoreMove: true
           });
-          moveElement(element, {
-            to: root,
+
+          // Then move it to immediately after the scrollable.
+          // If the parent is a horizontal flexbox and position is left, then
+          // we need to insert it before the scrollable.
+          const shouldInsertBefore = flexDirection === "column-reverse" || position === S_LEFT && flexDirection === "row" || position === S_RIGHT && flexDirection === "row-reverse";
+          moveElementNow(element, {
+            to: scrollable,
+            position: shouldInsertBefore ? "before" : "after",
+            ignoreMove: true
+          });
+
+          // Wrap the button.
+          root = wrapElementNow(element, {
+            wrapper: "div",
             ignoreMove: true
           });
         }
         disableInitialTransition(root);
-        addClasses(root, PREFIX_ROOT);
-        addClasses(element, PREFIX_BTN);
-        setBooleanData(root, PREFIX_FIXED, !hasCustomScrollable);
-        setData(root, PREFIX_PLACE, position);
+        addClassesNow(root, PREFIX_ROOT);
+        addClassesNow(element, PREFIX_BTN);
+        setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
+        setDataNow(root, PREFIX_PLACE, position);
         arrow = insertArrow(element, S_UP);
         hideIt(); // initial
 
@@ -17409,19 +17445,26 @@ var LISN = (function (exports) {
           displayElement(root);
         });
         this.onDestroy(async () => {
+          await waitForMutateTime();
           removeEventListenerFrom(element, S_CLICK, clickListener);
-          await removeClasses(root, PREFIX_ROOT);
-          await removeClasses(element, PREFIX_BTN);
-          await delData(root, PREFIX_FIXED);
-          await delData(root, PREFIX_PLACE);
-          await displayElement(root); // revert undisplay by onDisable
+          removeClassesNow(root, PREFIX_ROOT);
+          removeClassesNow(element, PREFIX_BTN);
+          delDataNow(root, PREFIX_FIXED);
+          delDataNow(root, PREFIX_PLACE);
+          displayElementNow(root); // revert undisplay by onDisable
 
           if (arrow) {
-            await moveElement(arrow); // remove
+            moveElementNow(arrow); // remove
           }
           if (root !== element) {
-            // unwrap the button
-            replaceElement(root, element, {
+            // Unwrap the button.
+            replaceElementNow(root, element, {
+              ignoreMove: true
+            });
+          }
+          if (placeholder) {
+            // Move it back into its original position.
+            replaceElementNow(placeholder, element, {
               ignoreMove: true
             });
           }

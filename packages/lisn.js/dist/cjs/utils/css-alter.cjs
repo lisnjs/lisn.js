@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleProps = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.getStylePropNow = exports.getStyleProp = exports.getMaxTransitionDuration = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
+exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleProps = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isFlexChild = exports.isFlex = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.getStylePropNow = exports.getStyleProp = exports.getParentFlexDirection = exports.getMaxTransitionDuration = exports.getFlexDirection = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _domOptimize = require("./dom-optimize.cjs");
@@ -550,12 +550,61 @@ exports.delStylePropNow = delStylePropNow;
 const delStyleProp = (element, prop) => (0, _domOptimize.waitForMutateTime)().then(() => delStylePropNow(element, prop));
 
 /**
+ * Returns the flex direction of the given element **if it has a flex layout**.
+ *
+ * @returns {} `null` if the element does not have a flex layout.
+ */
+exports.delStyleProp = delStyleProp;
+const getFlexDirection = async element => {
+  const displayStyle = await getComputedStyleProp(element, "display");
+  if (!displayStyle.includes("flex")) {
+    return null;
+  }
+  return await getComputedStyleProp(element, "flex-direction");
+};
+
+/**
+ * Returns the flex direction of the given element's parent **if it has a flex
+ * layout**.
+ *
+ * @returns {} `null` if the element's parent does not have a flex layout.
+ */
+exports.getFlexDirection = getFlexDirection;
+const getParentFlexDirection = async element => {
+  const parent = element.parentElement;
+  return parent ? getFlexDirection(parent) : null;
+};
+
+/**
+ * Returns true if the given element has a flex layout. If direction is given,
+ * then it also needs to match.
+ */
+exports.getParentFlexDirection = getParentFlexDirection;
+const isFlex = async (element, direction) => {
+  const flexDirection = await getFlexDirection(element);
+  if (direction) {
+    return direction === flexDirection;
+  }
+  return flexDirection !== null;
+};
+
+/**
+ * Returns true if the given element's parent has a flex layout. If direction is
+ * given, then it also needs to match.
+ */
+exports.isFlex = isFlex;
+const isFlexChild = async (element, direction) => {
+  const parent = element.parentElement;
+  return parent ? isFlex(parent, direction) : false;
+};
+
+/**
  * In milliseconds.
  *
  * @ignore
  * @internal
  */
-exports.delStyleProp = delStyleProp;
+exports.isFlexChild = isFlexChild;
 const getMaxTransitionDuration = async element => {
   const propVal = await getComputedStyleProp(element, "transition-duration");
   return MH.max(...(0, _text.splitOn)(propVal, ",", true).map(strValue => {

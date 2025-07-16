@@ -22,29 +22,32 @@ beforeAll(async () => {
   });
 });
 
-const newScrollingElement = () => {
-  const element = document.createElement("div");
-  element.enableScroll();
-  return element;
-};
-
 // Since overlays with same properties will be reused, ensure each test uses a
 // unique offset.
-const newWidget = async (config = {}) => {
+const newWidget = async (customScrollable = false) => {
+  const before = document.createElement("div");
+  before.classList.add("before");
+
+  const after = document.createElement("div");
+  after.classList.add("after");
+
+  const scrollable = document.createElement("div");
+  scrollable.enableScroll();
+
   const element = document.createElement("div");
-  document.body.append(element);
+  document.body.append(scrollable, before, element, after);
 
   const offset = Math.floor(Math.random() * 1000) + "px";
   const widget = new ScrollToTop(element, {
     offset: `top: ${offset}`,
-    ...config,
+    scrollable: customScrollable ? scrollable : undefined,
   });
 
   await window.waitFor(100);
   let overlay = null,
     thisObserver = null;
 
-  if (!config.scrollable) {
+  if (!customScrollable) {
     thisObserver = observer;
     expect(thisObserver.targets.size).toBeGreaterThanOrEqual(1);
     overlay = getLastTarget(thisObserver);
@@ -59,7 +62,10 @@ const newWidget = async (config = {}) => {
     widget,
     offset,
     observer: thisObserver,
+    scrollable,
     element,
+    before,
+    after,
     overlay,
   };
 };
@@ -127,9 +133,12 @@ test("disable", async () => {
 
 describe("destroy", () => {
   test("basic", async () => {
-    const { widget, observer, element, overlay } = await newWidget();
+    const { widget, observer, element, before, after, overlay } =
+      await newWidget();
     await window.waitFor(100);
     expect(element.parentElement).toBe(document.body);
+    expect(element.previousElementSibling).toBe(before);
+    expect(element.nextElementSibling).toBe(after);
 
     await widget.destroy();
 
@@ -137,30 +146,36 @@ describe("destroy", () => {
     expect(isElementUndisplayed(element)).toBe(false);
     expect(observer.targets.has(overlay)).toBe(false);
     expect(element.children.length).toBe(0); // arrow removed
+    expect(element.previousElementSibling).toBe(before);
+    expect(element.parentElement).toBe(document.body);
+    expect(element.nextElementSibling).toBe(after);
   });
 
   test("wrapping/unwrapping when custom scrollable", async () => {
-    const scrollable = newScrollingElement();
-    const { widget, element } = await newWidget({ scrollable });
+    const { widget, element, before, after, scrollable } =
+      await newWidget(true);
     await window.waitFor(100);
     expect(element.parentElement.parentElement).toBe(document.body); // wrapped
+    expect(element.parentElement.previousElementSibling).toBe(scrollable); // moved to after scrollable
 
     await widget.destroy();
 
     await window.waitForAF();
-    expect(element.parentElement).toBe(document.body); // unwrapped
     expect(element.children.length).toBe(0); // arrow removed
+    expect(element.parentElement).toBe(document.body); // unwrapped
+    expect(element.previousElementSibling).toBe(before); // position restored
+    expect(element.nextElementSibling).toBe(after);
   });
 });
 
 describe("click", () => {
   test("default scrollable", async () => {
+    const { element } = await newWidget();
     document.documentElement.scrollTo(200, 200);
     await window.waitFor(100);
     expect(document.documentElement.scrollTop).toBe(200);
     expect(document.documentElement.scrollLeft).toBe(200);
 
-    const { element } = await newWidget();
     element.dispatchEvent(window.newClick());
     await window.waitFor(1200); // scroll takes 1s
     expect(document.documentElement.scrollTop).toBe(0);
@@ -168,13 +183,12 @@ describe("click", () => {
   });
 
   test("custom scrollable", async () => {
-    const scrollable = newScrollingElement();
+    const { element, scrollable } = await newWidget(true);
     scrollable.scrollTo(200, 200);
     await window.waitFor(100);
     expect(scrollable.scrollTop).toBe(200);
     expect(scrollable.scrollLeft).toBe(200);
 
-    const { element } = await newWidget({ scrollable });
     element.dispatchEvent(window.newClick());
     await window.waitFor(1200); // scroll takes 1s
     expect(scrollable.scrollTop).toBe(0);

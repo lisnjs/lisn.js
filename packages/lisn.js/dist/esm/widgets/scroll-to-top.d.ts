@@ -15,8 +15,9 @@ import { Widget } from "../widgets/widget.js";
  *
  * **IMPORTANT:** When configuring an existing element as the button (i.e. using
  * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
- * - if using {@link settings.mainScrollableElementSelector}, the button element
- *   will have it's CSS position set to `fixed`;
+ * - if using
+ *   {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector},
+ *   the button element will have it's CSS position set to `fixed`;
  * - otherwise, if using a custom scrollable element, the button element may be
  *   moved in the DOM tree in order to position it on top of the scrollable
  * If you don't want the button element changed in any way, then consider using

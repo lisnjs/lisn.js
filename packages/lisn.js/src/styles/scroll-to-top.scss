@@ -7,12 +7,12 @@
 .lisn-scroll-to-top__root {
   --lisn_stt_sz: var(--lisn-scroll-to-top--size, #{$scroll-to-top-size});
   --lisn_stt_mg: var(--lisn-scroll-to-top--margin, #{$scroll-to-top-margin});
+  z-index: 99999;
 
   /* Fixed position for the document element */
   &[data-lisn-fixed="true"] {
     position: fixed;
     bottom: var(--lisn_stt_mg);
-    z-index: 99999;
 
     &[data-lisn-place="left"] {
       left: var(--lisn_stt_mg);
@@ -26,9 +26,9 @@
   /* Relatively positioned for a custom scrolling element. */
   /* Make it full width and zero height (or full height, zero width in case of horizontal flexbox parent). Then position the button child absolutely inside. */
   &[data-lisn-fixed="false"] {
-    align-self: stretch;
-    flex-basis: 0;
-    flex-grow: 0;
+    align-self: stretch !important;
+    flex-basis: 0 !important;
+    flex-grow: 0 !important;
     position: relative;
 
     & .lisn-scroll-to-top__btn {

@@ -84,7 +84,7 @@ export declare const arrayFrom: {
 };
 export declare const keysOf: <T extends Record<string | symbol, unknown>>(obj: T) => Array<keyof T & string>;
 export declare const defineProperty: <T>(o: T, p: PropertyKey, attributes: PropertyDescriptor & ThisType<any>) => T;
-export declare const merge: <A extends readonly (object | null | undefined)[]>(...a: A) => Spread<A>;
+export declare const merge: <A extends readonly (object | null | undefined)[]>(...a: [...A]) => Spread<A>;
 export declare const copyObject: <T extends object>(obj: T) => Pick<T, Exclude<keyof T, never>> & Pick<unknown, never> & {} extends infer T_1 ? T_1 extends Pick<T, Exclude<keyof T, never>> & Pick<unknown, never> & {} ? T_1 extends infer U ? { [K in keyof U]: U[K]; } : never : never : never;
 export declare const promiseResolve: {
     (): Promise<void>;

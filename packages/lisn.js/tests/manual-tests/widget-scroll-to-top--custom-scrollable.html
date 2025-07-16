@@ -25,26 +25,44 @@
         top: 0;
         left: 0;
       }
+
+      #scrollable {
+        height: 300px;
+        overflow: auto;
+        background: lightblue;
+      }
+
+      #scrollable div {
+        height: 3000px;
+      }
     </style>
   </head>
   <body>
-    <button
-      id="btn"
-      data-lisn-scroll-to-top="position=left | offset=top:300vh"
-    ></button>
-
     <div class="sticky">
       <button onclick="disable()">Disable</button>
       <button onclick="enable()">Enable</button>
     </div>
 
+    <div id="scrollable">
+      <div></div>
+    </div>
+
+    <button id="btnA" data-lisn-scroll-to-top="scrollable=#scrollable"></button>
+
+    <button
+      id="btnB"
+      data-lisn-scroll-to-top="scrollable=#scrollable | position=left | offset=top:300vh"
+    ></button>
+
     <script charset="utf-8">
       function disable() {
-        LISN.widgets.ScrollToTop.get(document.getElementById("btn")).disable();
+        LISN.widgets.ScrollToTop.get(document.getElementById("btnA")).disable();
+        LISN.widgets.ScrollToTop.get(document.getElementById("btnB")).disable();
       }
 
       function enable() {
-        LISN.widgets.ScrollToTop.get(document.getElementById("btn")).enable();
+        LISN.widgets.ScrollToTop.get(document.getElementById("btnA")).enable();
+        LISN.widgets.ScrollToTop.get(document.getElementById("btnB")).enable();
       }
     </script>
   </body>

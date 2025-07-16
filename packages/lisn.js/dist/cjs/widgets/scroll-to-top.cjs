@@ -9,6 +9,7 @@ var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"))
 var _cssAlter = require("../utils/css-alter.cjs");
 var _domAlter = require("../utils/dom-alter.cjs");
 var _domEvents = require("../utils/dom-events.cjs");
+var _domSearch = require("../utils/dom-search.cjs");
 var _event = require("../utils/event.cjs");
 var _validation = require("../utils/validation.cjs");
 var _views = require("../utils/views.cjs");
@@ -31,9 +32,15 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  * The button is only shown when the scroll offset from the top is more than a
  * given configurable amount.
  *
- * **NOTE:** Currently the widget only supports fixed positioned button that
- * scrolls the main scrolling element (see
- * {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector}).
+ * **IMPORTANT:** When configuring an existing element as the button (i.e. using
+ * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
+ * - if using {@link settings.mainScrollableElementSelector}, the button element
+ *   will have it's CSS position set to `fixed`;
+ * - otherwise, if using a custom scrollable element, the button element may be
+ *   moved in the DOM tree in order to position it on top of the scrollable
+ * If you don't want the button element changed in any way, then consider using
+ * the {@link Triggers.ClickTrigger | ClickTrigger} with a
+ * {@link Actions.ScrollTo | ScrollTo} action.
  *
  * **IMPORTANT:** You should not instantiate more than one {@link ScrollToTop}
  * widget on a given element. Use {@link ScrollToTop.get} to get an existing
@@ -87,19 +94,53 @@ function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; 
  * ```
  *
  * @example
- * This will create a scroll-to-top button for the main scrolling element
- * using an existing element for the button with default
+ * This will configure the given element as a scroll-to-top button for the main
+ * scrolling element using an existing element for the button with default
  * {@link ScrollToTopConfig}.
  *
  * ```html
- * <div class="lisn-scroll-to-top"></div>
+ * <button class="lisn-scroll-to-top"></button>
  * ```
- *
  * @example
  * As above but with custom settings.
  *
  * ```html
- * <div data-lisn-scroll-to-top="position=left | offset=top:300vh"></div>
+ * <button data-lisn-scroll-to-top="position=left | offset=top:300vh"></button>
+ * ```
+ *
+ * @example
+ * This will configure the given element as a scroll-to-top button for a custom
+ * scrolling element (i.e. one with overflow "auto" or "scroll").
+ *
+ * ```html
+ * <div id="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=#scrollable"></button>
+ * ```
+ *
+ * @example
+ * As above, but using a reference specification with a class name to find the
+ * scrollable.
+ *
+ * ```html
+ * <div class="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=prev.scrollable"></button>
+ * ```
+ *
+ * @example
+ * As above but with all custom settings.
+ *
+ * ```html
+ * <div class="scrollable">
+ *   <!-- content here... -->
+ * </div>
+ * <button data-lisn-scroll-to-top="scrollable=prev.scrollable
+ *                               | position=left
+ *                               | offset=top:300vh
+ * "></button>
  * ```
  */
 class ScrollToTop extends _widget.Widget {
@@ -123,7 +164,7 @@ class ScrollToTop extends _widget.Widget {
         return new ScrollToTop(element, config);
       }
       return null;
-    }, configValidator);
+    }, newConfigValidator);
   }
 
   /**
@@ -155,19 +196,27 @@ class ScrollToTop extends _widget.Widget {
     super(element, {
       id: DUMMY_ID
     });
-    const scrollWatcher = _scrollWatcher.ScrollWatcher.reuse();
-    const viewWatcher = _viewWatcher.ViewWatcher.reuse();
     const offset = (config === null || config === void 0 ? void 0 : config.offset) || `${MC.S_TOP}: var(${MH.prefixCssVar("scroll-to-top--offset")}, 200vh)`;
     const position = (config === null || config === void 0 ? void 0 : config.position) || MC.S_RIGHT;
+    const scrollable = config === null || config === void 0 ? void 0 : config.scrollable;
+    const hasCustomScrollable = scrollable && scrollable !== MH.getDocElement() && scrollable !== MH.getBody();
+    const scrollWatcher = _scrollWatcher.ScrollWatcher.reuse();
+    const viewWatcher = _viewWatcher.ViewWatcher.reuse(hasCustomScrollable ? {
+      root: scrollable
+    } : {});
     const clickListener = () => scrollWatcher.scrollTo({
-      top: 0
+      top: 0,
+      left: 0
+    }, {
+      scrollable
     });
-    const arrow = (0, _domAlter.insertArrow)(element, MC.S_UP);
+    let arrow;
+    const root = hasCustomScrollable ? MH.createElement("div") : element;
     const showIt = () => {
-      (0, _cssAlter.showElement)(element);
+      (0, _cssAlter.showElement)(root);
     };
     const hideIt = () => {
-      (0, _cssAlter.hideElement)(element);
+      (0, _cssAlter.hideElement)(root);
     };
 
     // SETUP ------------------------------
@@ -176,9 +225,22 @@ class ScrollToTop extends _widget.Widget {
       if (this.isDestroyed()) {
         return;
       }
-      (0, _cssAlter.disableInitialTransition)(element);
-      (0, _cssAlter.addClasses)(element, PREFIX_ROOT);
-      (0, _cssAlter.setData)(element, MC.PREFIX_PLACE, position);
+      if (root !== element) {
+        // wrap the button
+        (0, _domAlter.replaceElement)(element, root, {
+          ignoreMove: true
+        });
+        (0, _domAlter.moveElement)(element, {
+          to: root,
+          ignoreMove: true
+        });
+      }
+      (0, _cssAlter.disableInitialTransition)(root);
+      (0, _cssAlter.addClasses)(root, PREFIX_ROOT);
+      (0, _cssAlter.addClasses)(element, PREFIX_BTN);
+      (0, _cssAlter.setBooleanData)(root, PREFIX_FIXED, !hasCustomScrollable);
+      (0, _cssAlter.setData)(root, MC.PREFIX_PLACE, position);
+      arrow = (0, _domAlter.insertArrow)(element, MC.S_UP);
       hideIt(); // initial
 
       (0, _event.addEventListenerTo)(element, MC.S_CLICK, clickListener);
@@ -189,17 +251,28 @@ class ScrollToTop extends _widget.Widget {
         views: [MC.S_ABOVE]
       });
       this.onDisable(() => {
-        (0, _cssAlter.undisplayElement)(element);
+        (0, _cssAlter.undisplayElement)(root);
       });
       this.onEnable(() => {
-        (0, _cssAlter.displayElement)(element);
+        (0, _cssAlter.displayElement)(root);
       });
       this.onDestroy(async () => {
         (0, _event.removeEventListenerFrom)(element, MC.S_CLICK, clickListener);
-        await (0, _cssAlter.delData)(element, MC.PREFIX_PLACE);
-        await (0, _domAlter.moveElement)(arrow); // remove
-        await (0, _cssAlter.removeClasses)(element, PREFIX_ROOT);
-        await (0, _cssAlter.displayElement)(element); // revert undisplay by onDisable
+        await (0, _cssAlter.removeClasses)(root, PREFIX_ROOT);
+        await (0, _cssAlter.removeClasses)(element, PREFIX_BTN);
+        await (0, _cssAlter.delData)(root, PREFIX_FIXED);
+        await (0, _cssAlter.delData)(root, MC.PREFIX_PLACE);
+        await (0, _cssAlter.displayElement)(root); // revert undisplay by onDisable
+
+        if (arrow) {
+          await (0, _domAlter.moveElement)(arrow); // remove
+        }
+        if (root !== element) {
+          // unwrap the button
+          (0, _domAlter.replaceElement)(root, element, {
+            ignoreMove: true
+          });
+        }
         viewWatcher.offView(offset, showIt);
         viewWatcher.offView(offset, hideIt);
       });
@@ -215,15 +288,23 @@ exports.ScrollToTop = ScrollToTop;
 
 const WIDGET_NAME = "scroll-to-top";
 const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
-const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 // Only one ScrollToTop widget per element is allowed, but Widget requires a
 // non-blank ID.
 // In fact, it doesn't make much sense to have more than 1 scroll-to-top button
 // on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
+const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
+const PREFIX_BTN = `${PREFIXED_NAME}__btn`;
+const PREFIX_FIXED = MH.prefixName("fixed");
 let mainWidget = null;
-const configValidator = {
-  offset: (key, value) => (0, _validation.validateString)(key, value, _views.isValidScrollOffset),
-  position: (key, value) => (0, _validation.validateString)(key, value, v => v === MC.S_LEFT || v === MC.S_RIGHT)
+const newConfigValidator = element => {
+  return {
+    offset: (key, value) => (0, _validation.validateString)(key, value, _views.isValidScrollOffset),
+    position: (key, value) => (0, _validation.validateString)(key, value, v => v === MC.S_LEFT || v === MC.S_RIGHT),
+    scrollable: (key, value) => {
+      var _ref;
+      return (_ref = MH.isLiteralString(value) ? (0, _domSearch.waitForReferenceElement)(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
+    }
+  };
 };
 //# sourceMappingURL=scroll-to-top.cjs.map

@@ -2868,6 +2868,13 @@ var LISN = (function (exports) {
   };
 
   /**
+   * Like {@link replaceElementNow} except it will {@link waitForMutateTime}.
+   *
+   * @category DOM: Altering (optimized)
+   */
+  const replaceElement = async (element, newElement, options) => waitForMutateTime().then(() => replaceElementNow(element, newElement, options));
+
+  /**
    * Replace an element with another one.
    *
    * @param {} [options.ignoreMove]
@@ -11173,7 +11180,7 @@ var LISN = (function (exports) {
           scrollable: config === null || config === void 0 ? void 0 : config.scrollable,
           offset
         });
-      }, newConfigValidator$7);
+      }, newConfigValidator$8);
     }
     constructor(element, config) {
       const offset = config === null || config === void 0 ? void 0 : config.offset;
@@ -11238,7 +11245,7 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const newConfigValidator$7 = element => {
+  const newConfigValidator$8 = element => {
     return {
       offsetX: (key, value) => {
         var _validateNumber;
@@ -11378,7 +11385,7 @@ var LISN = (function (exports) {
         return new SetAttribute(element, {
           [args[0]]: config || {}
         });
-      }, configValidator$8);
+      }, configValidator$7);
     }
     constructor(element, attributes) {
       if (!attributes) {
@@ -11420,7 +11427,7 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const configValidator$8 = {
+  const configValidator$7 = {
     on: validateString,
     off: validateString
   };
@@ -13504,7 +13511,7 @@ var LISN = (function (exports) {
           return new Pager(element, config);
         }
         return null;
-      }, configValidator$7);
+      }, configValidator$6);
     }
 
     /**
@@ -13644,7 +13651,7 @@ var LISN = (function (exports) {
   const DUMMY_ID$9 = PREFIXED_NAME$5;
   const SUPPORTED_STYLES = ["slider", "carousel", "tabs"];
   const isValidStyle = value => includes(SUPPORTED_STYLES, value);
-  const configValidator$7 = {
+  const configValidator$6 = {
     initialPage: validateNumber,
     style: (key, value) => validateString(key, value, isValidStyle),
     pageSize: validateNumber,
@@ -14503,7 +14510,7 @@ var LISN = (function (exports) {
    */
   class CheckTrigger extends Trigger {
     static register() {
-      registerTrigger("check", (element, args, actions, config) => new CheckTrigger(element, actions, config), newConfigValidator$6);
+      registerTrigger("check", (element, args, actions, config) => new CheckTrigger(element, actions, config), newConfigValidator$7);
     }
 
     /**
@@ -14537,7 +14544,7 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const newConfigValidator$6 = element => {
+  const newConfigValidator$7 = element => {
     return {
       target: (key, value) => {
         var _ref;
@@ -14644,7 +14651,7 @@ var LISN = (function (exports) {
    */
   class ClickTrigger extends Trigger {
     static register() {
-      registerTrigger(S_CLICK, (element, args, actions, config) => new ClickTrigger(element, actions, config), newConfigValidator$5);
+      registerTrigger(S_CLICK, (element, args, actions, config) => new ClickTrigger(element, actions, config), newConfigValidator$6);
     }
 
     /**
@@ -14742,7 +14749,7 @@ var LISN = (function (exports) {
    */
   class PressTrigger extends Trigger {
     static register() {
-      registerTrigger(S_PRESS, (element, args, actions, config) => new PressTrigger(element, actions, config), newConfigValidator$5);
+      registerTrigger(S_PRESS, (element, args, actions, config) => new PressTrigger(element, actions, config), newConfigValidator$6);
     }
 
     /**
@@ -14837,7 +14844,7 @@ var LISN = (function (exports) {
    */
   class HoverTrigger extends Trigger {
     static register() {
-      registerTrigger(S_HOVER, (element, args, actions, config) => new HoverTrigger(element, actions, config), newConfigValidator$5);
+      registerTrigger(S_HOVER, (element, args, actions, config) => new HoverTrigger(element, actions, config), newConfigValidator$6);
     }
 
     /**
@@ -14860,7 +14867,7 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const newConfigValidator$5 = element => {
+  const newConfigValidator$6 = element => {
     return {
       target: (key, value) => {
         var _ref;
@@ -15004,7 +15011,7 @@ var LISN = (function (exports) {
         return new LayoutTrigger(element, actions, assign(config, {
           layout: validateStringRequired("layout", strReplace(strReplace(args[0] || "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => isValidDeviceList(value) || isValidAspectRatioList(value))
         }));
-      }, newConfigValidator$4);
+      }, newConfigValidator$5);
     }
 
     /**
@@ -15058,7 +15065,7 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const newConfigValidator$4 = element => {
+  const newConfigValidator$5 = element => {
     return {
       root: async (key, value) => {
         const root = isLiteralString(value) ? await waitForReferenceElement(value, element) : undefined;
@@ -15230,7 +15237,7 @@ var LISN = (function (exports) {
         return new ScrollTrigger(element, actions, assign(config, {
           directions: validateStrList("directions", args, isValidXYDirection)
         }));
-      }, newConfigValidator$3);
+      }, newConfigValidator$4);
     }
 
     /**
@@ -15277,7 +15284,7 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const newConfigValidator$3 = element => {
+  const newConfigValidator$4 = element => {
     return {
       scrollable: (key, value) => {
         var _ref;
@@ -15411,7 +15418,7 @@ var LISN = (function (exports) {
         return new ViewTrigger(element, actions, assign(config, {
           views: validateStrList("views", args, isValidView)
         }));
-      }, newConfigValidator$2);
+      }, newConfigValidator$3);
     }
 
     /**
@@ -15472,7 +15479,7 @@ var LISN = (function (exports) {
 
   // ----------
 
-  const newConfigValidator$2 = element => {
+  const newConfigValidator$3 = element => {
     return {
       target: (key, value) => {
         var _ref;
@@ -15666,7 +15673,7 @@ var LISN = (function (exports) {
       for (const [name, remove] of [[WIDGET_NAME_HIDE, false], [WIDGET_NAME_REMOVE, true]]) {
         registerWidget(name, (element, config) => {
           return new AutoHide(element, config);
-        }, newConfigValidator$1(remove), {
+        }, newConfigValidator$2(remove), {
           supportsMultiple: true
         });
       }
@@ -15731,7 +15738,7 @@ var LISN = (function (exports) {
   const WIDGET_NAME_HIDE = "auto-hide";
   const WIDGET_NAME_REMOVE = "auto-remove";
   const DEFAULT_DELAY = 3000;
-  const newConfigValidator$1 = autoRemove => {
+  const newConfigValidator$2 = autoRemove => {
     return {
       id: validateString,
       remove: () => autoRemove,
@@ -15815,7 +15822,7 @@ var LISN = (function (exports) {
           return new PageLoader(element, config);
         }
         return null;
-      }, configValidator$6);
+      }, configValidator$5);
     }
 
     /**
@@ -15897,7 +15904,7 @@ var LISN = (function (exports) {
   // whole page, but we support it, hence use a class rather than a DOM ID.
   const DUMMY_ID$8 = PREFIXED_NAME$4;
   let mainWidget$2 = null;
-  const configValidator$6 = {
+  const configValidator$5 = {
     autoRemove: validateBoolean
   };
 
@@ -16087,7 +16094,7 @@ var LISN = (function (exports) {
           logError(usageError("Only HTMLElement is supported for SameHeight widget"));
         }
         return null;
-      }, configValidator$5);
+      }, configValidator$4);
     }
     constructor(containerElement, config) {
       var _SameHeight$get;
@@ -16144,7 +16151,7 @@ var LISN = (function (exports) {
   // We consider elements that have text content of at least <MIN_CHARS_FOR_TEXT>
   // characters to be text.
   const MIN_CHARS_FOR_TEXT = 100;
-  const configValidator$5 = {
+  const configValidator$4 = {
     diffTolerance: validateNumber,
     resizeThreshold: validateNumber,
     [S_DEBOUNCE_WINDOW]: validateNumber,
@@ -16652,7 +16659,7 @@ var LISN = (function (exports) {
      * Enables scrollbars on the {@link settings.mainScrollableElementSelector}.
      *
      * **NOTE:** It returns a Promise to a widget because it will wait for the
-     * main element to be present in the DOM if not already.
+     * main scrollable element to be present in the DOM if not already.
      */
     static enableMain(config) {
       return ScrollWatcher.fetchMainScrollableElement().then(main => {
@@ -16676,7 +16683,7 @@ var LISN = (function (exports) {
           logError(usageError("Only HTMLElement is supported for Scrollbar widget"));
         }
         return null;
-      }, configValidator$4);
+      }, configValidator$3);
     }
 
     /**
@@ -16698,7 +16705,7 @@ var LISN = (function (exports) {
         if (this.isDestroyed()) {
           return;
         }
-        await init$1(this, scrollable, props, config);
+        init$1(this, scrollable, props, config);
       });
       this.getScrollable = () => ourScrollable;
     }
@@ -16737,7 +16744,7 @@ var LISN = (function (exports) {
   const S_ARIA_VALUENOW = ARIA_PREFIX + "valuenow";
   const S_SCROLLBAR = "scrollbar";
   let mainWidget$1 = null;
-  const configValidator$4 = {
+  const configValidator$3 = {
     id: validateString,
     className: validateStrList,
     hideNative: validateBoolean,
@@ -17177,9 +17184,15 @@ var LISN = (function (exports) {
    * The button is only shown when the scroll offset from the top is more than a
    * given configurable amount.
    *
-   * **NOTE:** Currently the widget only supports fixed positioned button that
-   * scrolls the main scrolling element (see
-   * {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector}).
+   * **IMPORTANT:** When configuring an existing element as the button (i.e. using
+   * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
+   * - if using {@link settings.mainScrollableElementSelector}, the button element
+   *   will have it's CSS position set to `fixed`;
+   * - otherwise, if using a custom scrollable element, the button element may be
+   *   moved in the DOM tree in order to position it on top of the scrollable
+   * If you don't want the button element changed in any way, then consider using
+   * the {@link Triggers.ClickTrigger | ClickTrigger} with a
+   * {@link Actions.ScrollTo | ScrollTo} action.
    *
    * **IMPORTANT:** You should not instantiate more than one {@link ScrollToTop}
    * widget on a given element. Use {@link ScrollToTop.get} to get an existing
@@ -17233,19 +17246,53 @@ var LISN = (function (exports) {
    * ```
    *
    * @example
-   * This will create a scroll-to-top button for the main scrolling element
-   * using an existing element for the button with default
+   * This will configure the given element as a scroll-to-top button for the main
+   * scrolling element using an existing element for the button with default
    * {@link ScrollToTopConfig}.
    *
    * ```html
-   * <div class="lisn-scroll-to-top"></div>
+   * <button class="lisn-scroll-to-top"></button>
    * ```
-   *
    * @example
    * As above but with custom settings.
    *
    * ```html
-   * <div data-lisn-scroll-to-top="position=left | offset=top:300vh"></div>
+   * <button data-lisn-scroll-to-top="position=left | offset=top:300vh"></button>
+   * ```
+   *
+   * @example
+   * This will configure the given element as a scroll-to-top button for a custom
+   * scrolling element (i.e. one with overflow "auto" or "scroll").
+   *
+   * ```html
+   * <div id="scrollable">
+   *   <!-- content here... -->
+   * </div>
+   * <button data-lisn-scroll-to-top="scrollable=#scrollable"></button>
+   * ```
+   *
+   * @example
+   * As above, but using a reference specification with a class name to find the
+   * scrollable.
+   *
+   * ```html
+   * <div class="scrollable">
+   *   <!-- content here... -->
+   * </div>
+   * <button data-lisn-scroll-to-top="scrollable=prev.scrollable"></button>
+   * ```
+   *
+   * @example
+   * As above but with all custom settings.
+   *
+   * ```html
+   * <div class="scrollable">
+   *   <!-- content here... -->
+   * </div>
+   * <button data-lisn-scroll-to-top="scrollable=prev.scrollable
+   *                               | position=left
+   *                               | offset=top:300vh
+   * "></button>
    * ```
    */
   class ScrollToTop extends Widget {
@@ -17269,7 +17316,7 @@ var LISN = (function (exports) {
           return new ScrollToTop(element, config);
         }
         return null;
-      }, configValidator$3);
+      }, newConfigValidator$1);
     }
 
     /**
@@ -17301,19 +17348,27 @@ var LISN = (function (exports) {
       super(element, {
         id: DUMMY_ID$5
       });
-      const scrollWatcher = ScrollWatcher.reuse();
-      const viewWatcher = ViewWatcher.reuse();
       const offset = (config === null || config === void 0 ? void 0 : config.offset) || `${S_TOP}: var(${prefixCssVar("scroll-to-top--offset")}, 200vh)`;
       const position = (config === null || config === void 0 ? void 0 : config.position) || S_RIGHT;
+      const scrollable = config === null || config === void 0 ? void 0 : config.scrollable;
+      const hasCustomScrollable = scrollable && scrollable !== getDocElement() && scrollable !== getBody();
+      const scrollWatcher = ScrollWatcher.reuse();
+      const viewWatcher = ViewWatcher.reuse(hasCustomScrollable ? {
+        root: scrollable
+      } : {});
       const clickListener = () => scrollWatcher.scrollTo({
-        top: 0
+        top: 0,
+        left: 0
+      }, {
+        scrollable
       });
-      const arrow = insertArrow(element, S_UP);
+      let arrow;
+      const root = hasCustomScrollable ? createElement("div") : element;
       const showIt = () => {
-        showElement(element);
+        showElement(root);
       };
       const hideIt = () => {
-        hideElement(element);
+        hideElement(root);
       };
 
       // SETUP ------------------------------
@@ -17322,9 +17377,22 @@ var LISN = (function (exports) {
         if (this.isDestroyed()) {
           return;
         }
-        disableInitialTransition(element);
-        addClasses(element, PREFIX_ROOT);
-        setData(element, PREFIX_PLACE, position);
+        if (root !== element) {
+          // wrap the button
+          replaceElement(element, root, {
+            ignoreMove: true
+          });
+          moveElement(element, {
+            to: root,
+            ignoreMove: true
+          });
+        }
+        disableInitialTransition(root);
+        addClasses(root, PREFIX_ROOT);
+        addClasses(element, PREFIX_BTN);
+        setBooleanData(root, PREFIX_FIXED, !hasCustomScrollable);
+        setData(root, PREFIX_PLACE, position);
+        arrow = insertArrow(element, S_UP);
         hideIt(); // initial
 
         addEventListenerTo(element, S_CLICK, clickListener);
@@ -17335,17 +17403,28 @@ var LISN = (function (exports) {
           views: [S_ABOVE]
         });
         this.onDisable(() => {
-          undisplayElement(element);
+          undisplayElement(root);
         });
         this.onEnable(() => {
-          displayElement(element);
+          displayElement(root);
         });
         this.onDestroy(async () => {
           removeEventListenerFrom(element, S_CLICK, clickListener);
-          await delData(element, PREFIX_PLACE);
-          await moveElement(arrow); // remove
-          await removeClasses(element, PREFIX_ROOT);
-          await displayElement(element); // revert undisplay by onDisable
+          await removeClasses(root, PREFIX_ROOT);
+          await removeClasses(element, PREFIX_BTN);
+          await delData(root, PREFIX_FIXED);
+          await delData(root, PREFIX_PLACE);
+          await displayElement(root); // revert undisplay by onDisable
+
+          if (arrow) {
+            await moveElement(arrow); // remove
+          }
+          if (root !== element) {
+            // unwrap the button
+            replaceElement(root, element, {
+              ignoreMove: true
+            });
+          }
           viewWatcher.offView(offset, showIt);
           viewWatcher.offView(offset, hideIt);
         });
@@ -17361,16 +17440,24 @@ var LISN = (function (exports) {
 
   const WIDGET_NAME$5 = "scroll-to-top";
   const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
-  const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
   // Only one ScrollToTop widget per element is allowed, but Widget requires a
   // non-blank ID.
   // In fact, it doesn't make much sense to have more than 1 scroll-to-top button
   // on the whole page, but we support it, hence use a class rather than a DOM ID.
   const DUMMY_ID$5 = PREFIXED_NAME$1;
+  const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
+  const PREFIX_BTN = `${PREFIXED_NAME$1}__btn`;
+  const PREFIX_FIXED = prefixName("fixed");
   let mainWidget = null;
-  const configValidator$3 = {
-    offset: (key, value) => validateString(key, value, isValidScrollOffset),
-    position: (key, value) => validateString(key, value, v => v === S_LEFT || v === S_RIGHT)
+  const newConfigValidator$1 = element => {
+    return {
+      offset: (key, value) => validateString(key, value, isValidScrollOffset),
+      position: (key, value) => validateString(key, value, v => v === S_LEFT || v === S_RIGHT),
+      scrollable: (key, value) => {
+        var _ref;
+        return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
+      }
+    };
   };
 
   /**

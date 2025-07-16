@@ -151,7 +151,7 @@ export class Scrollbar extends Widget {
    * Enables scrollbars on the {@link settings.mainScrollableElementSelector}.
    *
    * **NOTE:** It returns a Promise to a widget because it will wait for the
-   * main element to be present in the DOM if not already.
+   * main scrollable element to be present in the DOM if not already.
    */
   static enableMain(config) {
     return ScrollWatcher.fetchMainScrollableElement().then(main => {
@@ -203,7 +203,7 @@ export class Scrollbar extends Widget {
       if (this.isDestroyed()) {
         return;
       }
-      await init(this, scrollable, props, config);
+      init(this, scrollable, props, config);
     });
     this.getScrollable = () => ourScrollable;
   }

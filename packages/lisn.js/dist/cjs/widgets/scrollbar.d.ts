@@ -125,7 +125,7 @@ export declare class Scrollbar extends Widget {
      * Enables scrollbars on the {@link settings.mainScrollableElementSelector}.
      *
      * **NOTE:** It returns a Promise to a widget because it will wait for the
-     * main element to be present in the DOM if not already.
+     * main scrollable element to be present in the DOM if not already.
      */
     static enableMain(config?: ScrollbarConfig): Promise<Scrollbar>;
     static register(): void;
@@ -146,7 +146,7 @@ export type ScrollbarConfig = {
      * **IMPORTANT:** If you've disabled {@link settings.contentWrappingAllowed},
      * then the scrollable element provided as the widget element will _not_ have
      * its content wrapped and will remain the actual scrollable. In this case,
-     * it's ID will be set to this, so if it already has an ID, it will be
+     * its ID will be set to this, so if it already has an ID, it will be
      * overridden with this value.
      *
      * @defaultValue undefined

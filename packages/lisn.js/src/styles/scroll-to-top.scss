@@ -7,26 +7,60 @@
 .lisn-scroll-to-top__root {
   --lisn_stt_sz: var(--lisn-scroll-to-top--size, #{$scroll-to-top-size});
   --lisn_stt_mg: var(--lisn-scroll-to-top--margin, #{$scroll-to-top-margin});
-  box-sizing: border-box;
-  position: fixed;
-  bottom: var(--lisn_stt_mg);
-  z-index: 99999;
-  cursor: pointer;
-  background: var(--lisn-scroll-to-top--bg, #{$scroll-to-top-bg});
-  width: var(--lisn_stt_sz);
-  height: var(--lisn_stt_sz);
-  border-radius: 50%;
-  border: none;
-  outline: none;
-  margin: 0;
-  padding: 0;
 
-  &[data-lisn-place="left"] {
-    left: var(--lisn_stt_mg);
+  /* Fixed position for the document element */
+  &[data-lisn-fixed="true"] {
+    position: fixed;
+    bottom: var(--lisn_stt_mg);
+    z-index: 99999;
+
+    &[data-lisn-place="left"] {
+      left: var(--lisn_stt_mg);
+    }
+
+    &[data-lisn-place="right"] {
+      right: var(--lisn_stt_mg);
+    }
   }
 
-  &[data-lisn-place="right"] {
-    right: var(--lisn_stt_mg);
+  /* Relatively positioned for a custom scrolling element. */
+  /* Make it full width and zero height (or full height, zero width in case of horizontal flexbox parent). Then position the button child absolutely inside. */
+  &[data-lisn-fixed="false"] {
+    align-self: stretch;
+    flex-basis: 0;
+    flex-grow: 0;
+    position: relative;
+
+    & .lisn-scroll-to-top__btn {
+      position: absolute;
+      bottom: var(--lisn_stt_mg);
+    }
+
+    &[data-lisn-place="left"] {
+      & .lisn-scroll-to-top__btn {
+        left: var(--lisn_stt_mg);
+      }
+    }
+
+    &[data-lisn-place="right"] {
+      & .lisn-scroll-to-top__btn {
+        right: var(--lisn_stt_mg);
+      }
+    }
+  }
+
+  &.lisn-scroll-to-top__btn,
+  & .lisn-scroll-to-top__btn {
+    box-sizing: border-box;
+    cursor: pointer;
+    background: var(--lisn-scroll-to-top--bg, #{$scroll-to-top-bg});
+    width: var(--lisn_stt_sz);
+    height: var(--lisn_stt_sz);
+    border-radius: 50%;
+    border: none;
+    outline: none;
+    margin: 0;
+    padding: 0;
   }
 
   & .lisn-arrow {

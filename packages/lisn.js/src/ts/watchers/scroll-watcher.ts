@@ -120,7 +120,7 @@ export class ScrollWatcher {
    * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
    *   or is `null`, `window` or `document`, the following CSS variables are
    *   set on the root (`html`) element and represent the scroll of the
-   *   {@link fetchMainScrollableElement}:
+   *   {@link settings.mainScrollableElementSelector | the main scrolling element}:
    *   - `--lisn-js--page-scroll-top`
    *   - `--lisn-js--page-scroll-top-fraction`
    *   - `--lisn-js--page-scroll-left`
@@ -198,7 +198,8 @@ export class ScrollWatcher {
    *               the target coordinates. If it is a string, then it is treated
    *               as a selector for an element using `querySelector`.
    * @param {} [options.scrollable]
-   *               If not given, it defaults to {@link fetchMainScrollableElement}
+   *               If not given, it defaults to
+   *               {@link settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * @return {} `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
@@ -212,7 +213,8 @@ export class ScrollWatcher {
    * Returns the current {@link ScrollAction} if any.
    *
    * @param {} scrollable
-   *               If not given, it defaults to {@link fetchMainScrollableElement}
+   *               If not given, it defaults to
+   *               {@link settings.mainScrollableElementSelector | the main scrolling element}
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -825,7 +827,8 @@ export type ScrollWatcherConfig = {
 export type OnScrollOptions = {
   /**
    * If it is not given, or is `null`, `window` or `document`, then it will
-   * track the scroll of the {@link ScrollWatcher.fetchMainScrollableElement}.
+   * track the scroll of the
+   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * Other values must be an `Element` and are taken literally.
    *

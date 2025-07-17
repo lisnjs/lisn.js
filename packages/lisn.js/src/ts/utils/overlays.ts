@@ -37,8 +37,8 @@ export type OverlayOptions = {
    * If not given, then:
    * - if the overlay is to have a `position: fixed`, then `document.body` is used
    * - otherwise,
-   *   {@link Watchers/ScrollWatcher.ScrollWatcher.fetchMainContentElement | ScrollWatcher.fetchMainContentElement} is
-   *   used
+   *   {@link settings.mainScrollableElementSelector | the main scrolling element}
+   *   is used
    */
   parent?: HTMLElement;
 

@@ -853,7 +853,7 @@ const init = (
   const switches = components._switches;
   const nextSwitch = components._nextPrevSwitch._next;
   const prevSwitch = components._nextPrevSwitch._prev;
-  const pageContainer = pages[0]?.parentElement;
+  const pageContainer = MH.parentOf(pages[0]);
 
   let initialPage = toInt(config?.initialPage ?? 1);
   const pagerStyle = config?.style ?? "slider";

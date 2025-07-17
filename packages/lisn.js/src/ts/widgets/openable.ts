@@ -327,9 +327,9 @@ export abstract class Openable extends Widget {
  */
 export type OpenableTriggerConfig = {
   /**
-   * The DOM ID of the trigger. Will result in the trigger element, which could
-   * be a wrapper around the original element (as in the case of
-   * {@link Collapsible} you passed, getting this ID.
+   * The DOM ID to set on the trigger. Will result in the trigger element, which
+   * could be a wrapper around the original element (as in the case of {@link
+   * Collapsible} you passed, getting this ID.
    *
    * **IMPORTANT:** If the trigger element already has an ID and is not being
    * wrapped, then this will override the ID and it _won't_ be restored on destroy.
@@ -413,16 +413,16 @@ export type OpenableProperties = {
   name: string;
 
   /**
-   * The DOM ID of the openable. Will result in the top-level root element
-   * that's created by us getting this ID.
+   * The DOM ID to set on the openable. Will result in the top-level root
+   * element that's created by us getting this ID.
    *
    * @defaultValue undefined
    */
   id?: string;
 
   /**
-   * Class name(s) or a list of class names of the openable. Will result in the
-   * top-level root element that's created by us getting these classes.
+   * Class name(s) or a list of class names to set on the openable. Will result
+   * in the top-level root element that's created by us getting these classes.
    *
    * @defaultValue undefined
    */
@@ -793,8 +793,8 @@ export class Collapsible extends Openable {
  */
 export type CollapsibleConfig = {
   /**
-   * The DOM ID of the collapsible. Will result in the top-level root element
-   * that's created by us getting this ID.
+   * The DOM ID to set on the collapsible. Will result in the top-level root
+   * element that's created by us getting this ID.
    *
    * Note, this does not replace or affect the
    * `data-lisn-collapsible-content-id` attribute used to link triggers to the
@@ -805,8 +805,9 @@ export type CollapsibleConfig = {
   id?: string;
 
   /**
-   * Class name(s) or a list of class names of the collapsible. Will result in
-   * the top-level root element that's created by us getting these classes.
+   * Class name(s) or a list of class names to set on the collapsible. Will
+   * result in the top-level root element that's created by us getting these
+   * classes.
    *
    * @defaultValue undefined
    */
@@ -1091,8 +1092,8 @@ export class Popup extends Openable {
  */
 export type PopupConfig = {
   /**
-   * The DOM ID of the popup. Will result in the top-level root element that's
-   * created by us getting this ID.
+   * The DOM ID to set on the popup. Will result in the top-level root element
+   * that's created by us getting this ID.
    *
    * Note, this does not replace or affect the `data-lisn-popup-content-id`
    * attribute used to link triggers to the popup.
@@ -1102,8 +1103,8 @@ export type PopupConfig = {
   id?: string;
 
   /**
-   * Class name(s) or a list of class names of the popup. Will result in the
-   * top-level root element that's created by us getting these classes.
+   * Class name(s) or a list of class names to set on the popup. Will result in
+   * the top-level root element that's created by us getting these classes.
    *
    * @defaultValue undefined
    */
@@ -1328,8 +1329,8 @@ export class Modal extends Openable {
  */
 export type ModalConfig = {
   /**
-   * The DOM ID of the modal. Will result in the top-level root element that's
-   * created by us getting this ID.
+   * The DOM ID to set on the modal. Will result in the top-level root element
+   * that's created by us getting this ID.
    *
    * Note, this does not replace or affect the `data-lisn-modal-content-id`
    * attribute used to link triggers to the modal.
@@ -1339,8 +1340,8 @@ export type ModalConfig = {
   id?: string;
 
   /**
-   * Class name(s) or a list of class names of the modal. Will result in the
-   * top-level root element that's created by us getting these classes.
+   * Class name(s) or a list of class names to set on the modal. Will result in
+   * the top-level root element that's created by us getting these classes.
    *
    * @defaultValue undefined
    */
@@ -1561,8 +1562,8 @@ export class Offcanvas extends Openable {
  */
 export type OffcanvasConfig = {
   /**
-   * The DOM ID of the offcanvas. Will result in the top-level root element
-   * that's created by us getting this ID.
+   * The DOM ID to set on the offcanvas. Will result in the top-level root
+   * element that's created by us getting this ID.
    *
    * Note, this does not replace or affect the `data-lisn-offcanvas-content-id`
    * attribute used to link triggers to the offcanvas.
@@ -1572,8 +1573,8 @@ export type OffcanvasConfig = {
   id?: string;
 
   /**
-   * Class name(s) or a list of class names of the offcanvas. Will result in
-   * the top-level root element that's created by us getting these classes.
+   * Class name(s) or a list of class names to set on the offcanvas. Will result
+   * in the top-level root element that's created by us getting these classes.
    *
    * @defaultValue undefined
    */

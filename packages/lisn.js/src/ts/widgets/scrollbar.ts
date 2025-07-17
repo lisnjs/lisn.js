@@ -218,18 +218,17 @@ export class Scrollbar extends Widget {
    * **NOTE:** It returns a Promise to a widget because it will wait for the
    * main scrollable element to be present in the DOM if not already.
    */
-  static enableMain(config?: ScrollbarConfig) {
-    return ScrollWatcher.fetchMainScrollableElement().then((main) => {
-      const widget = new Scrollbar(main, config);
-      widget.onDestroy(() => {
-        if (mainWidget === widget) {
-          mainWidget = null;
-        }
-      });
-
-      mainWidget = widget;
-      return widget;
+  static async enableMain(config?: ScrollbarConfig) {
+    const scrollable = await ScrollWatcher.fetchMainScrollableElement();
+    const widget = new Scrollbar(scrollable, config);
+    widget.onDestroy(() => {
+      if (mainWidget === widget) {
+        mainWidget = null;
+      }
     });
+
+    mainWidget = widget;
+    return widget;
   }
 
   static register() {
@@ -283,8 +282,8 @@ export class Scrollbar extends Widget {
  */
 export type ScrollbarConfig = {
   /**
-   * The DOM ID of the scrollable element. Will result in the scrollable wrapper
-   * element that's created by us getting this ID.
+   * The DOM ID to set on the scrollable element. Will result in the scrollable
+   * wrapper element that's created by us getting this ID.
    *
    * **IMPORTANT:** If you've disabled {@link settings.contentWrappingAllowed},
    * then the scrollable element provided as the widget element will _not_ have
@@ -297,8 +296,8 @@ export type ScrollbarConfig = {
   id?: string;
 
   /**
-   * A class name or a list of class names of the scrollable element. Will
-   * result in the scrollable wrapper element that's created by us getting
+   * A class name or a list of class names to set on the scrollable element.
+   * Will result in the scrollable wrapper element that's created by us getting
    * these classes.
    *
    * See explanation for {@link id}.
@@ -388,8 +387,6 @@ const WIDGET_NAME = "scrollbar";
 const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
 // Only one Scrollbar widget per element is allowed, but Widget
 // requires a non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 const PREFIX_CONTAINER = `${PREFIXED_NAME}__container`;

@@ -196,8 +196,6 @@ const PREFIX_FLOATING_CLONE = `${PREFIXED_NAME}__ghost`;
 
 // Only one Sortable widget per element is allowed, but Widget requires a
 // non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
 const configValidator = {
   mode: (key, value) => validateString(key, value, v => v === "swap" || v === "move")

@@ -17580,17 +17580,16 @@
      * **NOTE:** It returns a Promise to a widget because it will wait for the
      * main scrollable element to be present in the DOM if not already.
      */
-    static enableMain(config) {
-      return ScrollWatcher.fetchMainScrollableElement().then(main => {
-        const widget = new Scrollbar(main, config);
-        widget.onDestroy(() => {
-          if (mainWidget$1 === widget) {
-            mainWidget$1 = null;
-          }
-        });
-        mainWidget$1 = widget;
-        return widget;
+    static async enableMain(config) {
+      const scrollable = await ScrollWatcher.fetchMainScrollableElement();
+      const widget = new Scrollbar(scrollable, config);
+      widget.onDestroy(() => {
+        if (mainWidget$1 === widget) {
+          mainWidget$1 = null;
+        }
       });
+      mainWidget$1 = widget;
+      return widget;
     }
     static register() {
       registerWidget(WIDGET_NAME$6, (element, config) => {
@@ -17640,8 +17639,6 @@
   const PREFIXED_NAME$2 = prefixName(WIDGET_NAME$6);
   // Only one Scrollbar widget per element is allowed, but Widget
   // requires a non-blank ID.
-  // In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-  // on the whole page, but we support it, hence use a class rather than a DOM ID.
   const DUMMY_ID$6 = PREFIXED_NAME$2;
   const PREFIX_ROOT$1 = `${PREFIXED_NAME$2}__root`;
   const PREFIX_CONTAINER = `${PREFIXED_NAME$2}__container`;
@@ -18411,8 +18408,6 @@
   const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
   // Only one ScrollToTop widget per element is allowed, but Widget requires a
   // non-blank ID.
-  // In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-  // on the whole page, but we support it, hence use a class rather than a DOM ID.
   const DUMMY_ID$5 = PREFIXED_NAME$1;
   const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
   const PREFIX_BTN = `${PREFIXED_NAME$1}__btn`;
@@ -18613,8 +18608,6 @@
 
   // Only one Sortable widget per element is allowed, but Widget requires a
   // non-blank ID.
-  // In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-  // on the whole page, but we support it, hence use a class rather than a DOM ID.
   const DUMMY_ID$4 = PREFIXED_NAME;
   const configValidator$2 = {
     mode: (key, value) => validateString(key, value, v => v === "swap" || v === "move")

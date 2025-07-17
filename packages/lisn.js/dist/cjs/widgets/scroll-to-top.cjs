@@ -316,8 +316,6 @@ const WIDGET_NAME = "scroll-to-top";
 const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
 // Only one ScrollToTop widget per element is allowed, but Widget requires a
 // non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 const PREFIX_BTN = `${PREFIXED_NAME}__btn`;

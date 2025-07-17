@@ -140,8 +140,8 @@ export declare class Scrollbar extends Widget {
  */
 export type ScrollbarConfig = {
     /**
-     * The DOM ID of the scrollable element. Will result in the scrollable wrapper
-     * element that's created by us getting this ID.
+     * The DOM ID to set on the scrollable element. Will result in the scrollable
+     * wrapper element that's created by us getting this ID.
      *
      * **IMPORTANT:** If you've disabled {@link settings.contentWrappingAllowed},
      * then the scrollable element provided as the widget element will _not_ have
@@ -153,8 +153,8 @@ export type ScrollbarConfig = {
      */
     id?: string;
     /**
-     * A class name or a list of class names of the scrollable element. Will
-     * result in the scrollable wrapper element that's created by us getting
+     * A class name or a list of class names to set on the scrollable element.
+     * Will result in the scrollable wrapper element that's created by us getting
      * these classes.
      *
      * See explanation for {@link id}.

@@ -11470,7 +11470,7 @@ class SetAttribute {
       return new SetAttribute(element, {
         [args[0]]: config || {}
       });
-    }, configValidator$7);
+    }, configValidator$8);
   }
   constructor(element, attributes) {
     if (!attributes) {
@@ -11512,7 +11512,7 @@ class SetAttribute {
 
 // --------------------
 
-const configValidator$7 = {
+const configValidator$8 = {
   on: validateString,
   off: validateString
 };
@@ -13596,7 +13596,7 @@ class Pager extends Widget {
         return new Pager(element, config);
       }
       return null;
-    }, configValidator$6);
+    }, configValidator$7);
   }
 
   /**
@@ -13736,7 +13736,7 @@ const VAR_PAGE_NUMBER = prefixCssJsVar(S_PAGE_NUMBER);
 const DUMMY_ID$9 = PREFIXED_NAME$5;
 const SUPPORTED_STYLES = ["slider", "carousel", "tabs"];
 const isValidStyle = value => includes(SUPPORTED_STYLES, value);
-const configValidator$6 = {
+const configValidator$7 = {
   initialPage: validateNumber,
   style: (key, value) => validateString(key, value, isValidStyle),
   pageSize: validateNumber,
@@ -15895,7 +15895,7 @@ class PageLoader extends Widget {
         return new PageLoader(element, config);
       }
       return null;
-    }, configValidator$5);
+    }, configValidator$6);
   }
 
   /**
@@ -15977,7 +15977,7 @@ const PREFIX_SPINNER = prefixName("spinner");
 // whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID$8 = PREFIXED_NAME$4;
 let mainWidget$2 = null;
-const configValidator$5 = {
+const configValidator$6 = {
   autoRemove: validateBoolean
 };
 
@@ -16167,7 +16167,7 @@ class SameHeight extends Widget {
         logError(usageError("Only HTMLElement is supported for SameHeight widget"));
       }
       return null;
-    }, configValidator$4);
+    }, configValidator$5);
   }
   constructor(containerElement, config) {
     var _SameHeight$get;
@@ -16224,7 +16224,7 @@ const DUMMY_ID$7 = PREFIXED_NAME$3;
 // We consider elements that have text content of at least <MIN_CHARS_FOR_TEXT>
 // characters to be text.
 const MIN_CHARS_FOR_TEXT = 100;
-const configValidator$4 = {
+const configValidator$5 = {
   diffTolerance: validateNumber,
   resizeThreshold: validateNumber,
   [S_DEBOUNCE_WINDOW]: validateNumber,
@@ -16759,7 +16759,7 @@ class Scrollbar extends Widget {
         logError(usageError("Only HTMLElement is supported for Scrollbar widget"));
       }
       return null;
-    }, configValidator$3);
+    }, configValidator$4);
   }
 
   /**
@@ -16818,7 +16818,7 @@ const S_RELEASE_POINTER_CAPTURE = "releasePointerCapture";
 const S_ARIA_VALUENOW = ARIA_PREFIX + "valuenow";
 const S_SCROLLBAR = "scrollbar";
 let mainWidget$1 = null;
-const configValidator$3 = {
+const configValidator$4 = {
   id: validateString,
   className: validateStrList,
   hideNative: validateBoolean,
@@ -17686,7 +17686,7 @@ class Sortable extends Widget {
         return new Sortable(element, config);
       }
       return null;
-    }, configValidator$2);
+    }, configValidator$3);
   }
 
   /**
@@ -17748,7 +17748,7 @@ const PREFIX_FLOATING_CLONE = `${PREFIXED_NAME}__ghost`;
 // Only one Sortable widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID$4 = PREFIXED_NAME;
-const configValidator$2 = {
+const configValidator$3 = {
   mode: (key, value) => validateString(key, value, v => v === "swap" || v === "move")
 };
 const touchMoveOptions = {
@@ -18000,7 +18000,7 @@ class TrackGesture extends Widget {
         return new TrackGesture(element, config);
       }
       return null;
-    }, configValidator$1);
+    }, configValidator$2);
   }
   constructor(element, config) {
     super(element, {
@@ -18029,7 +18029,7 @@ const WIDGET_NAME$3 = "track-gesture";
 // Only one TrackGesture widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID$3 = WIDGET_NAME$3;
-const configValidator$1 = {
+const configValidator$2 = {
   preventDefault: validateBoolean,
   minDeltaX: validateNumber,
   maxDeltaX: validateNumber,
@@ -18065,6 +18065,13 @@ const configValidator$1 = {
  * ```html
  * <div class="lisn-track-scroll"></div>
  * ```
+ *
+ * @example
+ * As above but with custom options
+ *
+ * ```html
+ * <div data-lisn-track-scroll="threshold=0 | debounce-window=0"></div>
+ * ```
  */
 class TrackScroll extends Widget {
   static get(element) {
@@ -18080,7 +18087,7 @@ class TrackScroll extends Widget {
         return new TrackScroll(element, config);
       }
       return null;
-    }, configValidator);
+    }, configValidator$1);
   }
   constructor(element, config) {
     super(element, {
@@ -18103,7 +18110,7 @@ const WIDGET_NAME$2 = "track-scroll";
 // Only one TrackScroll widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID$2 = WIDGET_NAME$2;
-const configValidator = {
+const configValidator$1 = {
   threshold: validateNumber,
   debounceWindow: validateNumber
 };
@@ -18139,6 +18146,13 @@ const configValidator = {
  * ```html
  * <div class="lisn-track-size"></div>
  * ```
+ *
+ * @example
+ * As above but with custom options
+ *
+ * ```html
+ * <div data-lisn-track-size="threshold=0 | debounce-window=0"></div>
+ * ```
  */
 class TrackSize extends Widget {
   static get(element) {
@@ -18149,24 +18163,27 @@ class TrackSize extends Widget {
     return null;
   }
   static register() {
-    registerWidget(WIDGET_NAME$1, element => {
+    registerWidget(WIDGET_NAME$1, (element, config) => {
       if (!TrackSize.get(element)) {
-        return new TrackSize(element);
+        return new TrackSize(element, config);
       }
       return null;
-    });
+    }, configValidator);
   }
-  constructor(element) {
+  constructor(element, config) {
     super(element, {
       id: DUMMY_ID$1
     });
-    SizeWatcher.reuse().trackSize(null, {
-      target: element,
-      threshold: 0
-    });
+    SizeWatcher.reuse().trackSize(null, assign({
+      target: element
+    }, config));
     this.onDestroy(() => SizeWatcher.reuse().noTrackSize(null, element));
   }
 }
+
+/**
+ * @interface
+ */
 
 // --------------------
 
@@ -18174,6 +18191,10 @@ const WIDGET_NAME$1 = "track-size";
 // Only one TrackSize widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID$1 = WIDGET_NAME$1;
+const configValidator = {
+  threshold: validateNumber,
+  debounceWindow: validateNumber
+};
 
 /**
  * @module Widgets
@@ -18216,7 +18237,10 @@ const DUMMY_ID$1 = WIDGET_NAME$1;
  * <div id="myRoot"></div>
  * <div data-lisn-track-view="root=#myRoot
  *                            | root-margin=100px,50px
- *                            | threshold=0,0.5"
+ *                            | threshold=0,0.5
+ *                            | debounce-window=0
+ *                            | resize-threshold=0
+ *                            | scroll-threshold=0"
  * ></div>
  * ```
  */

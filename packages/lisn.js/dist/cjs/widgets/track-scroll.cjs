@@ -34,6 +34,13 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  * ```html
  * <div class="lisn-track-scroll"></div>
  * ```
+ *
+ * @example
+ * As above but with custom options
+ *
+ * ```html
+ * <div data-lisn-track-scroll="threshold=0 | debounce-window=0"></div>
+ * ```
  */
 class TrackScroll extends _widget.Widget {
   static get(element) {

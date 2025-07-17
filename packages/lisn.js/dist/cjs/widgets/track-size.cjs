@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.TrackSize = void 0;
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
+var _validation = require("../utils/validation.cjs");
 var _sizeWatcher = require("../watchers/size-watcher.cjs");
 var _widget = require("./widget.cjs");
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
@@ -38,6 +39,13 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  * ```html
  * <div class="lisn-track-size"></div>
  * ```
+ *
+ * @example
+ * As above but with custom options
+ *
+ * ```html
+ * <div data-lisn-track-size="threshold=0 | debounce-window=0"></div>
+ * ```
  */
 class TrackSize extends _widget.Widget {
   static get(element) {
@@ -48,29 +56,36 @@ class TrackSize extends _widget.Widget {
     return null;
   }
   static register() {
-    (0, _widget.registerWidget)(WIDGET_NAME, element => {
+    (0, _widget.registerWidget)(WIDGET_NAME, (element, config) => {
       if (!TrackSize.get(element)) {
-        return new TrackSize(element);
+        return new TrackSize(element, config);
       }
       return null;
-    });
+    }, configValidator);
   }
-  constructor(element) {
+  constructor(element, config) {
     super(element, {
       id: DUMMY_ID
     });
-    _sizeWatcher.SizeWatcher.reuse().trackSize(null, {
-      target: element,
-      threshold: 0
-    });
+    _sizeWatcher.SizeWatcher.reuse().trackSize(null, MH.assign({
+      target: element
+    }, config));
     this.onDestroy(() => _sizeWatcher.SizeWatcher.reuse().noTrackSize(null, element));
   }
 }
 
-// --------------------
+/**
+ * @interface
+ */
 exports.TrackSize = TrackSize;
+// --------------------
+
 const WIDGET_NAME = "track-size";
 // Only one TrackSize widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID = WIDGET_NAME;
+const configValidator = {
+  threshold: _validation.validateNumber,
+  debounceWindow: _validation.validateNumber
+};
 //# sourceMappingURL=track-size.cjs.map

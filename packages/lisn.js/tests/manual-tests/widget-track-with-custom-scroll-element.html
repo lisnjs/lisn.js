@@ -49,7 +49,11 @@
   <body>
     <div
       id="content"
-      class="lisn-track-view lisn-track-size lisn-track-scroll"
+      data-lisn-track-scroll="threshold=0 | debounce-window=0"
+      data-lisn-track-size="threshold=0 | debounce-window=0"
+      data-lisn-track-view="debounce-window=0
+                            | resize-threshold=0
+                            | scroll-threshold=0"
       data-lisn-track-gesture="prevent-default=false"
     >
       <div class="spacer"></div>
@@ -57,7 +61,12 @@
         Toggle extra content element
       </button>
       <div
-        class="box lisn-track-view lisn-track-size lisn-track-scroll"
+        class="box"
+        data-lisn-track-scroll="threshold=0 | debounce-window=0"
+        data-lisn-track-size="threshold=0 | debounce-window=0"
+        data-lisn-track-view="debounce-window=0
+                              | resize-threshold=0
+                              | scroll-threshold=0"
         data-lisn-track-gesture="prevent-default=false"
       >
         <div class="lisn-wrapper">

@@ -4,9 +4,15 @@
 
 import * as MH from "@lisn/globals/minification-helpers";
 
+import { validateNumber } from "@lisn/utils/validation";
+
 import { SizeWatcher } from "@lisn/watchers/size-watcher";
 
-import { Widget, registerWidget } from "@lisn/widgets/widget";
+import {
+  Widget,
+  WidgetConfigValidatorObject,
+  registerWidget,
+} from "@lisn/widgets/widget";
 
 /**
  * This is a simple wrapper around the {@link SizeWatcher}. If you are using
@@ -34,6 +40,13 @@ import { Widget, registerWidget } from "@lisn/widgets/widget";
  * ```html
  * <div class="lisn-track-size"></div>
  * ```
+ *
+ * @example
+ * As above but with custom options
+ *
+ * ```html
+ * <div data-lisn-track-size="threshold=0 | debounce-window=0"></div>
+ * ```
  */
 export class TrackSize extends Widget {
   static get(element: Element): TrackSize | null {
@@ -45,25 +58,55 @@ export class TrackSize extends Widget {
   }
 
   static register() {
-    registerWidget(WIDGET_NAME, (element) => {
-      if (!TrackSize.get(element)) {
-        return new TrackSize(element);
-      }
-      return null;
-    });
+    registerWidget(
+      WIDGET_NAME,
+      (element, config) => {
+        if (!TrackSize.get(element)) {
+          return new TrackSize(element, config);
+        }
+        return null;
+      },
+      configValidator,
+    );
   }
 
-  constructor(element: Element) {
+  constructor(element: Element, config?: TrackSizeConfig) {
     super(element, { id: DUMMY_ID });
 
-    SizeWatcher.reuse().trackSize(null, {
-      target: element,
-      threshold: 0,
-    });
+    SizeWatcher.reuse().trackSize(
+      null,
+      MH.assign(
+        {
+          target: element,
+        },
+        config,
+      ),
+    );
 
     this.onDestroy(() => SizeWatcher.reuse().noTrackSize(null, element));
   }
 }
+
+/**
+ * @interface
+ */
+export type TrackSizeConfig = {
+  /**
+   * Corresponds to
+   * {@link Watchers/SizeWatcher.OnResizeOptions.threshold | OnResizeOptions.threshold}.
+   *
+   * @defaultValue undefined // SizeWatcher default
+   */
+  threshold?: number;
+
+  /**
+   * Corresponds to
+   * {@link Watchers/SizeWatcher.OnResizeOptions.debounceWindow | OnResizeOptions.debounceWindow}.
+   *
+   * @defaultValue undefined // SizeWatcher default
+   */
+  debounceWindow?: number;
+};
 
 // --------------------
 
@@ -71,3 +114,8 @@ const WIDGET_NAME = "track-size";
 // Only one TrackSize widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID = WIDGET_NAME;
+
+const configValidator: WidgetConfigValidatorObject<TrackSizeConfig> = {
+  threshold: validateNumber,
+  debounceWindow: validateNumber,
+};

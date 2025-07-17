@@ -290,7 +290,7 @@ exports.getWrapper = getWrapper;
 const getContentWrapper = (element, options) => {
   const {
     tagName,
-    className = MC.PREFIX_CONTENT_WRAPPER
+    className = MC.PREFIX_WRAPPER
   } = options !== null && options !== void 0 ? options : {};
   const firstChild = MH.childrenOf(element)[0];
   if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (!tagName || MH.toLowerCase(MH.tagName(firstChild)) === MH.toLowerCase(tagName)) && (!className || (0, _cssAlter.hasClass)(firstChild, className))) {
@@ -452,7 +452,7 @@ const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its 
 ) => {
   const {
     tagName,
-    className = wrapContent ? MC.PREFIX_CONTENT_WRAPPER : MC.PREFIX_WRAPPER,
+    className = MC.PREFIX_WRAPPER,
     ignoreMove = true,
     required = false,
     requiredBy = ""

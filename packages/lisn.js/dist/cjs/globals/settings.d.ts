@@ -97,12 +97,13 @@ export declare const settings: {
      *
      * ----------
      *
-     * If you can, it's recommended to leave this setting ON. You can still
-     * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
-     * attribute on it.
-     *
      * **IMPORTANT:** Certain widgets always require wrapping of elements or their
      * children. This setting only applies in cases where wrapping is optional.
+     * If you can, it's recommended to leave this setting ON. You can still try to
+     * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
+     * attribute on it. Alternatively, if the elements that need wrapping are
+     * already wrapped in an element with a class `lisn-wrapper`, this will be
+     * used as the wrapper.
      *
      * @defaultValue true
      * @category Generic

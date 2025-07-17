@@ -95,7 +95,6 @@ export declare const S_ROLE = "role";
 export declare const ARIA_PREFIX = "aria-";
 export declare const S_ARIA_CONTROLS: string;
 export declare const PREFIX_WRAPPER = "lisn-wrapper";
-export declare const PREFIX_CONTENT_WRAPPER = "lisn-content-wrapper";
 export declare const PREFIX_INLINE_WRAPPER = "lisn-wrapper-inline";
 export declare const PREFIX_TRANSITION = "lisn-transition";
 export declare const PREFIX_TRANSITION_DISABLE = "lisn-transition__disable";

@@ -84,7 +84,6 @@ var LISN = (function (exports) {
   const S_ATTRIBUTES = "attributes";
   const S_CHILD_LIST = "childList";
   const PREFIX_WRAPPER = `${PREFIX}-wrapper`;
-  const PREFIX_CONTENT_WRAPPER = `${PREFIX}-content-wrapper`;
   const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER}-inline`;
   const PREFIX_NO_SELECT = `${PREFIX}-no-select`;
   const PREFIX_NO_TOUCH_ACTION = `${PREFIX}-no-touch-action`;
@@ -385,17 +384,20 @@ var LISN = (function (exports) {
      *
      * ----------
      *
-     * If you can, it's recommended to leave this setting ON. You can still
-     * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
-     * attribute on it.
-     *
      * **IMPORTANT:** Certain widgets always require wrapping of elements or their
      * children. This setting only applies in cases where wrapping is optional.
+     * If you can, it's recommended to leave this setting ON. You can still try to
+     * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
+     * attribute on it. Alternatively, if the elements that need wrapping are
+     * already wrapped in an element with a class `lisn-wrapper`, this will be
+     * used as the wrapper.
      *
      * @defaultValue true
      * @category Generic
      */
     contentWrappingAllowed: true,
+    // [TODO v2] rename this setting
+
     /**
      * The timeout in milliseconds for waiting for the `document.readyState` to
      * become `complete`. The timer begins _once the `readyState` becomes
@@ -2244,7 +2246,7 @@ var LISN = (function (exports) {
   const getContentWrapper = (element, options) => {
     const {
       tagName: tagName$1,
-      className = PREFIX_CONTENT_WRAPPER
+      className = PREFIX_WRAPPER
     } = options !== null && options !== void 0 ? options : {};
     const firstChild = childrenOf(element)[0];
     if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName$1 || toLowerCase(tagName(firstChild)) === toLowerCase(tagName$1)) && (!className || hasClass(firstChild, className))) {
@@ -2311,7 +2313,7 @@ var LISN = (function (exports) {
   ) => {
     const {
       tagName: tagName$1,
-      className = wrapContent ? PREFIX_CONTENT_WRAPPER : PREFIX_WRAPPER,
+      className = PREFIX_WRAPPER,
       ignoreMove = true,
       required = false,
       requiredBy = ""

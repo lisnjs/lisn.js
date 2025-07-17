@@ -359,7 +359,7 @@ export const getWrapper = (
   element: Element,
   options?: {
     tagName?: keyof HTMLElementTagNameMap;
-    className?: string; // default is PREFIX_WRAPPER
+    className?: string;
   },
 ) => {
   const { tagName, className = MC.PREFIX_WRAPPER } = options ?? {};
@@ -386,10 +386,10 @@ export const getContentWrapper = (
   element: Element,
   options?: {
     tagName?: keyof HTMLElementTagNameMap;
-    className?: string; // default is PREFIX_CONTENT_WRAPPER
+    className?: string;
   },
 ) => {
-  const { tagName, className = MC.PREFIX_CONTENT_WRAPPER } = options ?? {};
+  const { tagName, className = MC.PREFIX_WRAPPER } = options ?? {};
   const firstChild = MH.childrenOf(element)[0];
   if (
     MH.lengthOf(MH.childrenOf(element)) === 1 &&
@@ -597,7 +597,7 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
 ) => {
   const {
     tagName,
-    className = wrapContent ? MC.PREFIX_CONTENT_WRAPPER : MC.PREFIX_WRAPPER,
+    className = MC.PREFIX_WRAPPER,
     ignoreMove = true,
     required = false,
     requiredBy = "",

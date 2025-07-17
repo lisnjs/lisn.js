@@ -235,7 +235,7 @@ const setupRepresentative = async element => {
     const prev = element.previousElementSibling;
     const prevChild = MH.childrenOf(prev)[0];
     if (prev && (0, _cssAlter.hasClass)(prev, MC.PREFIX_WRAPPER) && prevChild && (0, _cssAlter.hasClass)(prevChild, MC.PREFIX_GHOST)) {
-      // Done by a previous animate action?
+      // Already cloned by a previous animate action?
       target = prevChild;
     } else {
       target = (await (0, _domAlter.insertGhostClone)(element))._clone;

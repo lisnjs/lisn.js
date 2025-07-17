@@ -135,7 +135,6 @@ export const ARIA_PREFIX = "aria-";
 export const S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
 
 export const PREFIX_WRAPPER = `${PREFIX}-wrapper`;
-export const PREFIX_CONTENT_WRAPPER = `${PREFIX}-content-wrapper`;
 export const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER}-inline`;
 export const PREFIX_TRANSITION = `${PREFIX}-transition`;
 export const PREFIX_TRANSITION_DISABLE = `${PREFIX_TRANSITION}__disable`;

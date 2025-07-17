@@ -324,7 +324,7 @@ const setupRepresentative = async (element: Element): Promise<Element> => {
       prevChild &&
       hasClass(prevChild, MC.PREFIX_GHOST)
     ) {
-      // Done by a previous animate action?
+      // Already cloned by a previous animate action?
       target = prevChild;
     } else {
       target = (await insertGhostClone(element))._clone;

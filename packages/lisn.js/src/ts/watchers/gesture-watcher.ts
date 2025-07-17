@@ -15,7 +15,7 @@ import {
 import {
   addClasses,
   removeClasses,
-  setNumericStyleProps,
+  setNumericStyleJsVars,
 } from "@lisn/utils/css-alter";
 import { isValidDirection } from "@lisn/utils/directions";
 import {
@@ -1166,7 +1166,7 @@ const setGestureCssProps = (
   const prefix = `${intent}-`;
 
   if (intent === MC.S_ZOOM) {
-    setNumericStyleProps(
+    setNumericStyleJsVars(
       target,
       {
         deltaZ: data.totalDeltaZ,
@@ -1177,7 +1177,7 @@ const setGestureCssProps = (
       },
     ); // don't await here
   } else {
-    setNumericStyleProps(
+    setNumericStyleJsVars(
       target,
       {
         deltaX: data.totalDeltaX,

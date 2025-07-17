@@ -718,7 +718,7 @@ export const copyStyle = async (
  * @ignore
  * @internal
  */
-export const setNumericStyleProps = async (
+export const setNumericStyleJsVars = async (
   element: Element,
   props: CssNumericProps,
   options: {

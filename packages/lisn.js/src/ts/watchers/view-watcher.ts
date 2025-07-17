@@ -12,7 +12,7 @@ import {
   CommaSeparatedStr,
 } from "@lisn/globals/types";
 
-import { setNumericStyleProps } from "@lisn/utils/css-alter";
+import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { waitForInteractive } from "@lisn/utils/dom-events";
 import {
   waitForMeasureTime,
@@ -1100,7 +1100,7 @@ const setViewCssProps = (
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle,
   };
-  setNumericStyleProps(element, props, { _prefix: "r-", _numDecimal: 4 }); // don't await here
+  setNumericStyleJsVars(element, props, { _prefix: "r-", _numDecimal: 4 }); // don't await here
 };
 
 const fetchElement = async (

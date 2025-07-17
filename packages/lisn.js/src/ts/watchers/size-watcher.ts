@@ -7,7 +7,7 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { Box, Dimension, Size, SizeTarget } from "@lisn/globals/types";
 
-import { setNumericStyleProps } from "@lisn/utils/css-alter";
+import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { logError } from "@lisn/utils/log";
 import { toNonNegNum } from "@lisn/utils/math";
 import {
@@ -600,7 +600,7 @@ const setSizeCssProps = (
     contentWidth: sizeData?.content[MC.S_WIDTH],
     contentHeight: sizeData?.content[MC.S_HEIGHT],
   };
-  setNumericStyleProps(element, props, { _prefix: prefix }); // don't await here
+  setNumericStyleJsVars(element, props, { _prefix: prefix }); // don't await here
 };
 
 const fetchElement = async (

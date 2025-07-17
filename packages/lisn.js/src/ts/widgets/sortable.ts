@@ -13,7 +13,7 @@ import {
   unsetBooleanData,
   delData,
   copyStyle,
-  setNumericStyleProps,
+  setNumericStyleJsVars,
 } from "@lisn/utils/css-alter";
 import { moveElement, swapElements, cloneElement } from "@lisn/utils/dom-alter";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
@@ -387,7 +387,7 @@ const init = (
         }
 
         if (floatingClone) {
-          setNumericStyleProps(
+          setNumericStyleJsVars(
             floatingClone,
             {
               clientX: clientX - grabOffset[0],

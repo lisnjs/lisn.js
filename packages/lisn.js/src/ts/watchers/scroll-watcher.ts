@@ -14,7 +14,7 @@ import {
   CommaSeparatedStr,
 } from "@lisn/globals/types";
 
-import { setNumericStyleProps } from "@lisn/utils/css-alter";
+import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { getMaxDeltaDirection } from "@lisn/utils/directions";
 import { moveElement, tryWrapContent } from "@lisn/utils/dom-alter";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
@@ -1164,7 +1164,7 @@ const setScrollCssProps = (
     [MC.S_SCROLL_WIDTH]: scrollData[MC.S_SCROLL_WIDTH],
     [MC.S_SCROLL_HEIGHT]: scrollData[MC.S_SCROLL_HEIGHT],
   };
-  setNumericStyleProps(element, props, { _prefix: prefix });
+  setNumericStyleJsVars(element, props, { _prefix: prefix });
 };
 
 const getEventTarget = (element: Element): ScrollTarget => {

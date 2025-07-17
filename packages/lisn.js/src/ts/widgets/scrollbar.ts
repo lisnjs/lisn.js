@@ -29,7 +29,7 @@ import {
   getComputedStyleProp,
   getComputedStylePropNow,
   setStyleProp,
-  setNumericStyleProps,
+  setNumericStyleJsVars,
 } from "@lisn/utils/css-alter";
 import {
   moveElementNow,
@@ -613,7 +613,7 @@ const init = (
       MH.round(completeFraction * 100) + "",
     );
 
-    setNumericStyleProps(
+    setNumericStyleJsVars(
       scrollbar,
       { viewFr: viewFraction, completeFr: completeFraction },
       { _numDecimal: 4 },
@@ -646,7 +646,7 @@ const init = (
 
   const updatePropsOnResize = (target: Element, sizeData: SizeData) => {
     setBoxMeasureProps(containerElement);
-    setNumericStyleProps(
+    setNumericStyleJsVars(
       containerElement,
       { barHeight: sizeData.border[MC.S_HEIGHT] },
       { _units: "px", _numDecimal: 2 },

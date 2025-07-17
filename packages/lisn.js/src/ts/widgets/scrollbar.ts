@@ -48,7 +48,7 @@ import {
   preventSelect,
 } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
-import { toArrayIfSingle } from "@lisn/utils/misc";
+import { toArrayIfSingle, supportsSticky } from "@lisn/utils/misc";
 import {
   isScrollable,
   getDefaultScrollingElement,
@@ -455,20 +455,29 @@ const getScrollableProps = (containerElement: HTMLElement) => {
 
   let contentWrapper: HTMLElement | null = null;
   let scrollable = root;
+  let supported = true;
   if (!isMainScrollable && !isBody && allowedToWrap) {
     if (allowedToWrap) {
       contentWrapper = MH.createElement("div");
       scrollable = contentWrapper;
-    } else {
+    } else if (supportsSticky()) {
       logWarn(
         "Scrollbar on elements other than the main scrollable " +
           "when settings.contentWrappingAllowed is false relies on " +
           "position: sticky, is experimental and may not work properly",
       );
+    } else {
+      logError(
+        "Scrollbar on elements other than the main scrollable " +
+          "when settings.contentWrappingAllowed is false relies on " +
+          "position: sticky, but this browser does not support sticky.",
+      );
+      supported = false;
     }
   }
 
   return {
+    supported,
     isMainScrollable,
     isBody,
     isBodyInQuirks,
@@ -488,6 +497,7 @@ const init = (
   config: ScrollbarConfig | undefined,
 ) => {
   const {
+    supported,
     isMainScrollable,
     isBody,
     isBodyInQuirks,
@@ -818,6 +828,11 @@ const init = (
 
   // SETUP ------------------------------
 
+  if (!supported) {
+    setNativeShown();
+    return;
+  }
+
   if (!isMainScrollable && !isBody) {
     addClasses(containerElement, PREFIX_CONTAINER);
   }
@@ -826,11 +841,11 @@ const init = (
 
   // Wrap children if needed
   if (contentWrapper) {
-    addClasses(contentWrapper, PREFIX_CONTENT);
     wrapChildren(containerElement, {
       wrapper: contentWrapper,
       ignoreMove: true,
     }); // no need to await here
+    addClasses(contentWrapper, PREFIX_CONTENT);
 
     setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
     setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, hasVScroll);

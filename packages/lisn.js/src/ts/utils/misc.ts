@@ -11,6 +11,9 @@ import { roundNumTo } from "@lisn/utils/math";
 export const isTouchScreen = () =>
   MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
 
+export const supportsSticky = () =>
+  MH.hasDOM() ? !!CSS?.supports?.("position", "sticky") : false;
+
 export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {

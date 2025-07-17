@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.03% </span>
+                <span class="strong">96.15% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>97/101</span>
+                <span class='fraction'>100/104</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.88% </span>
+                <span class="strong">86.11% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>24/27</span>
+                <span class='fraction'>31/36</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96% </span>
+                <span class="strong">96.11% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>96/100</span>
+                <span class='fraction'>99/103</span>
             </div>
         
             
@@ -464,7 +464,19 @@
 <a name='L399'></a><a href='#L399'>399</a>
 <a name='L400'></a><a href='#L400'>400</a>
 <a name='L401'></a><a href='#L401'>401</a>
-<a name='L402'></a><a href='#L402'>402</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L402'></a><a href='#L402'>402</a>
+<a name='L403'></a><a href='#L403'>403</a>
+<a name='L404'></a><a href='#L404'>404</a>
+<a name='L405'></a><a href='#L405'>405</a>
+<a name='L406'></a><a href='#L406'>406</a>
+<a name='L407'></a><a href='#L407'>407</a>
+<a name='L408'></a><a href='#L408'>408</a>
+<a name='L409'></a><a href='#L409'>409</a>
+<a name='L410'></a><a href='#L410'>410</a>
+<a name='L411'></a><a href='#L411'>411</a>
+<a name='L412'></a><a href='#L412'>412</a>
+<a name='L413'></a><a href='#L413'>413</a>
+<a name='L414'></a><a href='#L414'>414</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -474,6 +486,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">92x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -723,15 +736,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -841,8 +867,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">92x</span>
 <span class="cline-any cline-yes">92x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">92x</span>
@@ -886,6 +910,7 @@ import {
   setDataNow,
   setBooleanDataNow,
   delDataNow,
+  getParentFlexDirection,
 } from "@lisn/utils/css-alter";
 import {
   replaceElementNow,
@@ -923,8 +948,8 @@ import {
  * **IMPORTANT:** When configuring an existing element as the button (i.e. using
  * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
  * - if using
- *   {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector},
- *   the button element will have it's CSS position set to `fixed`;
+ *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+ *   as the scrollable, the button element will have it's CSS position set to `fixed`;
  * - otherwise, if using a custom scrollable element, the button element may be
  *   moved in the DOM tree in order to position it on top of the scrollable
  * If you don't want the button element changed in any way, then consider using
@@ -1122,28 +1147,41 @@ export class ScrollToTop extends Widget {
 &nbsp;
     // SETUP ------------------------------
 &nbsp;
-    (destroyPromise || MH.promiseResolve()).then(waitForMutateTime).then(() =&gt; {
+    (destroyPromise || MH.promiseResolve()).then(async () =&gt; {
+      const flexDirection = scrollable
+        ? await getParentFlexDirection(scrollable)
+        : null;
+&nbsp;
+      await waitForMutateTime();
       if (this.isDestroyed()) {
         return;
       }
 &nbsp;
       if (hasCustomScrollable) {
         // Add a placeholder to restore its position on destroy.
-        // Then move it to immediately after the scrollable.
         placeholder = MH.createElement("div");
         moveElementNow(placeholder, {
           to: element,
           position: "before",
           ignoreMove: true,
         });
+&nbsp;
+        // Then move it to immediately after the scrollable.
+        // If the parent is a horizontal flexbox and position is left, then
+        // we need to insert it before the scrollable.
+        const shouldInsertBefore =
+          flexDirection === "column-reverse" ||
+          (position === MC.S_LEFT &amp;&amp; <span class="branch-2 cbranch-no" title="branch not covered" >flexDirection === "row")</span> ||
+          (position === MC.S_RIGHT &amp;&amp; flexDirection === "row-reverse");
+&nbsp;
         moveElementNow(element, {
           to: scrollable,
-          position: "after",
+          position: shouldInsertBefore ? <span class="branch-0 cbranch-no" title="branch not covered" >"before" </span>: "after",
           ignoreMove: true,
         });
 &nbsp;
         // Wrap the button.
-        root = wrapElementNow(element, { ignoreMove: true });
+        root = wrapElementNow(element, { wrapper: "div", ignoreMove: true });
       }
 &nbsp;
       disableInitialTransition(root);
@@ -1244,8 +1282,6 @@ const WIDGET_NAME = "scroll-to-top";
 const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
 // Only one ScrollToTop widget per element is allowed, but Widget requires a
 // non-blank ID.
-// In fact, it doesn't make much sense to have more than 1 scroll-to-top button
-// on the whole page, but we support it, hence use a class rather than a DOM ID.
 const DUMMY_ID = PREFIXED_NAME;
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 const PREFIX_BTN = `${PREFIXED_NAME}__btn`;
@@ -1273,7 +1309,7 @@ const newConfigValidator: WidgetConfigValidatorFunc&lt;ScrollToTopConfig&gt; = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-16T14:52:38.014Z
+                at 2025-07-17T14:28:53.790Z
             </div>
         <script src="../prettify.js"></script>
         <script>

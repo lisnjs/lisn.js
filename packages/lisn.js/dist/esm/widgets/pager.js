@@ -483,7 +483,7 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
   return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
 };
 const init = (widget, element, components, config, methods) => {
-  var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
+  var _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
   const logger = debug ? new debug.Logger({
     name: `Pager-${formatAsString(element)}`,
     logAtCreation: config
@@ -493,7 +493,7 @@ const init = (widget, element, components, config, methods) => {
   const switches = components._switches;
   const nextSwitch = components._nextPrevSwitch._next;
   const prevSwitch = components._nextPrevSwitch._prev;
-  const pageContainer = (_pages$ = pages[0]) === null || _pages$ === void 0 ? void 0 : _pages$.parentElement;
+  const pageContainer = MH.parentOf(pages[0]);
   let initialPage = toInt((_config$initialPage = config === null || config === void 0 ? void 0 : config.initialPage) !== null && _config$initialPage !== void 0 ? _config$initialPage : 1);
   const pagerStyle = (_config$style = config === null || config === void 0 ? void 0 : config.style) !== null && _config$style !== void 0 ? _config$style : "slider";
   const isCarousel = pagerStyle === "carousel";

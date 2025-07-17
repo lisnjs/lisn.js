@@ -64,7 +64,7 @@ export declare class ScrollWatcher {
      * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
      *   or is `null`, `window` or `document`, the following CSS variables are
      *   set on the root (`html`) element and represent the scroll of the
-     *   {@link fetchMainScrollableElement}:
+     *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
      *   - `--lisn-js--page-scroll-top`
      *   - `--lisn-js--page-scroll-top-fraction`
      *   - `--lisn-js--page-scroll-left`
@@ -126,7 +126,8 @@ export declare class ScrollWatcher {
      *               the target coordinates. If it is a string, then it is treated
      *               as a selector for an element using `querySelector`.
      * @param {} [options.scrollable]
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     *               If not given, it defaults to
+     *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
      * @return {} `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
@@ -136,7 +137,8 @@ export declare class ScrollWatcher {
      * Returns the current {@link ScrollAction} if any.
      *
      * @param {} scrollable
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     *               If not given, it defaults to
+     *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -161,7 +163,7 @@ export declare class ScrollWatcher {
     /**
      * Returns the element that holds the main page content. By default it's
      * `document.body` but is overridden by
-     * {@link settings.mainScrollableElementSelector}.
+     * {@link Settings.settings.mainScrollableElementSelector}.
      *
      * It will wait for the element to be available if not already.
      */
@@ -170,7 +172,7 @@ export declare class ScrollWatcher {
      * Returns the scrollable element that holds the wrapper around the main page
      * content. By default it's `document.scrollable` (unless `document.body` is
      * actually scrollable, in which case it will be used) but it will be
-     * different if {@link settings.mainScrollableElementSelector} is set.
+     * different if {@link Settings.settings.mainScrollableElementSelector} is set.
      *
      * It will wait for the element to be available if not already.
      */
@@ -225,7 +227,8 @@ export type ScrollWatcherConfig = {
 export type OnScrollOptions = {
     /**
      * If it is not given, or is `null`, `window` or `document`, then it will
-     * track the scroll of the {@link ScrollWatcher.fetchMainScrollableElement}.
+     * track the scroll of the
+     * {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
      * Other values must be an `Element` and are taken literally.
      *

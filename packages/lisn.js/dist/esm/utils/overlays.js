@@ -4,12 +4,10 @@
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { settings } from "../globals/settings.js";
 import { addClasses, addClassesNow, setDataNow, setStylePropNow } from "./css-alter.js";
-import { moveElement, wrapScrollingContent } from "./dom-alter.js";
+import { moveElement, tryWrapContent } from "./dom-alter.js";
 import { waitForElement } from "./dom-events.js";
 import { waitForMutateTime } from "./dom-optimize.js";
-import { logWarn } from "./log.js";
 import { camelToKebabCase, objToStrKey } from "./text.js";
 import { isScrollable, tryGetMainContentElement, fetchMainContentElement } from "./scroll.js";
 import { newXWeakMap } from "../modules/x-map.js";
@@ -80,11 +78,10 @@ export const createOverlay = async userOptions => {
     });
   }
   if (needsContentWrapping) {
-    if (settings.contentWrappingAllowed) {
-      parentEl = await wrapScrollingContent(parentEl);
-    } else {
-      logWarn("Percentage offset view trigger with scrolling root requires contentWrappingAllowed");
-    }
+    parentEl = await tryWrapContent(parentEl, {
+      required: true,
+      requiredBy: "percentage offset view trigger with scrolling root"
+    });
   }
   if (options._style.position === MC.S_ABSOLUTE) {
     // Ensure parent has non-static positioning

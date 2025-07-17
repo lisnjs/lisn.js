@@ -3,12 +3,14 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.wrapScrollingContent = exports.wrapElementNow = exports.wrapElement = exports.wrapChildrenNow = exports.wrapChildren = exports.swapElementsNow = exports.swapElements = exports.replaceElementNow = exports.replaceElement = exports.moveElementNow = exports.moveElement = exports.moveChildrenNow = exports.moveChildren = exports.insertGhostCloneNow = exports.insertGhostClone = exports.insertArrow = exports.ignoreMove = exports.hideAndRemoveElement = exports.getOrAssignID = exports.getIgnoreMove = exports.cloneElement = exports.clearIgnoreMove = void 0;
+exports.wrapElementNow = exports.wrapElement = exports.wrapChildrenNow = exports.wrapChildren = exports.tryWrapNow = exports.tryWrapContentNow = exports.tryWrapContent = exports.tryWrap = exports.swapElementsNow = exports.swapElements = exports.replaceElementNow = exports.replaceElement = exports.moveElementNow = exports.moveElement = exports.moveChildrenNow = exports.moveChildren = exports.isAllowedToWrap = exports.insertGhostCloneNow = exports.insertGhostClone = exports.insertArrow = exports.ignoreMove = exports.hideAndRemoveElement = exports.getWrapper = exports.getOrAssignID = exports.getIgnoreMove = exports.getContentWrapper = exports.cloneElement = exports.clearIgnoreMove = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
+var _settings = require("../globals/settings.cjs");
 var _cssAlter = require("./css-alter.cjs");
 var _domOptimize = require("./dom-optimize.cjs");
 var _domQuery = require("./dom-query.cjs");
+var _log = require("./log.cjs");
 var _text = require("./text.cjs");
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
@@ -260,27 +262,77 @@ const getOrAssignID = (element, prefix = "") => {
  * @internal
  */
 exports.getOrAssignID = getOrAssignID;
-const wrapScrollingContent = async element => {
-  await (0, _domOptimize.waitForMutateTime)();
-  let wrapper;
-  const firstChild = MH.childrenOf(element)[0];
-  if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (0, _cssAlter.hasClass)(firstChild, PREFIX_CONTENT_WRAPPER)) {
-    // Another concurrent call has just wrapped it
-    wrapper = firstChild;
-  } else {
-    wrapper = wrapChildrenNow(element, {
-      ignoreMove: true
-    });
-    (0, _cssAlter.addClassesNow)(wrapper, PREFIX_CONTENT_WRAPPER);
+const isAllowedToWrap = element => _settings.settings.contentWrappingAllowed === true && (0, _cssAlter.getData)(element, MC.PREFIX_NO_WRAP) === null;
+
+/**
+ * @ignore
+ * @internal
+ */
+exports.isAllowedToWrap = isAllowedToWrap;
+const getWrapper = (element, options) => {
+  const {
+    tagName,
+    className = MC.PREFIX_WRAPPER
+  } = options !== null && options !== void 0 ? options : {};
+  const parent = MH.parentOf(element);
+  if (MH.lengthOf(MH.childrenOf(parent)) === 1 && MH.isHTMLElement(parent) && (!tagName || MH.toLowerCase(MH.tagName(parent)) === MH.toLowerCase(tagName)) && (!className || (0, _cssAlter.hasClass)(parent, className))) {
+    // Already wrapped
+    return parent;
   }
-  return wrapper;
+  return null; // don't check the element itself, only its parent
 };
 
 /**
  * @ignore
  * @internal
  */
-exports.wrapScrollingContent = wrapScrollingContent;
+exports.getWrapper = getWrapper;
+const getContentWrapper = (element, options) => {
+  const {
+    tagName,
+    className = MC.PREFIX_CONTENT_WRAPPER
+  } = options !== null && options !== void 0 ? options : {};
+  const firstChild = MH.childrenOf(element)[0];
+  if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (!tagName || MH.toLowerCase(MH.tagName(firstChild)) === MH.toLowerCase(tagName)) && (!className || (0, _cssAlter.hasClass)(firstChild, className))) {
+    // Already wrapped
+    return firstChild;
+  }
+  return null;
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+exports.getContentWrapper = getContentWrapper;
+const tryWrapNow = (element, options) => _tryWrapNow(element, options);
+
+/**
+ * @ignore
+ * @internal
+ */
+exports.tryWrapNow = tryWrapNow;
+const tryWrap = (element, options) => _tryWrap(element, options);
+
+/**
+ * @ignore
+ * @internal
+ */
+exports.tryWrap = tryWrap;
+const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
+
+/**
+ * @ignore
+ * @internal
+ */
+exports.tryWrapContentNow = tryWrapContentNow;
+const tryWrapContent = (element, options) => _tryWrap(element, options, true);
+
+/**
+ * @ignore
+ * @internal
+ */
+exports.tryWrapContent = tryWrapContent;
 const cloneElement = element => {
   const clone = element.cloneNode(true);
   (0, _cssAlter.setBooleanData)(clone, MH.prefixName("clone"));
@@ -306,8 +358,9 @@ const insertGhostCloneNow = (element, insertBefore = null) => {
   const clone = cloneElement(element);
   clone.id = "";
   (0, _cssAlter.addClassesNow)(clone, MC.PREFIX_GHOST, MC.PREFIX_TRANSITION_DISABLE, MC.PREFIX_ANIMATE_DISABLE);
-  const wrapper = wrapElementNow(clone);
-  (0, _cssAlter.addClassesNow)(wrapper, MC.PREFIX_WRAPPER);
+  const wrapper = _tryWrapNow(clone, {
+    required: true
+  });
   moveElementNow(wrapper, {
     to: insertBefore || element,
     position: "before",
@@ -380,7 +433,6 @@ const insertArrow = (target, direction, position = "append", tag = "span") => {
 
 // ----------------------------------------
 exports.insertArrow = insertArrow;
-const PREFIX_CONTENT_WRAPPER = MH.prefixName("content-wrapper");
 const recordsToSkipOnce = MH.newMap();
 const createWrapperFor = (element, wrapper) => {
   if (MH.isElement(wrapper)) {
@@ -396,4 +448,34 @@ const createWrapperFor = (element, wrapper) => {
   }
   return MH.createElement(tag);
 };
+const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+) => {
+  const {
+    tagName,
+    className = wrapContent ? MC.PREFIX_CONTENT_WRAPPER : MC.PREFIX_WRAPPER,
+    ignoreMove = true,
+    required = false,
+    requiredBy = ""
+  } = options !== null && options !== void 0 ? options : {};
+  const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
+  const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
+  const allowedToWrap = isAllowedToWrap(element);
+  let wrapper = getWrapperFn(element, options);
+  if (!wrapper && (required || allowedToWrap)) {
+    wrapper = wrapFn(element, {
+      wrapper: tagName,
+      ignoreMove
+    });
+    (0, _cssAlter.addClassesNow)(wrapper, className);
+    if ((0, _domQuery.isInlineTag)(MH.tagName(wrapper))) {
+      (0, _cssAlter.addClassesNow)(wrapper, MC.PREFIX_INLINE_WRAPPER);
+    }
+    if (!allowedToWrap && requiredBy) {
+      (0, _log.logWarn)(`content wrapping is disabled for element but wrapping is required by ${requiredBy}`);
+    }
+  }
+  return wrapper;
+};
+const _tryWrap = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+) => (0, _domOptimize.waitForMutateTime)().then(() => _tryWrapNow(element, options, wrapContent));
 //# sourceMappingURL=dom-alter.cjs.map

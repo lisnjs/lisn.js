@@ -105,8 +105,8 @@ export const settings = MH.preventExtensions({
    * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
    * attribute on it.
    *
-   * **IMPORTANT:** Certain widgets always require wrapping of elements. This
-   * setting only applies in cases where wrapping is optional.
+   * **IMPORTANT:** Certain widgets always require wrapping of elements or their
+   * children. This setting only applies in cases where wrapping is optional.
    *
    * @defaultValue true
    * @category Generic

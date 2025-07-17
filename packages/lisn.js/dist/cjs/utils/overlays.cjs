@@ -6,12 +6,10 @@ Object.defineProperty(exports, "__esModule", {
 exports.getOverlay = exports.createOverlay = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-var _settings = require("../globals/settings.cjs");
 var _cssAlter = require("./css-alter.cjs");
 var _domAlter = require("./dom-alter.cjs");
 var _domEvents = require("./dom-events.cjs");
 var _domOptimize = require("./dom-optimize.cjs");
-var _log = require("./log.cjs");
 var _text = require("./text.cjs");
 var _scroll = require("./scroll.cjs");
 var _xMap = require("../modules/x-map.cjs");
@@ -87,11 +85,10 @@ const createOverlay = async userOptions => {
     });
   }
   if (needsContentWrapping) {
-    if (_settings.settings.contentWrappingAllowed) {
-      parentEl = await (0, _domAlter.wrapScrollingContent)(parentEl);
-    } else {
-      (0, _log.logWarn)("Percentage offset view trigger with scrolling root requires contentWrappingAllowed");
-    }
+    parentEl = await (0, _domAlter.tryWrapContent)(parentEl, {
+      required: true,
+      requiredBy: "percentage offset view trigger with scrolling root"
+    });
   }
   if (options._style.position === MC.S_ABSOLUTE) {
     // Ensure parent has non-static positioning

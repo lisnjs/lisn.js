@@ -84,8 +84,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * in order to modify the configuration of the automatically created widget.
  *
  * @example
- * This will create custom scrollbars for the main scrolling element
- * (see {@link settings.mainScrollableElementSelector}).
+ * This will create custom scrollbars for
+ * {@link settings.mainScrollableElementSelector | the main scrolling element}.
  *
  * This will work even if {@link settings.autoWidgets}) is false
  *
@@ -153,7 +153,8 @@ class Scrollbar extends _widget.Widget {
   }
 
   /**
-   * Enables scrollbars on the {@link settings.mainScrollableElementSelector}.
+   * Enables scrollbars on the
+   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * **NOTE:** It returns a Promise to a widget because it will wait for the
    * main scrollable element to be present in the DOM if not already.
@@ -196,9 +197,12 @@ class Scrollbar extends _widget.Widget {
       id: DUMMY_ID
     });
     /**
-     * Returns the actual scrollable element created by us which will be a
-     * descendant of the original element passed to the constructor (unless
-     * {@link settings.contentWrappingAllowed} is false).
+     * Returns the actual scrollable element us which, unless the scrollable you
+     * passed to the constructor is the
+     * {@link settings.mainScrollableElementSelector | the main scrolling element}
+     * or unless {@link settings.contentWrappingAllowed} is false,
+     * will be a new element created by us that is a descendant of the original
+     * element you passed.
      */
     _defineProperty(this, "getScrollable", void 0);
     const props = getScrollableProps(scrollable);
@@ -236,7 +240,7 @@ const PREFIX_DRAGGABLE = MH.prefixName("draggable");
 const PREFIX_CLICKABLE = MH.prefixName("clickable");
 const PREFIX_HAS_WRAPPER = MH.prefixName("has-wrapper");
 const PREFIX_ALLOW_COLLAPSE = MH.prefixName("allow-collapse");
-const PREFIX_HAS_FIXED_HEIGHT = MH.prefixName("has-fixed-height");
+const PREFIX_HAS_V_SCROLL = MH.prefixName("has-v-scroll");
 const PREFIX_HAS_SCROLLBAR = MH.prefixName("has-scrollbar");
 const PREFIX_HIDE_SCROLL = MH.prefixName("hide-scroll");
 const S_SET_POINTER_CAPTURE = "setPointerCapture";
@@ -268,23 +272,28 @@ const getScrollableProps = containerElement => {
 
   // check if we're using body in quirks mode
   const isBodyInQuirks = root === body && defaultScrollable === body;
-  const allowedToWrap = _settings.settings.contentWrappingAllowed && (0, _cssAlter.getData)(containerElement, MC.PREFIX_NO_WRAP) === null;
+  const allowedToWrap = (0, _domAlter.isAllowedToWrap)(containerElement);
   const needsSticky = !isMainScrollable && !allowedToWrap;
   const barParent = isMainScrollable ? body : containerElement;
-  const hasFixedHeight = (0, _scroll.isScrollable)(root, {
+  const hasVScroll = (0, _scroll.isScrollable)(root, {
     axis: "y"
   });
   let contentWrapper = null;
   let scrollable = root;
+  let supported = true;
   if (!isMainScrollable && !isBody && allowedToWrap) {
     if (allowedToWrap) {
       contentWrapper = MH.createElement("div");
       scrollable = contentWrapper;
-    } else {
+    } else if ((0, _misc.supportsSticky)()) {
       (0, _log.logWarn)("Scrollbar on elements other than the main scrollable " + "when settings.contentWrappingAllowed is false relies on " + "position: sticky, is experimental and may not work properly");
+    } else {
+      (0, _log.logError)("Scrollbar on elements other than the main scrollable " + "when settings.contentWrappingAllowed is false relies on " + "position: sticky, but this browser does not support sticky.");
+      supported = false;
     }
   }
   return {
+    supported,
     isMainScrollable,
     isBody,
     isBodyInQuirks,
@@ -293,12 +302,13 @@ const getScrollableProps = containerElement => {
     barParent,
     contentWrapper,
     needsSticky,
-    hasFixedHeight
+    hasVScroll
   };
 };
 const init = (widget, containerElement, props, config) => {
   var _ref, _config$onMobile, _ref2, _config$hideNative, _config$autoHide, _config$clickScroll, _ref3, _config$dragScroll, _ref4, _config$useHandle;
   const {
+    supported,
     isMainScrollable,
     isBody,
     isBodyInQuirks,
@@ -307,7 +317,7 @@ const init = (widget, containerElement, props, config) => {
     barParent,
     contentWrapper,
     needsSticky,
-    hasFixedHeight
+    hasVScroll
   } = props;
   const logger = _debug.default ? new _debug.default.Logger({
     name: `Scrollbar-${(0, _text.formatAsString)(root)}`,
@@ -567,6 +577,10 @@ const init = (widget, containerElement, props, config) => {
 
   // SETUP ------------------------------
 
+  if (!supported) {
+    setNativeShown();
+    return;
+  }
   if (!isMainScrollable && !isBody) {
     (0, _cssAlter.addClasses)(containerElement, PREFIX_CONTAINER);
   }
@@ -574,16 +588,13 @@ const init = (widget, containerElement, props, config) => {
 
   // Wrap children if needed
   if (contentWrapper) {
-    (0, _cssAlter.addClasses)(contentWrapper, PREFIX_CONTENT);
     (0, _domAlter.wrapChildren)(containerElement, {
       wrapper: contentWrapper,
       ignoreMove: true
     }); // no need to await here
-
+    (0, _cssAlter.addClasses)(contentWrapper, PREFIX_CONTENT);
     (0, _cssAlter.setBooleanData)(containerElement, PREFIX_HAS_WRAPPER);
-    if (hasFixedHeight) {
-      (0, _cssAlter.setBooleanData)(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-    }
+    (0, _cssAlter.setBooleanData)(containerElement, PREFIX_HAS_V_SCROLL, hasVScroll);
   }
   maybeSetNativeHidden();
   if (config !== null && config !== void 0 && config.id) {
@@ -675,9 +686,7 @@ const init = (widget, containerElement, props, config) => {
       (0, _cssAlter.delDataNow)(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
     }
     (0, _cssAlter.delDataNow)(containerElement, PREFIX_HAS_WRAPPER);
-    if (hasFixedHeight) {
-      (0, _cssAlter.delDataNow)(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-    }
+    (0, _cssAlter.delDataNow)(containerElement, PREFIX_HAS_V_SCROLL);
   });
 };
 const isHorizontal = scrollbar => (0, _cssAlter.getData)(scrollbar, MC.PREFIX_ORIENTATION) === MC.S_HORIZONTAL;

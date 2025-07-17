@@ -5,8 +5,6 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { settings } from "@lisn/globals/settings";
-
 import { XYDirection, ScrollDirection, SizeTarget } from "@lisn/globals/types";
 
 import {
@@ -16,9 +14,9 @@ import {
   CommaSeparatedStr,
 } from "@lisn/globals/types";
 
-import { getData, setNumericStyleProps } from "@lisn/utils/css-alter";
+import { setNumericStyleProps } from "@lisn/utils/css-alter";
 import { getMaxDeltaDirection } from "@lisn/utils/directions";
-import { moveElement, wrapScrollingContent } from "@lisn/utils/dom-alter";
+import { moveElement, tryWrapContent } from "@lisn/utils/dom-alter";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
@@ -120,7 +118,7 @@ export class ScrollWatcher {
    * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
    *   or is `null`, `window` or `document`, the following CSS variables are
    *   set on the root (`html`) element and represent the scroll of the
-   *   {@link settings.mainScrollableElementSelector | the main scrolling element}:
+   *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
    *   - `--lisn-js--page-scroll-top`
    *   - `--lisn-js--page-scroll-top-fraction`
    *   - `--lisn-js--page-scroll-left`
@@ -199,7 +197,7 @@ export class ScrollWatcher {
    *               as a selector for an element using `querySelector`.
    * @param {} [options.scrollable]
    *               If not given, it defaults to
-   *               {@link settings.mainScrollableElementSelector | the main scrolling element}.
+   *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * @return {} `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
@@ -214,7 +212,7 @@ export class ScrollWatcher {
    *
    * @param {} scrollable
    *               If not given, it defaults to
-   *               {@link settings.mainScrollableElementSelector | the main scrolling element}
+   *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -243,7 +241,7 @@ export class ScrollWatcher {
   /**
    * Returns the element that holds the main page content. By default it's
    * `document.body` but is overridden by
-   * {@link settings.mainScrollableElementSelector}.
+   * {@link Settings.settings.mainScrollableElementSelector}.
    *
    * It will wait for the element to be available if not already.
    */
@@ -255,7 +253,7 @@ export class ScrollWatcher {
    * Returns the scrollable element that holds the wrapper around the main page
    * content. By default it's `document.scrollable` (unless `document.body` is
    * actually scrollable, in which case it will be used) but it will be
-   * different if {@link settings.mainScrollableElementSelector} is set.
+   * different if {@link Settings.settings.mainScrollableElementSelector} is set.
    *
    * It will wait for the element to be available if not already.
    */
@@ -541,16 +539,9 @@ export class ScrollWatcher {
       // Observe the scrolling element
       setupOnResize(element);
 
-      // And also its children (if possible, single wrapper around children
-      const allowedToWrap =
-        settings.contentWrappingAllowed === true &&
-        element !== docScrollingElement &&
-        getData(element, MC.PREFIX_NO_WRAP) === null;
-
-      let wrapper: Element;
-      if (allowedToWrap) {
-        // Wrap the content and observe the wrapper
-        wrapper = await wrapScrollingContent(element);
+      // And also its children (if possible, a single wrapper around them
+      const wrapper = await tryWrapContent(element);
+      if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
 
@@ -574,7 +565,7 @@ export class ScrollWatcher {
         // If we've just added the wrapper, it will be in DOMWatcher's queue,
         // so check.
         if (child !== wrapper) {
-          if (allowedToWrap) {
+          if (wrapper) {
             // Move this child into the wrapper. If this results in change of size
             // for wrapper, SizeWatcher will call us.
             moveElement(child, { to: wrapper, ignoreMove: true });
@@ -828,7 +819,7 @@ export type OnScrollOptions = {
   /**
    * If it is not given, or is `null`, `window` or `document`, then it will
    * track the scroll of the
-   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
+   * {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * Other values must be an `Element` and are taken literally.
    *

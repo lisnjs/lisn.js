@@ -12,9 +12,11 @@
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { hideElement, hasClass, addClassesNow, setDataNow, setBooleanData } from "./css-alter.js";
+import { settings } from "../globals/settings.js";
+import { hideElement, hasClass, addClassesNow, getData, setDataNow, setBooleanData } from "./css-alter.js";
 import { waitForMutateTime } from "./dom-optimize.js";
 import { isInlineTag } from "./dom-query.js";
+import { logWarn } from "./log.js";
 import { randId } from "./text.js";
 
 /**
@@ -240,21 +242,65 @@ export const getOrAssignID = (element, prefix = "") => {
  * @ignore
  * @internal
  */
-export const wrapScrollingContent = async element => {
-  await waitForMutateTime();
-  let wrapper;
-  const firstChild = MH.childrenOf(element)[0];
-  if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && hasClass(firstChild, PREFIX_CONTENT_WRAPPER)) {
-    // Another concurrent call has just wrapped it
-    wrapper = firstChild;
-  } else {
-    wrapper = wrapChildrenNow(element, {
-      ignoreMove: true
-    });
-    addClassesNow(wrapper, PREFIX_CONTENT_WRAPPER);
+export const isAllowedToWrap = element => settings.contentWrappingAllowed === true && getData(element, MC.PREFIX_NO_WRAP) === null;
+
+/**
+ * @ignore
+ * @internal
+ */
+export const getWrapper = (element, options) => {
+  const {
+    tagName,
+    className = MC.PREFIX_WRAPPER
+  } = options !== null && options !== void 0 ? options : {};
+  const parent = MH.parentOf(element);
+  if (MH.lengthOf(MH.childrenOf(parent)) === 1 && MH.isHTMLElement(parent) && (!tagName || MH.toLowerCase(MH.tagName(parent)) === MH.toLowerCase(tagName)) && (!className || hasClass(parent, className))) {
+    // Already wrapped
+    return parent;
   }
-  return wrapper;
+  return null; // don't check the element itself, only its parent
 };
+
+/**
+ * @ignore
+ * @internal
+ */
+export const getContentWrapper = (element, options) => {
+  const {
+    tagName,
+    className = MC.PREFIX_CONTENT_WRAPPER
+  } = options !== null && options !== void 0 ? options : {};
+  const firstChild = MH.childrenOf(element)[0];
+  if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (!tagName || MH.toLowerCase(MH.tagName(firstChild)) === MH.toLowerCase(tagName)) && (!className || hasClass(firstChild, className))) {
+    // Already wrapped
+    return firstChild;
+  }
+  return null;
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const tryWrapNow = (element, options) => _tryWrapNow(element, options);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const tryWrap = (element, options) => _tryWrap(element, options);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const tryWrapContent = (element, options) => _tryWrap(element, options, true);
 
 /**
  * @ignore
@@ -284,8 +330,9 @@ export const insertGhostCloneNow = (element, insertBefore = null) => {
   const clone = cloneElement(element);
   clone.id = "";
   addClassesNow(clone, MC.PREFIX_GHOST, MC.PREFIX_TRANSITION_DISABLE, MC.PREFIX_ANIMATE_DISABLE);
-  const wrapper = wrapElementNow(clone);
-  addClassesNow(wrapper, MC.PREFIX_WRAPPER);
+  const wrapper = _tryWrapNow(clone, {
+    required: true
+  });
   moveElementNow(wrapper, {
     to: insertBefore || element,
     position: "before",
@@ -353,7 +400,6 @@ export const insertArrow = (target, direction, position = "append", tag = "span"
 
 // ----------------------------------------
 
-const PREFIX_CONTENT_WRAPPER = MH.prefixName("content-wrapper");
 const recordsToSkipOnce = MH.newMap();
 const createWrapperFor = (element, wrapper) => {
   if (MH.isElement(wrapper)) {
@@ -369,4 +415,34 @@ const createWrapperFor = (element, wrapper) => {
   }
   return MH.createElement(tag);
 };
+const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+) => {
+  const {
+    tagName,
+    className = wrapContent ? MC.PREFIX_CONTENT_WRAPPER : MC.PREFIX_WRAPPER,
+    ignoreMove = true,
+    required = false,
+    requiredBy = ""
+  } = options !== null && options !== void 0 ? options : {};
+  const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
+  const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
+  const allowedToWrap = isAllowedToWrap(element);
+  let wrapper = getWrapperFn(element, options);
+  if (!wrapper && (required || allowedToWrap)) {
+    wrapper = wrapFn(element, {
+      wrapper: tagName,
+      ignoreMove
+    });
+    addClassesNow(wrapper, className);
+    if (isInlineTag(MH.tagName(wrapper))) {
+      addClassesNow(wrapper, MC.PREFIX_INLINE_WRAPPER);
+    }
+    if (!allowedToWrap && requiredBy) {
+      logWarn(`content wrapping is disabled for element but wrapping is required by ${requiredBy}`);
+    }
+  }
+  return wrapper;
+};
+const _tryWrap = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+) => waitForMutateTime().then(() => _tryWrapNow(element, options, wrapContent));
 //# sourceMappingURL=dom-alter.js.map

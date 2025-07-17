@@ -83,6 +83,9 @@ var LISN = (function (exports) {
   const S_SELECTSTART = "selectstart";
   const S_ATTRIBUTES = "attributes";
   const S_CHILD_LIST = "childList";
+  const PREFIX_WRAPPER = `${PREFIX}-wrapper`;
+  const PREFIX_CONTENT_WRAPPER = `${PREFIX}-content-wrapper`;
+  const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER}-inline`;
   const PREFIX_NO_SELECT = `${PREFIX}-no-select`;
   const PREFIX_NO_TOUCH_ACTION = `${PREFIX}-no-touch-action`;
   const PREFIX_NO_WRAP = `${PREFIX}-no-wrap`;
@@ -324,7 +327,7 @@ var LISN = (function (exports) {
      * etc. If you are using the HTML API, then you must set this before the
      * document `readyState` becomes interactive.
      *
-     * @defaultValue null
+     * @defaultValue null // document.scrollingElement
      * @category Generic
      */
     mainScrollableElementSelector: null,
@@ -385,6 +388,9 @@ var LISN = (function (exports) {
      * If you can, it's recommended to leave this setting ON. You can still
      * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
      * attribute on it.
+     *
+     * **IMPORTANT:** Certain widgets always require wrapping of elements or their
+     * children. This setting only applies in cases where wrapping is optional.
      *
      * @defaultValue true
      * @category Generic
@@ -2094,6 +2100,38 @@ var LISN = (function (exports) {
 
 
   /**
+   * Wraps the element in the given wrapper, or a newly created element if not given.
+   *
+   * @param {} [options.wrapper]
+   *              If it's an element, it is used as the wrapper. If it's a string
+   *              tag name, then a new element with this tag is created as the
+   *              wrapper. If not given, then `div` is used if the element to be
+   *              wrapped has an block-display tag, or otherwise `span` (if the
+   *              element to be wrapped has an inline tag name).
+   * @param {} [options.ignoreMove]
+   *              If true, the DOM watcher instances will ignore the operation of
+   *              replacing the element (so as to not trigger relevant callbacks).
+   * @returns {} The wrapper element that was either passed in options or created.
+   *
+   * @category DOM: Altering
+   */
+  const wrapElementNow = (element, options) => {
+    const wrapper = createWrapperFor(element, options === null || options === void 0 ? void 0 : options.wrapper);
+    if ((options === null || options === void 0 ? void 0 : options.ignoreMove) === true) {
+      ignoreMove(element, {
+        from: parentOf(element),
+        to: wrapper
+      });
+      ignoreMove(wrapper, {
+        to: parentOf(element)
+      });
+    }
+    element.replaceWith(wrapper);
+    wrapper.append(element);
+    return wrapper;
+  };
+
+  /**
    * Wraps the element's children in the given wrapper, or a newly created element
    * if not given.
    *
@@ -2180,20 +2218,47 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    */
-  const wrapScrollingContent = async element => {
-    await waitForMutateTime();
-    let wrapper;
-    const firstChild = childrenOf(element)[0];
-    if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && hasClass(firstChild, PREFIX_CONTENT_WRAPPER)) {
-      // Another concurrent call has just wrapped it
-      wrapper = firstChild;
-    } else {
-      wrapper = wrapChildrenNow(element, {
-        });
-      addClassesNow(wrapper, PREFIX_CONTENT_WRAPPER);
+  const isAllowedToWrap = element => settings.contentWrappingAllowed === true && getData(element, PREFIX_NO_WRAP) === null;
+
+  /**
+   * @ignore
+   * @internal
+   */
+  const getWrapper = (element, options) => {
+    const {
+      tagName: tagName$1,
+      className = PREFIX_WRAPPER
+    } = options !== null && options !== void 0 ? options : {};
+    const parent = parentOf(element);
+    if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName$1 || toLowerCase(tagName(parent)) === toLowerCase(tagName$1)) && (!className || hasClass(parent, className))) {
+      // Already wrapped
+      return parent;
     }
-    return wrapper;
+    return null; // don't check the element itself, only its parent
   };
+
+  /**
+   * @ignore
+   * @internal
+   */
+  const getContentWrapper = (element, options) => {
+    const {
+      tagName: tagName$1,
+      className = PREFIX_CONTENT_WRAPPER
+    } = options !== null && options !== void 0 ? options : {};
+    const firstChild = childrenOf(element)[0];
+    if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName$1 || toLowerCase(tagName(firstChild)) === toLowerCase(tagName$1)) && (!className || hasClass(firstChild, className))) {
+      // Already wrapped
+      return firstChild;
+    }
+    return null;
+  };
+
+  /**
+   * @ignore
+   * @internal
+   */
+  const tryWrapContent = (element, options) => _tryWrap(element, options, true);
 
   /**
    * @ignore
@@ -2227,7 +2292,6 @@ var LISN = (function (exports) {
 
   // ----------------------------------------
 
-  const PREFIX_CONTENT_WRAPPER = prefixName("content-wrapper");
   const recordsToSkipOnce = newMap();
   const createWrapperFor = (element, wrapper) => {
     if (isElement(wrapper)) {
@@ -2243,6 +2307,36 @@ var LISN = (function (exports) {
     }
     return createElement(tag);
   };
+  const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+  ) => {
+    const {
+      tagName: tagName$1,
+      className = wrapContent ? PREFIX_CONTENT_WRAPPER : PREFIX_WRAPPER,
+      ignoreMove = true,
+      required = false,
+      requiredBy = ""
+    } = options !== null && options !== void 0 ? options : {};
+    const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
+    const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
+    const allowedToWrap = isAllowedToWrap(element);
+    let wrapper = getWrapperFn(element, options);
+    if (!wrapper && (required || allowedToWrap)) {
+      wrapper = wrapFn(element, {
+        wrapper: tagName$1,
+        ignoreMove
+      });
+      addClassesNow(wrapper, className);
+      if (isInlineTag(tagName(wrapper))) {
+        addClassesNow(wrapper, PREFIX_INLINE_WRAPPER);
+      }
+      if (!allowedToWrap && requiredBy) {
+        logWarn(`content wrapping is disabled for element but wrapping is required by ${requiredBy}`);
+      }
+    }
+    return wrapper;
+  };
+  const _tryWrap = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+  ) => waitForMutateTime().then(() => _tryWrapNow(element, options, wrapContent));
 
   /**
    * @module Utils
@@ -5281,11 +5375,10 @@ var LISN = (function (exports) {
       });
     }
     if (needsContentWrapping) {
-      if (settings.contentWrappingAllowed) {
-        parentEl = await wrapScrollingContent(parentEl);
-      } else {
-        logWarn("Percentage offset view trigger with scrolling root requires contentWrappingAllowed");
-      }
+      parentEl = await tryWrapContent(parentEl, {
+        required: true,
+        requiredBy: "percentage offset view trigger with scrolling root"
+      });
     }
     if (options._style.position === S_ABSOLUTE) {
       // Ensure parent has non-static positioning
@@ -6658,7 +6751,7 @@ var LISN = (function (exports) {
      * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
      *   or is `null`, `window` or `document`, the following CSS variables are
      *   set on the root (`html`) element and represent the scroll of the
-     *   {@link fetchMainScrollableElement}:
+     *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
      *   - `--lisn-js--page-scroll-top`
      *   - `--lisn-js--page-scroll-top-fraction`
      *   - `--lisn-js--page-scroll-left`
@@ -6720,7 +6813,8 @@ var LISN = (function (exports) {
      *               the target coordinates. If it is a string, then it is treated
      *               as a selector for an element using `querySelector`.
      * @param {} [options.scrollable]
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     *               If not given, it defaults to
+     *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
      * @return {} `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
@@ -6730,7 +6824,8 @@ var LISN = (function (exports) {
      * Returns the current {@link ScrollAction} if any.
      *
      * @param {} scrollable
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     *               If not given, it defaults to
+     *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -6752,7 +6847,7 @@ var LISN = (function (exports) {
     /**
      * Returns the element that holds the main page content. By default it's
      * `document.body` but is overridden by
-     * {@link settings.mainScrollableElementSelector}.
+     * {@link Settings.settings.mainScrollableElementSelector}.
      *
      * It will wait for the element to be available if not already.
      */
@@ -6764,7 +6859,7 @@ var LISN = (function (exports) {
      * Returns the scrollable element that holds the wrapper around the main page
      * content. By default it's `document.scrollable` (unless `document.body` is
      * actually scrollable, in which case it will be used) but it will be
-     * different if {@link settings.mainScrollableElementSelector} is set.
+     * different if {@link Settings.settings.mainScrollableElementSelector} is set.
      *
      * It will wait for the element to be available if not already.
      */
@@ -6967,12 +7062,9 @@ var LISN = (function (exports) {
         // Observe the scrolling element
         setupOnResize(element);
 
-        // And also its children (if possible, single wrapper around children
-        const allowedToWrap = settings.contentWrappingAllowed === true && element !== docScrollingElement && getData(element, PREFIX_NO_WRAP) === null;
-        let wrapper;
-        if (allowedToWrap) {
-          // Wrap the content and observe the wrapper
-          wrapper = await wrapScrollingContent(element);
+        // And also its children (if possible, a single wrapper around them
+        const wrapper = await tryWrapContent(element);
+        if (wrapper) {
           setupOnResize(wrapper);
           observedElements.add(wrapper);
 
@@ -6995,7 +7087,7 @@ var LISN = (function (exports) {
           // If we've just added the wrapper, it will be in DOMWatcher's queue,
           // so check.
           if (child !== wrapper) {
-            if (allowedToWrap) {
+            if (wrapper) {
               // Move this child into the wrapper. If this results in change of size
               // for wrapper, SizeWatcher will call us.
               moveElement(child, {

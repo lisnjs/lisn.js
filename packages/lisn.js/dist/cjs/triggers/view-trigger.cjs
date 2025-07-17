@@ -6,10 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.ViewTrigger = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-var _settings = require("../globals/settings.cjs");
 var _cssAlter = require("../utils/css-alter.cjs");
 var _domAlter = require("../utils/dom-alter.cjs");
-var _domQuery = require("../utils/dom-query.cjs");
 var _domSearch = require("../utils/dom-search.cjs");
 var _text = require("../utils/text.cjs");
 var _validation = require("../utils/validation.cjs");
@@ -227,24 +225,12 @@ const newConfigValidator = element => {
   };
 };
 const setupRepresentative = async element => {
-  var _MH$classList;
-  const allowedToWrap = _settings.settings.contentWrappingAllowed === true && (0, _cssAlter.getData)(element, MC.PREFIX_NO_WRAP) === null &&
-  // Done by another animate action?
-  !((_MH$classList = MH.classList(MH.parentOf(element))) !== null && _MH$classList !== void 0 && _MH$classList.contains(MC.PREFIX_WRAPPER));
-  let target;
-  if (allowedToWrap) {
-    target = await (0, _domAlter.wrapElement)(element, {
-      ignoreMove: true
-    });
-    (0, _cssAlter.addClasses)(target, MC.PREFIX_WRAPPER);
-    if ((0, _domQuery.isInlineTag)(MH.tagName(target))) {
-      (0, _cssAlter.addClasses)(target, MC.PREFIX_INLINE_WRAPPER);
-    }
-  } else {
-    // Otherwise create a dummy hidden clone that's not animated and position
-    // it absolutely in a wrapper of size 0 that's inserted just before the
-    // actual element, so that the hidden clone overlaps the actual element's
-    // regular (pre-transformed) position.
+  let target = await (0, _domAlter.tryWrap)(element);
+  if (!target) {
+    // Not allowed to wrap. Create a dummy hidden clone that's not animated and
+    // position it absolutely in a wrapper of size 0 that's inserted just
+    // before the actual element, so that the hidden clone overlaps the actual
+    // element's regular (pre-transformed) position.
 
     const prev = element.previousElementSibling;
     const prevChild = MH.childrenOf(prev)[0];

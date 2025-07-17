@@ -48,7 +48,7 @@ const settings = exports.settings = MH.preventExtensions({
    * etc. If you are using the HTML API, then you must set this before the
    * document `readyState` becomes interactive.
    *
-   * @defaultValue null
+   * @defaultValue null // document.scrollingElement
    * @category Generic
    */
   mainScrollableElementSelector: null,
@@ -109,6 +109,9 @@ const settings = exports.settings = MH.preventExtensions({
    * If you can, it's recommended to leave this setting ON. You can still
    * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
    * attribute on it.
+   *
+   * **IMPORTANT:** Certain widgets always require wrapping of elements or their
+   * children. This setting only applies in cases where wrapping is optional.
    *
    * @defaultValue true
    * @category Generic

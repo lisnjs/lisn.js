@@ -13,10 +13,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { settings } from "../globals/settings.js";
-import { hasClass, addClasses, getData } from "../utils/css-alter.js";
-import { wrapElement, insertGhostClone } from "../utils/dom-alter.js";
-import { isInlineTag } from "../utils/dom-query.js";
+import { hasClass } from "../utils/css-alter.js";
+import { insertGhostClone, tryWrap } from "../utils/dom-alter.js";
 import { waitForReferenceElement } from "../utils/dom-search.js";
 import { formatAsString } from "../utils/text.js";
 import { validateStrList, validateString, validateNumList } from "../utils/validation.js";
@@ -222,24 +220,12 @@ const newConfigValidator = element => {
   };
 };
 const setupRepresentative = async element => {
-  var _MH$classList;
-  const allowedToWrap = settings.contentWrappingAllowed === true && getData(element, MC.PREFIX_NO_WRAP) === null &&
-  // Done by another animate action?
-  !((_MH$classList = MH.classList(MH.parentOf(element))) !== null && _MH$classList !== void 0 && _MH$classList.contains(MC.PREFIX_WRAPPER));
-  let target;
-  if (allowedToWrap) {
-    target = await wrapElement(element, {
-      ignoreMove: true
-    });
-    addClasses(target, MC.PREFIX_WRAPPER);
-    if (isInlineTag(MH.tagName(target))) {
-      addClasses(target, MC.PREFIX_INLINE_WRAPPER);
-    }
-  } else {
-    // Otherwise create a dummy hidden clone that's not animated and position
-    // it absolutely in a wrapper of size 0 that's inserted just before the
-    // actual element, so that the hidden clone overlaps the actual element's
-    // regular (pre-transformed) position.
+  let target = await tryWrap(element);
+  if (!target) {
+    // Not allowed to wrap. Create a dummy hidden clone that's not animated and
+    // position it absolutely in a wrapper of size 0 that's inserted just
+    // before the actual element, so that the hidden clone overlaps the actual
+    // element's regular (pre-transformed) position.
 
     const prev = element.previousElementSibling;
     const prevChild = MH.childrenOf(prev)[0];

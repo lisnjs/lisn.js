@@ -99,6 +99,7 @@ const S_ROLE = "role";
 const ARIA_PREFIX = "aria-";
 const S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
 const PREFIX_WRAPPER$1 = `${PREFIX}-wrapper`;
+const PREFIX_CONTENT_WRAPPER = `${PREFIX}-content-wrapper`;
 const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER$1}-inline`;
 const PREFIX_TRANSITION = `${PREFIX}-transition`;
 const PREFIX_TRANSITION_DISABLE = `${PREFIX_TRANSITION}__disable`;
@@ -372,7 +373,7 @@ const settings = preventExtensions({
    * etc. If you are using the HTML API, then you must set this before the
    * document `readyState` becomes interactive.
    *
-   * @defaultValue null
+   * @defaultValue null // document.scrollingElement
    * @category Generic
    */
   mainScrollableElementSelector: null,
@@ -433,6 +434,9 @@ const settings = preventExtensions({
    * If you can, it's recommended to leave this setting ON. You can still
    * disable wrapping on a per-element basis by setting `data-lisn-no-wrap`
    * attribute on it.
+   *
+   * **IMPORTANT:** Certain widgets always require wrapping of elements or their
+   * children. This setting only applies in cases where wrapping is optional.
    *
    * @defaultValue true
    * @category Generic
@@ -1064,6 +1068,10 @@ const getBitmask = (start, end) => start > end ? getBitmask(end, start) : -1 >>>
  * @internal
  */
 
+const supportsSticky = () => {
+  var _CSS, _CSS$supports;
+  return hasDOM() ? !!((_CSS = CSS) !== null && _CSS !== void 0 && (_CSS$supports = _CSS.supports) !== null && _CSS$supports !== void 0 && _CSS$supports.call(_CSS, "position", "sticky")) : false;
+};
 const copyExistingKeys = (fromObj, toObj) => {
   for (const key in toObj) {
     if (!hasOwnProp(toObj, key)) {
@@ -2628,7 +2636,7 @@ const getFlexDirection = async element => {
  * @returns {} `null` if the element's parent does not have a flex layout.
  */
 const getParentFlexDirection = async element => {
-  const parent = element.parentElement;
+  const parent = parentOf(element);
   return parent ? getFlexDirection(parent) : null;
 };
 
@@ -3005,20 +3013,53 @@ const getOrAssignID = (element, prefix = "") => {
  * @ignore
  * @internal
  */
-const wrapScrollingContent = async element => {
-  await waitForMutateTime();
-  let wrapper;
-  const firstChild = childrenOf(element)[0];
-  if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && hasClass(firstChild, PREFIX_CONTENT_WRAPPER)) {
-    // Another concurrent call has just wrapped it
-    wrapper = firstChild;
-  } else {
-    wrapper = wrapChildrenNow(element, {
-      });
-    addClassesNow(wrapper, PREFIX_CONTENT_WRAPPER);
+const isAllowedToWrap = element => settings.contentWrappingAllowed === true && getData(element, PREFIX_NO_WRAP) === null;
+
+/**
+ * @ignore
+ * @internal
+ */
+const getWrapper = (element, options) => {
+  const {
+    tagName: tagName$1,
+    className = PREFIX_WRAPPER$1
+  } = options !== null && options !== void 0 ? options : {};
+  const parent = parentOf(element);
+  if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName$1 || toLowerCase(tagName(parent)) === toLowerCase(tagName$1)) && (!className || hasClass(parent, className))) {
+    // Already wrapped
+    return parent;
   }
-  return wrapper;
+  return null; // don't check the element itself, only its parent
 };
+
+/**
+ * @ignore
+ * @internal
+ */
+const getContentWrapper = (element, options) => {
+  const {
+    tagName: tagName$1,
+    className = PREFIX_CONTENT_WRAPPER
+  } = options !== null && options !== void 0 ? options : {};
+  const firstChild = childrenOf(element)[0];
+  if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName$1 || toLowerCase(tagName(firstChild)) === toLowerCase(tagName$1)) && (!className || hasClass(firstChild, className))) {
+    // Already wrapped
+    return firstChild;
+  }
+  return null;
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+const tryWrap = (element, options) => _tryWrap(element, options);
+
+/**
+ * @ignore
+ * @internal
+ */
+const tryWrapContent = (element, options) => _tryWrap(element, options, true);
 
 /**
  * @ignore
@@ -3048,8 +3089,9 @@ const insertGhostCloneNow = (element, insertBefore = null) => {
   const clone = cloneElement(element);
   clone.id = "";
   addClassesNow(clone, PREFIX_GHOST, PREFIX_TRANSITION_DISABLE, PREFIX_ANIMATE_DISABLE);
-  const wrapper = wrapElementNow(clone);
-  addClassesNow(wrapper, PREFIX_WRAPPER$1);
+  const wrapper = _tryWrapNow(clone, {
+    required: true
+  });
   moveElementNow(wrapper, {
     to: insertBefore || element,
     position: "before",
@@ -3117,7 +3159,6 @@ const insertArrow = (target, direction, position = "append", tag = "span") => {
 
 // ----------------------------------------
 
-const PREFIX_CONTENT_WRAPPER = prefixName("content-wrapper");
 const recordsToSkipOnce = newMap();
 const createWrapperFor = (element, wrapper) => {
   if (isElement(wrapper)) {
@@ -3133,6 +3174,36 @@ const createWrapperFor = (element, wrapper) => {
   }
   return createElement(tag);
 };
+const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+) => {
+  const {
+    tagName: tagName$1,
+    className = wrapContent ? PREFIX_CONTENT_WRAPPER : PREFIX_WRAPPER$1,
+    ignoreMove = true,
+    required = false,
+    requiredBy = ""
+  } = options !== null && options !== void 0 ? options : {};
+  const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
+  const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
+  const allowedToWrap = isAllowedToWrap(element);
+  let wrapper = getWrapperFn(element, options);
+  if (!wrapper && (required || allowedToWrap)) {
+    wrapper = wrapFn(element, {
+      wrapper: tagName$1,
+      ignoreMove
+    });
+    addClassesNow(wrapper, className);
+    if (isInlineTag(tagName(wrapper))) {
+      addClassesNow(wrapper, PREFIX_INLINE_WRAPPER);
+    }
+    if (!allowedToWrap && requiredBy) {
+      logWarn(`content wrapping is disabled for element but wrapping is required by ${requiredBy}`);
+    }
+  }
+  return wrapper;
+};
+const _tryWrap = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
+) => waitForMutateTime().then(() => _tryWrapNow(element, options, wrapContent));
 
 /**
  * @module Utils
@@ -6365,11 +6436,10 @@ const createOverlay = async userOptions => {
     });
   }
   if (needsContentWrapping) {
-    if (settings.contentWrappingAllowed) {
-      parentEl = await wrapScrollingContent(parentEl);
-    } else {
-      logWarn("Percentage offset view trigger with scrolling root requires contentWrappingAllowed");
-    }
+    parentEl = await tryWrapContent(parentEl, {
+      required: true,
+      requiredBy: "percentage offset view trigger with scrolling root"
+    });
   }
   if (options._style.position === S_ABSOLUTE) {
     // Ensure parent has non-static positioning
@@ -7742,7 +7812,7 @@ class ScrollWatcher {
    * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
    *   or is `null`, `window` or `document`, the following CSS variables are
    *   set on the root (`html`) element and represent the scroll of the
-   *   {@link fetchMainScrollableElement}:
+   *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
    *   - `--lisn-js--page-scroll-top`
    *   - `--lisn-js--page-scroll-top-fraction`
    *   - `--lisn-js--page-scroll-left`
@@ -7804,7 +7874,8 @@ class ScrollWatcher {
    *               the target coordinates. If it is a string, then it is treated
    *               as a selector for an element using `querySelector`.
    * @param {} [options.scrollable]
-   *               If not given, it defaults to {@link fetchMainScrollableElement}
+   *               If not given, it defaults to
+   *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * @return {} `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
@@ -7814,7 +7885,8 @@ class ScrollWatcher {
    * Returns the current {@link ScrollAction} if any.
    *
    * @param {} scrollable
-   *               If not given, it defaults to {@link fetchMainScrollableElement}
+   *               If not given, it defaults to
+   *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -7836,7 +7908,7 @@ class ScrollWatcher {
   /**
    * Returns the element that holds the main page content. By default it's
    * `document.body` but is overridden by
-   * {@link settings.mainScrollableElementSelector}.
+   * {@link Settings.settings.mainScrollableElementSelector}.
    *
    * It will wait for the element to be available if not already.
    */
@@ -7848,7 +7920,7 @@ class ScrollWatcher {
    * Returns the scrollable element that holds the wrapper around the main page
    * content. By default it's `document.scrollable` (unless `document.body` is
    * actually scrollable, in which case it will be used) but it will be
-   * different if {@link settings.mainScrollableElementSelector} is set.
+   * different if {@link Settings.settings.mainScrollableElementSelector} is set.
    *
    * It will wait for the element to be available if not already.
    */
@@ -8051,12 +8123,9 @@ class ScrollWatcher {
       // Observe the scrolling element
       setupOnResize(element);
 
-      // And also its children (if possible, single wrapper around children
-      const allowedToWrap = settings.contentWrappingAllowed === true && element !== docScrollingElement && getData(element, PREFIX_NO_WRAP) === null;
-      let wrapper;
-      if (allowedToWrap) {
-        // Wrap the content and observe the wrapper
-        wrapper = await wrapScrollingContent(element);
+      // And also its children (if possible, a single wrapper around them
+      const wrapper = await tryWrapContent(element);
+      if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
 
@@ -8079,7 +8148,7 @@ class ScrollWatcher {
         // If we've just added the wrapper, it will be in DOMWatcher's queue,
         // so check.
         if (child !== wrapper) {
-          if (allowedToWrap) {
+          if (wrapper) {
             // Move this child into the wrapper. If this results in change of size
             // for wrapper, SizeWatcher will call us.
             moveElement(child, {
@@ -13728,13 +13797,13 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
   return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
 };
 const init$3 = (widget, element, components, config, methods) => {
-  var _pages$, _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
+  var _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
   const pages = components._pages;
   const toggles = components._toggles;
   const switches = components._switches;
   const nextSwitch = components._nextPrevSwitch._next;
   const prevSwitch = components._nextPrevSwitch._prev;
-  const pageContainer = (_pages$ = pages[0]) === null || _pages$ === void 0 ? void 0 : _pages$.parentElement;
+  const pageContainer = parentOf(pages[0]);
   let initialPage = toInt((_config$initialPage = config === null || config === void 0 ? void 0 : config.initialPage) !== null && _config$initialPage !== void 0 ? _config$initialPage : 1);
   const pagerStyle = (_config$style = config === null || config === void 0 ? void 0 : config.style) !== null && _config$style !== void 0 ? _config$style : "slider";
   const isCarousel = pagerStyle === "carousel";
@@ -15508,24 +15577,12 @@ const newConfigValidator$3 = element => {
   };
 };
 const setupRepresentative = async element => {
-  var _MH$classList;
-  const allowedToWrap = settings.contentWrappingAllowed === true && getData(element, PREFIX_NO_WRAP) === null &&
-  // Done by another animate action?
-  !((_MH$classList = classList(parentOf(element))) !== null && _MH$classList !== void 0 && _MH$classList.contains(PREFIX_WRAPPER$1));
-  let target;
-  if (allowedToWrap) {
-    target = await wrapElement(element, {
-      ignoreMove: true
-    });
-    addClasses(target, PREFIX_WRAPPER$1);
-    if (isInlineTag(tagName(target))) {
-      addClasses(target, PREFIX_INLINE_WRAPPER);
-    }
-  } else {
-    // Otherwise create a dummy hidden clone that's not animated and position
-    // it absolutely in a wrapper of size 0 that's inserted just before the
-    // actual element, so that the hidden clone overlaps the actual element's
-    // regular (pre-transformed) position.
+  let target = await tryWrap(element);
+  if (!target) {
+    // Not allowed to wrap. Create a dummy hidden clone that's not animated and
+    // position it absolutely in a wrapper of size 0 that's inserted just
+    // before the actual element, so that the hidden clone overlaps the actual
+    // element's regular (pre-transformed) position.
 
     const prev = element.previousElementSibling;
     const prevChild = childrenOf(prev)[0];
@@ -16595,8 +16652,8 @@ const getOptimalHeight = (measurements, config, logger) => {
  * in order to modify the configuration of the automatically created widget.
  *
  * @example
- * This will create custom scrollbars for the main scrolling element
- * (see {@link settings.mainScrollableElementSelector}).
+ * This will create custom scrollbars for
+ * {@link settings.mainScrollableElementSelector | the main scrolling element}.
  *
  * This will work even if {@link settings.autoWidgets}) is false
  *
@@ -16646,9 +16703,12 @@ const getOptimalHeight = (measurements, config, logger) => {
  */
 class Scrollbar extends Widget {
   /**
-   * Returns the actual scrollable element created by us which will be a
-   * descendant of the original element passed to the constructor (unless
-   * {@link settings.contentWrappingAllowed} is false).
+   * Returns the actual scrollable element us which, unless the scrollable you
+   * passed to the constructor is the
+   * {@link settings.mainScrollableElementSelector | the main scrolling element}
+   * or unless {@link settings.contentWrappingAllowed} is false,
+   * will be a new element created by us that is a descendant of the original
+   * element you passed.
    */
 
   /**
@@ -16670,7 +16730,8 @@ class Scrollbar extends Widget {
   }
 
   /**
-   * Enables scrollbars on the {@link settings.mainScrollableElementSelector}.
+   * Enables scrollbars on the
+   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
    *
    * **NOTE:** It returns a Promise to a widget because it will wait for the
    * main scrollable element to be present in the DOM if not already.
@@ -16747,7 +16808,7 @@ const PREFIX_DRAGGABLE = prefixName("draggable");
 const PREFIX_CLICKABLE = prefixName("clickable");
 const PREFIX_HAS_WRAPPER = prefixName("has-wrapper");
 const PREFIX_ALLOW_COLLAPSE = prefixName("allow-collapse");
-const PREFIX_HAS_FIXED_HEIGHT = prefixName("has-fixed-height");
+const PREFIX_HAS_V_SCROLL = prefixName("has-v-scroll");
 const PREFIX_HAS_SCROLLBAR = prefixName("has-scrollbar");
 const PREFIX_HIDE_SCROLL = prefixName("hide-scroll");
 const S_SET_POINTER_CAPTURE = "setPointerCapture";
@@ -16779,23 +16840,28 @@ const getScrollableProps = containerElement => {
 
   // check if we're using body in quirks mode
   const isBodyInQuirks = root === body && defaultScrollable === body;
-  const allowedToWrap = settings.contentWrappingAllowed && getData(containerElement, PREFIX_NO_WRAP) === null;
+  const allowedToWrap = isAllowedToWrap(containerElement);
   const needsSticky = !isMainScrollable && !allowedToWrap;
   const barParent = isMainScrollable ? body : containerElement;
-  const hasFixedHeight = isScrollable(root, {
+  const hasVScroll = isScrollable(root, {
     axis: "y"
   });
   let contentWrapper = null;
   let scrollable = root;
+  let supported = true;
   if (!isMainScrollable && !isBody && allowedToWrap) {
     if (allowedToWrap) {
       contentWrapper = createElement("div");
       scrollable = contentWrapper;
-    } else {
+    } else if (supportsSticky()) {
       logWarn("Scrollbar on elements other than the main scrollable " + "when settings.contentWrappingAllowed is false relies on " + "position: sticky, is experimental and may not work properly");
+    } else {
+      logError("Scrollbar on elements other than the main scrollable " + "when settings.contentWrappingAllowed is false relies on " + "position: sticky, but this browser does not support sticky.");
+      supported = false;
     }
   }
   return {
+    supported,
     isMainScrollable,
     isBody,
     isBodyInQuirks,
@@ -16804,12 +16870,13 @@ const getScrollableProps = containerElement => {
     barParent,
     contentWrapper,
     needsSticky,
-    hasFixedHeight
+    hasVScroll
   };
 };
 const init$1 = (widget, containerElement, props, config) => {
   var _ref, _config$onMobile, _ref2, _config$hideNative, _config$autoHide, _config$clickScroll, _ref3, _config$dragScroll, _ref4, _config$useHandle;
   const {
+    supported,
     isMainScrollable,
     isBody,
     isBodyInQuirks,
@@ -16818,7 +16885,7 @@ const init$1 = (widget, containerElement, props, config) => {
     barParent,
     contentWrapper,
     needsSticky,
-    hasFixedHeight
+    hasVScroll
   } = props;
 
   // config
@@ -17054,6 +17121,10 @@ const init$1 = (widget, containerElement, props, config) => {
 
   // SETUP ------------------------------
 
+  if (!supported) {
+    setNativeShown();
+    return;
+  }
   if (!isMainScrollable && !isBody) {
     addClasses(containerElement, PREFIX_CONTAINER);
   }
@@ -17061,14 +17132,11 @@ const init$1 = (widget, containerElement, props, config) => {
 
   // Wrap children if needed
   if (contentWrapper) {
-    addClasses(contentWrapper, PREFIX_CONTENT);
     wrapChildren(containerElement, {
       wrapper: contentWrapper}); // no need to await here
-
+    addClasses(contentWrapper, PREFIX_CONTENT);
     setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
-    if (hasFixedHeight) {
-      setBooleanData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-    }
+    setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, hasVScroll);
   }
   maybeSetNativeHidden();
   if (config !== null && config !== void 0 && config.id) {
@@ -17160,9 +17228,7 @@ const init$1 = (widget, containerElement, props, config) => {
       delDataNow(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
     }
     delDataNow(containerElement, PREFIX_HAS_WRAPPER);
-    if (hasFixedHeight) {
-      delDataNow(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-    }
+    delDataNow(containerElement, PREFIX_HAS_V_SCROLL);
   });
 };
 const isHorizontal = scrollbar => getData(scrollbar, PREFIX_ORIENTATION) === S_HORIZONTAL;
@@ -17198,8 +17264,8 @@ const setOrReleasePointerCapture = (event, scrollbar, method) => {
  * **IMPORTANT:** When configuring an existing element as the button (i.e. using
  * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
  * - if using
- *   {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector},
- *   the button element will have it's CSS position set to `fixed`;
+ *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+ *   as the scrollable, the button element will have it's CSS position set to `fixed`;
  * - otherwise, if using a custom scrollable element, the button element may be
  *   moved in the DOM tree in order to position it on top of the scrollable
  * If you don't want the button element changed in any way, then consider using

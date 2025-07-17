@@ -5,18 +5,15 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { settings } from "@lisn/globals/settings";
-
 import {
   addClasses,
   addClassesNow,
   setDataNow,
   setStylePropNow,
 } from "@lisn/utils/css-alter";
-import { moveElement, wrapScrollingContent } from "@lisn/utils/dom-alter";
+import { moveElement, tryWrapContent } from "@lisn/utils/dom-alter";
 import { waitForElement } from "@lisn/utils/dom-events";
 import { waitForMutateTime } from "@lisn/utils/dom-optimize";
-import { logWarn } from "@lisn/utils/log";
 import { camelToKebabCase, objToStrKey } from "@lisn/utils/text";
 import {
   isScrollable,
@@ -37,7 +34,7 @@ export type OverlayOptions = {
    * If not given, then:
    * - if the overlay is to have a `position: fixed`, then `document.body` is used
    * - otherwise,
-   *   {@link settings.mainScrollableElementSelector | the main scrolling element}
+   *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
    *   is used
    */
   parent?: HTMLElement;
@@ -150,13 +147,10 @@ export const createOverlay = async (userOptions?: OverlayOptions) => {
   }
 
   if (needsContentWrapping) {
-    if (settings.contentWrappingAllowed) {
-      parentEl = await wrapScrollingContent(parentEl);
-    } else {
-      logWarn(
-        "Percentage offset view trigger with scrolling root requires contentWrappingAllowed",
-      );
-    }
+    parentEl = await tryWrapContent(parentEl, {
+      required: true,
+      requiredBy: "percentage offset view trigger with scrolling root",
+    });
   }
 
   if (options._style.position === MC.S_ABSOLUTE) {

@@ -35,6 +35,7 @@ import {
   moveElementNow,
   moveElement,
   moveChildrenNow,
+  isAllowedToWrap,
   wrapChildren,
   getOrAssignID,
 } from "@lisn/utils/dom-alter";
@@ -454,10 +455,7 @@ const getScrollableProps = (containerElement: HTMLElement) => {
   // check if we're using body in quirks mode
   const isBodyInQuirks = root === body && defaultScrollable === body;
 
-  const allowedToWrap =
-    settings.contentWrappingAllowed &&
-    getData(containerElement, MC.PREFIX_NO_WRAP) === null;
-
+  const allowedToWrap = isAllowedToWrap(containerElement);
   const needsSticky = !isMainScrollable && !allowedToWrap;
   const barParent = isMainScrollable ? body : containerElement;
   const hasVScroll = isScrollable(root, { axis: "y" });

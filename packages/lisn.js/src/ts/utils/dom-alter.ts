@@ -13,15 +13,19 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
+import { settings } from "@lisn/globals/settings";
+
 import {
   hideElement,
   hasClass,
   addClassesNow,
+  getData,
   setDataNow,
   setBooleanData,
 } from "@lisn/utils/css-alter";
 import { waitForMutateTime } from "@lisn/utils/dom-optimize";
 import { isInlineTag } from "@lisn/utils/dom-query";
+import { logWarn } from "@lisn/utils/log";
 import { randId } from "@lisn/utils/text";
 
 /**
@@ -343,25 +347,99 @@ export const getOrAssignID = (element: Element, prefix = "") => {
  * @ignore
  * @internal
  */
-export const wrapScrollingContent = async (element: Element) => {
-  await waitForMutateTime();
+export const isAllowedToWrap = (element: Element) =>
+  settings.contentWrappingAllowed === true &&
+  getData(element, MC.PREFIX_NO_WRAP) === null;
 
-  let wrapper: HTMLElement;
+/**
+ * @ignore
+ * @internal
+ */
+export const getWrapper = (
+  element: Element,
+  options?: {
+    tagName?: keyof HTMLElementTagNameMap;
+    className?: string; // default is PREFIX_WRAPPER
+  },
+) => {
+  const { tagName, className = MC.PREFIX_WRAPPER } = options ?? {};
+  const parent = MH.parentOf(element);
+  if (
+    MH.lengthOf(MH.childrenOf(parent)) === 1 &&
+    MH.isHTMLElement(parent) &&
+    (!tagName ||
+      MH.toLowerCase(MH.tagName(parent)) === MH.toLowerCase(tagName)) &&
+    (!className || hasClass(parent, className))
+  ) {
+    // Already wrapped
+    return parent;
+  }
+
+  return null; // don't check the element itself, only its parent
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const getContentWrapper = (
+  element: Element,
+  options?: {
+    tagName?: keyof HTMLElementTagNameMap;
+    className?: string; // default is PREFIX_CONTENT_WRAPPER
+  },
+) => {
+  const { tagName, className = MC.PREFIX_CONTENT_WRAPPER } = options ?? {};
   const firstChild = MH.childrenOf(element)[0];
   if (
     MH.lengthOf(MH.childrenOf(element)) === 1 &&
     MH.isHTMLElement(firstChild) &&
-    hasClass(firstChild, PREFIX_CONTENT_WRAPPER)
+    (!tagName ||
+      MH.toLowerCase(MH.tagName(firstChild)) === MH.toLowerCase(tagName)) &&
+    (!className || hasClass(firstChild, className))
   ) {
-    // Another concurrent call has just wrapped it
-    wrapper = firstChild;
-  } else {
-    wrapper = wrapChildrenNow(element, { ignoreMove: true });
-    addClassesNow(wrapper, PREFIX_CONTENT_WRAPPER);
+    // Already wrapped
+    return firstChild;
   }
 
-  return wrapper;
+  return null;
 };
+
+/**
+ * @ignore
+ * @internal
+ */
+export const tryWrapNow = <O extends ContentWrappingOptions>(
+  element: Element,
+  options?: O,
+) => _tryWrapNow(element, options);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const tryWrap = <O extends ContentWrappingOptions>(
+  element: Element,
+  options?: O,
+) => _tryWrap(element, options);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const tryWrapContentNow = <O extends ContentWrappingOptions>(
+  element: Element,
+  options?: O,
+) => _tryWrapNow(element, options, true);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const tryWrapContent = <O extends ContentWrappingOptions>(
+  element: Element,
+  options?: O,
+) => _tryWrap(element, options, true);
 
 /**
  * @ignore
@@ -401,8 +479,7 @@ export const insertGhostCloneNow = <E extends Element>(
     MC.PREFIX_ANIMATE_DISABLE,
   );
 
-  const wrapper = wrapElementNow(clone);
-  addClassesNow(wrapper, MC.PREFIX_WRAPPER);
+  const wrapper = _tryWrapNow(clone, { required: true });
 
   moveElementNow(wrapper, {
     to: insertBefore || element,
@@ -480,7 +557,13 @@ export const insertArrow = (
 
 // ----------------------------------------
 
-const PREFIX_CONTENT_WRAPPER = MH.prefixName("content-wrapper");
+type ContentWrappingOptions = {
+  tagName?: keyof HTMLElementTagNameMap;
+  className?: string;
+  ignoreMove?: boolean; // default is true here
+  required?: boolean; // if true, will ignore contentWrappingAllowed and data-lisn-no-wrap
+  requiredBy?: string; // for logging purposes
+};
 
 const recordsToSkipOnce = MH.newMap<
   /* target being moved */ Element,
@@ -506,3 +589,46 @@ const createWrapperFor = (
 
   return MH.createElement(tag);
 };
+
+const _tryWrapNow = <O extends ContentWrappingOptions>(
+  element: Element,
+  options: O | undefined,
+  wrapContent = false, // if true, wrap its children, otherwise given element
+) => {
+  const {
+    tagName,
+    className = wrapContent ? MC.PREFIX_CONTENT_WRAPPER : MC.PREFIX_WRAPPER,
+    ignoreMove = true,
+    required = false,
+    requiredBy = "",
+  } = options ?? {};
+
+  const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
+  const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
+  const allowedToWrap = isAllowedToWrap(element);
+
+  let wrapper = getWrapperFn(element, options);
+  if (!wrapper && (required || allowedToWrap)) {
+    wrapper = wrapFn(element, { wrapper: tagName, ignoreMove });
+    addClassesNow(wrapper, className);
+    if (isInlineTag(MH.tagName(wrapper))) {
+      addClassesNow(wrapper, MC.PREFIX_INLINE_WRAPPER);
+    }
+
+    if (!allowedToWrap && requiredBy) {
+      logWarn(
+        `content wrapping is disabled for element but wrapping is required by ${requiredBy}`,
+      );
+    }
+  }
+
+  return wrapper as O extends { required: true }
+    ? HTMLElement
+    : HTMLElement | null;
+};
+
+const _tryWrap = <O extends ContentWrappingOptions>(
+  element: Element,
+  options: O | undefined,
+  wrapContent = false, // if true, wrap its children, otherwise given element
+) => waitForMutateTime().then(() => _tryWrapNow(element, options, wrapContent));

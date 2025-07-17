@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 exports.ScrollWatcher = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
-var _settings = require("../globals/settings.cjs");
 var _cssAlter = require("../utils/css-alter.cjs");
 var _directions = require("../utils/directions.cjs");
 var _domAlter = require("../utils/dom-alter.cjs");
@@ -41,7 +40,7 @@ class ScrollWatcher {
   /**
    * Returns the element that holds the main page content. By default it's
    * `document.body` but is overridden by
-   * {@link settings.mainScrollableElementSelector}.
+   * {@link Settings.settings.mainScrollableElementSelector}.
    *
    * It will wait for the element to be available if not already.
    */
@@ -53,7 +52,7 @@ class ScrollWatcher {
    * Returns the scrollable element that holds the wrapper around the main page
    * content. By default it's `document.scrollable` (unless `document.body` is
    * actually scrollable, in which case it will be used) but it will be
-   * different if {@link settings.mainScrollableElementSelector} is set.
+   * different if {@link Settings.settings.mainScrollableElementSelector} is set.
    *
    * It will wait for the element to be available if not already.
    */
@@ -138,7 +137,7 @@ class ScrollWatcher {
      * - If {@link OnScrollOptions.scrollable | options.scrollable} is not given,
      *   or is `null`, `window` or `document`, the following CSS variables are
      *   set on the root (`html`) element and represent the scroll of the
-     *   {@link fetchMainScrollableElement}:
+     *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}:
      *   - `--lisn-js--page-scroll-top`
      *   - `--lisn-js--page-scroll-top-fraction`
      *   - `--lisn-js--page-scroll-left`
@@ -200,7 +199,8 @@ class ScrollWatcher {
      *               the target coordinates. If it is a string, then it is treated
      *               as a selector for an element using `querySelector`.
      * @param {} [options.scrollable]
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     *               If not given, it defaults to
+     *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
      * @return {} `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
@@ -210,7 +210,8 @@ class ScrollWatcher {
      * Returns the current {@link ScrollAction} if any.
      *
      * @param {} scrollable
-     *               If not given, it defaults to {@link fetchMainScrollableElement}
+     *               If not given, it defaults to
+     *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -409,12 +410,9 @@ class ScrollWatcher {
       // Observe the scrolling element
       setupOnResize(element);
 
-      // And also its children (if possible, single wrapper around children
-      const allowedToWrap = _settings.settings.contentWrappingAllowed === true && element !== docScrollingElement && (0, _cssAlter.getData)(element, MC.PREFIX_NO_WRAP) === null;
-      let wrapper;
-      if (allowedToWrap) {
-        // Wrap the content and observe the wrapper
-        wrapper = await (0, _domAlter.wrapScrollingContent)(element);
+      // And also its children (if possible, a single wrapper around them
+      const wrapper = await (0, _domAlter.tryWrapContent)(element);
+      if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
 
@@ -437,7 +435,7 @@ class ScrollWatcher {
         // If we've just added the wrapper, it will be in DOMWatcher's queue,
         // so check.
         if (child !== wrapper) {
-          if (allowedToWrap) {
+          if (wrapper) {
             // Move this child into the wrapper. If this results in change of size
             // for wrapper, SizeWatcher will call us.
             (0, _domAlter.moveElement)(child, {

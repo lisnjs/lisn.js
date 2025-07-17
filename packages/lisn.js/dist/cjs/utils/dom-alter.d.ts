@@ -171,7 +171,51 @@ export declare const getOrAssignID: (element: Element, prefix?: string) => strin
  * @ignore
  * @internal
  */
-export declare const wrapScrollingContent: (element: Element) => Promise<HTMLElement>;
+export declare const isAllowedToWrap: (element: Element) => boolean;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const getWrapper: (element: Element, options?: {
+    tagName?: keyof HTMLElementTagNameMap;
+    className?: string;
+}) => HTMLElement | null;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const getContentWrapper: (element: Element, options?: {
+    tagName?: keyof HTMLElementTagNameMap;
+    className?: string;
+}) => HTMLElement | null;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const tryWrapNow: <O extends ContentWrappingOptions>(element: Element, options?: O) => O extends {
+    required: true;
+} ? HTMLElement : HTMLElement | null;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const tryWrap: <O extends ContentWrappingOptions>(element: Element, options?: O) => Promise<O extends {
+    required: true;
+} ? HTMLElement : HTMLElement | null>;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const tryWrapContentNow: <O extends ContentWrappingOptions>(element: Element, options?: O) => O extends {
+    required: true;
+} ? HTMLElement : HTMLElement | null;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const tryWrapContent: <O extends ContentWrappingOptions>(element: Element, options?: O) => Promise<O extends {
+    required: true;
+} ? HTMLElement : HTMLElement | null>;
 /**
  * @ignore
  * @internal
@@ -236,4 +280,12 @@ export declare const clearIgnoreMove: (target: Element) => void;
  * @internal
  */
 export declare const insertArrow: (target: Element, direction: "up" | "down" | "left" | "right", position?: "prepend" | "append" | "before" | "after", tag?: string) => HTMLElement;
+type ContentWrappingOptions = {
+    tagName?: keyof HTMLElementTagNameMap;
+    className?: string;
+    ignoreMove?: boolean;
+    required?: boolean;
+    requiredBy?: string;
+};
+export {};
 //# sourceMappingURL=dom-alter.d.ts.map

@@ -523,7 +523,7 @@ export const getFlexDirection = async element => {
  * @returns {} `null` if the element's parent does not have a flex layout.
  */
 export const getParentFlexDirection = async element => {
-  const parent = element.parentElement;
+  const parent = MH.parentOf(element);
   return parent ? getFlexDirection(parent) : null;
 };
 
@@ -544,7 +544,7 @@ export const isFlex = async (element, direction) => {
  * given, then it also needs to match.
  */
 export const isFlexChild = async (element, direction) => {
-  const parent = element.parentElement;
+  const parent = MH.parentOf(element);
   return parent ? isFlex(parent, direction) : false;
 };
 

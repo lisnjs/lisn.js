@@ -11,13 +11,10 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { settings } from "@lisn/globals/settings";
-
 import { ViewTarget, View, CommaSeparatedStr } from "@lisn/globals/types";
 
-import { hasClass, addClasses, getData } from "@lisn/utils/css-alter";
-import { wrapElement, insertGhostClone } from "@lisn/utils/dom-alter";
-import { isInlineTag } from "@lisn/utils/dom-query";
+import { hasClass } from "@lisn/utils/css-alter";
+import { insertGhostClone, tryWrap } from "@lisn/utils/dom-alter";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
 import { formatAsString } from "@lisn/utils/text";
 import {
@@ -312,25 +309,12 @@ const newConfigValidator: WidgetConfigValidatorFunc<
 };
 
 const setupRepresentative = async (element: Element): Promise<Element> => {
-  const allowedToWrap =
-    settings.contentWrappingAllowed === true &&
-    getData(element, MC.PREFIX_NO_WRAP) === null &&
-    // Done by another animate action?
-    !MH.classList(MH.parentOf(element))?.contains(MC.PREFIX_WRAPPER);
-
-  let target: Element;
-  if (allowedToWrap) {
-    target = await wrapElement(element, { ignoreMove: true });
-    addClasses(target, MC.PREFIX_WRAPPER);
-
-    if (isInlineTag(MH.tagName(target))) {
-      addClasses(target, MC.PREFIX_INLINE_WRAPPER);
-    }
-  } else {
-    // Otherwise create a dummy hidden clone that's not animated and position
-    // it absolutely in a wrapper of size 0 that's inserted just before the
-    // actual element, so that the hidden clone overlaps the actual element's
-    // regular (pre-transformed) position.
+  let target: Element | null = await tryWrap(element);
+  if (!target) {
+    // Not allowed to wrap. Create a dummy hidden clone that's not animated and
+    // position it absolutely in a wrapper of size 0 that's inserted just
+    // before the actual element, so that the hidden clone overlaps the actual
+    // element's regular (pre-transformed) position.
 
     const prev = element.previousElementSibling;
     const prevChild = MH.childrenOf(prev)[0];

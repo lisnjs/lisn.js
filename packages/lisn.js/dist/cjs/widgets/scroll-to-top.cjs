@@ -35,8 +35,8 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  * **IMPORTANT:** When configuring an existing element as the button (i.e. using
  * `new ScrollToTop` or auto-widgets, rather than {@link ScrollToTop.enableMain}):
  * - if using
- *   {@link Settings.settings.mainScrollableElementSelector | settings.mainScrollableElementSelector},
- *   the button element will have it's CSS position set to `fixed`;
+ *   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+ *   as the scrollable, the button element will have it's CSS position set to `fixed`;
  * - otherwise, if using a custom scrollable element, the button element may be
  *   moved in the DOM tree in order to position it on top of the scrollable
  * If you don't want the button element changed in any way, then consider using

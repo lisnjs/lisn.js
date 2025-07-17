@@ -571,7 +571,7 @@ const getFlexDirection = async element => {
  */
 exports.getFlexDirection = getFlexDirection;
 const getParentFlexDirection = async element => {
-  const parent = element.parentElement;
+  const parent = MH.parentOf(element);
   return parent ? getFlexDirection(parent) : null;
 };
 
@@ -594,7 +594,7 @@ const isFlex = async (element, direction) => {
  */
 exports.isFlex = isFlex;
 const isFlexChild = async (element, direction) => {
-  const parent = element.parentElement;
+  const parent = MH.parentOf(element);
   return parent ? isFlex(parent, direction) : false;
 };
 

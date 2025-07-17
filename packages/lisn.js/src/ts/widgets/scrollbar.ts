@@ -400,7 +400,7 @@ const PREFIX_DRAGGABLE = MH.prefixName("draggable");
 const PREFIX_CLICKABLE = MH.prefixName("clickable");
 const PREFIX_HAS_WRAPPER = MH.prefixName("has-wrapper");
 const PREFIX_ALLOW_COLLAPSE = MH.prefixName("allow-collapse");
-const PREFIX_HAS_FIXED_HEIGHT = MH.prefixName("has-fixed-height");
+const PREFIX_HAS_V_SCROLL = MH.prefixName("has-v-scroll");
 const PREFIX_HAS_SCROLLBAR = MH.prefixName("has-scrollbar");
 const PREFIX_HIDE_SCROLL = MH.prefixName("hide-scroll");
 
@@ -451,7 +451,7 @@ const getScrollableProps = (containerElement: HTMLElement) => {
 
   const needsSticky = !isMainScrollable && !allowedToWrap;
   const barParent = isMainScrollable ? body : containerElement;
-  const hasFixedHeight = isScrollable(root, { axis: "y" });
+  const hasVScroll = isScrollable(root, { axis: "y" });
 
   let contentWrapper: HTMLElement | null = null;
   let scrollable = root;
@@ -477,7 +477,7 @@ const getScrollableProps = (containerElement: HTMLElement) => {
     barParent,
     contentWrapper,
     needsSticky,
-    hasFixedHeight,
+    hasVScroll,
   };
 };
 
@@ -496,7 +496,7 @@ const init = (
     barParent,
     contentWrapper,
     needsSticky,
-    hasFixedHeight,
+    hasVScroll,
   } = props;
 
   const logger = debug
@@ -833,9 +833,7 @@ const init = (
     }); // no need to await here
 
     setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
-    if (hasFixedHeight) {
-      setBooleanData(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-    }
+    setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, hasVScroll);
   }
 
   maybeSetNativeHidden();
@@ -942,9 +940,7 @@ const init = (
     }
 
     delDataNow(containerElement, PREFIX_HAS_WRAPPER);
-    if (hasFixedHeight) {
-      delDataNow(containerElement, PREFIX_HAS_FIXED_HEIGHT);
-    }
+    delDataNow(containerElement, PREFIX_HAS_V_SCROLL);
   });
 };
 

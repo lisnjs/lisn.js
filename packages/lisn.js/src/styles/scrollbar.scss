@@ -68,7 +68,7 @@
     margin-bottom: calc(-1 * var(--lisn_padb));
   }
 
-  &[data-lisn-has-fixed-height="true"] .lisn-scrollbar__content {
+  &[data-lisn-has-v-scroll="true"] .lisn-scrollbar__content {
     height: calc(
       var(--lisn_clht) - var(--lisn_padt) - var(--lisn_ofst) - var(
           --lisn_padb

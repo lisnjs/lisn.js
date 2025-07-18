@@ -1,6 +1,7 @@
 const { describe, test, expect } = require("@jest/globals");
 
 const { Scrollbar } = window.LISN.widgets;
+const { randId } = window.LISN.utils;
 
 const scrollbarPromise = window.LISN.utils.waitForElement(() =>
   document.querySelector(".lisn-scrollbar__root"),
@@ -12,66 +13,6 @@ const newWidget = async ({
   existingWrapper = false,
   disableWrapping = false,
 } = {}) => {
-  const element = document.createElement("div");
-  if (disableWrapping) {
-    element.dataset.lisnNoWrap = "";
-  }
-
-  const child1 = document.createElement("div");
-  const child2 = document.createElement("div");
-  let scrollableWrapper = null;
-  let contentWrapper = null;
-
-  document.body.append(element);
-  if (existingWrapper) {
-    scrollableWrapper = document.createElement("div");
-    scrollableWrapper.classList.add("lisn-scrollbar__content");
-    if (disableWrapping) {
-      scrollableWrapper.dataset.lisnNoWrap = "";
-    }
-
-    contentWrapper = document.createElement("div");
-    contentWrapper.classList.add("lisn-wrapper");
-
-    element.append(scrollableWrapper);
-    scrollableWrapper.append(contentWrapper);
-    contentWrapper.append(child1, child2);
-  } else {
-    element.append(child1, child2);
-  }
-
-  if (disableWrapping) {
-    window.expectWarning(/relies on position: sticky/);
-  }
-  const widget = new Scrollbar(element);
-  const actualScrollable = widget.getScrollable();
-  const actualRoot = widget.getElement();
-  expect(actualRoot).toBe(element);
-
-  await window.waitFor(300);
-
-  const actualContentWrapper = disableWrapping
-    ? null
-    : actualScrollable.children[0];
-  const barWrapper = actualRoot.children[0];
-
-  // console.log("XXX", {
-  //   disableWrapping,
-  //   existingWrapper,
-  //   actualRootCls: [...actualRoot.classList],
-  //   actualRootChildren: [...actualRoot.children].map((c) => [...c.classList]),
-  //   actualScrollableCls: [...actualScrollable.classList],
-  //   actualScrollableChildren: [...actualScrollable.children].map((c) => [
-  //     ...c.classList,
-  //   ]),
-  //   actualContentWrapperCls: [...(actualContentWrapper?.classList ?? [])],
-  //   actualContentWrapperChildren: [
-  //     ...(actualContentWrapper?.children ?? []),
-  //   ].map((c) => [...c.classList]),
-  //   barWrapperCls: [...barWrapper.classList],
-  //   barWrapperChildren: [...barWrapper.children].map((c) => [...c.classList]),
-  // });
-
   const ensureIsWrapped = (isDestroyed = false) => {
     if (isDestroyed) {
       expect(actualRoot.children.length).toBe(1);
@@ -118,6 +59,9 @@ const newWidget = async ({
 
   const ensureIsRestored = () => {
     expect(element.classList.contains("lisn-scrollbar__root")).toBe(false);
+    expect(element.id).toBe(origId);
+    expect(element.classList.contains(newClassName)).toBe(false);
+    expect(element.classList.contains(origClassName)).toBe(true);
 
     if (existingWrapper) {
       ensureIsWrapped(true);
@@ -129,6 +73,82 @@ const newWidget = async ({
       ensureIsUnwrapped(true);
     }
   };
+
+  // ------------------------------
+  // ------------------------------
+  // ------------------------------
+
+  const element = document.createElement("div");
+  const origId = randId();
+  const origClassName = randId();
+
+  const newId = randId();
+  const newClassName = randId();
+
+  element.id = origId;
+  element.classList.add(origClassName);
+
+  if (disableWrapping) {
+    element.dataset.lisnNoWrap = "";
+  }
+
+  const child1 = document.createElement("div");
+  const child2 = document.createElement("div");
+  let scrollableWrapper = null;
+  let contentWrapper = null;
+
+  document.body.append(element);
+  if (existingWrapper) {
+    scrollableWrapper = document.createElement("div");
+    scrollableWrapper.classList.add("lisn-scrollbar__content");
+    if (disableWrapping) {
+      scrollableWrapper.dataset.lisnNoWrap = "";
+    }
+
+    contentWrapper = document.createElement("div");
+    contentWrapper.classList.add("lisn-wrapper");
+
+    element.append(scrollableWrapper);
+    scrollableWrapper.append(contentWrapper);
+    contentWrapper.append(child1, child2);
+  } else {
+    element.append(child1, child2);
+  }
+
+  if (disableWrapping) {
+    window.expectWarning(/relies on position: sticky/);
+  }
+  const widget = new Scrollbar(element, { id: newId, className: newClassName });
+  const actualScrollable = widget.getScrollable();
+  const actualRoot = widget.getElement();
+  expect(actualRoot).toBe(element);
+
+  await window.waitFor(300);
+
+  const actualContentWrapper = disableWrapping
+    ? null
+    : actualScrollable.children[0];
+  const barWrapper = actualRoot.children[0];
+
+  // console.log("XXX", {
+  //   disableWrapping,
+  //   existingWrapper,
+  //   actualRootCls: [...actualRoot.classList],
+  //   actualRootChildren: [...actualRoot.children].map((c) => [...c.classList]),
+  //   actualScrollableCls: [...actualScrollable.classList],
+  //   actualScrollableChildren: [...actualScrollable.children].map((c) => [
+  //     ...c.classList,
+  //   ]),
+  //   actualContentWrapperCls: [...(actualContentWrapper?.classList ?? [])],
+  //   actualContentWrapperChildren: [
+  //     ...(actualContentWrapper?.children ?? []),
+  //   ].map((c) => [...c.classList]),
+  //   barWrapperCls: [...barWrapper.classList],
+  //   barWrapperChildren: [...barWrapper.children].map((c) => [...c.classList]),
+  // });
+
+  expect(actualScrollable.id).toBe(newId);
+  expect(actualScrollable.classList.contains(newClassName)).toBe(true);
 
   if (disableWrapping) {
     expect(actualRoot).toBe(actualScrollable);

@@ -904,6 +904,7 @@ const init = (
 
   maybeSetNativeHidden();
 
+  const origDomID = scrollable.id;
   if (config?.id) {
     scrollable.id = config.id;
   }
@@ -912,7 +913,6 @@ const init = (
     addClasses(scrollable, ...toArrayIfSingle(config.className));
   }
 
-  const hadDomID = !!scrollable.id;
   const scrollDomID = // for ARIA
     clickScroll || dragScroll ? getOrAssignID(scrollable, S_SCROLLBAR) : "";
 
@@ -976,8 +976,9 @@ const init = (
   widget.onDestroy(async () => {
     unmapScrollable(root);
 
-    if (!hadDomID) {
-      scrollable.id = "";
+    scrollable.id = origDomID;
+    if (config?.className) {
+      removeClasses(scrollable, ...toArrayIfSingle(config.className));
     }
 
     await waitForMutateTime();

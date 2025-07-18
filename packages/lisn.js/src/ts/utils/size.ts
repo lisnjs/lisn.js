@@ -31,11 +31,11 @@ export const getEntryContentBox = (entry: ResizeObserverEntry): Size => {
  * Returns the border box size of the given
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry | ResizeObserverEntry}.
  *
- * @param {} fallbackToContent If the entry does not contain border box
- *                             measurements (depending on browser), then fall
- *                             back to using the content box size. Otherwise
- *                             (by default) will return `NaN` values for width
- *                             and height.
+ * @param fallbackToContent If the entry does not contain border box
+ *                          measurements (depending on browser), then fall back
+ *                          to using the content box size. Otherwise (by
+ *                          default) will return `NaN` values for width and
+ *                          height.
  *
  * @category Size measurements
  */

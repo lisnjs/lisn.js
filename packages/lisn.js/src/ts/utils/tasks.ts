@@ -101,7 +101,7 @@ export const waitForDelay = (delay?: number) =>
  * Returns a promise that resolves at the next animation frame. Async/await
  * version of requestAnimationFrame.
  *
- * @returns {} The timestamp gotten from requestAnimationFrame
+ * @returns The timestamp gotten from requestAnimationFrame
  *
  * @category Tasks
  */

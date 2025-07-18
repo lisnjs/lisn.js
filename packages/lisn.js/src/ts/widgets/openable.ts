@@ -96,10 +96,9 @@ export type OpenableCreateFn<Config extends Record<string, unknown>> = (
  * {@link OpenableProperties.name | options.name} to the
  * {@link Openable.constructor} but it does not need to be the same.
  *
- * @param {} name        The name of the openable. Should be in kebab-case.
- * @param {} newOpenable Called for every element matching the selector.
- * @param {} configValidator
- *                        A validator object, or a function that returns such
+ * @param name            The name of the openable. Should be in kebab-case.
+ * @param newOpenable     Called for every element matching the selector.
+ * @param configValidator A validator object, or a function that returns such
  *                        an object, for all options supported by the widget.
  *
  * @see {@link registerWidget}

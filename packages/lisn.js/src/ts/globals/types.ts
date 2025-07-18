@@ -259,7 +259,7 @@ export type BoundingRect = {
 };
 
 /**
- * @param {} args  Arguments to log
+ * @param args Arguments to log
  *
  * @category Misc
  */

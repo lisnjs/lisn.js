@@ -136,8 +136,8 @@ export abstract class XMapBase<K, V> {
  * except that it supports automatically creating missing entries with
  * {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
   /**
@@ -176,10 +176,9 @@ export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
   static readonly newXMapGetter = newXMapGetter;
 
   /**
-   * @param {} getDefaultV  This function is called each time
-   *                        {@link sGet} is called with a non-existent
-   *                        key and must return a value that is then set for
-   *                        that key and returned.
+   * @param getDefaultV This function is called each time {@link sGet} is
+   *                    called with a non-existent key and must return a value
+   *                    that is then set for that key and returned.
    */
   constructor(getDefaultV: DefaultValueGetter<K, V>) {
     const root = MH.newMap<K, V>();
@@ -200,8 +199,8 @@ export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
  * except that it supports automatically creating missing entries with
  * with {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
   /**
@@ -213,10 +212,9 @@ export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
   static readonly newXWeakMapGetter = newXWeakMapGetter;
 
   /**
-   * @param {} getDefaultV  This function is called each time
-   *                        {@link sGet} is called with a non-existent
-   *                        key and must return a value that is then set for
-   *                        that key and returned.
+   * @param getDefaultV This function is called each time {@link sGet} is
+   *                    called with a non-existent key and must return a value
+   *                    that is then set for that key and returned.
    */
   constructor(getDefaultV: DefaultValueGetter<K, V>) {
     const root = MH.newWeakMap<K, V>();

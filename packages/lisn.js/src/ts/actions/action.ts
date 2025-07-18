@@ -30,9 +30,9 @@ export type ActionCreateFn<Config extends Record<string, unknown>> = (
  * **IMPORTANT:** If an action by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name      The name of the action. Should be in kebab-case.
- * @param {} newAction Called for every action specification for a trigger
- *                     parsed by {@link Triggers.registerTrigger}
+ * @param name      The name of the action. Should be in kebab-case.
+ * @param newAction Called for every action specification for a trigger
+ *                  parsed by {@link Triggers.registerTrigger}
  */
 export const registerAction = <Config extends Record<string, unknown>>(
   name: string,

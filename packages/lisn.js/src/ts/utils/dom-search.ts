@@ -54,7 +54,7 @@ import { logError } from "@lisn/utils/log";
  *
  * @category DOM: Searching for reference elements
  *
- * @param {} thisElement The element to search relative to
+ * @param thisElement The element to search relative to
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                        If the specification is invalid or if thisElement is

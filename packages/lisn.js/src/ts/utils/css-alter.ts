@@ -38,8 +38,8 @@ import { camelToKebabCase, splitOn } from "@lisn/utils/text";
  * Unlike {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace},
  * this will always add `toCls` even if `fromCls` isn't in the element's class list.
  *
- * @returns {} True if there was a change made (class removed or added),
- *             false otherwise.
+ * @returns True if there was a change made (class removed or added), false
+ * otherwise.
  *
  * @category CSS: Altering
  */
@@ -346,7 +346,7 @@ export const removeClasses = (el: Element, ...classNames: string[]) =>
 /**
  * Toggles the given class on the element.
  *
- * @param {} force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
  *
  * @category CSS: Altering
  */
@@ -570,7 +570,7 @@ export const delStyleProp = (element: Element, prop: string) =>
 /**
  * Returns the flex direction of the given element **if it has a flex layout**.
  *
- * @returns {} `null` if the element does not have a flex layout.
+ * @returns `null` if the element does not have a flex layout.
  */
 export const getFlexDirection = async (
   element: Element,
@@ -590,7 +590,7 @@ export const getFlexDirection = async (
  * Returns the flex direction of the given element's parent **if it has a flex
  * layout**.
  *
- * @returns {} `null` if the element's parent does not have a flex layout.
+ * @returns `null` if the element's parent does not have a flex layout.
  */
 export const getParentFlexDirection = async (
   element: Element,

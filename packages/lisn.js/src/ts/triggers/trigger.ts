@@ -341,17 +341,17 @@ export type TriggerCreateFn<Config extends TriggerConfig> = (
  * **IMPORTANT:** If a trigger by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name       The name of the trigger. Should be in kebab-case.
- * @param {} newTrigger Called for every trigger specification on any element
- *                      that has one or more trigger specifications.
- * @param {} configValidator
- *                      A validator object, or a function that returns such an
- *                      object, for all options that are specific to the
- *                      trigger. Base options (in {@link TriggerConfig}) will
- *                      be parsed automatically and don't need to be handled by
- *                      `configValidator`.
- *                      If the parameter is a function, it will be called with
- *                      the element on which the trigger is being defined.
+ * @param name       The name of the trigger. Should be in kebab-case.
+ * @param newTrigger Called for every trigger specification on any element
+ *                   that has one or more trigger specifications.
+ * @param configValidator
+ *                   A validator object, or a function that returns such an
+ *                   object, for all options that are specific to the
+ *                   trigger. Base options (in {@link TriggerConfig}) will
+ *                   be parsed automatically and don't need to be handled by
+ *                   `configValidator`.
+ *                   If the parameter is a function, it will be called with
+ *                   the element on which the trigger is being defined.
  *
  * @see {@link registerWidget}
  */

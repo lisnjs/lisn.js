@@ -46,8 +46,8 @@ export class XResizeObserver {
   readonly disconnect: () => void;
 
   /**
-   * @param {} debounceWindow Debounce the handler so that it's called at most
-   *                          every `debounceWindow` ms.
+   * @param debounceWindow Debounce the handler so that it's called at most
+   *                       every `debounceWindow` ms.
    */
   constructor(callback: XResizeObserverCallback, debounceWindow?: number) {
     const logger = debug ? new debug.Logger({ name: "XResizeObserver" }) : null;

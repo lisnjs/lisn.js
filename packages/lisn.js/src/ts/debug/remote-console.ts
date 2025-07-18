@@ -66,9 +66,9 @@ export class RemoteConsole implements ConsoleInterface {
    * Creates a new {@link RemoteConsole} and attempts to connect to the logger
    * at the given URL.
    *
-   * @param {} url                      The URL of the remote logger.
-   * @param {} [connectTimeout = 1500]  The timeout in ms for a connection
-   *                                    to be considered failed.
+   * @param url                     The URL of the remote logger.
+   * @param [connectTimeout = 1500] The timeout in ms for a connection
+   *                                to be considered failed.
    */
   constructor(url: string, connectTimeout = DEFAULT_TIMEOUT) {
     let hasFailed = false; // initially
@@ -164,9 +164,9 @@ export class RemoteConsole implements ConsoleInterface {
    *
    * If a new one is created, it will be saved for later reuse.
    *
-   * @param {} url               The URL of the remote logger.
-   * @param {} [connectTimeout]  The timeout in ms for a remote connection to
-   *                             be considered failed. Default is 1500.
+   * @param url              The URL of the remote logger.
+   * @param [connectTimeout] The timeout in ms for a remote connection to
+   *                         be considered failed. Default is 1500.
    */
   static reuse(url: string, connectTimeout = DEFAULT_TIMEOUT) {
     let rConsole = instances.get(url)?.get(connectTimeout);

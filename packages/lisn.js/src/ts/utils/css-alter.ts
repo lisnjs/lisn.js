@@ -308,40 +308,56 @@ export const isElementUndisplayed = (element: Element) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const hasClass = (el: Element, className: string) =>
-  MH.classList(el).contains(className);
+export const hasClass = (element: Element, className: string) =>
+  MH.classList(element).contains(className);
+
+/**
+ * Returns true if the element's class list contains all of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export const hasAllClasses = (element: Element, classNames: string[]) =>
+  !MH.some(classNames, (className) => !hasClass(element, className));
+
+/**
+ * Returns true if the element's class list contains any of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export const hasAnyClass = (element: Element, classNames: string[]) =>
+  MH.some(classNames, (className) => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
  *
  * @category CSS: Altering
  */
-export const addClassesNow = (el: Element, ...classNames: string[]) =>
-  MH.classList(el).add(...classNames);
+export const addClassesNow = (element: Element, ...classNames: string[]) =>
+  MH.classList(element).add(...classNames);
 
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const addClasses = (el: Element, ...classNames: string[]) =>
-  waitForMutateTime().then(() => addClassesNow(el, ...classNames));
+export const addClasses = (element: Element, ...classNames: string[]) =>
+  waitForMutateTime().then(() => addClassesNow(element, ...classNames));
 
 /**
  * Removes the given classes to the element.
  *
  * @category CSS: Altering
  */
-export const removeClassesNow = (el: Element, ...classNames: string[]) =>
-  MH.classList(el).remove(...classNames);
+export const removeClassesNow = (element: Element, ...classNames: string[]) =>
+  MH.classList(element).remove(...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const removeClasses = (el: Element, ...classNames: string[]) =>
-  waitForMutateTime().then(() => removeClassesNow(el, ...classNames));
+export const removeClasses = (element: Element, ...classNames: string[]) =>
+  waitForMutateTime().then(() => removeClassesNow(element, ...classNames));
 
 /**
  * Toggles the given class on the element.
@@ -351,18 +367,21 @@ export const removeClasses = (el: Element, ...classNames: string[]) =>
  * @category CSS: Altering
  */
 export const toggleClassNow = (
-  el: Element,
+  element: Element,
   className: string,
   force?: boolean,
-) => MH.classList(el).toggle(className, force);
+) => MH.classList(element).toggle(className, force);
 
 /**
  * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const toggleClass = (el: Element, className: string, force?: boolean) =>
-  waitForMutateTime().then(() => toggleClassNow(el, className, force));
+export const toggleClass = (
+  element: Element,
+  className: string,
+  force?: boolean,
+) => waitForMutateTime().then(() => toggleClassNow(element, className, force));
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -374,8 +393,8 @@ export const toggleClass = (el: Element, className: string, force?: boolean) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const getData = (el: Element, name: string) =>
-  MH.getAttr(el, MH.prefixData(name));
+export const getData = (element: Element, name: string) =>
+  MH.getAttr(element, MH.prefixData(name));
 
 /**
  * Returns the value of the given data attribute as a boolean. Its value is
@@ -387,8 +406,8 @@ export const getData = (el: Element, name: string) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const getBooleanData = (el: Element, name: string) => {
-  const value = getData(el, name);
+export const getBooleanData = (element: Element, name: string) => {
+  const value = getData(element, name);
   return value !== null && value !== "false";
 };
 
@@ -406,16 +425,16 @@ export const getBoolData = getBooleanData;
  *
  * @category CSS: Altering
  */
-export const setDataNow = (el: Element, name: string, value: string) =>
-  MH.setAttr(el, MH.prefixData(name), value);
+export const setDataNow = (element: Element, name: string, value: string) =>
+  MH.setAttr(element, MH.prefixData(name), value);
 
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const setData = (el: Element, name: string, value: string) =>
-  waitForMutateTime().then(() => setDataNow(el, name, value));
+export const setData = (element: Element, name: string, value: string) =>
+  waitForMutateTime().then(() => setDataNow(element, name, value));
 
 /**
  * Sets the given data attribute with value "true" (default) or "false".
@@ -425,8 +444,11 @@ export const setData = (el: Element, name: string, value: string) =>
  *
  * @category CSS: Altering
  */
-export const setBooleanDataNow = (el: Element, name: string, value = true) =>
-  MH.setAttr(el, MH.prefixData(name), value + "");
+export const setBooleanDataNow = (
+  element: Element,
+  name: string,
+  value = true,
+) => MH.setAttr(element, MH.prefixData(name), value + "");
 
 /**
  * @ignore
@@ -439,8 +461,8 @@ export const setBoolDataNow = setBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-export const setBooleanData = (el: Element, name: string, value = true) =>
-  waitForMutateTime().then(() => setBooleanDataNow(el, name, value));
+export const setBooleanData = (element: Element, name: string, value = true) =>
+  waitForMutateTime().then(() => setBooleanDataNow(element, name, value));
 
 /**
  * @ignore
@@ -456,8 +478,8 @@ export const setBoolData = setBooleanData;
  *
  * @category CSS: Altering
  */
-export const unsetBooleanDataNow = (el: Element, name: string) =>
-  MH.unsetAttr(el, MH.prefixData(name));
+export const unsetBooleanDataNow = (element: Element, name: string) =>
+  MH.unsetAttr(element, MH.prefixData(name));
 
 /**
  * @ignore
@@ -470,8 +492,8 @@ export const unsetBoolDataNow = unsetBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-export const unsetBooleanData = (el: Element, name: string) =>
-  waitForMutateTime().then(() => unsetBooleanDataNow(el, name));
+export const unsetBooleanData = (element: Element, name: string) =>
+  waitForMutateTime().then(() => unsetBooleanDataNow(element, name));
 
 /**
  * @ignore
@@ -487,16 +509,16 @@ export const unsetBoolData = unsetBooleanData;
  *
  * @category CSS: Altering
  */
-export const delDataNow = (el: Element, name: string) =>
-  MH.delAttr(el, MH.prefixData(name));
+export const delDataNow = (element: Element, name: string) =>
+  MH.delAttr(element, MH.prefixData(name));
 
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const delData = (el: Element, name: string) =>
-  waitForMutateTime().then(() => delDataNow(el, name));
+export const delData = (element: Element, name: string) =>
+  waitForMutateTime().then(() => delDataNow(element, name));
 
 /**
  * Returns the value of the given property from the computed style of the

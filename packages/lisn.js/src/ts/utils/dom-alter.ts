@@ -17,7 +17,7 @@ import { settings } from "@lisn/globals/settings";
 
 import {
   hideElement,
-  hasClass,
+  hasAnyClass,
   addClassesNow,
   getData,
   setDataNow,
@@ -354,22 +354,23 @@ export const isAllowedToWrap = (element: Element) =>
 /**
  * @ignore
  * @internal
+ *
+ * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
  */
 export const getWrapper = (
   element: Element,
   options?: {
     tagName?: keyof HTMLElementTagNameMap;
-    className?: string;
+    classNames?: string[] | null;
   },
 ) => {
-  const { tagName, className = MC.PREFIX_WRAPPER } = options ?? {};
+  const { tagName, classNames = [MC.PREFIX_WRAPPER] } = options ?? {};
   const parent = MH.parentOf(element);
   if (
     MH.lengthOf(MH.childrenOf(parent)) === 1 &&
     MH.isHTMLElement(parent) &&
-    (!tagName ||
-      MH.toLowerCase(MH.tagName(parent)) === MH.toLowerCase(tagName)) &&
-    (!className || hasClass(parent, className))
+    (!tagName || MH.hasTagName(parent, tagName)) &&
+    (!classNames || hasAnyClass(parent, classNames))
   ) {
     // Already wrapped
     return parent;
@@ -381,22 +382,23 @@ export const getWrapper = (
 /**
  * @ignore
  * @internal
+ *
+ * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
  */
 export const getContentWrapper = (
   element: Element,
   options?: {
     tagName?: keyof HTMLElementTagNameMap;
-    className?: string;
+    classNames?: string[] | null;
   },
 ) => {
-  const { tagName, className = MC.PREFIX_WRAPPER } = options ?? {};
+  const { tagName, classNames = [MC.PREFIX_WRAPPER] } = options ?? {};
   const firstChild = MH.childrenOf(element)[0];
   if (
     MH.lengthOf(MH.childrenOf(element)) === 1 &&
     MH.isHTMLElement(firstChild) &&
-    (!tagName ||
-      MH.toLowerCase(MH.tagName(firstChild)) === MH.toLowerCase(tagName)) &&
-    (!className || hasClass(firstChild, className))
+    (!tagName || MH.hasTagName(firstChild, tagName)) &&
+    (!classNames || hasAnyClass(firstChild, classNames))
   ) {
     // Already wrapped
     return firstChild;
@@ -559,7 +561,7 @@ export const insertArrow = (
 
 type ContentWrappingOptions = {
   tagName?: keyof HTMLElementTagNameMap;
-  className?: string;
+  classNames?: string[]; // if the wrapper has any one of these, it will be re-used
   ignoreMove?: boolean; // default is true here
   required?: boolean; // if true, will ignore contentWrappingAllowed and data-lisn-no-wrap
   requiredBy?: string; // for logging purposes
@@ -597,7 +599,7 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
 ) => {
   const {
     tagName,
-    className = MC.PREFIX_WRAPPER,
+    classNames = [MC.PREFIX_WRAPPER],
     ignoreMove = true,
     required = false,
     requiredBy = "",
@@ -610,7 +612,9 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
   let wrapper = getWrapperFn(element, options);
   if (!wrapper && (required || allowedToWrap)) {
     wrapper = wrapFn(element, { wrapper: tagName, ignoreMove });
-    addClassesNow(wrapper, className);
+    if (classNames) {
+      addClassesNow(wrapper, ...classNames);
+    }
     if (isInlineTag(MH.tagName(wrapper))) {
       addClassesNow(wrapper, MC.PREFIX_INLINE_WRAPPER);
     }

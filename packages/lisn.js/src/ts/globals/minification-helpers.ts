@@ -165,8 +165,8 @@ export const setTimer = root.setTimeout.bind(root);
 
 export const clearTimer = root.clearTimeout.bind(root);
 
-export const getBoundingClientRect = (el: Element) =>
-  el.getBoundingClientRect();
+export const getBoundingClientRect = (element: Element) =>
+  element.getBoundingClientRect();
 
 // Copy size properties explicitly to another object so they can be used with
 // the spread operator (DOMRect/DOMRectReadOnly's properties are not enumerable)
@@ -197,15 +197,17 @@ export const docQuerySelectorAll = (selector: string) =>
 
 export const getElementById = (id: string) => getDoc().getElementById(id);
 
-export const getAttr = (el: Element, name: string) => el.getAttribute(name);
+export const getAttr = (element: Element, name: string) =>
+  element.getAttribute(name);
 
-export const setAttr = (el: Element, name: string, value = "true") =>
-  el.setAttribute(name, value);
+export const setAttr = (element: Element, name: string, value = "true") =>
+  element.setAttribute(name, value);
 
-export const unsetAttr = (el: Element, name: string) =>
-  el.setAttribute(name, "false");
+export const unsetAttr = (element: Element, name: string) =>
+  element.setAttribute(name, "false");
 
-export const delAttr = (el: Element, name: string) => el.removeAttribute(name);
+export const delAttr = (element: Element, name: string) =>
+  element.removeAttribute(name);
 
 export const includes = (
   arr: readonly unknown[] | string,
@@ -213,10 +215,28 @@ export const includes = (
   startAt?: number,
 ) => (arr.indexOf as (v: unknown, startAt?: number) => number)(v, startAt) >= 0;
 
+export const every = <
+  A extends readonly unknown[],
+  T extends A[number],
+  C extends ArrayCallbackFn<A[number]>,
+>(
+  array: A,
+  predicate: C,
+) => array.every(predicate);
+
+export const some = <
+  A extends readonly unknown[],
+  T extends A[number],
+  C extends ArrayCallbackFn<A[number]>,
+>(
+  array: A,
+  predicate: C,
+) => array.some(predicate);
+
 export const filter = <
   A extends readonly unknown[],
   T extends A[number],
-  C extends FilterFn<A[number]> | FilterFnTypeP<A[number], T>,
+  C extends ArrayCallbackFn<A[number]> | FilterFnTypeP<A[number], T>,
 >(
   array: A,
   filterFn: C,
@@ -245,7 +265,10 @@ export const firstOf = <A extends readonly unknown[]>(
   a: A | null | undefined,
 ) => a?.slice(0, 1)[0] as FirstElement<A>;
 
-export const tagName = (el: Element) => el.tagName;
+export const tagName = (element: Element) => element.tagName;
+
+export const hasTagName = (element: Element, tag: string) =>
+  toLowerCase(tagName(element)) === toLowerCase(tag);
 
 export const preventDefault = (event: Event) => event.preventDefault();
 
@@ -342,16 +365,16 @@ export const currentTargetOf = <
       ? T | undefined
       : undefined;
 
-export const classList = <T extends Element | null | undefined>(el: T) =>
-  el?.classList as T extends Element ? DOMTokenList : undefined;
+export const classList = <T extends Element | null | undefined>(element: T) =>
+  element?.classList as T extends Element ? DOMTokenList : undefined;
 
 const S_TABINDEX = "tabindex";
-export const getTabIndex = (el: Element) => getAttr(el, S_TABINDEX);
+export const getTabIndex = (element: Element) => getAttr(element, S_TABINDEX);
 
-export const setTabIndex = (el: Element, index = "0") =>
-  setAttr(el, S_TABINDEX, index);
+export const setTabIndex = (element: Element, index = "0") =>
+  setAttr(element, S_TABINDEX, index);
 
-export const unsetTabIndex = (el: Element) => delAttr(el, S_TABINDEX);
+export const unsetTabIndex = (element: Element) => delAttr(element, S_TABINDEX);
 
 export const remove = (obj: { remove: () => void } | null | undefined) =>
   obj?.remove();
@@ -365,16 +388,16 @@ export const deleteKey = <K, V>(
 ) => map?.delete(key);
 
 export const elScrollTo = (
-  el: Element,
+  element: Element,
   coords: { top?: number; left?: number },
   behavior: ScrollBehavior = "instant",
-) => el.scrollTo(merge({ behavior }, coords));
+) => element.scrollTo(merge({ behavior }, coords));
 
 export const elScrollBy = (
-  el: Element,
+  element: Element,
   coords: { top?: number; left?: number },
   behavior: ScrollBehavior = "instant",
-) => el.scrollBy(merge({ behavior }, coords));
+) => element.scrollBy(merge({ behavior }, coords));
 
 export const newPromise = <T>(
   executor: (
@@ -441,11 +464,18 @@ type LastElement<T extends readonly unknown[]> = T extends readonly [
   ? Last
   : T[number] | undefined;
 
-type FilterFn<V> = (value: V, index: number, array: readonly V[]) => unknown;
+type ArrayCallbackFn<V> = (
+  value: V,
+  index: number,
+  array: readonly V[],
+) => unknown;
 type FilterFnTypeP<V, T extends V> = (
   value: V,
   index: number,
   array: readonly V[],
 ) => value is T;
-type FilteredType<C extends FilterFn<V> | FilterFnTypeP<V, T>, V, T extends V> =
-  C extends FilterFnTypeP<V, infer T> ? T : V;
+type FilteredType<
+  C extends ArrayCallbackFn<V> | FilterFnTypeP<V, T>,
+  V,
+  T extends V,
+> = C extends FilterFnTypeP<V, infer T> ? T : V;

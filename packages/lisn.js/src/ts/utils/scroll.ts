@@ -22,13 +22,11 @@ import {
   waitForInteractive,
   waitForElementOrInteractive,
 } from "@lisn/utils/dom-events";
-import {
-  waitForMeasureTime,
-  waitForMutateTime,
-} from "@lisn/utils/dom-optimize";
+import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
 import { maxAbs, easeInOutQuad } from "@lisn/utils/math";
+import { waitForAnimationFrame } from "@lisn/utils/tasks";
 import { isValidStrList } from "@lisn/utils/validation";
 
 import { newXMap } from "@lisn/modules/x-map";
@@ -204,7 +202,7 @@ export const isScrollable = (
  *
  * @param {} options See {@link isScrollable}
  *
- * @return {} `null` if no scrollable ancestors are found.
+ * @returns {} `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -258,7 +256,7 @@ export const getCurrentScrollAction = (
  *               the target coordinates. If it is a string, then it is treated
  *               as a selector for an element using `querySelector`.
  *
- * @return {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns {} `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling
@@ -640,14 +638,13 @@ const initiateScroll = async (
   const scrollable = options._scrollable;
 
   let startTime: number, previousTimeStamp: number;
-  let currentPosition: ScrollPosition = position.start;
+  const currentPosition: ScrollPosition = position.start;
 
   const step = async () => {
-    await waitForMutateTime(); // effectively next animation frame
+    const timeStamp = await waitForAnimationFrame();
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
     await waitForMeasureTime();
-    const timeStamp = MH.timeNow();
 
     if (isCancelled()) {
       // Reject the promise
@@ -671,14 +668,10 @@ const initiateScroll = async (
       const elapsed = timeStamp - startTime;
       const progress = easeInOutQuad(MH.min(1, elapsed / duration));
 
-      currentPosition = {
-        top:
-          position.start.top +
-          (position.end.top - position.start.top) * progress,
-        left:
-          position.start.left +
-          (position.end.left - position.start.left) * progress,
-      };
+      for (const s of [MC.S_LEFT, MC.S_TOP] as const) {
+        currentPosition[s] =
+          position.start[s] + (position.end[s] - position.start[s]) * progress;
+      }
 
       MH.elScrollTo(scrollable, currentPosition);
 

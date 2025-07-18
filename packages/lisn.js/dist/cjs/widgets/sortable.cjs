@@ -271,7 +271,7 @@ const init = (widget, element, items, methods) => {
           });
         }
         if (floatingClone) {
-          (0, _cssAlter.setNumericStyleProps)(floatingClone, {
+          (0, _cssAlter.setNumericStyleJsVars)(floatingClone, {
             clientX: clientX - grabOffset[0],
             clientY: clientY - grabOffset[1]
           }, {

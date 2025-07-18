@@ -8,7 +8,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
-import { showElement, hideElement, displayElement, undisplayElement, hasClass, addClasses, addClassesNow, removeClasses, removeClassesNow, getData, setData, setBooleanData, setBooleanDataNow, setDataNow, delData, delDataNow, getComputedStyleProp, getComputedStylePropNow, setStyleProp, setNumericStyleProps } from "../utils/css-alter.js";
+import { showElement, hideElement, displayElement, undisplayElement, hasClass, addClasses, addClassesNow, removeClasses, removeClassesNow, getData, setData, setBooleanData, setBooleanDataNow, setDataNow, delData, delDataNow, getComputedStyleProp, getComputedStylePropNow, setStyleProp, setNumericStyleJsVars } from "../utils/css-alter.js";
 import { moveElementNow, moveElement, moveChildrenNow, isAllowedToWrap, wrapChildren, getOrAssignID } from "../utils/dom-alter.js";
 import { waitForMeasureTime, waitForMutateTime } from "../utils/dom-optimize.js";
 import { addEventListenerTo, removeEventListenerFrom, preventSelect } from "../utils/event.js";
@@ -45,7 +45,15 @@ import debug from "../debug/debug.js";
  *
  * **IMPORTANT:** If you are using the Scrollbar on an element other than the
  * main scrollable element, it's highly recommended to enable (it is enabled by
- * default) {@link settings.contentWrappingAllowed}.
+ * default) {@link settings.contentWrappingAllowed}. Otherwise wrap all of its
+ * children in a single element with a class `lisn-wrapper`:
+ * ```html
+ * <div class="scrollable">
+ *   <div class="lisn-wrapper">
+ *     <!-- CONTENT -->
+ *   </div>
+ * </div>
+ * ```
  *
  * **IMPORTANT:** You should not instantiate more than one {@link Scrollbar}
  * widget on a given element. Use {@link Scrollbar.get} to get an existing
@@ -389,7 +397,7 @@ const init = (widget, containerElement, props, config) => {
       viewFraction
     });
     MH.setAttr(scrollbar, S_ARIA_VALUENOW, MH.round(completeFraction * 100) + "");
-    setNumericStyleProps(scrollbar, {
+    setNumericStyleJsVars(scrollbar, {
       viewFr: viewFraction,
       completeFr: completeFraction
     }, {
@@ -421,7 +429,7 @@ const init = (widget, containerElement, props, config) => {
   };
   const updatePropsOnResize = (target, sizeData) => {
     setBoxMeasureProps(containerElement);
-    setNumericStyleProps(containerElement, {
+    setNumericStyleJsVars(containerElement, {
       barHeight: sizeData.border[MC.S_HEIGHT]
     }, {
       _units: "px",

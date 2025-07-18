@@ -46,7 +46,7 @@ import { addDeltaZ } from "./gesture.js";
  * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}.
  *                                        Default is 5.
  *
- * @return {} `false` if there are no "wheel" events in the list, otherwise a
+ * @returns {} `false` if there are no "wheel" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures

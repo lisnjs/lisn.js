@@ -26,7 +26,15 @@ import { Widget } from "../widgets/widget.cjs";
  *
  * **IMPORTANT:** If you are using the Scrollbar on an element other than the
  * main scrollable element, it's highly recommended to enable (it is enabled by
- * default) {@link settings.contentWrappingAllowed}.
+ * default) {@link settings.contentWrappingAllowed}. Otherwise wrap all of its
+ * children in a single element with a class `lisn-wrapper`:
+ * ```html
+ * <div class="scrollable">
+ *   <div class="lisn-wrapper">
+ *     <!-- CONTENT -->
+ *   </div>
+ * </div>
+ * ```
  *
  * **IMPORTANT:** You should not instantiate more than one {@link Scrollbar}
  * widget on a given element. Use {@link Scrollbar.get} to get an existing

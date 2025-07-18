@@ -170,7 +170,7 @@ export declare const distanceBetween: (ptA: Point, ptB: Point) => number;
 export declare const quadraticRoots: (a: number, b: number, c: number) => number[];
 /**
  * Returns the value that an "easing" quadratic function would have at the
- * given x.
+ * given x (between 0 and 1).
  *
  * @see https://easings.net/#easeInOutQuad
  *

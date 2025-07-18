@@ -412,7 +412,7 @@ const setSizeCssProps = (element, sizeData) => {
     contentWidth: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[MC.S_WIDTH],
     contentHeight: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[MC.S_HEIGHT]
   };
-  (0, _cssAlter.setNumericStyleProps)(element, props, {
+  (0, _cssAlter.setNumericStyleJsVars)(element, props, {
     _prefix: prefix
   }); // don't await here
 };

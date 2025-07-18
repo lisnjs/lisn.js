@@ -48,7 +48,7 @@ const isValidStrList = (value, checkFn, allowEmpty = true) => {
  *
  * @param {} key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns {} `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -72,7 +72,7 @@ const validateStrList = (key, value, checkFn) => {
  *
  * @param {} key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns {} `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -91,7 +91,7 @@ const validateNumList = (key, value) => {
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns {} `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -111,7 +111,7 @@ const validateNumber = (key, value) => _validateNumber(key, value);
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is not a valid boolean or boolean string.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns {} `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -132,7 +132,7 @@ const validateBoolean = (key, value) => _validateBoolean(key, value);
  *                        If it is not given, then any literal string is
  *                        accepted.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns {} `undefined` if the input is nullish.
  *
  * @category Validation
  */

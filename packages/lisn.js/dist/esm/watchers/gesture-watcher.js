@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { addClasses, removeClasses, setNumericStyleProps } from "../utils/css-alter.js";
+import { addClasses, removeClasses, setNumericStyleJsVars } from "../utils/css-alter.js";
 import { isValidDirection } from "../utils/directions.js";
 import { addEventListenerTo, removeEventListenerFrom, preventSelect, undoPreventSelect } from "../utils/event.js";
 import { getDebouncedHandler } from "../utils/tasks.js";
@@ -571,14 +571,14 @@ const setGestureCssProps = (target, data) => {
   }
   const prefix = `${intent}-`;
   if (intent === MC.S_ZOOM) {
-    setNumericStyleProps(target, {
+    setNumericStyleJsVars(target, {
       deltaZ: data.totalDeltaZ
     }, {
       _prefix: prefix,
       _numDecimal: 2
     }); // don't await here
   } else {
-    setNumericStyleProps(target, {
+    setNumericStyleJsVars(target, {
       deltaX: data.totalDeltaX,
       deltaY: data.totalDeltaY
     }, {

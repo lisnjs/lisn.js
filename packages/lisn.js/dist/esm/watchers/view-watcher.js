@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { setNumericStyleProps } from "../utils/css-alter.js";
+import { setNumericStyleJsVars } from "../utils/css-alter.js";
 import { waitForInteractive } from "../utils/dom-events.js";
 import { waitForMeasureTime, waitForSubsequentMeasureTime } from "../utils/dom-optimize.js";
 import { logError } from "../utils/log.js";
@@ -720,7 +720,7 @@ const setViewCssProps = (element, viewData) => {
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: "r-",
     _numDecimal: 4
   }); // don't await here

@@ -281,7 +281,7 @@ export const quadraticRoots = (a: number, b: number, c: number) => {
 
 /**
  * Returns the value that an "easing" quadratic function would have at the
- * given x.
+ * given x (between 0 and 1).
  *
  * @see https://easings.net/#easeInOutQuad
  *
@@ -316,7 +316,7 @@ export const sortedKeysByVal = <T extends Record<string, number>>(
 export const keyWithMaxVal = (
   obj: Record<string, number>,
 ): string | undefined => {
-  return sortedKeysByVal(obj).slice(-1)[0];
+  return MH.lastOf(sortedKeysByVal(obj));
 };
 
 /**
@@ -329,7 +329,7 @@ export const keyWithMaxVal = (
 export const keyWithMinVal = (
   obj: Record<string, number>,
 ): string | undefined => {
-  return sortedKeysByVal(obj).slice(0, 1)[0];
+  return MH.firstOf(sortedKeysByVal(obj));
 };
 
 /**

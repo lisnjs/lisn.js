@@ -725,7 +725,7 @@ const setViewCssProps = (element, viewData) => {
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle
   };
-  (0, _cssAlter.setNumericStyleProps)(element, props, {
+  (0, _cssAlter.setNumericStyleJsVars)(element, props, {
     _prefix: "r-",
     _numDecimal: 4
   }); // don't await here

@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { addClasses, removeClasses, getBooleanData, setBooleanData, unsetBooleanData, delData, copyStyle, setNumericStyleProps } from "../utils/css-alter.js";
+import { addClasses, removeClasses, getBooleanData, setBooleanData, unsetBooleanData, delData, copyStyle, setNumericStyleJsVars } from "../utils/css-alter.js";
 import { moveElement, swapElements, cloneElement } from "../utils/dom-alter.js";
 import { waitForMeasureTime } from "../utils/dom-optimize.js";
 import { getVisibleContentChildren } from "../utils/dom-query.js";
@@ -267,7 +267,7 @@ const init = (widget, element, items, methods) => {
           });
         }
         if (floatingClone) {
-          setNumericStyleProps(floatingClone, {
+          setNumericStyleJsVars(floatingClone, {
             clientX: clientX - grabOffset[0],
             clientY: clientY - grabOffset[1]
           }, {

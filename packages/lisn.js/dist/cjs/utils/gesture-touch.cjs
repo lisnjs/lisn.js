@@ -58,7 +58,7 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  *                          The number of fingers that could be considered a
  *                          drag intent. Default is 1.
  *
- * @return {} `false` if there are less than 2 "touchmove" events in the list,
+ * @returns {} `false` if there are less than 2 "touchmove" events in the list,
  * `null` if the gesture is terminated, otherwise a {@link GestureFragment}.
  *
  * @category Gestures
@@ -132,7 +132,7 @@ const getTouchGestureFragment = (events, options) => {
     }
   }
   if (direction === MC.S_NONE) {
-    const lastTouchEvent = events.filter(MH.isTouchEvent).slice(-1)[0];
+    const lastTouchEvent = MH.lastOf(events.filter(MH.isTouchEvent));
     // If all fingers have lifted off, consider it terminated, otherwise wait
     // for more events.
     return MH.lengthOf(lastTouchEvent === null || lastTouchEvent === void 0 ? void 0 : lastTouchEvent.touches) ? false : null;

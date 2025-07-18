@@ -14,6 +14,7 @@ var _domOptimize = require("./dom-optimize.cjs");
 var _event = require("./event.cjs");
 var _log = require("./log.cjs");
 var _math = require("./math.cjs");
+var _tasks = require("./tasks.cjs");
 var _validation = require("./validation.cjs");
 var _xMap = require("../modules/x-map.cjs");
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
@@ -125,7 +126,7 @@ const isScrollable = (element, options) => {
  *
  * @param {} options See {@link isScrollable}
  *
- * @return {} `null` if no scrollable ancestors are found.
+ * @returns {} `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -171,7 +172,7 @@ const getCurrentScrollAction = scrollable => {
  *               the target coordinates. If it is a string, then it is treated
  *               as a selector for an element using `querySelector`.
  *
- * @return {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns {} `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling
@@ -455,11 +456,10 @@ const initiateScroll = async (options, isCancelled) => {
   let startTime, previousTimeStamp;
   let currentPosition = position.start;
   const step = async () => {
-    await (0, _domOptimize.waitForMutateTime)(); // effectively next animation frame
+    const timeStamp = await (0, _tasks.waitForAnimationFrame)();
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
     await (0, _domOptimize.waitForMeasureTime)();
-    const timeStamp = MH.timeNow();
     if (isCancelled()) {
       // Reject the promise
       throw currentPosition;
@@ -475,10 +475,9 @@ const initiateScroll = async (options, isCancelled) => {
     if (startTime !== timeStamp && previousTimeStamp !== timeStamp) {
       const elapsed = timeStamp - startTime;
       const progress = (0, _math.easeInOutQuad)(MH.min(1, elapsed / duration));
-      currentPosition = {
-        top: position.start.top + (position.end.top - position.start.top) * progress,
-        left: position.start.left + (position.end.left - position.start.left) * progress
-      };
+      for (const s of [MC.S_LEFT, MC.S_TOP]) {
+        currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
+      }
       MH.elScrollTo(scrollable, currentPosition);
       if (progress === 1) {
         return currentPosition;

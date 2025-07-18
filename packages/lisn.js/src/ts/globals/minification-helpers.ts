@@ -75,9 +75,8 @@ export const getPointerType = (event: Event) =>
       ? "mouse"
       : null;
 
-export const onAnimationFrame = hasDOM()
-  ? root.requestAnimationFrame.bind(root)
-  : () => {};
+export const onAnimationFrame = (callback: FrameRequestCallback) =>
+  requestAnimationFrame(callback);
 
 export const createElement = (
   tagName: string,
@@ -239,6 +238,13 @@ export const sizeOf = (obj: { size: number } | null | undefined) =>
 export const lengthOf = (obj: { length: number } | null | undefined) =>
   obj?.length ?? 0;
 
+export const lastOf = <A extends readonly unknown[]>(a: A | null | undefined) =>
+  a?.slice(-1)[0] as LastElement<A>;
+
+export const firstOf = <A extends readonly unknown[]>(
+  a: A | null | undefined,
+) => a?.slice(0, 1)[0] as FirstElement<A>;
+
 export const tagName = (el: Element) => el.tagName;
 
 export const preventDefault = (event: Event) => event.preventDefault();
@@ -258,6 +264,7 @@ export const merge = <A extends readonly (object | null | undefined)[]>(
   return MC.OBJECT.assign({}, ...a) as Spread<A>;
 };
 
+// alias for clarity of purpose
 export const copyObject = <T extends object>(obj: T) => merge(obj);
 
 export const promiseResolve = MC.PROMISE.resolve.bind(MC.PROMISE);
@@ -419,6 +426,20 @@ export const consoleWarn = CONSOLE.warn.bind(CONSOLE);
 export const consoleError = CONSOLE.error.bind(CONSOLE);
 
 // --------------------
+
+type FirstElement<T extends readonly unknown[]> = T extends readonly [
+  infer Head,
+  ...infer Last__ignored,
+]
+  ? Head
+  : T[number] | undefined;
+
+type LastElement<T extends readonly unknown[]> = T extends readonly [
+  ...infer Head__ignored,
+  infer Last,
+]
+  ? Last
+  : T[number] | undefined;
 
 type FilterFn<V> = (value: V, index: number, array: readonly V[]) => unknown;
 type FilterFnTypeP<V, T extends V> = (

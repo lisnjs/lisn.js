@@ -59,7 +59,7 @@ import { GestureFragment } from "../utils/gesture.cjs";
  *                                  See {@link getVectorDirection}
  * @param {} [options.scrollHeight] Use this as deltaY when Home/End is pressed
  *
- * @return {} `false` if there are no "keydown" events in the list, otherwise a
+ * @returns {} `false` if there are no "keydown" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures

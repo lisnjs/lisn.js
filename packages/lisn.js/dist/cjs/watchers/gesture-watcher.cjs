@@ -575,14 +575,14 @@ const setGestureCssProps = (target, data) => {
   }
   const prefix = `${intent}-`;
   if (intent === MC.S_ZOOM) {
-    (0, _cssAlter.setNumericStyleProps)(target, {
+    (0, _cssAlter.setNumericStyleJsVars)(target, {
       deltaZ: data.totalDeltaZ
     }, {
       _prefix: prefix,
       _numDecimal: 2
     }); // don't await here
   } else {
-    (0, _cssAlter.setNumericStyleProps)(target, {
+    (0, _cssAlter.setNumericStyleJsVars)(target, {
       deltaX: data.totalDeltaX,
       deltaY: data.totalDeltaY
     }, {

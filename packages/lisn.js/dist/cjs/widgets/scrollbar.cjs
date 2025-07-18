@@ -50,7 +50,15 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  *
  * **IMPORTANT:** If you are using the Scrollbar on an element other than the
  * main scrollable element, it's highly recommended to enable (it is enabled by
- * default) {@link settings.contentWrappingAllowed}.
+ * default) {@link settings.contentWrappingAllowed}. Otherwise wrap all of its
+ * children in a single element with a class `lisn-wrapper`:
+ * ```html
+ * <div class="scrollable">
+ *   <div class="lisn-wrapper">
+ *     <!-- CONTENT -->
+ *   </div>
+ * </div>
+ * ```
  *
  * **IMPORTANT:** You should not instantiate more than one {@link Scrollbar}
  * widget on a given element. Use {@link Scrollbar.get} to get an existing
@@ -394,7 +402,7 @@ const init = (widget, containerElement, props, config) => {
       viewFraction
     });
     MH.setAttr(scrollbar, S_ARIA_VALUENOW, MH.round(completeFraction * 100) + "");
-    (0, _cssAlter.setNumericStyleProps)(scrollbar, {
+    (0, _cssAlter.setNumericStyleJsVars)(scrollbar, {
       viewFr: viewFraction,
       completeFr: completeFraction
     }, {
@@ -426,7 +434,7 @@ const init = (widget, containerElement, props, config) => {
   };
   const updatePropsOnResize = (target, sizeData) => {
     setBoxMeasureProps(containerElement);
-    (0, _cssAlter.setNumericStyleProps)(containerElement, {
+    (0, _cssAlter.setNumericStyleJsVars)(containerElement, {
       barHeight: sizeData.border[MC.S_HEIGHT]
     }, {
       _units: "px",

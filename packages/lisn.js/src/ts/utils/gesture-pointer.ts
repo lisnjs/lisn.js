@@ -26,7 +26,7 @@ import { GestureFragment } from "@lisn/utils/gesture";
  *
  * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
  *
- * @return {} `false` if there are less than 2 "pointermove"/"mousemove" events
+ * @returns {} `false` if there are less than 2 "pointermove"/"mousemove" events
  * in the list, `null` if the gesture is terminated, otherwise a
  * {@link GestureFragment}.
  *

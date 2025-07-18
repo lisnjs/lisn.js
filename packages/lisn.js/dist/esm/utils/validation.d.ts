@@ -25,7 +25,7 @@ export declare const isValidStrList: <T extends string = string>(value: unknown,
  *
  * @param {} key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns {} `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -44,7 +44,7 @@ export declare const validateStrList: <T extends string = string>(key: string, v
  *
  * @param {} key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns {} `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -58,7 +58,7 @@ export declare const validateNumList: (key: string, value: unknown) => number[] 
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns {} `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -76,7 +76,7 @@ export declare const validateNumber: (key: string, value: unknown) => number | u
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is not a valid boolean or boolean string.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns {} `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -95,7 +95,7 @@ export declare const validateBoolean: (key: string, value: unknown) => boolean |
  *                        If it is not given, then any literal string is
  *                        accepted.
  *
- * @return {} `undefined` if the input is nullish.
+ * @returns {} `undefined` if the input is nullish.
  *
  * @category Validation
  */

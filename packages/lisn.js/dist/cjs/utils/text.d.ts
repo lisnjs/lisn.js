@@ -101,7 +101,7 @@ export declare const randId: (nChars?: number) => string;
  * `rootMargin`, top/bottom margin is relative to the height of the root, so
  * pass the actual root size.
  *
- * @return {} [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
+ * @returns {} [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
  *
  * @category Text
  */

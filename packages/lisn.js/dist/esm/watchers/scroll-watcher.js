@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { setNumericStyleProps } from "../utils/css-alter.js";
+import { setNumericStyleJsVars } from "../utils/css-alter.js";
 import { getMaxDeltaDirection } from "../utils/directions.js";
 import { moveElement, tryWrapContent } from "../utils/dom-alter.js";
 import { waitForMeasureTime } from "../utils/dom-optimize.js";
@@ -197,7 +197,7 @@ export class ScrollWatcher {
      *               If not given, it defaults to
      *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
-     * @return {} `null` if there's an ongoing scroll that is not cancellable,
+     * @returns {} `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
      */
     _defineProperty(this, "scrollTo", void 0);
@@ -719,7 +719,7 @@ const setScrollCssProps = (element, scrollData) => {
     [MC.S_SCROLL_WIDTH]: scrollData[MC.S_SCROLL_WIDTH],
     [MC.S_SCROLL_HEIGHT]: scrollData[MC.S_SCROLL_HEIGHT]
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: prefix
   });
 };

@@ -135,7 +135,7 @@ const prefixCssVar = name => "--" + prefixName(name);
 const prefixCssJsVar = name => prefixCssVar("js--" + name);
 const prefixData = name => `data-${camelToKebabCase$1(name)}`;
 const toLowerCase = s => s.toLowerCase();
-const timeNow = Date.now.bind(Date);
+Date.now.bind(Date);
 const hasDOM = () => typeof document !== "undefined";
 const getWindow = () => window;
 const getDoc = () => document;
@@ -144,7 +144,7 @@ const getDocScrollingElement = () => getDoc().scrollingElement;
 const getBody = () => getDoc().body;
 const getReadyState = () => getDoc().readyState;
 const getPointerType = event => isPointerEvent(event) ? event.pointerType : isMouseEvent(event) ? "mouse" : null;
-const onAnimationFrame = hasDOM() ? root.requestAnimationFrame.bind(root) : () => {};
+const onAnimationFrame = callback => requestAnimationFrame(callback);
 const createElement = (tagName, options) => getDoc().createElement(tagName, options);
 const isNullish = v => v === undefined || v === null;
 const isEmpty = v => isNullish(v) || v === "";
@@ -210,6 +210,7 @@ const lengthOf = obj => {
   var _obj$length;
   return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
 };
+const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
 const tagName = el => el.tagName;
 const preventDefault = event => event.preventDefault();
 const arrayFrom = ARRAY.from.bind(ARRAY);
@@ -220,6 +221,8 @@ const defineProperty = OBJECT.defineProperty.bind(OBJECT);
 const merge = (...a) => {
   return OBJECT.assign({}, ...a);
 };
+
+// alias for clarity of purpose
 const copyObject = obj => merge(obj);
 PROMISE.resolve.bind(PROMISE);
 const promiseAll = PROMISE.all.bind(PROMISE);
@@ -943,7 +946,7 @@ const distanceBetween = (ptA, ptB) => sqrt(pow(ptA[0] - ptB[0], 2) + pow(ptA[1] 
 
 /**
  * Returns the value that an "easing" quadratic function would have at the
- * given x.
+ * given x (between 0 and 1).
  *
  * @see https://easings.net/#easeInOutQuad
  *
@@ -1172,7 +1175,7 @@ const randId = (nChars = 8) => {
  * `rootMargin`, top/bottom margin is relative to the height of the root, so
  * pass the actual root size.
  *
- * @return {} [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
+ * @returns {} [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
  *
  * @category Text
  */
@@ -1269,7 +1272,7 @@ const maybeConvertToString = (value, nested) => {
  *
  * @param {} key Used in the error message thrown
  *
- * @return {} `undefined` if the input contains no non-empty values (after
+ * @returns {} `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -1570,6 +1573,18 @@ const getDebouncedHandler = (debounceWindow, handler) => {
     }
   };
 };
+
+/**
+ * Returns a promise that resolves at the next animation frame. Async/await
+ * version of requestAnimationFrame.
+ *
+ * @returns {} The timestamp gotten from requestAnimationFrame
+ *
+ * @category Tasks
+ */
+const waitForAnimationFrame = async () => newPromise(resolve => {
+  onAnimationFrame(resolve);
+});
 
 /**
  * @typeParam Args  See {@link Callback}
@@ -2054,7 +2069,7 @@ const delStyleProp = (element, prop) => waitForMutateTime().then(() => delStyleP
  * @ignore
  * @internal
  */
-const setNumericStyleProps = async (element, props, options = {}) => {
+const setNumericStyleJsVars = async (element, props, options = {}) => {
   if (!isDOMElement(element)) {
     return;
   }
@@ -3232,7 +3247,7 @@ const callEventListener = (handler, event) => {
  * but it handles `options` object in case the browser does not support those.
  * Does not support the `signal` option unless browser natively supports that.
  *
- * @return {} `true` if successfully added, or `false` if the same handler has
+ * @returns {} `true` if successfully added, or `false` if the same handler has
  * already been added by us, or if the handler is not a valid event listener.
  *
  * @category Events: Generic
@@ -3280,7 +3295,7 @@ const addEventListenerTo = (target, eventType, handler, options = {}) => {
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener | EventTarget:removeEventListener},
  * to remove it, not this function.
  *
- * @return {} `true` if successfully removed, or `false` if the handler has not
+ * @returns {} `true` if successfully removed, or `false` if the handler has not
  * been added by us.
  *
  * @category Events: Generic
@@ -3535,7 +3550,7 @@ const MIN_DELTA_Z = 0.1;
  *                                  See {@link getVectorDirection}
  * @param {} [options.scrollHeight] Use this as deltaY when Home/End is pressed
  *
- * @return {} `false` if there are no "keydown" events in the list, otherwise a
+ * @returns {} `false` if there are no "keydown" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures
@@ -3653,7 +3668,7 @@ const SK_ARROWRIGHT = SK_ARROW + SK_RIGHT;
  *
  * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
  *
- * @return {} `false` if there are less than 2 "pointermove"/"mousemove" events
+ * @returns {} `false` if there are less than 2 "pointermove"/"mousemove" events
  * in the list, `null` if the gesture is terminated, otherwise a
  * {@link GestureFragment}.
  *
@@ -3757,7 +3772,7 @@ const getPointerGestureFragment = (events, options) => {
  *                          The number of fingers that could be considered a
  *                          drag intent. Default is 1.
  *
- * @return {} `false` if there are less than 2 "touchmove" events in the list,
+ * @returns {} `false` if there are less than 2 "touchmove" events in the list,
  * `null` if the gesture is terminated, otherwise a {@link GestureFragment}.
  *
  * @category Gestures
@@ -3831,7 +3846,7 @@ const getTouchGestureFragment = (events, options) => {
     }
   }
   if (direction === S_NONE) {
-    const lastTouchEvent = events.filter(isTouchEvent).slice(-1)[0];
+    const lastTouchEvent = lastOf(events.filter(isTouchEvent));
     // If all fingers have lifted off, consider it terminated, otherwise wait
     // for more events.
     return lengthOf(lastTouchEvent === null || lastTouchEvent === void 0 ? void 0 : lastTouchEvent.touches) ? false : null;
@@ -4164,7 +4179,7 @@ const normalizeWheel = event => {
  * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}.
  *                                        Default is 5.
  *
- * @return {} `false` if there are no "wheel" events in the list, otherwise a
+ * @returns {} `false` if there are no "wheel" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures
@@ -4767,14 +4782,14 @@ const setGestureCssProps = (target, data) => {
   }
   const prefix = `${intent}-`;
   if (intent === S_ZOOM) {
-    setNumericStyleProps(target, {
+    setNumericStyleJsVars(target, {
       deltaZ: data.totalDeltaZ
     }, {
       _prefix: prefix,
       _numDecimal: 2
     }); // don't await here
   } else {
-    setNumericStyleProps(target, {
+    setNumericStyleJsVars(target, {
       deltaX: data.totalDeltaX,
       deltaY: data.totalDeltaY
     }, {
@@ -4968,7 +4983,7 @@ const isScrollable = (element, options) => {
  *
  * @param {} options See {@link isScrollable}
  *
- * @return {} `null` if no scrollable ancestors are found.
+ * @returns {} `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -5012,7 +5027,7 @@ const getCurrentScrollAction = scrollable => {
  *               the target coordinates. If it is a string, then it is treated
  *               as a selector for an element using `querySelector`.
  *
- * @return {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns {} `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling
@@ -5250,11 +5265,10 @@ const initiateScroll = async (options, isCancelled) => {
   let startTime, previousTimeStamp;
   let currentPosition = position.start;
   const step = async () => {
-    await waitForMutateTime(); // effectively next animation frame
+    const timeStamp = await waitForAnimationFrame();
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
     await waitForMeasureTime();
-    const timeStamp = timeNow();
     if (isCancelled()) {
       // Reject the promise
       throw currentPosition;
@@ -5270,10 +5284,9 @@ const initiateScroll = async (options, isCancelled) => {
     if (startTime !== timeStamp && previousTimeStamp !== timeStamp) {
       const elapsed = timeStamp - startTime;
       const progress = easeInOutQuad(min(1, elapsed / duration));
-      currentPosition = {
-        top: position.start.top + (position.end.top - position.start.top) * progress,
-        left: position.start.left + (position.end.left - position.start.left) * progress
-      };
+      for (const s of [S_LEFT, S_TOP]) {
+        currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
+      }
       elScrollTo(scrollable, currentPosition);
       if (progress === 1) {
         return currentPosition;
@@ -6086,7 +6099,7 @@ const setSizeCssProps = (element, sizeData) => {
     contentWidth: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[S_WIDTH],
     contentHeight: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[S_HEIGHT]
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: prefix
   }); // don't await here
 };
@@ -6815,7 +6828,7 @@ class ScrollWatcher {
    *               If not given, it defaults to
    *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
-   * @return {} `null` if there's an ongoing scroll that is not cancellable,
+   * @returns {} `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
    */
 
@@ -7372,7 +7385,7 @@ const setScrollCssProps = (element, scrollData) => {
     [S_SCROLL_WIDTH]: scrollData[S_SCROLL_WIDTH],
     [S_SCROLL_HEIGHT]: scrollData[S_SCROLL_HEIGHT]
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: prefix
   });
 };
@@ -8239,7 +8252,7 @@ const setViewCssProps = (element, viewData) => {
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: "r-",
     _numDecimal: 4
   }); // don't await here

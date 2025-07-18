@@ -750,7 +750,7 @@ const init = (widget, containerElement, items, config) => {
       if (MH.parentOf(element) === containerElement) {
         const width = getWidthAtH(element, properties, height);
         debug: logger === null || logger === void 0 || logger.debug9("Setting width property", element, properties, width);
-        (0, _cssAlter.setNumericStyleProps)(element, {
+        (0, _cssAlter.setNumericStyleJsVars)(element, {
           sameHeightW: width
         }, {
           _units: "px"
@@ -767,7 +767,7 @@ const init = (widget, containerElement, items, config) => {
     for (const element of allItems.keys()) {
       if (MH.parentOf(element) === containerElement) {
         // delete the property and attribute
-        await (0, _cssAlter.setNumericStyleProps)(element, {
+        await (0, _cssAlter.setNumericStyleJsVars)(element, {
           sameHeightW: NaN
         });
         await (0, _cssAlter.removeClasses)(element, PREFIX_ITEM);

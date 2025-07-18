@@ -7,7 +7,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
-import { setNumericStyleProps } from "../utils/css-alter.js";
+import { setNumericStyleJsVars } from "../utils/css-alter.js";
 import { logError } from "../utils/log.js";
 import { toNonNegNum } from "../utils/math.js";
 import { isValidBox, isValidDimension, getEntryBorderBox, getEntryContentBox, tryGetViewportOverlay, fetchViewportOverlay } from "../utils/size.js";
@@ -407,7 +407,7 @@ const setSizeCssProps = (element, sizeData) => {
     contentWidth: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[MC.S_WIDTH],
     contentHeight: sizeData === null || sizeData === void 0 ? void 0 : sizeData.content[MC.S_HEIGHT]
   };
-  setNumericStyleProps(element, props, {
+  setNumericStyleJsVars(element, props, {
     _prefix: prefix
   }); // don't await here
 };

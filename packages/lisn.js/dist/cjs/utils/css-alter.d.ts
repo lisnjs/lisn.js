@@ -455,7 +455,7 @@ export declare const copyStyle: (fromElement: Element, toElement: Element, inclu
  * @ignore
  * @internal
  */
-export declare const setNumericStyleProps: (element: Element, props: CssNumericProps, options?: {
+export declare const setNumericStyleJsVars: (element: Element, props: CssNumericProps, options?: {
     _prefix?: string;
     _units?: string;
     _numDecimal?: number;

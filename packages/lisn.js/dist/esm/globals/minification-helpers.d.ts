@@ -26,7 +26,7 @@ export declare const getDocScrollingElement: () => HTMLElement | null;
 export declare const getBody: () => HTMLElement;
 export declare const getReadyState: () => DocumentReadyState;
 export declare const getPointerType: (event: Event) => string | null;
-export declare const onAnimationFrame: any;
+export declare const onAnimationFrame: (callback: FrameRequestCallback) => number;
 export declare const createElement: (tagName: string, options?: ElementCreationOptions) => HTMLElement;
 export declare const createButton: (label?: string, tag?: string) => HTMLElement;
 export declare const isNullish: (v: unknown) => v is null | undefined;
@@ -74,6 +74,8 @@ export declare const sizeOf: (obj: {
 export declare const lengthOf: (obj: {
     length: number;
 } | null | undefined) => number;
+export declare const lastOf: <A extends readonly unknown[]>(a: A | null | undefined) => LastElement<A>;
+export declare const firstOf: <A extends readonly unknown[]>(a: A | null | undefined) => FirstElement<A>;
 export declare const tagName: (el: Element) => string;
 export declare const preventDefault: (event: Event) => void;
 export declare const arrayFrom: {
@@ -193,6 +195,14 @@ export declare const consoleError: {
     (...data: any[]): void;
     (message?: any, ...optionalParams: any[]): void;
 };
+type FirstElement<T extends readonly unknown[]> = T extends readonly [
+    infer Head,
+    ...infer Last
+] ? Head : T[number] | undefined;
+type LastElement<T extends readonly unknown[]> = T extends readonly [
+    ...infer Head,
+    infer Last
+] ? Last : T[number] | undefined;
 type FilterFn<V> = (value: V, index: number, array: readonly V[]) => unknown;
 type FilterFnTypeP<V, T extends V> = (value: V, index: number, array: readonly V[]) => value is T;
 type FilteredType<C extends FilterFn<V> | FilterFnTypeP<V, T>, V, T extends V> = C extends FilterFnTypeP<V, infer T> ? T : V;

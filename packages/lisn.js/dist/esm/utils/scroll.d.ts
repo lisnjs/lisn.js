@@ -111,7 +111,7 @@ export declare const isScrollable: (element: Element, options?: {
  *
  * @param {} options See {@link isScrollable}
  *
- * @return {} `null` if no scrollable ancestors are found.
+ * @returns {} `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -141,7 +141,7 @@ export declare const getCurrentScrollAction: (scrollable?: Element) => ScrollAct
  *               the target coordinates. If it is a string, then it is treated
  *               as a selector for an element using `querySelector`.
  *
- * @return {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns {} `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling

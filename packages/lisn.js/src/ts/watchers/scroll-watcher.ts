@@ -199,7 +199,7 @@ export class ScrollWatcher {
    *               If not given, it defaults to
    *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
-   * @return {} `null` if there's an ongoing scroll that is not cancellable,
+   * @returns {} `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
    */
   readonly scrollTo: (

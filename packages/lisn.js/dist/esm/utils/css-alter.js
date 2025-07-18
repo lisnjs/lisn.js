@@ -626,7 +626,7 @@ export const copyStyle = async (fromElement, toElement, includeComputedProps) =>
  * @ignore
  * @internal
  */
-export const setNumericStyleProps = async (element, props, options = {}) => {
+export const setNumericStyleJsVars = async (element, props, options = {}) => {
   if (!isDOMElement(element)) {
     return;
   }

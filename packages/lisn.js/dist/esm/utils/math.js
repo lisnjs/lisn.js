@@ -244,7 +244,7 @@ export const quadraticRoots = (a, b, c) => {
 
 /**
  * Returns the value that an "easing" quadratic function would have at the
- * given x.
+ * given x (between 0 and 1).
  *
  * @see https://easings.net/#easeInOutQuad
  *
@@ -272,7 +272,7 @@ export const sortedKeysByVal = (obj, descending = false) => {
  * @category Math
  */
 export const keyWithMaxVal = obj => {
-  return sortedKeysByVal(obj).slice(-1)[0];
+  return MH.lastOf(sortedKeysByVal(obj));
 };
 
 /**
@@ -283,7 +283,7 @@ export const keyWithMaxVal = obj => {
  * @category Math
  */
 export const keyWithMinVal = obj => {
-  return sortedKeysByVal(obj).slice(0, 1)[0];
+  return MH.firstOf(sortedKeysByVal(obj));
 };
 
 /**

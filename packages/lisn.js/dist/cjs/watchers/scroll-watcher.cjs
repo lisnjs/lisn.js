@@ -202,7 +202,7 @@ class ScrollWatcher {
      *               If not given, it defaults to
      *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
-     * @return {} `null` if there's an ongoing scroll that is not cancellable,
+     * @returns {} `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
      */
     _defineProperty(this, "scrollTo", void 0);
@@ -724,7 +724,7 @@ const setScrollCssProps = (element, scrollData) => {
     [MC.S_SCROLL_WIDTH]: scrollData[MC.S_SCROLL_WIDTH],
     [MC.S_SCROLL_HEIGHT]: scrollData[MC.S_SCROLL_HEIGHT]
   };
-  (0, _cssAlter.setNumericStyleProps)(element, props, {
+  (0, _cssAlter.setNumericStyleJsVars)(element, props, {
     _prefix: prefix
   });
 };

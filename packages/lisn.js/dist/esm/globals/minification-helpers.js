@@ -30,7 +30,7 @@ export const getDocScrollingElement = () => getDoc().scrollingElement;
 export const getBody = () => getDoc().body;
 export const getReadyState = () => getDoc().readyState;
 export const getPointerType = event => isPointerEvent(event) ? event.pointerType : isMouseEvent(event) ? "mouse" : null;
-export const onAnimationFrame = hasDOM() ? root.requestAnimationFrame.bind(root) : () => {};
+export const onAnimationFrame = callback => requestAnimationFrame(callback);
 export const createElement = (tagName, options) => getDoc().createElement(tagName, options);
 export const createButton = (label = "", tag = "button") => {
   const btn = createElement(tag);
@@ -109,6 +109,8 @@ export const lengthOf = obj => {
   var _obj$length;
   return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
 };
+export const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
+export const firstOf = a => a === null || a === void 0 ? void 0 : a.slice(0, 1)[0];
 export const tagName = el => el.tagName;
 export const preventDefault = event => event.preventDefault();
 export const arrayFrom = MC.ARRAY.from.bind(MC.ARRAY);
@@ -119,6 +121,8 @@ export const defineProperty = MC.OBJECT.defineProperty.bind(MC.OBJECT);
 export const merge = (...a) => {
   return MC.OBJECT.assign({}, ...a);
 };
+
+// alias for clarity of purpose
 export const copyObject = obj => merge(obj);
 export const promiseResolve = MC.PROMISE.resolve.bind(MC.PROMISE);
 export const promiseAll = MC.PROMISE.all.bind(MC.PROMISE);

@@ -3,9 +3,7 @@
  */
 import { Point, Vector, AtLeastOne } from "../globals/types.js";
 /**
- * Round a number to the given decimal precision (default is 0).
- *
- * @param {} [numDecimal = 0]
+ * Round a number to the given decimal precision.
  *
  * @category Math
  */
@@ -126,7 +124,7 @@ export declare const radToDeg: (a: number) => number;
 /**
  * Returns true if the given vectors point in the same direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 5 degrees of each other are
@@ -141,7 +139,7 @@ export declare const areParallel: (vA: Vector, vB: Vector, angleDiffThreshold?: 
 /**
  * Returns true if the given vectors point in the opposite direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 175-185 degrees of each other are
@@ -170,9 +168,13 @@ export declare const distanceBetween: (ptA: Point, ptB: Point) => number;
 export declare const quadraticRoots: (a: number, b: number, c: number) => number[];
 /**
  * Returns the value that an "easing" quadratic function would have at the
- * given x (between 0 and 1).
+ * given x.
  *
  * @see https://easings.net/#easeInOutQuad
+ *
+ * @param x Must be between 0 and 1.
+ *
+ * @returns The current y-axis value between 0 and 1.
  *
  * @category Math
  */

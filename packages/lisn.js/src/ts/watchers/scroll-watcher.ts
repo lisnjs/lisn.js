@@ -466,6 +466,7 @@ export class ScrollWatcher {
         MH.deleteKey(allScrollData, element);
         removeEventListenerFrom(eventTarget, MC.S_SCROLL, scrollHandler);
         MH.deleteKey(activeListeners, eventTarget);
+        // TODO: Should we unwrap children if previously WE wrapped them?
       }
     };
 
@@ -539,7 +540,9 @@ export class ScrollWatcher {
       setupOnResize(element);
 
       // And also its children (if possible, a single wrapper around them
-      const wrapper = await tryWrapContent(element);
+      const wrapper = await tryWrapContent(element, {
+        classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
+      });
       if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
@@ -1005,6 +1008,8 @@ type TrackType = typeof TRACK_REGULAR | typeof TRACK_FULL;
 
 const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
 const instances = MH.newMap<string, ScrollWatcher>();
+
+const PREFIX_WRAPPER = MH.prefixName("scroll-watcher-wrapper");
 
 const getConfig = (
   config: ScrollWatcherConfig,

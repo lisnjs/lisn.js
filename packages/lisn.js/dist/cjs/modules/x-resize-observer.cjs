@@ -24,8 +24,8 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  */
 class XResizeObserver {
   /**
-   * @param {} debounceWindow Debounce the handler so that it's called at most
-   *                          every `debounceWindow` ms.
+   * @param debounceWindow Debounce the handler so that it's called at most
+   *                       every `debounceWindow` ms.
    */
   constructor(callback, debounceWindow) {
     /**

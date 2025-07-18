@@ -49,10 +49,10 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  * `deltaY`, which in most browsers roughly corresponds to a percentage zoom
  * factor.
  *
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}.
- *                                        Default is 5.
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}.
+ *                                     Default is 5.
  *
- * @returns {} `false` if there are no "wheel" events in the list, otherwise a
+ * @returns `false` if there are no "wheel" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures

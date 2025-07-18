@@ -59,35 +59,35 @@ export declare class Sortable extends Widget {
     /**
      * Disables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     readonly disableItem: (itemNum: number, currentOrder?: boolean) => Promise<void>;
     /**
      * Re-enables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     readonly enableItem: (itemNum: number, currentOrder?: boolean) => Promise<void>;
     /**
      * Re-enables the given item number if it is disabled, otherwise disables it.
      * Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     readonly toggleItem: (itemNum: number, currentOrder?: boolean) => Promise<void>;
     /**
      * Returns true if the given item number is disabled. Note that item numbers
      * start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     readonly isItemDisabled: (itemNum: number, currentOrder?: boolean) => boolean;
     /**
@@ -102,9 +102,9 @@ export declare class Sortable extends Widget {
     /**
      * Returns the item elements.
      *
-     * @param {} currentOrder If false (default), returns the items in the
-     *                        original order. If true, they are returned in the
-     *                        current document order.
+     * @param currentOrder If false (default), returns the items in the
+     *                     original order. If true, they are returned in the
+     *                     current document order.
      */
     readonly getItems: (currentOrder?: boolean) => Element[];
     static get(element: Element): Sortable | null;

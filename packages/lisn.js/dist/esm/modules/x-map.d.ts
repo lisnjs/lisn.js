@@ -71,8 +71,8 @@ export declare abstract class XMapBase<K, V> {
  * except that it supports automatically creating missing entries with
  * {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 export declare class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
     /**
@@ -104,10 +104,9 @@ export declare class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V
      */
     static readonly newXMapGetter: <K_1, V_1>(getDefaultV: DefaultValueGetter<K_1, V_1>) => () => XMap<K_1, V_1>;
     /**
-     * @param {} getDefaultV  This function is called each time
-     *                        {@link sGet} is called with a non-existent
-     *                        key and must return a value that is then set for
-     *                        that key and returned.
+     * @param getDefaultV This function is called each time {@link sGet} is
+     *                    called with a non-existent key and must return a value
+     *                    that is then set for that key and returned.
      */
     constructor(getDefaultV: DefaultValueGetter<K, V>);
 }
@@ -117,8 +116,8 @@ export declare class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V
  * except that it supports automatically creating missing entries with
  * with {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 export declare class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
     /**
@@ -129,10 +128,9 @@ export declare class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
      */
     static readonly newXWeakMapGetter: <K_1 extends WeakKey, V_1>(getDefaultV: DefaultValueGetter<K_1, V_1>) => () => XWeakMap<K_1, V_1>;
     /**
-     * @param {} getDefaultV  This function is called each time
-     *                        {@link sGet} is called with a non-existent
-     *                        key and must return a value that is then set for
-     *                        that key and returned.
+     * @param getDefaultV This function is called each time {@link sGet} is
+     *                    called with a non-existent key and must return a value
+     *                    that is then set for that key and returned.
      */
     constructor(getDefaultV: DefaultValueGetter<K, V>);
 }

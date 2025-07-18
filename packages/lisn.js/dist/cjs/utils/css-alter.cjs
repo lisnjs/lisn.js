@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleJsVars = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isFlexChild = exports.isFlex = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.getStylePropNow = exports.getStyleProp = exports.getParentFlexDirection = exports.getMaxTransitionDuration = exports.getFlexDirection = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
+exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleJsVars = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isFlexChild = exports.isFlex = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.hasAnyClass = exports.hasAllClasses = exports.getStylePropNow = exports.getStyleProp = exports.getParentFlexDirection = exports.getMaxTransitionDuration = exports.getFlexDirection = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _domOptimize = require("./dom-optimize.cjs");
@@ -37,8 +37,8 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  * Unlike {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace},
  * this will always add `toCls` even if `fromCls` isn't in the element's class list.
  *
- * @returns {} True if there was a change made (class removed or added),
- *             false otherwise.
+ * @returns True if there was a change made (class removed or added), false
+ * otherwise.
  *
  * @category CSS: Altering
  */
@@ -287,15 +287,31 @@ const isElementUndisplayed = element => hasClass(element, MC.PREFIX_UNDISPLAY);
  * @category CSS: Altering (optimized)
  */
 exports.isElementUndisplayed = isElementUndisplayed;
-const hasClass = (el, className) => MH.classList(el).contains(className);
+const hasClass = (element, className) => MH.classList(element).contains(className);
+
+/**
+ * Returns true if the element's class list contains all of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+exports.hasClass = hasClass;
+const hasAllClasses = (element, classNames) => !MH.some(classNames, className => !hasClass(element, className));
+
+/**
+ * Returns true if the element's class list contains any of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+exports.hasAllClasses = hasAllClasses;
+const hasAnyClass = (element, classNames) => MH.some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
  *
  * @category CSS: Altering
  */
-exports.hasClass = hasClass;
-const addClassesNow = (el, ...classNames) => MH.classList(el).add(...classNames);
+exports.hasAnyClass = hasAnyClass;
+const addClassesNow = (element, ...classNames) => MH.classList(element).add(...classNames);
 
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
@@ -303,7 +319,7 @@ const addClassesNow = (el, ...classNames) => MH.classList(el).add(...classNames)
  * @category CSS: Altering (optimized)
  */
 exports.addClassesNow = addClassesNow;
-const addClasses = (el, ...classNames) => (0, _domOptimize.waitForMutateTime)().then(() => addClassesNow(el, ...classNames));
+const addClasses = (element, ...classNames) => (0, _domOptimize.waitForMutateTime)().then(() => addClassesNow(element, ...classNames));
 
 /**
  * Removes the given classes to the element.
@@ -311,7 +327,7 @@ const addClasses = (el, ...classNames) => (0, _domOptimize.waitForMutateTime)().
  * @category CSS: Altering
  */
 exports.addClasses = addClasses;
-const removeClassesNow = (el, ...classNames) => MH.classList(el).remove(...classNames);
+const removeClassesNow = (element, ...classNames) => MH.classList(element).remove(...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
@@ -319,17 +335,17 @@ const removeClassesNow = (el, ...classNames) => MH.classList(el).remove(...class
  * @category CSS: Altering (optimized)
  */
 exports.removeClassesNow = removeClassesNow;
-const removeClasses = (el, ...classNames) => (0, _domOptimize.waitForMutateTime)().then(() => removeClassesNow(el, ...classNames));
+const removeClasses = (element, ...classNames) => (0, _domOptimize.waitForMutateTime)().then(() => removeClassesNow(element, ...classNames));
 
 /**
  * Toggles the given class on the element.
  *
- * @param {} force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
  *
  * @category CSS: Altering
  */
 exports.removeClasses = removeClasses;
-const toggleClassNow = (el, className, force) => MH.classList(el).toggle(className, force);
+const toggleClassNow = (element, className, force) => MH.classList(element).toggle(className, force);
 
 /**
  * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
@@ -337,7 +353,7 @@ const toggleClassNow = (el, className, force) => MH.classList(el).toggle(classNa
  * @category CSS: Altering (optimized)
  */
 exports.toggleClassNow = toggleClassNow;
-const toggleClass = (el, className, force) => (0, _domOptimize.waitForMutateTime)().then(() => toggleClassNow(el, className, force));
+const toggleClass = (element, className, force) => (0, _domOptimize.waitForMutateTime)().then(() => toggleClassNow(element, className, force));
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -350,7 +366,7 @@ const toggleClass = (el, className, force) => (0, _domOptimize.waitForMutateTime
  * @category CSS: Altering (optimized)
  */
 exports.toggleClass = toggleClass;
-const getData = (el, name) => MH.getAttr(el, MH.prefixData(name));
+const getData = (element, name) => MH.getAttr(element, MH.prefixData(name));
 
 /**
  * Returns the value of the given data attribute as a boolean. Its value is
@@ -363,8 +379,8 @@ const getData = (el, name) => MH.getAttr(el, MH.prefixData(name));
  * @category CSS: Altering (optimized)
  */
 exports.getData = getData;
-const getBooleanData = (el, name) => {
-  const value = getData(el, name);
+const getBooleanData = (element, name) => {
+  const value = getData(element, name);
   return value !== null && value !== "false";
 };
 
@@ -383,7 +399,7 @@ const getBoolData = exports.getBoolData = getBooleanData;
  *
  * @category CSS: Altering
  */
-const setDataNow = (el, name, value) => MH.setAttr(el, MH.prefixData(name), value);
+const setDataNow = (element, name, value) => MH.setAttr(element, MH.prefixData(name), value);
 
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
@@ -391,7 +407,7 @@ const setDataNow = (el, name, value) => MH.setAttr(el, MH.prefixData(name), valu
  * @category CSS: Altering (optimized)
  */
 exports.setDataNow = setDataNow;
-const setData = (el, name, value) => (0, _domOptimize.waitForMutateTime)().then(() => setDataNow(el, name, value));
+const setData = (element, name, value) => (0, _domOptimize.waitForMutateTime)().then(() => setDataNow(element, name, value));
 
 /**
  * Sets the given data attribute with value "true" (default) or "false".
@@ -402,7 +418,7 @@ const setData = (el, name, value) => (0, _domOptimize.waitForMutateTime)().then(
  * @category CSS: Altering
  */
 exports.setData = setData;
-const setBooleanDataNow = (el, name, value = true) => MH.setAttr(el, MH.prefixData(name), value + "");
+const setBooleanDataNow = (element, name, value = true) => MH.setAttr(element, MH.prefixData(name), value + "");
 
 /**
  * @ignore
@@ -416,7 +432,7 @@ const setBoolDataNow = exports.setBoolDataNow = setBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-const setBooleanData = (el, name, value = true) => (0, _domOptimize.waitForMutateTime)().then(() => setBooleanDataNow(el, name, value));
+const setBooleanData = (element, name, value = true) => (0, _domOptimize.waitForMutateTime)().then(() => setBooleanDataNow(element, name, value));
 
 /**
  * @ignore
@@ -433,7 +449,7 @@ const setBoolData = exports.setBoolData = setBooleanData;
  *
  * @category CSS: Altering
  */
-const unsetBooleanDataNow = (el, name) => MH.unsetAttr(el, MH.prefixData(name));
+const unsetBooleanDataNow = (element, name) => MH.unsetAttr(element, MH.prefixData(name));
 
 /**
  * @ignore
@@ -447,7 +463,7 @@ const unsetBoolDataNow = exports.unsetBoolDataNow = unsetBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-const unsetBooleanData = (el, name) => (0, _domOptimize.waitForMutateTime)().then(() => unsetBooleanDataNow(el, name));
+const unsetBooleanData = (element, name) => (0, _domOptimize.waitForMutateTime)().then(() => unsetBooleanDataNow(element, name));
 
 /**
  * @ignore
@@ -464,7 +480,7 @@ const unsetBoolData = exports.unsetBoolData = unsetBooleanData;
  *
  * @category CSS: Altering
  */
-const delDataNow = (el, name) => MH.delAttr(el, MH.prefixData(name));
+const delDataNow = (element, name) => MH.delAttr(element, MH.prefixData(name));
 
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.
@@ -472,7 +488,7 @@ const delDataNow = (el, name) => MH.delAttr(el, MH.prefixData(name));
  * @category CSS: Altering (optimized)
  */
 exports.delDataNow = delDataNow;
-const delData = (el, name) => (0, _domOptimize.waitForMutateTime)().then(() => delDataNow(el, name));
+const delData = (element, name) => (0, _domOptimize.waitForMutateTime)().then(() => delDataNow(element, name));
 
 /**
  * Returns the value of the given property from the computed style of the
@@ -552,7 +568,7 @@ const delStyleProp = (element, prop) => (0, _domOptimize.waitForMutateTime)().th
 /**
  * Returns the flex direction of the given element **if it has a flex layout**.
  *
- * @returns {} `null` if the element does not have a flex layout.
+ * @returns `null` if the element does not have a flex layout.
  */
 exports.delStyleProp = delStyleProp;
 const getFlexDirection = async element => {
@@ -567,7 +583,7 @@ const getFlexDirection = async element => {
  * Returns the flex direction of the given element's parent **if it has a flex
  * layout**.
  *
- * @returns {} `null` if the element's parent does not have a flex layout.
+ * @returns `null` if the element's parent does not have a flex layout.
  */
 exports.getFlexDirection = getFlexDirection;
 const getParentFlexDirection = async element => {

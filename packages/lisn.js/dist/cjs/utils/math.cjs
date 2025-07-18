@@ -12,9 +12,7 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  */
 
 /**
- * Round a number to the given decimal precision (default is 0).
- *
- * @param {} [numDecimal = 0]
+ * Round a number to the given decimal precision.
  *
  * @category Math
  */
@@ -209,7 +207,7 @@ const radToDeg = a => a * 180 / MC.PI;
 /**
  * Returns true if the given vectors point in the same direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 5 degrees of each other are
@@ -231,7 +229,7 @@ const areParallel = (vA, vB, angleDiffThreshold = 0) => {
 /**
  * Returns true if the given vectors point in the opposite direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 175-185 degrees of each other are
@@ -269,9 +267,13 @@ const quadraticRoots = (a, b, c) => {
 
 /**
  * Returns the value that an "easing" quadratic function would have at the
- * given x (between 0 and 1).
+ * given x.
  *
  * @see https://easings.net/#easeInOutQuad
+ *
+ * @param x Must be between 0 and 1.
+ *
+ * @returns The current y-axis value between 0 and 1.
  *
  * @category Math
  */

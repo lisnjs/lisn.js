@@ -7,3 +7,7 @@ window.matchMedia = (m) => {
     matches: false,
   };
 };
+
+window.CSS = {
+  supports: () => true,
+};

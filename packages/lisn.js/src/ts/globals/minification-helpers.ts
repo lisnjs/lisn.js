@@ -217,7 +217,6 @@ export const includes = (
 
 export const every = <
   A extends readonly unknown[],
-  T extends A[number],
   C extends ArrayCallbackFn<A[number]>,
 >(
   array: A,
@@ -226,7 +225,6 @@ export const every = <
 
 export const some = <
   A extends readonly unknown[],
-  T extends A[number],
   C extends ArrayCallbackFn<A[number]>,
 >(
   array: A,

@@ -23,8 +23,8 @@ import { FlexDirection } from "../globals/types.js";
  * Unlike {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace},
  * this will always add `toCls` even if `fromCls` isn't in the element's class list.
  *
- * @returns {} True if there was a change made (class removed or added),
- *             false otherwise.
+ * @returns True if there was a change made (class removed or added), false
+ * otherwise.
  *
  * @category CSS: Altering
  */
@@ -204,45 +204,57 @@ export declare const isElementUndisplayed: (element: Element) => boolean;
  *
  * @category CSS: Altering (optimized)
  */
-export declare const hasClass: (el: Element, className: string) => boolean;
+export declare const hasClass: (element: Element, className: string) => boolean;
+/**
+ * Returns true if the element's class list contains all of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export declare const hasAllClasses: (element: Element, classNames: string[]) => boolean;
+/**
+ * Returns true if the element's class list contains any of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export declare const hasAnyClass: (element: Element, classNames: string[]) => boolean;
 /**
  * Adds the given classes to the element.
  *
  * @category CSS: Altering
  */
-export declare const addClassesNow: (el: Element, ...classNames: string[]) => void;
+export declare const addClassesNow: (element: Element, ...classNames: string[]) => void;
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export declare const addClasses: (el: Element, ...classNames: string[]) => Promise<void>;
+export declare const addClasses: (element: Element, ...classNames: string[]) => Promise<void>;
 /**
  * Removes the given classes to the element.
  *
  * @category CSS: Altering
  */
-export declare const removeClassesNow: (el: Element, ...classNames: string[]) => void;
+export declare const removeClassesNow: (element: Element, ...classNames: string[]) => void;
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export declare const removeClasses: (el: Element, ...classNames: string[]) => Promise<void>;
+export declare const removeClasses: (element: Element, ...classNames: string[]) => Promise<void>;
 /**
  * Toggles the given class on the element.
  *
- * @param {} force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
  *
  * @category CSS: Altering
  */
-export declare const toggleClassNow: (el: Element, className: string, force?: boolean) => boolean;
+export declare const toggleClassNow: (element: Element, className: string, force?: boolean) => boolean;
 /**
  * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export declare const toggleClass: (el: Element, className: string, force?: boolean) => Promise<boolean>;
+export declare const toggleClass: (element: Element, className: string, force?: boolean) => Promise<boolean>;
 /**
  * Returns the value of the given data attribute. The name of the attribute
  * must _not_ start with `data`. It can be in either camelCase or kebab-case,
@@ -250,7 +262,7 @@ export declare const toggleClass: (el: Element, className: string, force?: boole
  *
  * @category CSS: Altering (optimized)
  */
-export declare const getData: (el: Element, name: string) => string | null;
+export declare const getData: (element: Element, name: string) => string | null;
 /**
  * Returns the value of the given data attribute as a boolean. Its value is
  * expected to be either blank or "true" (which result in `true`), or "false"
@@ -261,12 +273,12 @@ export declare const getData: (el: Element, name: string) => string | null;
  *
  * @category CSS: Altering (optimized)
  */
-export declare const getBooleanData: (el: Element, name: string) => boolean;
+export declare const getBooleanData: (element: Element, name: string) => boolean;
 /**
  * @ignore
  * @deprecated
  */
-export declare const getBoolData: (el: Element, name: string) => boolean;
+export declare const getBoolData: (element: Element, name: string) => boolean;
 /**
  * Sets the given data attribute.
  *
@@ -275,13 +287,13 @@ export declare const getBoolData: (el: Element, name: string) => boolean;
  *
  * @category CSS: Altering
  */
-export declare const setDataNow: (el: Element, name: string, value: string) => void;
+export declare const setDataNow: (element: Element, name: string, value: string) => void;
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export declare const setData: (el: Element, name: string, value: string) => Promise<void>;
+export declare const setData: (element: Element, name: string, value: string) => Promise<void>;
 /**
  * Sets the given data attribute with value "true" (default) or "false".
  *
@@ -290,23 +302,23 @@ export declare const setData: (el: Element, name: string, value: string) => Prom
  *
  * @category CSS: Altering
  */
-export declare const setBooleanDataNow: (el: Element, name: string, value?: boolean) => void;
+export declare const setBooleanDataNow: (element: Element, name: string, value?: boolean) => void;
 /**
  * @ignore
  * @deprecated
  */
-export declare const setBoolDataNow: (el: Element, name: string, value?: boolean) => void;
+export declare const setBoolDataNow: (element: Element, name: string, value?: boolean) => void;
 /**
  * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export declare const setBooleanData: (el: Element, name: string, value?: boolean) => Promise<void>;
+export declare const setBooleanData: (element: Element, name: string, value?: boolean) => Promise<void>;
 /**
  * @ignore
  * @deprecated
  */
-export declare const setBoolData: (el: Element, name: string, value?: boolean) => Promise<void>;
+export declare const setBoolData: (element: Element, name: string, value?: boolean) => Promise<void>;
 /**
  * Sets the given data attribute with value "false".
  *
@@ -315,23 +327,23 @@ export declare const setBoolData: (el: Element, name: string, value?: boolean) =
  *
  * @category CSS: Altering
  */
-export declare const unsetBooleanDataNow: (el: Element, name: string) => void;
+export declare const unsetBooleanDataNow: (element: Element, name: string) => void;
 /**
  * @ignore
  * @deprecated
  */
-export declare const unsetBoolDataNow: (el: Element, name: string) => void;
+export declare const unsetBoolDataNow: (element: Element, name: string) => void;
 /**
  * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export declare const unsetBooleanData: (el: Element, name: string) => Promise<void>;
+export declare const unsetBooleanData: (element: Element, name: string) => Promise<void>;
 /**
  * @ignore
  * @deprecated
  */
-export declare const unsetBoolData: (el: Element, name: string) => Promise<void>;
+export declare const unsetBoolData: (element: Element, name: string) => Promise<void>;
 /**
  * Deletes the given data attribute.
  *
@@ -340,13 +352,13 @@ export declare const unsetBoolData: (el: Element, name: string) => Promise<void>
  *
  * @category CSS: Altering
  */
-export declare const delDataNow: (el: Element, name: string) => void;
+export declare const delDataNow: (element: Element, name: string) => void;
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export declare const delData: (el: Element, name: string) => Promise<void>;
+export declare const delData: (element: Element, name: string) => Promise<void>;
 /**
  * Returns the value of the given property from the computed style of the
  * element.
@@ -400,14 +412,14 @@ export declare const delStyleProp: (element: Element, prop: string) => Promise<s
 /**
  * Returns the flex direction of the given element **if it has a flex layout**.
  *
- * @returns {} `null` if the element does not have a flex layout.
+ * @returns `null` if the element does not have a flex layout.
  */
 export declare const getFlexDirection: (element: Element) => Promise<FlexDirection | null>;
 /**
  * Returns the flex direction of the given element's parent **if it has a flex
  * layout**.
  *
- * @returns {} `null` if the element's parent does not have a flex layout.
+ * @returns `null` if the element's parent does not have a flex layout.
  */
 export declare const getParentFlexDirection: (element: Element) => Promise<FlexDirection | null>;
 /**

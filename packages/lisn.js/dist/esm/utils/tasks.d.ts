@@ -47,7 +47,7 @@ export declare const waitForDelay: (delay?: number) => Promise<void>;
  * Returns a promise that resolves at the next animation frame. Async/await
  * version of requestAnimationFrame.
  *
- * @returns {} The timestamp gotten from requestAnimationFrame
+ * @returns The timestamp gotten from requestAnimationFrame
  *
  * @category Tasks
  */

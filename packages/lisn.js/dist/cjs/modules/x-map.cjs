@@ -109,16 +109,15 @@ class XMapBase {
  * except that it supports automatically creating missing entries with
  * {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 exports.XMapBase = XMapBase;
 class XMap extends XMapBase {
   /**
-   * @param {} getDefaultV  This function is called each time
-   *                        {@link sGet} is called with a non-existent
-   *                        key and must return a value that is then set for
-   *                        that key and returned.
+   * @param getDefaultV This function is called each time {@link sGet} is
+   *                    called with a non-existent key and must return a value
+   *                    that is then set for that key and returned.
    */
   constructor(getDefaultV) {
     const root = MH.newMap();
@@ -161,8 +160,8 @@ class XMap extends XMapBase {
  * except that it supports automatically creating missing entries with
  * with {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 exports.XMap = XMap;
 /**
@@ -174,10 +173,9 @@ exports.XMap = XMap;
 _defineProperty(XMap, "newXMapGetter", newXMapGetter);
 class XWeakMap extends XMapBase {
   /**
-   * @param {} getDefaultV  This function is called each time
-   *                        {@link sGet} is called with a non-existent
-   *                        key and must return a value that is then set for
-   *                        that key and returned.
+   * @param getDefaultV This function is called each time {@link sGet} is
+   *                    called with a non-existent key and must return a value
+   *                    that is then set for that key and returned.
    */
   constructor(getDefaultV) {
     const root = MH.newWeakMap();

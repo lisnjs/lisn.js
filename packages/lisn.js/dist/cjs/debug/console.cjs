@@ -17,10 +17,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  */
 class Console {
   /**
-   * @param {} remoteUrl         Attempt to use a remote logger at this URL.
-   * @param {} [connectTimeout]  The timeout in ms for a remote connection to
-   *                             be considered failed.
-   *                             See {@link RemoteConsole}.
+   * @param remoteUrl        Attempt to use a remote logger at this URL.
+   * @param [connectTimeout] The timeout in ms for a remote connection to be
+   *                         considered failed. See {@link RemoteConsole}.
    */
   constructor(remoteUrl, connectTimeout) {
     _defineProperty(this, "debug", void 0);

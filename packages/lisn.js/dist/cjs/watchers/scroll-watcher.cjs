@@ -169,9 +169,9 @@ class ScrollWatcher {
      * Get the scroll offset of the given scrollable. By default, it will
      * {@link waitForMeasureTime} and so will be delayed by one frame.
      *
-     * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-     *                    this only when doing realtime scroll-based animations
-     *                    as it may cause a forced layout.
+     * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+     *                 this only when doing realtime scroll-based animations
+     *                 as it may cause a forced layout.
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -195,23 +195,22 @@ class ScrollWatcher {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the "to" coordinates or options are invalid.
      *
-     * @param {} to  If this is an element, then its top-left position is used as
-     *               the target coordinates. If it is a string, then it is treated
-     *               as a selector for an element using `querySelector`.
-     * @param {} [options.scrollable]
-     *               If not given, it defaults to
-     *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
+     * @param to If this is an element, then its top-left position is used as
+     *           the target coordinates. If it is a string, then it is treated
+     *           as a selector for an element using `querySelector`.
+     * @param [options.scrollable]
+     *           If not given, it defaults to
+     *           {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
      *
-     * @returns {} `null` if there's an ongoing scroll that is not cancellable,
+     * @returns `null` if there's an ongoing scroll that is not cancellable,
      * otherwise a {@link ScrollAction}.
      */
     _defineProperty(this, "scrollTo", void 0);
     /**
      * Returns the current {@link ScrollAction} if any.
      *
-     * @param {} scrollable
-     *               If not given, it defaults to
-     *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+     * @param scrollable If not given, it defaults to
+     *                   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
      *
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
@@ -224,10 +223,10 @@ class ScrollWatcher {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the scrollable is invalid.
      *
-     * @param {} [options.immediate]  If true, then it will not use
-     *                                {@link waitForMeasureTime} or
-     *                                {@link Utils.waitForMutateTime | waitForMutateTime}.
-     *                                Warning: this will likely result in forced layout.
+     * @param [options.immediate] If true, then it will not use
+     *                            {@link waitForMeasureTime} or
+     *                            {@link Utils.waitForMutateTime | waitForMutateTime}.
+     *                            Warning: this will likely result in forced layout.
      */
     _defineProperty(this, "stopUserScrolling", void 0);
     if (key !== CONSTRUCTOR_KEY) {
@@ -353,6 +352,7 @@ class ScrollWatcher {
         MH.deleteKey(allScrollData, element);
         (0, _event.removeEventListenerFrom)(eventTarget, MC.S_SCROLL, scrollHandler);
         MH.deleteKey(activeListeners, eventTarget);
+        // TODO: Should we unwrap children if previously WE wrapped them?
       }
     };
 
@@ -411,7 +411,9 @@ class ScrollWatcher {
       setupOnResize(element);
 
       // And also its children (if possible, a single wrapper around them
-      const wrapper = await (0, _domAlter.tryWrapContent)(element);
+      const wrapper = await (0, _domAlter.tryWrapContent)(element, {
+        classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER]
+      });
       if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
@@ -628,6 +630,7 @@ class ScrollWatcher {
 exports.ScrollWatcher = ScrollWatcher;
 const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = MH.newMap();
+const PREFIX_WRAPPER = MH.prefixName("scroll-watcher-wrapper");
 const getConfig = config => {
   return {
     _debounceWindow: (0, _math.toNonNegNum)(config[MC.S_DEBOUNCE_WINDOW], 75),

@@ -31,9 +31,9 @@ class RemoteConsole {
    * Creates a new {@link RemoteConsole} and attempts to connect to the logger
    * at the given URL.
    *
-   * @param {} url                      The URL of the remote logger.
-   * @param {} [connectTimeout = 1500]  The timeout in ms for a connection
-   *                                    to be considered failed.
+   * @param url                     The URL of the remote logger.
+   * @param [connectTimeout = 1500] The timeout in ms for a connection
+   *                                to be considered failed.
    */
   constructor(url, connectTimeout = DEFAULT_TIMEOUT) {
     /**
@@ -151,9 +151,9 @@ class RemoteConsole {
    *
    * If a new one is created, it will be saved for later reuse.
    *
-   * @param {} url               The URL of the remote logger.
-   * @param {} [connectTimeout]  The timeout in ms for a remote connection to
-   *                             be considered failed. Default is 1500.
+   * @param url              The URL of the remote logger.
+   * @param [connectTimeout] The timeout in ms for a remote connection to
+   *                         be considered failed. Default is 1500.
    */
   static reuse(url, connectTimeout = DEFAULT_TIMEOUT) {
     var _instances$get2;

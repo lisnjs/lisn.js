@@ -9,7 +9,7 @@ import * as MH from "../globals/minification-helpers.js";
  *
  * @category DOM: Querying
  */
-export const getVisibleContentChildren = el => MH.filter([...MH.childrenOf(el)], e => isVisibleContentTag(MH.tagName(e)));
+export const getVisibleContentChildren = element => MH.filter([...MH.childrenOf(element)], ch => isVisibleContentTag(MH.tagName(ch)));
 
 /**
  * Returns whether the given tag is _not_ `script` or `style`. Comparison is

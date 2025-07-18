@@ -16,7 +16,7 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  *
  * @category DOM: Querying
  */
-const getVisibleContentChildren = el => MH.filter([...MH.childrenOf(el)], e => isVisibleContentTag(MH.tagName(e)));
+const getVisibleContentChildren = element => MH.filter([...MH.childrenOf(element)], ch => isVisibleContentTag(MH.tagName(ch)));
 
 /**
  * Returns whether the given tag is _not_ `script` or `style`. Comparison is

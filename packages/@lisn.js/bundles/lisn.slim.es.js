@@ -91,8 +91,8 @@ const S_ARROW = "arrow";
 const S_ROLE = "role";
 const ARIA_PREFIX = "aria-";
 const S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
-const PREFIX_WRAPPER = `${PREFIX}-wrapper`;
-const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER}-inline`;
+const PREFIX_WRAPPER$2 = `${PREFIX}-wrapper`;
+const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER$2}-inline`;
 const PREFIX_TRANSITION = `${PREFIX}-transition`;
 const PREFIX_TRANSITION_DISABLE = `${PREFIX_TRANSITION}__disable`;
 const PREFIX_HIDE = `${PREFIX}-hide`;
@@ -210,7 +210,7 @@ const isNodeBAfterA = (nodeA, nodeB) => (nodeA.compareDocumentPosition(nodeB) & 
 const strReplace = (s, match, replacement) => s.replace(match, replacement);
 const setTimer = root.setTimeout.bind(root);
 const clearTimer = root.clearTimeout.bind(root);
-const getBoundingClientRect = el => el.getBoundingClientRect();
+const getBoundingClientRect = element => element.getBoundingClientRect();
 
 // Copy size properties explicitly to another object so they can be used with
 // the spread operator (DOMRect/DOMRectReadOnly's properties are not enumerable)
@@ -231,11 +231,12 @@ const querySelectorAll = (root, selector) => root.querySelectorAll(selector);
 const docQuerySelector = selector => querySelector(getDoc(), selector);
 const docQuerySelectorAll = selector => querySelectorAll(getDoc(), selector);
 const getElementById = id => getDoc().getElementById(id);
-const getAttr = (el, name) => el.getAttribute(name);
-const setAttr = (el, name, value = "true") => el.setAttribute(name, value);
-const unsetAttr = (el, name) => el.setAttribute(name, "false");
-const delAttr = (el, name) => el.removeAttribute(name);
+const getAttr = (element, name) => element.getAttribute(name);
+const setAttr = (element, name, value = "true") => element.setAttribute(name, value);
+const unsetAttr = (element, name) => element.setAttribute(name, "false");
+const delAttr = (element, name) => element.removeAttribute(name);
 const includes = (arr, v, startAt) => arr.indexOf(v, startAt) >= 0;
+const some = (array, predicate) => array.some(predicate);
 const filter = (array, filterFn) => array.filter(filterFn);
 const filterBlank = array => {
   const result = array ? filter(array, v => !isEmpty(v)) : undefined;
@@ -250,7 +251,8 @@ const lengthOf = obj => {
   return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
 };
 const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
-const tagName = el => el.tagName;
+const tagName = element => element.tagName;
+const hasTagName = (element, tag) => toLowerCase(tagName(element)) === toLowerCase(tag);
 const preventDefault = event => event.preventDefault();
 const arrayFrom = ARRAY.from.bind(ARRAY);
 const keysOf = obj => OBJECT.keys(obj);
@@ -292,15 +294,15 @@ const parentOf = element => (element === null || element === void 0 ? void 0 : e
 const childrenOf = element => (element === null || element === void 0 ? void 0 : element.children) || [];
 const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
 const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;
-const classList = el => el === null || el === void 0 ? void 0 : el.classList;
+const classList = element => element === null || element === void 0 ? void 0 : element.classList;
 const S_TABINDEX = "tabindex";
-const getTabIndex = el => getAttr(el, S_TABINDEX);
-const setTabIndex = (el, index = "0") => setAttr(el, S_TABINDEX, index);
-const unsetTabIndex = el => delAttr(el, S_TABINDEX);
+const getTabIndex = element => getAttr(element, S_TABINDEX);
+const setTabIndex = (element, index = "0") => setAttr(element, S_TABINDEX, index);
+const unsetTabIndex = element => delAttr(element, S_TABINDEX);
 const remove = obj => obj === null || obj === void 0 ? void 0 : obj.remove();
 const deleteObjKey = (obj, key) => delete obj[key];
 const deleteKey = (map, key) => map === null || map === void 0 ? void 0 : map.delete(key);
-const elScrollTo = (el, coords, behavior = "instant") => el.scrollTo(merge({
+const elScrollTo = (element, coords, behavior = "instant") => element.scrollTo(merge({
   behavior
 }, coords));
 const newPromise = executor => new Promise(executor);
@@ -800,9 +802,7 @@ const settings = preventExtensions({
  */
 
 /**
- * Round a number to the given decimal precision (default is 0).
- *
- * @param {} [numDecimal = 0]
+ * Round a number to the given decimal precision.
  *
  * @category Math
  */
@@ -957,7 +957,7 @@ const degToRad = a => a * PI / 180;
 /**
  * Returns true if the given vectors point in the same direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 5 degrees of each other are
@@ -978,7 +978,7 @@ const areParallel = (vA, vB, angleDiffThreshold = 0) => {
 /**
  * Returns true if the given vectors point in the opposite direction.
  *
- * @param {} angleDiffThreshold
+ * @param angleDiffThreshold
  *                  Sets the threshold in degrees when comparing the angles of
  *                  two vectors. E.g. for 5 degrees threshold, directions
  *                  whose vectors are within 175-185 degrees of each other are
@@ -1000,9 +1000,13 @@ const distanceBetween = (ptA, ptB) => sqrt(pow(ptA[0] - ptB[0], 2) + pow(ptA[1] 
 
 /**
  * Returns the value that an "easing" quadratic function would have at the
- * given x (between 0 and 1).
+ * given x.
  *
  * @see https://easings.net/#easeInOutQuad
+ *
+ * @param x Must be between 0 and 1.
+ *
+ * @returns The current y-axis value between 0 and 1.
  *
  * @category Math
  */
@@ -1106,13 +1110,13 @@ const toBoolean = value => value === true || value === "true" || value === "" ? 
  * **NOTE:** This is not intended for serialization of data that needs to be
  * de-serialized. Only for debugging output.
  *
- * @param {} value     The value to format as string.
- * @param {} [maxLen]  Maximum length of the returned string. If not given or
- *                     is <= 0, the string is not truncated. Otherwise, if the
- *                     result is longer than maxLen, it is truncated to
- *                     `maxLen - 3` and added a suffix of "...".
- *                     Note that if `maxLen` is > 0 but <= 3, the result is
- *                     always "..."
+ * @param value    The value to format as string.
+ * @param [maxLen] Maximum length of the returned string. If not given or
+ *                 is <= 0, the string is not truncated. Otherwise, if the
+ *                 result is longer than maxLen, it is truncated to
+ *                 `maxLen - 3` and added a suffix of "...".
+ *                 Note that if `maxLen` is > 0 but <= 3, the result is
+ *                 always "..."
  *
  * @category Text
  */
@@ -1126,8 +1130,8 @@ const formatAsString = (value, maxLen) => {
  * {@link formatAsString} rather than the default string representation as
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join | Array:join} would.
  *
- * @param {} separator  The separator to use to delimit each argument.
- * @param {} args       Objects or values to convert to string and join.
+ * @param separator The separator to use to delimit each argument.
+ * @param args      Objects or values to convert to string and join.
  *
  * @category Text
  */
@@ -1152,11 +1156,11 @@ const joinAsString = (separator, ...args) => args.map(a => formatAsString(a)).jo
  * splitOn('foo, bar, baz', RegExp(',\\s*'), 3); // -> ['foo', 'bar', 'baz']
  * ```
  *
- * @param {} trim  If true, entries will be trimmed for whitespace after splitting.
+ * @param trim  If true, entries will be trimmed for whitespace after splitting.
  *
- * @param {} limit If not given or < 0, the string will be split on every
- *                 occurrence of `separator`. Otherwise, it will be split on
- *                 the first `limit` number of occurrences of `separator`.
+ * @param limit If not given or < 0, the string will be split on every
+ *              occurrence of `separator`. Otherwise, it will be split on
+ *              the first `limit` number of occurrences of `separator`.
  *
  * @category Text
  */
@@ -1212,7 +1216,7 @@ const camelToKebabCase = camelToKebabCase$1;
  *
  * **IMPORTANT:** This is _not_ suitable for cryptographic applications.
  *
- * @param {} [nChars = 8]  The length of the returned stirng.
+ * @param nChars The length of the returned stirng.
  *
  * @category Text
  */
@@ -1240,7 +1244,7 @@ const randId = (nChars = 8) => {
  * `rootMargin`, top/bottom margin is relative to the height of the root, so
  * pass the actual root size.
  *
- * @returns {} [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
+ * @returns [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
  *
  * @category Text
  */
@@ -1335,9 +1339,9 @@ const maybeConvertToString = (value, nested) => {
  *                If the input is not a string or array of strings, or if any
  *                entries do not pass `checkFn`.
  *
- * @param {} key Used in the error message thrown
+ * @param key Used in the error message thrown
  *
- * @returns {} `undefined` if the input contains no non-empty values (after
+ * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -1358,9 +1362,9 @@ const validateStrList = (key, value, checkFn) => {
  *                If the input is not a number or array of numbers. Numerical
  *                strings are accepted.
  *
- * @param {} key Used in the error message thrown
+ * @param key Used in the error message thrown
  *
- * @returns {} `undefined` if the input contains no non-empty values (after
+ * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
  * values.
  *
@@ -1378,7 +1382,7 @@ const validateNumList = (key, value) => {
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @returns {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -1397,7 +1401,7 @@ const validateNumber = (key, value) => _validateNumber(key, value);
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is not a valid boolean or boolean string.
  *
- * @returns {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -1410,14 +1414,12 @@ const validateBoolean = (key, value) => _validateBoolean(key, value);
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
- * @param {} checkFn      If given and the supplied value is a string, then it
- *                        is called with the value as a single argument. It
- *                        must return true if the value is valid and false
- *                        otherwise.
- *                        If it is not given, then any literal string is
- *                        accepted.
+ * @param checkFn If given and the supplied value is a string, then it is
+ *                called with the value as a single argument. It must return
+ *                true if the value is valid and false otherwise. If it is not
+ *                given, then any literal string is accepted.
  *
- * @returns {} `undefined` if the input is nullish.
+ * @returns `undefined` if the input is nullish.
  *
  * @category Validation
  */
@@ -1765,7 +1767,7 @@ const waitForDelay = delay => newPromise(resolve => {
  * Returns a promise that resolves at the next animation frame. Async/await
  * version of requestAnimationFrame.
  *
- * @returns {} The timestamp gotten from requestAnimationFrame
+ * @returns The timestamp gotten from requestAnimationFrame
  *
  * @category Tasks
  */
@@ -1774,7 +1776,7 @@ const waitForAnimationFrame = async () => newPromise(resolve => {
 });
 
 /**
- * @typeParam Args  See {@link Callback}
+ * @typeParam Args See {@link Callback}
  */
 
 /**
@@ -1816,12 +1818,12 @@ const wrapCallback = (handlerOrCallback, debounceWindow = 0) => {
  * - awaiting on an asynchronous handler and ensuring that the handler does not
  *  run concurrently to itself, i.e. subsequent {@link invoke}s will be queued
  *
- * @typeParam Args  The type of arguments that the callback expects.
+ * @typeParam Args The type of arguments that the callback expects.
  */
 class Callback {
   /**
-   * @param {} handler     The actual function to call. This should return one of
-   *                       the known {@link CallbackReturnType} values.
+   * @param handler The actual function to call. This should return one of
+   *                the known {@link CallbackReturnType} values.
    */
   constructor(handler) {
     let isRemoved = false;
@@ -1886,10 +1888,10 @@ _defineProperty(Callback, "REMOVE", SYMBOL("REMOVE"));
  * Note that if the argument is a callback that's already debounced by a
  * _larger_ window, then `debounceWindow` will have no effect.
  *
- * @param {} debounceWindow  If non-0, the callback will be called at most
- *                           every `debounceWindow` ms. The arguments it will
- *                           be called with will be the last arguments the
- *                           wrapper was called with.
+ * @param debounceWindow If non-0, the callback will be called at most
+ *                       every `debounceWindow` ms. The arguments it will
+ *                       be called with will be the last arguments the
+ *                       wrapper was called with.
  */
 _defineProperty(Callback, "wrap", wrapCallback);
 const callablesMap = newWeakMap();
@@ -2106,7 +2108,7 @@ const runDOMTaskQueue = queue => {
  *
  * @category DOM: Querying
  */
-const getVisibleContentChildren = el => filter([...childrenOf(el)], e => isVisibleContentTag(tagName(e)));
+const getVisibleContentChildren = element => filter([...childrenOf(element)], ch => isVisibleContentTag(tagName(ch)));
 
 /**
  * Returns whether the given tag is _not_ `script` or `style`. Comparison is
@@ -2161,8 +2163,8 @@ const inlineTags = newSet(["a", "abbr", "acronym", "b", "bdi", "bdo", "big", "bu
  * Unlike {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace},
  * this will always add `toCls` even if `fromCls` isn't in the element's class list.
  *
- * @returns {} True if there was a change made (class removed or added),
- *             false otherwise.
+ * @returns True if there was a change made (class removed or added), false
+ * otherwise.
  *
  * @category CSS: Altering
  */
@@ -2355,51 +2357,58 @@ const isElementUndisplayed = element => hasClass(element, PREFIX_UNDISPLAY);
  *
  * @category CSS: Altering (optimized)
  */
-const hasClass = (el, className) => classList(el).contains(className);
+const hasClass = (element, className) => classList(element).contains(className);
+
+/**
+ * Returns true if the element's class list contains any of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+const hasAnyClass = (element, classNames) => some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
  *
  * @category CSS: Altering
  */
-const addClassesNow = (el, ...classNames) => classList(el).add(...classNames);
+const addClassesNow = (element, ...classNames) => classList(element).add(...classNames);
 
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const addClasses = (el, ...classNames) => waitForMutateTime().then(() => addClassesNow(el, ...classNames));
+const addClasses = (element, ...classNames) => waitForMutateTime().then(() => addClassesNow(element, ...classNames));
 
 /**
  * Removes the given classes to the element.
  *
  * @category CSS: Altering
  */
-const removeClassesNow = (el, ...classNames) => classList(el).remove(...classNames);
+const removeClassesNow = (element, ...classNames) => classList(element).remove(...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const removeClasses = (el, ...classNames) => waitForMutateTime().then(() => removeClassesNow(el, ...classNames));
+const removeClasses = (element, ...classNames) => waitForMutateTime().then(() => removeClassesNow(element, ...classNames));
 
 /**
  * Toggles the given class on the element.
  *
- * @param {} force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
  *
  * @category CSS: Altering
  */
-const toggleClassNow = (el, className, force) => classList(el).toggle(className, force);
+const toggleClassNow = (element, className, force) => classList(element).toggle(className, force);
 
 /**
  * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const toggleClass = (el, className, force) => waitForMutateTime().then(() => toggleClassNow(el, className, force));
+const toggleClass = (element, className, force) => waitForMutateTime().then(() => toggleClassNow(element, className, force));
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -2411,7 +2420,7 @@ const toggleClass = (el, className, force) => waitForMutateTime().then(() => tog
  *
  * @category CSS: Altering (optimized)
  */
-const getData = (el, name) => getAttr(el, prefixData(name));
+const getData = (element, name) => getAttr(element, prefixData(name));
 
 /**
  * Sets the given data attribute.
@@ -2421,14 +2430,14 @@ const getData = (el, name) => getAttr(el, prefixData(name));
  *
  * @category CSS: Altering
  */
-const setDataNow = (el, name, value) => setAttr(el, prefixData(name), value);
+const setDataNow = (element, name, value) => setAttr(element, prefixData(name), value);
 
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const setData = (el, name, value) => waitForMutateTime().then(() => setDataNow(el, name, value));
+const setData = (element, name, value) => waitForMutateTime().then(() => setDataNow(element, name, value));
 
 /**
  * Sets the given data attribute with value "true" (default) or "false".
@@ -2438,14 +2447,14 @@ const setData = (el, name, value) => waitForMutateTime().then(() => setDataNow(e
  *
  * @category CSS: Altering
  */
-const setBooleanDataNow = (el, name, value = true) => setAttr(el, prefixData(name), value + "");
+const setBooleanDataNow = (element, name, value = true) => setAttr(element, prefixData(name), value + "");
 
 /**
  * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const setBooleanData = (el, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(el, name, value));
+const setBooleanData = (element, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(element, name, value));
 
 /**
  * Sets the given data attribute with value "false".
@@ -2455,14 +2464,14 @@ const setBooleanData = (el, name, value = true) => waitForMutateTime().then(() =
  *
  * @category CSS: Altering
  */
-const unsetBooleanDataNow = (el, name) => unsetAttr(el, prefixData(name));
+const unsetBooleanDataNow = (element, name) => unsetAttr(element, prefixData(name));
 
 /**
  * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const unsetBooleanData = (el, name) => waitForMutateTime().then(() => unsetBooleanDataNow(el, name));
+const unsetBooleanData = (element, name) => waitForMutateTime().then(() => unsetBooleanDataNow(element, name));
 
 /**
  * Deletes the given data attribute.
@@ -2472,14 +2481,14 @@ const unsetBooleanData = (el, name) => waitForMutateTime().then(() => unsetBoole
  *
  * @category CSS: Altering
  */
-const delDataNow = (el, name) => delAttr(el, prefixData(name));
+const delDataNow = (element, name) => delAttr(element, prefixData(name));
 
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-const delData = (el, name) => waitForMutateTime().then(() => delDataNow(el, name));
+const delData = (element, name) => waitForMutateTime().then(() => delDataNow(element, name));
 
 /**
  * Returns the value of the given property from the computed style of the
@@ -2687,16 +2696,16 @@ const scheduleCSSTransition = (element, toCls) => {
 /**
  * Wraps the element in the given wrapper, or a newly created element if not given.
  *
- * @param {} [options.wrapper]
+ * @param [options.wrapper]
  *              If it's an element, it is used as the wrapper. If it's a string
  *              tag name, then a new element with this tag is created as the
  *              wrapper. If not given, then `div` is used if the element to be
  *              wrapped has an block-display tag, or otherwise `span` (if the
  *              element to be wrapped has an inline tag name).
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
- * @returns {} The wrapper element that was either passed in options or created.
+ * @returns The wrapper element that was either passed in options or created.
  *
  * @category DOM: Altering
  */
@@ -2746,7 +2755,7 @@ const wrapChildrenNow = (element, options) => {
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -2772,7 +2781,7 @@ const replaceElementNow = (element, newElement, options) => {
 /**
  * Move an element's children to a new element
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the children (so as to not trigger relevant callbacks).
  *
@@ -2793,16 +2802,16 @@ const moveChildrenNow = (oldParent, newParent, options) => {
 /**
  * Moves an element to a new position.
  *
- * @param {} [options.to]         The new parent or sibling (depending on
- *                                `options.position`). If not given, the
- *                                element is removed from the DOM.
- * @param {} [options.position]   - append (default): append to `options.to`
- *                                - prepend: prepend to `options.to`
- *                                - before: insert before `options.to`
- *                                - after: insert after `options.to`
- * @param {} [options.ignoreMove] If true, the DOM watcher instances will
- *                                ignore the operation of moving the element
- *                                (so as to not trigger relevant callbacks).
+ * @param [options.to]         The new parent or sibling (depending on
+ *                             `options.position`). If not given, the
+ *                             element is removed from the DOM.
+ * @param [options.position]   - append (default): append to `options.to`
+ *                             - prepend: prepend to `options.to`
+ *                             - before: insert before `options.to`
+ *                             - after: insert after `options.to`
+ * @param [options.ignoreMove] If true, the DOM watcher instances will
+ *                             ignore the operation of moving the element
+ *                             (so as to not trigger relevant callbacks).
  *
  * @category DOM: Altering
  */
@@ -2854,14 +2863,16 @@ const isAllowedToWrap = element => settings.contentWrappingAllowed === true && g
 /**
  * @ignore
  * @internal
+ *
+ * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
  */
 const getWrapper = (element, options) => {
   const {
-    tagName: tagName$1,
-    className = PREFIX_WRAPPER
+    tagName,
+    classNames = [PREFIX_WRAPPER$2]
   } = options !== null && options !== void 0 ? options : {};
   const parent = parentOf(element);
-  if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName$1 || toLowerCase(tagName(parent)) === toLowerCase(tagName$1)) && (!className || hasClass(parent, className))) {
+  if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName || hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, classNames))) {
     // Already wrapped
     return parent;
   }
@@ -2871,14 +2882,16 @@ const getWrapper = (element, options) => {
 /**
  * @ignore
  * @internal
+ *
+ * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
  */
 const getContentWrapper = (element, options) => {
   const {
-    tagName: tagName$1,
-    className = PREFIX_WRAPPER
+    tagName,
+    classNames = [PREFIX_WRAPPER$2]
   } = options !== null && options !== void 0 ? options : {};
   const firstChild = childrenOf(element)[0];
-  if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName$1 || toLowerCase(tagName(firstChild)) === toLowerCase(tagName$1)) && (!className || hasClass(firstChild, className))) {
+  if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName || hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, classNames))) {
     // Already wrapped
     return firstChild;
   }
@@ -2998,7 +3011,7 @@ const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its 
 ) => {
   const {
     tagName: tagName$1,
-    className = PREFIX_WRAPPER,
+    classNames = [PREFIX_WRAPPER$2],
     ignoreMove = true,
     required = false,
     requiredBy = ""
@@ -3012,7 +3025,9 @@ const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its 
       wrapper: tagName$1,
       ignoreMove
     });
-    addClassesNow(wrapper, className);
+    if (classNames) {
+      addClassesNow(wrapper, ...classNames);
+    }
     if (isInlineTag(tagName(wrapper))) {
       addClassesNow(wrapper, PREFIX_INLINE_WRAPPER);
     }
@@ -3039,8 +3054,8 @@ const _tryWrap = (element, options, wrapContent = false // if true, wrap its chi
  * the DOM children. Uses
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver | MutationObserver}.
  *
- * @param {} timeout If given, then if no such element is present after this
- *                    many milliseconds, the promise will resolve to `null`.
+ * @param timeout If given, then if no such element is present after this many
+ *                milliseconds, the promise will resolve to `null`.
  *
  * @category DOM: Events
  */
@@ -3290,15 +3305,14 @@ class XMapBase {
  * except that it supports automatically creating missing entries with
  * {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 class XMap extends XMapBase {
   /**
-   * @param {} getDefaultV  This function is called each time
-   *                        {@link sGet} is called with a non-existent
-   *                        key and must return a value that is then set for
-   *                        that key and returned.
+   * @param getDefaultV This function is called each time {@link sGet} is
+   *                    called with a non-existent key and must return a value
+   *                    that is then set for that key and returned.
    */
   constructor(getDefaultV) {
     const root = newMap();
@@ -3320,8 +3334,8 @@ class XMap extends XMapBase {
  * except that it supports automatically creating missing entries with
  * with {@link sGet} according to a default value getter function.
  *
- * @typeParam K  The type of the keys the map holds.
- * @typeParam V  The type of the values the map holds.
+ * @typeParam K The type of the keys the map holds.
+ * @typeParam V The type of the values the map holds.
  */
 /**
  * Returns the number of entries in the {@link XMap}.
@@ -3347,10 +3361,9 @@ class XMap extends XMapBase {
 _defineProperty(XMap, "newXMapGetter", newXMapGetter);
 class XWeakMap extends XMapBase {
   /**
-   * @param {} getDefaultV  This function is called each time
-   *                        {@link sGet} is called with a non-existent
-   *                        key and must return a value that is then set for
-   *                        that key and returned.
+   * @param getDefaultV This function is called each time {@link sGet} is
+   *                    called with a non-existent key and must return a value
+   *                    that is then set for that key and returned.
    */
   constructor(getDefaultV) {
     const root = newWeakMap();
@@ -3842,15 +3855,15 @@ const getMaxDeltaDirection = (deltaX, deltaY) => {
  * Returns the approximate direction of the given 2D vector as one of the
  * cardinal (XY plane) ones: "up", "down", "left" or "right"; or "ambiguous".
  *
- * @param {} angleDiffThreshold  See {@link areParallel} or
- *                               {@link Utils.areAntiParallel | areAntiParallel}.
- *                               This determines whether the inferred direction
- *                               is ambiguous. For it to _not_ be ambiguous it
- *                               must align with one of the four cardinal
- *                               directions to within `angleDiffThreshold`.
- *                               It doesn't make sense for this value to be < 0
- *                               or >= 45 degrees. If it is, it's forced to be
- *                               positive (absolute) and <= 44.99.
+ * @param angleDiffThreshold See {@link areParallel} or
+ *                           {@link Utils.areAntiParallel | areAntiParallel}.
+ *                           This determines whether the inferred direction is
+ *                           ambiguous. For it to _not_ be ambiguous it must
+ *                           align with one of the four cardinal directions to
+ *                           within `angleDiffThreshold`. It doesn't make
+ *                           sense for this value to be < 0 or >= 45 degrees.
+ *                           If it is, it's forced to be positive (absolute)
+ *                           and <= 44.99.
  *
  * @category Directions
  */
@@ -4021,7 +4034,7 @@ const callEventListener = (handler, event) => {
  * but it handles `options` object in case the browser does not support those.
  * Does not support the `signal` option unless browser natively supports that.
  *
- * @returns {} `true` if successfully added, or `false` if the same handler has
+ * @returns `true` if successfully added, or `false` if the same handler has
  * already been added by us, or if the handler is not a valid event listener.
  *
  * @category Events: Generic
@@ -4069,7 +4082,7 @@ const addEventListenerTo = (target, eventType, handler, options = {}) => {
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener | EventTarget:removeEventListener},
  * to remove it, not this function.
  *
- * @returns {} `true` if successfully removed, or `false` if the handler has not
+ * @returns `true` if successfully removed, or `false` if the handler has not
  * been added by us.
  *
  * @category Events: Generic
@@ -4320,11 +4333,11 @@ const MIN_DELTA_Z = 0.1;
  * press of + or - steps up by 15% or down by ~13% (`1 / 1.15` to be exact)
  * since the previous one.
  *
- * @param {} [options.angleDiffThreshold]
- *                                  See {@link getVectorDirection}
- * @param {} [options.scrollHeight] Use this as deltaY when Home/End is pressed
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.scrollHeight]       Use this as deltaY when Home/End is
+ *                                     pressed.
  *
- * @returns {} `false` if there are no "keydown" events in the list, otherwise a
+ * @returns `false` if there are no "keydown" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures
@@ -4440,9 +4453,9 @@ const SK_ARROWRIGHT = SK_ARROW + SK_RIGHT;
  * Pointer gestures always require the primary button to be pressed and the
  * resulting intent is always "drag", and `deltaZ` is always 1.
  *
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
  *
- * @returns {} `false` if there are less than 2 "pointermove"/"mousemove" events
+ * @returns `false` if there are less than 2 "pointermove"/"mousemove" events
  * in the list, `null` if the gesture is terminated, otherwise a
  * {@link GestureFragment}.
  *
@@ -4522,7 +4535,7 @@ const getPointerGestureFragment = (events, options) => {
  * For zoom intents, which necessarily involves exactly two fingers `deltaZ`
  * is based on the relative change in distance between the fingers.
  *
- * @param {} [options.deltaThreshold]
+ * @param [options.deltaThreshold]
  *                          A change of x or y coordinate less than this is
  *                          considered insignificant, for the purposes of
  *                          determining:
@@ -4531,22 +4544,22 @@ const getPointerGestureFragment = (events, options) => {
  *                          2) whether more than two fingers have moved and
  *                             therefore whether the direction could be zoom or
  *                             not
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
- * @param {} [options.reverseScroll]
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.reverseScroll]
  *                          If set to `true`, will disable natural scroll
  *                          direction.
- * @param {} [options.dragHoldTime]
+ * @param [options.dragHoldTime]
  *                          If the user presses and holds for at least the
  *                          given amount of milliseconds before moving the
  *                          finger(s), gestures other than pinch will be
  *                          treated as a drag instead of scroll as long as the
  *                          number of fingers touching the screen is
  *                          `options.dragNumFingers`. Default is 500ms.
- * @param {} [options.dragNumFingers]
+ * @param [options.dragNumFingers]
  *                          The number of fingers that could be considered a
  *                          drag intent. Default is 1.
  *
- * @returns {} `false` if there are less than 2 "touchmove" events in the list,
+ * @returns `false` if there are less than 2 "touchmove" events in the list,
  * `null` if the gesture is terminated, otherwise a {@link GestureFragment}.
  *
  * @category Gestures
@@ -4645,8 +4658,8 @@ const getTouchGestureFragment = (events, options) => {
  * Note that, `deltaX`/`deltaY` are the end X/Y coordinate minus the start X/Y
  * coordinate. For natural scroll direction you should swap their signs.
  *
- * @param {} deltaThreshold If the change of x and y coordinate are both less
- *                          than this, it is marked as not significant.
+ * @param deltaThreshold If the change of x and y coordinate are both less
+ *                       than this, it is marked as not significant.
  *
  * @category Gestures
  */
@@ -4950,10 +4963,10 @@ const normalizeWheel = event => {
  * `deltaY`, which in most browsers roughly corresponds to a percentage zoom
  * factor.
  *
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}.
- *                                        Default is 5.
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}.
+ *                                     Default is 5.
  *
- * @returns {} `false` if there are no "wheel" events in the list, otherwise a
+ * @returns `false` if there are no "wheel" events in the list, otherwise a
  * {@link GestureFragment}.
  *
  * @category Gestures
@@ -5759,19 +5772,18 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
  *    this will cause a forced layout, so always {@link waitForMeasureTime}
  *    before calling this function when possible.
  *
- * @param {} [options.axis]    One of "x" or "y" for horizontal or vertical
- *                             scroll respectively. If not given, it checks
- *                             both.
- * @param {} [options.active]  If true, then if the target's current scroll
- *                             offset is 0, it will attempt to scroll it rather
- *                             than looking at the clientWidth/Height to
- *                             scrollWidth/Height. This is more reliable but can
- *                             cause issues, see note above.
- * @param {} [options.noCache] By default the result of a check is cached for
- *                             1s and if there's already a cached result for
- *                             this element, it is returns. Set this to true to
- *                             disable checking the cache and also saving the
- *                             result into the cache.
+ * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
+ *                          respectively. If not given, it checks both.
+ * @param [options.active]  If true, then if the target's current scroll offset
+ *                          is 0, it will attempt to scroll it rather than
+ *                          looking at the clientWidth/Height to
+ *                          scrollWidth/Height. This is more reliable but can
+ *                          cause issues, see note above.
+ * @param [options.noCache] By default the result of a check is cached for 1s
+ *                          and if there's already a cached result for this
+ *                          element, it is returns. Set this to true to disable
+ *                          checking the cache and also saving the result into
+ *                          the cache.
  *
  * @category Scrolling
  */
@@ -5836,9 +5848,9 @@ const isScrollable = (element, options) => {
  * Returns the closest scrollable ancestor of the given element, _not including
  * it_.
  *
- * @param {} options See {@link isScrollable}
+ * @param options See {@link isScrollable}
  *
- * @returns {} `null` if no scrollable ancestors are found.
+ * @returns `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -5878,11 +5890,11 @@ const getCurrentScrollAction = scrollable => {
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *               If the target coordinates are invalid.
  *
- * @param {} to  If this is an element, then its top-left position is used as
- *               the target coordinates. If it is a string, then it is treated
- *               as a selector for an element using `querySelector`.
+ * @param to If this is an element, then its top-left position is used as
+ *           the target coordinates. If it is a string, then it is treated
+ *           as a selector for an element using `querySelector`.
  *
- * @returns {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling
@@ -6118,7 +6130,7 @@ const initiateScroll = async (options, isCancelled) => {
   const duration = options._duration;
   const scrollable = options._scrollable;
   let startTime, previousTimeStamp;
-  let currentPosition = position.start;
+  const currentPosition = position.start;
   const step = async () => {
     const timeStamp = await waitForAnimationFrame();
     // Element.scrollTo equates to a measurement and needs to run after
@@ -6242,7 +6254,11 @@ const createOverlay = async userOptions => {
     });
   }
   if (needsContentWrapping) {
+    // TODO Is it possible to unwrap the children when no longer needing this
+    // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
+    // olverlays anyway.
     parentEl = await tryWrapContent(parentEl, {
+      classNames: [PREFIX_WRAPPER$2, PREFIX_WRAPPER$1],
       required: true,
       requiredBy: "percentage offset view trigger with scrolling root"
     });
@@ -6259,6 +6275,7 @@ const createOverlay = async userOptions => {
 
 // ----------------------------------------
 
+const PREFIX_WRAPPER$1 = prefixName("overlay-wrapper");
 const overlays = newXWeakMap(() => newMap());
 const fetchOverlayOptions = async userOptions => {
   var _userOptions$data2, _userOptions$id2;
@@ -6332,11 +6349,11 @@ const getEntryContentBox = entry => {
  * Returns the border box size of the given
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserverEntry | ResizeObserverEntry}.
  *
- * @param {} fallbackToContent If the entry does not contain border box
- *                             measurements (depending on browser), then fall
- *                             back to using the content box size. Otherwise
- *                             (by default) will return `NaN` values for width
- *                             and height.
+ * @param fallbackToContent If the entry does not contain border box
+ *                          measurements (depending on browser), then fall back
+ *                          to using the content box size. Otherwise (by
+ *                          default) will return `NaN` values for width and
+ *                          height.
  *
  * @category Size measurements
  */
@@ -6474,8 +6491,8 @@ class XResizeObserver {
    */
 
   /**
-   * @param {} debounceWindow Debounce the handler so that it's called at most
-   *                          every `debounceWindow` ms.
+   * @param debounceWindow Debounce the handler so that it's called at most
+   *                       every `debounceWindow` ms.
    */
   constructor(callback, debounceWindow) {
 
@@ -7650,9 +7667,9 @@ class ScrollWatcher {
    * Get the scroll offset of the given scrollable. By default, it will
    * {@link waitForMeasureTime} and so will be delayed by one frame.
    *
-   * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-   *                    this only when doing realtime scroll-based animations
-   *                    as it may cause a forced layout.
+   * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+   *                 this only when doing realtime scroll-based animations
+   *                 as it may cause a forced layout.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -7676,23 +7693,22 @@ class ScrollWatcher {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the "to" coordinates or options are invalid.
    *
-   * @param {} to  If this is an element, then its top-left position is used as
-   *               the target coordinates. If it is a string, then it is treated
-   *               as a selector for an element using `querySelector`.
-   * @param {} [options.scrollable]
-   *               If not given, it defaults to
-   *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
+   * @param to If this is an element, then its top-left position is used as
+   *           the target coordinates. If it is a string, then it is treated
+   *           as a selector for an element using `querySelector`.
+   * @param [options.scrollable]
+   *           If not given, it defaults to
+   *           {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}.
    *
-   * @returns {} `null` if there's an ongoing scroll that is not cancellable,
+   * @returns `null` if there's an ongoing scroll that is not cancellable,
    * otherwise a {@link ScrollAction}.
    */
 
   /**
    * Returns the current {@link ScrollAction} if any.
    *
-   * @param {} scrollable
-   *               If not given, it defaults to
-   *               {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
+   * @param scrollable If not given, it defaults to
+   *                   {@link Settings.settings.mainScrollableElementSelector | the main scrolling element}
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
@@ -7705,10 +7721,10 @@ class ScrollWatcher {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the scrollable is invalid.
    *
-   * @param {} [options.immediate]  If true, then it will not use
-   *                                {@link waitForMeasureTime} or
-   *                                {@link Utils.waitForMutateTime | waitForMutateTime}.
-   *                                Warning: this will likely result in forced layout.
+   * @param [options.immediate] If true, then it will not use
+   *                            {@link waitForMeasureTime} or
+   *                            {@link Utils.waitForMutateTime | waitForMutateTime}.
+   *                            Warning: this will likely result in forced layout.
    */
 
   /**
@@ -7875,6 +7891,7 @@ class ScrollWatcher {
         deleteKey(allScrollData, element);
         removeEventListenerFrom(eventTarget, S_SCROLL, scrollHandler);
         deleteKey(activeListeners, eventTarget);
+        // TODO: Should we unwrap children if previously WE wrapped them?
       }
     };
 
@@ -7930,7 +7947,9 @@ class ScrollWatcher {
       setupOnResize(element);
 
       // And also its children (if possible, a single wrapper around them
-      const wrapper = await tryWrapContent(element);
+      const wrapper = await tryWrapContent(element, {
+        classNames: [PREFIX_WRAPPER$2, PREFIX_WRAPPER]
+      });
       if (wrapper) {
         setupOnResize(wrapper);
         observedElements.add(wrapper);
@@ -8144,6 +8163,7 @@ class ScrollWatcher {
 
 const CONSTRUCTOR_KEY$1 = SYMBOL();
 const instances$3 = newMap();
+const PREFIX_WRAPPER = prefixName("scroll-watcher-wrapper");
 const getConfig$1 = config => {
   return {
     _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
@@ -8637,9 +8657,9 @@ class ViewWatcher {
    * Get the current view relative to the target. By default, it will
    * {@link waitForMeasureTime} and so will be delayed by one frame.
    *
-   * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-   *                    this only when doing realtime scroll-based animations
-   *                    as it may cause a forced layout.
+   * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+   *                 this only when doing realtime scroll-based animations
+   *                 as it may cause a forced layout.
    */
 
   /**
@@ -9478,23 +9498,23 @@ class Widget {
  * **IMPORTANT:** If a widget by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name       The name of the widget. Should be in kebab-case.
- * @param {} newWidget  Called for every element matching the widget selector.
- * @param {} configValidator
- *                      A validator object, or a function that returns such an
- *                      object, for all options supported by the widget. If
- *                      given, then the `newWidget` function will also be
- *                      passed a configuration object constructed from the
- *                      element's data attribute.
- * @param {} [options.selector]
- *                      The selector to match elements for. If not given, then
- *                      uses a default value of `[data-lisn-<name>], .lisn-<name>`
- * @param {} [options.supportsMultiple]
- *                      If true, and if `configValidator` is given, then the
- *                      value of the element's widget specific data attribute
- *                      will be split on ";" and each one parsed individually
- *                      as a configuration. Then the `newWidget` function will
- *                      be called once for each configuration.
+ * @param name      The name of the widget. Should be in kebab-case.
+ * @param newWidget Called for every element matching the widget selector.
+ * @param configValidator
+ *                  A validator object, or a function that returns such an
+ *                  object, for all options supported by the widget. If
+ *                  given, then the `newWidget` function will also be
+ *                  passed a configuration object constructed from the
+ *                  element's data attribute.
+ * @param [options.selector]
+ *                  The selector to match elements for. If not given, then
+ *                  uses a default value of `[data-lisn-<name>], .lisn-<name>`
+ * @param [options.supportsMultiple]
+ *                  If true, and if `configValidator` is given, then the
+ *                  value of the element's widget specific data attribute
+ *                  will be split on ";" and each one parsed individually
+ *                  as a configuration. Then the `newWidget` function will
+ *                  be called once for each configuration.
  */
 const registerWidget = async (name, newWidget, configValidator, options) => {
   var _options$selector;
@@ -9668,9 +9688,9 @@ const toOptionsObject = (input, separator) => {
  * **IMPORTANT:** If an action by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name      The name of the action. Should be in kebab-case.
- * @param {} newAction Called for every action specification for a trigger
- *                     parsed by {@link Triggers.registerTrigger}
+ * @param name      The name of the action. Should be in kebab-case.
+ * @param newAction Called for every action specification for a trigger
+ *                  parsed by {@link Triggers.registerTrigger}
  */
 const registerAction = (name, newAction, configValidator) => {
   if (registeredActions.has(name)) {
@@ -9840,18 +9860,18 @@ const getMethods$6 = (element, classNames) => {
 
 
 /**
- * @param {} webAnimationCallback This function is called for each
- *                                {@link https://developer.mozilla.org/en-US/docs/Web/API/Animation | Animation}
- *                                on the element. It {@link waitForMeasureTime}
- *                                before reading the animations.
- * @param {} legacyCallback       This function is called if the browser does
- *                                not support the Web Animations API. It is
- *                                called after {@link waitForMutateTime} so it
- *                                can safely modify styles.
- * @param {} realtime             If true, then it does not
- *                                {@link waitForMeasureTime} or
- *                                {@link waitForMutateTime} and runs
- *                                synchronously.
+ * @param webAnimationCallback This function is called for each
+ *                             {@link https://developer.mozilla.org/en-US/docs/Web/API/Animation | Animation}
+ *                             on the element. It {@link waitForMeasureTime}
+ *                             before reading the animations.
+ * @param legacyCallback       This function is called if the browser does not
+ *                             support the Web Animations API. It is called
+ *                             after {@link waitForMutateTime} so it can safely
+ *                             modify styles.
+ * @param realtime             If true, then it does not
+ *                             {@link waitForMeasureTime} or
+ *                             {@link waitForMutateTime} and runs
+ *                             synchronously.
  *
  * @category Animations
  */
@@ -10361,7 +10381,7 @@ const getMethods$4 = element => {
  *
  * @category DOM: Searching for reference elements
  *
- * @param {} thisElement The element to search relative to
+ * @param thisElement The element to search relative to
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                        If the specification is invalid or if thisElement is
@@ -10673,17 +10693,17 @@ class Trigger extends Widget {
  * **IMPORTANT:** If a trigger by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param {} name       The name of the trigger. Should be in kebab-case.
- * @param {} newTrigger Called for every trigger specification on any element
- *                      that has one or more trigger specifications.
- * @param {} configValidator
- *                      A validator object, or a function that returns such an
- *                      object, for all options that are specific to the
- *                      trigger. Base options (in {@link TriggerConfig}) will
- *                      be parsed automatically and don't need to be handled by
- *                      `configValidator`.
- *                      If the parameter is a function, it will be called with
- *                      the element on which the trigger is being defined.
+ * @param name       The name of the trigger. Should be in kebab-case.
+ * @param newTrigger Called for every trigger specification on any element
+ *                   that has one or more trigger specifications.
+ * @param configValidator
+ *                   A validator object, or a function that returns such an
+ *                   object, for all options that are specific to the
+ *                   trigger. Base options (in {@link TriggerConfig}) will
+ *                   be parsed automatically and don't need to be handled by
+ *                   `configValidator`.
+ *                   If the parameter is a function, it will be called with
+ *                   the element on which the trigger is being defined.
  *
  * @see {@link registerWidget}
  */
@@ -14396,7 +14416,7 @@ const setupRepresentative = async element => {
 
     const prev = element.previousElementSibling;
     const prevChild = childrenOf(prev)[0];
-    if (prev && hasClass(prev, PREFIX_WRAPPER) && prevChild && hasClass(prevChild, PREFIX_GHOST)) {
+    if (prev && hasClass(prev, PREFIX_WRAPPER$2) && prevChild && hasClass(prevChild, PREFIX_GHOST)) {
       // Already cloned by a previous animate action?
       target = prevChild;
     } else {

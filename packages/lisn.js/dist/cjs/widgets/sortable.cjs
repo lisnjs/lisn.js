@@ -104,35 +104,35 @@ class Sortable extends _widget.Widget {
     /**
      * Disables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "disableItem", void 0);
     /**
      * Re-enables the given item number. Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "enableItem", void 0);
     /**
      * Re-enables the given item number if it is disabled, otherwise disables it.
      * Note that item numbers start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "toggleItem", void 0);
     /**
      * Returns true if the given item number is disabled. Note that item numbers
      * start at 1.
      *
-     * @param {} currentOrder If false (default), the item numbers refer to the
-     *                        original order. If true, they refer to the current
-     *                        document order.
+     * @param currentOrder If false (default), the item numbers refer to the
+     *                     original order. If true, they refer to the current
+     *                     document order.
      */
     _defineProperty(this, "isItemDisabled", void 0);
     /**
@@ -147,9 +147,9 @@ class Sortable extends _widget.Widget {
     /**
      * Returns the item elements.
      *
-     * @param {} currentOrder If false (default), returns the items in the
-     *                        original order. If true, they are returned in the
-     *                        current document order.
+     * @param currentOrder If false (default), returns the items in the
+     *                     original order. If true, they are returned in the
+     *                     current document order.
      */
     _defineProperty(this, "getItems", void 0);
     const items = (config === null || config === void 0 ? void 0 : config.items) || [];

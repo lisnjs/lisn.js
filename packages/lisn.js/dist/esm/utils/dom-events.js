@@ -14,8 +14,8 @@ import { settings } from "../globals/settings.js";
  * the DOM children. Uses
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver | MutationObserver}.
  *
- * @param {} timeout If given, then if no such element is present after this
- *                    many milliseconds, the promise will resolve to `null`.
+ * @param timeout If given, then if no such element is present after this many
+ *                milliseconds, the promise will resolve to `null`.
  *
  * @category DOM: Events
  */

@@ -28,9 +28,9 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  * Pointer gestures always require the primary button to be pressed and the
  * resulting intent is always "drag", and `deltaZ` is always 1.
  *
- * @param {} [options.angleDiffThreshold] See {@link getVectorDirection}
+ * @param [options.angleDiffThreshold] See {@link getVectorDirection}
  *
- * @returns {} `false` if there are less than 2 "pointermove"/"mousemove" events
+ * @returns `false` if there are less than 2 "pointermove"/"mousemove" events
  * in the list, `null` if the gesture is terminated, otherwise a
  * {@link GestureFragment}.
  *

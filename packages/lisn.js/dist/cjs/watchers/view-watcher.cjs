@@ -159,9 +159,9 @@ class ViewWatcher {
      * Get the current view relative to the target. By default, it will
      * {@link waitForMeasureTime} and so will be delayed by one frame.
      *
-     * @param {} realtime If true, it will not {@link waitForMeasureTime}. Use
-     *                    this only when doing realtime scroll-based animations
-     *                    as it may cause a forced layout.
+     * @param realtime If true, it will not {@link waitForMeasureTime}. Use
+     *                 this only when doing realtime scroll-based animations
+     *                 as it may cause a forced layout.
      */
     _defineProperty(this, "fetchCurrentView", void 0);
     if (key !== CONSTRUCTOR_KEY) {

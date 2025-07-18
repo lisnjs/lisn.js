@@ -47,19 +47,18 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  *    this will cause a forced layout, so always {@link waitForMeasureTime}
  *    before calling this function when possible.
  *
- * @param {} [options.axis]    One of "x" or "y" for horizontal or vertical
- *                             scroll respectively. If not given, it checks
- *                             both.
- * @param {} [options.active]  If true, then if the target's current scroll
- *                             offset is 0, it will attempt to scroll it rather
- *                             than looking at the clientWidth/Height to
- *                             scrollWidth/Height. This is more reliable but can
- *                             cause issues, see note above.
- * @param {} [options.noCache] By default the result of a check is cached for
- *                             1s and if there's already a cached result for
- *                             this element, it is returns. Set this to true to
- *                             disable checking the cache and also saving the
- *                             result into the cache.
+ * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
+ *                          respectively. If not given, it checks both.
+ * @param [options.active]  If true, then if the target's current scroll offset
+ *                          is 0, it will attempt to scroll it rather than
+ *                          looking at the clientWidth/Height to
+ *                          scrollWidth/Height. This is more reliable but can
+ *                          cause issues, see note above.
+ * @param [options.noCache] By default the result of a check is cached for 1s
+ *                          and if there's already a cached result for this
+ *                          element, it is returns. Set this to true to disable
+ *                          checking the cache and also saving the result into
+ *                          the cache.
  *
  * @category Scrolling
  */
@@ -124,9 +123,9 @@ const isScrollable = (element, options) => {
  * Returns the closest scrollable ancestor of the given element, _not including
  * it_.
  *
- * @param {} options See {@link isScrollable}
+ * @param options See {@link isScrollable}
  *
- * @returns {} `null` if no scrollable ancestors are found.
+ * @returns `null` if no scrollable ancestors are found.
  *
  * @category Scrolling
  */
@@ -168,11 +167,11 @@ const getCurrentScrollAction = scrollable => {
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *               If the target coordinates are invalid.
  *
- * @param {} to  If this is an element, then its top-left position is used as
- *               the target coordinates. If it is a string, then it is treated
- *               as a selector for an element using `querySelector`.
+ * @param to If this is an element, then its top-left position is used as
+ *           the target coordinates. If it is a string, then it is treated
+ *           as a selector for an element using `querySelector`.
  *
- * @returns {} `null` if there's an ongoing scroll that is not cancellable,
+ * @returns `null` if there's an ongoing scroll that is not cancellable,
  * otherwise a {@link ScrollAction}.
  *
  * @category Scrolling
@@ -454,7 +453,7 @@ const initiateScroll = async (options, isCancelled) => {
   const duration = options._duration;
   const scrollable = options._scrollable;
   let startTime, previousTimeStamp;
-  let currentPosition = position.start;
+  const currentPosition = position.start;
   const step = async () => {
     const timeStamp = await (0, _tasks.waitForAnimationFrame)();
     // Element.scrollTo equates to a measurement and needs to run after

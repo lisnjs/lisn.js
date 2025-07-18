@@ -15,10 +15,7 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
 
 const isTouchScreen = () => MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
 exports.isTouchScreen = isTouchScreen;
-const supportsSticky = () => {
-  var _CSS, _CSS$supports;
-  return MH.hasDOM() ? !!((_CSS = CSS) !== null && _CSS !== void 0 && (_CSS$supports = _CSS.supports) !== null && _CSS$supports !== void 0 && _CSS$supports.call(_CSS, "position", "sticky")) : false;
-};
+const supportsSticky = () => MH.hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
 exports.supportsSticky = supportsSticky;
 const copyExistingKeys = (fromObj, toObj) => {
   for (const key in toObj) {

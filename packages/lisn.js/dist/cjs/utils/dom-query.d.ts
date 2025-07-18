@@ -8,7 +8,7 @@ import { DOMElement } from "../globals/types.cjs";
  *
  * @category DOM: Querying
  */
-export declare const getVisibleContentChildren: (el: Element) => Element[];
+export declare const getVisibleContentChildren: (element: Element) => Element[];
 /**
  * Returns whether the given tag is _not_ `script` or `style`. Comparison is
  * case insensitive.

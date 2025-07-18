@@ -13,7 +13,7 @@
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
-import { hideElement, hasClass, addClassesNow, getData, setDataNow, setBooleanData } from "./css-alter.js";
+import { hideElement, hasAnyClass, addClassesNow, getData, setDataNow, setBooleanData } from "./css-alter.js";
 import { waitForMutateTime } from "./dom-optimize.js";
 import { isInlineTag } from "./dom-query.js";
 import { logWarn } from "./log.js";
@@ -22,16 +22,16 @@ import { randId } from "./text.js";
 /**
  * Wraps the element in the given wrapper, or a newly created element if not given.
  *
- * @param {} [options.wrapper]
+ * @param [options.wrapper]
  *              If it's an element, it is used as the wrapper. If it's a string
  *              tag name, then a new element with this tag is created as the
  *              wrapper. If not given, then `div` is used if the element to be
  *              wrapped has an block-display tag, or otherwise `span` (if the
  *              element to be wrapped has an inline tag name).
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
- * @returns {} The wrapper element that was either passed in options or created.
+ * @returns The wrapper element that was either passed in options or created.
  *
  * @category DOM: Altering
  */
@@ -88,7 +88,7 @@ export const wrapChildren = async (element, options) => waitForMutateTime().then
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -121,7 +121,7 @@ export const replaceElement = async (element, newElement, options) => waitForMut
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -144,7 +144,7 @@ export const swapElements = async (elementA, elementB, options) => waitForMutate
 /**
  * Move an element's children to a new element
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the children (so as to not trigger relevant callbacks).
  *
@@ -172,16 +172,16 @@ export const moveChildren = async (oldParent, newParent, options) => waitForMuta
 /**
  * Moves an element to a new position.
  *
- * @param {} [options.to]         The new parent or sibling (depending on
- *                                `options.position`). If not given, the
- *                                element is removed from the DOM.
- * @param {} [options.position]   - append (default): append to `options.to`
- *                                - prepend: prepend to `options.to`
- *                                - before: insert before `options.to`
- *                                - after: insert after `options.to`
- * @param {} [options.ignoreMove] If true, the DOM watcher instances will
- *                                ignore the operation of moving the element
- *                                (so as to not trigger relevant callbacks).
+ * @param [options.to]         The new parent or sibling (depending on
+ *                             `options.position`). If not given, the
+ *                             element is removed from the DOM.
+ * @param [options.position]   - append (default): append to `options.to`
+ *                             - prepend: prepend to `options.to`
+ *                             - before: insert before `options.to`
+ *                             - after: insert after `options.to`
+ * @param [options.ignoreMove] If true, the DOM watcher instances will
+ *                             ignore the operation of moving the element
+ *                             (so as to not trigger relevant callbacks).
  *
  * @category DOM: Altering
  */
@@ -214,7 +214,7 @@ export const moveElement = async (element, options) => waitForMutateTime().then(
 /**
  * It will {@link hideElement} and then remove it from the DOM.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
  *
@@ -247,14 +247,16 @@ export const isAllowedToWrap = element => settings.contentWrappingAllowed === tr
 /**
  * @ignore
  * @internal
+ *
+ * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
  */
 export const getWrapper = (element, options) => {
   const {
     tagName,
-    className = MC.PREFIX_WRAPPER
+    classNames = [MC.PREFIX_WRAPPER]
   } = options !== null && options !== void 0 ? options : {};
   const parent = MH.parentOf(element);
-  if (MH.lengthOf(MH.childrenOf(parent)) === 1 && MH.isHTMLElement(parent) && (!tagName || MH.toLowerCase(MH.tagName(parent)) === MH.toLowerCase(tagName)) && (!className || hasClass(parent, className))) {
+  if (MH.lengthOf(MH.childrenOf(parent)) === 1 && MH.isHTMLElement(parent) && (!tagName || MH.hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, classNames))) {
     // Already wrapped
     return parent;
   }
@@ -264,14 +266,16 @@ export const getWrapper = (element, options) => {
 /**
  * @ignore
  * @internal
+ *
+ * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
  */
 export const getContentWrapper = (element, options) => {
   const {
     tagName,
-    className = MC.PREFIX_WRAPPER
+    classNames = [MC.PREFIX_WRAPPER]
   } = options !== null && options !== void 0 ? options : {};
   const firstChild = MH.childrenOf(element)[0];
-  if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (!tagName || MH.toLowerCase(MH.tagName(firstChild)) === MH.toLowerCase(tagName)) && (!className || hasClass(firstChild, className))) {
+  if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (!tagName || MH.hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, classNames))) {
     // Already wrapped
     return firstChild;
   }
@@ -419,7 +423,7 @@ const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its 
 ) => {
   const {
     tagName,
-    className = MC.PREFIX_WRAPPER,
+    classNames = [MC.PREFIX_WRAPPER],
     ignoreMove = true,
     required = false,
     requiredBy = ""
@@ -433,7 +437,9 @@ const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its 
       wrapper: tagName,
       ignoreMove
     });
-    addClassesNow(wrapper, className);
+    if (classNames) {
+      addClassesNow(wrapper, ...classNames);
+    }
     if (isInlineTag(MH.tagName(wrapper))) {
       addClassesNow(wrapper, MC.PREFIX_INLINE_WRAPPER);
     }

@@ -12,13 +12,13 @@ import * as MH from "../globals/minification-helpers.js";
  * **NOTE:** This is not intended for serialization of data that needs to be
  * de-serialized. Only for debugging output.
  *
- * @param {} value     The value to format as string.
- * @param {} [maxLen]  Maximum length of the returned string. If not given or
- *                     is <= 0, the string is not truncated. Otherwise, if the
- *                     result is longer than maxLen, it is truncated to
- *                     `maxLen - 3` and added a suffix of "...".
- *                     Note that if `maxLen` is > 0 but <= 3, the result is
- *                     always "..."
+ * @param value    The value to format as string.
+ * @param [maxLen] Maximum length of the returned string. If not given or
+ *                 is <= 0, the string is not truncated. Otherwise, if the
+ *                 result is longer than maxLen, it is truncated to
+ *                 `maxLen - 3` and added a suffix of "...".
+ *                 Note that if `maxLen` is > 0 but <= 3, the result is
+ *                 always "..."
  *
  * @category Text
  */
@@ -35,8 +35,8 @@ export const formatAsString = (value, maxLen) => {
  * {@link formatAsString} rather than the default string representation as
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/join | Array:join} would.
  *
- * @param {} separator  The separator to use to delimit each argument.
- * @param {} args       Objects or values to convert to string and join.
+ * @param separator The separator to use to delimit each argument.
+ * @param args      Objects or values to convert to string and join.
  *
  * @category Text
  */
@@ -61,11 +61,11 @@ export const joinAsString = (separator, ...args) => args.map(a => formatAsString
  * splitOn('foo, bar, baz', RegExp(',\\s*'), 3); // -> ['foo', 'bar', 'baz']
  * ```
  *
- * @param {} trim  If true, entries will be trimmed for whitespace after splitting.
+ * @param trim  If true, entries will be trimmed for whitespace after splitting.
  *
- * @param {} limit If not given or < 0, the string will be split on every
- *                 occurrence of `separator`. Otherwise, it will be split on
- *                 the first `limit` number of occurrences of `separator`.
+ * @param limit If not given or < 0, the string will be split on every
+ *              occurrence of `separator`. Otherwise, it will be split on
+ *              the first `limit` number of occurrences of `separator`.
  *
  * @category Text
  */
@@ -121,7 +121,7 @@ export const camelToKebabCase = MH.camelToKebabCase;
  *
  * **IMPORTANT:** This is _not_ suitable for cryptographic applications.
  *
- * @param {} [nChars = 8]  The length of the returned stirng.
+ * @param nChars The length of the returned stirng.
  *
  * @category Text
  */
@@ -149,7 +149,7 @@ export const randId = (nChars = 8) => {
  * `rootMargin`, top/bottom margin is relative to the height of the root, so
  * pass the actual root size.
  *
- * @returns {} [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
+ * @returns [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
  *
  * @category Text
  */

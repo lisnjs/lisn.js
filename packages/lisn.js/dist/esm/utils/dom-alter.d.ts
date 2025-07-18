@@ -12,16 +12,16 @@
 /**
  * Wraps the element in the given wrapper, or a newly created element if not given.
  *
- * @param {} [options.wrapper]
+ * @param [options.wrapper]
  *              If it's an element, it is used as the wrapper. If it's a string
  *              tag name, then a new element with this tag is created as the
  *              wrapper. If not given, then `div` is used if the element to be
  *              wrapped has an block-display tag, or otherwise `span` (if the
  *              element to be wrapped has an inline tag name).
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
- * @returns {} The wrapper element that was either passed in options or created.
+ * @returns The wrapper element that was either passed in options or created.
  *
  * @category DOM: Altering
  */
@@ -62,7 +62,7 @@ export declare const wrapChildren: (element: Element, options?: {
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -82,7 +82,7 @@ export declare const replaceElement: (element: Element, newElement: Element, opt
 /**
  * Replace an element with another one.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the element (so as to not trigger relevant callbacks).
  *
@@ -102,7 +102,7 @@ export declare const swapElements: (elementA: Element, elementB: Element, option
 /**
  * Move an element's children to a new element
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              moving the children (so as to not trigger relevant callbacks).
  *
@@ -122,16 +122,16 @@ export declare const moveChildren: (oldParent: Element, newParent: Element, opti
 /**
  * Moves an element to a new position.
  *
- * @param {} [options.to]         The new parent or sibling (depending on
- *                                `options.position`). If not given, the
- *                                element is removed from the DOM.
- * @param {} [options.position]   - append (default): append to `options.to`
- *                                - prepend: prepend to `options.to`
- *                                - before: insert before `options.to`
- *                                - after: insert after `options.to`
- * @param {} [options.ignoreMove] If true, the DOM watcher instances will
- *                                ignore the operation of moving the element
- *                                (so as to not trigger relevant callbacks).
+ * @param [options.to]         The new parent or sibling (depending on
+ *                             `options.position`). If not given, the
+ *                             element is removed from the DOM.
+ * @param [options.position]   - append (default): append to `options.to`
+ *                             - prepend: prepend to `options.to`
+ *                             - before: insert before `options.to`
+ *                             - after: insert after `options.to`
+ * @param [options.ignoreMove] If true, the DOM watcher instances will
+ *                             ignore the operation of moving the element
+ *                             (so as to not trigger relevant callbacks).
  *
  * @category DOM: Altering
  */
@@ -153,7 +153,7 @@ export declare const moveElement: (element: Element, options?: {
 /**
  * It will {@link hideElement} and then remove it from the DOM.
  *
- * @param {} [options.ignoreMove]
+ * @param [options.ignoreMove]
  *              If true, the DOM watcher instances will ignore the operation of
  *              replacing the element (so as to not trigger relevant callbacks).
  *
@@ -175,18 +175,22 @@ export declare const isAllowedToWrap: (element: Element) => boolean;
 /**
  * @ignore
  * @internal
+ *
+ * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
  */
 export declare const getWrapper: (element: Element, options?: {
     tagName?: keyof HTMLElementTagNameMap;
-    className?: string;
+    classNames?: string[] | null;
 }) => HTMLElement | null;
 /**
  * @ignore
  * @internal
+ *
+ * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
  */
 export declare const getContentWrapper: (element: Element, options?: {
     tagName?: keyof HTMLElementTagNameMap;
-    className?: string;
+    classNames?: string[] | null;
 }) => HTMLElement | null;
 /**
  * @ignore
@@ -282,7 +286,7 @@ export declare const clearIgnoreMove: (target: Element) => void;
 export declare const insertArrow: (target: Element, direction: "up" | "down" | "left" | "right", position?: "prepend" | "append" | "before" | "after", tag?: string) => HTMLElement;
 type ContentWrappingOptions = {
     tagName?: keyof HTMLElementTagNameMap;
-    className?: string;
+    classNames?: string[];
     ignoreMove?: boolean;
     required?: boolean;
     requiredBy?: string;

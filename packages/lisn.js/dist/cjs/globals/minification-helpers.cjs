@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.promiseAll = exports.preventExtensions = exports.preventDefault = exports.prefixName = exports.prefixLisnData = exports.prefixData = exports.prefixCssVar = exports.prefixCssJsVar = exports.pow = exports.parseFloat = exports.parentOf = exports.onAnimationFrame = exports.newWeakSet = exports.newWeakMap = exports.newSet = exports.newResizeObserver = exports.newPromise = exports.newMutationObserver = exports.newMap = exports.newIntersectionObserver = exports.min = exports.merge = exports.max = exports.log2 = exports.lengthOf = exports.lastOf = exports.keysOf = exports.kebabToCamelCase = exports.isWheelEvent = exports.isTouchPointerEvent = exports.isTouchEvent = exports.isString = exports.isPointerEvent = exports.isObject = exports.isNumber = exports.isNullish = exports.isNonPrimitive = exports.isNodeBAfterA = exports.isNode = exports.isNaN = exports.isMouseEvent = exports.isLiteralString = exports.isKeyboardEvent = exports.isIterableObject = exports.isInstanceOf = exports.isHTMLElement = exports.isFunction = exports.isEmpty = exports.isElement = exports.isDoc = exports.isBoolean = exports.isArray = exports.includes = exports.illegalConstructorError = exports.hasOwnProp = exports.hasDOM = exports.getWindow = exports.getTabIndex = exports.getReadyState = exports.getPointerType = exports.getElementById = exports.getDocScrollingElement = exports.getDocElement = exports.getDoc = exports.getBoundingClientRect = exports.getBody = exports.getAttr = exports.freezeObj = exports.floor = exports.firstOf = exports.filterBlank = exports.filter = exports.elScrollTo = exports.elScrollBy = exports.docQuerySelectorAll = exports.docQuerySelector = exports.deleteObjKey = exports.deleteKey = exports.delAttr = exports.defineProperty = exports.currentTargetOf = exports.createElement = exports.createButton = exports.copyObject = exports.copyBoundingRectProps = exports.constructorOf = exports.consoleWarn = exports.consoleLog = exports.consoleInfo = exports.consoleError = exports.consoleDebug = exports.clearTimer = exports.classList = exports.childrenOf = exports.ceil = exports.camelToKebabCase = exports.bugError = exports.assign = exports.arrayFrom = exports.abs = void 0;
-exports.usageError = exports.unsetTabIndex = exports.unsetAttr = exports.typeOrClassOf = exports.typeOf = exports.toUpperCase = exports.toLowerCase = exports.timeSince = exports.timeNow = exports.targetOf = exports.tagName = exports.stringify = exports.strReplace = exports.sqrt = exports.sizeOf = exports.setTimer = exports.setTabIndex = exports.setAttr = exports.round = exports.remove = exports.querySelectorAll = exports.querySelector = exports.promiseResolve = void 0;
+exports.preventDefault = exports.prefixName = exports.prefixLisnData = exports.prefixData = exports.prefixCssVar = exports.prefixCssJsVar = exports.pow = exports.parseFloat = exports.parentOf = exports.onAnimationFrame = exports.newWeakSet = exports.newWeakMap = exports.newSet = exports.newResizeObserver = exports.newPromise = exports.newMutationObserver = exports.newMap = exports.newIntersectionObserver = exports.min = exports.merge = exports.max = exports.log2 = exports.lengthOf = exports.lastOf = exports.keysOf = exports.kebabToCamelCase = exports.isWheelEvent = exports.isTouchPointerEvent = exports.isTouchEvent = exports.isString = exports.isPointerEvent = exports.isObject = exports.isNumber = exports.isNullish = exports.isNonPrimitive = exports.isNodeBAfterA = exports.isNode = exports.isNaN = exports.isMouseEvent = exports.isLiteralString = exports.isKeyboardEvent = exports.isIterableObject = exports.isInstanceOf = exports.isHTMLElement = exports.isFunction = exports.isEmpty = exports.isElement = exports.isDoc = exports.isBoolean = exports.isArray = exports.includes = exports.illegalConstructorError = exports.hasTagName = exports.hasOwnProp = exports.hasDOM = exports.getWindow = exports.getTabIndex = exports.getReadyState = exports.getPointerType = exports.getElementById = exports.getDocScrollingElement = exports.getDocElement = exports.getDoc = exports.getBoundingClientRect = exports.getBody = exports.getAttr = exports.freezeObj = exports.floor = exports.firstOf = exports.filterBlank = exports.filter = exports.every = exports.elScrollTo = exports.elScrollBy = exports.docQuerySelectorAll = exports.docQuerySelector = exports.deleteObjKey = exports.deleteKey = exports.delAttr = exports.defineProperty = exports.currentTargetOf = exports.createElement = exports.createButton = exports.copyObject = exports.copyBoundingRectProps = exports.constructorOf = exports.consoleWarn = exports.consoleLog = exports.consoleInfo = exports.consoleError = exports.consoleDebug = exports.clearTimer = exports.classList = exports.childrenOf = exports.ceil = exports.camelToKebabCase = exports.bugError = exports.assign = exports.arrayFrom = exports.abs = void 0;
+exports.usageError = exports.unsetTabIndex = exports.unsetAttr = exports.typeOrClassOf = exports.typeOf = exports.toUpperCase = exports.toLowerCase = exports.timeSince = exports.timeNow = exports.targetOf = exports.tagName = exports.stringify = exports.strReplace = exports.sqrt = exports.some = exports.sizeOf = exports.setTimer = exports.setTabIndex = exports.setAttr = exports.round = exports.remove = exports.querySelectorAll = exports.querySelector = exports.promiseResolve = exports.promiseAll = exports.preventExtensions = void 0;
 var MC = _interopRequireWildcard(require("./minification-constants.cjs"));
 var _errors = require("./errors.cjs");
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
@@ -121,7 +121,7 @@ const strReplace = (s, match, replacement) => s.replace(match, replacement);
 exports.strReplace = strReplace;
 const setTimer = exports.setTimer = root.setTimeout.bind(root);
 const clearTimer = exports.clearTimer = root.clearTimeout.bind(root);
-const getBoundingClientRect = el => el.getBoundingClientRect();
+const getBoundingClientRect = element => element.getBoundingClientRect();
 
 // Copy size properties explicitly to another object so they can be used with
 // the spread operator (DOMRect/DOMRectReadOnly's properties are not enumerable)
@@ -149,16 +149,20 @@ const docQuerySelectorAll = selector => querySelectorAll(getDoc(), selector);
 exports.docQuerySelectorAll = docQuerySelectorAll;
 const getElementById = id => getDoc().getElementById(id);
 exports.getElementById = getElementById;
-const getAttr = (el, name) => el.getAttribute(name);
+const getAttr = (element, name) => element.getAttribute(name);
 exports.getAttr = getAttr;
-const setAttr = (el, name, value = "true") => el.setAttribute(name, value);
+const setAttr = (element, name, value = "true") => element.setAttribute(name, value);
 exports.setAttr = setAttr;
-const unsetAttr = (el, name) => el.setAttribute(name, "false");
+const unsetAttr = (element, name) => element.setAttribute(name, "false");
 exports.unsetAttr = unsetAttr;
-const delAttr = (el, name) => el.removeAttribute(name);
+const delAttr = (element, name) => element.removeAttribute(name);
 exports.delAttr = delAttr;
 const includes = (arr, v, startAt) => arr.indexOf(v, startAt) >= 0;
 exports.includes = includes;
+const every = (array, predicate) => array.every(predicate);
+exports.every = every;
+const some = (array, predicate) => array.some(predicate);
+exports.some = some;
 const filter = (array, filterFn) => array.filter(filterFn);
 exports.filter = filter;
 const filterBlank = array => {
@@ -180,8 +184,10 @@ const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
 exports.lastOf = lastOf;
 const firstOf = a => a === null || a === void 0 ? void 0 : a.slice(0, 1)[0];
 exports.firstOf = firstOf;
-const tagName = el => el.tagName;
+const tagName = element => element.tagName;
 exports.tagName = tagName;
+const hasTagName = (element, tag) => toLowerCase(tagName(element)) === toLowerCase(tag);
+exports.hasTagName = hasTagName;
 const preventDefault = event => event.preventDefault();
 exports.preventDefault = preventDefault;
 const arrayFrom = exports.arrayFrom = MC.ARRAY.from.bind(MC.ARRAY);
@@ -236,14 +242,14 @@ const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
 exports.targetOf = targetOf;
 const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;
 exports.currentTargetOf = currentTargetOf;
-const classList = el => el === null || el === void 0 ? void 0 : el.classList;
+const classList = element => element === null || element === void 0 ? void 0 : element.classList;
 exports.classList = classList;
 const S_TABINDEX = "tabindex";
-const getTabIndex = el => getAttr(el, S_TABINDEX);
+const getTabIndex = element => getAttr(element, S_TABINDEX);
 exports.getTabIndex = getTabIndex;
-const setTabIndex = (el, index = "0") => setAttr(el, S_TABINDEX, index);
+const setTabIndex = (element, index = "0") => setAttr(element, S_TABINDEX, index);
 exports.setTabIndex = setTabIndex;
-const unsetTabIndex = el => delAttr(el, S_TABINDEX);
+const unsetTabIndex = element => delAttr(element, S_TABINDEX);
 exports.unsetTabIndex = unsetTabIndex;
 const remove = obj => obj === null || obj === void 0 ? void 0 : obj.remove();
 exports.remove = remove;
@@ -251,11 +257,11 @@ const deleteObjKey = (obj, key) => delete obj[key];
 exports.deleteObjKey = deleteObjKey;
 const deleteKey = (map, key) => map === null || map === void 0 ? void 0 : map.delete(key);
 exports.deleteKey = deleteKey;
-const elScrollTo = (el, coords, behavior = "instant") => el.scrollTo(merge({
+const elScrollTo = (element, coords, behavior = "instant") => element.scrollTo(merge({
   behavior
 }, coords));
 exports.elScrollTo = elScrollTo;
-const elScrollBy = (el, coords, behavior = "instant") => el.scrollBy(merge({
+const elScrollBy = (element, coords, behavior = "instant") => element.scrollBy(merge({
   behavior
 }, coords));
 exports.elScrollBy = elScrollBy;

@@ -40,15 +40,15 @@ const getMaxDeltaDirection = (deltaX, deltaY) => {
  * Returns the approximate direction of the given 2D vector as one of the
  * cardinal (XY plane) ones: "up", "down", "left" or "right"; or "ambiguous".
  *
- * @param {} angleDiffThreshold  See {@link areParallel} or
- *                               {@link Utils.areAntiParallel | areAntiParallel}.
- *                               This determines whether the inferred direction
- *                               is ambiguous. For it to _not_ be ambiguous it
- *                               must align with one of the four cardinal
- *                               directions to within `angleDiffThreshold`.
- *                               It doesn't make sense for this value to be < 0
- *                               or >= 45 degrees. If it is, it's forced to be
- *                               positive (absolute) and <= 44.99.
+ * @param angleDiffThreshold See {@link areParallel} or
+ *                           {@link Utils.areAntiParallel | areAntiParallel}.
+ *                           This determines whether the inferred direction is
+ *                           ambiguous. For it to _not_ be ambiguous it must
+ *                           align with one of the four cardinal directions to
+ *                           within `angleDiffThreshold`. It doesn't make
+ *                           sense for this value to be < 0 or >= 45 degrees.
+ *                           If it is, it's forced to be positive (absolute)
+ *                           and <= 44.99.
  *
  * @category Directions
  */

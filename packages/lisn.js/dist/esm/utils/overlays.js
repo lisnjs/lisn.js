@@ -78,7 +78,11 @@ export const createOverlay = async userOptions => {
     });
   }
   if (needsContentWrapping) {
+    // TODO Is it possible to unwrap the children when no longer needing this
+    // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
+    // olverlays anyway.
     parentEl = await tryWrapContent(parentEl, {
+      classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
       required: true,
       requiredBy: "percentage offset view trigger with scrolling root"
     });
@@ -95,6 +99,7 @@ export const createOverlay = async userOptions => {
 
 // ----------------------------------------
 
+const PREFIX_WRAPPER = MH.prefixName("overlay-wrapper");
 const overlays = newXWeakMap(() => MH.newMap());
 const tryGetOverlayOptions = userOptions => {
   var _userOptions$data, _userOptions$id;

@@ -2,6 +2,11 @@
  * @module Widgets
  */
 
+// [TODO v2]: Instead of wrapping children and changing which element is the
+// actual scrollable (and having to mapScrollable, etc), use the provided
+// element as the scrolling one but wrap IT (not its children) and insert the
+// scrollbars before it. Then remove, "id" and "className" config options.
+
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
@@ -36,6 +41,7 @@ import {
   moveElement,
   moveChildrenNow,
   isAllowedToWrap,
+  getContentWrapper,
   wrapChildren,
   getOrAssignID,
 } from "@lisn/utils/dom-alter";
@@ -101,13 +107,17 @@ import debug from "@lisn/debug/debug";
  * possible (before the scrollbar widget has time to initialize.
  *
  * **IMPORTANT:** If you are using the Scrollbar on an element other than the
- * main scrollable element, it's highly recommended to enable (it is enabled by
- * default) {@link settings.contentWrappingAllowed}. Otherwise wrap all of its
- * children in a single element with a class `lisn-wrapper`:
+ * main scrollable element, it's highly recommended to
+ * {@link settings.contentWrappingAllowed | enable content wrapping} (it is
+ * enabled by default). Otherwise, Scrollbar will rely on position: sticky. If
+ * you want to instead manually create the wrappers yourself, ensure your
+ * structure is as follows:
  * ```html
- * <div class="scrollable">
- *   <div class="lisn-wrapper">
- *     <!-- CONTENT -->
+ * <div class="scrollable"><!-- Element you instantiate as Scrollbar -->
+ *   <div class="lisn-scrollbar__content"><!-- Optional wrapper to avoid relying on sticky -->
+ *     <div class="lisn-wrapper"><!-- Optional wrapper to enable efficient scroll tracking -->
+ *       <!-- YOUR CONTENT -->
+ *     </div>
  *   </div>
  * </div>
  * ```
@@ -198,9 +208,10 @@ export class Scrollbar extends Widget {
    * Returns the actual scrollable element us which, unless the scrollable you
    * passed to the constructor is the
    * {@link settings.mainScrollableElementSelector | the main scrolling element}
-   * or unless {@link settings.contentWrappingAllowed} is false,
-   * will be a new element created by us that is a descendant of the original
-   * element you passed.
+   * or unless
+   * {@link settings.contentWrappingAllowed | you've disabled content wrapping},
+   * this will be a new element created by us that is a descendant of the
+   * original element you passed.
    */
   readonly getScrollable: () => Element;
 
@@ -232,6 +243,11 @@ export class Scrollbar extends Widget {
    * main scrollable element to be present in the DOM if not already.
    */
   static async enableMain(config?: ScrollbarConfig) {
+    // [TODO v2]: enableMain should be synchronous and the constructor should
+    // wait for the scrollable, allowing users who want to use the main
+    // scrollable to just pass null/undefined/window. Then getScrollable should
+    // return null or the actual scrollable if available + add fetchScrollable
+    // to return a Promise.
     const scrollable = await ScrollWatcher.fetchMainScrollableElement();
     const widget = new Scrollbar(scrollable, config);
     widget.onDestroy(() => {
@@ -297,16 +313,16 @@ export type ScrollbarConfig = {
   /**
    * The DOM ID to set on the
    * {@link Scrollbar.getScrollable | scrollable element}. Will result in the
-   * scrollable element getting this ID. This is useful if the element is a
+   * scrollable element getting this ID. This is useful if the scrollable is a
    * wrapper created by us and you want it to be assigned an ID.
    *
    * **IMPORTANT:** If the scrollable is the
    * {@link settings.mainScrollableElementSelector | the main scrolling element}
-   * or if you've disabled {@link settings.contentWrappingAllowed}, then the
-   * scrollable element provided as the widget element will _not_ have its
-   * content wrapped and will remain the actual scrollable. In this case, its
-   * ID will be set to this, so if it already has an ID, it will be overridden
-   * with this value.
+   * or {@link settings.contentWrappingAllowed | if you've disabled content wrapping},
+   * then the scrollable element provided as the widget element will _not_ have
+   * its content wrapped and will remain the actual scrollable. In this case,
+   * its ID will be set to this, so if it already has an ID, it will be
+   * overridden with this value.
    *
    * @defaultValue undefined
    */
@@ -315,8 +331,8 @@ export type ScrollbarConfig = {
   /**
    * A class name or a list of class names to set on the
    * {@link Scrollbar.getScrollable | scrollable element}. Will result in the
-   * scrollable element getting these classes. This is useful if the element is
-   * a wrapper created by us and you want it to be assigned classes.
+   * scrollable element getting these classes. This is useful if the scrollable
+   * is a wrapper created by us and you want it to be assigned classes.
    *
    * See explanation for {@link id}.
    *
@@ -464,32 +480,41 @@ const getScrollableProps = (containerElement: HTMLElement) => {
   const isBodyInQuirks = root === body && defaultScrollable === body;
 
   const allowedToWrap = isAllowedToWrap(containerElement);
-  const needsSticky = !isMainScrollable && !allowedToWrap;
   const barParent = isMainScrollable ? body : containerElement;
   const hasVScroll = isScrollable(root, { axis: "y" });
 
   let contentWrapper: HTMLElement | null = null;
-  let scrollable = root;
   let supported = true;
-  if (!isMainScrollable && !isBody && allowedToWrap) {
-    if (allowedToWrap) {
-      contentWrapper = MH.createElement("div");
-      scrollable = contentWrapper;
-    } else if (supportsSticky()) {
-      logWarn(
-        "Scrollbar on elements other than the main scrollable " +
-          "when settings.contentWrappingAllowed is false relies on " +
-          "position: sticky, is experimental and may not work properly",
-      );
-    } else {
-      logError(
-        "Scrollbar on elements other than the main scrollable " +
-          "when settings.contentWrappingAllowed is false relies on " +
-          "position: sticky, but this browser does not support sticky.",
-      );
-      supported = false;
+  let hasExistingWrapper = true;
+
+  if (!isMainScrollable && !isBody) {
+    // we need to wrap if possible
+    contentWrapper = getContentWrapper(containerElement, {
+      classNames: [PREFIX_CONTENT],
+    });
+    hasExistingWrapper = !MH.isNullish(contentWrapper);
+
+    if (!contentWrapper) {
+      const warnMsgPrefix =
+        "Scrollbar on elements other than " +
+        "the main scrollable when content wrapping is " +
+        "disabled relies on position: sticky";
+
+      if (allowedToWrap) {
+        // we'll wrap later, but create the wrapper now as it will be the actual
+        // scrollable
+        contentWrapper = MH.createElement("div");
+      } else if (supportsSticky()) {
+        logWarn(`${warnMsgPrefix}, is experimental and may not work properly.`);
+      } else {
+        logError(`${warnMsgPrefix}, but this browser does not support sticky.`);
+        supported = false;
+      }
     }
   }
+
+  const needsSticky =
+    !isMainScrollable && !allowedToWrap && !hasExistingWrapper;
 
   return {
     supported,
@@ -497,9 +522,10 @@ const getScrollableProps = (containerElement: HTMLElement) => {
     isBody,
     isBodyInQuirks,
     root,
-    scrollable,
+    scrollable: contentWrapper ?? root,
     barParent,
     contentWrapper,
+    hasExistingWrapper,
     needsSticky,
     hasVScroll,
   };
@@ -520,6 +546,7 @@ const init = (
     scrollable,
     barParent,
     contentWrapper,
+    hasExistingWrapper,
     needsSticky,
     hasVScroll,
   } = props;
@@ -547,6 +574,9 @@ const init = (
     return;
   }
 
+  // Ensure scroll tracking that will be setup on the original element uses the
+  // new scrollable we create.
+  // XXX TODO But this still breaks any existing scroll tracking
   mapScrollable(root, scrollable);
 
   // ----------
@@ -856,17 +886,20 @@ const init = (
   }
 
   setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
+  setBooleanData(
+    containerElement,
+    PREFIX_HAS_V_SCROLL,
+    !!contentWrapper && hasVScroll,
+  );
 
   // Wrap children if needed
-  if (contentWrapper) {
+  if (contentWrapper && !hasExistingWrapper) {
     wrapChildren(containerElement, {
       wrapper: contentWrapper,
       ignoreMove: true,
     }); // no need to await here
     addClasses(contentWrapper, PREFIX_CONTENT);
-
-    setBooleanData(containerElement, PREFIX_HAS_WRAPPER);
-    setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, hasVScroll);
   }
 
   maybeSetNativeHidden();
@@ -879,6 +912,7 @@ const init = (
     addClasses(scrollable, ...toArrayIfSingle(config.className));
   }
 
+  const hadDomID = !!scrollable.id;
   const scrollDomID = // for ARIA
     clickScroll || dragScroll ? getOrAssignID(scrollable, S_SCROLLBAR) : "";
 
@@ -942,8 +976,12 @@ const init = (
   widget.onDestroy(async () => {
     unmapScrollable(root);
 
+    if (!hadDomID) {
+      scrollable.id = "";
+    }
+
     await waitForMutateTime();
-    if (contentWrapper) {
+    if (contentWrapper && !hasExistingWrapper) {
       moveChildrenNow(contentWrapper, containerElement, { ignoreMove: true });
       moveElementNow(contentWrapper); // remove
     }
@@ -970,6 +1008,7 @@ const init = (
       delDataNow(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
     }
 
+    delDataNow(containerElement, PREFIX_ALLOW_COLLAPSE);
     delDataNow(containerElement, PREFIX_HAS_WRAPPER);
     delDataNow(containerElement, PREFIX_HAS_V_SCROLL);
   });

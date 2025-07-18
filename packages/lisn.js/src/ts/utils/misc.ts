@@ -12,7 +12,9 @@ export const isTouchScreen = () =>
   MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
 
 export const supportsSticky = () =>
-  MH.hasDOM() ? !!CSS?.supports?.("position", "sticky") : false;
+  MH.hasDOM()
+    ? typeof CSS !== "undefined" && CSS.supports("position", "sticky")
+    : false;
 
 export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
   for (const key in toObj) {

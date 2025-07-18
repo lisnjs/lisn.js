@@ -31,8 +31,8 @@ import { camelToKebabCase, splitOn } from "./text.js";
  * Unlike {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace},
  * this will always add `toCls` even if `fromCls` isn't in the element's class list.
  *
- * @returns {} True if there was a change made (class removed or added),
- *             false otherwise.
+ * @returns True if there was a change made (class removed or added), false
+ * otherwise.
  *
  * @category CSS: Altering
  */
@@ -265,51 +265,65 @@ export const isElementUndisplayed = element => hasClass(element, MC.PREFIX_UNDIS
  *
  * @category CSS: Altering (optimized)
  */
-export const hasClass = (el, className) => MH.classList(el).contains(className);
+export const hasClass = (element, className) => MH.classList(element).contains(className);
+
+/**
+ * Returns true if the element's class list contains all of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export const hasAllClasses = (element, classNames) => !MH.some(classNames, className => !hasClass(element, className));
+
+/**
+ * Returns true if the element's class list contains any of the given classes.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export const hasAnyClass = (element, classNames) => MH.some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
  *
  * @category CSS: Altering
  */
-export const addClassesNow = (el, ...classNames) => MH.classList(el).add(...classNames);
+export const addClassesNow = (element, ...classNames) => MH.classList(element).add(...classNames);
 
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const addClasses = (el, ...classNames) => waitForMutateTime().then(() => addClassesNow(el, ...classNames));
+export const addClasses = (element, ...classNames) => waitForMutateTime().then(() => addClassesNow(element, ...classNames));
 
 /**
  * Removes the given classes to the element.
  *
  * @category CSS: Altering
  */
-export const removeClassesNow = (el, ...classNames) => MH.classList(el).remove(...classNames);
+export const removeClassesNow = (element, ...classNames) => MH.classList(element).remove(...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const removeClasses = (el, ...classNames) => waitForMutateTime().then(() => removeClassesNow(el, ...classNames));
+export const removeClasses = (element, ...classNames) => waitForMutateTime().then(() => removeClassesNow(element, ...classNames));
 
 /**
  * Toggles the given class on the element.
  *
- * @param {} force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
  *
  * @category CSS: Altering
  */
-export const toggleClassNow = (el, className, force) => MH.classList(el).toggle(className, force);
+export const toggleClassNow = (element, className, force) => MH.classList(element).toggle(className, force);
 
 /**
  * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const toggleClass = (el, className, force) => waitForMutateTime().then(() => toggleClassNow(el, className, force));
+export const toggleClass = (element, className, force) => waitForMutateTime().then(() => toggleClassNow(element, className, force));
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -321,7 +335,7 @@ export const toggleClass = (el, className, force) => waitForMutateTime().then(()
  *
  * @category CSS: Altering (optimized)
  */
-export const getData = (el, name) => MH.getAttr(el, MH.prefixData(name));
+export const getData = (element, name) => MH.getAttr(element, MH.prefixData(name));
 
 /**
  * Returns the value of the given data attribute as a boolean. Its value is
@@ -333,8 +347,8 @@ export const getData = (el, name) => MH.getAttr(el, MH.prefixData(name));
  *
  * @category CSS: Altering (optimized)
  */
-export const getBooleanData = (el, name) => {
-  const value = getData(el, name);
+export const getBooleanData = (element, name) => {
+  const value = getData(element, name);
   return value !== null && value !== "false";
 };
 
@@ -352,14 +366,14 @@ export const getBoolData = getBooleanData;
  *
  * @category CSS: Altering
  */
-export const setDataNow = (el, name, value) => MH.setAttr(el, MH.prefixData(name), value);
+export const setDataNow = (element, name, value) => MH.setAttr(element, MH.prefixData(name), value);
 
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const setData = (el, name, value) => waitForMutateTime().then(() => setDataNow(el, name, value));
+export const setData = (element, name, value) => waitForMutateTime().then(() => setDataNow(element, name, value));
 
 /**
  * Sets the given data attribute with value "true" (default) or "false".
@@ -369,7 +383,7 @@ export const setData = (el, name, value) => waitForMutateTime().then(() => setDa
  *
  * @category CSS: Altering
  */
-export const setBooleanDataNow = (el, name, value = true) => MH.setAttr(el, MH.prefixData(name), value + "");
+export const setBooleanDataNow = (element, name, value = true) => MH.setAttr(element, MH.prefixData(name), value + "");
 
 /**
  * @ignore
@@ -382,7 +396,7 @@ export const setBoolDataNow = setBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-export const setBooleanData = (el, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(el, name, value));
+export const setBooleanData = (element, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(element, name, value));
 
 /**
  * @ignore
@@ -398,7 +412,7 @@ export const setBoolData = setBooleanData;
  *
  * @category CSS: Altering
  */
-export const unsetBooleanDataNow = (el, name) => MH.unsetAttr(el, MH.prefixData(name));
+export const unsetBooleanDataNow = (element, name) => MH.unsetAttr(element, MH.prefixData(name));
 
 /**
  * @ignore
@@ -411,7 +425,7 @@ export const unsetBoolDataNow = unsetBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-export const unsetBooleanData = (el, name) => waitForMutateTime().then(() => unsetBooleanDataNow(el, name));
+export const unsetBooleanData = (element, name) => waitForMutateTime().then(() => unsetBooleanDataNow(element, name));
 
 /**
  * @ignore
@@ -427,14 +441,14 @@ export const unsetBoolData = unsetBooleanData;
  *
  * @category CSS: Altering
  */
-export const delDataNow = (el, name) => MH.delAttr(el, MH.prefixData(name));
+export const delDataNow = (element, name) => MH.delAttr(element, MH.prefixData(name));
 
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.
  *
  * @category CSS: Altering (optimized)
  */
-export const delData = (el, name) => waitForMutateTime().then(() => delDataNow(el, name));
+export const delData = (element, name) => waitForMutateTime().then(() => delDataNow(element, name));
 
 /**
  * Returns the value of the given property from the computed style of the
@@ -506,7 +520,7 @@ export const delStyleProp = (element, prop) => waitForMutateTime().then(() => de
 /**
  * Returns the flex direction of the given element **if it has a flex layout**.
  *
- * @returns {} `null` if the element does not have a flex layout.
+ * @returns `null` if the element does not have a flex layout.
  */
 export const getFlexDirection = async element => {
   const displayStyle = await getComputedStyleProp(element, "display");
@@ -520,7 +534,7 @@ export const getFlexDirection = async element => {
  * Returns the flex direction of the given element's parent **if it has a flex
  * layout**.
  *
- * @returns {} `null` if the element's parent does not have a flex layout.
+ * @returns `null` if the element's parent does not have a flex layout.
  */
 export const getParentFlexDirection = async element => {
   const parent = MH.parentOf(element);

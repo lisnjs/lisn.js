@@ -218,7 +218,7 @@ export type BoundingRect = {
     height: number;
 };
 /**
- * @param {} args  Arguments to log
+ * @param args Arguments to log
  *
  * @category Misc
  */

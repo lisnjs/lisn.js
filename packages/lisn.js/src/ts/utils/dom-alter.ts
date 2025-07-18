@@ -3,11 +3,11 @@
  *
  * @categoryDescription DOM: Altering
  * These functions alter the DOM tree, but could lead to forced layout if not
- * scheduled using {@link waitForMutateTime}.
+ * scheduled using {@link Utils.waitForMutateTime}.
  *
  * @categoryDescription DOM: Altering (optimized)
  * These functions alter the DOM tree in an optimized way using
- * {@link waitForMutateTime} and so are asynchronous.
+ * {@link Utils.waitForMutateTime} and so are asynchronous.
  */
 
 import * as MC from "@lisn/globals/minification-constants";
@@ -19,11 +19,12 @@ import {
   hideElement,
   hasAnyClass,
   addClassesNow,
+  removeClassesNow,
   getData,
   setDataNow,
   setBooleanData,
 } from "@lisn/utils/css-alter";
-import { waitForMutateTime } from "@lisn/utils/dom-optimize";
+import { asyncMutatorFor } from "@lisn/utils/dom-optimize";
 import { isInlineTag } from "@lisn/utils/dom-query";
 import { logWarn } from "@lisn/utils/log";
 import { randId } from "@lisn/utils/text";
@@ -71,17 +72,11 @@ export const wrapElementNow = (
 };
 
 /**
- * Like {@link wrapElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const wrapElement = async (
-  element: Element,
-  options?: {
-    wrapper?: HTMLElement | keyof HTMLElementTagNameMap;
-    ignoreMove?: boolean;
-  },
-) => waitForMutateTime().then(() => wrapElementNow(element, options));
+export const wrapElement = asyncMutatorFor(wrapElementNow);
 
 /**
  * Wraps the element's children in the given wrapper, or a newly created element
@@ -110,17 +105,11 @@ export const wrapChildrenNow = (
 };
 
 /**
- * Like {@link wrapChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const wrapChildren = async (
-  element: Element,
-  options?: {
-    wrapper?: HTMLElement | keyof HTMLElementTagNameMap;
-    ignoreMove?: boolean;
-  },
-) => waitForMutateTime().then(() => wrapChildrenNow(element, options));
+export const wrapChildren = asyncMutatorFor(wrapChildrenNow);
 
 /**
  * Replace an element with another one.
@@ -156,20 +145,11 @@ export const replaceElementNow = (
 };
 
 /**
- * Like {@link replaceElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link replaceElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const replaceElement = async (
-  element: Element,
-  newElement: Element,
-  options?: {
-    ignoreMove?: boolean;
-  },
-) =>
-  waitForMutateTime().then(() =>
-    replaceElementNow(element, newElement, options),
-  );
+export const replaceElement = asyncMutatorFor(replaceElementNow);
 
 /**
  * Replace an element with another one.
@@ -194,18 +174,13 @@ export const swapElementsNow = (
 };
 
 /**
- * Like {@link swapElementsNow} except it will {@link waitForMutateTime}.
+ * Like {@link swapElementsNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const swapElements = async (
-  elementA: Element,
-  elementB: Element,
-  options?: {
-    ignoreMove?: boolean;
-  },
-) =>
-  waitForMutateTime().then(() => swapElementsNow(elementA, elementB, options));
+export const swapElements = asyncMutatorFor(swapElementsNow);
+
+// [TODO v2]: moveChildren to accept newParent as options.to
 
 /**
  * Move an element's children to a new element
@@ -236,20 +211,11 @@ export const moveChildrenNow = (
 };
 
 /**
- * Like {@link moveChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const moveChildren = async (
-  oldParent: Element,
-  newParent: Element,
-  options?: {
-    ignoreMove?: boolean;
-  },
-) =>
-  waitForMutateTime().then(() =>
-    moveChildrenNow(oldParent, newParent, options),
-  );
+export const moveChildren = asyncMutatorFor(moveChildrenNow);
 
 /**
  * Moves an element to a new position.
@@ -296,18 +262,11 @@ export const moveElementNow = (
 };
 
 /**
- * Like {@link moveElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-export const moveElement = async (
-  element: Element,
-  options?: {
-    to?: Element;
-    position?: "append" | "prepend" | "before" | "after";
-    ignoreMove?: boolean;
-  },
-) => waitForMutateTime().then(() => moveElementNow(element, options));
+export const moveElement = asyncMutatorFor(moveElementNow);
 
 /**
  * It will {@link hideElement} and then remove it from the DOM.
@@ -420,10 +379,7 @@ export const tryWrapNow = <O extends ContentWrappingOptions>(
  * @ignore
  * @internal
  */
-export const tryWrap = <O extends ContentWrappingOptions>(
-  element: Element,
-  options?: O,
-) => _tryWrap(element, options);
+export const tryWrap = asyncMutatorFor(tryWrapNow);
 
 /**
  * @ignore
@@ -438,10 +394,28 @@ export const tryWrapContentNow = <O extends ContentWrappingOptions>(
  * @ignore
  * @internal
  */
-export const tryWrapContent = <O extends ContentWrappingOptions>(
-  element: Element,
-  options?: O,
-) => _tryWrap(element, options, true);
+export const tryWrapContent = asyncMutatorFor(tryWrapContentNow);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const unwrapContentNow = (wrapper: Element, classNames?: string[]) => {
+  const parent = wrapper.parentElement;
+  if (parent) {
+    moveChildrenNow(wrapper, parent, { ignoreMove: true });
+    moveElementNow(wrapper, { ignoreMove: true });
+    if (classNames) {
+      removeClassesNow(wrapper, ...classNames);
+    }
+  }
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const unwrapContent = asyncMutatorFor(unwrapContentNow);
 
 /**
  * @ignore
@@ -498,10 +472,7 @@ export const insertGhostCloneNow = <E extends Element>(
  *
  * Exposed via DOMWatcher
  */
-export const insertGhostClone = <E extends Element>(
-  element: E,
-  insertBefore: Element | null = null,
-) => waitForMutateTime().then(() => insertGhostCloneNow(element, insertBefore));
+export const insertGhostClone = asyncMutatorFor(insertGhostCloneNow);
 
 /**
  * @ignore
@@ -630,9 +601,3 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
     ? HTMLElement
     : HTMLElement | null;
 };
-
-const _tryWrap = <O extends ContentWrappingOptions>(
-  element: Element,
-  options: O | undefined,
-  wrapContent = false, // if true, wrap its children, otherwise given element
-) => waitForMutateTime().then(() => _tryWrapNow(element, options, wrapContent));

@@ -39,10 +39,10 @@ import {
 import {
   moveElementNow,
   moveElement,
-  moveChildrenNow,
   isAllowedToWrap,
   getContentWrapper,
   wrapChildren,
+  unwrapContentNow,
   getOrAssignID,
 } from "@lisn/utils/dom-alter";
 import {
@@ -983,8 +983,7 @@ const init = (
 
     await waitForMutateTime();
     if (contentWrapper && !hasExistingWrapper) {
-      moveChildrenNow(contentWrapper, containerElement, { ignoreMove: true });
-      moveElementNow(contentWrapper); // remove
+      unwrapContentNow(contentWrapper, [PREFIX_CONTENT]);
     }
 
     moveElementNow(wrapper); // remove

@@ -24,6 +24,8 @@ import { DOMElement, FlexDirection } from "@lisn/globals/types";
 import {
   waitForMeasureTime,
   waitForMutateTime,
+  asyncMeasurerFor,
+  asyncMutatorFor,
   waitForSubsequentMutateTime,
 } from "@lisn/utils/dom-optimize";
 import { isDOMElement } from "@lisn/utils/dom-query";
@@ -340,8 +342,7 @@ export const addClassesNow = (element: Element, ...classNames: string[]) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const addClasses = (element: Element, ...classNames: string[]) =>
-  waitForMutateTime().then(() => addClassesNow(element, ...classNames));
+export const addClasses = asyncMutatorFor(addClassesNow);
 
 /**
  * Removes the given classes to the element.
@@ -356,8 +357,7 @@ export const removeClassesNow = (element: Element, ...classNames: string[]) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const removeClasses = (element: Element, ...classNames: string[]) =>
-  waitForMutateTime().then(() => removeClassesNow(element, ...classNames));
+export const removeClasses = asyncMutatorFor(removeClassesNow);
 
 /**
  * Toggles the given class on the element.
@@ -377,11 +377,7 @@ export const toggleClassNow = (
  *
  * @category CSS: Altering (optimized)
  */
-export const toggleClass = (
-  element: Element,
-  className: string,
-  force?: boolean,
-) => waitForMutateTime().then(() => toggleClassNow(element, className, force));
+export const toggleClass = asyncMutatorFor(toggleClassNow);
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -433,8 +429,7 @@ export const setDataNow = (element: Element, name: string, value: string) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const setData = (element: Element, name: string, value: string) =>
-  waitForMutateTime().then(() => setDataNow(element, name, value));
+export const setData = asyncMutatorFor(setDataNow);
 
 /**
  * Sets the given data attribute with value "true" (default) or "false".
@@ -461,8 +456,7 @@ export const setBoolDataNow = setBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-export const setBooleanData = (element: Element, name: string, value = true) =>
-  waitForMutateTime().then(() => setBooleanDataNow(element, name, value));
+export const setBooleanData = asyncMutatorFor(setBooleanDataNow);
 
 /**
  * @ignore
@@ -492,8 +486,7 @@ export const unsetBoolDataNow = unsetBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-export const unsetBooleanData = (element: Element, name: string) =>
-  waitForMutateTime().then(() => unsetBooleanDataNow(element, name));
+export const unsetBooleanData = asyncMutatorFor(unsetBooleanDataNow);
 
 /**
  * @ignore
@@ -517,8 +510,7 @@ export const delDataNow = (element: Element, name: string) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const delData = (element: Element, name: string) =>
-  waitForMutateTime().then(() => delDataNow(element, name));
+export const delData = asyncMutatorFor(delDataNow);
 
 /**
  * Returns the value of the given property from the computed style of the
@@ -534,8 +526,7 @@ export const getComputedStylePropNow = (element: Element, prop: string) =>
  *
  * @category DOM: Altering (optimized)
  */
-export const getComputedStyleProp = (element: Element, prop: string) =>
-  waitForMeasureTime().then(() => getComputedStylePropNow(element, prop));
+export const getComputedStyleProp = asyncMeasurerFor(getComputedStylePropNow);
 
 /**
  * Returns the value of the given property from the inline style of the
@@ -551,8 +542,7 @@ export const getStylePropNow = (element: Element, prop: string) =>
  *
  * @category DOM: Altering (optimized)
  */
-export const getStyleProp = (element: Element, prop: string) =>
-  waitForMeasureTime().then(() => getStylePropNow(element, prop));
+export const getStyleProp = asyncMeasurerFor(getStylePropNow);
 
 /**
  * Sets the given property on the inline style of the element.
@@ -570,8 +560,7 @@ export const setStylePropNow = (
  *
  * @category DOM: Altering (optimized)
  */
-export const setStyleProp = (element: Element, prop: string, value: string) =>
-  waitForMutateTime().then(() => setStylePropNow(element, prop, value));
+export const setStyleProp = asyncMutatorFor(setStylePropNow);
 
 /**
  * Deletes the given property on the inline style of the element.
@@ -586,8 +575,7 @@ export const delStylePropNow = (element: Element, prop: string) =>
  *
  * @category DOM: Altering (optimized)
  */
-export const delStyleProp = (element: Element, prop: string) =>
-  waitForMutateTime().then(() => delStylePropNow(element, prop));
+export const delStyleProp = asyncMutatorFor(delStylePropNow);
 
 /**
  * Returns the flex direction of the given element **if it has a flex layout**.
@@ -740,21 +728,21 @@ export const copyStyle = async (
  * @ignore
  * @internal
  */
-export const setNumericStyleJsVars = async (
+export const setNumericStyleJsVarsNow = (
   element: Element,
   props: CssNumericProps,
   options: {
     _prefix?: string;
     _units?: string;
     _numDecimal?: number;
-    _transformFn?: (prop: string, currVal: number, newVal: number) => number;
+    // _transformFn?: (prop: string, currVal: number, newVal: number) => number;
   } = {},
 ) => {
   if (!isDOMElement(element)) {
     return;
   }
 
-  const transformFn = options._transformFn;
+  // const transformFn = options._transformFn;
 
   const varPrefix = MH.prefixCssJsVar(options?._prefix || "");
   for (const prop in props) {
@@ -770,19 +758,19 @@ export const setNumericStyleJsVars = async (
       const thisNumDecimal =
         options?._numDecimal ?? (value > 0 && value < 1 ? 2 : 0);
 
-      if (transformFn) {
-        const currValue = MH.parseFloat(await getStyleProp(element, varName));
-
-        value = transformFn(prop, currValue || 0, value);
-      }
+      // if (transformFn) {
+      //   const currValue = MH.parseFloat(await getStyleProp(element, varName));
+      //
+      //   value = transformFn(prop, currValue || 0, value);
+      // }
 
       value = roundNumTo(value, thisNumDecimal);
     }
 
     if (value === null) {
-      delStyleProp(element, varName);
+      delStylePropNow(element, varName);
     } else {
-      setStyleProp(element, varName, value + (options?._units || ""));
+      setStylePropNow(element, varName, value + (options?._units || ""));
     }
   }
 };
@@ -791,9 +779,11 @@ export const setNumericStyleJsVars = async (
  * @ignore
  * @internal
  */
-type CssNumericProps = Record<string, number | undefined | null>;
+export const setNumericStyleJsVars = asyncMutatorFor(setNumericStyleJsVarsNow);
 
 // ----------------------------------------
+
+type CssNumericProps = Record<string, number | undefined | null>;
 
 type CSSTransition = {
   _cancel: () => undefined;

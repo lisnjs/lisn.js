@@ -71,6 +71,24 @@ export const waitForSubsequentMutateTime = () =>
 export const waitForSubsequentMeasureTime = () =>
   waitForMeasureTime().then(waitForMutateTime).then(waitForMeasureTime);
 
+/**
+ * @ignore
+ * @internal
+ */
+export const asyncMutatorFor =
+  <Args extends unknown[], Ret>(func: (...args: Args) => Ret) =>
+  async (...args: Args) =>
+    waitForMutateTime().then(() => func(...args));
+
+/**
+ * @ignore
+ * @internal
+ */
+export const asyncMeasurerFor =
+  <Args extends unknown[], Ret>(func: (...args: Args) => Ret) =>
+  async (...args: Args) =>
+    waitForMeasureTime().then(() => func(...args));
+
 // ----------------------------------------
 
 type TaskResolver = () => void;

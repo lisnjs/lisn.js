@@ -117,7 +117,7 @@ export class CheckTrigger extends Trigger {
   constructor(
     element: Element,
     actions: Action[],
-    config: CheckTriggerConfig = {},
+    config?: CheckTriggerConfig,
   ) {
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);

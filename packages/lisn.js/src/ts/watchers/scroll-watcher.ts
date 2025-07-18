@@ -264,7 +264,7 @@ export class ScrollWatcher {
    * Creates a new instance of ScrollWatcher with the given
    * {@link ScrollWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: ScrollWatcherConfig = {}) {
+  static create(config?: ScrollWatcherConfig) {
     return new ScrollWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -275,7 +275,7 @@ export class ScrollWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: ScrollWatcherConfig = {}) {
+  static reuse(config?: ScrollWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(myConfig);
 
@@ -368,7 +368,7 @@ export class ScrollWatcher {
       userOptions: OnScrollOptions | undefined,
       trackType: TrackType,
     ) => {
-      const options = await fetchOnScrollOptions(config, userOptions || {});
+      const options = await fetchOnScrollOptions(config, userOptions ?? {});
       const element = options._element;
 
       // Don't await for the scroll data before creating the callback so that
@@ -660,7 +660,7 @@ export class ScrollWatcher {
 
     // ----------
 
-    this.scroll = (direction, options = {}) => {
+    this.scroll = (direction, options) => {
       if (!isValidScrollDirection(direction)) {
         throw MH.usageError(`Unknown scroll direction: '${direction}'`);
       }
@@ -669,8 +669,8 @@ export class ScrollWatcher {
       const sign = direction === MC.S_UP || direction === MC.S_LEFT ? -1 : 1;
       let targetCoordinate: TargetCoordinate;
 
-      const amount = options.amount ?? 100;
-      const asFractionOf = options.asFractionOf;
+      const amount = options?.amount ?? 100;
+      const asFractionOf = options?.asFractionOf;
 
       if (asFractionOf === "visible") {
         targetCoordinate = isVertical
@@ -713,14 +713,14 @@ export class ScrollWatcher {
 
     // ----------
 
-    this.scrollTo = async (to, options = {}) =>
+    this.scrollTo = async (to, options) =>
       scrollTo(
         to,
         MH.merge(
           { duration: config._scrollDuration }, // default
           options,
           {
-            scrollable: await fetchScrollableElement(options.scrollable),
+            scrollable: await fetchScrollableElement(options?.scrollable),
           }, // override
         ),
       );
@@ -734,15 +734,15 @@ export class ScrollWatcher {
 
     // ----------
 
-    this.stopUserScrolling = async (options = {}) => {
-      const element = await fetchScrollableElement(options.scrollable);
+    this.stopUserScrolling = async (options) => {
+      const element = await fetchScrollableElement(options?.scrollable);
       const stopScroll = () =>
         MH.elScrollTo(element, {
           top: element[MC.S_SCROLL_TOP],
           left: element[MC.S_SCROLL_LEFT],
         });
 
-      if (options.immediate) {
+      if (options?.immediate) {
         stopScroll();
       } else {
         waitForMeasureTime().then(stopScroll);
@@ -1012,8 +1012,9 @@ const instances = MH.newMap<string, ScrollWatcher>();
 const PREFIX_WRAPPER = MH.prefixName("scroll-watcher-wrapper");
 
 const getConfig = (
-  config: ScrollWatcherConfig,
+  config: ScrollWatcherConfig | undefined,
 ): ScrollWatcherConfigInternal => {
+  config ??= {};
   return {
     _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -1159,7 +1160,7 @@ const setScrollCssProps = (
     prefix = "page-";
   }
 
-  scrollData = scrollData || {};
+  scrollData ??= {};
   const props = {
     [MC.S_SCROLL_TOP]: scrollData[MC.S_SCROLL_TOP],
     [MC.S_SCROLL_TOP_FRACTION]: scrollData[MC.S_SCROLL_TOP_FRACTION],

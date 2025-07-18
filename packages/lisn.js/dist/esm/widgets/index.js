@@ -11,6 +11,7 @@ export * from "./pager.js";
 export * from "./same-height.js";
 export * from "./scrollbar.js";
 export * from "./scroll-to-top.js";
+export * from "./smooth-scroll.js";
 export * from "./sortable.js";
 export * from "./track-gesture.js";
 export * from "./track-scroll.js";

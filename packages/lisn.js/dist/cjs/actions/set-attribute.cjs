@@ -121,7 +121,7 @@ class SetAttribute {
   static register() {
     (0, _action.registerAction)("set-attribute", (element, args, config) => {
       return new SetAttribute(element, {
-        [args[0]]: config || {}
+        [args[0]]: config !== null && config !== void 0 ? config : {}
       });
     }, configValidator);
   }

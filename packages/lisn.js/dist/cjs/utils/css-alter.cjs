@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleJsVars = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isFlexChild = exports.isFlex = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.hasAnyClass = exports.hasAllClasses = exports.getStylePropNow = exports.getStyleProp = exports.getParentFlexDirection = exports.getMaxTransitionDuration = exports.getFlexDirection = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
+exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleJsVarsNow = exports.setNumericStyleJsVars = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isFlexChild = exports.isFlex = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.hasAnyClass = exports.hasAllClasses = exports.getStylePropNow = exports.getStyleProp = exports.getParentFlexDirection = exports.getMaxTransitionDuration = exports.getFlexDirection = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _domOptimize = require("./dom-optimize.cjs");
@@ -319,14 +319,13 @@ const addClassesNow = (element, ...classNames) => MH.classList(element).add(...c
  * @category CSS: Altering (optimized)
  */
 exports.addClassesNow = addClassesNow;
-const addClasses = (element, ...classNames) => (0, _domOptimize.waitForMutateTime)().then(() => addClassesNow(element, ...classNames));
+const addClasses = exports.addClasses = (0, _domOptimize.asyncMutatorFor)(addClassesNow);
 
 /**
  * Removes the given classes to the element.
  *
  * @category CSS: Altering
  */
-exports.addClasses = addClasses;
 const removeClassesNow = (element, ...classNames) => MH.classList(element).remove(...classNames);
 
 /**
@@ -335,7 +334,7 @@ const removeClassesNow = (element, ...classNames) => MH.classList(element).remov
  * @category CSS: Altering (optimized)
  */
 exports.removeClassesNow = removeClassesNow;
-const removeClasses = (element, ...classNames) => (0, _domOptimize.waitForMutateTime)().then(() => removeClassesNow(element, ...classNames));
+const removeClasses = exports.removeClasses = (0, _domOptimize.asyncMutatorFor)(removeClassesNow);
 
 /**
  * Toggles the given class on the element.
@@ -344,7 +343,6 @@ const removeClasses = (element, ...classNames) => (0, _domOptimize.waitForMutate
  *
  * @category CSS: Altering
  */
-exports.removeClasses = removeClasses;
 const toggleClassNow = (element, className, force) => MH.classList(element).toggle(className, force);
 
 /**
@@ -353,7 +351,7 @@ const toggleClassNow = (element, className, force) => MH.classList(element).togg
  * @category CSS: Altering (optimized)
  */
 exports.toggleClassNow = toggleClassNow;
-const toggleClass = (element, className, force) => (0, _domOptimize.waitForMutateTime)().then(() => toggleClassNow(element, className, force));
+const toggleClass = exports.toggleClass = (0, _domOptimize.asyncMutatorFor)(toggleClassNow);
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -365,7 +363,6 @@ const toggleClass = (element, className, force) => (0, _domOptimize.waitForMutat
  *
  * @category CSS: Altering (optimized)
  */
-exports.toggleClass = toggleClass;
 const getData = (element, name) => MH.getAttr(element, MH.prefixData(name));
 
 /**
@@ -407,7 +404,7 @@ const setDataNow = (element, name, value) => MH.setAttr(element, MH.prefixData(n
  * @category CSS: Altering (optimized)
  */
 exports.setDataNow = setDataNow;
-const setData = (element, name, value) => (0, _domOptimize.waitForMutateTime)().then(() => setDataNow(element, name, value));
+const setData = exports.setData = (0, _domOptimize.asyncMutatorFor)(setDataNow);
 
 /**
  * Sets the given data attribute with value "true" (default) or "false".
@@ -417,7 +414,6 @@ const setData = (element, name, value) => (0, _domOptimize.waitForMutateTime)().
  *
  * @category CSS: Altering
  */
-exports.setData = setData;
 const setBooleanDataNow = (element, name, value = true) => MH.setAttr(element, MH.prefixData(name), value + "");
 
 /**
@@ -432,13 +428,12 @@ const setBoolDataNow = exports.setBoolDataNow = setBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-const setBooleanData = (element, name, value = true) => (0, _domOptimize.waitForMutateTime)().then(() => setBooleanDataNow(element, name, value));
+const setBooleanData = exports.setBooleanData = (0, _domOptimize.asyncMutatorFor)(setBooleanDataNow);
 
 /**
  * @ignore
  * @deprecated
  */
-exports.setBooleanData = setBooleanData;
 const setBoolData = exports.setBoolData = setBooleanData;
 
 /**
@@ -463,13 +458,12 @@ const unsetBoolDataNow = exports.unsetBoolDataNow = unsetBooleanDataNow;
  *
  * @category CSS: Altering (optimized)
  */
-const unsetBooleanData = (element, name) => (0, _domOptimize.waitForMutateTime)().then(() => unsetBooleanDataNow(element, name));
+const unsetBooleanData = exports.unsetBooleanData = (0, _domOptimize.asyncMutatorFor)(unsetBooleanDataNow);
 
 /**
  * @ignore
  * @deprecated
  */
-exports.unsetBooleanData = unsetBooleanData;
 const unsetBoolData = exports.unsetBoolData = unsetBooleanData;
 
 /**
@@ -488,7 +482,7 @@ const delDataNow = (element, name) => MH.delAttr(element, MH.prefixData(name));
  * @category CSS: Altering (optimized)
  */
 exports.delDataNow = delDataNow;
-const delData = (element, name) => (0, _domOptimize.waitForMutateTime)().then(() => delDataNow(element, name));
+const delData = exports.delData = (0, _domOptimize.asyncMutatorFor)(delDataNow);
 
 /**
  * Returns the value of the given property from the computed style of the
@@ -496,7 +490,6 @@ const delData = (element, name) => (0, _domOptimize.waitForMutateTime)().then(()
  *
  * @category DOM: Altering
  */
-exports.delData = delData;
 const getComputedStylePropNow = (element, prop) => getComputedStyle(element).getPropertyValue(prop);
 
 /**
@@ -505,7 +498,7 @@ const getComputedStylePropNow = (element, prop) => getComputedStyle(element).get
  * @category DOM: Altering (optimized)
  */
 exports.getComputedStylePropNow = getComputedStylePropNow;
-const getComputedStyleProp = (element, prop) => (0, _domOptimize.waitForMeasureTime)().then(() => getComputedStylePropNow(element, prop));
+const getComputedStyleProp = exports.getComputedStyleProp = (0, _domOptimize.asyncMeasurerFor)(getComputedStylePropNow);
 
 /**
  * Returns the value of the given property from the inline style of the
@@ -513,7 +506,6 @@ const getComputedStyleProp = (element, prop) => (0, _domOptimize.waitForMeasureT
  *
  * @category DOM: Altering
  */
-exports.getComputedStyleProp = getComputedStyleProp;
 const getStylePropNow = (element, prop) => {
   var _style;
   return (_style = element.style) === null || _style === void 0 ? void 0 : _style.getPropertyValue(prop);
@@ -525,14 +517,13 @@ const getStylePropNow = (element, prop) => {
  * @category DOM: Altering (optimized)
  */
 exports.getStylePropNow = getStylePropNow;
-const getStyleProp = (element, prop) => (0, _domOptimize.waitForMeasureTime)().then(() => getStylePropNow(element, prop));
+const getStyleProp = exports.getStyleProp = (0, _domOptimize.asyncMeasurerFor)(getStylePropNow);
 
 /**
  * Sets the given property on the inline style of the element.
  *
  * @category DOM: Altering
  */
-exports.getStyleProp = getStyleProp;
 const setStylePropNow = (element, prop, value) => {
   var _style2;
   return (_style2 = element.style) === null || _style2 === void 0 ? void 0 : _style2.setProperty(prop, value);
@@ -544,14 +535,13 @@ const setStylePropNow = (element, prop, value) => {
  * @category DOM: Altering (optimized)
  */
 exports.setStylePropNow = setStylePropNow;
-const setStyleProp = (element, prop, value) => (0, _domOptimize.waitForMutateTime)().then(() => setStylePropNow(element, prop, value));
+const setStyleProp = exports.setStyleProp = (0, _domOptimize.asyncMutatorFor)(setStylePropNow);
 
 /**
  * Deletes the given property on the inline style of the element.
  *
  * @category DOM: Altering
  */
-exports.setStyleProp = setStyleProp;
 const delStylePropNow = (element, prop) => {
   var _style3;
   return (_style3 = element.style) === null || _style3 === void 0 ? void 0 : _style3.removeProperty(prop);
@@ -563,14 +553,13 @@ const delStylePropNow = (element, prop) => {
  * @category DOM: Altering (optimized)
  */
 exports.delStylePropNow = delStylePropNow;
-const delStyleProp = (element, prop) => (0, _domOptimize.waitForMutateTime)().then(() => delStylePropNow(element, prop));
+const delStyleProp = exports.delStyleProp = (0, _domOptimize.asyncMutatorFor)(delStylePropNow);
 
 /**
  * Returns the flex direction of the given element **if it has a flex layout**.
  *
  * @returns `null` if the element does not have a flex layout.
  */
-exports.delStyleProp = delStyleProp;
 const getFlexDirection = async element => {
   const displayStyle = await getComputedStyleProp(element, "display");
   if (!displayStyle.includes("flex")) {
@@ -698,11 +687,13 @@ const copyStyle = async (fromElement, toElement, includeComputedProps) => {
  * @internal
  */
 exports.copyStyle = copyStyle;
-const setNumericStyleJsVars = async (element, props, options = {}) => {
+const setNumericStyleJsVarsNow = (element, props, options = {}) => {
   if (!(0, _domQuery.isDOMElement)(element)) {
     return;
   }
-  const transformFn = options._transformFn;
+
+  // const transformFn = options._transformFn;
+
   const varPrefix = MH.prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
   for (const prop in props) {
     const cssPropSuffix = (0, _text.camelToKebabCase)(prop);
@@ -714,16 +705,19 @@ const setNumericStyleJsVars = async (element, props, options = {}) => {
       var _options$_numDecimal;
       value = props[prop];
       const thisNumDecimal = (_options$_numDecimal = options === null || options === void 0 ? void 0 : options._numDecimal) !== null && _options$_numDecimal !== void 0 ? _options$_numDecimal : value > 0 && value < 1 ? 2 : 0;
-      if (transformFn) {
-        const currValue = MH.parseFloat(await getStyleProp(element, varName));
-        value = transformFn(prop, currValue || 0, value);
-      }
+
+      // if (transformFn) {
+      //   const currValue = MH.parseFloat(await getStyleProp(element, varName));
+      //
+      //   value = transformFn(prop, currValue || 0, value);
+      // }
+
       value = (0, _math.roundNumTo)(value, thisNumDecimal);
     }
     if (value === null) {
-      delStyleProp(element, varName);
+      delStylePropNow(element, varName);
     } else {
-      setStyleProp(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
+      setStylePropNow(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
     }
   }
 };
@@ -732,9 +726,11 @@ const setNumericStyleJsVars = async (element, props, options = {}) => {
  * @ignore
  * @internal
  */
+exports.setNumericStyleJsVarsNow = setNumericStyleJsVarsNow;
+const setNumericStyleJsVars = exports.setNumericStyleJsVars = (0, _domOptimize.asyncMutatorFor)(setNumericStyleJsVarsNow);
 
 // ----------------------------------------
-exports.setNumericStyleJsVars = setNumericStyleJsVars;
+
 const PREFIX_HAS_MODAL = MH.prefixName("has-modal");
 const scheduledCSSTransitions = MH.newWeakMap();
 const cancelCSSTransitions = (element, ...toClasses) => {

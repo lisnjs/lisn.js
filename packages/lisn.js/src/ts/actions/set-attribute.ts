@@ -134,7 +134,7 @@ export class SetAttribute implements Action {
     registerAction(
       "set-attribute",
       (element, args, config) => {
-        return new SetAttribute(element, { [args[0]]: config || {} });
+        return new SetAttribute(element, { [args[0]]: config ?? {} });
       },
       configValidator,
     );

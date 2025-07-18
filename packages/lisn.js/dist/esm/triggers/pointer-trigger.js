@@ -115,10 +115,10 @@ export class ClickTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
     setupWatcher(this, element, actions, config, MC.S_CLICK);
   }
 }
@@ -214,10 +214,10 @@ export class PressTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
     setupWatcher(this, element, actions, config, MC.S_PRESS);
   }
 }
@@ -310,10 +310,10 @@ export class HoverTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
     setupWatcher(this, element, actions, config, MC.S_HOVER);
   }
 }
@@ -339,6 +339,7 @@ const setupWatcher = (widget, element, actions, config, action) => {
   if (!MH.lengthOf(actions)) {
     return;
   }
+  config !== null && config !== void 0 ? config : config = {};
   const target = MH.targetOf(config) || element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS

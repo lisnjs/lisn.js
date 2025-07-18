@@ -285,8 +285,8 @@ export const merge = <A extends readonly (object | null | undefined)[]>(
   return MC.OBJECT.assign({}, ...a) as Spread<A>;
 };
 
-// alias for clarity of purpose
-export const copyObject = <T extends object>(obj: T) => merge(obj);
+export const copyObject = <T extends object>(obj: T | null | undefined) =>
+  merge(obj);
 
 export const promiseResolve = MC.PROMISE.resolve.bind(MC.PROMISE);
 

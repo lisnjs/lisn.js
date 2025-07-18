@@ -82,7 +82,7 @@ const splitOn = (input, separator, trim, limit) => {
   if (!input.trim()) {
     return [];
   }
-  limit = limit !== null && limit !== void 0 ? limit : -1;
+  limit !== null && limit !== void 0 ? limit : limit = -1;
   const output = [];
   const addEntry = s => output.push(trim ? s.trim() : s);
   while (limit--) {

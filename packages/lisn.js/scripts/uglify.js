@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 import path from "path";
 
 const reserved = "['LISN']";
-const bundleDir = "../@lisn.js/bundles/";
+const bundleDir = "../@lisn.js/bundles";
 
 const uglify = (build, useESM = false) => {
   const suffix = (build ? "." + build : "") + (useESM ? ".es" : "");

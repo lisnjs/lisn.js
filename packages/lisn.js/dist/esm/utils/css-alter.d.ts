@@ -254,7 +254,7 @@ export declare const toggleClassNow: (element: Element, className: string, force
  *
  * @category CSS: Altering (optimized)
  */
-export declare const toggleClass: (element: Element, className: string, force?: boolean) => Promise<boolean>;
+export declare const toggleClass: (element: Element, className: string, force?: boolean | undefined) => Promise<boolean>;
 /**
  * Returns the value of the given data attribute. The name of the attribute
  * must _not_ start with `data`. It can be in either camelCase or kebab-case,
@@ -313,12 +313,12 @@ export declare const setBoolDataNow: (element: Element, name: string, value?: bo
  *
  * @category CSS: Altering (optimized)
  */
-export declare const setBooleanData: (element: Element, name: string, value?: boolean) => Promise<void>;
+export declare const setBooleanData: (element: Element, name: string, value?: boolean | undefined) => Promise<void>;
 /**
  * @ignore
  * @deprecated
  */
-export declare const setBoolData: (element: Element, name: string, value?: boolean) => Promise<void>;
+export declare const setBoolData: (element: Element, name: string, value?: boolean | undefined) => Promise<void>;
 /**
  * Sets the given data attribute with value "false".
  *
@@ -467,16 +467,20 @@ export declare const copyStyle: (fromElement: Element, toElement: Element, inclu
  * @ignore
  * @internal
  */
-export declare const setNumericStyleJsVars: (element: Element, props: CssNumericProps, options?: {
+export declare const setNumericStyleJsVarsNow: (element: Element, props: CssNumericProps, options?: {
     _prefix?: string;
     _units?: string;
     _numDecimal?: number;
-    _transformFn?: (prop: string, currVal: number, newVal: number) => number;
-}) => Promise<void>;
+}) => void;
 /**
  * @ignore
  * @internal
  */
+export declare const setNumericStyleJsVars: (element: Element, props: CssNumericProps, options?: {
+    _prefix?: string;
+    _units?: string;
+    _numDecimal?: number;
+} | undefined) => Promise<void>;
 type CssNumericProps = Record<string, number | undefined | null>;
 export {};
 //# sourceMappingURL=css-alter.d.ts.map

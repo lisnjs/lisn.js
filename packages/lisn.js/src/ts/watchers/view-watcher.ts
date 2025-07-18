@@ -172,7 +172,7 @@ export class ViewWatcher {
    * Creates a new instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: ViewWatcherConfig = {}) {
+  static create(config?: ViewWatcherConfig) {
     return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -183,7 +183,7 @@ export class ViewWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: ViewWatcherConfig = {}) {
+  static reuse(config?: ViewWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, { _root: null }));
 
@@ -1089,7 +1089,7 @@ const setViewCssProps = (
   element: Element,
   viewData: ViewData | undefined | null,
 ) => {
-  const relative: Record<string, number> = viewData?.relative || {};
+  const relative: Record<string, number> = viewData?.relative ?? {};
   const props = {
     top: relative.top,
     bottom: relative.bottom,

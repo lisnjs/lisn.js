@@ -85,7 +85,7 @@ export const splitOn = (
     return [];
   }
 
-  limit = limit ?? -1;
+  limit ??= -1;
 
   const output: string[] = [];
   const addEntry = (s: string) => output.push(trim ? s.trim() : s);

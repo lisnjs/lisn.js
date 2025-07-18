@@ -137,7 +137,7 @@ export class ClickTrigger extends Trigger {
   constructor(
     element: Element,
     actions: Action[],
-    config: PointerTriggerConfig = {},
+    config?: PointerTriggerConfig,
   ) {
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
@@ -247,7 +247,7 @@ export class PressTrigger extends Trigger {
   constructor(
     element: Element,
     actions: Action[],
-    config: PointerTriggerConfig = {},
+    config?: PointerTriggerConfig,
   ) {
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
@@ -354,7 +354,7 @@ export class HoverTrigger extends Trigger {
   constructor(
     element: Element,
     actions: Action[],
-    config: PointerTriggerConfig = {},
+    config?: PointerTriggerConfig,
   ) {
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
@@ -409,13 +409,14 @@ const setupWatcher = (
   widget: ClickTrigger | HoverTrigger | PressTrigger,
   element: Element,
   actions: Action[],
-  config: PointerTriggerConfig,
+  config: PointerTriggerConfig | undefined,
   action: "click" | "hover" | "press",
 ) => {
   if (!MH.lengthOf(actions)) {
     return;
   }
 
+  config ??= {};
   const target = MH.targetOf(config) || element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS

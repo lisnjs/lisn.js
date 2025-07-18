@@ -133,7 +133,7 @@ export class GestureWatcher {
    * Creates a new instance of GestureWatcher with the given
    * {@link GestureWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: GestureWatcherConfig = {}) {
+  static create(config?: GestureWatcherConfig) {
     return new GestureWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -144,7 +144,7 @@ export class GestureWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: GestureWatcherConfig = {}) {
+  static reuse(config?: GestureWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(myConfig);
 
@@ -224,7 +224,7 @@ export class GestureWatcher {
       handler: OnGestureHandler,
       userOptions: OnGestureOptions | undefined,
     ) => {
-      const options = getOptions(config, userOptions || {});
+      const options = getOptions(config, userOptions ?? {});
       createCallback(target, handler, options);
 
       for (const device of options._devices || DEVICES) {
@@ -821,8 +821,9 @@ const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
 const instances = MH.newMap<string, GestureWatcher>();
 
 const getConfig = (
-  config: GestureWatcherConfig,
+  config: GestureWatcherConfig | undefined,
 ): GestureWatcherConfigInternal => {
+  config ??= {};
   return {
     _preventDefault: config.preventDefault ?? true,
     _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 150),

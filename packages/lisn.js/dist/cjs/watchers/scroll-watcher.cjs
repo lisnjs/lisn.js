@@ -64,7 +64,7 @@ class ScrollWatcher {
    * Creates a new instance of ScrollWatcher with the given
    * {@link ScrollWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ScrollWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -75,7 +75,7 @@ class ScrollWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig(config);
     const configStrKey = (0, _text.objToStrKey)(myConfig);
     let instance = instances.get(configStrKey);
@@ -278,7 +278,7 @@ class ScrollWatcher {
     // ----------
 
     const setupOnScroll = async (handler, userOptions, trackType) => {
-      const options = await fetchOnScrollOptions(config, userOptions || {});
+      const options = await fetchOnScrollOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const element = options._element;
 
       // Don't await for the scroll data before creating the callback so that
@@ -514,7 +514,7 @@ class ScrollWatcher {
 
     // ----------
 
-    this.scroll = (direction, options = {}) => {
+    this.scroll = (direction, options) => {
       var _options$amount;
       if (!(0, _scroll.isValidScrollDirection)(direction)) {
         throw MH.usageError(`Unknown scroll direction: '${direction}'`);
@@ -522,8 +522,8 @@ class ScrollWatcher {
       const isVertical = direction === MC.S_UP || direction === MC.S_DOWN;
       const sign = direction === MC.S_UP || direction === MC.S_LEFT ? -1 : 1;
       let targetCoordinate;
-      const amount = (_options$amount = options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
-      const asFractionOf = options.asFractionOf;
+      const amount = (_options$amount = options === null || options === void 0 ? void 0 : options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
+      const asFractionOf = options === null || options === void 0 ? void 0 : options.asFractionOf;
       if (asFractionOf === "visible") {
         targetCoordinate = isVertical ? el => el[MC.S_SCROLL_TOP] + sign * amount * (0, _scroll.getClientHeightNow)(el) / 100 : el => el[MC.S_SCROLL_LEFT] + sign * amount * (0, _scroll.getClientWidthNow)(el) / 100;
 
@@ -549,12 +549,12 @@ class ScrollWatcher {
 
     // ----------
 
-    this.scrollTo = async (to, options = {}) => (0, _scroll.scrollTo)(to, MH.merge({
+    this.scrollTo = async (to, options) => (0, _scroll.scrollTo)(to, MH.merge({
       duration: config._scrollDuration
     },
     // default
     options, {
-      scrollable: await (0, _scroll.fetchScrollableElement)(options.scrollable)
+      scrollable: await (0, _scroll.fetchScrollableElement)(options === null || options === void 0 ? void 0 : options.scrollable)
     } // override
     ));
 
@@ -564,13 +564,13 @@ class ScrollWatcher {
 
     // ----------
 
-    this.stopUserScrolling = async (options = {}) => {
-      const element = await (0, _scroll.fetchScrollableElement)(options.scrollable);
+    this.stopUserScrolling = async options => {
+      const element = await (0, _scroll.fetchScrollableElement)(options === null || options === void 0 ? void 0 : options.scrollable);
       const stopScroll = () => MH.elScrollTo(element, {
         top: element[MC.S_SCROLL_TOP],
         left: element[MC.S_SCROLL_LEFT]
       });
-      if (options.immediate) {
+      if (options !== null && options !== void 0 && options.immediate) {
         stopScroll();
       } else {
         (0, _domOptimize.waitForMeasureTime)().then(stopScroll);
@@ -632,6 +632,7 @@ const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = MH.newMap();
 const PREFIX_WRAPPER = MH.prefixName("scroll-watcher-wrapper");
 const getConfig = config => {
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _debounceWindow: (0, _math.toNonNegNum)(config[MC.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -718,7 +719,7 @@ const setScrollCssProps = (element, scrollData) => {
     element = MH.getDocElement();
     prefix = "page-";
   }
-  scrollData = scrollData || {};
+  scrollData !== null && scrollData !== void 0 ? scrollData : scrollData = {};
   const props = {
     [MC.S_SCROLL_TOP]: scrollData[MC.S_SCROLL_TOP],
     [MC.S_SCROLL_TOP_FRACTION]: scrollData[MC.S_SCROLL_TOP_FRACTION],

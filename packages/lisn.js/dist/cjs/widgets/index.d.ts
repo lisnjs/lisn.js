@@ -10,6 +10,7 @@ export * from "../widgets/pager.cjs";
 export * from "../widgets/same-height.cjs";
 export * from "../widgets/scrollbar.cjs";
 export * from "../widgets/scroll-to-top.cjs";
+export * from "../widgets/smooth-scroll.cjs";
 export * from "../widgets/sortable.cjs";
 export * from "../widgets/track-gesture.cjs";
 export * from "../widgets/track-scroll.cjs";

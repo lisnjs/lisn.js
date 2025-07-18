@@ -58,7 +58,8 @@ export class Logger implements LoggerInterface {
   readonly getVerbosityLevel: () => number;
   readonly setVerbosityLevel: (level: number) => void;
 
-  constructor(config: LoggerConfig = {}) {
+  constructor(config?: LoggerConfig) {
+    config ??= {};
     const myConfig = MH.merge(
       {
         // set defaults

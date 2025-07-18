@@ -126,7 +126,7 @@ export class SizeWatcher {
    * Creates a new instance of SizeWatcher with the given
    * {@link SizeWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: SizeWatcherConfig = {}) {
+  static create(config?: SizeWatcherConfig) {
     return new SizeWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -137,7 +137,7 @@ export class SizeWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: SizeWatcherConfig = {}) {
+  static reuse(config?: SizeWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(myConfig);
 
@@ -264,7 +264,7 @@ export class SizeWatcher {
       handler: OnResizeHandler,
       userOptions: OnResizeOptions | undefined,
     ) => {
-      const options = await fetchOptions(userOptions || {});
+      const options = await fetchOptions(userOptions ?? {});
       const element = options._element;
 
       // Don't await for the size data before creating the callback so that
@@ -532,7 +532,10 @@ type CallbackEntry = {
 const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
 const instances = MH.newMap<string, SizeWatcher>();
 
-const getConfig = (config: SizeWatcherConfig): SizeWatcherConfigInternal => {
+const getConfig = (
+  config: SizeWatcherConfig | undefined,
+): SizeWatcherConfigInternal => {
+  config ??= {};
   return {
     _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)

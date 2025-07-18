@@ -55,7 +55,11 @@ import {
   preventSelect,
 } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
-import { toArrayIfSingle, supportsSticky } from "@lisn/utils/misc";
+import {
+  toArrayIfSingle,
+  supportsSticky,
+  isInQuirksMode,
+} from "@lisn/utils/misc";
 import {
   isScrollable,
   getDefaultScrollingElement,
@@ -477,7 +481,7 @@ const getScrollableProps = (containerElement: HTMLElement) => {
       : containerElement;
 
   // check if we're using body in quirks mode
-  const isBodyInQuirks = root === body && defaultScrollable === body;
+  const isBodyInQuirks = isBody && isInQuirksMode();
 
   const allowedToWrap = isAllowedToWrap(containerElement);
   const barParent = isMainScrollable ? body : containerElement;

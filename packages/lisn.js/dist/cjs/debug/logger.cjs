@@ -40,7 +40,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  * @category Logging
  */
 class Logger {
-  constructor(config = {}) {
+  constructor(config) {
     _defineProperty(this, "debug", void 0);
     _defineProperty(this, "log", void 0);
     _defineProperty(this, "info", void 0);
@@ -59,6 +59,7 @@ class Logger {
     _defineProperty(this, "getName", void 0);
     _defineProperty(this, "getVerbosityLevel", void 0);
     _defineProperty(this, "setVerbosityLevel", void 0);
+    config !== null && config !== void 0 ? config : config = {};
     const myConfig = MH.merge({
       // set defaults
       verbosityLevel: _settings.settings.verbosityLevel,

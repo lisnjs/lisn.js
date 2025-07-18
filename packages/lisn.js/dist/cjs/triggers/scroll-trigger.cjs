@@ -117,7 +117,7 @@ class ScrollTrigger extends _trigger.Trigger {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    config = config !== null && config !== void 0 ? config : {};
+    config !== null && config !== void 0 ? config : config = {};
     let directions = config.directions;
     if (!directions) {
       config.once = true;

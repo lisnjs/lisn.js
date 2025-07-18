@@ -34,7 +34,8 @@ export const callEventListener = (handler, event) => {
  *
  * @category Events: Generic
  */
-export const addEventListenerTo = (target, eventType, handler, options = {}) => {
+export const addEventListenerTo = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   if (getEventHandlerData(target, eventType, handler, options)) {
     // already added
@@ -82,7 +83,8 @@ export const addEventListenerTo = (target, eventType, handler, options = {}) => 
  *
  * @category Events: Generic
  */
-export const removeEventListenerFrom = (target, eventType, handler, options = {}) => {
+export const removeEventListenerFrom = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   const data = getEventHandlerData(target, eventType, handler, options);
   if (!data) {

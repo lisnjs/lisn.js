@@ -185,7 +185,7 @@ export class ViewTrigger extends Trigger {
         })
       : null;
 
-    this.getConfig = () => MH.copyObject(config || {});
+    this.getConfig = () => MH.copyObject(config);
 
     if (!MH.lengthOf(actions)) {
       return;

@@ -14,11 +14,11 @@ import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
 import { showElement, hideElement, displayElement, undisplayElement, hasClass, addClasses, addClassesNow, removeClasses, removeClassesNow, getData, setData, setBooleanData, setBooleanDataNow, setDataNow, delData, delDataNow, getComputedStyleProp, getComputedStylePropNow, setStyleProp, setNumericStyleJsVars } from "../utils/css-alter.js";
-import { moveElementNow, moveElement, moveChildrenNow, isAllowedToWrap, getContentWrapper, wrapChildren, getOrAssignID } from "../utils/dom-alter.js";
+import { moveElementNow, moveElement, isAllowedToWrap, getContentWrapper, wrapChildren, unwrapContentNow, getOrAssignID } from "../utils/dom-alter.js";
 import { waitForMeasureTime, waitForMutateTime } from "../utils/dom-optimize.js";
 import { addEventListenerTo, removeEventListenerFrom, preventSelect } from "../utils/event.js";
 import { logError, logWarn } from "../utils/log.js";
-import { toArrayIfSingle, supportsSticky } from "../utils/misc.js";
+import { toArrayIfSingle, supportsSticky, isInQuirksMode } from "../utils/misc.js";
 import { isScrollable, getDefaultScrollingElement, getClientWidthNow, getClientHeightNow, mapScrollable, unmapScrollable, tryGetMainScrollableElement } from "../utils/scroll.js";
 import { formatAsString } from "../utils/text.js";
 import { validateStrList, validateNumber, validateBoolean, validateString } from "../utils/validation.js";
@@ -289,7 +289,7 @@ const getScrollableProps = containerElement => {
   const root = isMainScrollable ? mainScrollableElement : isBody ? defaultScrollable : containerElement;
 
   // check if we're using body in quirks mode
-  const isBodyInQuirks = root === body && defaultScrollable === body;
+  const isBodyInQuirks = isBody && isInQuirksMode();
   const allowedToWrap = isAllowedToWrap(containerElement);
   const barParent = isMainScrollable ? body : containerElement;
   const hasVScroll = isScrollable(root, {
@@ -636,13 +636,13 @@ const init = (widget, containerElement, props, config) => {
     addClasses(contentWrapper, PREFIX_CONTENT);
   }
   maybeSetNativeHidden();
+  const origDomID = scrollable.id;
   if (config !== null && config !== void 0 && config.id) {
     scrollable.id = config.id;
   }
   if (config !== null && config !== void 0 && config.className) {
     addClasses(scrollable, ...toArrayIfSingle(config.className));
   }
-  const hadDomID = !!scrollable.id;
   const scrollDomID =
   // for ARIA
   clickScroll || dragScroll ? getOrAssignID(scrollable, S_SCROLLBAR) : "";
@@ -695,15 +695,13 @@ const init = (widget, containerElement, props, config) => {
   });
   widget.onDestroy(async () => {
     unmapScrollable(root);
-    if (!hadDomID) {
-      scrollable.id = "";
+    scrollable.id = origDomID;
+    if (config !== null && config !== void 0 && config.className) {
+      removeClasses(scrollable, ...toArrayIfSingle(config.className));
     }
     await waitForMutateTime();
     if (contentWrapper && !hasExistingWrapper) {
-      moveChildrenNow(contentWrapper, containerElement, {
-        ignoreMove: true
-      });
-      moveElementNow(contentWrapper); // remove
+      unwrapContentNow(contentWrapper, [PREFIX_CONTENT]);
     }
     moveElementNow(wrapper); // remove
 

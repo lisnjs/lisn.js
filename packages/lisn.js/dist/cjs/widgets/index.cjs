@@ -80,6 +80,17 @@ Object.keys(_scrollToTop).forEach(function (key) {
     }
   });
 });
+var _smoothScroll = require("./smooth-scroll.cjs");
+Object.keys(_smoothScroll).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _smoothScroll[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _smoothScroll[key];
+    }
+  });
+});
 var _sortable = require("./sortable.cjs");
 Object.keys(_sortable).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;

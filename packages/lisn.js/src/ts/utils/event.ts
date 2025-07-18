@@ -43,8 +43,9 @@ export const addEventListenerTo = (
   target: EventTarget,
   eventType: string,
   handler: EventListenerOrEventListenerObject,
-  options: boolean | AddEventListenerOptions = {},
+  options?: boolean | AddEventListenerOptions,
 ): boolean => {
+  options ??= false;
   eventType = transformEventType(eventType);
   if (getEventHandlerData(target, eventType, handler, options)) {
     // already added
@@ -99,8 +100,9 @@ export const removeEventListenerFrom = (
   target: EventTarget,
   eventType: string,
   handler: EventListenerOrEventListenerObject,
-  options: boolean | AddEventListenerOptions = {},
+  options?: boolean | AddEventListenerOptions,
 ) => {
+  options ??= false;
   eventType = transformEventType(eventType);
   const data = getEventHandlerData(target, eventType, handler, options);
 

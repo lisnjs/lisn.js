@@ -8,6 +8,7 @@ import * as MH from "../globals/minification-helpers.js";
 import { roundNumTo } from "./math.js";
 export const isTouchScreen = () => MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
 export const supportsSticky = () => MH.hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
+export const isInQuirksMode = () => MH.hasDOM() ? document.compatMode === "BackCompat" : false;
 export const copyExistingKeys = (fromObj, toObj) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {

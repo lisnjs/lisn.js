@@ -28,7 +28,7 @@ class PointerWatcher {
    * Creates a new instance of PointerWatcher with the given
    * {@link PointerWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new PointerWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -39,7 +39,7 @@ class PointerWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig(config);
     const configStrKey = (0, _text.objToStrKey)(myConfig);
     let instance = instances.get(configStrKey);

@@ -43,7 +43,7 @@ class GestureWatcher {
    * Creates a new instance of GestureWatcher with the given
    * {@link GestureWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new GestureWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -54,7 +54,7 @@ class GestureWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig(config);
     const configStrKey = (0, _text.objToStrKey)(myConfig);
     let instance = instances.get(configStrKey);
@@ -147,7 +147,7 @@ class GestureWatcher {
     // async for consistency with other watchers and future compatibility in
     // case of change needed
     const setupOnGesture = async (target, handler, userOptions) => {
-      const options = getOptions(config, userOptions || {});
+      const options = getOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       createCallback(target, handler, options);
       for (const device of options._devices || _gesture.DEVICES) {
         var _allListeners$get;
@@ -342,6 +342,7 @@ const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = MH.newMap();
 const getConfig = config => {
   var _config$preventDefaul, _config$naturalTouchS, _config$touchDragHold, _config$touchDragNumF;
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _preventDefault: (_config$preventDefaul = config.preventDefault) !== null && _config$preventDefaul !== void 0 ? _config$preventDefaul : true,
     _debounceWindow: (0, _math.toNonNegNum)(config[MC.S_DEBOUNCE_WINDOW], 150),

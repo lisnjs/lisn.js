@@ -131,7 +131,10 @@ export type ScrollToOptions = {
  *                          is 0, it will attempt to scroll it rather than
  *                          looking at the clientWidth/Height to
  *                          scrollWidth/Height. This is more reliable but can
- *                          cause issues, see note above.
+ *                          cause issues, see note above. Note however it will
+ *                          fail (return a false positive) on elements that have
+ *                          overflowing content but overflow set to hidden, clip
+ *                          or visible;
  * @param [options.noCache] By default the result of a check is cached for 1s
  *                          and if there's already a cached result for this
  *                          element, it is returns. Set this to true to disable
@@ -148,7 +151,7 @@ export const isScrollable = (
     noCache?: boolean;
   },
 ): boolean => {
-  const { axis, active, noCache } = options || {};
+  const { axis, active, noCache } = options ?? {};
   if (!axis) {
     return (
       isScrollable(element, { axis: "y", active, noCache }) ||

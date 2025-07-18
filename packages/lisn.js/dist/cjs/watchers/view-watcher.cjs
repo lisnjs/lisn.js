@@ -45,7 +45,7 @@ class ViewWatcher {
    * Creates a new instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -56,7 +56,7 @@ class ViewWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig(config);
     const configStrKey = (0, _text.objToStrKey)((0, _misc.omitKeys)(myConfig, {
@@ -714,7 +714,8 @@ const fetchViews = async (intersection, realtime, useScrollingAncestor) => {
   return [MC.S_AT];
 };
 const setViewCssProps = (element, viewData) => {
-  const relative = (viewData === null || viewData === void 0 ? void 0 : viewData.relative) || {};
+  var _viewData$relative;
+  const relative = (_viewData$relative = viewData === null || viewData === void 0 ? void 0 : viewData.relative) !== null && _viewData$relative !== void 0 ? _viewData$relative : {};
   const props = {
     top: relative.top,
     bottom: relative.bottom,

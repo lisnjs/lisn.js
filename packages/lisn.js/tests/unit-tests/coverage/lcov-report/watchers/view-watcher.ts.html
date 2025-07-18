@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">73.39% </span>
+                <span class="strong">73.83% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>80/109</span>
+                <span class='fraction'>79/107</span>
             </div>
         
             
@@ -1462,31 +1462,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">258x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">258x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">257x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">257x</span>
 <span class="cline-any cline-yes">257x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">258x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">258x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">257x</span>
-<span class="cline-any cline-yes">257x</span>
-<span class="cline-any cline-yes">257x</span>
-<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">258x</span>
+<span class="cline-any cline-yes">258x</span>
+<span class="cline-any cline-yes">258x</span>
+<span class="cline-any cline-yes">258x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">257x</span>
+<span class="cline-any cline-yes">258x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1687,10 +1687,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">10x</span>
 <span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16x</span>
@@ -2084,8 +2084,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">283x</span>
-<span class="cline-any cline-yes">283x</span>
+<span class="cline-any cline-yes">284x</span>
+<span class="cline-any cline-yes">284x</span>
 <span class="cline-any cline-yes">283x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2537,7 +2537,7 @@ export class ViewWatcher {
    * Creates a new instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: ViewWatcherConfig = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+  static create(config?: ViewWatcherConfig) {
     return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 &nbsp;
@@ -2548,7 +2548,7 @@ export class ViewWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: ViewWatcherConfig = {}) {
+  static reuse(config?: ViewWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, { _root: null }));
 &nbsp;
@@ -3454,7 +3454,7 @@ const setViewCssProps = (
   element: Element,
   viewData: ViewData | undefined | null,
 ) =&gt; {
-  const relative: Record&lt;string, number&gt; = viewData?.relative || {};
+  const relative: Record&lt;string, number&gt; = viewData?.relative ?? {};
   const props = {
     top: relative.top,
     bottom: relative.bottom,
@@ -3520,7 +3520,7 @@ const invokeCallback = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-18T10:32:49.585Z
+                at 2025-07-18T17:58:38.755Z
             </div>
         <script src="../prettify.js"></script>
         <script>

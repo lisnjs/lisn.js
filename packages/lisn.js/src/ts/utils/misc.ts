@@ -16,6 +16,9 @@ export const supportsSticky = () =>
     ? typeof CSS !== "undefined" && CSS.supports("position", "sticky")
     : false;
 
+export const isInQuirksMode = () =>
+  MH.hasDOM() ? document.compatMode === "BackCompat" : false;
+
 export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {

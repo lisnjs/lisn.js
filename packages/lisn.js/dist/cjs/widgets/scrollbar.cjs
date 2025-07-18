@@ -292,7 +292,7 @@ const getScrollableProps = containerElement => {
   const root = isMainScrollable ? mainScrollableElement : isBody ? defaultScrollable : containerElement;
 
   // check if we're using body in quirks mode
-  const isBodyInQuirks = root === body && defaultScrollable === body;
+  const isBodyInQuirks = isBody && (0, _misc.isInQuirksMode)();
   const allowedToWrap = (0, _domAlter.isAllowedToWrap)(containerElement);
   const barParent = isMainScrollable ? body : containerElement;
   const hasVScroll = (0, _scroll.isScrollable)(root, {
@@ -639,13 +639,13 @@ const init = (widget, containerElement, props, config) => {
     (0, _cssAlter.addClasses)(contentWrapper, PREFIX_CONTENT);
   }
   maybeSetNativeHidden();
+  const origDomID = scrollable.id;
   if (config !== null && config !== void 0 && config.id) {
     scrollable.id = config.id;
   }
   if (config !== null && config !== void 0 && config.className) {
     (0, _cssAlter.addClasses)(scrollable, ...(0, _misc.toArrayIfSingle)(config.className));
   }
-  const hadDomID = !!scrollable.id;
   const scrollDomID =
   // for ARIA
   clickScroll || dragScroll ? (0, _domAlter.getOrAssignID)(scrollable, S_SCROLLBAR) : "";
@@ -698,15 +698,13 @@ const init = (widget, containerElement, props, config) => {
   });
   widget.onDestroy(async () => {
     (0, _scroll.unmapScrollable)(root);
-    if (!hadDomID) {
-      scrollable.id = "";
+    scrollable.id = origDomID;
+    if (config !== null && config !== void 0 && config.className) {
+      (0, _cssAlter.removeClasses)(scrollable, ...(0, _misc.toArrayIfSingle)(config.className));
     }
     await (0, _domOptimize.waitForMutateTime)();
     if (contentWrapper && !hasExistingWrapper) {
-      (0, _domAlter.moveChildrenNow)(contentWrapper, containerElement, {
-        ignoreMove: true
-      });
-      (0, _domAlter.moveElementNow)(contentWrapper); // remove
+      (0, _domAlter.unwrapContentNow)(contentWrapper, [PREFIX_CONTENT]);
     }
     (0, _domAlter.moveElementNow)(wrapper); // remove
 

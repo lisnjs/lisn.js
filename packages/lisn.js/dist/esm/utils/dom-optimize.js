@@ -66,6 +66,18 @@ export const waitForSubsequentMutateTime = () => waitForMutateTime().then(waitFo
  */
 export const waitForSubsequentMeasureTime = () => waitForMeasureTime().then(waitForMutateTime).then(waitForMeasureTime);
 
+/**
+ * @ignore
+ * @internal
+ */
+export const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() => func(...args));
+
+/**
+ * @ignore
+ * @internal
+ */
+export const asyncMeasurerFor = func => async (...args) => waitForMeasureTime().then(() => func(...args));
+
 // ----------------------------------------
 
 const scheduledDOMMeasurements = [];

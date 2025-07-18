@@ -254,7 +254,7 @@ export class Trigger extends Widget {
     this.reverse = reverse.invoke;
     this[MC.S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
     this.getActions = () => [...actions]; // copy
-    this.getConfig = () => MH.copyObject(config || {});
+    this.getConfig = () => MH.copyObject(config);
   }
 }
 

@@ -3,11 +3,11 @@
  *
  * @categoryDescription DOM: Altering
  * These functions alter the DOM tree, but could lead to forced layout if not
- * scheduled using {@link waitForMutateTime}.
+ * scheduled using {@link Utils.waitForMutateTime}.
  *
  * @categoryDescription DOM: Altering (optimized)
  * These functions alter the DOM tree in an optimized way using
- * {@link waitForMutateTime} and so are asynchronous.
+ * {@link Utils.waitForMutateTime} and so are asynchronous.
  */
 /**
  * Wraps the element in the given wrapper, or a newly created element if not given.
@@ -30,14 +30,14 @@ export declare const wrapElementNow: (element: Element, options?: {
     ignoreMove?: boolean;
 }) => HTMLElement;
 /**
- * Like {@link wrapElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const wrapElement: (element: Element, options?: {
     wrapper?: HTMLElement | keyof HTMLElementTagNameMap;
     ignoreMove?: boolean;
-}) => Promise<HTMLElement>;
+} | undefined) => Promise<HTMLElement>;
 /**
  * Wraps the element's children in the given wrapper, or a newly created element
  * if not given.
@@ -51,14 +51,14 @@ export declare const wrapChildrenNow: (element: Element, options?: {
     ignoreMove?: boolean;
 }) => HTMLElement;
 /**
- * Like {@link wrapChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const wrapChildren: (element: Element, options?: {
     wrapper?: HTMLElement | keyof HTMLElementTagNameMap;
     ignoreMove?: boolean;
-}) => Promise<HTMLElement>;
+} | undefined) => Promise<HTMLElement>;
 /**
  * Replace an element with another one.
  *
@@ -72,13 +72,13 @@ export declare const replaceElementNow: (element: Element, newElement: Element, 
     ignoreMove?: boolean;
 }) => void;
 /**
- * Like {@link replaceElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link replaceElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const replaceElement: (element: Element, newElement: Element, options?: {
     ignoreMove?: boolean;
-}) => Promise<void>;
+} | undefined) => Promise<void>;
 /**
  * Replace an element with another one.
  *
@@ -92,13 +92,13 @@ export declare const swapElementsNow: (elementA: Element, elementB: Element, opt
     ignoreMove?: boolean;
 }) => void;
 /**
- * Like {@link swapElementsNow} except it will {@link waitForMutateTime}.
+ * Like {@link swapElementsNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const swapElements: (elementA: Element, elementB: Element, options?: {
     ignoreMove?: boolean;
-}) => Promise<void>;
+} | undefined) => Promise<void>;
 /**
  * Move an element's children to a new element
  *
@@ -112,13 +112,13 @@ export declare const moveChildrenNow: (oldParent: Element, newParent: Element, o
     ignoreMove?: boolean;
 }) => void;
 /**
- * Like {@link moveChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
 export declare const moveChildren: (oldParent: Element, newParent: Element, options?: {
     ignoreMove?: boolean;
-}) => Promise<void>;
+} | undefined) => Promise<void>;
 /**
  * Moves an element to a new position.
  *
@@ -141,7 +141,7 @@ export declare const moveElementNow: (element: Element, options?: {
     ignoreMove?: boolean;
 }) => void;
 /**
- * Like {@link moveElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
@@ -149,7 +149,7 @@ export declare const moveElement: (element: Element, options?: {
     to?: Element;
     position?: "append" | "prepend" | "before" | "after";
     ignoreMove?: boolean;
-}) => Promise<void>;
+} | undefined) => Promise<void>;
 /**
  * It will {@link hideElement} and then remove it from the DOM.
  *
@@ -203,7 +203,7 @@ export declare const tryWrapNow: <O extends ContentWrappingOptions>(element: Ele
  * @ignore
  * @internal
  */
-export declare const tryWrap: <O extends ContentWrappingOptions>(element: Element, options?: O) => Promise<O extends {
+export declare const tryWrap: <O extends ContentWrappingOptions>(element: Element, options?: O | undefined) => Promise<O extends {
     required: true;
 } ? HTMLElement : HTMLElement | null>;
 /**
@@ -217,9 +217,19 @@ export declare const tryWrapContentNow: <O extends ContentWrappingOptions>(eleme
  * @ignore
  * @internal
  */
-export declare const tryWrapContent: <O extends ContentWrappingOptions>(element: Element, options?: O) => Promise<O extends {
+export declare const tryWrapContent: <O extends ContentWrappingOptions>(element: Element, options?: O | undefined) => Promise<O extends {
     required: true;
 } ? HTMLElement : HTMLElement | null>;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const unwrapContentNow: (wrapper: Element, classNames?: string[]) => void;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const unwrapContent: (wrapper: Element, classNames?: string[] | undefined) => Promise<void>;
 /**
  * @ignore
  * @internal
@@ -249,7 +259,7 @@ export declare const insertGhostCloneNow: <E extends Element>(element: E, insert
  *
  * Exposed via DOMWatcher
  */
-export declare const insertGhostClone: <E extends Element>(element: E, insertBefore?: Element | null) => Promise<{
+export declare const insertGhostClone: <E extends Element>(element: E, insertBefore?: Element | null | undefined) => Promise<{
     _wrapper: HTMLElement;
     _clone: E;
 }>;

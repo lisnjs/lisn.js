@@ -53,4 +53,14 @@ export declare const waitForSubsequentMutateTime: () => Promise<void>;
  * @category DOM: Preventing layout trashing
  */
 export declare const waitForSubsequentMeasureTime: () => Promise<void>;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const asyncMutatorFor: <Args extends unknown[], Ret>(func: (...args: Args) => Ret) => (...args: Args) => Promise<Ret>;
+/**
+ * @ignore
+ * @internal
+ */
+export declare const asyncMeasurerFor: <Args extends unknown[], Ret>(func: (...args: Args) => Ret) => (...args: Args) => Promise<Ret>;
 //# sourceMappingURL=dom-optimize.d.ts.map

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.waitForSubsequentMutateTime = exports.waitForSubsequentMeasureTime = exports.waitForMutateTime = exports.waitForMeasureTime = void 0;
+exports.waitForSubsequentMutateTime = exports.waitForSubsequentMeasureTime = exports.waitForMutateTime = exports.waitForMeasureTime = exports.asyncMutatorFor = exports.asyncMeasurerFor = void 0;
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _log = require("./log.cjs");
 var _tasks = require("./tasks.cjs");
@@ -75,8 +75,22 @@ const waitForSubsequentMutateTime = () => waitForMutateTime().then(waitForMeasur
 exports.waitForSubsequentMutateTime = waitForSubsequentMutateTime;
 const waitForSubsequentMeasureTime = () => waitForMeasureTime().then(waitForMutateTime).then(waitForMeasureTime);
 
-// ----------------------------------------
+/**
+ * @ignore
+ * @internal
+ */
 exports.waitForSubsequentMeasureTime = waitForSubsequentMeasureTime;
+const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() => func(...args));
+
+/**
+ * @ignore
+ * @internal
+ */
+exports.asyncMutatorFor = asyncMutatorFor;
+const asyncMeasurerFor = func => async (...args) => waitForMeasureTime().then(() => func(...args));
+
+// ----------------------------------------
+exports.asyncMeasurerFor = asyncMeasurerFor;
 const scheduledDOMMeasurements = [];
 const scheduledDOMMutations = [];
 let hasScheduledDOMTasks = false;

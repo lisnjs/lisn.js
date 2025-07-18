@@ -110,7 +110,7 @@ export class DOMWatcher {
    * Creates a new instance of DOMWatcher with the given
    * {@link DOMWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: DOMWatcherConfig = {}) {
+  static create(config?: DOMWatcherConfig) {
     return new DOMWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -121,7 +121,7 @@ export class DOMWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: DOMWatcherConfig = {}) {
+  static reuse(config?: DOMWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, { _root: null }));
 
@@ -255,7 +255,7 @@ export class DOMWatcher {
       handler: OnMutationHandler,
       userOptions: OnMutationOptions | undefined,
     ) => {
-      const options = getOptions(userOptions || {});
+      const options = getOptions(userOptions ?? {});
       const callback = createCallback(handler, options);
 
       let root = config._root || MH.getBody();
@@ -637,10 +637,12 @@ const instances = newXMap<Element | null, Map<string, DOMWatcher>>(() =>
   MH.newMap(),
 );
 
-const getConfig = (config: DOMWatcherConfig): DOMWatcherConfigInternal => {
+const getConfig = (
+  config: DOMWatcherConfig | undefined,
+): DOMWatcherConfigInternal => {
   return {
-    _root: config.root || null,
-    _subtree: config.subtree ?? true,
+    _root: config?.root || null,
+    _subtree: config?.subtree ?? true,
   };
 };
 

@@ -144,7 +144,7 @@ export class ScrollTrigger extends Trigger {
     actions: Action[],
     config?: ScrollTriggerConfig,
   ) {
-    config = config ?? {};
+    config ??= {};
 
     let directions = config.directions;
     if (!directions) {

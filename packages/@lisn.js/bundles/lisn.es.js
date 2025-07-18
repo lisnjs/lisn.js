@@ -260,6 +260,7 @@ const lengthOf = obj => {
   return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
 };
 const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
+const firstOf = a => a === null || a === void 0 ? void 0 : a.slice(0, 1)[0];
 const tagName = element => element.tagName;
 const hasTagName = (element, tag) => toLowerCase(tagName(element)) === toLowerCase(tag);
 const preventDefault = event => event.preventDefault();
@@ -1078,6 +1079,7 @@ const getBitmask = (start, end) => start > end ? getBitmask(end, start) : -1 >>>
  */
 
 const supportsSticky = () => hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
+const isInQuirksMode = () => hasDOM() ? document.compatMode === "BackCompat" : false;
 const copyExistingKeys = (fromObj, toObj) => {
   for (const key in toObj) {
     if (!hasOwnProp(toObj, key)) {
@@ -1203,7 +1205,7 @@ const splitOn = (input, separator, trim, limit) => {
   if (!input.trim()) {
     return [];
   }
-  limit = limit !== null && limit !== void 0 ? limit : -1;
+  limit !== null && limit !== void 0 ? limit : limit = -1;
   const output = [];
   const addEntry = s => output.push(trim ? s.trim() : s);
   while (limit--) {
@@ -2108,6 +2110,18 @@ const waitForSubsequentMutateTime = () => waitForMutateTime().then(waitForMeasur
  */
 const waitForSubsequentMeasureTime = () => waitForMeasureTime().then(waitForMutateTime).then(waitForMeasureTime);
 
+/**
+ * @ignore
+ * @internal
+ */
+const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() => func(...args));
+
+/**
+ * @ignore
+ * @internal
+ */
+const asyncMeasurerFor = func => async (...args) => waitForMeasureTime().then(() => func(...args));
+
 // ----------------------------------------
 
 const scheduledDOMMeasurements = [];
@@ -2444,7 +2458,7 @@ const addClassesNow = (element, ...classNames) => classList(element).add(...clas
  *
  * @category CSS: Altering (optimized)
  */
-const addClasses = (element, ...classNames) => waitForMutateTime().then(() => addClassesNow(element, ...classNames));
+const addClasses = asyncMutatorFor(addClassesNow);
 
 /**
  * Removes the given classes to the element.
@@ -2458,7 +2472,7 @@ const removeClassesNow = (element, ...classNames) => classList(element).remove(.
  *
  * @category CSS: Altering (optimized)
  */
-const removeClasses = (element, ...classNames) => waitForMutateTime().then(() => removeClassesNow(element, ...classNames));
+const removeClasses = asyncMutatorFor(removeClassesNow);
 
 /**
  * Toggles the given class on the element.
@@ -2474,7 +2488,7 @@ const toggleClassNow = (element, className, force) => classList(element).toggle(
  *
  * @category CSS: Altering (optimized)
  */
-const toggleClass = (element, className, force) => waitForMutateTime().then(() => toggleClassNow(element, className, force));
+const toggleClass = asyncMutatorFor(toggleClassNow);
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -2518,7 +2532,7 @@ const setDataNow = (element, name, value) => setAttr(element, prefixData(name), 
  *
  * @category CSS: Altering (optimized)
  */
-const setData = (element, name, value) => waitForMutateTime().then(() => setDataNow(element, name, value));
+const setData = asyncMutatorFor(setDataNow);
 
 /**
  * Sets the given data attribute with value "true" (default) or "false".
@@ -2535,7 +2549,7 @@ const setBooleanDataNow = (element, name, value = true) => setAttr(element, pref
  *
  * @category CSS: Altering (optimized)
  */
-const setBooleanData = (element, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(element, name, value));
+const setBooleanData = asyncMutatorFor(setBooleanDataNow);
 
 /**
  * Sets the given data attribute with value "false".
@@ -2552,7 +2566,7 @@ const unsetBooleanDataNow = (element, name) => unsetAttr(element, prefixData(nam
  *
  * @category CSS: Altering (optimized)
  */
-const unsetBooleanData = (element, name) => waitForMutateTime().then(() => unsetBooleanDataNow(element, name));
+const unsetBooleanData = asyncMutatorFor(unsetBooleanDataNow);
 
 /**
  * Deletes the given data attribute.
@@ -2569,7 +2583,7 @@ const delDataNow = (element, name) => delAttr(element, prefixData(name));
  *
  * @category CSS: Altering (optimized)
  */
-const delData = (element, name) => waitForMutateTime().then(() => delDataNow(element, name));
+const delData = asyncMutatorFor(delDataNow);
 
 /**
  * Returns the value of the given property from the computed style of the
@@ -2584,7 +2598,7 @@ const getComputedStylePropNow = (element, prop) => getComputedStyle(element).get
  *
  * @category DOM: Altering (optimized)
  */
-const getComputedStyleProp = (element, prop) => waitForMeasureTime().then(() => getComputedStylePropNow(element, prop));
+const getComputedStyleProp = asyncMeasurerFor(getComputedStylePropNow);
 
 /**
  * Returns the value of the given property from the inline style of the
@@ -2602,7 +2616,7 @@ const getStylePropNow = (element, prop) => {
  *
  * @category DOM: Altering (optimized)
  */
-const getStyleProp = (element, prop) => waitForMeasureTime().then(() => getStylePropNow(element, prop));
+const getStyleProp = asyncMeasurerFor(getStylePropNow);
 
 /**
  * Sets the given property on the inline style of the element.
@@ -2619,7 +2633,7 @@ const setStylePropNow = (element, prop, value) => {
  *
  * @category DOM: Altering (optimized)
  */
-const setStyleProp = (element, prop, value) => waitForMutateTime().then(() => setStylePropNow(element, prop, value));
+const setStyleProp = asyncMutatorFor(setStylePropNow);
 
 /**
  * Deletes the given property on the inline style of the element.
@@ -2636,7 +2650,7 @@ const delStylePropNow = (element, prop) => {
  *
  * @category DOM: Altering (optimized)
  */
-const delStyleProp = (element, prop) => waitForMutateTime().then(() => delStylePropNow(element, prop));
+const delStyleProp = asyncMutatorFor(delStylePropNow);
 
 /**
  * Returns the flex direction of the given element **if it has a flex layout**.
@@ -2740,11 +2754,13 @@ const copyStyle = async (fromElement, toElement, includeComputedProps) => {
  * @ignore
  * @internal
  */
-const setNumericStyleJsVars = async (element, props, options = {}) => {
+const setNumericStyleJsVarsNow = (element, props, options = {}) => {
   if (!isDOMElement(element)) {
     return;
   }
-  const transformFn = options._transformFn;
+
+  // const transformFn = options._transformFn;
+
   const varPrefix = prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
   for (const prop in props) {
     const cssPropSuffix = camelToKebabCase(prop);
@@ -2756,16 +2772,19 @@ const setNumericStyleJsVars = async (element, props, options = {}) => {
       var _options$_numDecimal;
       value = props[prop];
       const thisNumDecimal = (_options$_numDecimal = options === null || options === void 0 ? void 0 : options._numDecimal) !== null && _options$_numDecimal !== void 0 ? _options$_numDecimal : value > 0 && value < 1 ? 2 : 0;
-      if (transformFn) {
-        const currValue = parseFloat(await getStyleProp(element, varName));
-        value = transformFn(prop, currValue || 0, value);
-      }
+
+      // if (transformFn) {
+      //   const currValue = MH.parseFloat(await getStyleProp(element, varName));
+      //
+      //   value = transformFn(prop, currValue || 0, value);
+      // }
+
       value = roundNumTo(value, thisNumDecimal);
     }
     if (value === null) {
-      delStyleProp(element, varName);
+      delStylePropNow(element, varName);
     } else {
-      setStyleProp(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
+      setStylePropNow(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
     }
   }
 };
@@ -2774,6 +2793,7 @@ const setNumericStyleJsVars = async (element, props, options = {}) => {
  * @ignore
  * @internal
  */
+const setNumericStyleJsVars = asyncMutatorFor(setNumericStyleJsVarsNow);
 
 // ----------------------------------------
 
@@ -2818,11 +2838,11 @@ const scheduleCSSTransition = (element, toCls) => {
  *
  * @categoryDescription DOM: Altering
  * These functions alter the DOM tree, but could lead to forced layout if not
- * scheduled using {@link waitForMutateTime}.
+ * scheduled using {@link Utils.waitForMutateTime}.
  *
  * @categoryDescription DOM: Altering (optimized)
  * These functions alter the DOM tree in an optimized way using
- * {@link waitForMutateTime} and so are asynchronous.
+ * {@link Utils.waitForMutateTime} and so are asynchronous.
  */
 
 
@@ -2859,11 +2879,11 @@ const wrapElementNow = (element, options) => {
 };
 
 /**
- * Like {@link wrapElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-const wrapElement = async (element, options) => waitForMutateTime().then(() => wrapElementNow(element, options));
+const wrapElement = asyncMutatorFor(wrapElementNow);
 
 /**
  * Wraps the element's children in the given wrapper, or a newly created element
@@ -2886,11 +2906,11 @@ const wrapChildrenNow = (element, options) => {
 };
 
 /**
- * Like {@link wrapChildrenNow} except it will {@link waitForMutateTime}.
+ * Like {@link wrapChildrenNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-const wrapChildren = async (element, options) => waitForMutateTime().then(() => wrapChildrenNow(element, options));
+const wrapChildren = asyncMutatorFor(wrapChildrenNow);
 
 /**
  * Replace an element with another one.
@@ -2935,11 +2955,13 @@ const swapElementsNow = (elementA, elementB, options) => {
 };
 
 /**
- * Like {@link swapElementsNow} except it will {@link waitForMutateTime}.
+ * Like {@link swapElementsNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-const swapElements = async (elementA, elementB, options) => waitForMutateTime().then(() => swapElementsNow(elementA, elementB, options));
+const swapElements = asyncMutatorFor(swapElementsNow);
+
+// [TODO v2]: moveChildren to accept newParent as options.to
 
 /**
  * Move an element's children to a new element
@@ -2998,11 +3020,11 @@ const moveElementNow = (element, options) => {
 };
 
 /**
- * Like {@link moveElementNow} except it will {@link waitForMutateTime}.
+ * Like {@link moveElementNow} except it will {@link Utils.waitForMutateTime}.
  *
  * @category DOM: Altering (optimized)
  */
-const moveElement = async (element, options) => waitForMutateTime().then(() => moveElementNow(element, options));
+const moveElement = asyncMutatorFor(moveElementNow);
 
 /**
  * It will {@link hideElement} and then remove it from the DOM.
@@ -3079,13 +3101,44 @@ const getContentWrapper = (element, options) => {
  * @ignore
  * @internal
  */
-const tryWrap = (element, options) => _tryWrap(element, options);
+const tryWrapNow = (element, options) => _tryWrapNow(element, options);
 
 /**
  * @ignore
  * @internal
  */
-const tryWrapContent = (element, options) => _tryWrap(element, options, true);
+const tryWrap = asyncMutatorFor(tryWrapNow);
+
+/**
+ * @ignore
+ * @internal
+ */
+const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
+
+/**
+ * @ignore
+ * @internal
+ */
+const tryWrapContent = asyncMutatorFor(tryWrapContentNow);
+
+/**
+ * @ignore
+ * @internal
+ */
+const unwrapContentNow = (wrapper, classNames) => {
+  const parent = wrapper.parentElement;
+  if (parent) {
+    moveChildrenNow(wrapper, parent, {
+      ignoreMove: true
+    });
+    moveElementNow(wrapper, {
+      ignoreMove: true
+    });
+    if (classNames) {
+      removeClassesNow(wrapper, ...classNames);
+    }
+  }
+};
 
 /**
  * @ignore
@@ -3135,7 +3188,7 @@ const insertGhostCloneNow = (element, insertBefore = null) => {
  *
  * Exposed via DOMWatcher
  */
-const insertGhostClone = (element, insertBefore = null) => waitForMutateTime().then(() => insertGhostCloneNow(element, insertBefore));
+const insertGhostClone = asyncMutatorFor(insertGhostCloneNow);
 
 /**
  * @ignore
@@ -3230,8 +3283,6 @@ const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its 
   }
   return wrapper;
 };
-const _tryWrap = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
-) => waitForMutateTime().then(() => _tryWrapNow(element, options, wrapContent));
 
 /**
  * @module Utils
@@ -3648,7 +3699,7 @@ class DOMWatcher {
    * Creates a new instance of DOMWatcher with the given
    * {@link DOMWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new DOMWatcher(getConfig$6(config), CONSTRUCTOR_KEY$6);
   }
 
@@ -3659,7 +3710,7 @@ class DOMWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig$6(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -3764,7 +3815,7 @@ class DOMWatcher {
     // ----------
 
     const setupOnMutation = async (handler, userOptions) => {
-      const options = getOptions$3(userOptions || {});
+      const options = getOptions$3(userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const callback = createCallback(handler, options);
       let root = config._root || getBody();
       if (!root) {
@@ -3946,8 +3997,8 @@ const instances$8 = newXMap(() => newMap());
 const getConfig$6 = config => {
   var _config$subtree;
   return {
-    _root: config.root || null,
-    _subtree: (_config$subtree = config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
+    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
   };
 };
 const CATEGORIES_BITS = DOM_CATEGORIES_SPACE.bit;
@@ -4232,7 +4283,8 @@ const callEventListener = (handler, event) => {
  *
  * @category Events: Generic
  */
-const addEventListenerTo = (target, eventType, handler, options = {}) => {
+const addEventListenerTo = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   if (getEventHandlerData(target, eventType, handler, options)) {
     // already added
@@ -4280,7 +4332,8 @@ const addEventListenerTo = (target, eventType, handler, options = {}) => {
  *
  * @category Events: Generic
  */
-const removeEventListenerFrom = (target, eventType, handler, options = {}) => {
+const removeEventListenerFrom = (target, eventType, handler, options) => {
+  options !== null && options !== void 0 ? options : options = false;
   eventType = transformEventType(eventType);
   const data = getEventHandlerData(target, eventType, handler, options);
   if (!data) {
@@ -5293,7 +5346,7 @@ class GestureWatcher {
    * Creates a new instance of GestureWatcher with the given
    * {@link GestureWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new GestureWatcher(getConfig$5(config), CONSTRUCTOR_KEY$5);
   }
 
@@ -5304,7 +5357,7 @@ class GestureWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig$5(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances$7.get(configStrKey);
@@ -5347,7 +5400,7 @@ class GestureWatcher {
     // async for consistency with other watchers and future compatibility in
     // case of change needed
     const setupOnGesture = async (target, handler, userOptions) => {
-      const options = getOptions$2(config, userOptions || {});
+      const options = getOptions$2(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       createCallback(target, handler, options);
       for (const device of options._devices || DEVICES) {
         var _allListeners$get;
@@ -5536,6 +5589,7 @@ const CONSTRUCTOR_KEY$5 = SYMBOL();
 const instances$7 = newMap();
 const getConfig$5 = config => {
   var _config$preventDefaul, _config$naturalTouchS, _config$touchDragHold, _config$touchDragNumF;
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _preventDefault: (_config$preventDefaul = config.preventDefault) !== null && _config$preventDefaul !== void 0 ? _config$preventDefaul : true,
     _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 150),
@@ -5971,7 +6025,10 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
  *                          is 0, it will attempt to scroll it rather than
  *                          looking at the clientWidth/Height to
  *                          scrollWidth/Height. This is more reliable but can
- *                          cause issues, see note above.
+ *                          cause issues, see note above. Note however it will
+ *                          fail (return a false positive) on elements that have
+ *                          overflowing content but overflow set to hidden, clip
+ *                          or visible;
  * @param [options.noCache] By default the result of a check is cached for 1s
  *                          and if there's already a cached result for this
  *                          element, it is returns. Set this to true to disable
@@ -5985,7 +6042,7 @@ const isScrollable = (element, options) => {
     axis,
     active,
     noCache
-  } = options || {};
+  } = options !== null && options !== void 0 ? options : {};
   if (!axis) {
     return isScrollable(element, {
       axis: "y",
@@ -6184,7 +6241,7 @@ const getClientHeightNow = element => isScrollableBodyInQuirks(element) ? elemen
  * Exposed via ScrollWatcher
  */
 const fetchMainContentElement = async () => {
-  await init$5();
+  await init$6();
   return mainContentElement;
 };
 
@@ -6201,7 +6258,7 @@ const tryGetMainScrollableElement = () => mainScrollableElement !== null && main
  * Exposed via ScrollWatcher
  */
 const fetchMainScrollableElement = async () => {
-  await init$5();
+  await init$6();
   return mainScrollableElement;
 };
 
@@ -6379,7 +6436,7 @@ const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNo
 let mainContentElement;
 let mainScrollableElement;
 let initPromise$1 = null;
-const init$5 = () => {
+const init$6 = () => {
   if (!initPromise$1) {
     initPromise$1 = (async () => {
       const mainScrollableElementSelector = settings.mainScrollableElementSelector;
@@ -6405,7 +6462,7 @@ const init$5 = () => {
 // Try to find the main scrollable/content elements asap so that tryGetMain*
 // can return them if called before fetchMain*
 if (hasDOM()) {
-  waitForInteractive().then(init$5);
+  waitForInteractive().then(init$6);
 }
 
 /**
@@ -6602,7 +6659,7 @@ const tryGetViewportOverlay = () => viewportOverlay !== null && viewportOverlay 
  * Exposed via SizeWatcher
  */
 const fetchViewportOverlay = async () => {
-  await init$4();
+  await init$5();
   return viewportOverlay;
 };
 
@@ -6647,7 +6704,7 @@ const getSizeFromInlineBlock = size => {
 
 let viewportOverlay;
 let initPromise = null;
-const init$4 = () => {
+const init$5 = () => {
   if (!initPromise) {
     initPromise = (async () => {
       viewportOverlay = await createOverlay({
@@ -6877,7 +6934,7 @@ class SizeWatcher {
    * Creates a new instance of SizeWatcher with the given
    * {@link SizeWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new SizeWatcher(getConfig$4(config), CONSTRUCTOR_KEY$4);
   }
 
@@ -6888,7 +6945,7 @@ class SizeWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig$4(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances$6.get(configStrKey);
@@ -6992,7 +7049,7 @@ class SizeWatcher {
     // ----------
 
     const setupOnResize = async (handler, userOptions) => {
-      const options = await fetchOptions(userOptions || {});
+      const options = await fetchOptions(userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const element = options._element;
 
       // Don't await for the size data before creating the callback so that
@@ -7124,6 +7181,7 @@ class SizeWatcher {
 const CONSTRUCTOR_KEY$4 = SYMBOL();
 const instances$6 = newMap();
 const getConfig$4 = config => {
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -7236,7 +7294,7 @@ class LayoutWatcher {
    * Creates a new instance of LayoutWatcher with the given
    * {@link LayoutWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new LayoutWatcher(getConfig$3(config), CONSTRUCTOR_KEY$3);
   }
 
@@ -7247,7 +7305,7 @@ class LayoutWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig$3(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -7601,7 +7659,7 @@ class PointerWatcher {
    * Creates a new instance of PointerWatcher with the given
    * {@link PointerWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new PointerWatcher(getConfig$2(config), CONSTRUCTOR_KEY$2);
   }
 
@@ -7612,7 +7670,7 @@ class PointerWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig$2(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances$4.get(configStrKey);
@@ -7959,7 +8017,7 @@ class ScrollWatcher {
    * Creates a new instance of ScrollWatcher with the given
    * {@link ScrollWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ScrollWatcher(getConfig$1(config), CONSTRUCTOR_KEY$1);
   }
 
@@ -7970,7 +8028,7 @@ class ScrollWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     const myConfig = getConfig$1(config);
     const configStrKey = objToStrKey(myConfig);
     let instance = instances$3.get(configStrKey);
@@ -8025,7 +8083,7 @@ class ScrollWatcher {
     // ----------
 
     const setupOnScroll = async (handler, userOptions, trackType) => {
-      const options = await fetchOnScrollOptions(config, userOptions || {});
+      const options = await fetchOnScrollOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const element = options._element;
 
       // Don't await for the scroll data before creating the callback so that
@@ -8252,7 +8310,7 @@ class ScrollWatcher {
 
     // ----------
 
-    this.scroll = (direction, options = {}) => {
+    this.scroll = (direction, options) => {
       var _options$amount;
       if (!isValidScrollDirection(direction)) {
         throw usageError(`Unknown scroll direction: '${direction}'`);
@@ -8260,8 +8318,8 @@ class ScrollWatcher {
       const isVertical = direction === S_UP || direction === S_DOWN;
       const sign = direction === S_UP || direction === S_LEFT ? -1 : 1;
       let targetCoordinate;
-      const amount = (_options$amount = options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
-      const asFractionOf = options.asFractionOf;
+      const amount = (_options$amount = options === null || options === void 0 ? void 0 : options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
+      const asFractionOf = options === null || options === void 0 ? void 0 : options.asFractionOf;
       if (asFractionOf === "visible") {
         targetCoordinate = isVertical ? el => el[S_SCROLL_TOP] + sign * amount * getClientHeightNow(el) / 100 : el => el[S_SCROLL_LEFT] + sign * amount * getClientWidthNow(el) / 100;
 
@@ -8287,12 +8345,12 @@ class ScrollWatcher {
 
     // ----------
 
-    this.scrollTo = async (to, options = {}) => scrollTo(to, merge({
+    this.scrollTo = async (to, options) => scrollTo(to, merge({
       duration: config._scrollDuration
     },
     // default
     options, {
-      scrollable: await fetchScrollableElement(options.scrollable)
+      scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable)
     } // override
     ));
 
@@ -8302,13 +8360,13 @@ class ScrollWatcher {
 
     // ----------
 
-    this.stopUserScrolling = async (options = {}) => {
-      const element = await fetchScrollableElement(options.scrollable);
+    this.stopUserScrolling = async options => {
+      const element = await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable);
       const stopScroll = () => elScrollTo(element, {
         top: element[S_SCROLL_TOP],
         left: element[S_SCROLL_LEFT]
       });
-      if (options.immediate) {
+      if (options !== null && options !== void 0 && options.immediate) {
         stopScroll();
       } else {
         waitForMeasureTime().then(stopScroll);
@@ -8370,6 +8428,7 @@ const CONSTRUCTOR_KEY$1 = SYMBOL();
 const instances$3 = newMap();
 const PREFIX_WRAPPER$1 = prefixName("scroll-watcher-wrapper");
 const getConfig$1 = config => {
+  config !== null && config !== void 0 ? config : config = {};
   return {
     _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
@@ -8456,7 +8515,7 @@ const setScrollCssProps = (element, scrollData) => {
     element = getDocElement();
     prefix = "page-";
   }
-  scrollData = scrollData || {};
+  scrollData !== null && scrollData !== void 0 ? scrollData : scrollData = {};
   const props = {
     [S_SCROLL_TOP]: scrollData[S_SCROLL_TOP],
     [S_SCROLL_TOP_FRACTION]: scrollData[S_SCROLL_TOP_FRACTION],
@@ -8871,7 +8930,7 @@ class ViewWatcher {
    * Creates a new instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -8882,7 +8941,7 @@ class ViewWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -9432,7 +9491,8 @@ const fetchViews = async (intersection, realtime, useScrollingAncestor) => {
   return [S_AT];
 };
 const setViewCssProps = (element, viewData) => {
-  const relative = (viewData === null || viewData === void 0 ? void 0 : viewData.relative) || {};
+  var _viewData$relative;
+  const relative = (_viewData$relative = viewData === null || viewData === void 0 ? void 0 : viewData.relative) !== null && _viewData$relative !== void 0 ? _viewData$relative : {};
   const props = {
     top: relative.top,
     bottom: relative.bottom,
@@ -10874,7 +10934,7 @@ class Trigger extends Widget {
     this.reverse = reverse.invoke;
     this[S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
     this.getActions = () => [...actions]; // copy
-    this.getConfig = () => copyObject(config || {});
+    this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
   }
 }
 
@@ -11497,9 +11557,9 @@ class SetAttribute {
   static register() {
     registerAction("set-attribute", (element, args, config) => {
       return new SetAttribute(element, {
-        [args[0]]: config || {}
+        [args[0]]: config !== null && config !== void 0 ? config : {}
       });
-    }, configValidator$8);
+    }, configValidator$9);
   }
   constructor(element, attributes) {
     if (!attributes) {
@@ -11541,7 +11601,7 @@ class SetAttribute {
 
 // --------------------
 
-const configValidator$8 = {
+const configValidator$9 = {
   on: validateString,
   off: validateString
 };
@@ -13612,19 +13672,19 @@ class Pager extends Widget {
    */
 
   static get(element) {
-    const instance = super.get(element, DUMMY_ID$9);
+    const instance = super.get(element, DUMMY_ID$a);
     if (isInstanceOf(instance, Pager)) {
       return instance;
     }
     return null;
   }
   static register() {
-    registerWidget(WIDGET_NAME$9, (element, config) => {
+    registerWidget(WIDGET_NAME$a, (element, config) => {
       if (!Pager.get(element)) {
         return new Pager(element, config);
       }
       return null;
-    }, configValidator$7);
+    }, configValidator$8);
   }
 
   /**
@@ -13636,7 +13696,7 @@ class Pager extends Widget {
     var _Pager$get;
     const destroyPromise = (_Pager$get = Pager.get(element)) === null || _Pager$get === void 0 ? void 0 : _Pager$get.destroy();
     super(element, {
-      id: DUMMY_ID$9
+      id: DUMMY_ID$a
     });
     const pages = (config === null || config === void 0 ? void 0 : config.pages) || [];
     const toggles = (config === null || config === void 0 ? void 0 : config.toggles) || [];
@@ -13688,7 +13748,7 @@ class Pager extends Widget {
       if (this.isDestroyed()) {
         return;
       }
-      init$3(this, element, components, config, methods);
+      init$4(this, element, components, config, methods);
     });
     this.nextPage = () => methods._nextPage();
     this.prevPage = () => methods._prevPage();
@@ -13726,21 +13786,21 @@ const S_TOTAL_PAGES = "total-pages";
 const S_VISIBLE_PAGES = "visible-pages";
 const S_CURRENT_PAGE = "current-page";
 const S_PAGE_NUMBER = "page-number";
-const WIDGET_NAME$9 = "pager";
-const PREFIXED_NAME$5 = prefixName(WIDGET_NAME$9);
-const PREFIX_ROOT$4 = `${PREFIXED_NAME$5}__root`;
-const PREFIX_PAGE_CONTAINER = `${PREFIXED_NAME$5}__page-container`;
+const WIDGET_NAME$a = "pager";
+const PREFIXED_NAME$6 = prefixName(WIDGET_NAME$a);
+const PREFIX_ROOT$5 = `${PREFIXED_NAME$6}__root`;
+const PREFIX_PAGE_CONTAINER = `${PREFIXED_NAME$6}__page-container`;
 
 // Use different classes for styling items to the one used for auto-discovering
 // them, so that re-creating existing widgets can correctly find the items to
 // be used by the new widget synchronously before the current one is destroyed.
-const PREFIX_PAGE = `${PREFIXED_NAME$5}__page`;
-const PREFIX_PAGE__FOR_SELECT = `${PREFIXED_NAME$5}-page`;
-const PREFIX_TOGGLE__FOR_SELECT = `${PREFIXED_NAME$5}-toggle`;
-const PREFIX_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-switch`;
-const PREFIX_NEXT_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-next-switch`;
-const PREFIX_PREV_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-prev-switch`;
-const PREFIX_STYLE = `${PREFIXED_NAME$5}-style`;
+const PREFIX_PAGE = `${PREFIXED_NAME$6}__page`;
+const PREFIX_PAGE__FOR_SELECT = `${PREFIXED_NAME$6}-page`;
+const PREFIX_TOGGLE__FOR_SELECT = `${PREFIXED_NAME$6}-toggle`;
+const PREFIX_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-switch`;
+const PREFIX_NEXT_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-next-switch`;
+const PREFIX_PREV_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-prev-switch`;
+const PREFIX_STYLE = `${PREFIXED_NAME$6}-style`;
 const PREFIX_IS_FULLSCREEN = prefixName("is-fullscreen");
 const PREFIX_USE_PARALLAX = prefixName("use-parallax");
 const PREFIX_TOTAL_PAGES = prefixName(S_TOTAL_PAGES);
@@ -13761,10 +13821,10 @@ const VAR_PAGE_NUMBER = prefixCssJsVar(S_PAGE_NUMBER);
 
 // Only one Pager widget per element is allowed, but Widget requires a
 // non-blank ID.
-const DUMMY_ID$9 = PREFIXED_NAME$5;
+const DUMMY_ID$a = PREFIXED_NAME$6;
 const SUPPORTED_STYLES = ["slider", "carousel", "tabs"];
 const isValidStyle = value => includes(SUPPORTED_STYLES, value);
-const configValidator$7 = {
+const configValidator$8 = {
   initialPage: validateNumber,
   style: (key, value) => validateString(key, value, isValidStyle),
   pageSize: validateNumber,
@@ -13826,7 +13886,7 @@ const setCurrentPage = (pagerEl, pageNumbers, isPageDisabled) => {
   setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
   return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
 };
-const init$3 = (widget, element, components, config, methods) => {
+const init$4 = (widget, element, components, config, methods) => {
   var _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
   const pages = components._pages;
   const toggles = components._toggles;
@@ -13999,7 +14059,7 @@ const init$3 = (widget, element, components, config, methods) => {
     if (prevSwitch) {
       removeEventListenerFrom(prevSwitch, S_CLICK, prevSwitchClickListener);
     }
-    removeClassesNow(element, PREFIX_ROOT$4);
+    removeClassesNow(element, PREFIX_ROOT$5);
     if (pageContainer) {
       removeClassesNow(pageContainer, PREFIX_PAGE_CONTAINER);
     }
@@ -14008,7 +14068,7 @@ const init$3 = (widget, element, components, config, methods) => {
     widget.onTransition(() => recalculateCarouselProps());
   }
   addWatchers();
-  addClasses(element, PREFIX_ROOT$4);
+  addClasses(element, PREFIX_ROOT$5);
   if (pageContainer) {
     addClasses(pageContainer, PREFIX_PAGE_CONTAINER);
   }
@@ -14632,9 +14692,9 @@ class CheckTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
-    this.getConfig = () => copyObject(config);
+    this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
     if (!lengthOf(actions)) {
       return;
     }
@@ -14773,9 +14833,9 @@ class ClickTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
-    this.getConfig = () => copyObject(config);
+    this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
     setupWatcher(this, element, actions, config, S_CLICK);
   }
 }
@@ -14871,9 +14931,9 @@ class PressTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
-    this.getConfig = () => copyObject(config);
+    this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
     setupWatcher(this, element, actions, config, S_PRESS);
   }
 }
@@ -14966,9 +15026,9 @@ class HoverTrigger extends Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
-    this.getConfig = () => copyObject(config);
+    this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
     setupWatcher(this, element, actions, config, S_HOVER);
   }
 }
@@ -14994,6 +15054,7 @@ const setupWatcher = (widget, element, actions, config, action) => {
   if (!lengthOf(actions)) {
     return;
   }
+  config !== null && config !== void 0 ? config : config = {};
   const target = targetOf(config) || element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS
@@ -15360,7 +15421,7 @@ class ScrollTrigger extends Trigger {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    config = config !== null && config !== void 0 ? config : {};
+    config !== null && config !== void 0 ? config : config = {};
     let directions = config.directions;
     if (!directions) {
       config.once = true;
@@ -15543,7 +15604,7 @@ class ViewTrigger extends Trigger {
   constructor(element, actions, config) {
     var _config$rootMargin;
     super(element, actions, config);
-    this.getConfig = () => copyObject(config || {});
+    this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
     if (!lengthOf(actions)) {
       return;
     }
@@ -15909,21 +15970,21 @@ class PageLoader extends Widget {
    */
   static get(element) {
     if (!element) {
-      return mainWidget$2;
+      return mainWidget$3;
     }
-    const instance = super.get(element, DUMMY_ID$8);
+    const instance = super.get(element, DUMMY_ID$9);
     if (isInstanceOf(instance, PageLoader)) {
       return instance;
     }
     return null;
   }
   static register() {
-    registerWidget(WIDGET_NAME$8, (element, config) => {
+    registerWidget(WIDGET_NAME$9, (element, config) => {
       if (!PageLoader.get(element)) {
         return new PageLoader(element, config);
       }
       return null;
-    }, configValidator$6);
+    }, configValidator$7);
   }
 
   /**
@@ -15934,8 +15995,8 @@ class PageLoader extends Widget {
     const loader = createElement("div");
     const widget = new PageLoader(loader, config);
     widget.onDestroy(() => {
-      if (mainWidget$2 === widget) {
-        mainWidget$2 = null;
+      if (mainWidget$3 === widget) {
+        mainWidget$3 = null;
       }
       return moveElement(loader);
     });
@@ -15946,21 +16007,21 @@ class PageLoader extends Widget {
         });
       }
     });
-    mainWidget$2 = widget;
+    mainWidget$3 = widget;
     return widget;
   }
   constructor(element, config) {
     var _PageLoader$get;
     const destroyPromise = (_PageLoader$get = PageLoader.get(element)) === null || _PageLoader$get === void 0 ? void 0 : _PageLoader$get.destroy();
     super(element, {
-      id: DUMMY_ID$8
+      id: DUMMY_ID$9
     });
     (destroyPromise || promiseResolve()).then(() => {
       var _config$autoRemove;
       if (this.isDestroyed()) {
         return;
       }
-      addClasses(element, PREFIX_ROOT$3);
+      addClasses(element, PREFIX_ROOT$4);
       const spinner = createElement("div");
       addClasses(spinner, PREFIX_SPINNER);
       moveElement(spinner, {
@@ -15973,7 +16034,7 @@ class PageLoader extends Widget {
       }
       this.onDisable(() => {
         undisplayElement(element);
-        if (!docQuerySelector(`.${PREFIX_ROOT$3}`)) {
+        if (!docQuerySelector(`.${PREFIX_ROOT$4}`)) {
           delHasModal();
         }
       });
@@ -15982,7 +16043,7 @@ class PageLoader extends Widget {
       });
       this.onDestroy(async () => {
         moveElement(spinner); // remove
-        await removeClasses(element, PREFIX_ROOT$3);
+        await removeClasses(element, PREFIX_ROOT$4);
         await displayElement(element); // revert undisplay by onDisable
       });
     });
@@ -15995,17 +16056,17 @@ class PageLoader extends Widget {
 
 // --------------------
 
-const WIDGET_NAME$8 = "page-loader";
-const PREFIXED_NAME$4 = prefixName(WIDGET_NAME$8);
-const PREFIX_ROOT$3 = `${PREFIXED_NAME$4}__root`;
+const WIDGET_NAME$9 = "page-loader";
+const PREFIXED_NAME$5 = prefixName(WIDGET_NAME$9);
+const PREFIX_ROOT$4 = `${PREFIXED_NAME$5}__root`;
 const PREFIX_SPINNER = prefixName("spinner");
 // Only one PageLoader widget per element is allowed, but Widget requires a
 // non-blank ID.
 // In fact, it doesn't make much sense to have more than 1 page loader on the
 // whole page, but we support it, hence use a class rather than a DOM ID.
-const DUMMY_ID$8 = PREFIXED_NAME$4;
-let mainWidget$2 = null;
-const configValidator$6 = {
+const DUMMY_ID$9 = PREFIXED_NAME$5;
+let mainWidget$3 = null;
+const configValidator$7 = {
   autoRemove: validateBoolean
 };
 
@@ -16179,14 +16240,14 @@ class SameHeight extends Widget {
    * instance is returned. Otherwise null.
    */
   static get(containerElement) {
-    const instance = super.get(containerElement, DUMMY_ID$7);
+    const instance = super.get(containerElement, DUMMY_ID$8);
     if (isInstanceOf(instance, SameHeight)) {
       return instance;
     }
     return null;
   }
   static register() {
-    registerWidget(WIDGET_NAME$7, (element, config) => {
+    registerWidget(WIDGET_NAME$8, (element, config) => {
       if (isHTMLElement(element)) {
         if (!SameHeight.get(element)) {
           return new SameHeight(element, config);
@@ -16195,13 +16256,13 @@ class SameHeight extends Widget {
         logError(usageError("Only HTMLElement is supported for SameHeight widget"));
       }
       return null;
-    }, configValidator$5);
+    }, configValidator$6);
   }
   constructor(containerElement, config) {
     var _SameHeight$get;
     const destroyPromise = (_SameHeight$get = SameHeight.get(containerElement)) === null || _SameHeight$get === void 0 ? void 0 : _SameHeight$get.destroy();
     super(containerElement, {
-      id: DUMMY_ID$7
+      id: DUMMY_ID$8
     });
     const items = getItemsFrom(containerElement, config === null || config === void 0 ? void 0 : config.items);
     if (sizeOf(items) < 2) {
@@ -16217,7 +16278,7 @@ class SameHeight extends Widget {
         if (this.isDestroyed()) {
           return;
         }
-        init$2(this, containerElement, items, fullConfig);
+        init$3(this, containerElement, items, fullConfig);
       });
     });
     this.toColumn = () => setData(containerElement, PREFIX_ORIENTATION, S_VERTICAL);
@@ -16233,26 +16294,26 @@ class SameHeight extends Widget {
 
 // ------------------------------
 
-const WIDGET_NAME$7 = "same-height";
-const PREFIXED_NAME$3 = prefixName(WIDGET_NAME$7);
-const PREFIX_ROOT$2 = `${PREFIXED_NAME$3}__root`;
+const WIDGET_NAME$8 = "same-height";
+const PREFIXED_NAME$4 = prefixName(WIDGET_NAME$8);
+const PREFIX_ROOT$3 = `${PREFIXED_NAME$4}__root`;
 
 // Use different classes for styling items to the one used for auto-discovering
 // them, so that re-creating existing widgets can correctly find the items to
 // be used by the new widget synchronously before the current one is destroyed.
-const PREFIX_ITEM$1 = `${PREFIXED_NAME$3}__item`;
-const PREFIX_ITEM__FOR_SELECT$1 = `${PREFIXED_NAME$3}-item`;
+const PREFIX_ITEM$1 = `${PREFIXED_NAME$4}__item`;
+const PREFIX_ITEM__FOR_SELECT$1 = `${PREFIXED_NAME$4}-item`;
 const S_TEXT = "text";
 const S_IMAGE = "image";
 
 // Only one SameHeight widget per element is allowed, but Widget requires a
 // non-blank ID.
-const DUMMY_ID$7 = PREFIXED_NAME$3;
+const DUMMY_ID$8 = PREFIXED_NAME$4;
 
 // We consider elements that have text content of at least <MIN_CHARS_FOR_TEXT>
 // characters to be text.
 const MIN_CHARS_FOR_TEXT = 100;
-const configValidator$5 = {
+const configValidator$6 = {
   diffTolerance: validateNumber,
   resizeThreshold: validateNumber,
   [S_DEBOUNCE_WINDOW]: validateNumber,
@@ -16320,7 +16381,7 @@ const getItemsFrom = (containerElement, inputItems) => {
   }
   return itemMap;
 };
-const init$2 = (widget, containerElement, items, config) => {
+const init$3 = (widget, containerElement, items, config) => {
   const diffTolerance = config._diffTolerance;
   const debounceWindow = config._debounceWindow;
   const sizeWatcher = SizeWatcher.reuse({
@@ -16435,7 +16496,7 @@ const init$2 = (widget, containerElement, items, config) => {
       }
     }
     allItems.clear();
-    await removeClasses(containerElement, PREFIX_ROOT$2);
+    await removeClasses(containerElement, PREFIX_ROOT$3);
   });
 
   // Find all relevant items: the container, its direct children and the
@@ -16463,7 +16524,7 @@ const init$2 = (widget, containerElement, items, config) => {
       }
     }
   }
-  addClasses(containerElement, PREFIX_ROOT$2);
+  addClasses(containerElement, PREFIX_ROOT$3);
   observeAll();
 };
 
@@ -16760,12 +16821,12 @@ class Scrollbar extends Widget {
    */
   static get(scrollable) {
     if (!scrollable) {
-      return mainWidget$1;
+      return mainWidget$2;
     }
     if (scrollable === getDocElement()) {
       scrollable = getBody();
     }
-    const instance = super.get(scrollable, DUMMY_ID$6);
+    const instance = super.get(scrollable, DUMMY_ID$7);
     if (isInstanceOf(instance, Scrollbar)) {
       return instance;
     }
@@ -16788,15 +16849,15 @@ class Scrollbar extends Widget {
     const scrollable = await ScrollWatcher.fetchMainScrollableElement();
     const widget = new Scrollbar(scrollable, config);
     widget.onDestroy(() => {
-      if (mainWidget$1 === widget) {
-        mainWidget$1 = null;
+      if (mainWidget$2 === widget) {
+        mainWidget$2 = null;
       }
     });
-    mainWidget$1 = widget;
+    mainWidget$2 = widget;
     return widget;
   }
   static register() {
-    registerWidget(WIDGET_NAME$6, (element, config) => {
+    registerWidget(WIDGET_NAME$7, (element, config) => {
       if (isHTMLElement(element)) {
         if (!Scrollbar.get(element)) {
           return new Scrollbar(element, config);
@@ -16805,7 +16866,7 @@ class Scrollbar extends Widget {
         logError(usageError("Only HTMLElement is supported for Scrollbar widget"));
       }
       return null;
-    }, configValidator$4);
+    }, configValidator$5);
   }
 
   /**
@@ -16819,7 +16880,7 @@ class Scrollbar extends Widget {
     }
     const destroyPromise = (_Scrollbar$get = Scrollbar.get(scrollable)) === null || _Scrollbar$get === void 0 ? void 0 : _Scrollbar$get.destroy();
     super(scrollable, {
-      id: DUMMY_ID$6
+      id: DUMMY_ID$7
     });
     const props = getScrollableProps(scrollable);
     const ourScrollable = props.scrollable;
@@ -16827,7 +16888,7 @@ class Scrollbar extends Widget {
       if (this.isDestroyed()) {
         return;
       }
-      init$1(this, scrollable, props, config);
+      init$2(this, scrollable, props, config);
     });
     this.getScrollable = () => ourScrollable;
   }
@@ -16839,32 +16900,32 @@ class Scrollbar extends Widget {
 
 // --------------------
 
-const WIDGET_NAME$6 = "scrollbar";
-const PREFIXED_NAME$2 = prefixName(WIDGET_NAME$6);
+const WIDGET_NAME$7 = "scrollbar";
+const PREFIXED_NAME$3 = prefixName(WIDGET_NAME$7);
 // Only one Scrollbar widget per element is allowed, but Widget
 // requires a non-blank ID.
-const DUMMY_ID$6 = PREFIXED_NAME$2;
-const PREFIX_ROOT$1 = `${PREFIXED_NAME$2}__root`;
-const PREFIX_CONTAINER = `${PREFIXED_NAME$2}__container`;
-const PREFIX_CONTENT = `${PREFIXED_NAME$2}__content`;
-const PREFIX_BAR = `${PREFIXED_NAME$2}__bar`;
-const PREFIX_WRAPPER = `${PREFIXED_NAME$2}__wrapper`;
-const PREFIX_FILL = `${PREFIXED_NAME$2}__fill`;
-const PREFIX_SPACER = `${PREFIXED_NAME$2}__spacer`;
-const PREFIX_HANDLE = `${PREFIXED_NAME$2}__handle`;
+const DUMMY_ID$7 = PREFIXED_NAME$3;
+const PREFIX_ROOT$2 = `${PREFIXED_NAME$3}__root`;
+const PREFIX_CONTAINER = `${PREFIXED_NAME$3}__container`;
+const PREFIX_CONTENT = `${PREFIXED_NAME$3}__content`;
+const PREFIX_BAR = `${PREFIXED_NAME$3}__bar`;
+const PREFIX_WRAPPER = `${PREFIXED_NAME$3}__wrapper`;
+const PREFIX_FILL = `${PREFIXED_NAME$3}__fill`;
+const PREFIX_SPACER = `${PREFIXED_NAME$3}__spacer`;
+const PREFIX_HANDLE = `${PREFIXED_NAME$3}__handle`;
 const PREFIX_DRAGGABLE = prefixName("draggable");
 const PREFIX_CLICKABLE = prefixName("clickable");
 const PREFIX_HAS_WRAPPER = prefixName("has-wrapper");
 const PREFIX_ALLOW_COLLAPSE = prefixName("allow-collapse");
-const PREFIX_HAS_V_SCROLL = prefixName("has-v-scroll");
+const PREFIX_HAS_V_SCROLL$1 = prefixName("has-v-scroll");
 const PREFIX_HAS_SCROLLBAR = prefixName("has-scrollbar");
 const PREFIX_HIDE_SCROLL = prefixName("hide-scroll");
 const S_SET_POINTER_CAPTURE = "setPointerCapture";
 const S_RELEASE_POINTER_CAPTURE = "releasePointerCapture";
 const S_ARIA_VALUENOW = ARIA_PREFIX + "valuenow";
 const S_SCROLLBAR = "scrollbar";
-let mainWidget$1 = null;
-const configValidator$4 = {
+let mainWidget$2 = null;
+const configValidator$5 = {
   id: validateString,
   className: validateStrList,
   hideNative: validateBoolean,
@@ -16887,7 +16948,7 @@ const getScrollableProps = containerElement => {
   const root = isMainScrollable ? mainScrollableElement : isBody ? defaultScrollable : containerElement;
 
   // check if we're using body in quirks mode
-  const isBodyInQuirks = root === body && defaultScrollable === body;
+  const isBodyInQuirks = isBody && isInQuirksMode();
   const allowedToWrap = isAllowedToWrap(containerElement);
   const barParent = isMainScrollable ? body : containerElement;
   const hasVScroll = isScrollable(root, {
@@ -16931,7 +16992,7 @@ const getScrollableProps = containerElement => {
     hasVScroll
   };
 };
-const init$1 = (widget, containerElement, props, config) => {
+const init$2 = (widget, containerElement, props, config) => {
   var _ref, _config$onMobile, _ref2, _config$hideNative, _config$autoHide, _config$clickScroll, _ref3, _config$dragScroll, _ref4, _config$useHandle;
   const {
     supported,
@@ -17199,26 +17260,28 @@ const init$1 = (widget, containerElement, props, config) => {
   }
   setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !IS_MOBILE);
   setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
-  setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, !!contentWrapper && hasVScroll);
+  setBooleanData(containerElement, PREFIX_HAS_V_SCROLL$1, !!contentWrapper && hasVScroll);
 
   // Wrap children if needed
   if (contentWrapper && !hasExistingWrapper) {
     wrapChildren(containerElement, {
-      wrapper: contentWrapper}); // no need to await here
+      wrapper: contentWrapper,
+      ignoreMove: true
+    }); // no need to await here
     addClasses(contentWrapper, PREFIX_CONTENT);
   }
   maybeSetNativeHidden();
+  const origDomID = scrollable.id;
   if (config !== null && config !== void 0 && config.id) {
     scrollable.id = config.id;
   }
   if (config !== null && config !== void 0 && config.className) {
     addClasses(scrollable, ...toArrayIfSingle(config.className));
   }
-  const hadDomID = !!scrollable.id;
   const scrollDomID =
   // for ARIA
   clickScroll || dragScroll ? getOrAssignID(scrollable, S_SCROLLBAR) : "";
-  addClasses(barParent, PREFIX_ROOT$1);
+  addClasses(barParent, PREFIX_ROOT$2);
   const wrapper = createElement("div");
   preventSelect(wrapper);
   addClasses(wrapper, PREFIX_NO_TOUCH_ACTION);
@@ -17267,15 +17330,13 @@ const init$1 = (widget, containerElement, props, config) => {
   });
   widget.onDestroy(async () => {
     unmapScrollable(root);
-    if (!hadDomID) {
-      scrollable.id = "";
+    scrollable.id = origDomID;
+    if (config !== null && config !== void 0 && config.className) {
+      removeClasses(scrollable, ...toArrayIfSingle(config.className));
     }
     await waitForMutateTime();
     if (contentWrapper && !hasExistingWrapper) {
-      moveChildrenNow(contentWrapper, containerElement, {
-        ignoreMove: true
-      });
-      moveElementNow(contentWrapper); // remove
+      unwrapContentNow(contentWrapper, [PREFIX_CONTENT]);
     }
     moveElementNow(wrapper); // remove
 
@@ -17289,14 +17350,14 @@ const init$1 = (widget, containerElement, props, config) => {
       removeEventListenerFrom(scrollbarH, S_POINTERDOWN, onClickOrDragH);
       removeEventListenerFrom(scrollbarV, S_POINTERDOWN, onClickOrDragV);
     }
-    removeClassesNow(barParent, PREFIX_ROOT$1);
+    removeClassesNow(barParent, PREFIX_ROOT$2);
     removeClassesNow(containerElement, PREFIX_CONTAINER);
     for (const position of [S_TOP, S_BOTTOM, S_LEFT, S_RIGHT]) {
       delDataNow(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
     }
     delDataNow(containerElement, PREFIX_ALLOW_COLLAPSE);
     delDataNow(containerElement, PREFIX_HAS_WRAPPER);
-    delDataNow(containerElement, PREFIX_HAS_V_SCROLL);
+    delDataNow(containerElement, PREFIX_HAS_V_SCROLL$1);
   });
 };
 const isHorizontal = scrollbar => getData(scrollbar, PREFIX_ORIENTATION) === S_HORIZONTAL;
@@ -17448,16 +17509,16 @@ class ScrollToTop extends Widget {
    */
   static get(element) {
     if (!element) {
-      return mainWidget;
+      return mainWidget$1;
     }
-    const instance = super.get(element, DUMMY_ID$5);
+    const instance = super.get(element, DUMMY_ID$6);
     if (isInstanceOf(instance, ScrollToTop)) {
       return instance;
     }
     return null;
   }
   static register() {
-    registerWidget(WIDGET_NAME$5, (element, config) => {
+    registerWidget(WIDGET_NAME$6, (element, config) => {
       if (!ScrollToTop.get(element)) {
         return new ScrollToTop(element, config);
       }
@@ -17473,8 +17534,8 @@ class ScrollToTop extends Widget {
     const button = createButton("Back to top");
     const widget = new ScrollToTop(button, config);
     widget.onDestroy(() => {
-      if (mainWidget === widget) {
-        mainWidget = null;
+      if (mainWidget$1 === widget) {
+        mainWidget$1 = null;
       }
       return moveElement(button);
     });
@@ -17485,14 +17546,14 @@ class ScrollToTop extends Widget {
         });
       }
     });
-    mainWidget = widget;
+    mainWidget$1 = widget;
     return widget;
   }
   constructor(element, config) {
     var _ScrollToTop$get;
     const destroyPromise = (_ScrollToTop$get = ScrollToTop.get(element)) === null || _ScrollToTop$get === void 0 ? void 0 : _ScrollToTop$get.destroy();
     super(element, {
-      id: DUMMY_ID$5
+      id: DUMMY_ID$6
     });
     const offset = (config === null || config === void 0 ? void 0 : config.offset) || `${S_TOP}: var(${prefixCssVar("scroll-to-top--offset")}, 200vh)`;
     const position = (config === null || config === void 0 ? void 0 : config.position) || S_RIGHT;
@@ -17552,7 +17613,7 @@ class ScrollToTop extends Widget {
         });
       }
       disableInitialTransition(root);
-      addClassesNow(root, PREFIX_ROOT);
+      addClassesNow(root, PREFIX_ROOT$1);
       addClassesNow(element, PREFIX_BTN);
       setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
       setDataNow(root, PREFIX_PLACE, position);
@@ -17575,7 +17636,7 @@ class ScrollToTop extends Widget {
       this.onDestroy(async () => {
         await waitForMutateTime();
         removeEventListenerFrom(element, S_CLICK, clickListener);
-        removeClassesNow(root, PREFIX_ROOT);
+        removeClassesNow(root, PREFIX_ROOT$1);
         removeClassesNow(element, PREFIX_BTN);
         delDataNow(root, PREFIX_FIXED);
         delDataNow(root, PREFIX_PLACE);
@@ -17609,15 +17670,15 @@ class ScrollToTop extends Widget {
 
 // --------------------
 
-const WIDGET_NAME$5 = "scroll-to-top";
-const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
+const WIDGET_NAME$6 = "scroll-to-top";
+const PREFIXED_NAME$2 = prefixName(WIDGET_NAME$6);
 // Only one ScrollToTop widget per element is allowed, but Widget requires a
 // non-blank ID.
-const DUMMY_ID$5 = PREFIXED_NAME$1;
-const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
-const PREFIX_BTN = `${PREFIXED_NAME$1}__btn`;
+const DUMMY_ID$6 = PREFIXED_NAME$2;
+const PREFIX_ROOT$1 = `${PREFIXED_NAME$2}__root`;
+const PREFIX_BTN = `${PREFIXED_NAME$2}__btn`;
 const PREFIX_FIXED = prefixName("fixed");
-let mainWidget = null;
+let mainWidget$1 = null;
 const newConfigValidator$1 = element => {
   return {
     offset: (key, value) => validateString(key, value, isValidScrollOffset),
@@ -17627,6 +17688,446 @@ const newConfigValidator$1 = element => {
       return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
     }
   };
+};
+
+/**
+ * @module Widgets
+ */
+
+
+/**
+ * Configures the given element as a {@link SmoothScroll} widget.
+ *
+ * The SmoothScroll widget creates a configurable smooth scrolling
+ * experience, including support for lag and speed, and using a custom element
+ * that only takes up part of the page, all while preserving native scrolling
+ * behaviour (i.e. it does not disable native scroll and does not use fake
+ * scrollbars).
+ *
+ * **IMPORTANT:** The scrollable element you pass must have its children
+ * wrapped. This will be done automatically unless you create these wrappers
+ * yourself by ensuring your structure is as follows:
+ *
+ * ```html
+ * <!-- If using the document as the scrollable -->
+ * <body><!-- Element you instantiate as SmoothScroll, or you can pass documentElement -->
+ *   <div class="lisn-smooth-scroll__content"><!-- Required wrapper; will be created if missing -->
+ *     <div class="lisn-smooth-scroll__inner"><!-- Required inner wrapper; will be created if missing -->
+ *       <!-- YOUR CONTENT -->
+ *     </div>
+ *   </div>
+ * </body>
+ * ```
+ *
+ * ```html
+ * <!-- If using a custom scrollable -->
+ * <div class="scrollable"><!-- Element you instantiate as SmoothScroll -->
+ *   <div class="lisn-smooth-scroll__content"><!-- Required outer wrapper; will be created if missing -->
+ *     <div class="lisn-smooth-scroll__inner"><!-- Required inner wrapper; will be created if missing -->
+ *       <!-- YOUR CONTENT -->
+ *     </div>
+ *   </div>
+ * </div>
+ * ```
+ *
+ * **IMPORTANT:** If the scrollable element you pass is other than
+ * `document.documentElement` or `document.body`, SmoothScroll will then rely on
+ * position: sticky. XXX TODO
+ *
+ * **IMPORTANT:** You should not instantiate more than one
+ * {@link SmoothScroll} widget on a given element. Use
+ * {@link SmoothScroll.get} to get an existing instance if any. If there is
+ * already a widget instance, it will be destroyed!
+ *
+ * -----
+ *
+ * To use with auto-widgets (HTML API) (see
+ * {@link Settings.settings.autoWidgets | settings.autoWidgets}), the following
+ * CSS classes or data attributes are recognized:
+ * - `lisn-smooth-scroll` class or `data-lisn-smooth-scroll` attribute set
+ *   on the container element that constitutes the scrollable container
+ *
+ * See below examples for what values you can use set for the data attribute
+ * in order to modify the configuration of the automatically created widget.
+ *
+ * @example
+ * This will create a smooth scroller for
+ * {@link settings.mainScrollableElementSelector | the main scrolling element}.
+ *
+ * This will work even if {@link settings.autoWidgets}) is false
+ *
+ * ```html
+ * <!-- LISN should be loaded beforehand -->
+ * <script>
+ *   // You can also just customise global default settings:
+ *   // LISN.settings.smoothScroll = "TODO";
+ *
+ *   LISN.widgets.SmoothScroll.enableMain({
+ *     XXX: "TODO",
+ *   });
+ * </script>
+ * ```
+ *
+ * @example
+ * This will create a smooth scroller for a custom scrolling element (i.e. one
+ * with overflow "auto" or "scroll").
+ *
+ * ```html
+ * <div class="scrolling lisn-smooth-scroll">
+ *   <!-- content here... -->
+ * </div>
+ * ```
+ *
+ * @example
+ * As above but with custom settings.
+ *
+ * ```html
+ * <div
+ *   class="scrolling"
+ *   data-lisn-smooth-scroll="XXX=TODO
+ *                            | XXX=TODO
+ *                        ">
+ *   <!-- content here... -->
+ * </div>
+ * ```
+ */
+class SmoothScroll extends Widget {
+  // XXX TODO getScrollable ?
+
+  /**
+   * If element is omitted, returns the instance created by {@link enableMain}
+   * if any.
+   */
+  static get(scrollable) {
+    if (!scrollable) {
+      return mainWidget;
+    }
+    if (scrollable === getDocElement()) {
+      scrollable = getBody();
+    }
+    const instance = super.get(scrollable, DUMMY_ID$5);
+    if (isInstanceOf(instance, SmoothScroll)) {
+      return instance;
+    }
+    return null;
+  }
+
+  /**
+   * Creates a smooth scroller for the
+   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
+   *
+   * **NOTE:** It returns a Promise to a widget because it will wait for the
+   * main scrollable element to be present in the DOM if not already.
+   */
+  static async enableMain(config) {
+    const scrollable = await ScrollWatcher.fetchMainScrollableElement();
+    const widget = new SmoothScroll(scrollable, config);
+    widget.onDestroy(() => {
+      if (mainWidget === widget) {
+        mainWidget = null;
+      }
+    });
+    mainWidget = widget;
+    return widget;
+  }
+  static register() {
+    registerWidget(WIDGET_NAME$5, (element, config) => {
+      if (isHTMLElement(element)) {
+        if (!SmoothScroll.get(element)) {
+          return new SmoothScroll(element, config);
+        }
+      } else {
+        logError(usageError("Only HTMLElement is supported for SmoothScroll widget"));
+      }
+      return null;
+    }, configValidator$4);
+  }
+
+  /**
+   * Note that passing `document.body` is considered equivalent to
+   * `document.documentElement`.
+   */
+  constructor(scrollable, config) {
+    var _SmoothScroll$get;
+    if (scrollable === getDocElement()) {
+      scrollable = getBody();
+    }
+    const destroyPromise = (_SmoothScroll$get = SmoothScroll.get(scrollable)) === null || _SmoothScroll$get === void 0 ? void 0 : _SmoothScroll$get.destroy();
+    super(scrollable, {
+      id: DUMMY_ID$5
+    });
+
+    // const props = getScrollableProps(scrollable); // XXX
+    // const ourScrollable = props.scrollable; // XXX
+
+    (destroyPromise || promiseResolve()).then(async () => {
+      if (this.isDestroyed()) {
+        return;
+      }
+      init$1(this, scrollable, config);
+      // XXX init(this, scrollable, props, config);
+    });
+  }
+}
+
+/**
+ * @interface
+ */
+
+// --------------------
+
+const WIDGET_NAME$5 = "smooth-scroll";
+const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
+// Only one SmoothScroll widget per element is allowed, but Widget requires a
+// non-blank ID.
+const DUMMY_ID$5 = PREFIXED_NAME$1;
+const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
+const PREFIX_DUMMY = `${PREFIXED_NAME$1}__dummy`;
+const PREFIX_OUTER_WRAPPER = `${PREFIXED_NAME$1}__content`;
+const PREFIX_INNER_WRAPPER = `${PREFIXED_NAME$1}__inner`;
+const PREFIX_HAS_H_SCROLL = prefixName("has-h-scroll");
+const PREFIX_HAS_V_SCROLL = prefixName("has-v-scroll");
+const PREFIX_USES_STICKY = prefixName("uses-sticky");
+let mainWidget = null;
+const configValidator$4 = {
+  id: validateString,
+  className: validateStrList,
+  lag: validateNumber
+};
+const createWrappers = (element, classNamesEntries) => {
+  const wrapContentNow = (element, classNames) => tryWrapContentNow(element, {
+    classNames,
+    required: true,
+    requiredBy: "SmoothScroll"
+  });
+  let lastWrapper = element;
+  const result = {};
+  let createdByUs = [];
+  const unwrapFn = () => {
+    for (const [wrapper, classNames] of createdByUs) {
+      unwrapContentNow(wrapper, classNames);
+    }
+    createdByUs = [];
+  };
+  for (const [key, classNames, skip] of classNamesEntries) {
+    let wrapper = skip ? lastWrapper : getContentWrapper(lastWrapper, {
+      classNames
+    });
+    if (!wrapper) {
+      wrapper = wrapContentNow(lastWrapper, classNames);
+      createdByUs.push([wrapper, classNames]);
+    }
+    lastWrapper = wrapper;
+    result[key] = wrapper;
+  }
+  return {
+    wrappers: result,
+    unwrapFn
+  };
+};
+
+// XXX TODO children can use unique lag factor
+const init$1 = async (widget, scrollable, config) => {
+  const docEl = getDocElement();
+  const body = getBody();
+  const defaultScrollable = getDefaultScrollingElement();
+  let needsSticky = true;
+  let root = scrollable;
+  if (scrollable === docEl || scrollable === body) {
+    scrollable = defaultScrollable;
+    root = body;
+    needsSticky = false;
+  }
+  if (needsSticky && !supportsSticky()) {
+    logError("SmoothScroll on elements other than the document relies on " + "position: sticky, but this browser does not support sticky.");
+    return;
+  }
+  const scrollWatcher = ScrollWatcher.reuse({
+    [S_DEBOUNCE_WINDOW]: 0
+  });
+  const sizeWatcher = SizeWatcher.reuse({
+    [S_DEBOUNCE_WINDOW]: 0
+  });
+  await waitForMeasureTime();
+  const initialWidth = scrollable[S_SCROLL_WIDTH];
+  const initialHeight = scrollable[S_SCROLL_HEIGHT];
+
+  // We only care if it has horizontal/vertical scroll if we're using a custom
+  // scrollable, so no need to check otherwise.
+  const hasHScroll = needsSticky ? isScrollable(scrollable, {
+    axis: "x"
+  }) : false;
+  const hasVScroll = needsSticky ? isScrollable(scrollable, {
+    axis: "y"
+  }) : false;
+
+  // ----------
+
+  const setSizeVars = (element, width, height, now = false) => {
+    (now ? setNumericStyleJsVarsNow : setNumericStyleJsVars)(element, {
+      width,
+      height
+    }, {
+      _units: "px",
+      _numDecimal: 2
+    });
+  };
+
+  // If there's a scroll or size change for the scrollable container, update the
+  // transforms and possibly the width/height of the content (if it uses sticky)
+  // .
+  const updatePropsOnScroll = (target, scrollData) => {
+    applyTransforms(scrollData);
+
+    // If the scrollable scrolls horizontally we need to set a fixed width on
+    // the inner wrapper, and if it scrolls vertically we need to set a fixed
+    // height.
+    if (needsSticky) {
+      setSizeVars(innerWrapper, hasHScroll ? scrollData[S_CLIENT_WIDTH] : NaN, hasVScroll ? scrollData[S_CLIENT_HEIGHT] : NaN);
+    }
+  };
+
+  // If content is resized, update the dummy overflow to match its size
+  const updatePropsOnResize = (target, sizeData) => {
+    setSizeVars(dummy, sizeData.border[S_WIDTH], sizeData.border[S_HEIGHT]);
+  };
+
+  // ----------
+
+  const startOffsets = {
+    [S_SCROLL_LEFT]: 0,
+    [S_SCROLL_TOP]: 0
+  };
+  const currentOffsets = copyObject(startOffsets);
+  const targetOffsetsQueue = {
+    [S_SCROLL_LEFT]: [],
+    [S_SCROLL_TOP]: []
+  }; // checkpoints, each time it has to reverse direction
+
+  const applyTransforms = scrollData => {
+    let isDone = true;
+    for (const s of [S_SCROLL_LEFT, S_SCROLL_TOP]) {
+      var _MH$firstOf;
+      const newTarget = scrollData[s];
+      const currentPosition = currentOffsets[s];
+      const currentStart = startOffsets[s];
+      // Take from the front of the queue
+      const currentTarget = (_MH$firstOf = firstOf(targetOffsetsQueue[s])) !== null && _MH$firstOf !== void 0 ? _MH$firstOf : newTarget;
+      const currentElapsed = round(abs(currentPosition - currentStart));
+      const currentTotal = round(abs(currentTarget - currentStart));
+
+      // XXX TODO dependent on lag
+      if (currentTotal <= 0) {
+        continue;
+      }
+      const progress = easeInOutQuad(min(1, currentElapsed / currentTotal));
+      currentOffsets[s] = currentStart + (currentTarget - currentStart) * progress;
+      if (Number.isNaN(progress) || currentPosition === currentOffsets[s]) {
+        return;
+      }
+
+      // Check if we need to save the new target as a checkpoint, in case it's
+      // the first one or it has reversed directions (the sign of the difference
+      // between current and target has changed).
+      const lastTarget = lastOf(targetOffsetsQueue[s]);
+      const isScrolling = !isNullish(lastTarget);
+      const hasReversedDirection = isScrolling && newTarget <= currentPosition !== lastTarget <= currentPosition;
+      if (!isScrolling || hasReversedDirection) {
+        // save this as a "checkpoint" in the queue
+        targetOffsetsQueue[s].push(newTarget);
+      }
+      if (progress === 1) {
+        // pop from the front of the queue
+        targetOffsetsQueue[s].shift();
+      }
+      if (lengthOf(targetOffsetsQueue[s]) > 0) {
+        isDone = false;
+      }
+    }
+    setNumericStyleJsVars(innerWrapper, {
+      offsetX: -currentOffsets[S_SCROLL_LEFT],
+      offsetY: -currentOffsets[S_SCROLL_TOP]
+    }, {
+      _units: "px",
+      _numDecimal: 2
+    });
+    if (!isDone) {
+      onAnimationFrame(() => applyTransforms(scrollData));
+    }
+  };
+
+  // ----------
+
+  const addWatchers = () => {
+    // Track scroll in any direction as well as changes in border or content size
+    // of the element and its contents.
+    scrollWatcher.trackScroll(updatePropsOnScroll, {
+      threshold: 0,
+      scrollable
+    });
+
+    // Track changes in content or border size of the inner content wrapper.
+    sizeWatcher.onResize(updatePropsOnResize, {
+      target: innerWrapper,
+      threshold: 0
+    });
+  };
+  const removeWatchers = () => {
+    scrollWatcher.noTrackScroll(updatePropsOnScroll, scrollable);
+    sizeWatcher.offResize(updatePropsOnResize, innerWrapper);
+  };
+
+  // SETUP ------------------------------
+
+  await waitForMutateTime();
+  addClassesNow(root, PREFIX_ROOT);
+
+  // Wrap the contents in a fixed/sticky positioned wrapper and insert a dummy
+  // overflow element of the same size.
+  const {
+    wrappers,
+    unwrapFn
+  } = createWrappers(root, [["o", [PREFIX_OUTER_WRAPPER], false], ["i", [PREFIX_INNER_WRAPPER], !needsSticky]]);
+  const outerWrapper = wrappers.o;
+  const innerWrapper = wrappers.i;
+  // [TODO v2]: Better way to centrally manage wrapping and wrapping of elements
+  setBooleanDataNow(root, PREFIX_NO_WRAP); // prevent ScrollWatcher from wrapping it; XXX TODO remove this on destroy if it was added by us
+  setBooleanDataNow(root, PREFIX_HAS_H_SCROLL, hasHScroll);
+  setBooleanDataNow(root, PREFIX_HAS_V_SCROLL, hasVScroll);
+  setBooleanDataNow(root, PREFIX_USES_STICKY, needsSticky);
+  if (config !== null && config !== void 0 && config.id) {
+    outerWrapper.id = config.id;
+  }
+  if (config !== null && config !== void 0 && config.className) {
+    addClassesNow(outerWrapper, ...toArrayIfSingle(config.className));
+  }
+  const dummy = createElement("div");
+  addClassesNow(dummy, PREFIX_DUMMY);
+  // set its size now to prevent initial layout shifts
+  setSizeVars(dummy, initialWidth, initialHeight, true);
+  moveElementNow(dummy, {
+    to: root,
+    ignoreMove: true
+  });
+  addWatchers();
+  widget.onDisable(() => {
+    removeWatchers();
+    // XXX TODO re-enable regular scrolling
+  });
+  widget.onEnable(() => {
+    addWatchers();
+    // XXX TODO re-enable smooth scrolling
+  });
+  widget.onDestroy(async () => {
+    await waitForMutateTime();
+    unwrapFn();
+    moveElementNow(dummy); // remove
+
+    removeClassesNow(root, PREFIX_ROOT);
+    delDataNow(root, PREFIX_HAS_H_SCROLL);
+    delDataNow(root, PREFIX_HAS_V_SCROLL);
+    delDataNow(root, PREFIX_USES_STICKY);
+  });
 };
 
 /**
@@ -18384,6 +18885,7 @@ var index = /*#__PURE__*/Object.freeze({
   SameHeight: SameHeight,
   ScrollToTop: ScrollToTop,
   Scrollbar: Scrollbar,
+  SmoothScroll: SmoothScroll,
   Sortable: Sortable,
   TrackGesture: TrackGesture,
   TrackScroll: TrackScroll,
@@ -18441,8 +18943,9 @@ Offcanvas.register();
 PageLoader.register();
 Pager.register();
 SameHeight.register();
-ScrollToTop.register();
 Scrollbar.register();
+ScrollToTop.register();
+SmoothScroll.register();
 Sortable.register();
 TrackGesture.register();
 TrackScroll.register();

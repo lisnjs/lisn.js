@@ -36,7 +36,7 @@ import { Console } from "./console.js";
  * @category Logging
  */
 export class Logger {
-  constructor(config = {}) {
+  constructor(config) {
     _defineProperty(this, "debug", void 0);
     _defineProperty(this, "log", void 0);
     _defineProperty(this, "info", void 0);
@@ -55,6 +55,7 @@ export class Logger {
     _defineProperty(this, "getName", void 0);
     _defineProperty(this, "getVerbosityLevel", void 0);
     _defineProperty(this, "setVerbosityLevel", void 0);
+    config !== null && config !== void 0 ? config : config = {};
     const myConfig = MH.merge({
       // set defaults
       verbosityLevel: settings.verbosityLevel,

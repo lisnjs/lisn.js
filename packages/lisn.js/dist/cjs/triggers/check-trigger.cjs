@@ -104,10 +104,10 @@ class CheckTrigger extends _trigger.Trigger {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the config is invalid.
    */
-  constructor(element, actions, config = {}) {
+  constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
     if (!MH.lengthOf(actions)) {
       return;
     }

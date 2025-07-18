@@ -1171,7 +1171,7 @@ var LISN = (function (exports) {
     if (!input.trim()) {
       return [];
     }
-    limit = limit !== null && limit !== void 0 ? limit : -1;
+    limit !== null && limit !== void 0 ? limit : limit = -1;
     const output = [];
     const addEntry = s => output.push(trim ? s.trim() : s);
     while (limit--) {
@@ -2045,6 +2045,18 @@ var LISN = (function (exports) {
    */
   const waitForSubsequentMeasureTime = () => waitForMeasureTime().then(waitForMutateTime).then(waitForMeasureTime);
 
+  /**
+   * @ignore
+   * @internal
+   */
+  const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() => func(...args));
+
+  /**
+   * @ignore
+   * @internal
+   */
+  const asyncMeasurerFor = func => async (...args) => waitForMeasureTime().then(() => func(...args));
+
   // ----------------------------------------
 
   const scheduledDOMMeasurements = [];
@@ -2381,7 +2393,7 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering (optimized)
    */
-  const addClasses = (element, ...classNames) => waitForMutateTime().then(() => addClassesNow(element, ...classNames));
+  const addClasses = asyncMutatorFor(addClassesNow);
 
   /**
    * Removes the given classes to the element.
@@ -2395,7 +2407,7 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering (optimized)
    */
-  const removeClasses = (element, ...classNames) => waitForMutateTime().then(() => removeClassesNow(element, ...classNames));
+  const removeClasses = asyncMutatorFor(removeClassesNow);
 
   /**
    * Toggles the given class on the element.
@@ -2411,7 +2423,7 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering (optimized)
    */
-  const toggleClass = (element, className, force) => waitForMutateTime().then(() => toggleClassNow(element, className, force));
+  const toggleClass = asyncMutatorFor(toggleClassNow);
 
   // For *Data: to avoid unnecessary type checking that ensures element is
   // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -2440,7 +2452,7 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering (optimized)
    */
-  const setData = (element, name, value) => waitForMutateTime().then(() => setDataNow(element, name, value));
+  const setData = asyncMutatorFor(setDataNow);
 
   /**
    * Sets the given data attribute with value "true" (default) or "false".
@@ -2457,7 +2469,7 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering (optimized)
    */
-  const setBooleanData = (element, name, value = true) => waitForMutateTime().then(() => setBooleanDataNow(element, name, value));
+  const setBooleanData = asyncMutatorFor(setBooleanDataNow);
 
   /**
    * Sets the given data attribute with value "false".
@@ -2474,7 +2486,7 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering (optimized)
    */
-  const unsetBooleanData = (element, name) => waitForMutateTime().then(() => unsetBooleanDataNow(element, name));
+  const unsetBooleanData = asyncMutatorFor(unsetBooleanDataNow);
 
   /**
    * Deletes the given data attribute.
@@ -2491,7 +2503,7 @@ var LISN = (function (exports) {
    *
    * @category CSS: Altering (optimized)
    */
-  const delData = (element, name) => waitForMutateTime().then(() => delDataNow(element, name));
+  const delData = asyncMutatorFor(delDataNow);
 
   /**
    * Returns the value of the given property from the computed style of the
@@ -2506,25 +2518,7 @@ var LISN = (function (exports) {
    *
    * @category DOM: Altering (optimized)
    */
-  const getComputedStyleProp = (element, prop) => waitForMeasureTime().then(() => getComputedStylePropNow(element, prop));
-
-  /**
-   * Returns the value of the given property from the inline style of the
-   * element.
-   *
-   * @category DOM: Altering
-   */
-  const getStylePropNow = (element, prop) => {
-    var _style;
-    return (_style = element.style) === null || _style === void 0 ? void 0 : _style.getPropertyValue(prop);
-  };
-
-  /**
-   * Like {@link getStylePropNow} except it will {@link waitForMeasureTime}.
-   *
-   * @category DOM: Altering (optimized)
-   */
-  const getStyleProp = (element, prop) => waitForMeasureTime().then(() => getStylePropNow(element, prop));
+  const getComputedStyleProp = asyncMeasurerFor(getComputedStylePropNow);
 
   /**
    * Sets the given property on the inline style of the element.
@@ -2541,7 +2535,7 @@ var LISN = (function (exports) {
    *
    * @category DOM: Altering (optimized)
    */
-  const setStyleProp = (element, prop, value) => waitForMutateTime().then(() => setStylePropNow(element, prop, value));
+  const setStyleProp = asyncMutatorFor(setStylePropNow);
 
   /**
    * Deletes the given property on the inline style of the element.
@@ -2552,13 +2546,6 @@ var LISN = (function (exports) {
     var _style3;
     return (_style3 = element.style) === null || _style3 === void 0 ? void 0 : _style3.removeProperty(prop);
   };
-
-  /**
-   * Like {@link delStylePropNow} except it will {@link waitForMutateTime}.
-   *
-   * @category DOM: Altering (optimized)
-   */
-  const delStyleProp = (element, prop) => waitForMutateTime().then(() => delStylePropNow(element, prop));
 
   /**
    * In milliseconds.
@@ -2610,11 +2597,13 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    */
-  const setNumericStyleJsVars = async (element, props, options = {}) => {
+  const setNumericStyleJsVarsNow = (element, props, options = {}) => {
     if (!isDOMElement(element)) {
       return;
     }
-    const transformFn = options._transformFn;
+
+    // const transformFn = options._transformFn;
+
     const varPrefix = prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
     for (const prop in props) {
       const cssPropSuffix = camelToKebabCase(prop);
@@ -2626,16 +2615,19 @@ var LISN = (function (exports) {
         var _options$_numDecimal;
         value = props[prop];
         const thisNumDecimal = (_options$_numDecimal = options === null || options === void 0 ? void 0 : options._numDecimal) !== null && _options$_numDecimal !== void 0 ? _options$_numDecimal : value > 0 && value < 1 ? 2 : 0;
-        if (transformFn) {
-          const currValue = parseFloat(await getStyleProp(element, varName));
-          value = transformFn(prop, currValue || 0, value);
-        }
+
+        // if (transformFn) {
+        //   const currValue = MH.parseFloat(await getStyleProp(element, varName));
+        //
+        //   value = transformFn(prop, currValue || 0, value);
+        // }
+
         value = roundNumTo(value, thisNumDecimal);
       }
       if (value === null) {
-        delStyleProp(element, varName);
+        delStylePropNow(element, varName);
       } else {
-        setStyleProp(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
+        setStylePropNow(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
       }
     }
   };
@@ -2644,6 +2636,7 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    */
+  const setNumericStyleJsVars = asyncMutatorFor(setNumericStyleJsVarsNow);
 
   // ----------------------------------------
 
@@ -2688,11 +2681,11 @@ var LISN = (function (exports) {
    *
    * @categoryDescription DOM: Altering
    * These functions alter the DOM tree, but could lead to forced layout if not
-   * scheduled using {@link waitForMutateTime}.
+   * scheduled using {@link Utils.waitForMutateTime}.
    *
    * @categoryDescription DOM: Altering (optimized)
    * These functions alter the DOM tree in an optimized way using
-   * {@link waitForMutateTime} and so are asynchronous.
+   * {@link Utils.waitForMutateTime} and so are asynchronous.
    */
 
 
@@ -2729,11 +2722,11 @@ var LISN = (function (exports) {
   };
 
   /**
-   * Like {@link wrapElementNow} except it will {@link waitForMutateTime}.
+   * Like {@link wrapElementNow} except it will {@link Utils.waitForMutateTime}.
    *
    * @category DOM: Altering (optimized)
    */
-  const wrapElement = async (element, options) => waitForMutateTime().then(() => wrapElementNow(element, options));
+  const wrapElement = asyncMutatorFor(wrapElementNow);
 
   /**
    * Wraps the element's children in the given wrapper, or a newly created element
@@ -2780,6 +2773,8 @@ var LISN = (function (exports) {
     }
     element.replaceWith(newElement);
   };
+
+  // [TODO v2]: moveChildren to accept newParent as options.to
 
   /**
    * Move an element's children to a new element
@@ -2838,11 +2833,11 @@ var LISN = (function (exports) {
   };
 
   /**
-   * Like {@link moveElementNow} except it will {@link waitForMutateTime}.
+   * Like {@link moveElementNow} except it will {@link Utils.waitForMutateTime}.
    *
    * @category DOM: Altering (optimized)
    */
-  const moveElement = async (element, options) => waitForMutateTime().then(() => moveElementNow(element, options));
+  const moveElement = asyncMutatorFor(moveElementNow);
 
   /**
    * @ignore
@@ -2905,13 +2900,25 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    */
-  const tryWrap = (element, options) => _tryWrap(element, options);
+  const tryWrapNow = (element, options) => _tryWrapNow(element, options);
 
   /**
    * @ignore
    * @internal
    */
-  const tryWrapContent = (element, options) => _tryWrap(element, options, true);
+  const tryWrap = asyncMutatorFor(tryWrapNow);
+
+  /**
+   * @ignore
+   * @internal
+   */
+  const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
+
+  /**
+   * @ignore
+   * @internal
+   */
+  const tryWrapContent = asyncMutatorFor(tryWrapContentNow);
 
   /**
    * @ignore
@@ -2961,7 +2968,7 @@ var LISN = (function (exports) {
    *
    * Exposed via DOMWatcher
    */
-  const insertGhostClone = (element, insertBefore = null) => waitForMutateTime().then(() => insertGhostCloneNow(element, insertBefore));
+  const insertGhostClone = asyncMutatorFor(insertGhostCloneNow);
 
   /**
    * @ignore
@@ -3040,8 +3047,6 @@ var LISN = (function (exports) {
     }
     return wrapper;
   };
-  const _tryWrap = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
-  ) => waitForMutateTime().then(() => _tryWrapNow(element, options, wrapContent));
 
   /**
    * @module Utils
@@ -3458,7 +3463,7 @@ var LISN = (function (exports) {
      * Creates a new instance of DOMWatcher with the given
      * {@link DOMWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new DOMWatcher(getConfig$6(config), CONSTRUCTOR_KEY$6);
     }
 
@@ -3469,7 +3474,7 @@ var LISN = (function (exports) {
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       var _instances$get;
       const myConfig = getConfig$6(config);
       const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -3574,7 +3579,7 @@ var LISN = (function (exports) {
       // ----------
 
       const setupOnMutation = async (handler, userOptions) => {
-        const options = getOptions$3(userOptions || {});
+        const options = getOptions$3(userOptions !== null && userOptions !== void 0 ? userOptions : {});
         const callback = createCallback(handler, options);
         let root = config._root || getBody();
         if (!root) {
@@ -3756,8 +3761,8 @@ var LISN = (function (exports) {
   const getConfig$6 = config => {
     var _config$subtree;
     return {
-      _root: config.root || null,
-      _subtree: (_config$subtree = config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
+      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
     };
   };
   const CATEGORIES_BITS = DOM_CATEGORIES_SPACE.bit;
@@ -4042,7 +4047,8 @@ var LISN = (function (exports) {
    *
    * @category Events: Generic
    */
-  const addEventListenerTo = (target, eventType, handler, options = {}) => {
+  const addEventListenerTo = (target, eventType, handler, options) => {
+    options !== null && options !== void 0 ? options : options = false;
     eventType = transformEventType(eventType);
     if (getEventHandlerData(target, eventType, handler, options)) {
       // already added
@@ -4090,7 +4096,8 @@ var LISN = (function (exports) {
    *
    * @category Events: Generic
    */
-  const removeEventListenerFrom = (target, eventType, handler, options = {}) => {
+  const removeEventListenerFrom = (target, eventType, handler, options) => {
+    options !== null && options !== void 0 ? options : options = false;
     eventType = transformEventType(eventType);
     const data = getEventHandlerData(target, eventType, handler, options);
     if (!data) {
@@ -5103,7 +5110,7 @@ var LISN = (function (exports) {
      * Creates a new instance of GestureWatcher with the given
      * {@link GestureWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new GestureWatcher(getConfig$5(config), CONSTRUCTOR_KEY$5);
     }
 
@@ -5114,7 +5121,7 @@ var LISN = (function (exports) {
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       const myConfig = getConfig$5(config);
       const configStrKey = objToStrKey(myConfig);
       let instance = instances$7.get(configStrKey);
@@ -5157,7 +5164,7 @@ var LISN = (function (exports) {
       // async for consistency with other watchers and future compatibility in
       // case of change needed
       const setupOnGesture = async (target, handler, userOptions) => {
-        const options = getOptions$2(config, userOptions || {});
+        const options = getOptions$2(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
         createCallback(target, handler, options);
         for (const device of options._devices || DEVICES) {
           var _allListeners$get;
@@ -5346,6 +5353,7 @@ var LISN = (function (exports) {
   const instances$7 = newMap();
   const getConfig$5 = config => {
     var _config$preventDefaul, _config$naturalTouchS, _config$touchDragHold, _config$touchDragNumF;
+    config !== null && config !== void 0 ? config : config = {};
     return {
       _preventDefault: (_config$preventDefaul = config.preventDefault) !== null && _config$preventDefaul !== void 0 ? _config$preventDefaul : true,
       _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 150),
@@ -5781,7 +5789,10 @@ var LISN = (function (exports) {
    *                          is 0, it will attempt to scroll it rather than
    *                          looking at the clientWidth/Height to
    *                          scrollWidth/Height. This is more reliable but can
-   *                          cause issues, see note above.
+   *                          cause issues, see note above. Note however it will
+   *                          fail (return a false positive) on elements that have
+   *                          overflowing content but overflow set to hidden, clip
+   *                          or visible;
    * @param [options.noCache] By default the result of a check is cached for 1s
    *                          and if there's already a cached result for this
    *                          element, it is returns. Set this to true to disable
@@ -5795,7 +5806,7 @@ var LISN = (function (exports) {
       axis,
       active,
       noCache
-    } = options || {};
+    } = options !== null && options !== void 0 ? options : {};
     if (!axis) {
       return isScrollable(element, {
         axis: "y",
@@ -6675,7 +6686,7 @@ var LISN = (function (exports) {
      * Creates a new instance of SizeWatcher with the given
      * {@link SizeWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new SizeWatcher(getConfig$4(config), CONSTRUCTOR_KEY$4);
     }
 
@@ -6686,7 +6697,7 @@ var LISN = (function (exports) {
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       const myConfig = getConfig$4(config);
       const configStrKey = objToStrKey(myConfig);
       let instance = instances$6.get(configStrKey);
@@ -6790,7 +6801,7 @@ var LISN = (function (exports) {
       // ----------
 
       const setupOnResize = async (handler, userOptions) => {
-        const options = await fetchOptions(userOptions || {});
+        const options = await fetchOptions(userOptions !== null && userOptions !== void 0 ? userOptions : {});
         const element = options._element;
 
         // Don't await for the size data before creating the callback so that
@@ -6922,6 +6933,7 @@ var LISN = (function (exports) {
   const CONSTRUCTOR_KEY$4 = SYMBOL();
   const instances$6 = newMap();
   const getConfig$4 = config => {
+    config !== null && config !== void 0 ? config : config = {};
     return {
       _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
       // If threshold is 0, internally treat as 1 (pixel)
@@ -7034,7 +7046,7 @@ var LISN = (function (exports) {
      * Creates a new instance of LayoutWatcher with the given
      * {@link LayoutWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new LayoutWatcher(getConfig$3(config), CONSTRUCTOR_KEY$3);
     }
 
@@ -7045,7 +7057,7 @@ var LISN = (function (exports) {
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       var _instances$get;
       const myConfig = getConfig$3(config);
       const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -7399,7 +7411,7 @@ var LISN = (function (exports) {
      * Creates a new instance of PointerWatcher with the given
      * {@link PointerWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new PointerWatcher(getConfig$2(config), CONSTRUCTOR_KEY$2);
     }
 
@@ -7410,7 +7422,7 @@ var LISN = (function (exports) {
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       const myConfig = getConfig$2(config);
       const configStrKey = objToStrKey(myConfig);
       let instance = instances$4.get(configStrKey);
@@ -7757,7 +7769,7 @@ var LISN = (function (exports) {
      * Creates a new instance of ScrollWatcher with the given
      * {@link ScrollWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new ScrollWatcher(getConfig$1(config), CONSTRUCTOR_KEY$1);
     }
 
@@ -7768,7 +7780,7 @@ var LISN = (function (exports) {
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       const myConfig = getConfig$1(config);
       const configStrKey = objToStrKey(myConfig);
       let instance = instances$3.get(configStrKey);
@@ -7823,7 +7835,7 @@ var LISN = (function (exports) {
       // ----------
 
       const setupOnScroll = async (handler, userOptions, trackType) => {
-        const options = await fetchOnScrollOptions(config, userOptions || {});
+        const options = await fetchOnScrollOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
         const element = options._element;
 
         // Don't await for the scroll data before creating the callback so that
@@ -8050,7 +8062,7 @@ var LISN = (function (exports) {
 
       // ----------
 
-      this.scroll = (direction, options = {}) => {
+      this.scroll = (direction, options) => {
         var _options$amount;
         if (!isValidScrollDirection(direction)) {
           throw usageError(`Unknown scroll direction: '${direction}'`);
@@ -8058,8 +8070,8 @@ var LISN = (function (exports) {
         const isVertical = direction === S_UP || direction === S_DOWN;
         const sign = direction === S_UP || direction === S_LEFT ? -1 : 1;
         let targetCoordinate;
-        const amount = (_options$amount = options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
-        const asFractionOf = options.asFractionOf;
+        const amount = (_options$amount = options === null || options === void 0 ? void 0 : options.amount) !== null && _options$amount !== void 0 ? _options$amount : 100;
+        const asFractionOf = options === null || options === void 0 ? void 0 : options.asFractionOf;
         if (asFractionOf === "visible") {
           targetCoordinate = isVertical ? el => el[S_SCROLL_TOP] + sign * amount * getClientHeightNow(el) / 100 : el => el[S_SCROLL_LEFT] + sign * amount * getClientWidthNow(el) / 100;
 
@@ -8085,12 +8097,12 @@ var LISN = (function (exports) {
 
       // ----------
 
-      this.scrollTo = async (to, options = {}) => scrollTo(to, merge({
+      this.scrollTo = async (to, options) => scrollTo(to, merge({
         duration: config._scrollDuration
       },
       // default
       options, {
-        scrollable: await fetchScrollableElement(options.scrollable)
+        scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable)
       } // override
       ));
 
@@ -8100,13 +8112,13 @@ var LISN = (function (exports) {
 
       // ----------
 
-      this.stopUserScrolling = async (options = {}) => {
-        const element = await fetchScrollableElement(options.scrollable);
+      this.stopUserScrolling = async options => {
+        const element = await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable);
         const stopScroll = () => elScrollTo(element, {
           top: element[S_SCROLL_TOP],
           left: element[S_SCROLL_LEFT]
         });
-        if (options.immediate) {
+        if (options !== null && options !== void 0 && options.immediate) {
           stopScroll();
         } else {
           waitForMeasureTime().then(stopScroll);
@@ -8168,6 +8180,7 @@ var LISN = (function (exports) {
   const instances$3 = newMap();
   const PREFIX_WRAPPER = prefixName("scroll-watcher-wrapper");
   const getConfig$1 = config => {
+    config !== null && config !== void 0 ? config : config = {};
     return {
       _debounceWindow: toNonNegNum(config[S_DEBOUNCE_WINDOW], 75),
       // If threshold is 0, internally treat as 1 (pixel)
@@ -8254,7 +8267,7 @@ var LISN = (function (exports) {
       element = getDocElement();
       prefix = "page-";
     }
-    scrollData = scrollData || {};
+    scrollData !== null && scrollData !== void 0 ? scrollData : scrollData = {};
     const props = {
       [S_SCROLL_TOP]: scrollData[S_SCROLL_TOP],
       [S_SCROLL_TOP_FRACTION]: scrollData[S_SCROLL_TOP_FRACTION],
@@ -8669,7 +8682,7 @@ var LISN = (function (exports) {
      * Creates a new instance of ViewWatcher with the given
      * {@link ViewWatcherConfig}. It does not save it for future reuse.
      */
-    static create(config = {}) {
+    static create(config) {
       return new ViewWatcher(getConfig(config), CONSTRUCTOR_KEY);
     }
 
@@ -8680,7 +8693,7 @@ var LISN = (function (exports) {
      * **NOTE:** It saves it for future reuse, so don't use this for temporary
      * short-lived watchers.
      */
-    static reuse(config = {}) {
+    static reuse(config) {
       var _instances$get;
       const myConfig = getConfig(config);
       const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -9230,7 +9243,8 @@ var LISN = (function (exports) {
     return [S_AT];
   };
   const setViewCssProps = (element, viewData) => {
-    const relative = (viewData === null || viewData === void 0 ? void 0 : viewData.relative) || {};
+    var _viewData$relative;
+    const relative = (_viewData$relative = viewData === null || viewData === void 0 ? void 0 : viewData.relative) !== null && _viewData$relative !== void 0 ? _viewData$relative : {};
     const props = {
       top: relative.top,
       bottom: relative.bottom,
@@ -10672,7 +10686,7 @@ var LISN = (function (exports) {
       this.reverse = reverse.invoke;
       this[S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
       this.getActions = () => [...actions]; // copy
-      this.getConfig = () => copyObject(config || {});
+      this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
     }
   }
 
@@ -11295,7 +11309,7 @@ var LISN = (function (exports) {
     static register() {
       registerAction("set-attribute", (element, args, config) => {
         return new SetAttribute(element, {
-          [args[0]]: config || {}
+          [args[0]]: config !== null && config !== void 0 ? config : {}
         });
       }, configValidator$1);
     }
@@ -13435,9 +13449,9 @@ var LISN = (function (exports) {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the config is invalid.
      */
-    constructor(element, actions, config = {}) {
+    constructor(element, actions, config) {
       super(element, actions, config);
-      this.getConfig = () => copyObject(config);
+      this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
       if (!lengthOf(actions)) {
         return;
       }
@@ -13576,9 +13590,9 @@ var LISN = (function (exports) {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the config is invalid.
      */
-    constructor(element, actions, config = {}) {
+    constructor(element, actions, config) {
       super(element, actions, config);
-      this.getConfig = () => copyObject(config);
+      this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
       setupWatcher(this, element, actions, config, S_CLICK);
     }
   }
@@ -13674,9 +13688,9 @@ var LISN = (function (exports) {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the config is invalid.
      */
-    constructor(element, actions, config = {}) {
+    constructor(element, actions, config) {
       super(element, actions, config);
-      this.getConfig = () => copyObject(config);
+      this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
       setupWatcher(this, element, actions, config, S_PRESS);
     }
   }
@@ -13769,9 +13783,9 @@ var LISN = (function (exports) {
      * @throws {@link Errors.LisnUsageError | LisnUsageError}
      *                If the config is invalid.
      */
-    constructor(element, actions, config = {}) {
+    constructor(element, actions, config) {
       super(element, actions, config);
-      this.getConfig = () => copyObject(config);
+      this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
       setupWatcher(this, element, actions, config, S_HOVER);
     }
   }
@@ -13797,6 +13811,7 @@ var LISN = (function (exports) {
     if (!lengthOf(actions)) {
       return;
     }
+    config !== null && config !== void 0 ? config : config = {};
     const target = targetOf(config) || element;
 
     // For clicks use the trigger's own toggle function so that it remembers ITS
@@ -14163,7 +14178,7 @@ var LISN = (function (exports) {
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
-      config = config !== null && config !== void 0 ? config : {};
+      config !== null && config !== void 0 ? config : config = {};
       let directions = config.directions;
       if (!directions) {
         config.once = true;
@@ -14346,7 +14361,7 @@ var LISN = (function (exports) {
     constructor(element, actions, config) {
       var _config$rootMargin;
       super(element, actions, config);
-      this.getConfig = () => copyObject(config || {});
+      this.getConfig = () => copyObject(config !== null && config !== void 0 ? config : {});
       if (!lengthOf(actions)) {
         return;
       }

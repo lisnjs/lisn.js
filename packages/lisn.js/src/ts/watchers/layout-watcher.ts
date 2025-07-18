@@ -132,7 +132,7 @@ export class LayoutWatcher {
    * Creates a new instance of LayoutWatcher with the given
    * {@link LayoutWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config: LayoutWatcherConfig = {}) {
+  static create(config?: LayoutWatcherConfig) {
     return new LayoutWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -143,7 +143,7 @@ export class LayoutWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config: LayoutWatcherConfig = {}) {
+  static reuse(config?: LayoutWatcherConfig) {
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, { _root: null }));
 

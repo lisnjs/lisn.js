@@ -39,7 +39,7 @@ export class DOMWatcher {
    * Creates a new instance of DOMWatcher with the given
    * {@link DOMWatcherConfig}. It does not save it for future reuse.
    */
-  static create(config = {}) {
+  static create(config) {
     return new DOMWatcher(getConfig(config), CONSTRUCTOR_KEY);
   }
 
@@ -50,7 +50,7 @@ export class DOMWatcher {
    * **NOTE:** It saves it for future reuse, so don't use this for temporary
    * short-lived watchers.
    */
-  static reuse(config = {}) {
+  static reuse(config) {
     var _instances$get;
     const myConfig = getConfig(config);
     const configStrKey = objToStrKey(omitKeys(myConfig, {
@@ -215,7 +215,7 @@ export class DOMWatcher {
     // ----------
 
     const setupOnMutation = async (handler, userOptions) => {
-      const options = getOptions(userOptions || {});
+      const options = getOptions(userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const callback = createCallback(handler, options);
       let root = config._root || MH.getBody();
       if (!root) {
@@ -407,8 +407,8 @@ const instances = newXMap(() => MH.newMap());
 const getConfig = config => {
   var _config$subtree;
   return {
-    _root: config.root || null,
-    _subtree: (_config$subtree = config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
+    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
   };
 };
 const CATEGORIES_BITS = DOM_CATEGORIES_SPACE.bit;

@@ -115,29 +115,33 @@ export type ScrollToOptions = {
  * Returns true if the given element is scrollable in the given direction, or
  * in either direction (if `axis` is not given).
  *
- * **IMPORTANT:** If you enable `active` then be aware that:
- * 1. It may attempt to scroll the target in order to determine whether it's
- *    scrollable in a more reliable way than the default method of comparing
- *    clientWidth/Height to scrollWidth/Height. If there is currently any
- *    ongoing scroll on the target, this will stop it, so never use that inside
- *    scroll-triggered handlers.
- * 2. If the layout has been invalidated and not yet recalculated,
- *    this will cause a forced layout, so always {@link waitForMeasureTime}
- *    before calling this function when possible.
+ * It first checks whether the current scroll offset on the target along the
+ * given axis is non-0, and if so returns true immediately. Otherwise it will
+ * attempt to determine if it's scrollable using one of these methods
+ * (controlled by `options.active`):
+ * - passive check (default): Will examine `clientWidth/Height`,
+ *   `scrollWidth/Height` as well as the computed `overflow` CSS property to try
+ *   to determine if the target is scrollable. This is not 100% reliable but is
+ *   safer than the active check
+ * - active check: Will attempt to scroll the target by 1px and examine if the
+ *   scroll offset had changed, then revert it back to 0. This is a more
+ *   reliable check, however it can cause issues in certain contexts. In
+ *   particular, if a scroll on the target had just been initiated (but it's
+ *   scroll offset was still 0), the scroll may be cancelled. Never use that
+ *   inside scroll-based handlers.
+ *
+ * **NOTE:** If the layout has been invalidated and not yet recalculated, this
+ * will cause a forced layout, so always {@link waitForMeasureTime} before
+ * calling this function when possible.
  *
  * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
  *                          respectively. If not given, it checks both.
  * @param [options.active]  If true, then if the target's current scroll offset
  *                          is 0, it will attempt to scroll it rather than
- *                          looking at the clientWidth/Height to
- *                          scrollWidth/Height. This is more reliable but can
- *                          cause issues, see note above. Note however it will
- *                          fail (return a false positive) on elements that have
- *                          overflowing content but overflow set to hidden, clip
- *                          or visible;
+ *                          looking at its overflow.
  * @param [options.noCache] By default the result of a check is cached for 1s
  *                          and if there's already a cached result for this
- *                          element, it is returns. Set this to true to disable
+ *                          element, it is returned. Set this to true to disable
  *                          checking the cache and also saving the result into
  *                          the cache.
  *
@@ -168,7 +172,6 @@ export const isScrollable = (
 
   const offset = axis === "x" ? "Left" : "Top";
   let result = false;
-  let doCache = !noCache;
 
   if (element[`scroll${offset}`]) {
     result = true;
@@ -182,12 +185,13 @@ export const isScrollable = (
     result = canScroll;
   } else {
     const dimension = axis === "x" ? "Width" : "Height";
-    result = element[`scroll${dimension}`] > element[`client${dimension}`];
-    // No need to cache a passive check.
-    doCache = false;
+    const hasOverflow =
+      element[`scroll${dimension}`] > element[`client${dimension}`];
+    const overflowProp = getComputedStylePropNow(element, "overflow");
+    result = hasOverflow && MH.includes(["scroll", "auto"], overflowProp);
   }
 
-  if (doCache) {
+  if (!noCache) {
     isScrollableCache.sGet(element).set(axis, result);
     MH.setTimer(() => {
       MH.deleteKey(isScrollableCache.get(element), axis);

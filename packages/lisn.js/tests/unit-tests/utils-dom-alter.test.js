@@ -1,10 +1,12 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+// TODO tryWrap, tryWrapContent
+
 const utils = window.LISN.utils;
 const { DOMWatcher } = window.LISN.watchers;
 
-const newWatcherElement = async () => {
-  const { parentEl, parentElB, childEl, childElB } = newElement();
+const newWatcherElements = async () => {
+  const { parentEl, parentElB, childEl, childElB } = newElements();
 
   document.body.append(parentEl, parentElB);
   await window.waitForMO();
@@ -17,18 +19,20 @@ const newWatcherElement = async () => {
   return { parentEl, parentElB, childEl, childElB, callback };
 };
 
+// returns this structure:
 // parentEl
 //   |--- childEl
 //   |--- childElB
 // parentElB
-const newElement = () => {
-  const parentEl = document.createElement("div");
+const newElements = (inline = false) => {
+  const tag = inline ? "span" : "div";
+  const parentEl = document.createElement(tag);
   parentEl.id = "parent";
-  const parentElB = document.createElement("div");
+  const parentElB = document.createElement(tag);
   parentElB.id = "parentB";
-  const childEl = document.createElement("div");
+  const childEl = document.createElement(tag);
   childEl.id = "child";
-  const childElB = document.createElement("div");
+  const childElB = document.createElement(tag);
   childElB.id = "childB";
 
   parentEl.append(childEl, childElB);
@@ -38,7 +42,7 @@ const newElement = () => {
 
 describe("wrapElementNow", () => {
   test("ignoreMove: true", async () => {
-    const { parentEl, callback } = await newWatcherElement();
+    const { parentEl, callback } = await newWatcherElements();
     utils.wrapElementNow(parentEl, {
       ignoreMove: true,
     });
@@ -48,7 +52,7 @@ describe("wrapElementNow", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentEl, callback } = await newWatcherElement();
+    const { parentEl, callback } = await newWatcherElements();
     utils.wrapElementNow(parentEl);
 
     await window.waitForMO();
@@ -100,7 +104,7 @@ describe("wrapElementNow", () => {
 
 describe("wrapElement", () => {
   test("ignoreMove: true", async () => {
-    const { parentEl, callback } = await newWatcherElement();
+    const { parentEl, callback } = await newWatcherElements();
     await utils.wrapElement(parentEl, {
       ignoreMove: true,
     });
@@ -110,7 +114,7 @@ describe("wrapElement", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentEl, callback } = await newWatcherElement();
+    const { parentEl, callback } = await newWatcherElements();
     await utils.wrapElement(parentEl);
 
     await window.waitForMO();
@@ -160,9 +164,86 @@ describe("wrapElement", () => {
   });
 });
 
+describe("wrapChildrenNow", () => {
+  test("ignoreMove: true", async () => {
+    const { parentEl, callback } = await newWatcherElements();
+    utils.wrapChildrenNow(parentEl, {
+      ignoreMove: true,
+    });
+
+    await window.waitForMO();
+    expect(callback).toHaveBeenCalledTimes(0);
+  });
+
+  test("ignoreMove: false", async () => {
+    const { parentEl, callback } = await newWatcherElements();
+    utils.wrapChildrenNow(parentEl);
+
+    await window.waitForMO();
+    expect(callback.mock.calls.length).toBeGreaterThan(0);
+  });
+
+  test("default for span", () => {
+    const { parentEl, childEl, childElB } = newElements(true); // span
+    const wrapper = utils.wrapChildrenNow(parentEl);
+    expect(wrapper.tagName).toBe("SPAN");
+    expect(wrapper.parentElement).toBe(parentEl);
+    expect(wrapper.children.length).toBe(2);
+    expect(childEl.parentElement).toBe(wrapper);
+    expect(childElB.parentElement).toBe(wrapper);
+  });
+
+  test("default for div", () => {
+    const { parentEl, childEl, childElB } = newElements();
+    const wrapper = utils.wrapChildrenNow(parentEl);
+    expect(wrapper.tagName).toBe("DIV");
+    expect(wrapper.parentElement).toBe(parentEl);
+    expect(wrapper.children.length).toBe(2);
+    expect(childEl.parentElement).toBe(wrapper);
+    expect(childElB.parentElement).toBe(wrapper);
+  });
+
+  test("supplied tag for div", () => {
+    const { parentEl, childEl, childElB } = newElements();
+    const wrapper = utils.wrapChildrenNow(parentEl, {
+      wrapper: "section",
+    });
+    expect(wrapper.tagName).toBe("SECTION");
+    expect(wrapper.parentElement).toBe(parentEl);
+    expect(wrapper.children.length).toBe(2);
+    expect(childEl.parentElement).toBe(wrapper);
+    expect(childElB.parentElement).toBe(wrapper);
+  });
+
+  test("supplied tag for span", () => {
+    const { parentEl, childEl, childElB } = newElements(true); // span
+    const wrapper = utils.wrapChildrenNow(parentEl, {
+      wrapper: "b",
+    });
+    expect(wrapper.tagName).toBe("B");
+    expect(wrapper.parentElement).toBe(parentEl);
+    expect(wrapper.children.length).toBe(2);
+    expect(childEl.parentElement).toBe(wrapper);
+    expect(childElB.parentElement).toBe(wrapper);
+  });
+
+  test("supplied wrapper", () => {
+    const wrapper = document.createElement("div");
+    const { parentEl, childEl, childElB } = newElements();
+    const result = utils.wrapChildrenNow(parentEl, {
+      wrapper,
+    });
+    expect(result).toBe(wrapper);
+    expect(wrapper.parentElement).toBe(parentEl);
+    expect(wrapper.children.length).toBe(2);
+    expect(childEl.parentElement).toBe(wrapper);
+    expect(childElB.parentElement).toBe(wrapper);
+  });
+});
+
 describe("replaceElementNow", () => {
   test("ignoreMove: true", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     utils.replaceElementNow(childEl, parentElB, {
       ignoreMove: true,
     });
@@ -172,7 +253,7 @@ describe("replaceElementNow", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     utils.replaceElementNow(childEl, parentElB);
 
     await window.waitForMO();
@@ -180,7 +261,7 @@ describe("replaceElementNow", () => {
   });
 
   test("default", () => {
-    const { parentEl, parentElB, childEl } = newElement();
+    const { parentEl, parentElB, childEl } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     utils.replaceElementNow(childEl, parentElB);
@@ -192,7 +273,7 @@ describe("replaceElementNow", () => {
 
 describe("replaceElement", () => {
   test("ignoreMove: true", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     await utils.replaceElement(childEl, parentElB, {
       ignoreMove: true,
     });
@@ -202,7 +283,7 @@ describe("replaceElement", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     await utils.replaceElement(childEl, parentElB);
 
     await window.waitForMO();
@@ -210,7 +291,7 @@ describe("replaceElement", () => {
   });
 
   test("default", async () => {
-    const { parentEl, parentElB, childEl } = newElement();
+    const { parentEl, parentElB, childEl } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     await utils.replaceElement(childEl, parentElB);
@@ -222,7 +303,7 @@ describe("replaceElement", () => {
 
 describe("swapElementsNow", () => {
   test("ignoreMove: true", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     utils.swapElementsNow(childEl, parentElB, {
       ignoreMove: true,
     });
@@ -232,7 +313,7 @@ describe("swapElementsNow", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     utils.swapElementsNow(childEl, parentElB);
 
     await window.waitForMO();
@@ -240,7 +321,7 @@ describe("swapElementsNow", () => {
   });
 
   test("from same parent", () => {
-    const { parentEl, childEl, childElB } = newElement();
+    const { parentEl, childEl, childElB } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     expect(childElB.parentElement).toBe(parentEl);
@@ -253,7 +334,7 @@ describe("swapElementsNow", () => {
   });
 
   test("from different parents", () => {
-    const { parentEl, parentElB, childEl, childElB } = newElement();
+    const { parentEl, parentElB, childEl, childElB } = newElements();
     parentElB.append(childElB);
 
     expect(childEl.parentElement).toBe(parentEl);
@@ -267,7 +348,7 @@ describe("swapElementsNow", () => {
 
 describe("swapElements", () => {
   test("ignoreMove: true", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     await utils.swapElements(childEl, parentElB, {
       ignoreMove: true,
     });
@@ -277,7 +358,7 @@ describe("swapElements", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     await utils.swapElements(childEl, parentElB);
 
     await window.waitForMO();
@@ -285,7 +366,7 @@ describe("swapElements", () => {
   });
 
   test("from same parent", async () => {
-    const { parentEl, childEl, childElB } = newElement();
+    const { parentEl, childEl, childElB } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     expect(childElB.parentElement).toBe(parentEl);
@@ -298,7 +379,7 @@ describe("swapElements", () => {
   });
 
   test("from different parents", async () => {
-    const { parentEl, parentElB, childEl, childElB } = newElement();
+    const { parentEl, parentElB, childEl, childElB } = newElements();
     parentElB.append(childElB);
 
     expect(childEl.parentElement).toBe(parentEl);
@@ -312,7 +393,7 @@ describe("swapElements", () => {
 
 describe("moveChildrenNow", () => {
   test("ignoreMove: true", async () => {
-    const { parentEl, parentElB, callback } = await newWatcherElement();
+    const { parentEl, parentElB, callback } = await newWatcherElements();
     utils.moveChildrenNow(parentEl, parentElB, {
       ignoreMove: true,
     });
@@ -322,7 +403,7 @@ describe("moveChildrenNow", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentEl, parentElB, callback } = await newWatcherElement();
+    const { parentEl, parentElB, callback } = await newWatcherElements();
     utils.moveChildrenNow(parentEl, parentElB);
 
     await window.waitForMO();
@@ -330,7 +411,7 @@ describe("moveChildrenNow", () => {
   });
 
   test("default", () => {
-    const { parentEl, parentElB, childEl, childElB } = newElement();
+    const { parentEl, parentElB, childEl, childElB } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     expect(childElB.parentElement).toBe(parentEl);
@@ -343,7 +424,7 @@ describe("moveChildrenNow", () => {
 
 describe("moveChildren", () => {
   test("ignoreMove: true", async () => {
-    const { parentEl, parentElB, callback } = await newWatcherElement();
+    const { parentEl, parentElB, callback } = await newWatcherElements();
     await utils.moveChildren(parentEl, parentElB, {
       ignoreMove: true,
     });
@@ -353,7 +434,7 @@ describe("moveChildren", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentEl, parentElB, callback } = await newWatcherElement();
+    const { parentEl, parentElB, callback } = await newWatcherElements();
     await utils.moveChildren(parentEl, parentElB);
 
     await window.waitForMO();
@@ -361,7 +442,7 @@ describe("moveChildren", () => {
   });
 
   test("default", async () => {
-    const { parentEl, parentElB, childEl, childElB } = newElement();
+    const { parentEl, parentElB, childEl, childElB } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     expect(childElB.parentElement).toBe(parentEl);
@@ -374,7 +455,7 @@ describe("moveChildren", () => {
 
 describe("moveElementNow", () => {
   test("ignoreMove: true", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     utils.moveElementNow(childEl, {
       to: parentElB,
       ignoreMove: true,
@@ -385,7 +466,7 @@ describe("moveElementNow", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     utils.moveElementNow(childEl, { to: parentElB });
 
     await window.waitForMO();
@@ -393,7 +474,7 @@ describe("moveElementNow", () => {
   });
 
   test("default (removing)", () => {
-    const { parentEl, childEl } = newElement();
+    const { parentEl, childEl } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     utils.moveElementNow(childEl);
@@ -402,7 +483,7 @@ describe("moveElementNow", () => {
   });
 
   test("to another", () => {
-    const { parentEl, parentElB, childEl } = newElement();
+    const { parentEl, parentElB, childEl } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     utils.moveElementNow(childEl, { to: parentElB });
@@ -411,7 +492,7 @@ describe("moveElementNow", () => {
   });
 
   test("append (default)", () => {
-    const { parentElB, childEl, childElB } = newElement();
+    const { parentElB, childEl, childElB } = newElements();
     parentElB.append(childElB);
 
     utils.moveElementNow(childEl, { to: parentElB });
@@ -421,7 +502,7 @@ describe("moveElementNow", () => {
   });
 
   test("prepend", () => {
-    const { parentElB, childEl, childElB } = newElement();
+    const { parentElB, childEl, childElB } = newElements();
     parentElB.append(childElB);
 
     utils.moveElementNow(childEl, { to: parentElB, position: "prepend" });
@@ -431,7 +512,7 @@ describe("moveElementNow", () => {
   });
 
   test("before", () => {
-    const { parentElB, childEl, childElB } = newElement();
+    const { parentElB, childEl, childElB } = newElements();
     parentElB.append(childElB);
 
     utils.moveElementNow(childEl, { to: childElB, position: "before" });
@@ -441,7 +522,7 @@ describe("moveElementNow", () => {
   });
 
   test("prepend", () => {
-    const { parentElB, childEl, childElB } = newElement();
+    const { parentElB, childEl, childElB } = newElements();
     parentElB.append(childElB);
 
     utils.moveElementNow(childEl, { to: childElB, position: "after" });
@@ -453,7 +534,7 @@ describe("moveElementNow", () => {
 
 describe("moveElement", () => {
   test("ignoreMove: true", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     await utils.moveElement(childEl, {
       to: parentElB,
       ignoreMove: true,
@@ -464,7 +545,7 @@ describe("moveElement", () => {
   });
 
   test("ignoreMove: false", async () => {
-    const { parentElB, childEl, callback } = await newWatcherElement();
+    const { parentElB, childEl, callback } = await newWatcherElements();
     await utils.moveElement(childEl, { to: parentElB });
 
     await window.waitForMO();
@@ -472,7 +553,7 @@ describe("moveElement", () => {
   });
 
   test("default (removing)", async () => {
-    const { parentEl, childEl } = newElement();
+    const { parentEl, childEl } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     await utils.moveElement(childEl);
@@ -481,7 +562,7 @@ describe("moveElement", () => {
   });
 
   test("to another", async () => {
-    const { parentEl, parentElB, childEl } = newElement();
+    const { parentEl, parentElB, childEl } = newElements();
 
     expect(childEl.parentElement).toBe(parentEl);
     await utils.moveElement(childEl, { to: parentElB });

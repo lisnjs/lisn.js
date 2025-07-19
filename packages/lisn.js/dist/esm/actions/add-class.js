@@ -10,7 +10,7 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
  */
 
 import * as MC from "../globals/minification-constants.js";
-import { addClasses, removeClasses, toggleClass } from "../utils/css-alter.js";
+import { addClasses, removeClasses, toggleClasses } from "../utils/css-alter.js";
 import { registerAction } from "./action.js";
 
 /**
@@ -119,11 +119,7 @@ const getMethods = (element, classNames) => {
   return {
     _add: () => addClasses(element, ...classNames),
     _remove: () => removeClasses(element, ...classNames),
-    _toggle: async () => {
-      for (const cls of classNames) {
-        await toggleClass(element, cls);
-      }
-    }
+    _toggle: () => toggleClasses(element, ...classNames)
   };
 };
 //# sourceMappingURL=add-class.js.map

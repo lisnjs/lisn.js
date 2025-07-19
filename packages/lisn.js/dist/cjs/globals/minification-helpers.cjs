@@ -199,8 +199,6 @@ const defineProperty = exports.defineProperty = MC.OBJECT.defineProperty.bind(MC
 const merge = (...a) => {
   return MC.OBJECT.assign({}, ...a);
 };
-
-// alias for clarity of purpose
 exports.merge = merge;
 const copyObject = obj => merge(obj);
 exports.copyObject = copyObject;

@@ -7,6 +7,7 @@ exports.unmapScrollable = exports.tryGetScrollableElement = exports.tryGetMainSc
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _settings = require("../globals/settings.cjs");
+var _animations = require("./animations.cjs");
 var _cssAlter = require("./css-alter.cjs");
 var _directions = require("./directions.cjs");
 var _domEvents = require("./dom-events.cjs");
@@ -14,7 +15,6 @@ var _domOptimize = require("./dom-optimize.cjs");
 var _event = require("./event.cjs");
 var _log = require("./log.cjs");
 var _math = require("./math.cjs");
-var _tasks = require("./tasks.cjs");
 var _validation = require("./validation.cjs");
 var _xMap = require("../modules/x-map.cjs");
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
@@ -37,29 +37,33 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  * Returns true if the given element is scrollable in the given direction, or
  * in either direction (if `axis` is not given).
  *
- * **IMPORTANT:** If you enable `active` then be aware that:
- * 1. It may attempt to scroll the target in order to determine whether it's
- *    scrollable in a more reliable way than the default method of comparing
- *    clientWidth/Height to scrollWidth/Height. If there is currently any
- *    ongoing scroll on the target, this will stop it, so never use that inside
- *    scroll-triggered handlers.
- * 2. If the layout has been invalidated and not yet recalculated,
- *    this will cause a forced layout, so always {@link waitForMeasureTime}
- *    before calling this function when possible.
+ * It first checks whether the current scroll offset on the target along the
+ * given axis is non-0, and if so returns true immediately. Otherwise it will
+ * attempt to determine if it's scrollable using one of these methods
+ * (controlled by `options.active`):
+ * - passive check (default): Will examine `clientWidth/Height`,
+ *   `scrollWidth/Height` as well as the computed `overflow` CSS property to try
+ *   to determine if the target is scrollable. This is not 100% reliable but is
+ *   safer than the active check
+ * - active check: Will attempt to scroll the target by 1px and examine if the
+ *   scroll offset had changed, then revert it back to 0. This is a more
+ *   reliable check, however it can cause issues in certain contexts. In
+ *   particular, if a scroll on the target had just been initiated (but it's
+ *   scroll offset was still 0), the scroll may be cancelled. Never use that
+ *   inside scroll-based handlers.
+ *
+ * **NOTE:** If the layout has been invalidated and not yet recalculated, this
+ * will cause a forced layout, so always {@link waitForMeasureTime} before
+ * calling this function when possible.
  *
  * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
  *                          respectively. If not given, it checks both.
  * @param [options.active]  If true, then if the target's current scroll offset
  *                          is 0, it will attempt to scroll it rather than
- *                          looking at the clientWidth/Height to
- *                          scrollWidth/Height. This is more reliable but can
- *                          cause issues, see note above. Note however it will
- *                          fail (return a false positive) on elements that have
- *                          overflowing content but overflow set to hidden, clip
- *                          or visible;
+ *                          looking at its overflow.
  * @param [options.noCache] By default the result of a check is cached for 1s
  *                          and if there's already a cached result for this
- *                          element, it is returns. Set this to true to disable
+ *                          element, it is returned. Set this to true to disable
  *                          checking the cache and also saving the result into
  *                          the cache.
  *
@@ -91,7 +95,6 @@ const isScrollable = (element, options) => {
   }
   const offset = axis === "x" ? "Left" : "Top";
   let result = false;
-  let doCache = !noCache;
   if (element[`scroll${offset}`]) {
     result = true;
   } else if (active) {
@@ -108,11 +111,11 @@ const isScrollable = (element, options) => {
     result = canScroll;
   } else {
     const dimension = axis === "x" ? "Width" : "Height";
-    result = element[`scroll${dimension}`] > element[`client${dimension}`];
-    // No need to cache a passive check.
-    doCache = false;
+    const hasOverflow = element[`scroll${dimension}`] > element[`client${dimension}`];
+    const overflowProp = (0, _cssAlter.getComputedStylePropNow)(element, "overflow");
+    result = hasOverflow && MH.includes(["scroll", "auto"], overflowProp);
   }
-  if (doCache) {
+  if (!noCache) {
     isScrollableCache.sGet(element).set(axis, result);
     MH.setTimer(() => {
       MH.deleteKey(isScrollableCache.get(element), axis);
@@ -458,7 +461,7 @@ const initiateScroll = async (options, isCancelled) => {
   let startTime, previousTimeStamp;
   const currentPosition = position.start;
   const step = async () => {
-    const timeStamp = await (0, _tasks.waitForAnimationFrame)();
+    const timeStamp = await (0, _animations.waitForAnimationFrame)();
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
     await (0, _domOptimize.waitForMeasureTime)();

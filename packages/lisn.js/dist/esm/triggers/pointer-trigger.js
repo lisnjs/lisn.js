@@ -118,7 +118,7 @@ export class ClickTrigger extends Trigger {
   constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
-    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
+    this.getConfig = () => MH.copyObject(config);
     setupWatcher(this, element, actions, config, MC.S_CLICK);
   }
 }
@@ -217,7 +217,7 @@ export class PressTrigger extends Trigger {
   constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
-    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
+    this.getConfig = () => MH.copyObject(config);
     setupWatcher(this, element, actions, config, MC.S_PRESS);
   }
 }
@@ -313,7 +313,7 @@ export class HoverTrigger extends Trigger {
   constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
-    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
+    this.getConfig = () => MH.copyObject(config);
     setupWatcher(this, element, actions, config, MC.S_HOVER);
   }
 }

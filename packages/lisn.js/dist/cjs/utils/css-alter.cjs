@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleJsVarsNow = exports.setNumericStyleJsVars = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.removeClassesNow = exports.removeClasses = exports.isFlexChild = exports.isFlex = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.hasAnyClass = exports.hasAllClasses = exports.getStylePropNow = exports.getStyleProp = exports.getParentFlexDirection = exports.getMaxTransitionDuration = exports.getFlexDirection = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
+exports.unsetBooleanDataNow = exports.unsetBooleanData = exports.unsetBoolDataNow = exports.unsetBoolData = exports.undisplayElementNow = exports.undisplayElement = exports.transitionElementNow = exports.transitionElement = exports.toggleShowElementNow = exports.toggleShowElement = exports.toggleDisplayElementNow = exports.toggleDisplayElement = exports.toggleClassesNow = exports.toggleClasses = exports.toggleClassNow = exports.toggleClass = exports.showElementNow = exports.showElement = exports.setStylePropNow = exports.setStyleProp = exports.setNumericStyleJsVarsNow = exports.setNumericStyleJsVars = exports.setHasModal = exports.setDataNow = exports.setData = exports.setBooleanDataNow = exports.setBooleanData = exports.setBoolDataNow = exports.setBoolData = exports.replaceClassNow = exports.replaceClass = exports.removeClassesNow = exports.removeClasses = exports.isFlexChild = exports.isFlex = exports.isElementUndisplayed = exports.isElementHidden = exports.hideElementNow = exports.hideElement = exports.hasClass = exports.hasAnyClass = exports.hasAllClasses = exports.getStylePropNow = exports.getStyleProp = exports.getParentFlexDirection = exports.getMaxTransitionDuration = exports.getFlexDirection = exports.getData = exports.getComputedStylePropNow = exports.getComputedStyleProp = exports.getBooleanData = exports.getBoolData = exports.displayElementNow = exports.displayElement = exports.disableInitialTransition = exports.delStylePropNow = exports.delStyleProp = exports.delHasModal = exports.delDataNow = exports.delData = exports.copyStyle = exports.addClassesNow = exports.addClasses = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _domOptimize = require("./dom-optimize.cjs");
@@ -295,7 +295,7 @@ const hasClass = (element, className) => MH.classList(element).contains(classNam
  * @category CSS: Altering (optimized)
  */
 exports.hasClass = hasClass;
-const hasAllClasses = (element, classNames) => !MH.some(classNames, className => !hasClass(element, className));
+const hasAllClasses = (element, ...classNames) => MH.lengthOf(classNames) > 0 && !MH.some(classNames, className => !hasClass(element, className));
 
 /**
  * Returns true if the element's class list contains any of the given classes.
@@ -303,7 +303,7 @@ const hasAllClasses = (element, classNames) => !MH.some(classNames, className =>
  * @category CSS: Altering (optimized)
  */
 exports.hasAllClasses = hasAllClasses;
-const hasAnyClass = (element, classNames) => MH.some(classNames, className => hasClass(element, className));
+const hasAnyClass = (element, ...classNames) => MH.some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
@@ -352,6 +352,43 @@ const toggleClassNow = (element, className, force) => MH.classList(element).togg
  */
 exports.toggleClassNow = toggleClassNow;
 const toggleClass = exports.toggleClass = (0, _domOptimize.asyncMutatorFor)(toggleClassNow);
+
+/**
+ * Toggles the given classes on the element. This function does not accept the
+ * `force` parameter.
+ *
+ * @category CSS: Altering
+ */
+const toggleClassesNow = (element, ...classNames) => {
+  for (const cls of classNames) {
+    toggleClassNow(element, cls);
+  }
+};
+
+/**
+ * Like {@link toggleClassesNow} except it will {@link waitForMutateTime}.
+ *
+ * @category CSS: Altering (optimized)
+ */
+exports.toggleClassesNow = toggleClassesNow;
+const toggleClasses = exports.toggleClasses = (0, _domOptimize.asyncMutatorFor)(toggleClassesNow);
+
+/**
+ * Replaces the given class on the element with a new one.
+ *
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
+ *
+ * @category CSS: Altering
+ */
+const replaceClassNow = (element, oldClassName, newClassName) => MH.classList(element).replace(oldClassName, newClassName);
+
+/**
+ * Like {@link replaceClassNow} except it will {@link waitForMutateTime}.
+ *
+ * @category CSS: Altering (optimized)
+ */
+exports.replaceClassNow = replaceClassNow;
+const replaceClass = exports.replaceClass = (0, _domOptimize.asyncMutatorFor)(replaceClassNow);
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -691,9 +728,6 @@ const setNumericStyleJsVarsNow = (element, props, options = {}) => {
   if (!(0, _domQuery.isDOMElement)(element)) {
     return;
   }
-
-  // const transformFn = options._transformFn;
-
   const varPrefix = MH.prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
   for (const prop in props) {
     const cssPropSuffix = (0, _text.camelToKebabCase)(prop);
@@ -705,13 +739,6 @@ const setNumericStyleJsVarsNow = (element, props, options = {}) => {
       var _options$_numDecimal;
       value = props[prop];
       const thisNumDecimal = (_options$_numDecimal = options === null || options === void 0 ? void 0 : options._numDecimal) !== null && _options$_numDecimal !== void 0 ? _options$_numDecimal : value > 0 && value < 1 ? 2 : 0;
-
-      // if (transformFn) {
-      //   const currValue = MH.parseFloat(await getStyleProp(element, varName));
-      //
-      //   value = transformFn(prop, currValue || 0, value);
-      // }
-
       value = (0, _math.roundNumTo)(value, thisNumDecimal);
     }
     if (value === null) {

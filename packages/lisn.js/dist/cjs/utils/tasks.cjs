@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.waitForDelay = exports.waitForAnimationFrame = exports.scheduleHighPriorityTask = exports.getDebouncedHandler = void 0;
+exports.waitForDelay = exports.scheduleHighPriorityTask = exports.getDebouncedHandler = void 0;
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
 /**
@@ -83,18 +83,5 @@ exports.getDebouncedHandler = getDebouncedHandler;
 const waitForDelay = delay => MH.newPromise(resolve => {
   MH.setTimer(resolve, delay);
 });
-
-/**
- * Returns a promise that resolves at the next animation frame. Async/await
- * version of requestAnimationFrame.
- *
- * @returns The timestamp gotten from requestAnimationFrame
- *
- * @category Tasks
- */
 exports.waitForDelay = waitForDelay;
-const waitForAnimationFrame = async () => MH.newPromise(resolve => {
-  MH.onAnimationFrame(resolve);
-});
-exports.waitForAnimationFrame = waitForAnimationFrame;
 //# sourceMappingURL=tasks.cjs.map

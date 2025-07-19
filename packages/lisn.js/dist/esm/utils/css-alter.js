@@ -272,14 +272,14 @@ export const hasClass = (element, className) => MH.classList(element).contains(c
  *
  * @category CSS: Altering (optimized)
  */
-export const hasAllClasses = (element, classNames) => !MH.some(classNames, className => !hasClass(element, className));
+export const hasAllClasses = (element, ...classNames) => MH.lengthOf(classNames) > 0 && !MH.some(classNames, className => !hasClass(element, className));
 
 /**
  * Returns true if the element's class list contains any of the given classes.
  *
  * @category CSS: Altering (optimized)
  */
-export const hasAnyClass = (element, classNames) => MH.some(classNames, className => hasClass(element, className));
+export const hasAnyClass = (element, ...classNames) => MH.some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
@@ -324,6 +324,41 @@ export const toggleClassNow = (element, className, force) => MH.classList(elemen
  * @category CSS: Altering (optimized)
  */
 export const toggleClass = asyncMutatorFor(toggleClassNow);
+
+/**
+ * Toggles the given classes on the element. This function does not accept the
+ * `force` parameter.
+ *
+ * @category CSS: Altering
+ */
+export const toggleClassesNow = (element, ...classNames) => {
+  for (const cls of classNames) {
+    toggleClassNow(element, cls);
+  }
+};
+
+/**
+ * Like {@link toggleClassesNow} except it will {@link waitForMutateTime}.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export const toggleClasses = asyncMutatorFor(toggleClassesNow);
+
+/**
+ * Replaces the given class on the element with a new one.
+ *
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
+ *
+ * @category CSS: Altering
+ */
+export const replaceClassNow = (element, oldClassName, newClassName) => MH.classList(element).replace(oldClassName, newClassName);
+
+/**
+ * Like {@link replaceClassNow} except it will {@link waitForMutateTime}.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export const replaceClass = asyncMutatorFor(replaceClassNow);
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.
@@ -644,9 +679,6 @@ export const setNumericStyleJsVarsNow = (element, props, options = {}) => {
   if (!isDOMElement(element)) {
     return;
   }
-
-  // const transformFn = options._transformFn;
-
   const varPrefix = MH.prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
   for (const prop in props) {
     const cssPropSuffix = camelToKebabCase(prop);
@@ -658,13 +690,6 @@ export const setNumericStyleJsVarsNow = (element, props, options = {}) => {
       var _options$_numDecimal;
       value = props[prop];
       const thisNumDecimal = (_options$_numDecimal = options === null || options === void 0 ? void 0 : options._numDecimal) !== null && _options$_numDecimal !== void 0 ? _options$_numDecimal : value > 0 && value < 1 ? 2 : 0;
-
-      // if (transformFn) {
-      //   const currValue = MH.parseFloat(await getStyleProp(element, varName));
-      //
-      //   value = transformFn(prop, currValue || 0, value);
-      // }
-
       value = roundNumTo(value, thisNumDecimal);
     }
     if (value === null) {

@@ -68,12 +68,15 @@ export const wrapElement = asyncMutatorFor(wrapElementNow);
  */
 export const wrapChildrenNow = (element, options) => {
   const wrapper = createWrapperFor(element, options === null || options === void 0 ? void 0 : options.wrapper);
+  const {
+    ignoreMove
+  } = options !== null && options !== void 0 ? options : {};
   moveChildrenNow(element, wrapper, {
-    ignoreMove: true
+    ignoreMove
   });
   moveElementNow(wrapper, {
     to: element,
-    ignoreMove: true
+    ignoreMove
   });
   return wrapper;
 };
@@ -258,7 +261,7 @@ export const getWrapper = (element, options) => {
     classNames = [MC.PREFIX_WRAPPER]
   } = options !== null && options !== void 0 ? options : {};
   const parent = MH.parentOf(element);
-  if (MH.lengthOf(MH.childrenOf(parent)) === 1 && MH.isHTMLElement(parent) && (!tagName || MH.hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, classNames))) {
+  if (MH.lengthOf(MH.childrenOf(parent)) === 1 && MH.isHTMLElement(parent) && (!tagName || MH.hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, ...classNames))) {
     // Already wrapped
     return parent;
   }
@@ -277,7 +280,7 @@ export const getContentWrapper = (element, options) => {
     classNames = [MC.PREFIX_WRAPPER]
   } = options !== null && options !== void 0 ? options : {};
   const firstChild = MH.childrenOf(element)[0];
-  if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (!tagName || MH.hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, classNames))) {
+  if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (!tagName || MH.hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, ...classNames))) {
     // Already wrapped
     return firstChild;
   }

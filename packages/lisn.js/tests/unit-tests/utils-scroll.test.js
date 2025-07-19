@@ -600,12 +600,6 @@ test("isScrollable", () => {
   expect(utils.isScrollable(element, { active: true, noCache: true })).toBe(
     false,
   );
-  expect(
-    utils.isScrollable(element, { active: true, axis: "x", noCache: true }),
-  ).toBe(false);
-  expect(
-    utils.isScrollable(element, { active: true, axis: "y", noCache: true }),
-  ).toBe(false);
   expect(element.scrollTop).toBe(0);
   expect(element.scrollLeft).toBe(0);
 
@@ -614,17 +608,23 @@ test("isScrollable", () => {
   expect(utils.isScrollable(element, { active: true, noCache: true })).toBe(
     false,
   );
-  expect(
-    utils.isScrollable(element, { active: true, axis: "x", noCache: true }),
-  ).toBe(false);
-  expect(
-    utils.isScrollable(element, { active: true, axis: "y", noCache: true }),
-  ).toBe(false);
   expect(element.scrollTop).toBe(0);
   expect(element.scrollLeft).toBe(0);
 
+  // ----------
   element.enableScroll();
-  // passive will fail here, that's ok
+
+  element.style.overflow = "visible";
+  expect(utils.isScrollable(element, { noCache: true })).toBe(false);
+  element.style.overflow = "hidden";
+  expect(utils.isScrollable(element, { noCache: true })).toBe(false);
+  element.style.overflow = "scroll";
+  expect(utils.isScrollable(element, { noCache: true })).toBe(true);
+  element.style.overflow = "auto";
+  expect(utils.isScrollable(element, { axis: "x", noCache: true })).toBe(true);
+  expect(utils.isScrollable(element, { axis: "y", noCache: true })).toBe(true);
+  expect(utils.isScrollable(element, { noCache: true })).toBe(true);
+
   expect(utils.isScrollable(element, { active: true, noCache: true })).toBe(
     true,
   );
@@ -634,11 +634,17 @@ test("isScrollable", () => {
   expect(
     utils.isScrollable(element, { active: true, axis: "y", noCache: true }),
   ).toBe(true);
+
   expect(element.scrollTop).toBe(0);
   expect(element.scrollLeft).toBe(0);
 
+  // ----------
   element.scrollTo(10, 0);
+
   expect(utils.isScrollable(element, { noCache: true })).toBe(true);
+  expect(utils.isScrollable(element, { axis: "x", noCache: true })).toBe(true);
+  expect(utils.isScrollable(element, { axis: "y", noCache: true })).toBe(true);
+
   expect(utils.isScrollable(element, { active: true, noCache: true })).toBe(
     true,
   );
@@ -648,11 +654,17 @@ test("isScrollable", () => {
   expect(
     utils.isScrollable(element, { active: true, axis: "y", noCache: true }),
   ).toBe(true);
+
   expect(element.scrollTop).toBe(0);
   expect(element.scrollLeft).toBe(10);
 
+  // ----------
   element.scrollTo(0, 10);
+
   expect(utils.isScrollable(element, { noCache: true })).toBe(true);
+  expect(utils.isScrollable(element, { axis: "x", noCache: true })).toBe(true);
+  expect(utils.isScrollable(element, { axis: "y", noCache: true })).toBe(true);
+
   expect(utils.isScrollable(element, { active: true, noCache: true })).toBe(
     true,
   );
@@ -662,11 +674,17 @@ test("isScrollable", () => {
   expect(
     utils.isScrollable(element, { active: true, axis: "y", noCache: true }),
   ).toBe(true);
+
   expect(element.scrollTop).toBe(10);
   expect(element.scrollLeft).toBe(0);
 
+  // ----------
   element.scrollTo(10, 10);
+
+  expect(utils.isScrollable(element, { axis: "x", noCache: true })).toBe(true);
+  expect(utils.isScrollable(element, { axis: "y", noCache: true })).toBe(true);
   expect(utils.isScrollable(element, { noCache: true })).toBe(true);
+
   expect(utils.isScrollable(element, { active: true, noCache: true })).toBe(
     true,
   );
@@ -676,6 +694,7 @@ test("isScrollable", () => {
   expect(
     utils.isScrollable(element, { active: true, axis: "y", noCache: true }),
   ).toBe(true);
+
   expect(element.scrollTop).toBe(10);
   expect(element.scrollLeft).toBe(10);
 });

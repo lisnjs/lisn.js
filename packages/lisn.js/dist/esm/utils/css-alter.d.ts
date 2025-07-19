@@ -210,13 +210,13 @@ export declare const hasClass: (element: Element, className: string) => boolean;
  *
  * @category CSS: Altering (optimized)
  */
-export declare const hasAllClasses: (element: Element, classNames: string[]) => boolean;
+export declare const hasAllClasses: (element: Element, ...classNames: string[]) => boolean;
 /**
  * Returns true if the element's class list contains any of the given classes.
  *
  * @category CSS: Altering (optimized)
  */
-export declare const hasAnyClass: (element: Element, classNames: string[]) => boolean;
+export declare const hasAnyClass: (element: Element, ...classNames: string[]) => boolean;
 /**
  * Adds the given classes to the element.
  *
@@ -255,6 +255,33 @@ export declare const toggleClassNow: (element: Element, className: string, force
  * @category CSS: Altering (optimized)
  */
 export declare const toggleClass: (element: Element, className: string, force?: boolean | undefined) => Promise<boolean>;
+/**
+ * Toggles the given classes on the element. This function does not accept the
+ * `force` parameter.
+ *
+ * @category CSS: Altering
+ */
+export declare const toggleClassesNow: (element: Element, ...classNames: string[]) => void;
+/**
+ * Like {@link toggleClassesNow} except it will {@link waitForMutateTime}.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export declare const toggleClasses: (element: Element, ...classNames: string[]) => Promise<void>;
+/**
+ * Replaces the given class on the element with a new one.
+ *
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
+ *
+ * @category CSS: Altering
+ */
+export declare const replaceClassNow: (element: Element, oldClassName: string, newClassName: string) => boolean;
+/**
+ * Like {@link replaceClassNow} except it will {@link waitForMutateTime}.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export declare const replaceClass: (element: Element, oldClassName: string, newClassName: string) => Promise<boolean>;
 /**
  * Returns the value of the given data attribute. The name of the attribute
  * must _not_ start with `data`. It can be in either camelCase or kebab-case,

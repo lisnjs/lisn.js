@@ -43,13 +43,4 @@ export declare const getDebouncedHandler: <Args extends unknown[]>(debounceWindo
  * @category Tasks
  */
 export declare const waitForDelay: (delay?: number) => Promise<void>;
-/**
- * Returns a promise that resolves at the next animation frame. Async/await
- * version of requestAnimationFrame.
- *
- * @returns The timestamp gotten from requestAnimationFrame
- *
- * @category Tasks
- */
-export declare const waitForAnimationFrame: () => Promise<number>;
 //# sourceMappingURL=tasks.d.ts.map

@@ -124,8 +124,6 @@ export const defineProperty = MC.OBJECT.defineProperty.bind(MC.OBJECT);
 export const merge = (...a) => {
   return MC.OBJECT.assign({}, ...a);
 };
-
-// alias for clarity of purpose
 export const copyObject = obj => merge(obj);
 export const promiseResolve = MC.PROMISE.resolve.bind(MC.PROMISE);
 export const promiseAll = MC.PROMISE.all.bind(MC.PROMISE);

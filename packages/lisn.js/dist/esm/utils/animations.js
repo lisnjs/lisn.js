@@ -8,6 +8,54 @@ import { addClassesNow, removeClassesNow, getData } from "./css-alter.js";
 import { waitForMeasureTime, waitForMutateTime } from "./dom-optimize.js";
 
 /**
+ * The callback is passed two arguments:
+ * 1. The total elapsed time in milliseconds since the start
+ * 2. The elapsed time in milliseconds since the previous frame
+ *
+ * The first time this callback is called both of these will be 0.
+ *
+ * The callback must return `true` if it wants to animate again on the next
+ * frame and `false` if done.
+ */
+
+/**
+ * Returns a promise that resolves at the next animation frame. Async/await
+ * version of requestAnimationFrame.
+ *
+ * @returns The timestamp gotten from requestAnimationFrame
+ *
+ * @category Animations
+ */
+export const waitForAnimationFrame = async () => MH.newPromise(resolve => {
+  MH.onAnimationFrame(resolve);
+});
+
+/**
+ * Calls the given callback on every animation frame.
+ *
+ * @see {@link AnimationCallback}
+ *
+ * @category Animations
+ */
+export const onEveryAnimationFrame = callback => {
+  let startTime, previousTimeStamp;
+  const step = timeStamp => {
+    if (!startTime) {
+      startTime = timeStamp;
+      previousTimeStamp = timeStamp;
+    }
+    const totalElapsed = timeStamp - startTime;
+    const elapsedSinceLast = timeStamp - previousTimeStamp;
+    previousTimeStamp = timeStamp;
+    const shouldRepeat = callback(totalElapsed, elapsedSinceLast);
+    if (shouldRepeat) {
+      MH.onAnimationFrame(step);
+    }
+  };
+  MH.onAnimationFrame(step);
+};
+
+/**
  * @param webAnimationCallback This function is called for each
  *                             {@link https://developer.mozilla.org/en-US/docs/Web/API/Animation | Animation}
  *                             on the element. It {@link waitForMeasureTime}

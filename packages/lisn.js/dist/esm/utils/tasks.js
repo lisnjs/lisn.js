@@ -75,16 +75,4 @@ export const getDebouncedHandler = (debounceWindow, handler) => {
 export const waitForDelay = delay => MH.newPromise(resolve => {
   MH.setTimer(resolve, delay);
 });
-
-/**
- * Returns a promise that resolves at the next animation frame. Async/await
- * version of requestAnimationFrame.
- *
- * @returns The timestamp gotten from requestAnimationFrame
- *
- * @category Tasks
- */
-export const waitForAnimationFrame = async () => MH.newPromise(resolve => {
-  MH.onAnimationFrame(resolve);
-});
 //# sourceMappingURL=tasks.js.map

@@ -223,8 +223,6 @@ const defineProperty = OBJECT.defineProperty.bind(OBJECT);
 const merge = (...a) => {
   return OBJECT.assign({}, ...a);
 };
-
-// alias for clarity of purpose
 const copyObject = obj => merge(obj);
 PROMISE.resolve.bind(PROMISE);
 const promiseAll = PROMISE.all.bind(PROMISE);
@@ -1579,18 +1577,6 @@ const getDebouncedHandler = (debounceWindow, handler) => {
 };
 
 /**
- * Returns a promise that resolves at the next animation frame. Async/await
- * version of requestAnimationFrame.
- *
- * @returns The timestamp gotten from requestAnimationFrame
- *
- * @category Tasks
- */
-const waitForAnimationFrame = async () => newPromise(resolve => {
-  onAnimationFrame(resolve);
-});
-
-/**
  * @typeParam Args See {@link Callback}
  */
 
@@ -1966,7 +1952,7 @@ const hasClass = (element, className) => classList(element).contains(className);
  *
  * @category CSS: Altering (optimized)
  */
-const hasAnyClass = (element, classNames) => some(classNames, className => hasClass(element, className));
+const hasAnyClass = (element, ...classNames) => some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
@@ -2058,9 +2044,6 @@ const setNumericStyleJsVarsNow = (element, props, options = {}) => {
   if (!isDOMElement(element)) {
     return;
   }
-
-  // const transformFn = options._transformFn;
-
   const varPrefix = prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
   for (const prop in props) {
     const cssPropSuffix = camelToKebabCase(prop);
@@ -2072,13 +2055,6 @@ const setNumericStyleJsVarsNow = (element, props, options = {}) => {
       var _options$_numDecimal;
       value = props[prop];
       const thisNumDecimal = (_options$_numDecimal = options === null || options === void 0 ? void 0 : options._numDecimal) !== null && _options$_numDecimal !== void 0 ? _options$_numDecimal : value > 0 && value < 1 ? 2 : 0;
-
-      // if (transformFn) {
-      //   const currValue = MH.parseFloat(await getStyleProp(element, varName));
-      //
-      //   value = transformFn(prop, currValue || 0, value);
-      // }
-
       value = roundNumTo(value, thisNumDecimal);
     }
     if (value === null) {
@@ -2151,12 +2127,15 @@ const wrapElementNow = (element, options) => {
  */
 const wrapChildrenNow = (element, options) => {
   const wrapper = createWrapperFor(element, options === null || options === void 0 ? void 0 : options.wrapper);
+  const {
+    ignoreMove
+  } = options !== null && options !== void 0 ? options : {};
   moveChildrenNow(element, wrapper, {
-    ignoreMove: true
+    ignoreMove
   });
   moveElementNow(wrapper, {
     to: element,
-    ignoreMove: true
+    ignoreMove
   });
   return wrapper;
 };
@@ -2244,7 +2223,7 @@ const getWrapper = (element, options) => {
     classNames = [PREFIX_WRAPPER$2]
   } = options !== null && options !== void 0 ? options : {};
   const parent = parentOf(element);
-  if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName || hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, classNames))) {
+  if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName || hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, ...classNames))) {
     // Already wrapped
     return parent;
   }
@@ -2263,7 +2242,7 @@ const getContentWrapper = (element, options) => {
     classNames = [PREFIX_WRAPPER$2]
   } = options !== null && options !== void 0 ? options : {};
   const firstChild = childrenOf(element)[0];
-  if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName || hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, classNames))) {
+  if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName || hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, ...classNames))) {
     // Already wrapped
     return firstChild;
   }
@@ -4889,6 +4868,34 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
 
 
 /**
+ * The callback is passed two arguments:
+ * 1. The total elapsed time in milliseconds since the start
+ * 2. The elapsed time in milliseconds since the previous frame
+ *
+ * The first time this callback is called both of these will be 0.
+ *
+ * The callback must return `true` if it wants to animate again on the next
+ * frame and `false` if done.
+ */
+
+/**
+ * Returns a promise that resolves at the next animation frame. Async/await
+ * version of requestAnimationFrame.
+ *
+ * @returns The timestamp gotten from requestAnimationFrame
+ *
+ * @category Animations
+ */
+const waitForAnimationFrame = async () => newPromise(resolve => {
+  onAnimationFrame(resolve);
+});
+
+/**
+ * @module Utils
+ */
+
+
+/**
  * @category Scrolling
  */
 
@@ -4903,29 +4910,33 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
  * Returns true if the given element is scrollable in the given direction, or
  * in either direction (if `axis` is not given).
  *
- * **IMPORTANT:** If you enable `active` then be aware that:
- * 1. It may attempt to scroll the target in order to determine whether it's
- *    scrollable in a more reliable way than the default method of comparing
- *    clientWidth/Height to scrollWidth/Height. If there is currently any
- *    ongoing scroll on the target, this will stop it, so never use that inside
- *    scroll-triggered handlers.
- * 2. If the layout has been invalidated and not yet recalculated,
- *    this will cause a forced layout, so always {@link waitForMeasureTime}
- *    before calling this function when possible.
+ * It first checks whether the current scroll offset on the target along the
+ * given axis is non-0, and if so returns true immediately. Otherwise it will
+ * attempt to determine if it's scrollable using one of these methods
+ * (controlled by `options.active`):
+ * - passive check (default): Will examine `clientWidth/Height`,
+ *   `scrollWidth/Height` as well as the computed `overflow` CSS property to try
+ *   to determine if the target is scrollable. This is not 100% reliable but is
+ *   safer than the active check
+ * - active check: Will attempt to scroll the target by 1px and examine if the
+ *   scroll offset had changed, then revert it back to 0. This is a more
+ *   reliable check, however it can cause issues in certain contexts. In
+ *   particular, if a scroll on the target had just been initiated (but it's
+ *   scroll offset was still 0), the scroll may be cancelled. Never use that
+ *   inside scroll-based handlers.
+ *
+ * **NOTE:** If the layout has been invalidated and not yet recalculated, this
+ * will cause a forced layout, so always {@link waitForMeasureTime} before
+ * calling this function when possible.
  *
  * @param [options.axis]    One of "x" or "y" for horizontal or vertical scroll
  *                          respectively. If not given, it checks both.
  * @param [options.active]  If true, then if the target's current scroll offset
  *                          is 0, it will attempt to scroll it rather than
- *                          looking at the clientWidth/Height to
- *                          scrollWidth/Height. This is more reliable but can
- *                          cause issues, see note above. Note however it will
- *                          fail (return a false positive) on elements that have
- *                          overflowing content but overflow set to hidden, clip
- *                          or visible;
+ *                          looking at its overflow.
  * @param [options.noCache] By default the result of a check is cached for 1s
  *                          and if there's already a cached result for this
- *                          element, it is returns. Set this to true to disable
+ *                          element, it is returned. Set this to true to disable
  *                          checking the cache and also saving the result into
  *                          the cache.
  *
@@ -4957,7 +4968,6 @@ const isScrollable = (element, options) => {
   }
   const offset = axis === "x" ? "Left" : "Top";
   let result = false;
-  let doCache = !noCache;
   if (element[`scroll${offset}`]) {
     result = true;
   } else if (active) {
@@ -4974,11 +4984,11 @@ const isScrollable = (element, options) => {
     result = canScroll;
   } else {
     const dimension = axis === "x" ? "Width" : "Height";
-    result = element[`scroll${dimension}`] > element[`client${dimension}`];
-    // No need to cache a passive check.
-    doCache = false;
+    const hasOverflow = element[`scroll${dimension}`] > element[`client${dimension}`];
+    const overflowProp = getComputedStylePropNow(element, "overflow");
+    result = hasOverflow && includes(["scroll", "auto"], overflowProp);
   }
-  if (doCache) {
+  if (!noCache) {
     isScrollableCache.sGet(element).set(axis, result);
     setTimer(() => {
       deleteKey(isScrollableCache.get(element), axis);

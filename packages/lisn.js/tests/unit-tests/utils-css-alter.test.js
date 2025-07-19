@@ -221,3 +221,192 @@ test("isElementUndisplayed", () => {
   utils.undisplayElementNow(element);
   expect(utils.isElementUndisplayed(element)).toBe(true);
 });
+
+test("hasClass", () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2");
+  expect(utils.hasClass(element, "cls1")).toBe(true);
+  expect(utils.hasClass(element, "cls2")).toBe(true);
+  expect(utils.hasClass(element, "cls3")).toBe(false);
+  expect(utils.hasClass(element, "")).toBe(false);
+});
+
+test("hasAnyClass", () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2");
+  expect(utils.hasAnyClass(element, "cls1")).toBe(true);
+  expect(utils.hasAnyClass(element, "cls1", "cls2")).toBe(true);
+  expect(utils.hasAnyClass(element, "cls1", "cls3")).toBe(true);
+  expect(utils.hasAnyClass(element, "cls2", "cls3")).toBe(true);
+
+  expect(utils.hasAnyClass(element, "cls3")).toBe(false);
+  expect(utils.hasAnyClass(element, "cls3", "cls4")).toBe(false);
+  expect(utils.hasAnyClass(element)).toBe(false);
+});
+
+test("hasAllClasses", () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2", "cls3");
+  expect(utils.hasAllClasses(element, "cls1")).toBe(true);
+  expect(utils.hasAllClasses(element, "cls1", "cls2")).toBe(true);
+  expect(utils.hasAllClasses(element, "cls1", "cls3")).toBe(true);
+  expect(utils.hasAllClasses(element, "cls1", "cls2", "cls3")).toBe(true);
+  expect(utils.hasAllClasses(element, "cls2", "cls3")).toBe(true);
+  expect(utils.hasAllClasses(element, "cls3")).toBe(true);
+
+  expect(utils.hasAllClasses(element, "cls3", "cls4")).toBe(false);
+  expect(utils.hasAllClasses(element, "cls4")).toBe(false);
+  expect(utils.hasAllClasses(element)).toBe(false);
+});
+
+test("addClassesNow", () => {
+  const element = document.createElement("div");
+  utils.addClassesNow(element, "cls1", "cls2");
+  expect(element.classList.length).toBe(2);
+  expect(element.classList.contains("cls1")).toBe(true);
+  expect(element.classList.contains("cls2")).toBe(true);
+});
+
+test("addClasses", async () => {
+  const element = document.createElement("div");
+  await utils.addClasses(element, "cls1", "cls2");
+  expect(element.classList.length).toBe(2);
+  expect(element.classList.contains("cls1")).toBe(true);
+  expect(element.classList.contains("cls2")).toBe(true);
+});
+
+test("removeClassesNow", () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2", "cls3");
+  utils.removeClassesNow(element, "cls1", "cls2");
+  expect(element.classList.length).toBe(1);
+  expect(element.classList.contains("cls1")).toBe(false);
+  expect(element.classList.contains("cls2")).toBe(false);
+  expect(element.classList.contains("cls3")).toBe(true);
+});
+
+test("removeClasses", async () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2", "cls3");
+  await utils.removeClassesNow(element, "cls1", "cls2");
+  expect(element.classList.length).toBe(1);
+  expect(element.classList.contains("cls1")).toBe(false);
+  expect(element.classList.contains("cls2")).toBe(false);
+  expect(element.classList.contains("cls3")).toBe(true);
+});
+
+test("toggleClassNow", () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2");
+
+  utils.toggleClassNow(element, "cls1");
+  expect(element.classList.length).toBe(1);
+  expect(element.classList.contains("cls1")).toBe(false);
+  expect(element.classList.contains("cls2")).toBe(true);
+
+  utils.toggleClassNow(element, "cls1");
+  expect(element.classList.length).toBe(2);
+  expect(element.classList.contains("cls1")).toBe(true);
+  expect(element.classList.contains("cls2")).toBe(true);
+
+  for (const __ignored of [1, 2]) {
+    utils.toggleClassNow(element, "cls1", true);
+    expect(element.classList.length).toBe(2);
+    expect(element.classList.contains("cls1")).toBe(true);
+    expect(element.classList.contains("cls2")).toBe(true);
+  }
+
+  for (const __ignored of [1, 2]) {
+    utils.toggleClassNow(element, "cls1", false);
+    expect(element.classList.length).toBe(1);
+    expect(element.classList.contains("cls1")).toBe(false);
+    expect(element.classList.contains("cls2")).toBe(true);
+  }
+});
+
+test("toggleClass", async () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2");
+
+  await utils.toggleClass(element, "cls1");
+  expect(element.classList.length).toBe(1);
+  expect(element.classList.contains("cls1")).toBe(false);
+  expect(element.classList.contains("cls2")).toBe(true);
+
+  await utils.toggleClass(element, "cls1");
+  expect(element.classList.length).toBe(2);
+  expect(element.classList.contains("cls1")).toBe(true);
+  expect(element.classList.contains("cls2")).toBe(true);
+
+  for (const __ignored of [1, 2]) {
+    await utils.toggleClass(element, "cls1", true);
+    expect(element.classList.length).toBe(2);
+    expect(element.classList.contains("cls1")).toBe(true);
+    expect(element.classList.contains("cls2")).toBe(true);
+  }
+
+  for (const __ignored of [1, 2]) {
+    await utils.toggleClass(element, "cls1", false);
+    expect(element.classList.length).toBe(1);
+    expect(element.classList.contains("cls1")).toBe(false);
+    expect(element.classList.contains("cls2")).toBe(true);
+  }
+});
+
+test("toggleClassesNow", () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2", "cls3");
+
+  utils.toggleClassesNow(element, "cls1", "cls2");
+  expect(element.classList.length).toBe(1);
+  expect(element.classList.contains("cls1")).toBe(false);
+  expect(element.classList.contains("cls2")).toBe(false);
+  expect(element.classList.contains("cls3")).toBe(true);
+
+  utils.toggleClassesNow(element, "cls1", "cls2");
+  expect(element.classList.length).toBe(3);
+  expect(element.classList.contains("cls1")).toBe(true);
+  expect(element.classList.contains("cls2")).toBe(true);
+  expect(element.classList.contains("cls3")).toBe(true);
+});
+
+test("toggleClasses", async () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2", "cls3");
+
+  await utils.toggleClasses(element, "cls1", "cls2");
+  expect(element.classList.length).toBe(1);
+  expect(element.classList.contains("cls1")).toBe(false);
+  expect(element.classList.contains("cls2")).toBe(false);
+  expect(element.classList.contains("cls3")).toBe(true);
+
+  await utils.toggleClasses(element, "cls1", "cls2");
+  expect(element.classList.length).toBe(3);
+  expect(element.classList.contains("cls1")).toBe(true);
+  expect(element.classList.contains("cls2")).toBe(true);
+  expect(element.classList.contains("cls3")).toBe(true);
+});
+
+test("replaceClassNow", () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2");
+
+  utils.replaceClassNow(element, "cls1", "newCls1");
+  expect(element.classList.length).toBe(2);
+  expect(element.classList.contains("cls1")).toBe(false);
+  expect(element.classList.contains("cls2")).toBe(true);
+  expect(element.classList.contains("newCls1")).toBe(true);
+});
+
+test("replaceClass", async () => {
+  const element = document.createElement("div");
+  element.classList.add("cls1", "cls2");
+
+  await utils.replaceClass(element, "cls1", "newCls1");
+  expect(element.classList.length).toBe(2);
+  expect(element.classList.contains("cls1")).toBe(false);
+  expect(element.classList.contains("cls2")).toBe(true);
+  expect(element.classList.contains("newCls1")).toBe(true);
+});
+
+// TODO rest...

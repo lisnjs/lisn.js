@@ -124,11 +124,7 @@ const getMethods = (element, classNames) => {
   return {
     _add: () => (0, _cssAlter.addClasses)(element, ...classNames),
     _remove: () => (0, _cssAlter.removeClasses)(element, ...classNames),
-    _toggle: async () => {
-      for (const cls of classNames) {
-        await (0, _cssAlter.toggleClass)(element, cls);
-      }
-    }
+    _toggle: () => (0, _cssAlter.toggleClasses)(element, ...classNames)
   };
 };
 //# sourceMappingURL=add-class.cjs.map

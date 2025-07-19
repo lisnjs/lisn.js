@@ -99,6 +99,7 @@ Element.prototype.enableScroll = function () {
 
   this._isScrollable = true;
 
+  this.style.overflow = "auto";
   this.scrollHeight = window.SCROLL_HEIGHT;
   this.scrollWidth = window.SCROLL_WIDTH;
   this.clientHeight = window.CLIENT_HEIGHT;

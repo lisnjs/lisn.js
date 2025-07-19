@@ -159,7 +159,7 @@ class ViewTrigger extends _trigger.Trigger {
     const logger = _debug.default ? new _debug.default.Logger({
       name: `ViewTrigger-${(0, _text.formatAsString)(element)}`
     }) : null;
-    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
+    this.getConfig = () => MH.copyObject(config);
     if (!MH.lengthOf(actions)) {
       return;
     }

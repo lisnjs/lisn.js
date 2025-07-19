@@ -102,7 +102,7 @@ export class CheckTrigger extends Trigger {
   constructor(element, actions, config) {
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
-    this.getConfig = () => MH.copyObject(config !== null && config !== void 0 ? config : {});
+    this.getConfig = () => MH.copyObject(config);
     if (!MH.lengthOf(actions)) {
       return;
     }

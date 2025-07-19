@@ -14,8 +14,16 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  */
 
 const isTouchScreen = () => MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
+
+/**
+ * @since v1.2.0
+ */
 exports.isTouchScreen = isTouchScreen;
 const supportsSticky = () => MH.hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
+
+/**
+ * @since v1.2.0
+ */
 exports.supportsSticky = supportsSticky;
 const isInQuirksMode = () => MH.hasDOM() ? document.compatMode === "BackCompat" : false;
 exports.isInQuirksMode = isInQuirksMode;

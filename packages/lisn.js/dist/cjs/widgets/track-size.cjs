@@ -76,6 +76,8 @@ class TrackSize extends _widget.Widget {
 
 /**
  * @interface
+ *
+ * @since v1.2.0
  */
 exports.TrackSize = TrackSize;
 // --------------------

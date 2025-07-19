@@ -357,7 +357,7 @@ export type PagerConfig = {
      * the element will get `height: 100vh` set. Otherwise, you need to set its
      * height in your CSS.
      *
-     * @since Introduced in v1.1.0.
+     * @since v1.1.0
      *
      * @defaultValue "slider"
      */

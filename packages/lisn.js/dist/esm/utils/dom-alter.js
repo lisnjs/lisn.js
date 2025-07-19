@@ -246,6 +246,8 @@ export const getOrAssignID = (element, prefix = "") => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const isAllowedToWrap = element => settings.contentWrappingAllowed === true && getData(element, MC.PREFIX_NO_WRAP) === null;
 
@@ -254,6 +256,8 @@ export const isAllowedToWrap = element => settings.contentWrappingAllowed === tr
  * @internal
  *
  * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ *
+ * @since v1.2.0
  */
 export const getWrapper = (element, options) => {
   const {
@@ -273,6 +277,8 @@ export const getWrapper = (element, options) => {
  * @internal
  *
  * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ *
+ * @since v1.2.0
  */
 export const getContentWrapper = (element, options) => {
   const {
@@ -290,30 +296,40 @@ export const getContentWrapper = (element, options) => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const tryWrapNow = (element, options) => _tryWrapNow(element, options);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const tryWrap = asyncMutatorFor(tryWrapNow);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const tryWrapContent = asyncMutatorFor(tryWrapContentNow);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const unwrapContentNow = (wrapper, classNames) => {
   const parent = wrapper.parentElement;
@@ -333,6 +349,8 @@ export const unwrapContentNow = (wrapper, classNames) => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const unwrapContent = asyncMutatorFor(unwrapContentNow);
 

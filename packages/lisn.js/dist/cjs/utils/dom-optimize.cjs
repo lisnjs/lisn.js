@@ -78,6 +78,8 @@ const waitForSubsequentMeasureTime = () => waitForMeasureTime().then(waitForMuta
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 exports.waitForSubsequentMeasureTime = waitForSubsequentMeasureTime;
 const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() => func(...args));
@@ -85,6 +87,8 @@ const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() =
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 exports.asyncMutatorFor = asyncMutatorFor;
 const asyncMeasurerFor = func => async (...args) => waitForMeasureTime().then(() => func(...args));

@@ -56,11 +56,15 @@ export declare const waitForSubsequentMeasureTime: () => Promise<void>;
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const asyncMutatorFor: <Args extends unknown[], Ret>(func: (...args: Args) => Ret) => (...args: Args) => Promise<Ret>;
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const asyncMeasurerFor: <Args extends unknown[], Ret>(func: (...args: Args) => Ret) => (...args: Args) => Promise<Ret>;
 //# sourceMappingURL=dom-optimize.d.ts.map

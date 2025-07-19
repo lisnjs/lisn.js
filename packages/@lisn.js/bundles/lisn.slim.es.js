@@ -1661,6 +1661,53 @@ const newBitSpace = (counter, propNames) => {
  */
 const DOM_CATEGORIES_SPACE = createBitSpace(newBitSpaces(), S_ADDED, S_REMOVED, S_ATTRIBUTE);
 
+function _OverloadYield(e, d) {
+  this.v = e, this.k = d;
+}
+function _asyncIterator(r) {
+  var n,
+    t,
+    o,
+    e = 2;
+  for ("undefined" != typeof Symbol && (t = Symbol.asyncIterator, o = Symbol.iterator); e--;) {
+    if (t && null != (n = r[t])) return n.call(r);
+    if (o && null != (n = r[o])) return new AsyncFromSyncIterator(n.call(r));
+    t = "@@asyncIterator", o = "@@iterator";
+  }
+  throw new TypeError("Object is not async iterable");
+}
+function AsyncFromSyncIterator(r) {
+  function AsyncFromSyncIteratorContinuation(r) {
+    if (Object(r) !== r) return Promise.reject(new TypeError(r + " is not an object."));
+    var n = r.done;
+    return Promise.resolve(r.value).then(function (r) {
+      return {
+        value: r,
+        done: n
+      };
+    });
+  }
+  return AsyncFromSyncIterator = function (r) {
+    this.s = r, this.n = r.next;
+  }, AsyncFromSyncIterator.prototype = {
+    s: null,
+    n: null,
+    next: function () {
+      return AsyncFromSyncIteratorContinuation(this.n.apply(this.s, arguments));
+    },
+    return: function (r) {
+      var n = this.s.return;
+      return void 0 === n ? Promise.resolve({
+        value: r,
+        done: true
+      }) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
+    },
+    throw: function (r) {
+      var n = this.s.return;
+      return void 0 === n ? Promise.reject(r) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
+    }
+  }, new AsyncFromSyncIterator(r);
+}
 function _defineProperty(e, r, t) {
   return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
     value: t,
@@ -1683,6 +1730,73 @@ function _toPropertyKey(t) {
   var i = _toPrimitive(t, "string");
   return "symbol" == typeof i ? i : i + "";
 }
+function _wrapAsyncGenerator(e) {
+  return function () {
+    return new AsyncGenerator(e.apply(this, arguments));
+  };
+}
+function AsyncGenerator(e) {
+  var r, t;
+  function resume(r, t) {
+    try {
+      var n = e[r](t),
+        o = n.value,
+        u = o instanceof _OverloadYield;
+      Promise.resolve(u ? o.v : o).then(function (t) {
+        if (u) {
+          var i = "return" === r ? "return" : "next";
+          if (!o.k || t.done) return resume(i, t);
+          t = e[i](t).value;
+        }
+        settle(n.done ? "return" : "normal", t);
+      }, function (e) {
+        resume("throw", e);
+      });
+    } catch (e) {
+      settle("throw", e);
+    }
+  }
+  function settle(e, n) {
+    switch (e) {
+      case "return":
+        r.resolve({
+          value: n,
+          done: true
+        });
+        break;
+      case "throw":
+        r.reject(n);
+        break;
+      default:
+        r.resolve({
+          value: n,
+          done: false
+        });
+    }
+    (r = r.next) ? resume(r.key, r.arg) : t = null;
+  }
+  this._invoke = function (e, n) {
+    return new Promise(function (o, u) {
+      var i = {
+        key: e,
+        arg: n,
+        resolve: o,
+        reject: u,
+        next: null
+      };
+      t ? t = t.next = i : (r = t = i, resume(e, n));
+    });
+  }, "function" != typeof e.return && (this.return = void 0);
+}
+AsyncGenerator.prototype["function" == typeof Symbol && Symbol.asyncIterator || "@@asyncIterator"] = function () {
+  return this;
+}, AsyncGenerator.prototype.next = function (e) {
+  return this._invoke("next", e);
+}, AsyncGenerator.prototype.throw = function (e) {
+  return this._invoke("throw", e);
+}, AsyncGenerator.prototype.return = function (e) {
+  return this._invoke("return", e);
+};
 
 /**
  * @module Utils
@@ -2031,12 +2145,16 @@ const waitForSubsequentMeasureTime = () => waitForMeasureTime().then(waitForMuta
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const asyncMutatorFor = func => async (...args) => waitForMutateTime().then(() => func(...args));
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const asyncMeasurerFor = func => async (...args) => waitForMeasureTime().then(() => func(...args));
 
@@ -2360,6 +2478,8 @@ const hasClass = (element, className) => classList(element).contains(className);
 /**
  * Returns true if the element's class list contains any of the given classes.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering (optimized)
  */
 const hasAnyClass = (element, ...classNames) => some(classNames, className => hasClass(element, className));
@@ -2405,6 +2525,8 @@ const toggleClassNow = (element, className, force) => classList(element).toggle(
  * Toggles the given classes on the element. This function does not accept the
  * `force` parameter.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 const toggleClassesNow = (element, ...classNames) => {
@@ -2415,6 +2537,8 @@ const toggleClassesNow = (element, ...classNames) => {
 
 /**
  * Like {@link toggleClassesNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -2455,12 +2579,16 @@ const setData = asyncMutatorFor(setDataNow);
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 const setBooleanDataNow = (element, name, value = true) => setAttr(element, prefixData(name), value + "");
 
 /**
  * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -2472,12 +2600,16 @@ const setBooleanData = asyncMutatorFor(setBooleanDataNow);
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 const unsetBooleanDataNow = (element, name) => unsetAttr(element, prefixData(name));
 
 /**
  * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -2843,6 +2975,8 @@ const getOrAssignID = (element, prefix = "") => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const isAllowedToWrap = element => settings.contentWrappingAllowed === true && getData(element, PREFIX_NO_WRAP) === null;
 
@@ -2851,6 +2985,8 @@ const isAllowedToWrap = element => settings.contentWrappingAllowed === true && g
  * @internal
  *
  * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ *
+ * @since v1.2.0
  */
 const getWrapper = (element, options) => {
   const {
@@ -2870,6 +3006,8 @@ const getWrapper = (element, options) => {
  * @internal
  *
  * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ *
+ * @since v1.2.0
  */
 const getContentWrapper = (element, options) => {
   const {
@@ -2887,24 +3025,32 @@ const getContentWrapper = (element, options) => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const tryWrapNow = (element, options) => _tryWrapNow(element, options);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const tryWrap = asyncMutatorFor(tryWrapNow);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const tryWrapContent = asyncMutatorFor(tryWrapContentNow);
 
@@ -5742,11 +5888,6 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
 };
 
 /**
- * @module Utils
- */
-
-
-/**
  * The callback is passed two arguments:
  * 1. The total elapsed time in milliseconds since the start
  * 2. The elapsed time in milliseconds since the previous frame
@@ -5770,6 +5911,28 @@ const waitForAnimationFrame = async () => newPromise(resolve => {
 });
 
 /**
+ * Generator version of {@link onEveryAnimationFrame}.
+ *
+ * Returns a new async iterator which yields the total elapsed time and elapsed
+ * time since the last call on every animation frame.
+ *
+ * @example
+ * ```javascript
+ * for await (const [totalElapsed, elapsedSinceLast] of animationFrameIterator()) {
+ *   // ... do something
+ *   if (done) break;
+ * }
+ * ```
+ *
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
+function animationFrameIterator() {
+  return _animationFrameIterator.apply(this, arguments);
+}
+
+/**
  * @param webAnimationCallback This function is called for each
  *                             {@link https://developer.mozilla.org/en-US/docs/Web/API/Animation | Animation}
  *                             on the element. It {@link waitForMeasureTime}
@@ -5785,6 +5948,26 @@ const waitForAnimationFrame = async () => newPromise(resolve => {
  *
  * @category Animations
  */
+function _animationFrameIterator() {
+  _animationFrameIterator = _wrapAsyncGenerator(function* () {
+    let startTime, previousTimeStamp;
+    const step = async () => {
+      const timeStamp = await waitForAnimationFrame();
+      if (!startTime) {
+        startTime = timeStamp;
+        previousTimeStamp = timeStamp;
+      }
+      const totalElapsed = timeStamp - startTime;
+      const elapsedSinceLast = timeStamp - previousTimeStamp;
+      previousTimeStamp = timeStamp;
+      return [totalElapsed, elapsedSinceLast];
+    };
+    while (true) {
+      yield step();
+    }
+  });
+  return _animationFrameIterator.apply(this, arguments);
+}
 const iterateAnimations = async (element, webAnimationCallback, legacyCallback, realtime = false) => {
   /* istanbul ignore next */ // jsdom doesn't support Web Animations
   if ("getAnimations" in element && getData(element, prefixName("test-legacy")) === null) {
@@ -5821,11 +6004,6 @@ const resetCssAnimationsNow = element => {
 
   removeClassesNow(element, PREFIX_ANIMATE_DISABLE);
 };
-
-/**
- * @module Utils
- */
-
 
 /**
  * @category Scrolling
@@ -6215,40 +6393,56 @@ const initiateScroll = async (options, isCancelled) => {
   const position = await getStartEndPosition(options);
   const duration = options._duration;
   const scrollable = options._scrollable;
-  let startTime, previousTimeStamp;
   const currentPosition = position.start;
-  const step = async () => {
-    const timeStamp = await waitForAnimationFrame();
-    // Element.scrollTo equates to a measurement and needs to run after
-    // painting to avoid forced layout.
-    await waitForMeasureTime();
-    if (isCancelled()) {
-      // Reject the promise
-      throw currentPosition;
-    }
-    if (!startTime) {
-      // If it's very close to the target, no need to scroll smoothly
-      if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
-        elScrollTo(scrollable, position.end);
-        return position.end;
+  var _iteratorAbruptCompletion = false;
+  var _didIteratorError = false;
+  var _iteratorError;
+  try {
+    for (var _iterator = _asyncIterator(animationFrameIterator()), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
+      const [totalElapsed, elapsedSinceLast__ignored] = _step.value;
+      {
+        // Element.scrollTo equates to a measurement and needs to run after
+        // painting to avoid forced layout.
+        await waitForMeasureTime();
+        if (isCancelled()) {
+          // Reject the promise
+          throw currentPosition;
+        }
+        if (totalElapsed === 0) {
+          // First frame
+          // If it's very close to the target, no need to scroll smoothly
+          if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
+            elScrollTo(scrollable, position.end);
+            return position.end;
+          }
+        } else {
+          const progress = easeInOutQuad(min(1, totalElapsed / duration));
+          for (const s of [S_LEFT, S_TOP]) {
+            currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
+          }
+          elScrollTo(scrollable, currentPosition);
+          if (progress === 1) {
+            // done
+            break;
+          }
+        }
       }
-      startTime = timeStamp;
     }
-    if (startTime !== timeStamp && previousTimeStamp !== timeStamp) {
-      const elapsed = timeStamp - startTime;
-      const progress = easeInOutQuad(min(1, elapsed / duration));
-      for (const s of [S_LEFT, S_TOP]) {
-        currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (_iteratorAbruptCompletion && _iterator.return != null) {
+        await _iterator.return();
       }
-      elScrollTo(scrollable, currentPosition);
-      if (progress === 1) {
-        return currentPosition;
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
       }
     }
-    previousTimeStamp = timeStamp;
-    return step();
-  };
-  return step();
+  }
+  return currentPosition;
 };
 const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
 

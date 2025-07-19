@@ -270,12 +270,16 @@ export const hasClass = (element, className) => MH.classList(element).contains(c
 /**
  * Returns true if the element's class list contains all of the given classes.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering (optimized)
  */
 export const hasAllClasses = (element, ...classNames) => MH.lengthOf(classNames) > 0 && !MH.some(classNames, className => !hasClass(element, className));
 
 /**
  * Returns true if the element's class list contains any of the given classes.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -329,6 +333,8 @@ export const toggleClass = asyncMutatorFor(toggleClassNow);
  * Toggles the given classes on the element. This function does not accept the
  * `force` parameter.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 export const toggleClassesNow = (element, ...classNames) => {
@@ -340,6 +346,8 @@ export const toggleClassesNow = (element, ...classNames) => {
 /**
  * Like {@link toggleClassesNow} except it will {@link waitForMutateTime}.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering (optimized)
  */
 export const toggleClasses = asyncMutatorFor(toggleClassesNow);
@@ -349,12 +357,16 @@ export const toggleClasses = asyncMutatorFor(toggleClassesNow);
  *
  * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 export const replaceClassNow = (element, oldClassName, newClassName) => MH.classList(element).replace(oldClassName, newClassName);
 
 /**
  * Like {@link replaceClassNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -379,6 +391,8 @@ export const getData = (element, name) => MH.getAttr(element, MH.prefixData(name
  *
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -416,6 +430,8 @@ export const setData = asyncMutatorFor(setDataNow);
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 export const setBooleanDataNow = (element, name, value = true) => MH.setAttr(element, MH.prefixData(name), value + "");
@@ -428,6 +444,8 @@ export const setBoolDataNow = setBooleanDataNow;
 
 /**
  * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -445,6 +463,8 @@ export const setBoolData = setBooleanData;
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 export const unsetBooleanDataNow = (element, name) => MH.unsetAttr(element, MH.prefixData(name));
@@ -457,6 +477,8 @@ export const unsetBoolDataNow = unsetBooleanDataNow;
 
 /**
  * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -556,6 +578,8 @@ export const delStyleProp = asyncMutatorFor(delStylePropNow);
  * Returns the flex direction of the given element **if it has a flex layout**.
  *
  * @returns `null` if the element does not have a flex layout.
+ *
+ * @since v1.2.0
  */
 export const getFlexDirection = async element => {
   const displayStyle = await getComputedStyleProp(element, "display");
@@ -570,6 +594,8 @@ export const getFlexDirection = async element => {
  * layout**.
  *
  * @returns `null` if the element's parent does not have a flex layout.
+ *
+ * @since v1.2.0
  */
 export const getParentFlexDirection = async element => {
   const parent = MH.parentOf(element);
@@ -579,6 +605,8 @@ export const getParentFlexDirection = async element => {
 /**
  * Returns true if the given element has a flex layout. If direction is given,
  * then it also needs to match.
+ *
+ * @since v1.2.0
  */
 export const isFlex = async (element, direction) => {
   const flexDirection = await getFlexDirection(element);
@@ -591,6 +619,8 @@ export const isFlex = async (element, direction) => {
 /**
  * Returns true if the given element's parent has a flex layout. If direction is
  * given, then it also needs to match.
+ *
+ * @since v1.2.0
  */
 export const isFlexChild = async (element, direction) => {
   const parent = MH.parentOf(element);

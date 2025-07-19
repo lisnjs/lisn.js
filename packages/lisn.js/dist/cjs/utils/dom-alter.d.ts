@@ -170,6 +170,8 @@ export declare const getOrAssignID: (element: Element, prefix?: string) => strin
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const isAllowedToWrap: (element: Element) => boolean;
 /**
@@ -177,6 +179,8 @@ export declare const isAllowedToWrap: (element: Element) => boolean;
  * @internal
  *
  * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ *
+ * @since v1.2.0
  */
 export declare const getWrapper: (element: Element, options?: {
     tagName?: keyof HTMLElementTagNameMap;
@@ -187,6 +191,8 @@ export declare const getWrapper: (element: Element, options?: {
  * @internal
  *
  * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ *
+ * @since v1.2.0
  */
 export declare const getContentWrapper: (element: Element, options?: {
     tagName?: keyof HTMLElementTagNameMap;
@@ -195,6 +201,8 @@ export declare const getContentWrapper: (element: Element, options?: {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const tryWrapNow: <O extends ContentWrappingOptions>(element: Element, options?: O) => O extends {
     required: true;
@@ -202,6 +210,8 @@ export declare const tryWrapNow: <O extends ContentWrappingOptions>(element: Ele
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const tryWrap: <O extends ContentWrappingOptions>(element: Element, options?: O | undefined) => Promise<O extends {
     required: true;
@@ -209,6 +219,8 @@ export declare const tryWrap: <O extends ContentWrappingOptions>(element: Elemen
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const tryWrapContentNow: <O extends ContentWrappingOptions>(element: Element, options?: O) => O extends {
     required: true;
@@ -216,6 +228,8 @@ export declare const tryWrapContentNow: <O extends ContentWrappingOptions>(eleme
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const tryWrapContent: <O extends ContentWrappingOptions>(element: Element, options?: O | undefined) => Promise<O extends {
     required: true;
@@ -223,11 +237,15 @@ export declare const tryWrapContent: <O extends ContentWrappingOptions>(element:
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const unwrapContentNow: (wrapper: Element, classNames?: string[]) => void;
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export declare const unwrapContent: (wrapper: Element, classNames?: string[] | undefined) => Promise<void>;
 /**

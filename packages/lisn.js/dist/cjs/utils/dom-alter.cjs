@@ -259,6 +259,8 @@ const getOrAssignID = (element, prefix = "") => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 exports.getOrAssignID = getOrAssignID;
 const isAllowedToWrap = element => _settings.settings.contentWrappingAllowed === true && (0, _cssAlter.getData)(element, MC.PREFIX_NO_WRAP) === null;
@@ -268,6 +270,8 @@ const isAllowedToWrap = element => _settings.settings.contentWrappingAllowed ===
  * @internal
  *
  * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ *
+ * @since v1.2.0
  */
 exports.isAllowedToWrap = isAllowedToWrap;
 const getWrapper = (element, options) => {
@@ -288,6 +292,8 @@ const getWrapper = (element, options) => {
  * @internal
  *
  * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ *
+ * @since v1.2.0
  */
 exports.getWrapper = getWrapper;
 const getContentWrapper = (element, options) => {
@@ -306,6 +312,8 @@ const getContentWrapper = (element, options) => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 exports.getContentWrapper = getContentWrapper;
 const tryWrapNow = (element, options) => _tryWrapNow(element, options);
@@ -313,6 +321,8 @@ const tryWrapNow = (element, options) => _tryWrapNow(element, options);
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 exports.tryWrapNow = tryWrapNow;
 const tryWrap = exports.tryWrap = (0, _domOptimize.asyncMutatorFor)(tryWrapNow);
@@ -320,12 +330,16 @@ const tryWrap = exports.tryWrap = (0, _domOptimize.asyncMutatorFor)(tryWrapNow);
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const tryWrapContentNow = (element, options) => _tryWrapNow(element, options, true);
 
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 exports.tryWrapContentNow = tryWrapContentNow;
 const tryWrapContent = exports.tryWrapContent = (0, _domOptimize.asyncMutatorFor)(tryWrapContentNow);
@@ -333,6 +347,8 @@ const tryWrapContent = exports.tryWrapContent = (0, _domOptimize.asyncMutatorFor
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 const unwrapContentNow = (wrapper, classNames) => {
   const parent = wrapper.parentElement;
@@ -352,6 +368,8 @@ const unwrapContentNow = (wrapper, classNames) => {
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 exports.unwrapContentNow = unwrapContentNow;
 const unwrapContent = exports.unwrapContent = (0, _domOptimize.asyncMutatorFor)(unwrapContentNow);

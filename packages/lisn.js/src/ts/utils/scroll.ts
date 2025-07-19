@@ -16,7 +16,7 @@ import {
   Offset,
 } from "@lisn/globals/types";
 
-import { waitForAnimationFrame } from "@lisn/utils/animations";
+import { animationFrameIterator } from "@lisn/utils/animations";
 import { getComputedStylePropNow } from "@lisn/utils/css-alter";
 import { SCROLL_DIRECTIONS } from "@lisn/utils/directions";
 import {
@@ -643,11 +643,12 @@ const initiateScroll = async (
   const duration = options._duration;
   const scrollable = options._scrollable;
 
-  let startTime: number, previousTimeStamp: number;
   const currentPosition: ScrollPosition = position.start;
 
-  const step = async () => {
-    const timeStamp = await waitForAnimationFrame();
+  for await (const [
+    totalElapsed,
+    elapsedSinceLast__ignored,
+  ] of animationFrameIterator()) {
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
     await waitForMeasureTime();
@@ -657,7 +658,8 @@ const initiateScroll = async (
       throw currentPosition;
     }
 
-    if (!startTime) {
+    if (totalElapsed === 0) {
+      // First frame
       // If it's very close to the target, no need to scroll smoothly
       if (
         duration === 0 ||
@@ -666,13 +668,8 @@ const initiateScroll = async (
         MH.elScrollTo(scrollable, position.end);
         return position.end;
       }
-
-      startTime = timeStamp;
-    }
-
-    if (startTime !== timeStamp && previousTimeStamp !== timeStamp) {
-      const elapsed = timeStamp - startTime;
-      const progress = easeInOutQuad(MH.min(1, elapsed / duration));
+    } else {
+      const progress = easeInOutQuad(MH.min(1, totalElapsed / duration));
 
       for (const s of [MC.S_LEFT, MC.S_TOP] as const) {
         currentPosition[s] =
@@ -682,15 +679,13 @@ const initiateScroll = async (
       MH.elScrollTo(scrollable, currentPosition);
 
       if (progress === 1) {
-        return currentPosition;
+        // done
+        break;
       }
     }
+  }
 
-    previousTimeStamp = timeStamp;
-    return step();
-  };
-
-  return step();
+  return currentPosition;
 };
 
 const isScrollableBodyInQuirks = (element: Element): element is HTMLElement =>

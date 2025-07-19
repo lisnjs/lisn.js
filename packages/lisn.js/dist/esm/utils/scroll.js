@@ -1,3 +1,5 @@
+function _asyncIterator(r) { var n, t, o, e = 2; for ("undefined" != typeof Symbol && (t = Symbol.asyncIterator, o = Symbol.iterator); e--;) { if (t && null != (n = r[t])) return n.call(r); if (o && null != (n = r[o])) return new AsyncFromSyncIterator(n.call(r)); t = "@@asyncIterator", o = "@@iterator"; } throw new TypeError("Object is not async iterable"); }
+function AsyncFromSyncIterator(r) { function AsyncFromSyncIteratorContinuation(r) { if (Object(r) !== r) return Promise.reject(new TypeError(r + " is not an object.")); var n = r.done; return Promise.resolve(r.value).then(function (r) { return { value: r, done: n }; }); } return AsyncFromSyncIterator = function (r) { this.s = r, this.n = r.next; }, AsyncFromSyncIterator.prototype = { s: null, n: null, next: function () { return AsyncFromSyncIteratorContinuation(this.n.apply(this.s, arguments)); }, return: function (r) { var n = this.s.return; return void 0 === n ? Promise.resolve({ value: r, done: !0 }) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments)); }, throw: function (r) { var n = this.s.return; return void 0 === n ? Promise.reject(r) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments)); } }, new AsyncFromSyncIterator(r); }
 /**
  * @module Utils
  */
@@ -5,7 +7,7 @@
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
-import { waitForAnimationFrame } from "./animations.js";
+import { animationFrameIterator } from "./animations.js";
 import { getComputedStylePropNow } from "./css-alter.js";
 import { SCROLL_DIRECTIONS } from "./directions.js";
 import { waitForInteractive, waitForElementOrInteractive } from "./dom-events.js";
@@ -436,40 +438,56 @@ const initiateScroll = async (options, isCancelled) => {
   const position = await getStartEndPosition(options);
   const duration = options._duration;
   const scrollable = options._scrollable;
-  let startTime, previousTimeStamp;
   const currentPosition = position.start;
-  const step = async () => {
-    const timeStamp = await waitForAnimationFrame();
-    // Element.scrollTo equates to a measurement and needs to run after
-    // painting to avoid forced layout.
-    await waitForMeasureTime();
-    if (isCancelled()) {
-      // Reject the promise
-      throw currentPosition;
-    }
-    if (!startTime) {
-      // If it's very close to the target, no need to scroll smoothly
-      if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
-        MH.elScrollTo(scrollable, position.end);
-        return position.end;
+  var _iteratorAbruptCompletion = false;
+  var _didIteratorError = false;
+  var _iteratorError;
+  try {
+    for (var _iterator = _asyncIterator(animationFrameIterator()), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
+      const [totalElapsed, elapsedSinceLast__ignored] = _step.value;
+      {
+        // Element.scrollTo equates to a measurement and needs to run after
+        // painting to avoid forced layout.
+        await waitForMeasureTime();
+        if (isCancelled()) {
+          // Reject the promise
+          throw currentPosition;
+        }
+        if (totalElapsed === 0) {
+          // First frame
+          // If it's very close to the target, no need to scroll smoothly
+          if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
+            MH.elScrollTo(scrollable, position.end);
+            return position.end;
+          }
+        } else {
+          const progress = easeInOutQuad(MH.min(1, totalElapsed / duration));
+          for (const s of [MC.S_LEFT, MC.S_TOP]) {
+            currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
+          }
+          MH.elScrollTo(scrollable, currentPosition);
+          if (progress === 1) {
+            // done
+            break;
+          }
+        }
       }
-      startTime = timeStamp;
     }
-    if (startTime !== timeStamp && previousTimeStamp !== timeStamp) {
-      const elapsed = timeStamp - startTime;
-      const progress = easeInOutQuad(MH.min(1, elapsed / duration));
-      for (const s of [MC.S_LEFT, MC.S_TOP]) {
-        currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (_iteratorAbruptCompletion && _iterator.return != null) {
+        await _iterator.return();
       }
-      MH.elScrollTo(scrollable, currentPosition);
-      if (progress === 1) {
-        return currentPosition;
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
       }
     }
-    previousTimeStamp = timeStamp;
-    return step();
-  };
-  return step();
+  }
+  return currentPosition;
 };
 const isScrollableBodyInQuirks = element => element === MH.getBody() && MH.getDocScrollingElement() === null;
 

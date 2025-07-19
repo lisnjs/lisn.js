@@ -208,11 +208,15 @@ export declare const hasClass: (element: Element, className: string) => boolean;
 /**
  * Returns true if the element's class list contains all of the given classes.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering (optimized)
  */
 export declare const hasAllClasses: (element: Element, ...classNames: string[]) => boolean;
 /**
  * Returns true if the element's class list contains any of the given classes.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -259,11 +263,15 @@ export declare const toggleClass: (element: Element, className: string, force?: 
  * Toggles the given classes on the element. This function does not accept the
  * `force` parameter.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 export declare const toggleClassesNow: (element: Element, ...classNames: string[]) => void;
 /**
  * Like {@link toggleClassesNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -273,11 +281,15 @@ export declare const toggleClasses: (element: Element, ...classNames: string[]) 
  *
  * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 export declare const replaceClassNow: (element: Element, oldClassName: string, newClassName: string) => boolean;
 /**
  * Like {@link replaceClassNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -297,6 +309,8 @@ export declare const getData: (element: Element, name: string) => string | null;
  *
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -327,6 +341,8 @@ export declare const setData: (element: Element, name: string, value: string) =>
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 export declare const setBooleanDataNow: (element: Element, name: string, value?: boolean) => void;
@@ -337,6 +353,8 @@ export declare const setBooleanDataNow: (element: Element, name: string, value?:
 export declare const setBoolDataNow: (element: Element, name: string, value?: boolean) => void;
 /**
  * Like {@link setBooleanDataNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -352,6 +370,8 @@ export declare const setBoolData: (element: Element, name: string, value?: boole
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
+ * @since v1.2.0
+ *
  * @category CSS: Altering
  */
 export declare const unsetBooleanDataNow: (element: Element, name: string) => void;
@@ -362,6 +382,8 @@ export declare const unsetBooleanDataNow: (element: Element, name: string) => vo
 export declare const unsetBoolDataNow: (element: Element, name: string) => void;
 /**
  * Like {@link unsetBooleanDataNow} except it will {@link waitForMutateTime}.
+ *
+ * @since v1.2.0
  *
  * @category CSS: Altering (optimized)
  */
@@ -440,6 +462,8 @@ export declare const delStyleProp: (element: Element, prop: string) => Promise<s
  * Returns the flex direction of the given element **if it has a flex layout**.
  *
  * @returns `null` if the element does not have a flex layout.
+ *
+ * @since v1.2.0
  */
 export declare const getFlexDirection: (element: Element) => Promise<FlexDirection | null>;
 /**
@@ -447,16 +471,22 @@ export declare const getFlexDirection: (element: Element) => Promise<FlexDirecti
  * layout**.
  *
  * @returns `null` if the element's parent does not have a flex layout.
+ *
+ * @since v1.2.0
  */
 export declare const getParentFlexDirection: (element: Element) => Promise<FlexDirection | null>;
 /**
  * Returns true if the given element has a flex layout. If direction is given,
  * then it also needs to match.
+ *
+ * @since v1.2.0
  */
 export declare const isFlex: (element: Element, direction?: FlexDirection) => Promise<boolean>;
 /**
  * Returns true if the given element's parent has a flex layout. If direction is
  * given, then it also needs to match.
+ *
+ * @since v1.2.0
  */
 export declare const isFlexChild: (element: Element, direction?: FlexDirection) => Promise<boolean>;
 /**

@@ -96,16 +96,3 @@ export const waitForDelay = (delay?: number) =>
   MH.newPromise<void>((resolve) => {
     MH.setTimer(resolve, delay);
   });
-
-/**
- * Returns a promise that resolves at the next animation frame. Async/await
- * version of requestAnimationFrame.
- *
- * @returns The timestamp gotten from requestAnimationFrame
- *
- * @category Tasks
- */
-export const waitForAnimationFrame = async () =>
-  MH.newPromise<number>((resolve) => {
-    MH.onAnimationFrame(resolve);
-  });

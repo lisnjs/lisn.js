@@ -318,7 +318,8 @@ export const hasClass = (element: Element, className: string) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const hasAllClasses = (element: Element, classNames: string[]) =>
+export const hasAllClasses = (element: Element, ...classNames: string[]) =>
+  MH.lengthOf(classNames) > 0 &&
   !MH.some(classNames, (className) => !hasClass(element, className));
 
 /**
@@ -326,7 +327,7 @@ export const hasAllClasses = (element: Element, classNames: string[]) =>
  *
  * @category CSS: Altering (optimized)
  */
-export const hasAnyClass = (element: Element, classNames: string[]) =>
+export const hasAnyClass = (element: Element, ...classNames: string[]) =>
   MH.some(classNames, (className) => hasClass(element, className));
 
 /**
@@ -378,6 +379,45 @@ export const toggleClassNow = (
  * @category CSS: Altering (optimized)
  */
 export const toggleClass = asyncMutatorFor(toggleClassNow);
+
+/**
+ * Toggles the given classes on the element. This function does not accept the
+ * `force` parameter.
+ *
+ * @category CSS: Altering
+ */
+export const toggleClassesNow = (element: Element, ...classNames: string[]) => {
+  for (const cls of classNames) {
+    toggleClassNow(element, cls);
+  }
+};
+
+/**
+ * Like {@link toggleClassesNow} except it will {@link waitForMutateTime}.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export const toggleClasses = asyncMutatorFor(toggleClassesNow);
+
+/**
+ * Replaces the given class on the element with a new one.
+ *
+ * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
+ *
+ * @category CSS: Altering
+ */
+export const replaceClassNow = (
+  element: Element,
+  oldClassName: string,
+  newClassName: string,
+) => MH.classList(element).replace(oldClassName, newClassName);
+
+/**
+ * Like {@link replaceClassNow} except it will {@link waitForMutateTime}.
+ *
+ * @category CSS: Altering (optimized)
+ */
+export const replaceClass = asyncMutatorFor(replaceClassNow);
 
 // For *Data: to avoid unnecessary type checking that ensures element is
 // HTMLElement or SVGElement, use getAttribute instead of dataset.

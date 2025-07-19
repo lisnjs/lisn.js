@@ -94,11 +94,12 @@ export const wrapChildrenNow = (
   },
 ) => {
   const wrapper = createWrapperFor(element, options?.wrapper);
+  const { ignoreMove } = options ?? {};
 
-  moveChildrenNow(element, wrapper, { ignoreMove: true });
+  moveChildrenNow(element, wrapper, { ignoreMove });
   moveElementNow(wrapper, {
     to: element,
-    ignoreMove: true,
+    ignoreMove,
   });
 
   return wrapper;
@@ -329,7 +330,7 @@ export const getWrapper = (
     MH.lengthOf(MH.childrenOf(parent)) === 1 &&
     MH.isHTMLElement(parent) &&
     (!tagName || MH.hasTagName(parent, tagName)) &&
-    (!classNames || hasAnyClass(parent, classNames))
+    (!classNames || hasAnyClass(parent, ...classNames))
   ) {
     // Already wrapped
     return parent;
@@ -357,7 +358,7 @@ export const getContentWrapper = (
     MH.lengthOf(MH.childrenOf(element)) === 1 &&
     MH.isHTMLElement(firstChild) &&
     (!tagName || MH.hasTagName(firstChild, tagName)) &&
-    (!classNames || hasAnyClass(firstChild, classNames))
+    (!classNames || hasAnyClass(firstChild, ...classNames))
   ) {
     // Already wrapped
     return firstChild;

@@ -8,7 +8,11 @@
 
 import * as MC from "@lisn/globals/minification-constants";
 
-import { addClasses, removeClasses, toggleClass } from "@lisn/utils/css-alter";
+import {
+  addClasses,
+  removeClasses,
+  toggleClasses,
+} from "@lisn/utils/css-alter";
 
 import { Action, registerAction } from "@lisn/actions/action";
 
@@ -123,13 +127,7 @@ export class RemoveClass implements Action {
 const getMethods = (element: Element, classNames: string[]) => {
   return {
     _add: () => addClasses(element, ...classNames),
-
     _remove: () => removeClasses(element, ...classNames),
-
-    _toggle: async () => {
-      for (const cls of classNames) {
-        await toggleClass(element, cls);
-      }
-    },
+    _toggle: () => toggleClasses(element, ...classNames),
   };
 };

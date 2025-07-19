@@ -16,6 +16,7 @@ import {
   Offset,
 } from "@lisn/globals/types";
 
+import { waitForAnimationFrame } from "@lisn/utils/animations";
 import { getComputedStylePropNow } from "@lisn/utils/css-alter";
 import { SCROLL_DIRECTIONS } from "@lisn/utils/directions";
 import {
@@ -26,7 +27,6 @@ import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
 import { maxAbs, easeInOutQuad } from "@lisn/utils/math";
-import { waitForAnimationFrame } from "@lisn/utils/tasks";
 import { isValidStrList } from "@lisn/utils/validation";
 
 import { newXMap } from "@lisn/modules/x-map";

@@ -89,6 +89,8 @@ export class TrackSize extends Widget {
 
 /**
  * @interface
+ *
+ * @since v1.2.0
  */
 export type TrackSizeConfig = {
   /**

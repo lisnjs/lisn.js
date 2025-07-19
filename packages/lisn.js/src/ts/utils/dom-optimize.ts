@@ -74,6 +74,8 @@ export const waitForSubsequentMeasureTime = () =>
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const asyncMutatorFor =
   <Args extends unknown[], Ret>(func: (...args: Args) => Ret) =>
@@ -83,6 +85,8 @@ export const asyncMutatorFor =
 /**
  * @ignore
  * @internal
+ *
+ * @since v1.2.0
  */
 export const asyncMeasurerFor =
   <Args extends unknown[], Ret>(func: (...args: Args) => Ret) =>

@@ -48,6 +48,8 @@ export const waitForAnimationFrame = async () =>
  *
  * @see {@link AnimationCallback}
  *
+ * @since v1.2.0
+ *
  * @category Animations
  */
 export const onEveryAnimationFrame = (callback: AnimationCallback) => {

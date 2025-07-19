@@ -10,4 +10,6 @@
 import { Logger } from "@lisn/debug/logger";
 import { Console } from "@lisn/debug/console";
 import { RemoteConsole } from "@lisn/debug/remote-console";
-export default { Logger, Console, RemoteConsole };
+
+const result = { Logger, Console, RemoteConsole };
+export default result as typeof result | null;

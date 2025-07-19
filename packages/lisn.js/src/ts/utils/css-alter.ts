@@ -735,14 +735,11 @@ export const setNumericStyleJsVarsNow = (
     _prefix?: string;
     _units?: string;
     _numDecimal?: number;
-    // _transformFn?: (prop: string, currVal: number, newVal: number) => number;
   } = {},
 ) => {
   if (!isDOMElement(element)) {
     return;
   }
-
-  // const transformFn = options._transformFn;
 
   const varPrefix = MH.prefixCssJsVar(options?._prefix || "");
   for (const prop in props) {
@@ -757,13 +754,6 @@ export const setNumericStyleJsVarsNow = (
       value = props[prop];
       const thisNumDecimal =
         options?._numDecimal ?? (value > 0 && value < 1 ? 2 : 0);
-
-      // if (transformFn) {
-      //   const currValue = MH.parseFloat(await getStyleProp(element, varName));
-      //
-      //   value = transformFn(prop, currValue || 0, value);
-      // }
-
       value = roundNumTo(value, thisNumDecimal);
     }
 

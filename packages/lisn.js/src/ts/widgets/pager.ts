@@ -906,7 +906,11 @@ const init = (
         numVisiblePages = getNumVisiblePages(true);
       }
 
-      logger?.debug8("Pager resized", { gap, containerSize, numVisiblePages });
+      debug: logger?.debug8("Pager resized", {
+        gap,
+        containerSize,
+        numVisiblePages,
+      });
     } // otherwise just a page transition
 
     const currPageNum = widget.getCurrentPageNum();
@@ -944,7 +948,7 @@ const init = (
       ? numVisiblePages + 0.5
       : numVisiblePages;
 
-    logger?.debug8("Carousel calculations", {
+    debug: logger?.debug8("Carousel calculations", {
       currPageNum,
       prevPageNum,
       visibleStart,

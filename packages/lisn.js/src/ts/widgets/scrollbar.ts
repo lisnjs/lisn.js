@@ -643,7 +643,7 @@ const init = (
       ? scrollData[MC.S_CLIENT_WIDTH] / scrollData[MC.S_SCROLL_WIDTH]
       : scrollData[MC.S_CLIENT_HEIGHT] / scrollData[MC.S_SCROLL_HEIGHT];
 
-    logger?.debug9("Updating progress", {
+    debug: logger?.debug9("Updating progress", {
       tracksH,
       completeFraction,
       viewFraction,
@@ -725,7 +725,7 @@ const init = (
       setOrReleasePointerCapture(event, scrollbar, S_SET_POINTER_CAPTURE);
     }
 
-    logger?.debug10("Click or drag", {
+    debug: logger?.debug10("Click or drag", {
       eventType,
       isClick,
       isHandleClick,
@@ -762,7 +762,7 @@ const init = (
       ? event.clientX - rect.left
       : event.clientY - rect.top;
 
-    logger?.debug10("Pointer offset", offset);
+    debug: logger?.debug10("Pointer offset", offset);
 
     if (offset === lastOffset) {
       return;
@@ -801,7 +801,7 @@ const init = (
       ? { left: targetScrollOffset }
       : { top: targetScrollOffset };
 
-    logger?.debug10("Scroll target offset", {
+    debug: logger?.debug10("Scroll target offset", {
       lastTargetFraction,
       targetCoordinates,
     });

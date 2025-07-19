@@ -19,7 +19,6 @@
  * debug messages that identifies the instance.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { settings } from "@lisn/globals/settings";
@@ -148,7 +147,7 @@ const logDebugN = (logger: Logger, level: number, ...args: unknown[]) => {
 const isMobile = () => {
   const regex =
     /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-  return regex.test(MC.USER_AGENT);
+  return regex.test(MH.userAgent);
 };
 
 const getBooleanURLParam = (name: string) => {

@@ -14,6 +14,7 @@ import { settings } from "@lisn/globals/settings";
 
 import { Position } from "@lisn/globals/types";
 
+import { supportsSticky, isMobile, isInQuirksMode } from "@lisn/utils/browser";
 import {
   showElement,
   hideElement,
@@ -55,11 +56,7 @@ import {
   preventSelect,
 } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
-import {
-  toArrayIfSingle,
-  supportsSticky,
-  isInQuirksMode,
-} from "@lisn/utils/misc";
+import { toArrayIfSingle } from "@lisn/utils/misc";
 import {
   isScrollable,
   getDefaultScrollingElement,
@@ -574,7 +571,7 @@ const init = (
     config?.dragScroll ?? settings.scrollbarDragScroll ?? false;
   const useHandle = config?.useHandle ?? settings.scrollbarUseHandle ?? false;
 
-  if (MC.IS_MOBILE && !onMobile) {
+  if (isMobile() && !onMobile) {
     return;
   }
 
@@ -889,7 +886,7 @@ const init = (
     addClasses(containerElement, PREFIX_CONTAINER);
   }
 
-  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !isMobile());
   setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
   setBooleanData(
     containerElement,

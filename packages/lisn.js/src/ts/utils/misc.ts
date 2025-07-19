@@ -8,23 +8,6 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { roundNumTo } from "@lisn/utils/math";
 
-export const isTouchScreen = () =>
-  MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
-
-/**
- * @since v1.2.0
- */
-export const supportsSticky = () =>
-  MH.hasDOM()
-    ? typeof CSS !== "undefined" && CSS.supports("position", "sticky")
-    : false;
-
-/**
- * @since v1.2.0
- */
-export const isInQuirksMode = () =>
-  MH.hasDOM() ? document.compatMode === "BackCompat" : false;
-
 export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {

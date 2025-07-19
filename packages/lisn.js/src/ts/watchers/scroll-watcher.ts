@@ -953,6 +953,8 @@ export type OnScrollHandler =
 export type ScrollData = {
   clientWidth: number;
   clientHeight: number;
+  scrollWidth: number;
+  scrollHeight: number;
 
   scrollTop: number;
 
@@ -969,9 +971,6 @@ export type ScrollData = {
    * `clientWidth`, ranging from 0 to 1.
    */
   scrollLeftFraction: number;
-
-  scrollWidth: number;
-  scrollHeight: number;
 
   /**
    * This is the direction of the last scroll action, i.e. _compared to the
@@ -1138,14 +1137,14 @@ const fetchScrollData = async (
 
   return {
     direction,
+    [MC.S_CLIENT_WIDTH]: clientWidth,
+    [MC.S_CLIENT_HEIGHT]: clientHeight,
+    [MC.S_SCROLL_WIDTH]: scrollWidth,
+    [MC.S_SCROLL_HEIGHT]: scrollHeight,
     [MC.S_SCROLL_TOP]: scrollTop,
     [MC.S_SCROLL_TOP_FRACTION]: scrollTopFraction,
     [MC.S_SCROLL_LEFT]: scrollLeft,
     [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-    [MC.S_SCROLL_WIDTH]: scrollWidth,
-    [MC.S_SCROLL_HEIGHT]: scrollHeight,
-    [MC.S_CLIENT_WIDTH]: clientWidth,
-    [MC.S_CLIENT_HEIGHT]: clientHeight,
   };
 };
 

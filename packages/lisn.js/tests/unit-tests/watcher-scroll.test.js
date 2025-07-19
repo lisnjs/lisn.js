@@ -32,15 +32,15 @@ const newWatcherElement = (config = null) => {
 };
 
 const getScrollDataAfterScroll = (direction, x, y) => ({
+  clientWidth: window.CLIENT_WIDTH,
+  clientHeight: window.CLIENT_HEIGHT,
+  scrollWidth: window.SCROLL_WIDTH,
+  scrollHeight: window.SCROLL_HEIGHT,
   scrollTop: y,
   scrollTopFraction: y / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
   scrollLeft: x,
   scrollLeftFraction: x / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-  scrollWidth: window.SCROLL_WIDTH,
-  scrollHeight: window.SCROLL_HEIGHT,
   direction: direction,
-  clientWidth: window.CLIENT_WIDTH,
-  clientHeight: window.CLIENT_HEIGHT,
 });
 
 const defaultScrollData = getScrollDataAfterScroll("none", 0, 0);
@@ -227,17 +227,10 @@ describe("initial call", () => {
 
     await window.waitForAF();
     expect(callback).toHaveBeenCalledTimes(1); // initial call
-    expect(callback).toHaveBeenCalledWith(element, {
-      scrollTop: 10,
-      scrollTopFraction: 10 / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-      scrollLeft: 0,
-      scrollLeftFraction: 0,
-      scrollWidth: window.SCROLL_WIDTH,
-      scrollHeight: window.SCROLL_HEIGHT,
-      direction: "down",
-      clientWidth: window.CLIENT_WIDTH,
-      clientHeight: window.CLIENT_HEIGHT,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      element,
+      getScrollDataAfterScroll("down", 0, 10),
+    );
 
     // there's already a previous event data
     const callbackB = jest.fn();
@@ -249,17 +242,10 @@ describe("initial call", () => {
     expect(callback).toHaveBeenCalledTimes(1); // no new calls
     for (const cbk of [callbackB, callbackC]) {
       expect(cbk).toHaveBeenCalledTimes(1);
-      expect(cbk).toHaveBeenCalledWith(element, {
-        scrollTop: 10,
-        scrollTopFraction: 10 / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-        scrollLeft: 0,
-        scrollLeftFraction: 0,
-        scrollWidth: window.SCROLL_WIDTH,
-        scrollHeight: window.SCROLL_HEIGHT,
-        direction: "down",
-        clientWidth: window.CLIENT_WIDTH,
-        clientHeight: window.CLIENT_HEIGHT,
-      });
+      expect(cbk).toHaveBeenCalledWith(
+        element,
+        getScrollDataAfterScroll("down", 0, 10),
+      );
     }
   });
 
@@ -499,17 +485,11 @@ describe("threshold", () => {
       } else {
         nCalls++;
         expect(callback).toHaveBeenCalledTimes(nCalls); // initial call
-        expect(callback).toHaveBeenNthCalledWith(nCalls, element, {
-          scrollTop: 50,
-          scrollTopFraction: 50 / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-          scrollLeft: 40,
-          scrollLeftFraction: 40 / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-          scrollWidth: window.SCROLL_WIDTH,
-          scrollHeight: window.SCROLL_HEIGHT,
-          direction: "down",
-          clientWidth: window.CLIENT_WIDTH,
-          clientHeight: window.CLIENT_HEIGHT,
-        });
+        expect(callback).toHaveBeenNthCalledWith(
+          nCalls,
+          element,
+          getScrollDataAfterScroll("down", 40, 50),
+        );
       }
 
       element.scrollTo(30, 50); // max change of -10
@@ -525,17 +505,11 @@ describe("threshold", () => {
       element.scrollTo(10, 100); // max change of +50 => trigger
       await window.waitForAF();
       expect(callback).toHaveBeenCalledTimes(++nCalls);
-      expect(callback).toHaveBeenNthCalledWith(nCalls, element, {
-        scrollTop: 100,
-        scrollTopFraction: 100 / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-        scrollLeft: 10,
-        scrollLeftFraction: 10 / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-        scrollWidth: window.SCROLL_WIDTH,
-        scrollHeight: window.SCROLL_HEIGHT,
-        direction: "left", // compared to last event
-        clientWidth: window.CLIENT_WIDTH,
-        clientHeight: window.CLIENT_HEIGHT,
-      });
+      expect(callback).toHaveBeenNthCalledWith(
+        nCalls,
+        element,
+        getScrollDataAfterScroll("left", 10, 100),
+      );
 
       element.scrollTo(20, 51); // max change of -49
       await window.waitForAF();
@@ -546,17 +520,11 @@ describe("threshold", () => {
       element.scrollTo(30, 50); // max change of -50 => trigger
       await window.waitForAF();
       expect(callback).toHaveBeenCalledTimes(++nCalls);
-      expect(callback).toHaveBeenNthCalledWith(nCalls, element, {
-        scrollTop: 50,
-        scrollTopFraction: 50 / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-        scrollLeft: 30,
-        scrollLeftFraction: 30 / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-        scrollWidth: window.SCROLL_WIDTH,
-        scrollHeight: window.SCROLL_HEIGHT,
-        direction: "right", // compared to last event
-        clientWidth: window.CLIENT_WIDTH,
-        clientHeight: window.CLIENT_HEIGHT,
-      });
+      expect(callback).toHaveBeenNthCalledWith(
+        nCalls,
+        element,
+        getScrollDataAfterScroll("right", 30, 50),
+      );
     });
   }
 });
@@ -697,19 +665,10 @@ describe("direction (0 threshold, effective 1)", () => {
       element.scrollTo(...endCoords);
       await window.waitForAF();
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(element, {
-        scrollTop: endCoords[1],
-        scrollTopFraction:
-          endCoords[1] / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-        scrollLeft: endCoords[0],
-        scrollLeftFraction:
-          endCoords[0] / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-        scrollWidth: window.SCROLL_WIDTH,
-        scrollHeight: window.SCROLL_HEIGHT,
-        direction: expDirection,
-        clientWidth: window.CLIENT_WIDTH,
-        clientHeight: window.CLIENT_HEIGHT,
-      });
+      expect(callback).toHaveBeenCalledWith(
+        element,
+        getScrollDataAfterScroll(expDirection, ...endCoords, ...startCoords),
+      );
 
       const nCalls = {};
       for (const direction of DIRECTIONS) {
@@ -723,19 +682,10 @@ describe("direction (0 threshold, effective 1)", () => {
       element.scrollTo(...startCoords);
       await window.waitForAF();
       expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenCalledWith(element, {
-        scrollTop: startCoords[1],
-        scrollTopFraction:
-          startCoords[1] / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-        scrollLeft: startCoords[0],
-        scrollLeftFraction:
-          startCoords[0] / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-        scrollWidth: window.SCROLL_WIDTH,
-        scrollHeight: window.SCROLL_HEIGHT,
-        direction: expDirectionRev,
-        clientWidth: window.CLIENT_WIDTH,
-        clientHeight: window.CLIENT_HEIGHT,
-      });
+      expect(callback).toHaveBeenCalledWith(
+        element,
+        getScrollDataAfterScroll(expDirectionRev, ...startCoords, ...endCoords),
+      );
 
       for (const direction of DIRECTIONS) {
         nCalls[direction] += direction === expDirectionRev ? 1 : 0;
@@ -790,19 +740,10 @@ describe("direction + threshold", () => {
       element.scrollTo(...endCoords);
       await window.waitForAF();
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(element, {
-        scrollTop: endCoords[1],
-        scrollTopFraction:
-          endCoords[1] / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-        scrollLeft: endCoords[0],
-        scrollLeftFraction:
-          endCoords[0] / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-        scrollWidth: window.SCROLL_WIDTH,
-        scrollHeight: window.SCROLL_HEIGHT,
-        direction: expDirection,
-        clientWidth: window.CLIENT_WIDTH,
-        clientHeight: window.CLIENT_HEIGHT,
-      });
+      expect(callback).toHaveBeenCalledWith(
+        element,
+        getScrollDataAfterScroll(expDirection, ...endCoords, ...startCoords),
+      );
 
       const nCalls = {};
       for (const direction of DIRECTIONS) {
@@ -816,19 +757,10 @@ describe("direction + threshold", () => {
       element.scrollTo(...startCoords);
       await window.waitForAF();
       expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenCalledWith(element, {
-        scrollTop: startCoords[1],
-        scrollTopFraction:
-          startCoords[1] / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-        scrollLeft: startCoords[0],
-        scrollLeftFraction:
-          startCoords[0] / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-        scrollWidth: window.SCROLL_WIDTH,
-        scrollHeight: window.SCROLL_HEIGHT,
-        direction: expDirectionRev,
-        clientWidth: window.CLIENT_WIDTH,
-        clientHeight: window.CLIENT_HEIGHT,
-      });
+      expect(callback).toHaveBeenCalledWith(
+        element,
+        getScrollDataAfterScroll(expDirectionRev, ...startCoords, ...endCoords),
+      );
 
       for (const direction of DIRECTIONS) {
         nCalls[direction] += direction === expDirectionRev ? 1 : 0;
@@ -918,17 +850,7 @@ test("fetchCurrentScroll", async () => {
   const tStart = Date.now();
   const scroll = await watcher.fetchCurrentScroll(element);
   const tEnd = Date.now();
-  expect(scroll).toEqual({
-    scrollTop: 20,
-    scrollTopFraction: 20 / (window.SCROLL_HEIGHT - window.CLIENT_HEIGHT),
-    scrollLeft: 10,
-    scrollLeftFraction: 10 / (window.SCROLL_WIDTH - window.CLIENT_WIDTH),
-    scrollWidth: window.SCROLL_WIDTH,
-    scrollHeight: window.SCROLL_HEIGHT,
-    direction: "down",
-    clientWidth: window.CLIENT_WIDTH,
-    clientHeight: window.CLIENT_HEIGHT,
-  });
+  expect(scroll).toEqual(getScrollDataAfterScroll("down", 10, 20));
   expect(tEnd - tStart).toBeLessThan(30);
 });
 

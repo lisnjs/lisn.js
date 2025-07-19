@@ -21,11 +21,14 @@ import {
 import { LisnUsageError, LisnBugError } from "@lisn/globals/errors";
 
 // credit: underscore.js
-const root =
+export const root =
   (typeof self === "object" && self.self === self && self) ||
   (typeof global == "object" && global.global === global && global) ||
   Function("return this")() ||
   {};
+
+export const userAgent =
+  typeof navigator === "undefined" ? "" : navigator.userAgent;
 
 export const kebabToCamelCase = (str: string) =>
   str.replace(/-./g, (m) => toUpperCase(m.charAt(1)));

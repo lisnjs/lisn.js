@@ -541,7 +541,7 @@ export class ScrollWatcher {
 
       // And also its children (if possible, a single wrapper around them
       const wrapper = await tryWrapContent(element, {
-        classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
+        _classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
       });
       if (wrapper) {
         setupOnResize(wrapper);

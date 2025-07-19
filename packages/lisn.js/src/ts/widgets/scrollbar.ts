@@ -494,7 +494,7 @@ const getScrollableProps = (containerElement: HTMLElement) => {
   if (!isMainScrollable && !isBody) {
     // we need to wrap if possible
     contentWrapper = getContentWrapper(containerElement, {
-      classNames: [PREFIX_CONTENT],
+      _classNames: [PREFIX_CONTENT],
     });
     hasExistingWrapper = !MH.isNullish(contentWrapper);
 

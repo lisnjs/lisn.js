@@ -324,11 +324,12 @@ export const isAllowedToWrap = (element: Element) =>
 export const getWrapper = (
   element: Element,
   options?: {
-    tagName?: keyof HTMLElementTagNameMap;
-    classNames?: string[] | null;
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
   },
 ) => {
-  const { tagName, classNames = [MC.PREFIX_WRAPPER] } = options ?? {};
+  const { _tagName: tagName, _classNames: classNames = [MC.PREFIX_WRAPPER] } =
+    options ?? {};
   const parent = MH.parentOf(element);
   if (
     MH.lengthOf(MH.childrenOf(parent)) === 1 &&
@@ -354,11 +355,12 @@ export const getWrapper = (
 export const getContentWrapper = (
   element: Element,
   options?: {
-    tagName?: keyof HTMLElementTagNameMap;
-    classNames?: string[] | null;
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
   },
 ) => {
-  const { tagName, classNames = [MC.PREFIX_WRAPPER] } = options ?? {};
+  const { _tagName: tagName, _classNames: classNames = [MC.PREFIX_WRAPPER] } =
+    options ?? {};
   const firstChild = MH.childrenOf(element)[0];
   if (
     MH.lengthOf(MH.childrenOf(element)) === 1 &&
@@ -474,7 +476,7 @@ export const insertGhostCloneNow = <E extends Element>(
     MC.PREFIX_ANIMATE_DISABLE,
   );
 
-  const wrapper = _tryWrapNow(clone, { required: true });
+  const wrapper = _tryWrapNow(clone, { _required: true });
 
   moveElementNow(wrapper, {
     to: insertBefore || element,
@@ -550,11 +552,11 @@ export const insertArrow = (
 // ----------------------------------------
 
 type ContentWrappingOptions = {
-  tagName?: keyof HTMLElementTagNameMap;
-  classNames?: string[]; // if the wrapper has any one of these, it will be re-used
-  ignoreMove?: boolean; // default is true here
-  required?: boolean; // if true, will ignore contentWrappingAllowed and data-lisn-no-wrap
-  requiredBy?: string; // for logging purposes
+  _tagName?: keyof HTMLElementTagNameMap;
+  _classNames?: string[]; // if the wrapper has any one of these, it will be re-used
+  _ignoreMove?: boolean; // default is true here
+  _required?: boolean; // if true, will ignore contentWrappingAllowed and data-lisn-no-wrap
+  _requiredBy?: string; // for logging purposes
 };
 
 const recordsToSkipOnce = MH.newMap<
@@ -588,11 +590,11 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
   wrapContent = false, // if true, wrap its children, otherwise given element
 ) => {
   const {
-    tagName,
-    classNames = [MC.PREFIX_WRAPPER],
-    ignoreMove = true,
-    required = false,
-    requiredBy = "",
+    _tagName: tagName,
+    _classNames: classNames = [MC.PREFIX_WRAPPER],
+    _ignoreMove: ignoreMove = true,
+    _required: required = false,
+    _requiredBy: requiredBy = "",
   } = options ?? {};
 
   const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
@@ -616,7 +618,7 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
     }
   }
 
-  return wrapper as O extends { required: true }
+  return wrapper as O extends { _required: true }
     ? HTMLElement
     : HTMLElement | null;
 };

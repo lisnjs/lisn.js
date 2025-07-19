@@ -151,9 +151,9 @@ export const createOverlay = async (userOptions?: OverlayOptions) => {
     // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
     // olverlays anyway.
     parentEl = await tryWrapContent(parentEl, {
-      classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
-      required: true,
-      requiredBy: "percentage offset view trigger with scrolling root",
+      _classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
+      _required: true,
+      _requiredBy: "percentage offset view trigger with scrolling root",
     });
   }
 

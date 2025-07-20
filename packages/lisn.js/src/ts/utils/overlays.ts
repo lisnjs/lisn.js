@@ -225,8 +225,8 @@ const getOverlayKey = (
 
 const getCssProperties = (style: Record<string, string> | undefined) => {
   const finalCssProperties: Record<string, string> = MH.merge(
-    { position: MC.S_ABSOLUTE }, // default
     style,
+    { position: style?.position || MC.S_ABSOLUTE }, // default
   );
 
   if (

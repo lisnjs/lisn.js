@@ -716,13 +716,10 @@ export class ScrollWatcher {
     this.scrollTo = async (to, options) =>
       scrollTo(
         to,
-        MH.merge(
-          { duration: config._scrollDuration }, // default
-          options,
-          {
-            scrollable: await fetchScrollableElement(options?.scrollable),
-          }, // override
-        ),
+        MH.merge(options, {
+          duration: options?.duration ?? config._scrollDuration, // default
+          scrollable: await fetchScrollableElement(options?.scrollable), // override
+        }),
       );
 
     // ----------

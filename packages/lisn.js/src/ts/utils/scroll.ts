@@ -16,7 +16,10 @@ import {
   Offset,
 } from "@lisn/globals/types";
 
-import { animationFrameIterator } from "@lisn/utils/animations";
+import {
+  newAnimationFrameIterator,
+  ElapsedTimes,
+} from "@lisn/utils/animations";
 import { getComputedStylePropNow } from "@lisn/utils/css-alter";
 import { SCROLL_DIRECTIONS } from "@lisn/utils/directions";
 import {
@@ -26,10 +29,13 @@ import {
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
-import { maxAbs, easeInOutQuad } from "@lisn/utils/math";
+import { maxAbs, criticallyDamped } from "@lisn/utils/math";
+import { randId, formatAsString } from "@lisn/utils/text";
 import { isValidStrList } from "@lisn/utils/validation";
 
 import { newXMap } from "@lisn/modules/x-map";
+
+import debug from "@lisn/debug/debug";
 
 /**
  * @category Scrolling
@@ -66,9 +72,10 @@ export type ScrollToOptions = {
    */
   offset?: CoordinateOffset;
 
-  // TODO maybe support fixed velocity as an alternative to fixed duration?
+  // TODO maybe support fixed average velocity as an alternative to fixed duration?
   /**
-   * The duration of the scroll animation. If not given, it is instant.
+   * The duration of the scroll animation in milliseconds. If not given, it is
+   * instant.
    *
    * @defaultValue 0
    */
@@ -240,9 +247,9 @@ export const getCurrentScrollAction = (
   scrollable?: Element,
 ): ScrollAction | null => {
   scrollable = toScrollableOrDefault(scrollable);
-  const action = currentScrollAction.get(scrollable);
-  if (action) {
-    return MH.copyObject(action);
+  const info = currentScrollInfos.get(scrollable);
+  if (info) {
+    return MH.copyObject(info._action);
   }
   return null;
 };
@@ -275,9 +282,9 @@ export const scrollTo = (
   const scrollable = options._scrollable;
 
   // cancel current scroll action if any
-  const currentScroll = currentScrollAction.get(scrollable);
-  if (currentScroll) {
-    if (!currentScroll.cancel()) {
+  const info = currentScrollInfos.get(scrollable);
+  if (info) {
+    if (!info._action.cancel()) {
       // current scroll action is not cancellable by us
       return null;
     }
@@ -312,16 +319,16 @@ export const scrollTo = (
     }
   }
 
-  const promise = initiateScroll(options, () => isCancelled);
-
-  const thisScrollAction: ScrollAction = {
-    waitFor: () => promise,
-    cancel: cancelFn,
+  const thisInfo: ScrollInfo = {
+    _action: {
+      waitFor: () => scrollActionPromise,
+      cancel: cancelFn,
+    },
   };
 
   const cleanup = () => {
-    if (currentScrollAction.get(scrollable) === thisScrollAction) {
-      MH.deleteKey(currentScrollAction, scrollable);
+    if (currentScrollInfos.get(scrollable)?._action === thisInfo._action) {
+      MH.deleteKey(currentScrollInfos, scrollable);
     }
 
     if (preventScrollHandler) {
@@ -333,10 +340,11 @@ export const scrollTo = (
     }
   };
 
-  thisScrollAction.waitFor().then(cleanup).catch(cleanup);
+  const scrollActionPromise = initiateScroll(options, () => isCancelled);
+  thisInfo._action.waitFor().then(cleanup).catch(cleanup);
 
-  currentScrollAction.set(scrollable, thisScrollAction);
-  return thisScrollAction;
+  updateCurrentScrollInfo(scrollable, thisInfo);
+  return thisInfo._action;
 };
 
 /**
@@ -437,7 +445,7 @@ export const fetchMainScrollableElement = async (): Promise<HTMLElement> => {
  */
 export const getDefaultScrollingElement = () => {
   const body = MH.getBody();
-  return isScrollable(body) ? body : MH.getDocScrollingElement() || body;
+  return isScrollable(body) ? body : (MH.getDocScrollingElement() ?? body);
 };
 
 /**
@@ -469,6 +477,15 @@ type ScrollToOptionsInternal = {
   _userCanInterrupt: boolean;
 };
 
+type Velocity = { top: number; left: number };
+
+type ScrollInfo = {
+  _action: ScrollAction;
+  _position?: ScrollPosition;
+  _velocity?: Velocity;
+  _elapsed?: ElapsedTimes;
+};
+
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
 
 const isScrollableCache = newXMap<Element, Map<"x" | "y", boolean>>(() =>
@@ -477,18 +494,28 @@ const isScrollableCache = newXMap<Element, Map<"x" | "y", boolean>>(() =>
 
 const mappedScrollables = MH.newMap<Element, Element>();
 
-const currentScrollAction = MH.newMap<Element, ScrollAction>();
+const currentScrollInfos = MH.newMap<Element, ScrollInfo>();
 
 const DIFF_THRESHOLD = 5;
-const arePositionsDifferent = (start: ScrollPosition, end: ScrollPosition) =>
-  maxAbs(start.top - end.top, start.left - end.left) >= DIFF_THRESHOLD;
+const arePositionsDifferent = (
+  start: ScrollPosition,
+  end: ScrollPosition,
+  threshold = DIFF_THRESHOLD,
+) => maxAbs(start.top - end.top, start.left - end.left) > threshold;
+
+// must be called in "measure time"
+const getBorderWidth = (element: Element, side: Offset) =>
+  MH.ceil(MH.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+
+const isScrollableBodyInQuirks = (element: Element): element is HTMLElement =>
+  element === MH.getBody() && MH.getDocScrollingElement() === null;
 
 const toScrollableOrMain = <R>(
   target: ScrollTarget | null | undefined,
   getMain: () => R,
 ): Element | R => {
   if (MH.isElement(target)) {
-    return mappedScrollables.get(target) || target;
+    return mappedScrollables.get(target) ?? target;
   }
 
   if (!target || target === MH.getWindow() || target === MH.getDoc()) {
@@ -513,21 +540,35 @@ const getOptions = (
 
   return {
     _target: target,
-    _offset: options?.offset || null,
+    _offset: options?.offset ?? null,
     _altTarget: altTarget,
-    _altOffset: options?.altOffset || null,
+    _altOffset: options?.altOffset ?? null,
     _scrollable: scrollable,
-    _duration: options?.duration || 0,
+    _duration: options?.duration ?? 0,
     _weCanInterrupt: options?.weCanInterrupt ?? false,
     _userCanInterrupt: options?.userCanInterrupt ?? false,
   };
+};
+
+const updateCurrentScrollInfo = (
+  scrollable: Element,
+  newInfo: Partial<ScrollInfo>,
+) => {
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
+  const _action = newInfo._action ?? existingScrollInfo?._action;
+  if (_action) {
+    currentScrollInfos.set(
+      scrollable,
+      MH.merge(existingScrollInfo, newInfo, { _action }),
+    );
+  }
 };
 
 const getTargetCoordinates = (
   scrollable: Element,
   target: TargetCoordinates | Element | string,
 ): TargetCoordinates => {
-  const docScrollingElement = MH.getDocScrollingElement();
+  const isDocScrollingElement = scrollable === MH.getDocScrollingElement();
 
   if (MH.isElement(target)) {
     if (scrollable === target || !scrollable.contains(target)) {
@@ -536,17 +577,13 @@ const getTargetCoordinates = (
 
     return {
       top: () =>
-        scrollable[MC.S_SCROLL_TOP] +
         MH.getBoundingClientRect(target).top -
-        (scrollable === docScrollingElement
-          ? 0
-          : MH.getBoundingClientRect(scrollable).top),
+        MH.getBoundingClientRect(scrollable).top +
+        (isDocScrollingElement ? 0 : scrollable[MC.S_SCROLL_TOP]),
       left: () =>
-        scrollable[MC.S_SCROLL_LEFT] +
         MH.getBoundingClientRect(target).left -
-        (scrollable === docScrollingElement
-          ? 0
-          : MH.getBoundingClientRect(scrollable).left),
+        MH.getBoundingClientRect(scrollable).left +
+        (isDocScrollingElement ? 0 : scrollable[MC.S_SCROLL_LEFT]),
     };
   }
 
@@ -568,15 +605,15 @@ const getTargetCoordinates = (
 
 const getStartEndPosition = async (
   options: ScrollToOptionsInternal,
-): Promise<{ start: ScrollPosition; end: ScrollPosition }> => {
+): Promise<{ _start: ScrollPosition; _end: ScrollPosition }> => {
   await waitForMeasureTime();
 
   const applyOffset = (
     position: ScrollPosition,
     offset: CoordinateOffset | null,
   ) => {
-    position.top += offset?.top || 0;
-    position.left += offset?.left || 0;
+    position.top += offset?.top ?? 0;
+    position.left += offset?.left ?? 0;
   };
 
   const scrollable = options._scrollable;
@@ -593,7 +630,7 @@ const getStartEndPosition = async (
     applyOffset(end, options._altOffset);
   }
 
-  return { start, end };
+  return { _start: start, _end: end };
 };
 
 // must be called in "measure time"
@@ -642,58 +679,79 @@ const initiateScroll = async (
   const position = await getStartEndPosition(options);
   const duration = options._duration;
   const scrollable = options._scrollable;
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
 
-  const currentPosition: ScrollPosition = position.start;
+  const currentPosition = existingScrollInfo?._position ?? position._start;
+  const currentVelocity = existingScrollInfo?._velocity ?? {
+    [MC.S_TOP]: 0,
+    [MC.S_LEFT]: 0,
+  };
+  let elapsed = existingScrollInfo?._elapsed;
 
-  for await (const [
-    totalElapsed,
-    elapsedSinceLast__ignored,
-  ] of animationFrameIterator()) {
+  const logger = debug
+    ? new debug.Logger({
+        name: `scroll-${formatAsString(scrollable)}-${randId()}`,
+        logAtCreation: {
+          options,
+          position,
+          elapsed,
+          currentPosition: MH.copyObject(currentPosition),
+          currentVelocity: MH.copyObject(currentVelocity),
+        },
+      })
+    : null;
+
+  for await (elapsed of newAnimationFrameIterator(elapsed)) {
+    const deltaTime = elapsed.sinceLast;
+    if (deltaTime === 0) {
+      // First time
+      continue;
+    }
+
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
     await waitForMeasureTime();
 
     if (isCancelled()) {
       // Reject the promise
+      logger?.debug8("Cancelled");
       throw currentPosition;
     }
 
-    if (totalElapsed === 0) {
-      // First frame
-      // If it's very close to the target, no need to scroll smoothly
-      if (
-        duration === 0 ||
-        !arePositionsDifferent(currentPosition, position.end)
-      ) {
-        MH.elScrollTo(scrollable, position.end);
-        return position.end;
-      }
-    } else {
-      const progress = easeInOutQuad(MH.min(1, totalElapsed / duration));
+    for (const s of [MC.S_LEFT, MC.S_TOP] as const) {
+      const { l, v } = criticallyDamped({
+        l: currentPosition[s],
+        v: currentVelocity[s],
+        lTarget: position._end[s],
+        dt: deltaTime,
+        lag: duration,
+      });
 
-      for (const s of [MC.S_LEFT, MC.S_TOP] as const) {
-        currentPosition[s] =
-          position.start[s] + (position.end[s] - position.start[s]) * progress;
-      }
+      currentPosition[s] = l;
+      currentVelocity[s] = v;
+    }
 
-      MH.elScrollTo(scrollable, currentPosition);
+    updateCurrentScrollInfo(scrollable, {
+      _position: currentPosition,
+      _velocity: currentVelocity,
+      _elapsed: elapsed,
+    });
 
-      if (progress === 1) {
-        // done
-        break;
-      }
+    const isDone = !arePositionsDifferent(currentPosition, position._end, 0.5);
+    if (isDone) {
+      MH.assign(currentPosition, position._end); // use exact final coordinates
+    }
+
+    MH.elScrollTo(scrollable, currentPosition);
+
+    if (isDone) {
+      logger?.debug8("Done");
+      break;
     }
   }
 
   return currentPosition;
 };
-
-const isScrollableBodyInQuirks = (element: Element): element is HTMLElement =>
-  element === MH.getBody() && MH.getDocScrollingElement() === null;
-
-// must be called in "measure time"
-const getBorderWidth = (element: Element, side: Offset) =>
-  MH.ceil(MH.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
 
 // ------------------------------
 

@@ -5,7 +5,7 @@ const utils = window.LISN.utils;
 // one rAF for measure time and one to run first step of initiateScroll
 const minStartDelay = 20;
 
-const diffTolerance = 40;
+const diffTolerance = 100; // in milliseconds
 
 const roundDiff = (x, y) => {
   return Math.floor(Math.abs(x - y));
@@ -458,7 +458,7 @@ describe("scrollTo before previous one finishes", () => {
 
 test("scrollTo: already at target, no altTarget", async () => {
   const element = newScrollingElement();
-  element.scrollTo(48, 49);
+  element.scrollTo(49.6, 49.6);
   const action = utils.scrollTo(
     {
       top: 50,

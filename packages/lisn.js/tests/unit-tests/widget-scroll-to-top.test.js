@@ -177,7 +177,7 @@ describe("click", () => {
     expect(document.documentElement.scrollLeft).toBe(200);
 
     element.dispatchEvent(window.newClick());
-    await window.waitFor(1200); // scroll takes 1s
+    await window.waitFor(1500); // scroll takes ~1s
     expect(document.documentElement.scrollTop).toBe(0);
     expect(document.documentElement.scrollLeft).toBe(0);
   });
@@ -190,7 +190,7 @@ describe("click", () => {
     expect(scrollable.scrollLeft).toBe(200);
 
     element.dispatchEvent(window.newClick());
-    await window.waitFor(1200); // scroll takes 1s
+    await window.waitFor(1500); // scroll takes ~1s
     expect(scrollable.scrollTop).toBe(0);
     expect(scrollable.scrollLeft).toBe(0);
   });

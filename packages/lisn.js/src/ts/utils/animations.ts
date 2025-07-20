@@ -16,12 +16,18 @@ import {
 } from "@lisn/utils/dom-optimize";
 import { criticallyDamped } from "@lisn/utils/math";
 
+export type ElapsedTimes = {
+  total: number;
+  sinceLast: number;
+};
+
 /**
- * The callback is passed two arguments:
- * 1. The total elapsed time in milliseconds since the start
- * 2. The elapsed time in milliseconds since the previous frame
+ * The callback is as an argument the {@link ElapsedTimes | elapsed times}:
+ * - The total elapsed time in milliseconds since the start
+ * - The elapsed time in milliseconds since the previous frame
  *
- * The first time this callback is called both of these will be 0.
+ * The first time this callback is called both of these will be 0 unless seed
+ * values were provided.
  *
  * The callback must return `true` if it wants to animate again on the next
  * frame and `false` if done.
@@ -30,16 +36,14 @@ import { criticallyDamped } from "@lisn/utils/math";
  *
  * @category Animations
  */
-export type AnimationCallback = (
-  totalElapsed: number,
-  elapsedSinceLast: number,
-) => boolean;
+export type AnimationCallback = (elapsed: ElapsedTimes) => boolean;
 
 /**
  * Returns a promise that resolves at the next animation frame. Async/await
- * version of requestAnimationFrame.
+ * version of
+ * {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame | requestAnimationFrame}.
  *
- * @returns The timestamp gotten from requestAnimationFrame
+ * @returns The timestamp gotten from `requestAnimationFrame`
  *
  * @category Animations
  */
@@ -53,19 +57,22 @@ export const waitForAnimationFrame = async () =>
  *
  * The returned Promise resolves when the callback is done (returns `false`).
  *
- * @see {@link AnimationCallback}
+ * @param callback  See {@link AnimationCallback}.
+ * @param elapsed   Seed values to use as the total elapsed and elapsed since
+ *                  last. Otherwise it will use the timestamp of the first frame
+ *                  as the start, which will result in those values being 0 the
+ *                  first time.
  *
  * @since v1.2.0
  *
  * @category Animations
  */
-export const onEveryAnimationFrame = async (callback: AnimationCallback) => {
-  for await (const [
-    totalElapsed,
-    elapsedSinceLast,
-  ] of animationFrameIterator()) {
-    const shouldRepeat = callback(totalElapsed, elapsedSinceLast);
-
+export const onEveryAnimationFrame = async (
+  callback: AnimationCallback,
+  elapsed?: ElapsedTimes,
+) => {
+  for await (elapsed of newAnimationFrameIterator(elapsed)) {
+    const shouldRepeat = callback(elapsed);
     if (!shouldRepeat) {
       break;
     }
@@ -80,7 +87,7 @@ export const onEveryAnimationFrame = async (callback: AnimationCallback) => {
  *
  * @example
  * ```javascript
- * for await (const [totalElapsed, elapsedSinceLast] of animationFrameIterator()) {
+ * for await (const elapsed of newAnimationFrameIterator()) {
  *   // ... do something
  *   if (done) break;
  * }
@@ -90,24 +97,25 @@ export const onEveryAnimationFrame = async (callback: AnimationCallback) => {
  *
  * @category Animations
  */
-export async function* animationFrameIterator(): AsyncGenerator<
-  readonly [number, number],
-  never
-> {
+export async function* newAnimationFrameIterator(
+  elapsed?: ElapsedTimes,
+): AsyncGenerator<ElapsedTimes, never> {
   let startTime: number, previousTimeStamp: number;
+  const { total: totalSeed = 0, sinceLast: sinceLastSeed = 0 } = elapsed ?? {};
 
   const step = async () => {
     const timeStamp = await waitForAnimationFrame();
-    if (!startTime) {
-      startTime = timeStamp;
-      previousTimeStamp = timeStamp;
+    if (!startTime || !previousTimeStamp) {
+      // First time
+      startTime = timeStamp - totalSeed;
+      previousTimeStamp = timeStamp - sinceLastSeed;
     }
 
     const totalElapsed = timeStamp - startTime;
     const elapsedSinceLast = timeStamp - previousTimeStamp;
     previousTimeStamp = timeStamp;
 
-    return [totalElapsed, elapsedSinceLast] as const;
+    return { total: totalElapsed, sinceLast: elapsedSinceLast };
   };
 
   while (true) {
@@ -136,7 +144,7 @@ export async function* animationFrameIterator(): AsyncGenerator<
  * If you never need to update the target you can use a for await loop:
  *
  * ```javascript
- * const iterator = criticallyDampedAnimationIterator({
+ * const iterator = newCriticallyDampedAnimationIterator({
  *   l: 10,
  *   lTarget: 100,
  *   lag: 1500
@@ -151,7 +159,7 @@ export async function* animationFrameIterator(): AsyncGenerator<
  * If you do need to update the target, then call `next` explicitly:
  *
  * ```javascript
- * const iterator = criticallyDampedAnimationIterator({
+ * const iterator = newCriticallyDampedAnimationIterator({
  *   l: 10,
  *   lTarget: 100,
  *   lag: 1500
@@ -166,7 +174,7 @@ export async function* animationFrameIterator(): AsyncGenerator<
  *
  * @category Animations
  */
-export async function* criticallyDampedAnimationIterator(settings: {
+export async function* newCriticallyDampedAnimationIterator(settings: {
   lTarget: number;
   lag: number;
   l?: number;
@@ -188,7 +196,7 @@ export async function* criticallyDampedAnimationIterator(settings: {
     return { l, v, t };
   };
 
-  for await ([t, dt] of animationFrameIterator()) {
+  for await ({ total: t, sinceLast: dt } of newAnimationFrameIterator()) {
     if (dt === 0) {
       continue;
     }

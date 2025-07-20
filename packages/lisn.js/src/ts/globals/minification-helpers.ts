@@ -342,7 +342,7 @@ export const typeOrClassOf = (obj: unknown) =>
   isObject(obj) ? constructorOf(obj)?.name : typeOf(obj);
 
 export const parentOf = (element: Element | undefined | null) =>
-  element?.parentElement || null;
+  element?.parentElement ?? null;
 
 export const childrenOf = (element: Element | undefined | null) =>
   element?.children || [];

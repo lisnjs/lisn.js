@@ -161,7 +161,7 @@ export class Trigger extends Widget {
 
     const once = config?.once ?? false;
     const oneWay = config?.oneWay ?? false;
-    const delay = config?.delay || 0;
+    const delay = config?.delay ?? 0;
     const doDelay = config?.doDelay ?? delay;
     const undoDelay = config?.undoDelay ?? delay;
 
@@ -400,7 +400,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
 
       const actions = [];
       for (const actionSpec of splitOn(
-        allActionSpecs || "",
+        allActionSpecs ?? "",
         ACTION_PREF_CHAR,
         true,
       )) {
@@ -413,7 +413,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
 
         try {
           actions.push(
-            await fetchAction(actionTarget, name, actionArgsAndOptions || ""),
+            await fetchAction(actionTarget, name, actionArgsAndOptions ?? ""),
           );
         } catch (err) {
           if (MH.isInstanceOf(err, LisnUsageError)) {

@@ -87,7 +87,7 @@ export const getOverlay = (userOptions?: OverlayOptions) => {
     return null;
   }
 
-  return overlays.get(options._parent)?.get(options._overlayKey) || null;
+  return overlays.get(options._parent)?.get(options._overlayKey) ?? null;
 };
 
 /**

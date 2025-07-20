@@ -197,7 +197,7 @@ export class ViewTrigger extends Trigger {
       threshold: config?.threshold,
     });
 
-    const target = config?.target || element;
+    const target = config?.target ?? element;
     const views = config?.views || MC.S_AT;
     const oppositeViews = getOppositeViews(views);
 

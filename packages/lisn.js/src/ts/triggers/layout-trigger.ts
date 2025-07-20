@@ -146,7 +146,7 @@ export class LayoutTrigger extends Trigger {
             layout: validateStringRequired(
               "layout",
               MH.strReplace(
-                MH.strReplace(args[0] || "", /(min|max)-/g, "$1 "),
+                MH.strReplace(args[0] ?? "", /(min|max)-/g, "$1 "),
                 /-to-/g,
                 " to ",
               ),
@@ -171,7 +171,7 @@ export class LayoutTrigger extends Trigger {
     actions: Action[],
     config: LayoutTriggerConfig,
   ) {
-    const layout = config?.layout || "";
+    const layout = config?.layout ?? "";
     if (!layout) {
       throw MH.usageError("'layout' is required");
     }

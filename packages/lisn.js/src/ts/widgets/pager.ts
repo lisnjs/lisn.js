@@ -354,8 +354,8 @@ export class Pager extends Widget {
     const toggles = config?.toggles || [];
     const switches = config?.switches || [];
     const nextPrevSwitch = {
-      _next: config?.nextSwitch || null,
-      _prev: config?.prevSwitch || null,
+      _next: config?.nextSwitch ?? null,
+      _prev: config?.prevSwitch ?? null,
     };
 
     const pageSelector = getDefaultWidgetSelector(PREFIX_PAGE__FOR_SELECT);
@@ -856,7 +856,7 @@ const init = (
   const pageContainer = MH.parentOf(pages[0]);
 
   let initialPage = toInt(config?.initialPage ?? 1);
-  const pagerStyle = config?.style ?? "slider";
+  const pagerStyle = config?.style || "slider";
   const isCarousel = pagerStyle === "carousel";
   const minPageSize = config?.pageSize ?? 300;
   const enablePeek = config?.peek ?? false;

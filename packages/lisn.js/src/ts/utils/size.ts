@@ -103,8 +103,8 @@ export const fetchViewportSize = async (realtime = false) => {
     : null;
 
   return {
-    [MC.S_WIDTH]: root?.clientWidth || 0,
-    [MC.S_HEIGHT]: root?.clientHeight || 0,
+    [MC.S_WIDTH]: root?.clientWidth ?? 0,
+    [MC.S_HEIGHT]: root?.clientHeight ?? 0,
   };
 };
 

@@ -75,10 +75,10 @@ export class Logger implements LoggerInterface {
       !getBooleanURLParam("disableRemoteLog") &&
       (myConfig.remoteLoggerOnMobileOnly === false || isMobile())
     ) {
-      remoteLoggerURL = myConfig.remoteLoggerURL || "";
+      remoteLoggerURL = myConfig.remoteLoggerURL ?? "";
     }
 
-    const name = myConfig.name || "";
+    const name = myConfig.name ?? "";
     const myConsole = new Console(
       remoteLoggerURL,
       myConfig.remoteLoggerConnectTimeout,
@@ -96,7 +96,7 @@ export class Logger implements LoggerInterface {
       verbosityLevel = l;
     };
 
-    this.setVerbosityLevel(myConfig.verbosityLevel || 0);
+    this.setVerbosityLevel(myConfig.verbosityLevel ?? 0);
 
     this.debug1 = (...args) => logDebugN(this, 1, debugPrefix, ...args);
     this.debug2 = (...args) => logDebugN(this, 2, debugPrefix, ...args);

@@ -607,7 +607,7 @@ export class ScrollWatcher {
       }
 
       const element = await fetchScrollableElement(scrollable);
-      const realtime = (activeListeners.get(scrollable)?._nRealtime || 0) > 0;
+      const realtime = (activeListeners.get(scrollable)?._nRealtime ?? 0) > 0;
       const latestData = await fetchCurrentScroll(element, realtime, true);
       allScrollData.set(element, latestData);
 
@@ -1127,8 +1127,8 @@ const fetchScrollData = async (
   const scrollLeftFraction =
     MH.round(scrollLeft) / (scrollWidth - clientWidth || MC.INFINITY);
 
-  const prevScrollTop = previousEventData?.scrollTop || 0;
-  const prevScrollLeft = previousEventData?.scrollLeft || 0;
+  const prevScrollTop = previousEventData?.scrollTop ?? 0;
+  const prevScrollLeft = previousEventData?.scrollLeft ?? 0;
 
   const direction = getMaxDeltaDirection(
     scrollLeft - prevScrollLeft,

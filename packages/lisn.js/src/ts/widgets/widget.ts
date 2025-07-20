@@ -119,7 +119,7 @@ export class Widget {
    * Retrieve an existing widget by element and ID.
    */
   static get(element: Element, id: string): Widget | null {
-    return instances.get(element)?.get(id) || null;
+    return instances.get(element)?.get(id) ?? null;
   }
 
   /**
@@ -321,7 +321,7 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
   await waitForInteractive();
 
   const prefixedName = MH.prefixName(name);
-  const selector = options?.selector ?? getDefaultWidgetSelector(prefixedName);
+  const selector = options?.selector || getDefaultWidgetSelector(prefixedName);
 
   if (settings.autoWidgets) {
     const domWatcher = DOMWatcher.reuse();

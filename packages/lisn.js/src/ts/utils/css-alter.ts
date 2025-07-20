@@ -811,7 +811,7 @@ export const setNumericStyleJsVarsNow = (
     return;
   }
 
-  const varPrefix = MH.prefixCssJsVar(options?._prefix || "");
+  const varPrefix = MH.prefixCssJsVar(options?._prefix ?? "");
   for (const prop in props) {
     const cssPropSuffix = camelToKebabCase(prop);
     const varName = `${varPrefix}${cssPropSuffix}`;
@@ -830,7 +830,7 @@ export const setNumericStyleJsVarsNow = (
     if (value === null) {
       delStylePropNow(element, varName);
     } else {
-      setStylePropNow(element, varName, value + (options?._units || ""));
+      setStylePropNow(element, varName, value + (options?._units ?? ""));
     }
   }
 };

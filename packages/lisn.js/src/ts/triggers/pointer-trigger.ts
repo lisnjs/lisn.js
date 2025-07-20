@@ -417,7 +417,7 @@ const setupWatcher = (
   }
 
   config ??= {};
-  const target = MH.targetOf(config) || element;
+  const target = MH.targetOf(config) ?? element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS
   // state rather than the odd/even clicks. Otherwise if the trigger is

@@ -21,9 +21,9 @@ export const callEventListener = (
   event: Event,
 ) => {
   if (MH.isFunction(handler)) {
-    handler.call(event.currentTarget || self, event);
+    handler.call(event.currentTarget ?? self, event);
   } else {
-    handler.handleEvent.call(event.currentTarget || self, event);
+    handler.handleEvent.call(event.currentTarget ?? self, event);
   }
 };
 

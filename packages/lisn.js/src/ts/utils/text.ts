@@ -173,7 +173,7 @@ export const randId = (nChars = 8) => {
  */
 export const toMargins = (value: string, absoluteSize: Size) => {
   const toPxValue = (strValue: string | undefined, index: number) => {
-    let margin = MH.parseFloat(strValue || "") || 0;
+    let margin = MH.parseFloat(strValue ?? "") || 0;
 
     if (strValue === margin + "%") {
       margin *=

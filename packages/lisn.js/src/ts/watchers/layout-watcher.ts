@@ -516,7 +516,7 @@ const getConfig = (
   }
 
   return {
-    _root: config?.root || null,
+    _root: config?.root ?? null,
     _deviceBreakpoints: deviceBreakpoints,
     _aspectRatioBreakpoints: aspectRatioBreakpoints,
   };

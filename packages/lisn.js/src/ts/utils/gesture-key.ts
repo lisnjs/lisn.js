@@ -127,7 +127,7 @@ export const getKeyGestureFragment = (
       "-": deltasOut,
     };
 
-    const theseDeltas = deltasForKey[event.key] || null;
+    const theseDeltas = deltasForKey[event.key] ?? null;
     if (!theseDeltas) {
       // not a relevant key
       continue;

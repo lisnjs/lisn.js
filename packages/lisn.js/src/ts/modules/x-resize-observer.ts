@@ -63,7 +63,7 @@ export class XResizeObserver {
 
     let observedTargets = MH.newWeakSet<Element>();
 
-    debounceWindow = debounceWindow || 0;
+    debounceWindow ??= 0;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
     const resizeHandler = (entries: ResizeObserverEntry[]) => {

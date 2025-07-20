@@ -211,7 +211,7 @@ export abstract class Openable extends Widget {
   static get(element: Element): Openable | null {
     // We manage the instances here since we also map associated elements and
     // not just the main content element that created the widget.
-    return instances.get(element) || null;
+    return instances.get(element) ?? null;
   }
 
   constructor(element: HTMLElement, properties: OpenableProperties) {
@@ -1064,7 +1064,7 @@ export class Popup extends Openable {
     const root = this.getRoot();
     const container = this.getContainer();
 
-    const position = config?.position ?? S_AUTO;
+    const position = config?.position || S_AUTO;
     if (position !== S_AUTO) {
       setData(root, MC.PREFIX_PLACE, position);
     }
@@ -1772,7 +1772,7 @@ const findContainer = (content: Element, cls: string) => {
   // the next mutate time. In that case, to correctly determine the container
   // element, use the current widget's root element, which is located in the
   // content element's original place.
-  let childRef = currWidget?.getRoot() || content;
+  let childRef = currWidget?.getRoot() ?? content;
   if (!MH.parentOf(childRef)) {
     // The current widget is not yet initialized (i.e. we are re-creating it
     // immediately after it was constructed)
@@ -2300,8 +2300,9 @@ const insertCollapsibleIcon = (
 ) => {
   const iconPosition = triggerConfig.icon ?? widgetConfig?.icon;
   const iconClosed =
-    triggerConfig.iconClosed ?? widgetConfig?.iconClosed ?? "plus";
-  const iconOpen = triggerConfig.iconOpen ?? widgetConfig?.iconOpen ?? "minus";
+    (triggerConfig.iconClosed ?? widgetConfig?.iconClosed) || "plus";
+  const iconOpen =
+    (triggerConfig.iconOpen ?? widgetConfig?.iconOpen) || "minus";
 
   if (iconPosition) {
     addClasses(trigger, PREFIX_ICON_WRAPPER);

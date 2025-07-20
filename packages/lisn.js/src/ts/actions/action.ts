@@ -87,7 +87,7 @@ export const fetchAction = async (
     throw MH.usageError(`Unknown action '${name}'`);
   }
 
-  return await newActionFromSpec(element, argsAndOptions || "");
+  return await newActionFromSpec(element, argsAndOptions ?? "");
 };
 
 // --------------------

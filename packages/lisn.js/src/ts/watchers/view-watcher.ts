@@ -809,9 +809,9 @@ const getConfig = (
   config: ViewWatcherConfig | undefined,
 ): ViewWatcherConfigInternal => {
   return {
-    _root: config?.root || null,
+    _root: config?.root ?? null,
     _rootMargin: config?.rootMargin ?? "0px 0px 0px 0px",
-    _threshold: config?.threshold || 0,
+    _threshold: config?.threshold ?? 0,
   };
 };
 

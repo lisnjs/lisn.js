@@ -36,11 +36,11 @@ export class LocalConsole implements ConsoleInterface {
 
 // ------------------------------
 
-const isiOS = MH.includes(MH.userAgent, "iPhone OS") || false;
+const isiOS = MH.includes(MH.userAgent, "iPhone OS");
 const iOSlog: LogFunction = (...args) =>
   MH.consoleInfo(joinAsString(" ", ...args));
 
-const isJest = MH.includes(MH.userAgent, " jsdom/") || false;
+const isJest = MH.includes(MH.userAgent, " jsdom/");
 const jestLog: Record<LevelName, LogFunction> = {
   debug: (...args) => MH.consoleDebug(joinAsString(" ", ...args)),
   log: (...args) => MH.consoleLog(joinAsString(" ", ...args)),

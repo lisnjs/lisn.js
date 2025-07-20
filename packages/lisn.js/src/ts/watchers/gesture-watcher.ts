@@ -227,7 +227,7 @@ export class GestureWatcher {
       const options = getOptions(config, userOptions ?? {});
       createCallback(target, handler, options);
 
-      for (const device of options._devices || DEVICES) {
+      for (const device of options._devices ?? DEVICES) {
         let listeners = allListeners.get(target)?.get(device);
         if (listeners) {
           debug: logger?.debug4(
@@ -263,7 +263,7 @@ export class GestureWatcher {
       MH.deleteKey(allCallbacks.get(target), handler);
       allCallbacks.prune(target);
 
-      for (const device of options._devices || DEVICES) {
+      for (const device of options._devices ?? DEVICES) {
         const listeners = allListeners.get(target)?.get(device);
         if (listeners) {
           listeners._nCallbacks--;
@@ -292,7 +292,7 @@ export class GestureWatcher {
       event: Event,
     ): boolean /* true if terminated */ => {
       const preventDefault =
-        (allListeners.get(target)?.get(device)?._nPreventDefault || 0) > 0;
+        (allListeners.get(target)?.get(device)?._nPreventDefault ?? 0) > 0;
 
       let isTerminated = false;
       for (const { _wrapper } of allCallbacks.get(target)?.values() || []) {
@@ -900,12 +900,12 @@ const getOptions = (
 
   return {
     _devices:
-      validateStrList("devices", options.devices, isValidInputDevice) || null,
+      validateStrList("devices", options.devices, isValidInputDevice) ?? null,
     _directions:
-      validateStrList("directions", options.directions, isValidDirection) ||
+      validateStrList("directions", options.directions, isValidDirection) ??
       null,
     _intents:
-      validateStrList("intents", options.intents, isValidIntent) || null,
+      validateStrList("intents", options.intents, isValidIntent) ?? null,
     _minTotalDeltaX: options.minTotalDeltaX ?? null,
     _maxTotalDeltaX: options.maxTotalDeltaX ?? null,
     _minTotalDeltaY: options.minTotalDeltaY ?? null,

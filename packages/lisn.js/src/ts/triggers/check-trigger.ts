@@ -126,7 +126,7 @@ export class CheckTrigger extends Trigger {
       return;
     }
 
-    const target = MH.targetOf(config) || element;
+    const target = MH.targetOf(config) ?? element;
 
     if (!MH.isInstanceOf(target, HTMLInputElement)) {
       return;

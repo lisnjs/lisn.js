@@ -258,7 +258,7 @@ export class DOMWatcher {
       const options = getOptions(userOptions ?? {});
       const callback = createCallback(handler, options);
 
-      let root = config._root || MH.getBody();
+      let root = config._root ?? MH.getBody();
       if (!root) {
         root = await waitForElement(MH.getBody);
       } else {
@@ -431,7 +431,7 @@ export class DOMWatcher {
       const requestFrom = requestToSkip.from;
       const requestTo = requestToSkip.to;
 
-      const root = config._root || MH.getBody();
+      const root = config._root ?? MH.getBody();
       // If "from" is currently outside our root, we may not have seen a
       // removal operation.
       if (
@@ -641,7 +641,7 @@ const getConfig = (
   config: DOMWatcherConfig | undefined,
 ): DOMWatcherConfigInternal => {
   return {
-    _root: config?.root || null,
+    _root: config?.root ?? null,
     _subtree: config?.subtree ?? true,
   };
 };
@@ -669,15 +669,15 @@ const getOptions = (options: OnMutationOptions): OnMutationOptionsInternal => {
     categoryBitmask = DOM_CATEGORIES_SPACE.bitmask; // default: all
   }
 
-  const selector = options.selector || "";
+  const selector = options.selector ?? "";
   if (!MH.isString(selector)) {
     throw MH.usageError("'selector' must be a string");
   }
 
   return {
     _categoryBitmask: categoryBitmask,
-    _target: options.target || null,
-    _selector: options.selector || "",
+    _target: options.target ?? null,
+    _selector: selector,
   };
 };
 

@@ -242,7 +242,7 @@ export const moveElementNow = (
     ignoreMove?: boolean;
   },
 ) => {
-  let parentEl = options?.to || null;
+  let parentEl = options?.to ?? null;
   const position = options?.position || "append";
   if (position === "before" || position === "after") {
     parentEl = MH.parentOf(options?.to);
@@ -481,7 +481,7 @@ export const insertGhostCloneNow = <E extends Element>(
   const wrapper = _tryWrapNow(clone, { _required: true });
 
   moveElementNow(wrapper, {
-    to: insertBefore || element,
+    to: insertBefore ?? element,
     position: "before",
     ignoreMove: true,
   });
@@ -508,8 +508,8 @@ export const ignoreMove = (
   options: { from?: Element | null; to?: Element | null },
 ) =>
   recordsToSkipOnce.set(target, {
-    from: options.from || null,
-    to: options.to || null,
+    from: options.from ?? null,
+    to: options.to ?? null,
   });
 
 /**
@@ -519,7 +519,7 @@ export const ignoreMove = (
 export const getIgnoreMove = (
   target: Element,
 ): { from: Element | null; to: Element | null } | null =>
-  recordsToSkipOnce.get(target) || null;
+  recordsToSkipOnce.get(target) ?? null;
 
 /**
  * @ignore

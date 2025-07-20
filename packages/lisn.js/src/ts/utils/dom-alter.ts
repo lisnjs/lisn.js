@@ -317,7 +317,8 @@ export const isAllowedToWrap = (element: Element) =>
  * @ignore
  * @internal
  *
- * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
  *
  * @since v1.2.0
  */
@@ -348,7 +349,8 @@ export const getWrapper = (
  * @ignore
  * @internal
  *
- * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
  *
  * @since v1.2.0
  */

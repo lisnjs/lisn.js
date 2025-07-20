@@ -323,6 +323,8 @@ export const round = MC.MATH.round.bind(MC.MATH);
 
 export const pow = MC.MATH.pow.bind(MC.MATH);
 
+export const exp = MC.MATH.exp.bind(MC.MATH);
+
 export const parseFloat = MC.NUMBER.parseFloat.bind(MC.NUMBER);
 
 export const isNaN = MC.NUMBER.isNaN.bind(MC.NUMBER);

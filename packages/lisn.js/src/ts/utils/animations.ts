@@ -14,6 +14,7 @@ import {
   waitForMeasureTime,
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
+import { criticallyDamped } from "@lisn/utils/math";
 
 /**
  * The callback is passed two arguments:
@@ -24,6 +25,10 @@ import {
  *
  * The callback must return `true` if it wants to animate again on the next
  * frame and `false` if done.
+ *
+ * @since v1.2.0
+ *
+ * @category Animations
  */
 export type AnimationCallback = (
   totalElapsed: number,
@@ -85,7 +90,10 @@ export const onEveryAnimationFrame = async (callback: AnimationCallback) => {
  *
  * @category Animations
  */
-export async function* animationFrameIterator() {
+export async function* animationFrameIterator(): AsyncGenerator<
+  readonly [number, number],
+  never
+> {
   let startTime: number, previousTimeStamp: number;
 
   const step = async () => {
@@ -99,12 +107,96 @@ export async function* animationFrameIterator() {
     const elapsedSinceLast = timeStamp - previousTimeStamp;
     previousTimeStamp = timeStamp;
 
-    return [totalElapsed, elapsedSinceLast];
+    return [totalElapsed, elapsedSinceLast] as const;
   };
 
   while (true) {
     yield step();
   }
+}
+
+/**
+ * Returns an animation iterator based on {@link criticallyDamped} that starts
+ * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
+ * the new position and velocity, and total time at every animation frame.
+ *
+ * @param [settings.l]         The initial starting position.
+ * @param [settings.lTarget]   The initial target position. Can be updated when
+ *                             calling next().
+ * @param [settings.lag]       See {@link criticallyDamped}.
+ * @param [settings.precision] See {@link criticallyDamped}.
+ *
+ * @returns An iterator whose `next` method accepts an optional new `lTarget`.
+ * The iterator yields an object containing successive values for:
+ * - position (`l`)
+ * - velocity (`v`)
+ * - total time elapsed (`t`)
+ *
+ * @example
+ * If you never need to update the target you can use a for await loop:
+ *
+ * ```javascript
+ * const iterator = criticallyDampedAnimationIterator({
+ *   l: 10,
+ *   lTarget: 100,
+ *   lag: 1500
+ * });
+ *
+ * for await (const { l, v, t } of iterator) {
+ *   console.log({ l, v, t });
+ * }
+ * ```
+ *
+ * @example
+ * If you do need to update the target, then call `next` explicitly:
+ *
+ * ```javascript
+ * const iterator = criticallyDampedAnimationIterator({
+ *   l: 10,
+ *   lTarget: 100,
+ *   lag: 1500
+ * });
+ *
+ * let { value: { l, v, t } } = await iterator.next();
+ * ({ value: { l, v, t } } = await iterator.next()); // updated
+ * ({ value: { l, v, t } } = await iterator.next(200)); // updated towards a new target
+ * ```
+ *
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
+export async function* criticallyDampedAnimationIterator(settings: {
+  lTarget: number;
+  lag: number;
+  l?: number;
+}): AsyncGenerator<{ l: number; v: number; t: number }, never> {
+  let { l, lTarget } = settings;
+  const { lag } = settings;
+  let v = 0,
+    t = 0,
+    dt = 0;
+
+  const next = async () => {
+    ({ l, v } = criticallyDamped({
+      l,
+      v,
+      lTarget,
+      dt,
+      lag,
+    }));
+    return { l, v, t };
+  };
+
+  for await ([t, dt] of animationFrameIterator()) {
+    if (dt === 0) {
+      continue;
+    }
+
+    lTarget = yield next() ?? lTarget;
+  }
+
+  throw null; // tell TypeScript it will never end
 }
 
 /**

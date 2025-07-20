@@ -1,205 +1,165 @@
 const { test, expect } = require("@jest/globals");
 
 const { ScrollTo, fetchAction } = window.LISN.actions;
+const { randId } = window.LISN.utils;
 
-document.documentElement.enableScroll();
+const newScrollingRoot = (x = 0, y = 0, useDocumentElement = false) => {
+  const root = useDocumentElement
+    ? document.documentElement
+    : document.createElement("div");
+
+  if (!useDocumentElement) {
+    root.id = randId();
+    document.body.append(root);
+  }
+
+  root.enableScroll();
+  root.scrollTo(x, y);
+  expect(root.scrollLeft).toBe(x);
+  expect(root.scrollTop).toBe(y);
+
+  const element = document.createElement("div");
+  root.append(element);
+
+  return { root, element };
+};
 
 test("basic", async () => {
   const docTop = 500;
   const docLeft = 100;
-  document.documentElement.scrollTo(docLeft, docTop);
-  const element = document.createElement("div");
+  const { root, element } = newScrollingRoot(docLeft, docTop, true);
 
   const elTop = 300;
   const elLeft = 50;
   const elW = 100;
   const elH = 50;
-  element.getBoundingClientRect = () => {
-    const scrollTop = document.documentElement.scrollTop;
-    const scrollLeft = document.documentElement.scrollLeft;
+  element.setOffset(elLeft, elTop);
+  element.resize([elW, elH]);
 
-    const x = elLeft - scrollLeft;
-    const y = elTop - scrollTop;
-    return {
-      x,
-      left: x,
-      right: x + elW,
-      width: elW,
-      y: y,
-      top: y,
-      bottom: y + elH,
-      height: elH,
-    };
-  };
-  document.body.append(element);
-
-  const action = new ScrollTo(element);
+  const action = new ScrollTo(element, { duration: 0 });
 
   await window.waitForAF();
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 
   await action.do();
-  expect(document.documentElement.scrollTop).toBe(elTop);
-  expect(document.documentElement.scrollLeft).toBe(elLeft);
+  expect(root.scrollTop).toBe(elTop);
+  expect(root.scrollLeft).toBe(elLeft);
 
   await action.undo();
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 
   await action.undo(); // no-op
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 
   await action.toggle();
-  expect(document.documentElement.scrollTop).toBe(elTop);
-  expect(document.documentElement.scrollLeft).toBe(elLeft);
+  expect(root.scrollTop).toBe(elTop);
+  expect(root.scrollLeft).toBe(elLeft);
 
   await action.toggle();
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 });
 
 test("with offset", async () => {
   const docTop = 500;
   const docLeft = 100;
-  document.documentElement.scrollTo(docLeft, docTop);
-  const element = document.createElement("div");
+  const { root, element } = newScrollingRoot(docLeft, docTop);
 
   const elTop = 300;
   const elLeft = 50;
   const elW = 100;
   const elH = 50;
-  element.getBoundingClientRect = () => {
-    const scrollTop = document.documentElement.scrollTop;
-    const scrollLeft = document.documentElement.scrollLeft;
+  element.setOffset(elLeft, elTop);
+  element.resize([elW, elH]);
 
-    const x = elLeft - scrollLeft;
-    const y = elTop - scrollTop;
-    return {
-      x,
-      left: x,
-      right: x + elW,
-      width: elW,
-      y: y,
-      top: y,
-      bottom: y + elH,
-      height: elH,
-    };
-  };
-  document.body.append(element);
-
-  const action = new ScrollTo(element, { offset: { top: 10, left: 20 } });
+  const action = new ScrollTo(element, {
+    scrollable: root,
+    offset: { top: 10, left: 20 },
+    duration: 0,
+  });
 
   await window.waitForAF();
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 
   await action.do();
-  expect(document.documentElement.scrollTop).toBe(elTop + 10);
-  expect(document.documentElement.scrollLeft).toBe(elLeft + 20);
+  expect(root.scrollTop).toBe(elTop + 10);
+  expect(root.scrollLeft).toBe(elLeft + 20);
 
   await action.undo();
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 
   await action.undo(); // no-op
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 
   await action.toggle();
-  expect(document.documentElement.scrollTop).toBe(elTop + 10);
-  expect(document.documentElement.scrollLeft).toBe(elLeft + 20);
+  expect(root.scrollTop).toBe(elTop + 10);
+  expect(root.scrollLeft).toBe(elLeft + 20);
 
   await action.toggle();
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 });
 
 test("parse with offset", async () => {
   const docTop = 500;
   const docLeft = 100;
-  document.documentElement.scrollTo(docLeft, docTop);
-  const element = document.createElement("div");
+  const { root, element } = newScrollingRoot(docLeft, docTop);
 
   const elTop = 300;
   const elLeft = 50;
   const elW = 100;
   const elH = 50;
-  element.getBoundingClientRect = () => {
-    const scrollTop = document.documentElement.scrollTop;
-    const scrollLeft = document.documentElement.scrollLeft;
+  element.setOffset(elLeft, elTop);
+  element.resize([elW, elH]);
 
-    const x = elLeft - scrollLeft;
-    const y = elTop - scrollTop;
-    return {
-      x,
-      left: x,
-      right: x + elW,
-      width: elW,
-      y: y,
-      top: y,
-      bottom: y + elH,
-      height: elH,
-    };
-  };
-  document.body.append(element);
-
-  const action = await fetchAction(element, "scroll-to", "offsetX=20");
+  const action = await fetchAction(
+    element,
+    "scroll-to",
+    `offsetX=20, scrollable=#${root.id}, duration=0`,
+  );
   expect(action).toBeInstanceOf(ScrollTo);
 
   await window.waitForAF();
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 
   await action.do();
-  expect(document.documentElement.scrollTop).toBe(elTop);
-  expect(document.documentElement.scrollLeft).toBe(elLeft + 20);
+  expect(root.scrollTop).toBe(elTop);
+  expect(root.scrollLeft).toBe(elLeft + 20);
 });
 
 test("parse with 2 offsets", async () => {
   const docTop = 500;
   const docLeft = 100;
-  document.documentElement.scrollTo(docLeft, docTop);
-  const element = document.createElement("div");
+  const { root, element } = newScrollingRoot(docLeft, docTop);
 
   const elTop = 300;
   const elLeft = 50;
   const elW = 100;
   const elH = 50;
-  element.getBoundingClientRect = () => {
-    const scrollTop = document.documentElement.scrollTop;
-    const scrollLeft = document.documentElement.scrollLeft;
-
-    const x = elLeft - scrollLeft;
-    const y = elTop - scrollTop;
-    return {
-      x,
-      left: x,
-      right: x + elW,
-      width: elW,
-      y: y,
-      top: y,
-      bottom: y + elH,
-      height: elH,
-    };
-  };
-  document.body.append(element);
+  element.setOffset(elLeft, elTop);
+  element.resize([elW, elH]);
 
   const action = await fetchAction(
     element,
     "scroll-to",
-    " offsetX=20, offsetY=-10",
+    ` offsetX=20, offsetY=-10, scrollable=#${root.id}, duration=0`,
   );
   expect(action).toBeInstanceOf(ScrollTo);
 
   await window.waitForAF();
-  expect(document.documentElement.scrollTop).toBe(docTop);
-  expect(document.documentElement.scrollLeft).toBe(docLeft);
+  expect(root.scrollTop).toBe(docTop);
+  expect(root.scrollLeft).toBe(docLeft);
 
   await action.do();
-  expect(document.documentElement.scrollTop).toBe(elTop - 10);
-  expect(document.documentElement.scrollLeft).toBe(elLeft + 20);
+  expect(root.scrollTop).toBe(elTop - 10);
+  expect(root.scrollLeft).toBe(elLeft + 20);
 });
 
 test("is registered", async () => {

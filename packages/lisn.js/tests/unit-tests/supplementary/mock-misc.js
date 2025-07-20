@@ -1,5 +1,10 @@
-window.requestAnimationFrame = (fn) =>
-  window.setTimeout(() => fn(Date.now() - 10), 10);
+window.requestAnimationFrame = (fn) => {
+  const lastTimeStamp = Date.now();
+
+  window.setTimeout(() => {
+    fn(lastTimeStamp);
+  }, 10);
+};
 
 window.matchMedia = (m) => {
   return {

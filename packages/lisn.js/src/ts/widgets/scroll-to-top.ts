@@ -5,7 +5,7 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { ScrollOffset } from "@lisn/globals/types";
+import { ScrollOffsetSpec } from "@lisn/globals/types";
 
 import {
   showElement,
@@ -224,7 +224,7 @@ export class ScrollToTop extends Widget {
     const destroyPromise = ScrollToTop.get(element)?.destroy();
     super(element, { id: DUMMY_ID });
 
-    const offset: ScrollOffset =
+    const offset: ScrollOffsetSpec =
       config?.offset ||
       `${MC.S_TOP}: var(${MH.prefixCssVar("scroll-to-top--offset")}, 200vh)`;
     const position: "left" | "right" = config?.position || MC.S_RIGHT;
@@ -368,7 +368,7 @@ export type ScrollToTopConfig = {
    *
    * @defaultValue "top: var(--lisn-scroll-to-top--offset, 200vh)"
    */
-  offset?: ScrollOffset;
+  offset?: ScrollOffsetSpec;
 
   /**
    * The horizontal position of the scroll-to-top button.

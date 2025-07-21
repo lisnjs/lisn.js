@@ -60,7 +60,7 @@ import debug from "@lisn/debug/debug";
  * - Additional trigger options:
  *   - `target`: A string element specification for an element (see
  *     {@link Utils.getReferenceElement | getReferenceElement}) or a
- *     {@link Types.ScrollOffset | ScrollOffset}.
+ *     {@link Types.ScrollOffsetSpec | ScrollOffsetSpec}.
  *   - `root`: A string element specification. See
  *     {@link Utils.getReferenceElement | getReferenceElement}.
  *   - `rootMargin`: A string.

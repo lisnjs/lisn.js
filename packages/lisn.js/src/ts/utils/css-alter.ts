@@ -472,6 +472,8 @@ export const getBooleanData = (element: Element, name: string) => {
 /**
  * @ignore
  * @deprecated
+ *
+ * Deprecated alias for {@link getBooleanData}
  */
 export const getBoolData = getBooleanData;
 
@@ -512,6 +514,8 @@ export const setBooleanDataNow = (
 /**
  * @ignore
  * @deprecated
+ *
+ * Deprecated alias for {@link setBooleanData}
  */
 export const setBoolDataNow = setBooleanDataNow;
 
@@ -527,6 +531,8 @@ export const setBooleanData = asyncMutatorFor(setBooleanDataNow);
 /**
  * @ignore
  * @deprecated
+ *
+ * Deprecated alias for {@link setBoolean}
  */
 export const setBoolData = setBooleanData;
 
@@ -546,6 +552,8 @@ export const unsetBooleanDataNow = (element: Element, name: string) =>
 /**
  * @ignore
  * @deprecated
+ *
+ * Deprecated alias for {@link unsetBooleanNow}
  */
 export const unsetBoolDataNow = unsetBooleanDataNow;
 
@@ -561,6 +569,8 @@ export const unsetBooleanData = asyncMutatorFor(unsetBooleanDataNow);
 /**
  * @ignore
  * @deprecated
+ *
+ * Deprecated alias for {@link unsetBoolean}
  */
 export const unsetBoolData = unsetBooleanData;
 

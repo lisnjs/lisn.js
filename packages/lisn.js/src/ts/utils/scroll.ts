@@ -13,7 +13,7 @@ import {
   TargetCoordinates,
   CoordinateOffset,
   ScrollPosition,
-  Offset,
+  Anchor,
 } from "@lisn/globals/types";
 
 import {
@@ -267,8 +267,8 @@ export const getCurrentScrollAction = (
  *
  * Returns `null` if there's an ongoing scroll that is not cancellable.
  *
- * Note that if `to` is an element or a selector, then it _must_ be a
- * descendant of the scrollable element.
+ * Note that if `to` is an element or a query selector string, then it _must_ be
+ * a descendant of the scrollable element.
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *               If the target coordinates are invalid.
@@ -512,7 +512,7 @@ const arePositionsDifferent = (
 ) => maxAbs(start.top - end.top, start.left - end.left) > threshold;
 
 // must be called in "measure time"
-const getBorderWidth = (element: Element, side: Offset) =>
+const getBorderWidth = (element: Element, side: Anchor) =>
   MH.ceil(MH.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
 
 const isScrollableBodyInQuirks = (element: Element): element is HTMLElement =>

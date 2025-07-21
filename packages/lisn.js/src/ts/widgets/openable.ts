@@ -503,7 +503,10 @@ export type OpenableConfig = {
 
 /**
  * @interface
+ * @ignore
  * @deprecated
+ *
+ * Deprecated alias for {@link OpenableConfig}
  */
 export type OpenableProperties = OpenableConfig;
 

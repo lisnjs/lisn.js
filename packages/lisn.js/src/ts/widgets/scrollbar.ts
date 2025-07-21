@@ -560,16 +560,14 @@ const init = (
     : null;
 
   // config
-  const onMobile = config?.onMobile ?? settings.scrollbarOnMobile ?? false;
-  const hideNative =
-    config?.hideNative ?? settings.scrollbarHideNative ?? false;
+  const onMobile = config?.onMobile ?? settings.scrollbarOnMobile;
+  const hideNative = config?.hideNative ?? settings.scrollbarHideNative;
   const positionH = config?.positionH || settings.scrollbarPositionH;
   const positionV = config?.positionV || settings.scrollbarPositionV;
   const autoHideDelay = config?.autoHide ?? settings.scrollbarAutoHide;
   const clickScroll = config?.clickScroll ?? settings.scrollbarClickScroll;
-  const dragScroll =
-    config?.dragScroll ?? settings.scrollbarDragScroll ?? false;
-  const useHandle = config?.useHandle ?? settings.scrollbarUseHandle ?? false;
+  const dragScroll = config?.dragScroll ?? settings.scrollbarDragScroll;
+  const useHandle = config?.useHandle ?? settings.scrollbarUseHandle;
 
   if (isMobile() && !onMobile) {
     return;

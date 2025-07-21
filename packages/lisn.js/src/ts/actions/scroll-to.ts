@@ -236,7 +236,7 @@ const newConfigValidator: WidgetConfigValidatorFunc<{
   return {
     offsetX: (key, value) => validateNumber(key, value) ?? 0,
     offsetY: (key, value) => validateNumber(key, value) ?? 0,
-    duration: (key, value) => validateNumber(key, value),
+    duration: validateNumber,
     scrollable: (key, value) =>
       (MH.isLiteralString(value)
         ? waitForReferenceElement(value, element)

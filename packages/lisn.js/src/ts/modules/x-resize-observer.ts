@@ -100,7 +100,7 @@ export class XResizeObserver {
       if (!timer && MH.sizeOf(buffer)) {
         timer = MH.setTimer(() => {
           if (MH.sizeOf(buffer)) {
-            callback(MH.arrayFrom(buffer.values()), this);
+            callback([...buffer.values()], this);
             buffer.clear();
           }
 

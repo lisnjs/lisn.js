@@ -382,6 +382,30 @@ export const getContentWrapper = (
 /**
  * @ignore
  * @internal
+ */
+export const createWrapperFor = (
+  element: Element,
+  wrapper?: HTMLElement | keyof HTMLElementTagNameMap,
+) => {
+  if (MH.isElement(wrapper)) {
+    return wrapper;
+  }
+
+  let tag = wrapper;
+  if (!tag) {
+    if (isInlineTag(MH.tagName(element))) {
+      tag = "span";
+    } else {
+      tag = "div";
+    }
+  }
+
+  return MH.createElement(tag);
+};
+
+/**
+ * @ignore
+ * @internal
  *
  * @since v1.2.0
  */
@@ -570,26 +594,6 @@ const recordsToSkipOnce = MH.newMap<
   /* target being moved */ Element,
   { from: Element | null; to: Element | null }
 >();
-
-const createWrapperFor = (
-  element: Element,
-  wrapper: HTMLElement | keyof HTMLElementTagNameMap | undefined,
-) => {
-  if (MH.isElement(wrapper)) {
-    return wrapper;
-  }
-
-  let tag = wrapper;
-  if (!tag) {
-    if (isInlineTag(MH.tagName(element))) {
-      tag = "span";
-    } else {
-      tag = "div";
-    }
-  }
-
-  return MH.createElement(tag);
-};
 
 const _tryWrapNow = <O extends ContentWrappingOptions>(
   element: Element,

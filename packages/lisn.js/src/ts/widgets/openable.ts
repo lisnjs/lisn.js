@@ -41,13 +41,13 @@ import {
   moveElementNow,
   replaceElementNow,
   getOrAssignID,
+  createWrapperFor,
 } from "@lisn/utils/dom-alter";
 import { waitForInteractive } from "@lisn/utils/dom-events";
 import {
   waitForMeasureTime,
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
-import { isInlineTag } from "@lisn/utils/dom-query";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
 import { keyWithMaxVal } from "@lisn/utils/math";
@@ -299,7 +299,7 @@ export abstract class Openable extends Widget {
       closeCallbacks.clear();
     });
 
-    const { root, container, triggers, outerWrapper } = setupElements(
+    const { root, container, triggers, outerWrapper } = init(
       this,
       element,
       config,
@@ -1817,13 +1817,11 @@ const findTriggers = (
     ];
   } else if (container) {
     triggers = [
-      ...MH.arrayFrom(
-        MH.querySelectorAll(
-          container,
-          getTriggerSelector(`:not([data-${prefixedNames._contentId}])`),
-        ),
-      ).filter((t) => !content.contains(t)),
-    ];
+      ...MH.querySelectorAll(
+        container,
+        getTriggerSelector(`:not([data-${prefixedNames._contentId}])`),
+      ),
+    ].filter((t) => !content.contains(t));
   }
 
   return triggers;
@@ -1831,25 +1829,20 @@ const findTriggers = (
 
 const getTriggersFrom = (
   content: Element,
-  inputTriggers:
-    | Element[]
-    | Map<Element, OpenableTriggerConfig | null>
-    | undefined,
+  inputTriggers: OpenableConfig["triggers"],
   wrapTriggers: boolean,
   prefixedNames: ReturnType<typeof getPrefixedNames>,
 ) => {
   const triggerMap = MH.newMap<Element, OpenableTriggerConfig>();
 
-  inputTriggers = inputTriggers || findTriggers(content, prefixedNames);
+  inputTriggers = inputTriggers ?? findTriggers(content, prefixedNames);
 
   const addTrigger = (
     trigger: Element,
     triggerConfig: OpenableTriggerConfig,
   ) => {
     if (wrapTriggers) {
-      const wrapper = MH.createElement(
-        isInlineTag(MH.tagName(trigger)) ? "span" : "div",
-      );
+      const wrapper = createWrapperFor(trigger);
       wrapElement(trigger, { wrapper, ignoreMove: true }); // no need to await
       trigger = wrapper;
     }
@@ -1879,7 +1872,7 @@ const getTriggersFrom = (
   return triggerMap;
 };
 
-const setupElements = (
+const init = (
   widget: Openable,
   content: HTMLElement,
   config: OpenableConfig,
@@ -2119,7 +2112,7 @@ const setupListeners = (
 
   const isTrigger = (element: Element) =>
     MH.includes(
-      MH.arrayFrom(triggers.keys()),
+      [...triggers.keys()],
       element.closest(getDefaultWidgetSelector(prefixedNames._trigger)),
     );
 

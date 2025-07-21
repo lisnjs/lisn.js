@@ -11,6 +11,7 @@ export * from "@lisn/widgets/pager";
 export * from "@lisn/widgets/same-height";
 export * from "@lisn/widgets/scrollbar";
 export * from "@lisn/widgets/scroll-to-top";
+export * from "@lisn/widgets/smooth-scroll";
 export * from "@lisn/widgets/sortable";
 export * from "@lisn/widgets/track-gesture";
 export * from "@lisn/widgets/track-scroll";

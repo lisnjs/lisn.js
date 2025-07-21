@@ -1,0 +1,63 @@
+@use "./_variables.scss" as *;
+@use "./_mixins.scss" as *;
+
+@use "./base.scss";
+
+.lisn-smooth-scroll__root {
+  & .lisn-smooth-scroll__content {
+    position: fixed;
+    overflow: visible;
+    top: 0;
+    left: 0;
+  }
+
+  & .lisn-smooth-scroll__inner {
+    /* force GPU acceleration */
+    transform: translate3d(
+      var(--lisn-js--offset-x, 0px),
+      var(--lisn-js--offset-y, 0px),
+      0.1px
+    ) !important;
+    transition: transform 0.05s linear; /* smooth it out */
+    will-change: transform;
+  }
+
+  & .lisn-smooth-scroll__dummy {
+    width: var(--lisn-js--width); /* content (scroll) width */
+    height: var(--lisn-js--height); /* content (scroll) height */
+  }
+
+  &[data-lisn-uses-sticky="true"] {
+    position: relative;
+
+    & .lisn-smooth-scroll__content {
+      position: sticky;
+    }
+
+    & .lisn-smooth-scroll__inner {
+      overflow: hidden;
+    }
+
+    &[data-lisn-has-h-scroll="true"] {
+      & .lisn-smooth-scroll__content {
+        /* sticky wrapper */
+        width: 0;
+      }
+
+      & .lisn-smooth-scroll__inner {
+        width: var(--lisn-js--width); /* fixed client width */
+      }
+    }
+
+    &[data-lisn-has-v-scroll="true"] {
+      & .lisn-smooth-scroll__content {
+        /* sticky wrapper */
+        height: 0;
+      }
+
+      & .lisn-smooth-scroll__inner {
+        height: var(--lisn-js--height); /* fixed client height */
+      }
+    }
+  }
+}

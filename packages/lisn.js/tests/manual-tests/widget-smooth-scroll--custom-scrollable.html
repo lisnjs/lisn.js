@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <script charset="utf-8">
+      LISN.settings.mainScrollableElementSelector = "#main";
+      <!-- LISN.widgets.SmoothScroll.enableMain(); -->
+    </script>
+    <link
+      rel="stylesheet"
+      href="assets/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      #main {
+        width: 90vw;
+        height: 90vh;
+        overflow: scroll;
+        border: solid 1px grey;
+      }
+
+      .overflow {
+        min-width: 350vw;
+        min-height: 350vh;
+      }
+
+      .section {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-evently;
+        margin: 30vh 0;
+        gap: 30vw;
+      }
+
+      .box {
+        background: blue;
+        flex-grow: 1;
+        height: 200px;
+      }
+
+      .box:nth-child(odd) {
+        background: yellow;
+        height: 300px;
+      }
+
+      .spacer {
+        height: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spacer"></div>
+
+    <div class="section">
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+    </div>
+
+    <div id="main">
+      <div class="overflow">
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
+
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
+
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
+
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -93,8 +93,8 @@ export type OpenableCreateFn<Config extends Record<string, unknown>> = (
  * `.lisn-<name>`).
  *
  * The name you specify here should generally be the same name you pass in
- * {@link OpenableProperties.name | options.name} to the
- * {@link Openable.constructor} but it does not need to be the same.
+ * {@link OpenableConfig.name | options.name} to the {@link Openable.constructor}
+ * but it does not need to be the same.
  *
  * @param name            The name of the openable. Should be in kebab-case.
  * @param newOpenable     Called for every element matching the selector.
@@ -214,10 +214,10 @@ export abstract class Openable extends Widget {
     return instances.get(element) ?? null;
   }
 
-  constructor(element: HTMLElement, properties: OpenableProperties) {
+  constructor(element: HTMLElement, config: OpenableConfig) {
     super(element);
 
-    const { isModal, isOffcanvas } = properties;
+    const { isModal, isOffcanvas } = config;
 
     const openCallbacks = MH.newSet<WidgetCallback>();
     const closeCallbacks = MH.newSet<WidgetCallback>();
@@ -302,14 +302,14 @@ export abstract class Openable extends Widget {
     const { root, container, triggers, outerWrapper } = setupElements(
       this,
       element,
-      properties,
+      config,
     );
   }
 }
 
 /**
  * Per-trigger based configuration. Can either be given as an object as the
- * value of the {@link OpenableProperties.triggers} map, or it can be set as a
+ * value of the {@link OpenableConfig.triggers} map, or it can be set as a
  * string configuration in the `data-lisn-<name>-trigger` data attribute. See
  * {@link getWidgetConfig} for the syntax.
  *
@@ -347,7 +347,7 @@ export type OpenableTriggerConfig = {
   className?: string[] | string;
 
   /**
-   * Override the widget's {@link OpenableProperties.autoClose} for this trigger.
+   * Override the widget's {@link OpenableConfig.autoClose} for this trigger.
    *
    * @defaultValue undefined // Widget default
    */
@@ -356,7 +356,7 @@ export type OpenableTriggerConfig = {
   /**
    * Open the openable when this trigger is hovered.
    *
-   * If the device is touch and {@link OpenableProperties.autoClose} is enabled,
+   * If the device is touch and {@link OpenableConfig.autoClose} is enabled,
    * the widget will be closed shortly after the pointer leaves both the
    * trigger and the root element.
    *
@@ -404,7 +404,7 @@ export type OpenableTriggerConfig = {
 /**
  * @interface
  */
-export type OpenableProperties = {
+export type OpenableConfig = {
   /**
    * The name of the _type_ of the openable. Will set the class prefix to
    * `lisn-<name>`.
@@ -500,6 +500,12 @@ export type OpenableProperties = {
    */
   onSetup?: () => void;
 };
+
+/**
+ * @interface
+ * @deprecated
+ */
+export type OpenableProperties = OpenableConfig;
 
 /* ********************
  * Collapsible
@@ -671,7 +677,7 @@ export class Collapsible extends Openable {
   static register() {
     registerOpenable(
       WIDGET_NAME_COLLAPSIBLE,
-      (el, config) => new Collapsible(el, config),
+      (element, config) => new Collapsible(element, config),
       collapsibleConfigValidator,
     );
   }
@@ -1044,7 +1050,7 @@ export class Popup extends Openable {
   static register() {
     registerOpenable(
       WIDGET_NAME_POPUP,
-      (el, config) => new Popup(el, config),
+      (element, config) => new Popup(element, config),
       popupConfigValidator,
     );
   }
@@ -1304,7 +1310,7 @@ export class Modal extends Openable {
   static register() {
     registerOpenable(
       WIDGET_NAME_MODAL,
-      (el, config) => new Modal(el, config),
+      (element, config) => new Modal(element, config),
       modalConfigValidator,
     );
   }
@@ -1534,7 +1540,7 @@ export class Offcanvas extends Openable {
   static register() {
     registerOpenable(
       WIDGET_NAME_OFFCANVAS,
-      (el, config) => new Offcanvas(el, config),
+      (element, config) => new Offcanvas(element, config),
       offcanvasConfigValidator,
     );
   }
@@ -1876,15 +1882,15 @@ const getTriggersFrom = (
 const setupElements = (
   widget: Openable,
   content: HTMLElement,
-  properties: OpenableProperties,
+  config: OpenableConfig,
 ): ElementsCollection => {
-  const prefixedNames = getPrefixedNames(properties.name);
+  const prefixedNames = getPrefixedNames(config.name);
   const container = findContainer(content, prefixedNames._containerForSelect);
 
-  const wrapTriggers = properties.wrapTriggers ?? false;
+  const wrapTriggers = config.wrapTriggers ?? false;
   const triggers = getTriggersFrom(
     content,
-    properties.triggers,
+    config.triggers,
     wrapTriggers,
     prefixedNames,
   );
@@ -1903,7 +1909,7 @@ const setupElements = (
   // was.
   let root: HTMLElement;
   let placeholder: HTMLElement;
-  if (properties.isOffcanvas) {
+  if (config.isOffcanvas) {
     addClasses(outerWrapper, prefixedNames._outerWrapper);
     root = wrapElementNow(outerWrapper);
     placeholder = MH.createElement("div");
@@ -1916,18 +1922,18 @@ const setupElements = (
     root = placeholder = outerWrapper;
   }
 
-  if (properties.id) {
-    root.id = properties.id;
+  if (config.id) {
+    root.id = config.id;
   }
 
-  if (properties.className) {
-    addClassesNow(root, ...toArrayIfSingle(properties.className));
+  if (config.className) {
+    addClassesNow(root, ...toArrayIfSingle(config.className));
   }
 
   unsetBooleanData(root, PREFIX_IS_OPEN);
-  const domID = getOrAssignID(root, properties.name);
+  const domID = getOrAssignID(root, config.name);
 
-  if (properties.isModal) {
+  if (config.isModal) {
     MH.setAttr(root, MC.S_ROLE, "dialog");
     MH.setAttr(root, S_ARIA_MODAL);
   }
@@ -1936,7 +1942,7 @@ const setupElements = (
   disableInitialTransition(root);
 
   // Add a close button?
-  if (properties.closeButton) {
+  if (config.closeButton) {
     const closeBtn = MH.createButton("Close");
     addClasses(closeBtn, PREFIX_CLOSE_BTN);
 
@@ -1946,7 +1952,7 @@ const setupElements = (
       widget.close();
     });
 
-    moveElement(closeBtn, { to: properties.isOffcanvas ? root : innerWrapper });
+    moveElement(closeBtn, { to: config.isOffcanvas ? root : innerWrapper });
   }
 
   // Transfer the relevant classes/data attrs from content to root element, so
@@ -2045,7 +2051,7 @@ const setupElements = (
         addClassesNow(container, prefixedNames._container);
       }
 
-      if (properties.isOffcanvas) {
+      if (config.isOffcanvas) {
         moveElementNow(root, {
           to: MH.getBody(),
           ignoreMove: true,
@@ -2086,10 +2092,10 @@ const setupElements = (
         }
       }
 
-      setupListeners(widget, elements, properties, prefixedNames);
+      setupListeners(widget, elements, config, prefixedNames);
 
-      if (properties.onSetup) {
-        properties.onSetup();
+      if (config.onSetup) {
+        config.onSetup();
       }
     });
 
@@ -2099,7 +2105,7 @@ const setupElements = (
 const setupListeners = (
   widget: Openable,
   elements: ElementsCollection,
-  properties: OpenableProperties,
+  config: OpenableConfig,
   prefixedNames: ReturnType<typeof getPrefixedNames>,
 ) => {
   const { content, root, triggers } = elements;
@@ -2123,7 +2129,7 @@ const setupListeners = (
   const usesHover = (trigger: Element) => triggers.get(trigger)?.hover;
 
   const usesAutoClose = (trigger: Element | null) =>
-    (trigger ? triggers.get(trigger)?.autoClose : null) ?? properties.autoClose;
+    (trigger ? triggers.get(trigger)?.autoClose : null) ?? config.autoClose;
 
   // ----------
 
@@ -2203,7 +2209,7 @@ const setupListeners = (
         // use a delay that allows the mouse to move from trigger to content
         // without closing it
         // TODO make this user-configurable
-        properties.isOffcanvas ? 300 : 50,
+        config.isOffcanvas ? 300 : 50,
       );
     }
   };

@@ -123,7 +123,7 @@ import debug from "@lisn/debug/debug";
  * {@link Settings.settings.autoWidgets | settings.autoWidgets}), the following
  * CSS classes or data attributes are recognized:
  * - `lisn-pager` class or `data-lisn-pager` attribute set on the container
- *   element that constitutes the pager
+ *   element that constitutes the pager.
  * - `lisn-pager-page` class or `data-lisn-pager-page` attribute set on
  *   elements that should act as the pages.
  * - `lisn-pager-toggle` class or `data-lisn-pager-toggle` attribute set on

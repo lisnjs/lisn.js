@@ -5,19 +5,20 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { ScrollOffset, View, CommaSeparatedStr } from "@lisn/globals/types";
+import { ScrollOffsetSpec, View, CommaSeparatedStr } from "@lisn/globals/types";
 
 import { isValidStrList, validateStrList } from "@lisn/utils/validation";
 
 import { newBitSpaces, createBitSpace } from "@lisn/modules/bit-spaces";
 
 /**
- * Returns true if the given string is a valid {@link ScrollOffset}.
+ * Returns true if the given string is a valid {@link ScrollOffsetSpec}.
  *
  * @category Validation
  */
-export const isValidScrollOffset = (offset: string): offset is ScrollOffset =>
-  offset.match(OFFSET_REGEX) !== null;
+export const isValidScrollOffset = (
+  offset: string,
+): offset is ScrollOffsetSpec => offset.match(OFFSET_REGEX) !== null;
 
 /**
  * Returns true if the given string is a valid "view".

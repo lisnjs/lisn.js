@@ -41,12 +41,20 @@ export type AspectRatioSpec = LayoutSpec<AspectRatio>;
 /**
  * @category Layout
  */
-export type Offset = "top" | "bottom" | "left" | "right";
+export type Anchor = "top" | "bottom" | "left" | "right";
+
+/**
+ * @ignore
+ * @deprecated
+ *
+ * Deprecated alias for {@link Anchor}
+ */
+export type Offset = Anchor;
 
 /**
  * @category Layout
  */
-export type Position = Offset;
+export type Position = Anchor;
 
 /**
  * @category Layout
@@ -56,7 +64,7 @@ export type FlexDirection = "row" | "column" | "row-reverse" | "column-reverse";
 /**
  * @category Views
  */
-export type ViewTarget = Element | ScrollOffset;
+export type ViewTarget = Element | ScrollOffsetSpec;
 
 /**
  * The {@link Watchers/ViewWatcher.ViewWatcherConfig.root | root}'s
@@ -88,7 +96,15 @@ export type View = "at" | "above" | "below" | "left" | "right";
  *
  * @category Views
  */
-export type ScrollOffset = `${Offset}: ${string}`;
+export type ScrollOffsetSpec = `${Anchor}: ${string}`;
+
+/**
+ * @ignore
+ * @deprecated
+ *
+ * Deprecated alias for {@link ScrollOffsetSpec}
+ */
+export type ScrollOffset = ScrollOffsetSpec;
 
 /**
  * @category Sizing

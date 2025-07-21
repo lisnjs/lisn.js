@@ -93,5 +93,7 @@ export const toBoolean = (value: unknown) =>
 
 /**
  * @deprecated
+ *
+ * Deprecated alias for {@link toBoolean}
  */
 export const toBool = toBoolean;

@@ -1,1 +1,0 @@
-export const getElementsFromRefs = refs => refs === null || refs === void 0 ? void 0 : refs.map(r => r.current).filter(e => e !== null);

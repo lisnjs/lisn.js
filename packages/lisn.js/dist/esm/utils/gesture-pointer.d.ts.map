@@ -1,1 +1,0 @@
-{"version":3,"file":"gesture-pointer.d.ts","sourceRoot":"","sources":["../../../src/ts/utils/gesture-pointer.ts"],"names":[],"mappings":"AAAA;;GAEG;AAOH,OAAO,EAAE,eAAe,EAAE,MAAM,qBAAqB,CAAC;AAEtD;;;;;;;;;;;;;;;;;;;;;;GAsBG;AACH,eAAO,MAAM,yBAAyB,GACpC,QAAQ,KAAK,GAAG,SAAS,KAAK,EAAE,EAChC,UAAU;IACR,kBAAkB,CAAC,EAAE,MAAM,CAAC;CAC7B,KACA,eAAe,GAAG,IAAI,GAAG,KAiE3B,CAAC"}

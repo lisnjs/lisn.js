@@ -6,8 +6,6 @@
  <a href="https://lisnjs.github.io/">Official site</a>&nbsp;|&nbsp;<a href="https://lisnjs.github.io/demos/">Demos</a>&nbsp;|&nbsp;<a href="https://lisnjs.github.io/docs/">Docs</a>
 </h2>
 
-## Contents
-
 <!-- toc -->
 
 # Intro
@@ -69,8 +67,8 @@ They are simple wrappers around (some of) the watchers that allow you to use the
 watchers in the HTML-only mode, or as a simpler/quicker alternative for some
 actions. You always use Triggers together with Actions.
 
-Each trigger is tied to an element and a set of actions. It can be run (forward),
-reversed or toggled (which does, undoes or toggles each action).
+Each trigger is tied to an element and a set of actions. It can be run
+(forward), reversed or toggled (which does, undoes or toggles each action).
 
 When you create a trigger you specify a set of conditions that run it, and
 implicitly any opposite condition will reverse it. LISN is smart about what's
@@ -113,8 +111,8 @@ there are also sub-exports available, that correspond to the respective group:
 ## Embedding the bundle
 
 Download the bundle of your choice (see
-[Choose your bundle](https://lisnjs.github.io/#bundles) or use jsdelivr,
-and embed it, as well as the CSS file, in on your page:
+[Choose your bundle](https://lisnjs.github.io/#bundles) or use jsdelivr, and
+embed it, as well as the CSS file, in on your page:
 
 ```html
 <script
@@ -282,3 +280,10 @@ For complete and more advanced examples, see the
 [tests](https://github.com/lisnjs/lisn.js/tree/main/packages/lisn.js/tests)
 useful. Although rough, there's likely everything that you'll want to find in
 there.
+
+# Tests
+
+LISN is extensively
+[tested](https://github.com/lisnjs/lisn.js/tree/main/packages/lisn.js/tests)
+before each release, both manual and unit tests. See here for
+[coverage report](https://lisnjs.github.io/test-coverage).

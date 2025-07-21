@@ -1,8 +1,5 @@
 node_modules
-docs
-assets
-website/out
-ignore
-.next
 *.zip
 *.tsbuildinfo
+
+/ignore

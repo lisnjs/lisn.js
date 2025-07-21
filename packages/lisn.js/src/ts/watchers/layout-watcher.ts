@@ -18,8 +18,8 @@
 // If the root is null, i.e. the viewport, the overlays will have a "fixed"
 // position and be inserted in document.body. Otherwise, they'll be inserted
 // in the root element with an "absolute" position. The root element, if not
-// body must be positioned. It gets a default position of "relative" through
-// the class `.lisn-overlay-container`, which Overlays ensures it gets.
+// body must be positioned. Overlays ensures it gets a default position of
+// "relative".
 //
 // If using custom root we track its size through SizeWatcher as the
 // aspectRatio overlays are relative to the height, and we can't rely on CSS

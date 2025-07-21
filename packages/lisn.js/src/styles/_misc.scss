@@ -38,16 +38,12 @@ body[data-lisn-has-modal] {
   z-index: -1000;
 }
 
-.lisn-wrapper {
-  position: relative;
-}
-
 .lisn-wrapper-inline {
   width: fit-content;
   display: inline-block;
 }
 
-.lisn-overlay-container {
+.lisn-relative {
   position: relative;
 }
 

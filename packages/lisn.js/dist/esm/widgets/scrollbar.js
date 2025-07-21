@@ -13,12 +13,13 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
+import { supportsSticky, isMobile, isInQuirksMode } from "../utils/browser.js";
 import { showElement, hideElement, displayElement, undisplayElement, hasClass, addClasses, addClassesNow, removeClasses, removeClassesNow, getData, setData, setBooleanData, setBooleanDataNow, setDataNow, delData, delDataNow, getComputedStyleProp, getComputedStylePropNow, setStyleProp, setNumericStyleJsVars } from "../utils/css-alter.js";
 import { moveElementNow, moveElement, isAllowedToWrap, getContentWrapper, wrapChildren, unwrapContentNow, getOrAssignID } from "../utils/dom-alter.js";
 import { waitForMeasureTime, waitForMutateTime } from "../utils/dom-optimize.js";
 import { addEventListenerTo, removeEventListenerFrom, preventSelect } from "../utils/event.js";
 import { logError, logWarn } from "../utils/log.js";
-import { toArrayIfSingle, supportsSticky, isInQuirksMode } from "../utils/misc.js";
+import { toArrayIfSingle } from "../utils/misc.js";
 import { isScrollable, getDefaultScrollingElement, getClientWidthNow, getClientHeightNow, mapScrollable, unmapScrollable, tryGetMainScrollableElement } from "../utils/scroll.js";
 import { formatAsString } from "../utils/text.js";
 import { validateStrList, validateNumber, validateBoolean, validateString } from "../utils/validation.js";
@@ -301,7 +302,7 @@ const getScrollableProps = containerElement => {
   if (!isMainScrollable && !isBody) {
     // we need to wrap if possible
     contentWrapper = getContentWrapper(containerElement, {
-      classNames: [PREFIX_CONTENT]
+      _classNames: [PREFIX_CONTENT]
     });
     hasExistingWrapper = !MH.isNullish(contentWrapper);
     if (!contentWrapper) {
@@ -365,7 +366,7 @@ const init = (widget, containerElement, props, config) => {
   const clickScroll = (_config$clickScroll = config === null || config === void 0 ? void 0 : config.clickScroll) !== null && _config$clickScroll !== void 0 ? _config$clickScroll : settings.scrollbarClickScroll;
   const dragScroll = (_ref3 = (_config$dragScroll = config === null || config === void 0 ? void 0 : config.dragScroll) !== null && _config$dragScroll !== void 0 ? _config$dragScroll : settings.scrollbarDragScroll) !== null && _ref3 !== void 0 ? _ref3 : false;
   const useHandle = (_ref4 = (_config$useHandle = config === null || config === void 0 ? void 0 : config.useHandle) !== null && _config$useHandle !== void 0 ? _config$useHandle : settings.scrollbarUseHandle) !== null && _ref4 !== void 0 ? _ref4 : false;
-  if (MC.IS_MOBILE && !onMobile) {
+  if (isMobile() && !onMobile) {
     return;
   }
 
@@ -421,7 +422,7 @@ const init = (widget, containerElement, props, config) => {
     const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
     const completeFraction = tracksH ? scrollData[MC.S_SCROLL_LEFT_FRACTION] : scrollData[MC.S_SCROLL_TOP_FRACTION];
     const viewFraction = tracksH ? scrollData[MC.S_CLIENT_WIDTH] / scrollData[MC.S_SCROLL_WIDTH] : scrollData[MC.S_CLIENT_HEIGHT] / scrollData[MC.S_SCROLL_HEIGHT];
-    logger === null || logger === void 0 || logger.debug9("Updating progress", {
+    debug: logger === null || logger === void 0 || logger.debug9("Updating progress", {
       tracksH,
       completeFraction,
       viewFraction
@@ -489,7 +490,7 @@ const init = (widget, containerElement, props, config) => {
       isDragging = true;
       setOrReleasePointerCapture(event, scrollbar, S_SET_POINTER_CAPTURE);
     }
-    logger === null || logger === void 0 || logger.debug10("Click or drag", {
+    debug: logger === null || logger === void 0 || logger.debug10("Click or drag", {
       eventType,
       isClick,
       isHandleClick,
@@ -512,7 +513,7 @@ const init = (widget, containerElement, props, config) => {
     // event target is and what transforms is has applied.
     const rect = MH.getBoundingClientRect(scrollbar);
     const offset = barIsHorizontal ? event.clientX - rect.left : event.clientY - rect.top;
-    logger === null || logger === void 0 || logger.debug10("Pointer offset", offset);
+    debug: logger === null || logger === void 0 || logger.debug10("Pointer offset", offset);
     if (offset === lastOffset) {
       return;
     }
@@ -538,7 +539,7 @@ const init = (widget, containerElement, props, config) => {
     } : {
       top: targetScrollOffset
     };
-    logger === null || logger === void 0 || logger.debug10("Scroll target offset", {
+    debug: logger === null || logger === void 0 || logger.debug10("Scroll target offset", {
       lastTargetFraction,
       targetCoordinates
     });
@@ -623,7 +624,7 @@ const init = (widget, containerElement, props, config) => {
   if (!isMainScrollable && !isBody) {
     addClasses(containerElement, PREFIX_CONTAINER);
   }
-  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !isMobile());
   setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
   setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, !!contentWrapper && hasVScroll);
 

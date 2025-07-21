@@ -202,7 +202,8 @@ const moveChildren = exports.moveChildren = (0, _domOptimize.asyncMutatorFor)(mo
  * @category DOM: Altering
  */
 const moveElementNow = (element, options) => {
-  let parentEl = (options === null || options === void 0 ? void 0 : options.to) || null;
+  var _options$to;
+  let parentEl = (_options$to = options === null || options === void 0 ? void 0 : options.to) !== null && _options$to !== void 0 ? _options$to : null;
   const position = (options === null || options === void 0 ? void 0 : options.position) || "append";
   if (position === "before" || position === "after") {
     parentEl = MH.parentOf(options === null || options === void 0 ? void 0 : options.to);
@@ -269,15 +270,16 @@ const isAllowedToWrap = element => _settings.settings.contentWrappingAllowed ===
  * @ignore
  * @internal
  *
- * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
  *
  * @since v1.2.0
  */
 exports.isAllowedToWrap = isAllowedToWrap;
 const getWrapper = (element, options) => {
   const {
-    tagName,
-    classNames = [MC.PREFIX_WRAPPER]
+    _tagName: tagName,
+    _classNames: classNames = [MC.PREFIX_WRAPPER]
   } = options !== null && options !== void 0 ? options : {};
   const parent = MH.parentOf(element);
   if (MH.lengthOf(MH.childrenOf(parent)) === 1 && MH.isHTMLElement(parent) && (!tagName || MH.hasTagName(parent, tagName)) && (!classNames || (0, _cssAlter.hasAnyClass)(parent, ...classNames))) {
@@ -291,15 +293,16 @@ const getWrapper = (element, options) => {
  * @ignore
  * @internal
  *
- * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
  *
  * @since v1.2.0
  */
 exports.getWrapper = getWrapper;
 const getContentWrapper = (element, options) => {
   const {
-    tagName,
-    classNames = [MC.PREFIX_WRAPPER]
+    _tagName: tagName,
+    _classNames: classNames = [MC.PREFIX_WRAPPER]
   } = options !== null && options !== void 0 ? options : {};
   const firstChild = MH.childrenOf(element)[0];
   if (MH.lengthOf(MH.childrenOf(element)) === 1 && MH.isHTMLElement(firstChild) && (!tagName || MH.hasTagName(firstChild, tagName)) && (!classNames || (0, _cssAlter.hasAnyClass)(firstChild, ...classNames))) {
@@ -404,10 +407,10 @@ const insertGhostCloneNow = (element, insertBefore = null) => {
   clone.id = "";
   (0, _cssAlter.addClassesNow)(clone, MC.PREFIX_GHOST, MC.PREFIX_TRANSITION_DISABLE, MC.PREFIX_ANIMATE_DISABLE);
   const wrapper = _tryWrapNow(clone, {
-    required: true
+    _required: true
   });
   moveElementNow(wrapper, {
-    to: insertBefore || element,
+    to: insertBefore !== null && insertBefore !== void 0 ? insertBefore : element,
     position: "before",
     ignoreMove: true
   });
@@ -432,17 +435,23 @@ const insertGhostClone = exports.insertGhostClone = (0, _domOptimize.asyncMutato
  *
  * Exposed via DOMWatcher
  */
-const ignoreMove = (target, options) => recordsToSkipOnce.set(target, {
-  from: options.from || null,
-  to: options.to || null
-});
+const ignoreMove = (target, options) => {
+  var _options$from, _options$to2;
+  return recordsToSkipOnce.set(target, {
+    from: (_options$from = options.from) !== null && _options$from !== void 0 ? _options$from : null,
+    to: (_options$to2 = options.to) !== null && _options$to2 !== void 0 ? _options$to2 : null
+  });
+};
 
 /**
  * @ignore
  * @internal
  */
 exports.ignoreMove = ignoreMove;
-const getIgnoreMove = target => recordsToSkipOnce.get(target) || null;
+const getIgnoreMove = target => {
+  var _recordsToSkipOnce$ge;
+  return (_recordsToSkipOnce$ge = recordsToSkipOnce.get(target)) !== null && _recordsToSkipOnce$ge !== void 0 ? _recordsToSkipOnce$ge : null;
+};
 
 /**
  * @ignore
@@ -495,11 +504,11 @@ const createWrapperFor = (element, wrapper) => {
 const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
 ) => {
   const {
-    tagName,
-    classNames = [MC.PREFIX_WRAPPER],
-    ignoreMove = true,
-    required = false,
-    requiredBy = ""
+    _tagName: tagName,
+    _classNames: classNames = [MC.PREFIX_WRAPPER],
+    _ignoreMove: ignoreMove = true,
+    _required: required = false,
+    _requiredBy: requiredBy = ""
   } = options !== null && options !== void 0 ? options : {};
   const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
   const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;

@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.36% </span>
+                <span class="strong">95.53% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>106/110</span>
+                <span class='fraction'>107/112</span>
             </div>
         
             
@@ -1246,11 +1246,7 @@
 <a name='L1181'></a><a href='#L1181'>1181</a>
 <a name='L1182'></a><a href='#L1182'>1182</a>
 <a name='L1183'></a><a href='#L1183'>1183</a>
-<a name='L1184'></a><a href='#L1184'>1184</a>
-<a name='L1185'></a><a href='#L1185'>1185</a>
-<a name='L1186'></a><a href='#L1186'>1186</a>
-<a name='L1187'></a><a href='#L1187'>1187</a>
-<a name='L1188'></a><a href='#L1188'>1188</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1184'></a><a href='#L1184'>1184</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1976,9 +1972,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">86x</span>
 <span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-yes">18x</span>
@@ -2030,7 +2023,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">86x</span>
 <span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2980,7 +2972,7 @@ export class ScrollWatcher {
 &nbsp;
       // And also its children (if possible, a single wrapper around them
       const wrapper = await tryWrapContent(element, {
-        classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
+        _classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER],
       });
       if (wrapper) {
         setupOnResize(wrapper);
@@ -3046,7 +3038,7 @@ export class ScrollWatcher {
       }
 &nbsp;
       const element = await fetchScrollableElement(scrollable);
-      const realtime = (activeListeners.get(scrollable)?._nRealtime || 0) &gt; 0;
+      const realtime = (activeListeners.get(scrollable)?._nRealtime ?? <span class="branch-1 cbranch-no" title="branch not covered" >0)</span> &gt; 0;
       const latestData = await fetchCurrentScroll(element, realtime, true);
       allScrollData.set(element, latestData);
 &nbsp;
@@ -3155,13 +3147,10 @@ export class ScrollWatcher {
     this.scrollTo = async (to, options) =&gt;
       scrollTo(
         to,
-        MH.merge(
-          { duration: config._scrollDuration }, // default
-          options,
-          {
-            scrollable: await fetchScrollableElement(options?.scrollable),
-          }, // override
-        ),
+        MH.merge(options, {
+          duration: options?.duration ?? config._scrollDuration, // default
+          scrollable: await fetchScrollableElement(options?.scrollable), // override
+        }),
       );
 &nbsp;
     // ----------
@@ -3392,6 +3381,8 @@ export type OnScrollHandler =
 export type ScrollData = {
   clientWidth: number;
   clientHeight: number;
+  scrollWidth: number;
+  scrollHeight: number;
 &nbsp;
   scrollTop: number;
 &nbsp;
@@ -3408,9 +3399,6 @@ export type ScrollData = {
    * `clientWidth`, ranging from 0 to 1.
    */
   scrollLeftFraction: number;
-&nbsp;
-  scrollWidth: number;
-  scrollHeight: number;
 &nbsp;
   /**
    * This is the direction of the last scroll action, i.e. _compared to the
@@ -3567,8 +3555,8 @@ const fetchScrollData = async (
   const scrollLeftFraction =
     MH.round(scrollLeft) / (scrollWidth - clientWidth || MC.INFINITY);
 &nbsp;
-  const prevScrollTop = previousEventData?.scrollTop || 0;
-  const prevScrollLeft = previousEventData?.scrollLeft || 0;
+  const prevScrollTop = previousEventData?.scrollTop ?? 0;
+  const prevScrollLeft = previousEventData?.scrollLeft ?? 0;
 &nbsp;
   const direction = getMaxDeltaDirection(
     scrollLeft - prevScrollLeft,
@@ -3577,14 +3565,14 @@ const fetchScrollData = async (
 &nbsp;
   return {
     direction,
+    [MC.S_CLIENT_WIDTH]: clientWidth,
+    [MC.S_CLIENT_HEIGHT]: clientHeight,
+    [MC.S_SCROLL_WIDTH]: scrollWidth,
+    [MC.S_SCROLL_HEIGHT]: scrollHeight,
     [MC.S_SCROLL_TOP]: scrollTop,
     [MC.S_SCROLL_TOP_FRACTION]: scrollTopFraction,
     [MC.S_SCROLL_LEFT]: scrollLeft,
     [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-    [MC.S_SCROLL_WIDTH]: scrollWidth,
-    [MC.S_SCROLL_HEIGHT]: scrollHeight,
-    [MC.S_CLIENT_WIDTH]: clientWidth,
-    [MC.S_CLIENT_HEIGHT]: clientHeight,
   };
 };
 &nbsp;
@@ -3631,7 +3619,7 @@ const invokeCallback = (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-19T06:50:43.490Z
+                at 2025-07-20T16:27:25.598Z
             </div>
         <script src="../prettify.js"></script>
         <script>

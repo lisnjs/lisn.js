@@ -220,9 +220,10 @@ class DOMWatcher {
     // ----------
 
     const setupOnMutation = async (handler, userOptions) => {
+      var _config$_root;
       const options = getOptions(userOptions !== null && userOptions !== void 0 ? userOptions : {});
       const callback = createCallback(handler, options);
-      let root = config._root || MH.getBody();
+      let root = (_config$_root = config._root) !== null && _config$_root !== void 0 ? _config$_root : MH.getBody();
       if (!root) {
         root = await (0, _domEvents.waitForElement)(MH.getBody);
       } else {
@@ -349,6 +350,7 @@ class DOMWatcher {
     // ----------
 
     const shouldSkipOperation = operation => {
+      var _config$_root2;
       const target = operation._target;
       const requestToSkip = (0, _domAlter.getIgnoreMove)(target);
       if (!requestToSkip) {
@@ -358,7 +360,7 @@ class DOMWatcher {
       const addedTo = MH.parentOf(target);
       const requestFrom = requestToSkip.from;
       const requestTo = requestToSkip.to;
-      const root = config._root || MH.getBody();
+      const root = (_config$_root2 = config._root) !== null && _config$_root2 !== void 0 ? _config$_root2 : MH.getBody();
       // If "from" is currently outside our root, we may not have seen a
       // removal operation.
       if ((removedFrom === requestFrom || !root.contains(requestFrom)) && addedTo === requestTo) {
@@ -410,9 +412,9 @@ exports.DOMWatcher = DOMWatcher;
 const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = (0, _xMap.newXMap)(() => MH.newMap());
 const getConfig = config => {
-  var _config$subtree;
+  var _config$root, _config$subtree;
   return {
-    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
     _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
   };
 };
@@ -424,6 +426,7 @@ const ATTRIBUTE_BIT = CATEGORIES_BITS[MC.S_ATTRIBUTE];
 // ----------------------------------------
 
 const getOptions = options => {
+  var _options$selector, _options$target;
   let categoryBitmask = 0;
   const categories = (0, _validation.validateStrList)("categories", options.categories, _dom.DOM_CATEGORIES_SPACE.has);
   if (categories) {
@@ -433,14 +436,14 @@ const getOptions = options => {
   } else {
     categoryBitmask = _dom.DOM_CATEGORIES_SPACE.bitmask; // default: all
   }
-  const selector = options.selector || "";
+  const selector = (_options$selector = options.selector) !== null && _options$selector !== void 0 ? _options$selector : "";
   if (!MH.isString(selector)) {
     throw MH.usageError("'selector' must be a string");
   }
   return {
     _categoryBitmask: categoryBitmask,
-    _target: options.target || null,
-    _selector: options.selector || ""
+    _target: (_options$target = options.target) !== null && _options$target !== void 0 ? _options$target : null,
+    _selector: selector
   };
 };
 const getDiffOperation = (operationA, operationB) => {

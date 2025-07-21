@@ -18,6 +18,7 @@ import { Action } from "../actions/action.cjs";
  * - Accepted options:
  *   - `offsetX`: A number.
  *   - `offsetY`: A number.
+ *   - `duration`: A number.
  *   - `scrollable`: A string element specification for an element (see
  *     {@link Utils.getReferenceElement | getReferenceElement}). Note that,
  *     unless it's a DOM ID, the specification is parsed relative to the
@@ -48,11 +49,11 @@ import { Action } from "../actions/action.cjs";
  *
  * @example
  * When the user clicks the button, scroll the main scrolling element to
- * element's position 10px _down_ and 50px _left_:
+ * element's position 10px _down_ and 50px _left_, with a duration of 200ms:
  *
  * ```html
  * <button id="btn">Scroll to/back</button>
- * <div data-lisn-on-click="@scroll-to: offsetY=10, offsetX=-50 +target=#btn"></div>
+ * <div data-lisn-on-click="@scroll-to: offsetY=10, offsetX=-50, duration=200 +target=#btn"></div>
  * ```
  *
  * @example
@@ -108,6 +109,12 @@ export type ScrollToConfig = {
      * @defaultValue undefined // none
      */
     offset?: CoordinateOffset;
+    /**
+     * The duration in milliseconds of the scroll animation.
+     *
+     * @defaultValue {@link ScrollWatcher} default
+     */
+    duration?: number;
     /**
      * The element that should be scrolled.
      *

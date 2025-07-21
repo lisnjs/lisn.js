@@ -178,25 +178,27 @@ export declare const isAllowedToWrap: (element: Element) => boolean;
  * @ignore
  * @internal
  *
- * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
  *
  * @since v1.2.0
  */
 export declare const getWrapper: (element: Element, options?: {
-    tagName?: keyof HTMLElementTagNameMap;
-    classNames?: string[] | null;
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
 }) => HTMLElement | null;
 /**
  * @ignore
  * @internal
  *
- * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
  *
  * @since v1.2.0
  */
 export declare const getContentWrapper: (element: Element, options?: {
-    tagName?: keyof HTMLElementTagNameMap;
-    classNames?: string[] | null;
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
 }) => HTMLElement | null;
 /**
  * @ignore
@@ -205,7 +207,7 @@ export declare const getContentWrapper: (element: Element, options?: {
  * @since v1.2.0
  */
 export declare const tryWrapNow: <O extends ContentWrappingOptions>(element: Element, options?: O) => O extends {
-    required: true;
+    _required: true;
 } ? HTMLElement : HTMLElement | null;
 /**
  * @ignore
@@ -214,7 +216,7 @@ export declare const tryWrapNow: <O extends ContentWrappingOptions>(element: Ele
  * @since v1.2.0
  */
 export declare const tryWrap: <O extends ContentWrappingOptions>(element: Element, options?: O | undefined) => Promise<O extends {
-    required: true;
+    _required: true;
 } ? HTMLElement : HTMLElement | null>;
 /**
  * @ignore
@@ -223,7 +225,7 @@ export declare const tryWrap: <O extends ContentWrappingOptions>(element: Elemen
  * @since v1.2.0
  */
 export declare const tryWrapContentNow: <O extends ContentWrappingOptions>(element: Element, options?: O) => O extends {
-    required: true;
+    _required: true;
 } ? HTMLElement : HTMLElement | null;
 /**
  * @ignore
@@ -232,7 +234,7 @@ export declare const tryWrapContentNow: <O extends ContentWrappingOptions>(eleme
  * @since v1.2.0
  */
 export declare const tryWrapContent: <O extends ContentWrappingOptions>(element: Element, options?: O | undefined) => Promise<O extends {
-    required: true;
+    _required: true;
 } ? HTMLElement : HTMLElement | null>;
 /**
  * @ignore
@@ -313,11 +315,11 @@ export declare const clearIgnoreMove: (target: Element) => void;
  */
 export declare const insertArrow: (target: Element, direction: "up" | "down" | "left" | "right", position?: "prepend" | "append" | "before" | "after", tag?: string) => HTMLElement;
 type ContentWrappingOptions = {
-    tagName?: keyof HTMLElementTagNameMap;
-    classNames?: string[];
-    ignoreMove?: boolean;
-    required?: boolean;
-    requiredBy?: string;
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[];
+    _ignoreMove?: boolean;
+    _required?: boolean;
+    _requiredBy?: string;
 };
 export {};
 //# sourceMappingURL=dom-alter.d.ts.map

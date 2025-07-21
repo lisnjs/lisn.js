@@ -407,7 +407,7 @@ export class ScrollWatcher {
 
       // And also its children (if possible, a single wrapper around them
       const wrapper = await tryWrapContent(element, {
-        classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER]
+        _classNames: [MC.PREFIX_WRAPPER, PREFIX_WRAPPER]
       });
       if (wrapper) {
         setupOnResize(wrapper);
@@ -456,7 +456,7 @@ export class ScrollWatcher {
     // ----------
 
     const scrollHandler = async event => {
-      var _activeListeners$get;
+      var _activeListeners$get$, _activeListeners$get;
       // We cannot use event.currentTarget because scrollHandler is called inside
       // a setTimeout so by that time, currentTarget is null or something else.
       //
@@ -476,7 +476,7 @@ export class ScrollWatcher {
         return;
       }
       const element = await fetchScrollableElement(scrollable);
-      const realtime = (((_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) || 0) > 0;
+      const realtime = ((_activeListeners$get$ = (_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) !== null && _activeListeners$get$ !== void 0 ? _activeListeners$get$ : 0) > 0;
       const latestData = await fetchCurrentScroll(element, realtime, true);
       allScrollData.set(element, latestData);
       debug: logger === null || logger === void 0 || logger.debug9("Scroll event", element, latestData);
@@ -544,14 +544,14 @@ export class ScrollWatcher {
 
     // ----------
 
-    this.scrollTo = async (to, options) => scrollTo(to, MH.merge({
-      duration: config._scrollDuration
-    },
-    // default
-    options, {
-      scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable)
-    } // override
-    ));
+    this.scrollTo = async (to, options) => {
+      var _options$duration;
+      return scrollTo(to, MH.merge(options, {
+        duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : config._scrollDuration,
+        // default
+        scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable) // override
+      }));
+    };
 
     // ----------
 
@@ -681,6 +681,7 @@ const hasExceededThreshold = (options, latestData, lastThresholdData) => {
   return checkTop && topDiff >= threshold || checkLeft && leftDiff >= threshold;
 };
 const fetchScrollData = async (element, previousEventData, realtime) => {
+  var _previousEventData$sc, _previousEventData$sc2;
   if (!realtime) {
     await waitForMeasureTime();
   }
@@ -692,19 +693,19 @@ const fetchScrollData = async (element, previousEventData, realtime) => {
   const clientHeight = getClientHeightNow(element);
   const scrollTopFraction = MH.round(scrollTop) / (scrollHeight - clientHeight || MC.INFINITY);
   const scrollLeftFraction = MH.round(scrollLeft) / (scrollWidth - clientWidth || MC.INFINITY);
-  const prevScrollTop = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) || 0;
-  const prevScrollLeft = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) || 0;
+  const prevScrollTop = (_previousEventData$sc = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) !== null && _previousEventData$sc !== void 0 ? _previousEventData$sc : 0;
+  const prevScrollLeft = (_previousEventData$sc2 = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) !== null && _previousEventData$sc2 !== void 0 ? _previousEventData$sc2 : 0;
   const direction = getMaxDeltaDirection(scrollLeft - prevScrollLeft, scrollTop - prevScrollTop);
   return {
     direction,
+    [MC.S_CLIENT_WIDTH]: clientWidth,
+    [MC.S_CLIENT_HEIGHT]: clientHeight,
+    [MC.S_SCROLL_WIDTH]: scrollWidth,
+    [MC.S_SCROLL_HEIGHT]: scrollHeight,
     [MC.S_SCROLL_TOP]: scrollTop,
     [MC.S_SCROLL_TOP_FRACTION]: scrollTopFraction,
     [MC.S_SCROLL_LEFT]: scrollLeft,
-    [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-    [MC.S_SCROLL_WIDTH]: scrollWidth,
-    [MC.S_SCROLL_HEIGHT]: scrollHeight,
-    [MC.S_CLIENT_WIDTH]: clientWidth,
-    [MC.S_CLIENT_HEIGHT]: clientHeight
+    [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction
   };
 };
 const setScrollCssProps = (element, scrollData) => {

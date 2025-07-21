@@ -255,6 +255,66 @@ export const quadraticRoots = (a, b, c) => {
 export const easeInOutQuad = x => x < 0.5 ? 2 * x * x : 1 - MH.pow(-2 * x + 2, 2) / 2;
 
 /**
+ * Returns the new position and velocity for a critically damped user-driven
+ * spring state toward a current target position.
+ *
+ * @param [settings.lTarget]       Target final position.
+ * @param [settings.dt]            Time step in milliseconds since the last call.
+ *                                 Must be small for the returned values to be
+ *                                 meaningful.
+ * @param [settings.lag]           Lag in milliseconds (how long it should take
+ *                                 for it to reach the final position). Must be
+ *                                 positive.
+ * @param [settings.l = 0]         Current position (starting or one returned by
+ *                                 previous call).
+ * @param [settings.v = 0]         Current velocity (returned by previous call).
+ * @param [settings.precision = 2] Number of decimal places to round position to
+ *                                 in order to determine when it's "done".
+ * @returns Updated position and velocity
+ *
+ * @since v1.2.0
+ *
+ * @category Math
+ */
+export const criticallyDamped = settings => {
+  const {
+    lTarget,
+    precision = 2
+  } = settings;
+  const lag = toNumWithBounds(settings.lag, {
+    min: 1
+  }) / 1000; // to seconds
+
+  // Since the position only approaches asymptotically the target it never truly
+  // reaches it exactly we need an approximation to calculate w0. N determines
+  // how far away from the target position we are after `lag` milliseconds.
+  const N = 7;
+  const w0 = N / lag;
+  let {
+    l = 0,
+    v = 0,
+    dt
+  } = settings;
+  dt /= 1000; // to seconds
+
+  if (roundNumTo(l - lTarget, precision) === 0) {
+    // we're done
+    l = lTarget;
+    v = 0;
+  } else if (dt > 0) {
+    const A = l - lTarget;
+    const B = v + w0 * A;
+    const e = MH.exp(-w0 * dt);
+    l = lTarget + (A + B * dt) * e;
+    v = (B - w0 * (A + B * dt)) * e;
+  }
+  return {
+    l,
+    v
+  };
+};
+
+/**
  * Returns an array of object's keys sorted by the numeric value they hold.
  *
  * @category Math

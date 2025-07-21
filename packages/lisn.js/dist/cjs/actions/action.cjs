@@ -60,7 +60,7 @@ const fetchAction = async (element, name, argsAndOptions) => {
   if (!newActionFromSpec) {
     throw MH.usageError(`Unknown action '${name}'`);
   }
-  return await newActionFromSpec(element, argsAndOptions || "");
+  return await newActionFromSpec(element, argsAndOptions !== null && argsAndOptions !== void 0 ? argsAndOptions : "");
 };
 
 // --------------------

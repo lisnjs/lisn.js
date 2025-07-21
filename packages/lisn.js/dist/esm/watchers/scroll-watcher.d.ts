@@ -349,6 +349,8 @@ export type OnScrollHandler = CallbackHandler<OnScrollHandlerArgs> | OnScrollCal
 export type ScrollData = {
     clientWidth: number;
     clientHeight: number;
+    scrollWidth: number;
+    scrollHeight: number;
     scrollTop: number;
     /**
      * This is the `scrollTop` relative to the full `scrollHeight` minus the
@@ -361,8 +363,6 @@ export type ScrollData = {
      * `clientWidth`, ranging from 0 to 1.
      */
     scrollLeftFraction: number;
-    scrollWidth: number;
-    scrollHeight: number;
     /**
      * This is the direction of the last scroll action, i.e. _compared to the
      * last scroll event_, not necessarily based on the deltas compared to the

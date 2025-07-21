@@ -7,16 +7,18 @@ function AsyncFromSyncIterator(r) { function AsyncFromSyncIteratorContinuation(r
 import * as MC from "../globals/minification-constants.js";
 import * as MH from "../globals/minification-helpers.js";
 import { settings } from "../globals/settings.js";
-import { animationFrameIterator } from "./animations.js";
+import { newAnimationFrameIterator } from "./animations.js";
 import { getComputedStylePropNow } from "./css-alter.js";
 import { SCROLL_DIRECTIONS } from "./directions.js";
 import { waitForInteractive, waitForElementOrInteractive } from "./dom-events.js";
 import { waitForMeasureTime } from "./dom-optimize.js";
 import { addEventListenerTo, removeEventListenerFrom } from "./event.js";
 import { logError, logWarn } from "./log.js";
-import { maxAbs, easeInOutQuad } from "./math.js";
+import { maxAbs, criticallyDamped } from "./math.js";
+import { randId, formatAsString } from "./text.js";
 import { isValidStrList } from "./validation.js";
 import { newXMap } from "../modules/x-map.js";
+import debug from "../debug/debug.js";
 
 /**
  * @category Scrolling
@@ -149,9 +151,9 @@ export const getClosestScrollable = (element, options) => {
  */
 export const getCurrentScrollAction = scrollable => {
   scrollable = toScrollableOrDefault(scrollable);
-  const action = currentScrollAction.get(scrollable);
-  if (action) {
-    return MH.copyObject(action);
+  const info = currentScrollInfos.get(scrollable);
+  if (info) {
+    return MH.copyObject(info._action);
   }
   return null;
 };
@@ -181,9 +183,9 @@ export const scrollTo = (to, userOptions) => {
   const scrollable = options._scrollable;
 
   // cancel current scroll action if any
-  const currentScroll = currentScrollAction.get(scrollable);
-  if (currentScroll) {
-    if (!currentScroll.cancel()) {
+  const info = currentScrollInfos.get(scrollable);
+  if (info) {
+    if (!info._action.cancel()) {
       // current scroll action is not cancellable by us
       return null;
     }
@@ -208,14 +210,16 @@ export const scrollTo = (to, userOptions) => {
       });
     }
   }
-  const promise = initiateScroll(options, () => isCancelled);
-  const thisScrollAction = {
-    waitFor: () => promise,
-    cancel: cancelFn
+  const thisInfo = {
+    _action: {
+      waitFor: () => scrollActionPromise,
+      cancel: cancelFn
+    }
   };
   const cleanup = () => {
-    if (currentScrollAction.get(scrollable) === thisScrollAction) {
-      MH.deleteKey(currentScrollAction, scrollable);
+    var _currentScrollInfos$g;
+    if (((_currentScrollInfos$g = currentScrollInfos.get(scrollable)) === null || _currentScrollInfos$g === void 0 ? void 0 : _currentScrollInfos$g._action) === thisInfo._action) {
+      MH.deleteKey(currentScrollInfos, scrollable);
     }
     if (preventScrollHandler) {
       for (const eventType of scrollEvents) {
@@ -225,9 +229,10 @@ export const scrollTo = (to, userOptions) => {
       }
     }
   };
-  thisScrollAction.waitFor().then(cleanup).catch(cleanup);
-  currentScrollAction.set(scrollable, thisScrollAction);
-  return thisScrollAction;
+  const scrollActionPromise = initiateScroll(options, () => isCancelled);
+  thisInfo._action.waitFor().then(cleanup).catch(cleanup);
+  updateCurrentScrollInfo(scrollable, thisInfo);
+  return thisInfo._action;
 };
 
 /**
@@ -308,8 +313,9 @@ export const fetchMainScrollableElement = async () => {
  * @internal
  */
 export const getDefaultScrollingElement = () => {
+  var _MH$getDocScrollingEl;
   const body = MH.getBody();
-  return isScrollable(body) ? body : MH.getDocScrollingElement() || body;
+  return isScrollable(body) ? body : (_MH$getDocScrollingEl = MH.getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : body;
 };
 
 /**
@@ -329,12 +335,17 @@ export const fetchScrollableElement = async target => toScrollableOrMain(target,
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
 const isScrollableCache = newXMap(() => MH.newMap());
 const mappedScrollables = MH.newMap();
-const currentScrollAction = MH.newMap();
+const currentScrollInfos = MH.newMap();
 const DIFF_THRESHOLD = 5;
-const arePositionsDifferent = (start, end) => maxAbs(start.top - end.top, start.left - end.left) >= DIFF_THRESHOLD;
+const arePositionsDifferent = (start, end, threshold = DIFF_THRESHOLD) => maxAbs(start.top - end.top, start.left - end.left) > threshold;
+
+// must be called in "measure time"
+const getBorderWidth = (element, side) => MH.ceil(MH.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+const isScrollableBodyInQuirks = element => element === MH.getBody() && MH.getDocScrollingElement() === null;
 const toScrollableOrMain = (target, getMain) => {
   if (MH.isElement(target)) {
-    return mappedScrollables.get(target) || target;
+    var _mappedScrollables$ge;
+    return (_mappedScrollables$ge = mappedScrollables.get(target)) !== null && _mappedScrollables$ge !== void 0 ? _mappedScrollables$ge : target;
   }
   if (!target || target === MH.getWindow() || target === MH.getDoc()) {
     return getMain();
@@ -343,30 +354,40 @@ const toScrollableOrMain = (target, getMain) => {
 };
 const toScrollableOrDefault = scrollable => scrollable !== null && scrollable !== void 0 ? scrollable : getDefaultScrollingElement();
 const getOptions = (to, options) => {
-  var _options$weCanInterru, _options$userCanInter;
+  var _options$offset, _options$altOffset, _options$duration, _options$weCanInterru, _options$userCanInter;
   const scrollable = toScrollableOrDefault(options === null || options === void 0 ? void 0 : options.scrollable);
   const target = getTargetCoordinates(scrollable, to);
   const altTarget = options !== null && options !== void 0 && options.altTarget ? getTargetCoordinates(scrollable, options === null || options === void 0 ? void 0 : options.altTarget) : null;
   return {
     _target: target,
-    _offset: (options === null || options === void 0 ? void 0 : options.offset) || null,
+    _offset: (_options$offset = options === null || options === void 0 ? void 0 : options.offset) !== null && _options$offset !== void 0 ? _options$offset : null,
     _altTarget: altTarget,
-    _altOffset: (options === null || options === void 0 ? void 0 : options.altOffset) || null,
+    _altOffset: (_options$altOffset = options === null || options === void 0 ? void 0 : options.altOffset) !== null && _options$altOffset !== void 0 ? _options$altOffset : null,
     _scrollable: scrollable,
-    _duration: (options === null || options === void 0 ? void 0 : options.duration) || 0,
+    _duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : 0,
     _weCanInterrupt: (_options$weCanInterru = options === null || options === void 0 ? void 0 : options.weCanInterrupt) !== null && _options$weCanInterru !== void 0 ? _options$weCanInterru : false,
     _userCanInterrupt: (_options$userCanInter = options === null || options === void 0 ? void 0 : options.userCanInterrupt) !== null && _options$userCanInter !== void 0 ? _options$userCanInter : false
   };
 };
+const updateCurrentScrollInfo = (scrollable, newInfo) => {
+  var _newInfo$_action;
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
+  const _action = (_newInfo$_action = newInfo._action) !== null && _newInfo$_action !== void 0 ? _newInfo$_action : existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._action;
+  if (_action) {
+    currentScrollInfos.set(scrollable, MH.merge(existingScrollInfo, newInfo, {
+      _action
+    }));
+  }
+};
 const getTargetCoordinates = (scrollable, target) => {
-  const docScrollingElement = MH.getDocScrollingElement();
+  const isDocScrollingElement = scrollable === MH.getDocScrollingElement();
   if (MH.isElement(target)) {
     if (scrollable === target || !scrollable.contains(target)) {
       throw MH.usageError("Target must be a descendant of the scrollable one");
     }
     return {
-      top: () => scrollable[MC.S_SCROLL_TOP] + MH.getBoundingClientRect(target).top - (scrollable === docScrollingElement ? 0 : MH.getBoundingClientRect(scrollable).top),
-      left: () => scrollable[MC.S_SCROLL_LEFT] + MH.getBoundingClientRect(target).left - (scrollable === docScrollingElement ? 0 : MH.getBoundingClientRect(scrollable).left)
+      top: () => MH.getBoundingClientRect(target).top - MH.getBoundingClientRect(scrollable).top + (isDocScrollingElement ? 0 : scrollable[MC.S_SCROLL_TOP]),
+      left: () => MH.getBoundingClientRect(target).left - MH.getBoundingClientRect(scrollable).left + (isDocScrollingElement ? 0 : scrollable[MC.S_SCROLL_LEFT])
     };
   }
   if (MH.isString(target)) {
@@ -384,8 +405,9 @@ const getTargetCoordinates = (scrollable, target) => {
 const getStartEndPosition = async options => {
   await waitForMeasureTime();
   const applyOffset = (position, offset) => {
-    position.top += (offset === null || offset === void 0 ? void 0 : offset.top) || 0;
-    position.left += (offset === null || offset === void 0 ? void 0 : offset.left) || 0;
+    var _offset$top, _offset$left;
+    position.top += (_offset$top = offset === null || offset === void 0 ? void 0 : offset.top) !== null && _offset$top !== void 0 ? _offset$top : 0;
+    position.left += (_offset$left = offset === null || offset === void 0 ? void 0 : offset.left) !== null && _offset$left !== void 0 ? _offset$left : 0;
   };
   const scrollable = options._scrollable;
   const start = {
@@ -399,8 +421,8 @@ const getStartEndPosition = async options => {
     applyOffset(end, options._altOffset);
   }
   return {
-    start,
-    end
+    _start: start,
+    _end: end
   };
 };
 
@@ -435,41 +457,75 @@ const getEndPosition = (scrollable, startPosition, targetCoordinates) => {
   return endPosition;
 };
 const initiateScroll = async (options, isCancelled) => {
+  var _existingScrollInfo$_, _existingScrollInfo$_2;
   const position = await getStartEndPosition(options);
   const duration = options._duration;
   const scrollable = options._scrollable;
-  const currentPosition = position.start;
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
+  const currentPosition = (_existingScrollInfo$_ = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._position) !== null && _existingScrollInfo$_ !== void 0 ? _existingScrollInfo$_ : position._start;
+  const currentVelocity = (_existingScrollInfo$_2 = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._velocity) !== null && _existingScrollInfo$_2 !== void 0 ? _existingScrollInfo$_2 : {
+    [MC.S_TOP]: 0,
+    [MC.S_LEFT]: 0
+  };
+  let elapsed = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._elapsed;
+  const logger = debug ? new debug.Logger({
+    name: `scroll-${formatAsString(scrollable)}-${randId()}`,
+    logAtCreation: {
+      options,
+      position,
+      elapsed,
+      currentPosition: MH.copyObject(currentPosition),
+      currentVelocity: MH.copyObject(currentVelocity)
+    }
+  }) : null;
   var _iteratorAbruptCompletion = false;
   var _didIteratorError = false;
   var _iteratorError;
   try {
-    for (var _iterator = _asyncIterator(animationFrameIterator()), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
-      const [totalElapsed, elapsedSinceLast__ignored] = _step.value;
+    for (var _iterator = _asyncIterator(newAnimationFrameIterator(elapsed)), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
+      elapsed = _step.value;
       {
+        const deltaTime = elapsed.sinceLast;
+        if (deltaTime === 0) {
+          // First time
+          continue;
+        }
+
         // Element.scrollTo equates to a measurement and needs to run after
         // painting to avoid forced layout.
         await waitForMeasureTime();
         if (isCancelled()) {
           // Reject the promise
+          logger === null || logger === void 0 || logger.debug8("Cancelled");
           throw currentPosition;
         }
-        if (totalElapsed === 0) {
-          // First frame
-          // If it's very close to the target, no need to scroll smoothly
-          if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
-            MH.elScrollTo(scrollable, position.end);
-            return position.end;
-          }
-        } else {
-          const progress = easeInOutQuad(MH.min(1, totalElapsed / duration));
-          for (const s of [MC.S_LEFT, MC.S_TOP]) {
-            currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
-          }
-          MH.elScrollTo(scrollable, currentPosition);
-          if (progress === 1) {
-            // done
-            break;
-          }
+        for (const s of [MC.S_LEFT, MC.S_TOP]) {
+          const {
+            l,
+            v
+          } = criticallyDamped({
+            l: currentPosition[s],
+            v: currentVelocity[s],
+            lTarget: position._end[s],
+            dt: deltaTime,
+            lag: duration
+          });
+          currentPosition[s] = l;
+          currentVelocity[s] = v;
+        }
+        updateCurrentScrollInfo(scrollable, {
+          _position: currentPosition,
+          _velocity: currentVelocity,
+          _elapsed: elapsed
+        });
+        const isDone = !arePositionsDifferent(currentPosition, position._end, 0.5);
+        if (isDone) {
+          MH.assign(currentPosition, position._end); // use exact final coordinates
+        }
+        MH.elScrollTo(scrollable, currentPosition);
+        if (isDone) {
+          logger === null || logger === void 0 || logger.debug8("Done");
+          break;
         }
       }
     }
@@ -489,10 +545,6 @@ const initiateScroll = async (options, isCancelled) => {
   }
   return currentPosition;
 };
-const isScrollableBodyInQuirks = element => element === MH.getBody() && MH.getDocScrollingElement() === null;
-
-// must be called in "measure time"
-const getBorderWidth = (element, side) => MH.ceil(MH.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
 
 // ------------------------------
 

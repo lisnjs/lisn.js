@@ -69,17 +69,17 @@ var LISN = (function (exports) {
   const S_SKIP_INITIAL = "skipInitial";
   const S_DEBOUNCE_WINDOW = "debounceWindow";
   const S_CANCEL = "cancel";
-  const S_KEYDOWN = S_KEY + S_DOWN;
-  const S_MOUSEUP = S_MOUSE + S_UP;
-  const S_MOUSEDOWN = S_MOUSE + S_DOWN;
-  const S_POINTERUP = S_POINTER + S_UP;
-  const S_POINTERDOWN = S_POINTER + S_DOWN;
+  const S_KEYDOWN = `${S_KEY}${S_DOWN}`;
+  const S_MOUSEUP = `${S_MOUSE}${S_UP}`;
+  const S_MOUSEDOWN = `${S_MOUSE}${S_DOWN}`;
+  const S_POINTERUP = `${S_POINTER}${S_UP}`;
+  const S_POINTERDOWN = `${S_POINTER}${S_DOWN}`;
   const S_POINTERMOVE = `${S_POINTER}move`;
-  const S_POINTERCANCEL = S_POINTER + S_CANCEL;
+  const S_POINTERCANCEL = `${S_POINTER}${S_CANCEL}`;
   const S_TOUCHSTART = `${S_TOUCH}start`;
   const S_TOUCHEND = `${S_TOUCH}end`;
   const S_TOUCHMOVE = `${S_TOUCH}move`;
-  const S_TOUCHCANCEL = S_TOUCH + S_CANCEL;
+  const S_TOUCHCANCEL = `${S_TOUCH}${S_CANCEL}`;
   const S_SELECTSTART = "selectstart";
   const S_ATTRIBUTES = "attributes";
   const S_CHILD_LIST = "childList";
@@ -88,8 +88,6 @@ var LISN = (function (exports) {
   const PREFIX_NO_SELECT = `${PREFIX}-no-select`;
   const PREFIX_NO_TOUCH_ACTION = `${PREFIX}-no-touch-action`;
   const PREFIX_NO_WRAP = `${PREFIX}-no-wrap`;
-  const USER_AGENT = typeof navigator === "undefined" ? "" : navigator.userAgent;
-  USER_AGENT.match(/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/) !== null;
 
   /**
    * @module Errors
@@ -243,6 +241,7 @@ var LISN = (function (exports) {
   const abs = MATH.abs.bind(MATH);
   const round = MATH.round.bind(MATH);
   const pow = MATH.pow.bind(MATH);
+  const exp = MATH.exp.bind(MATH);
   const parseFloat = NUMBER.parseFloat.bind(NUMBER);
   NUMBER.isNaN.bind(NUMBER);
   const isInstanceOf = (value, Class) => value instanceof Class;
@@ -252,7 +251,10 @@ var LISN = (function (exports) {
     var _constructorOf;
     return isObject(obj) ? (_constructorOf = constructorOf(obj)) === null || _constructorOf === void 0 ? void 0 : _constructorOf.name : typeOf(obj);
   };
-  const parentOf = element => (element === null || element === void 0 ? void 0 : element.parentElement) || null;
+  const parentOf = element => {
+    var _element$parentElemen;
+    return (_element$parentElemen = element === null || element === void 0 ? void 0 : element.parentElement) !== null && _element$parentElemen !== void 0 ? _element$parentElemen : null;
+  };
   const childrenOf = element => (element === null || element === void 0 ? void 0 : element.children) || [];
   const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
   const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;
@@ -946,18 +948,64 @@ var LISN = (function (exports) {
   const distanceBetween = (ptA, ptB) => sqrt(pow(ptA[0] - ptB[0], 2) + pow(ptA[1] - ptB[1], 2));
 
   /**
-   * Returns the value that an "easing" quadratic function would have at the
-   * given x.
+   * Returns the new position and velocity for a critically damped user-driven
+   * spring state toward a current target position.
    *
-   * @see https://easings.net/#easeInOutQuad
+   * @param [settings.lTarget]       Target final position.
+   * @param [settings.dt]            Time step in milliseconds since the last call.
+   *                                 Must be small for the returned values to be
+   *                                 meaningful.
+   * @param [settings.lag]           Lag in milliseconds (how long it should take
+   *                                 for it to reach the final position). Must be
+   *                                 positive.
+   * @param [settings.l = 0]         Current position (starting or one returned by
+   *                                 previous call).
+   * @param [settings.v = 0]         Current velocity (returned by previous call).
+   * @param [settings.precision = 2] Number of decimal places to round position to
+   *                                 in order to determine when it's "done".
+   * @returns Updated position and velocity
    *
-   * @param x Must be between 0 and 1.
-   *
-   * @returns The current y-axis value between 0 and 1.
+   * @since v1.2.0
    *
    * @category Math
    */
-  const easeInOutQuad = x => x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;
+  const criticallyDamped = settings => {
+    const {
+      lTarget,
+      precision = 2
+    } = settings;
+    const lag = toNumWithBounds(settings.lag, {
+      min: 1
+    }) / 1000; // to seconds
+
+    // Since the position only approaches asymptotically the target it never truly
+    // reaches it exactly we need an approximation to calculate w0. N determines
+    // how far away from the target position we are after `lag` milliseconds.
+    const N = 7;
+    const w0 = N / lag;
+    let {
+      l = 0,
+      v = 0,
+      dt
+    } = settings;
+    dt /= 1000; // to seconds
+
+    if (roundNumTo(l - lTarget, precision) === 0) {
+      // we're done
+      l = lTarget;
+      v = 0;
+    } else if (dt > 0) {
+      const A = l - lTarget;
+      const B = v + w0 * A;
+      const e = exp(-w0 * dt);
+      l = lTarget + (A + B * dt) * e;
+      v = (B - w0 * (A + B * dt)) * e;
+    }
+    return {
+      l,
+      v
+    };
+  };
 
   /**
    * Returns an array of object's keys sorted by the numeric value they hold.
@@ -1187,7 +1235,7 @@ var LISN = (function (exports) {
   const toMargins = (value, absoluteSize) => {
     var _parts$, _parts$2, _ref, _parts$3;
     const toPxValue = (strValue, index) => {
-      let margin = parseFloat(strValue || "") || 0;
+      let margin = parseFloat(strValue !== null && strValue !== void 0 ? strValue : "") || 0;
       if (strValue === margin + "%") {
         margin *= index % 2 ? absoluteSize[S_HEIGHT] : absoluteSize[S_WIDTH];
       }
@@ -2162,10 +2210,11 @@ var LISN = (function (exports) {
    * @internal
    */
   const setNumericStyleJsVarsNow = (element, props, options = {}) => {
+    var _options$_prefix;
     if (!isDOMElement(element)) {
       return;
     }
-    const varPrefix = prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
+    const varPrefix = prefixCssJsVar((_options$_prefix = options === null || options === void 0 ? void 0 : options._prefix) !== null && _options$_prefix !== void 0 ? _options$_prefix : "");
     for (const prop in props) {
       const cssPropSuffix = camelToKebabCase(prop);
       const varName = `${varPrefix}${cssPropSuffix}`;
@@ -2181,7 +2230,8 @@ var LISN = (function (exports) {
       if (value === null) {
         delStylePropNow(element, varName);
       } else {
-        setStylePropNow(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
+        var _options$_units;
+        setStylePropNow(element, varName, value + ((_options$_units = options === null || options === void 0 ? void 0 : options._units) !== null && _options$_units !== void 0 ? _options$_units : ""));
       }
     }
   };
@@ -2301,7 +2351,8 @@ var LISN = (function (exports) {
    * @category DOM: Altering
    */
   const moveElementNow = (element, options) => {
-    let parentEl = (options === null || options === void 0 ? void 0 : options.to) || null;
+    var _options$to;
+    let parentEl = (_options$to = options === null || options === void 0 ? void 0 : options.to) !== null && _options$to !== void 0 ? _options$to : null;
     const position = (options === null || options === void 0 ? void 0 : options.position) || "append";
     if (position === "before" || position === "after") {
       parentEl = parentOf(options === null || options === void 0 ? void 0 : options.to);
@@ -2338,14 +2389,15 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    *
-   * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+   * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+   *                             disable check.
    *
    * @since v1.2.0
    */
   const getWrapper = (element, options) => {
     const {
-      tagName,
-      classNames = [PREFIX_WRAPPER$2]
+      _tagName: tagName,
+      _classNames: classNames = [PREFIX_WRAPPER$2]
     } = options !== null && options !== void 0 ? options : {};
     const parent = parentOf(element);
     if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName || hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, ...classNames))) {
@@ -2359,14 +2411,15 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    *
-   * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+   * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+   *                             disable check.
    *
    * @since v1.2.0
    */
   const getContentWrapper = (element, options) => {
     const {
-      tagName,
-      classNames = [PREFIX_WRAPPER$2]
+      _tagName: tagName,
+      _classNames: classNames = [PREFIX_WRAPPER$2]
     } = options !== null && options !== void 0 ? options : {};
     const firstChild = childrenOf(element)[0];
     if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName || hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, ...classNames))) {
@@ -2398,16 +2451,22 @@ var LISN = (function (exports) {
    *
    * Exposed via DOMWatcher
    */
-  const ignoreMove = (target, options) => recordsToSkipOnce.set(target, {
-    from: options.from || null,
-    to: options.to || null
-  });
+  const ignoreMove = (target, options) => {
+    var _options$from, _options$to2;
+    return recordsToSkipOnce.set(target, {
+      from: (_options$from = options.from) !== null && _options$from !== void 0 ? _options$from : null,
+      to: (_options$to2 = options.to) !== null && _options$to2 !== void 0 ? _options$to2 : null
+    });
+  };
 
   /**
    * @ignore
    * @internal
    */
-  const getIgnoreMove = target => recordsToSkipOnce.get(target) || null;
+  const getIgnoreMove = target => {
+    var _recordsToSkipOnce$ge;
+    return (_recordsToSkipOnce$ge = recordsToSkipOnce.get(target)) !== null && _recordsToSkipOnce$ge !== void 0 ? _recordsToSkipOnce$ge : null;
+  };
 
   /**
    * @ignore
@@ -2442,11 +2501,11 @@ var LISN = (function (exports) {
   const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
   ) => {
     const {
-      tagName: tagName$1,
-      classNames = [PREFIX_WRAPPER$2],
-      ignoreMove = true,
-      required = false,
-      requiredBy = ""
+      _tagName: tagName$1,
+      _classNames: classNames = [PREFIX_WRAPPER$2],
+      _ignoreMove: ignoreMove = true,
+      _required: required = false,
+      _requiredBy: requiredBy = ""
     } = options !== null && options !== void 0 ? options : {};
     const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
     const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
@@ -2994,9 +3053,10 @@ var LISN = (function (exports) {
       // ----------
 
       const setupOnMutation = async (handler, userOptions) => {
+        var _config$_root;
         const options = getOptions$3(userOptions !== null && userOptions !== void 0 ? userOptions : {});
         const callback = createCallback(handler, options);
-        let root = config._root || getBody();
+        let root = (_config$_root = config._root) !== null && _config$_root !== void 0 ? _config$_root : getBody();
         if (!root) {
           root = await waitForElement(getBody);
         } else {
@@ -3114,6 +3174,7 @@ var LISN = (function (exports) {
       // ----------
 
       const shouldSkipOperation = operation => {
+        var _config$_root2;
         const target = operation._target;
         const requestToSkip = getIgnoreMove(target);
         if (!requestToSkip) {
@@ -3123,7 +3184,7 @@ var LISN = (function (exports) {
         const addedTo = parentOf(target);
         const requestFrom = requestToSkip.from;
         const requestTo = requestToSkip.to;
-        const root = config._root || getBody();
+        const root = (_config$_root2 = config._root) !== null && _config$_root2 !== void 0 ? _config$_root2 : getBody();
         // If "from" is currently outside our root, we may not have seen a
         // removal operation.
         if ((removedFrom === requestFrom || !root.contains(requestFrom)) && addedTo === requestTo) {
@@ -3174,9 +3235,9 @@ var LISN = (function (exports) {
   const CONSTRUCTOR_KEY$6 = SYMBOL();
   const instances$6 = newXMap(() => newMap());
   const getConfig$6 = config => {
-    var _config$subtree;
+    var _config$root, _config$subtree;
     return {
-      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
       _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
     };
   };
@@ -3188,6 +3249,7 @@ var LISN = (function (exports) {
   // ----------------------------------------
 
   const getOptions$3 = options => {
+    var _options$selector, _options$target;
     let categoryBitmask = 0;
     const categories = validateStrList("categories", options.categories, DOM_CATEGORIES_SPACE.has);
     if (categories) {
@@ -3197,14 +3259,14 @@ var LISN = (function (exports) {
     } else {
       categoryBitmask = DOM_CATEGORIES_SPACE.bitmask; // default: all
     }
-    const selector = options.selector || "";
+    const selector = (_options$selector = options.selector) !== null && _options$selector !== void 0 ? _options$selector : "";
     if (!isString(selector)) {
       throw usageError("'selector' must be a string");
     }
     return {
       _categoryBitmask: categoryBitmask,
-      _target: options.target || null,
-      _selector: options.selector || ""
+      _target: (_options$target = options.target) !== null && _options$target !== void 0 ? _options$target : null,
+      _selector: selector
     };
   };
   const getDiffOperation = (operationA, operationB) => {
@@ -3350,9 +3412,11 @@ var LISN = (function (exports) {
    */
   const callEventListener = (handler, event) => {
     if (isFunction(handler)) {
-      handler.call(event.currentTarget || self, event);
+      var _event$currentTarget;
+      handler.call((_event$currentTarget = event.currentTarget) !== null && _event$currentTarget !== void 0 ? _event$currentTarget : self, event);
     } else {
-      handler.handleEvent.call(event.currentTarget || self, event);
+      var _event$currentTarget2;
+      handler.handleEvent.call((_event$currentTarget2 = event.currentTarget) !== null && _event$currentTarget2 !== void 0 ? _event$currentTarget2 : self, event);
     }
   };
 
@@ -3693,6 +3757,7 @@ var LISN = (function (exports) {
       deltaY = 0,
       deltaZ = 1;
     for (const event of events) {
+      var _deltasForKey$event$k;
       if (!isKeyboardEvent(event) || event.type !== S_KEYDOWN) {
         continue;
       }
@@ -3714,7 +3779,7 @@ var LISN = (function (exports) {
         "=": event.ctrlKey ? deltasIn : null,
         "-": deltasOut
       };
-      const theseDeltas = deltasForKey[event.key] || null;
+      const theseDeltas = (_deltasForKey$event$k = deltasForKey[event.key]) !== null && _deltasForKey$event$k !== void 0 ? _deltasForKey$event$k : null;
       if (!theseDeltas) {
         // not a relevant key
         continue;
@@ -4487,8 +4552,8 @@ var LISN = (function (exports) {
       const setupOnGesture = async (target, handler, userOptions) => {
         const options = getOptions$2(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
         createCallback(target, handler, options);
-        for (const device of options._devices || DEVICES) {
-          var _allListeners$get;
+        for (const device of (_options$_devices = options._devices) !== null && _options$_devices !== void 0 ? _options$_devices : DEVICES) {
+          var _options$_devices, _allListeners$get;
           let listeners = (_allListeners$get = allListeners.get(target)) === null || _allListeners$get === void 0 ? void 0 : _allListeners$get.get(device);
           if (listeners) ; else {
             listeners = setupListeners(target, device, options);
@@ -4506,8 +4571,8 @@ var LISN = (function (exports) {
       const deleteHandler = (target, handler, options) => {
         deleteKey(allCallbacks.get(target), handler);
         allCallbacks.prune(target);
-        for (const device of options._devices || DEVICES) {
-          var _allListeners$get2;
+        for (const device of (_options$_devices2 = options._devices) !== null && _options$_devices2 !== void 0 ? _options$_devices2 : DEVICES) {
+          var _options$_devices2, _allListeners$get2;
           const listeners = (_allListeners$get2 = allListeners.get(target)) === null || _allListeners$get2 === void 0 ? void 0 : _allListeners$get2.get(device);
           if (listeners) {
             listeners._nCallbacks--;
@@ -4525,8 +4590,8 @@ var LISN = (function (exports) {
       // ----------
 
       const invokeCallbacks = (target, device, event) => {
-        var _allListeners$get3;
-        const preventDefault = (((_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) || 0) > 0;
+        var _allListeners$get$get, _allListeners$get3;
+        const preventDefault = ((_allListeners$get$get = (_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) !== null && _allListeners$get$get !== void 0 ? _allListeners$get$get : 0) > 0;
         let isTerminated = false;
         for (const {
           _wrapper
@@ -4718,14 +4783,14 @@ var LISN = (function (exports) {
     [S_WHEEL]: getWheelGestureFragment
   };
   const getOptions$2 = (config, options) => {
-    var _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
+    var _validateStrList, _validateStrList2, _validateStrList3, _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
     const debounceWindow = toNonNegNum(options[S_DEBOUNCE_WINDOW], config._debounceWindow // watcher is never debounced, so apply default here
     );
     const deltaThreshold = toNonNegNum(options.deltaThreshold, config._deltaThreshold);
     return {
-      _devices: validateStrList("devices", options.devices, isValidInputDevice) || null,
-      _directions: validateStrList("directions", options.directions, isValidDirection) || null,
-      _intents: validateStrList("intents", options.intents, isValidIntent) || null,
+      _devices: (_validateStrList = validateStrList("devices", options.devices, isValidInputDevice)) !== null && _validateStrList !== void 0 ? _validateStrList : null,
+      _directions: (_validateStrList2 = validateStrList("directions", options.directions, isValidDirection)) !== null && _validateStrList2 !== void 0 ? _validateStrList2 : null,
+      _intents: (_validateStrList3 = validateStrList("intents", options.intents, isValidIntent)) !== null && _validateStrList3 !== void 0 ? _validateStrList3 : null,
       _minTotalDeltaX: (_options$minTotalDelt = options.minTotalDeltaX) !== null && _options$minTotalDelt !== void 0 ? _options$minTotalDelt : null,
       _maxTotalDeltaX: (_options$maxTotalDelt = options.maxTotalDeltaX) !== null && _options$maxTotalDelt !== void 0 ? _options$maxTotalDelt : null,
       _minTotalDeltaY: (_options$minTotalDelt2 = options.minTotalDeltaY) !== null && _options$minTotalDelt2 !== void 0 ? _options$minTotalDelt2 : null,
@@ -4994,21 +5059,27 @@ var LISN = (function (exports) {
   };
 
   /**
-   * The callback is passed two arguments:
-   * 1. The total elapsed time in milliseconds since the start
-   * 2. The elapsed time in milliseconds since the previous frame
+   * The callback is as an argument the {@link ElapsedTimes | elapsed times}:
+   * - The total elapsed time in milliseconds since the start
+   * - The elapsed time in milliseconds since the previous frame
    *
-   * The first time this callback is called both of these will be 0.
+   * The first time this callback is called both of these will be 0 unless seed
+   * values were provided.
    *
    * The callback must return `true` if it wants to animate again on the next
    * frame and `false` if done.
+   *
+   * @since v1.2.0
+   *
+   * @category Animations
    */
 
   /**
    * Returns a promise that resolves at the next animation frame. Async/await
-   * version of requestAnimationFrame.
+   * version of
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame | requestAnimationFrame}.
    *
-   * @returns The timestamp gotten from requestAnimationFrame
+   * @returns The timestamp gotten from `requestAnimationFrame`
    *
    * @category Animations
    */
@@ -5024,7 +5095,7 @@ var LISN = (function (exports) {
    *
    * @example
    * ```javascript
-   * for await (const [totalElapsed, elapsedSinceLast] of animationFrameIterator()) {
+   * for await (const elapsed of newAnimationFrameIterator()) {
    *   // ... do something
    *   if (done) break;
    * }
@@ -5034,45 +5105,88 @@ var LISN = (function (exports) {
    *
    * @category Animations
    */
-  function animationFrameIterator() {
-    return _animationFrameIterator.apply(this, arguments);
+  function newAnimationFrameIterator(_x) {
+    return _newAnimationFrameIterator.apply(this, arguments);
   }
 
   /**
-   * @param webAnimationCallback This function is called for each
-   *                             {@link https://developer.mozilla.org/en-US/docs/Web/API/Animation | Animation}
-   *                             on the element. It {@link waitForMeasureTime}
-   *                             before reading the animations.
-   * @param legacyCallback       This function is called if the browser does not
-   *                             support the Web Animations API. It is called
-   *                             after {@link waitForMutateTime} so it can safely
-   *                             modify styles.
-   * @param realtime             If true, then it does not
-   *                             {@link waitForMeasureTime} or
-   *                             {@link waitForMutateTime} and runs
-   *                             synchronously.
+   * Returns an animation iterator based on {@link criticallyDamped} that starts
+   * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
+   * the new position and velocity, and total time at every animation frame.
+   *
+   * @param [settings.l]         The initial starting position.
+   * @param [settings.lTarget]   The initial target position. Can be updated when
+   *                             calling next().
+   * @param [settings.lag]       See {@link criticallyDamped}.
+   * @param [settings.precision] See {@link criticallyDamped}.
+   *
+   * @returns An iterator whose `next` method accepts an optional new `lTarget`.
+   * The iterator yields an object containing successive values for:
+   * - position (`l`)
+   * - velocity (`v`)
+   * - total time elapsed (`t`)
+   *
+   * @example
+   * If you never need to update the target you can use a for await loop:
+   *
+   * ```javascript
+   * const iterator = newCriticallyDampedAnimationIterator({
+   *   l: 10,
+   *   lTarget: 100,
+   *   lag: 1500
+   * });
+   *
+   * for await (const { l, v, t } of iterator) {
+   *   console.log({ l, v, t });
+   * }
+   * ```
+   *
+   * @example
+   * If you do need to update the target, then call `next` explicitly:
+   *
+   * ```javascript
+   * const iterator = newCriticallyDampedAnimationIterator({
+   *   l: 10,
+   *   lTarget: 100,
+   *   lag: 1500
+   * });
+   *
+   * let { value: { l, v, t } } = await iterator.next();
+   * ({ value: { l, v, t } } = await iterator.next()); // updated
+   * ({ value: { l, v, t } } = await iterator.next(200)); // updated towards a new target
+   * ```
+   *
+   * @since v1.2.0
    *
    * @category Animations
    */
-  function _animationFrameIterator() {
-    _animationFrameIterator = _wrapAsyncGenerator(function* () {
+  function _newAnimationFrameIterator() {
+    _newAnimationFrameIterator = _wrapAsyncGenerator(function* (elapsed) {
       let startTime, previousTimeStamp;
+      const {
+        total: totalSeed = 0,
+        sinceLast: sinceLastSeed = 0
+      } = elapsed !== null && elapsed !== void 0 ? elapsed : {};
       const step = async () => {
         const timeStamp = await waitForAnimationFrame();
-        if (!startTime) {
-          startTime = timeStamp;
-          previousTimeStamp = timeStamp;
+        if (!startTime || !previousTimeStamp) {
+          // First time
+          startTime = timeStamp - totalSeed;
+          previousTimeStamp = timeStamp - sinceLastSeed;
         }
         const totalElapsed = timeStamp - startTime;
         const elapsedSinceLast = timeStamp - previousTimeStamp;
         previousTimeStamp = timeStamp;
-        return [totalElapsed, elapsedSinceLast];
+        return {
+          total: totalElapsed,
+          sinceLast: elapsedSinceLast
+        };
       };
       while (true) {
         yield step();
       }
     });
-    return _animationFrameIterator.apply(this, arguments);
+    return _newAnimationFrameIterator.apply(this, arguments);
   }
 
   /**
@@ -5206,9 +5320,9 @@ var LISN = (function (exports) {
    */
   const getCurrentScrollAction = scrollable => {
     scrollable = toScrollableOrDefault(scrollable);
-    const action = currentScrollAction.get(scrollable);
-    if (action) {
-      return copyObject(action);
+    const info = currentScrollInfos.get(scrollable);
+    if (info) {
+      return copyObject(info._action);
     }
     return null;
   };
@@ -5238,9 +5352,9 @@ var LISN = (function (exports) {
     const scrollable = options._scrollable;
 
     // cancel current scroll action if any
-    const currentScroll = currentScrollAction.get(scrollable);
-    if (currentScroll) {
-      if (!currentScroll.cancel()) {
+    const info = currentScrollInfos.get(scrollable);
+    if (info) {
+      if (!info._action.cancel()) {
         // current scroll action is not cancellable by us
         return null;
       }
@@ -5265,14 +5379,16 @@ var LISN = (function (exports) {
         });
       }
     }
-    const promise = initiateScroll(options, () => isCancelled);
-    const thisScrollAction = {
-      waitFor: () => promise,
-      cancel: cancelFn
+    const thisInfo = {
+      _action: {
+        waitFor: () => scrollActionPromise,
+        cancel: cancelFn
+      }
     };
     const cleanup = () => {
-      if (currentScrollAction.get(scrollable) === thisScrollAction) {
-        deleteKey(currentScrollAction, scrollable);
+      var _currentScrollInfos$g;
+      if (((_currentScrollInfos$g = currentScrollInfos.get(scrollable)) === null || _currentScrollInfos$g === void 0 ? void 0 : _currentScrollInfos$g._action) === thisInfo._action) {
+        deleteKey(currentScrollInfos, scrollable);
       }
       if (preventScrollHandler) {
         for (const eventType of scrollEvents) {
@@ -5282,9 +5398,10 @@ var LISN = (function (exports) {
         }
       }
     };
-    thisScrollAction.waitFor().then(cleanup).catch(cleanup);
-    currentScrollAction.set(scrollable, thisScrollAction);
-    return thisScrollAction;
+    const scrollActionPromise = initiateScroll(options, () => isCancelled);
+    thisInfo._action.waitFor().then(cleanup).catch(cleanup);
+    updateCurrentScrollInfo(scrollable, thisInfo);
+    return thisInfo._action;
   };
 
   /**
@@ -5339,8 +5456,9 @@ var LISN = (function (exports) {
    * @internal
    */
   const getDefaultScrollingElement = () => {
+    var _MH$getDocScrollingEl;
     const body = getBody();
-    return isScrollable(body) ? body : getDocScrollingElement() || body;
+    return isScrollable(body) ? body : (_MH$getDocScrollingEl = getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : body;
   };
 
   /**
@@ -5354,12 +5472,17 @@ var LISN = (function (exports) {
   const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
   const isScrollableCache = newXMap(() => newMap());
   const mappedScrollables = newMap();
-  const currentScrollAction = newMap();
+  const currentScrollInfos = newMap();
   const DIFF_THRESHOLD = 5;
-  const arePositionsDifferent = (start, end) => maxAbs(start.top - end.top, start.left - end.left) >= DIFF_THRESHOLD;
+  const arePositionsDifferent = (start, end, threshold = DIFF_THRESHOLD) => maxAbs(start.top - end.top, start.left - end.left) > threshold;
+
+  // must be called in "measure time"
+  const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+  const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
   const toScrollableOrMain = (target, getMain) => {
     if (isElement(target)) {
-      return mappedScrollables.get(target) || target;
+      var _mappedScrollables$ge;
+      return (_mappedScrollables$ge = mappedScrollables.get(target)) !== null && _mappedScrollables$ge !== void 0 ? _mappedScrollables$ge : target;
     }
     if (!target || target === getWindow() || target === getDoc()) {
       return getMain();
@@ -5368,30 +5491,40 @@ var LISN = (function (exports) {
   };
   const toScrollableOrDefault = scrollable => scrollable !== null && scrollable !== void 0 ? scrollable : getDefaultScrollingElement();
   const getOptions$1 = (to, options) => {
-    var _options$weCanInterru, _options$userCanInter;
+    var _options$offset, _options$altOffset, _options$duration, _options$weCanInterru, _options$userCanInter;
     const scrollable = toScrollableOrDefault(options === null || options === void 0 ? void 0 : options.scrollable);
     const target = getTargetCoordinates(scrollable, to);
     const altTarget = options !== null && options !== void 0 && options.altTarget ? getTargetCoordinates(scrollable, options === null || options === void 0 ? void 0 : options.altTarget) : null;
     return {
       _target: target,
-      _offset: (options === null || options === void 0 ? void 0 : options.offset) || null,
+      _offset: (_options$offset = options === null || options === void 0 ? void 0 : options.offset) !== null && _options$offset !== void 0 ? _options$offset : null,
       _altTarget: altTarget,
-      _altOffset: (options === null || options === void 0 ? void 0 : options.altOffset) || null,
+      _altOffset: (_options$altOffset = options === null || options === void 0 ? void 0 : options.altOffset) !== null && _options$altOffset !== void 0 ? _options$altOffset : null,
       _scrollable: scrollable,
-      _duration: (options === null || options === void 0 ? void 0 : options.duration) || 0,
+      _duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : 0,
       _weCanInterrupt: (_options$weCanInterru = options === null || options === void 0 ? void 0 : options.weCanInterrupt) !== null && _options$weCanInterru !== void 0 ? _options$weCanInterru : false,
       _userCanInterrupt: (_options$userCanInter = options === null || options === void 0 ? void 0 : options.userCanInterrupt) !== null && _options$userCanInter !== void 0 ? _options$userCanInter : false
     };
   };
+  const updateCurrentScrollInfo = (scrollable, newInfo) => {
+    var _newInfo$_action;
+    const existingScrollInfo = currentScrollInfos.get(scrollable);
+    const _action = (_newInfo$_action = newInfo._action) !== null && _newInfo$_action !== void 0 ? _newInfo$_action : existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._action;
+    if (_action) {
+      currentScrollInfos.set(scrollable, merge(existingScrollInfo, newInfo, {
+        _action
+      }));
+    }
+  };
   const getTargetCoordinates = (scrollable, target) => {
-    const docScrollingElement = getDocScrollingElement();
+    const isDocScrollingElement = scrollable === getDocScrollingElement();
     if (isElement(target)) {
       if (scrollable === target || !scrollable.contains(target)) {
         throw usageError("Target must be a descendant of the scrollable one");
       }
       return {
-        top: () => scrollable[S_SCROLL_TOP] + getBoundingClientRect(target).top - (scrollable === docScrollingElement ? 0 : getBoundingClientRect(scrollable).top),
-        left: () => scrollable[S_SCROLL_LEFT] + getBoundingClientRect(target).left - (scrollable === docScrollingElement ? 0 : getBoundingClientRect(scrollable).left)
+        top: () => getBoundingClientRect(target).top - getBoundingClientRect(scrollable).top + (isDocScrollingElement ? 0 : scrollable[S_SCROLL_TOP]),
+        left: () => getBoundingClientRect(target).left - getBoundingClientRect(scrollable).left + (isDocScrollingElement ? 0 : scrollable[S_SCROLL_LEFT])
       };
     }
     if (isString(target)) {
@@ -5409,8 +5542,9 @@ var LISN = (function (exports) {
   const getStartEndPosition = async options => {
     await waitForMeasureTime();
     const applyOffset = (position, offset) => {
-      position.top += (offset === null || offset === void 0 ? void 0 : offset.top) || 0;
-      position.left += (offset === null || offset === void 0 ? void 0 : offset.left) || 0;
+      var _offset$top, _offset$left;
+      position.top += (_offset$top = offset === null || offset === void 0 ? void 0 : offset.top) !== null && _offset$top !== void 0 ? _offset$top : 0;
+      position.left += (_offset$left = offset === null || offset === void 0 ? void 0 : offset.left) !== null && _offset$left !== void 0 ? _offset$left : 0;
     };
     const scrollable = options._scrollable;
     const start = {
@@ -5424,8 +5558,8 @@ var LISN = (function (exports) {
       applyOffset(end, options._altOffset);
     }
     return {
-      start,
-      end
+      _start: start,
+      _end: end
     };
   };
 
@@ -5460,41 +5594,66 @@ var LISN = (function (exports) {
     return endPosition;
   };
   const initiateScroll = async (options, isCancelled) => {
+    var _existingScrollInfo$_, _existingScrollInfo$_2;
     const position = await getStartEndPosition(options);
     const duration = options._duration;
     const scrollable = options._scrollable;
-    const currentPosition = position.start;
+    const existingScrollInfo = currentScrollInfos.get(scrollable);
+    const currentPosition = (_existingScrollInfo$_ = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._position) !== null && _existingScrollInfo$_ !== void 0 ? _existingScrollInfo$_ : position._start;
+    const currentVelocity = (_existingScrollInfo$_2 = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._velocity) !== null && _existingScrollInfo$_2 !== void 0 ? _existingScrollInfo$_2 : {
+      [S_TOP]: 0,
+      [S_LEFT]: 0
+    };
+    let elapsed = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._elapsed;
+    const logger = null;
     var _iteratorAbruptCompletion = false;
     var _didIteratorError = false;
     var _iteratorError;
     try {
-      for (var _iterator = _asyncIterator(animationFrameIterator()), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
-        const [totalElapsed, elapsedSinceLast__ignored] = _step.value;
+      for (var _iterator = _asyncIterator(newAnimationFrameIterator(elapsed)), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
+        elapsed = _step.value;
         {
+          const deltaTime = elapsed.sinceLast;
+          if (deltaTime === 0) {
+            // First time
+            continue;
+          }
+
           // Element.scrollTo equates to a measurement and needs to run after
           // painting to avoid forced layout.
           await waitForMeasureTime();
           if (isCancelled()) {
             // Reject the promise
+            logger === null || logger === void 0 || logger.debug8("Cancelled");
             throw currentPosition;
           }
-          if (totalElapsed === 0) {
-            // First frame
-            // If it's very close to the target, no need to scroll smoothly
-            if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
-              elScrollTo(scrollable, position.end);
-              return position.end;
-            }
-          } else {
-            const progress = easeInOutQuad(min(1, totalElapsed / duration));
-            for (const s of [S_LEFT, S_TOP]) {
-              currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
-            }
-            elScrollTo(scrollable, currentPosition);
-            if (progress === 1) {
-              // done
-              break;
-            }
+          for (const s of [S_LEFT, S_TOP]) {
+            const {
+              l,
+              v
+            } = criticallyDamped({
+              l: currentPosition[s],
+              v: currentVelocity[s],
+              lTarget: position._end[s],
+              dt: deltaTime,
+              lag: duration
+            });
+            currentPosition[s] = l;
+            currentVelocity[s] = v;
+          }
+          updateCurrentScrollInfo(scrollable, {
+            _position: currentPosition,
+            _velocity: currentVelocity,
+            _elapsed: elapsed
+          });
+          const isDone = !arePositionsDifferent(currentPosition, position._end, 0.5);
+          if (isDone) {
+            assign(currentPosition, position._end); // use exact final coordinates
+          }
+          elScrollTo(scrollable, currentPosition);
+          if (isDone) {
+            logger === null || logger === void 0 || logger.debug8("Done");
+            break;
           }
         }
       }
@@ -5514,10 +5673,6 @@ var LISN = (function (exports) {
     }
     return currentPosition;
   };
-  const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
-
-  // must be called in "measure time"
-  const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNow(element, `border-${side}`)));
 
   // ------------------------------
 
@@ -5608,9 +5763,9 @@ var LISN = (function (exports) {
       // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
       // olverlays anyway.
       parentEl = await tryWrapContent(parentEl, {
-        classNames: [PREFIX_WRAPPER$2, PREFIX_WRAPPER$1],
-        required: true,
-        requiredBy: "percentage offset view trigger with scrolling root"
+        _classNames: [PREFIX_WRAPPER$2, PREFIX_WRAPPER$1],
+        _required: true,
+        _requiredBy: "percentage offset view trigger with scrolling root"
       });
     }
     if (options._style.position === S_ABSOLUTE) {
@@ -5642,11 +5797,10 @@ var LISN = (function (exports) {
   };
   const getOverlayKey = (style, data) => objToStrKey(style) + "|" + objToStrKey(data);
   const getCssProperties = style => {
-    const finalCssProperties = merge({
-      position: S_ABSOLUTE
-    },
-    // default
-    style);
+    const finalCssProperties = merge(style, {
+      position: (style === null || style === void 0 ? void 0 : style.position) || S_ABSOLUTE
+    } // default
+    );
     if (finalCssProperties.position === S_ABSOLUTE || finalCssProperties.position === S_FIXED) {
       if (isEmpty(finalCssProperties.top) && isEmpty(finalCssProperties.bottom)) {
         finalCssProperties.top = "0px";
@@ -5756,14 +5910,14 @@ var LISN = (function (exports) {
    * @internal
    */
   const fetchViewportSize = async (realtime = false) => {
-    var _MH$getDocScrollingEl;
+    var _MH$getDocScrollingEl, _root$clientWidth, _root$clientHeight;
     if (!realtime) {
       await waitForMeasureTime();
     }
     const root = hasDOM() ? (_MH$getDocScrollingEl = getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : getBody() : null;
     return {
-      [S_WIDTH]: (root === null || root === void 0 ? void 0 : root.clientWidth) || 0,
-      [S_HEIGHT]: (root === null || root === void 0 ? void 0 : root.clientHeight) || 0
+      [S_WIDTH]: (_root$clientWidth = root === null || root === void 0 ? void 0 : root.clientWidth) !== null && _root$clientWidth !== void 0 ? _root$clientWidth : 0,
+      [S_HEIGHT]: (_root$clientHeight = root === null || root === void 0 ? void 0 : root.clientHeight) !== null && _root$clientHeight !== void 0 ? _root$clientHeight : 0
     };
   };
 
@@ -5855,7 +6009,7 @@ var LISN = (function (exports) {
       // a counter of 1 or 2 for how many more calls to ignore.
       const targetsToSkip = newWeakMap();
       let observedTargets = newWeakSet();
-      debounceWindow = debounceWindow || 0;
+      debounceWindow !== null && debounceWindow !== void 0 ? debounceWindow : debounceWindow = 0;
       let timer = null;
       const resizeHandler = entries => {
         // Override entries for previous targets, but keep entries whose targets
@@ -6573,6 +6727,7 @@ var LISN = (function (exports) {
   const PREFIX_DEVICE = prefixName("device");
   const PREFIX_ASPECTR = prefixName("aspect-ratio");
   const getConfig$3 = config => {
+    var _config$root;
     const deviceBreakpoints = copyObject(settings.deviceBreakpoints);
     if (config !== null && config !== void 0 && config.deviceBreakpoints) {
       copyExistingKeys(config.deviceBreakpoints, deviceBreakpoints);
@@ -6582,7 +6737,7 @@ var LISN = (function (exports) {
       copyExistingKeys(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
     }
     return {
-      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
       _deviceBreakpoints: deviceBreakpoints,
       _aspectRatioBreakpoints: aspectRatioBreakpoints
     };
@@ -7299,7 +7454,7 @@ var LISN = (function (exports) {
 
         // And also its children (if possible, a single wrapper around them
         const wrapper = await tryWrapContent(element, {
-          classNames: [PREFIX_WRAPPER$2, PREFIX_WRAPPER]
+          _classNames: [PREFIX_WRAPPER$2, PREFIX_WRAPPER]
         });
         if (wrapper) {
           setupOnResize(wrapper);
@@ -7348,7 +7503,7 @@ var LISN = (function (exports) {
       // ----------
 
       const scrollHandler = async event => {
-        var _activeListeners$get;
+        var _activeListeners$get$, _activeListeners$get;
         // We cannot use event.currentTarget because scrollHandler is called inside
         // a setTimeout so by that time, currentTarget is null or something else.
         //
@@ -7368,7 +7523,7 @@ var LISN = (function (exports) {
           return;
         }
         const element = await fetchScrollableElement(scrollable);
-        const realtime = (((_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) || 0) > 0;
+        const realtime = ((_activeListeners$get$ = (_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) !== null && _activeListeners$get$ !== void 0 ? _activeListeners$get$ : 0) > 0;
         const latestData = await fetchCurrentScroll(element, realtime, true);
         allScrollData.set(element, latestData);
         for (const entry of ((_allCallbacks$get3 = allCallbacks.get(element)) === null || _allCallbacks$get3 === void 0 ? void 0 : _allCallbacks$get3.values()) || []) {
@@ -7433,14 +7588,14 @@ var LISN = (function (exports) {
 
       // ----------
 
-      this.scrollTo = async (to, options) => scrollTo(to, merge({
-        duration: config._scrollDuration
-      },
-      // default
-      options, {
-        scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable)
-      } // override
-      ));
+      this.scrollTo = async (to, options) => {
+        var _options$duration;
+        return scrollTo(to, merge(options, {
+          duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : config._scrollDuration,
+          // default
+          scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable) // override
+        }));
+      };
 
       // ----------
 
@@ -7570,6 +7725,7 @@ var LISN = (function (exports) {
     return checkTop && topDiff >= threshold || checkLeft && leftDiff >= threshold;
   };
   const fetchScrollData = async (element, previousEventData, realtime) => {
+    var _previousEventData$sc, _previousEventData$sc2;
     if (!realtime) {
       await waitForMeasureTime();
     }
@@ -7581,19 +7737,19 @@ var LISN = (function (exports) {
     const clientHeight = getClientHeightNow(element);
     const scrollTopFraction = round(scrollTop) / (scrollHeight - clientHeight || INFINITY);
     const scrollLeftFraction = round(scrollLeft) / (scrollWidth - clientWidth || INFINITY);
-    const prevScrollTop = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) || 0;
-    const prevScrollLeft = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) || 0;
+    const prevScrollTop = (_previousEventData$sc = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) !== null && _previousEventData$sc !== void 0 ? _previousEventData$sc : 0;
+    const prevScrollLeft = (_previousEventData$sc2 = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) !== null && _previousEventData$sc2 !== void 0 ? _previousEventData$sc2 : 0;
     const direction = getMaxDeltaDirection(scrollLeft - prevScrollLeft, scrollTop - prevScrollTop);
     return {
       direction,
+      [S_CLIENT_WIDTH]: clientWidth,
+      [S_CLIENT_HEIGHT]: clientHeight,
+      [S_SCROLL_WIDTH]: scrollWidth,
+      [S_SCROLL_HEIGHT]: scrollHeight,
       [S_SCROLL_TOP]: scrollTop,
       [S_SCROLL_TOP_FRACTION]: scrollTopFraction,
       [S_SCROLL_LEFT]: scrollLeft,
-      [S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-      [S_SCROLL_WIDTH]: scrollWidth,
-      [S_SCROLL_HEIGHT]: scrollHeight,
-      [S_CLIENT_WIDTH]: clientWidth,
-      [S_CLIENT_HEIGHT]: clientHeight
+      [S_SCROLL_LEFT_FRACTION]: scrollLeftFraction
     };
   };
   const setScrollCssProps = (element, scrollData) => {
@@ -8251,11 +8407,11 @@ var LISN = (function (exports) {
   const CONSTRUCTOR_KEY = SYMBOL();
   const instances = newXMap(() => newMap());
   const getConfig = config => {
-    var _config$rootMargin;
+    var _config$root, _config$rootMargin, _config$threshold;
     return {
-      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
       _rootMargin: (_config$rootMargin = config === null || config === void 0 ? void 0 : config.rootMargin) !== null && _config$rootMargin !== void 0 ? _config$rootMargin : "0px 0px 0px 0px",
-      _threshold: (config === null || config === void 0 ? void 0 : config.threshold) || 0
+      _threshold: (_config$threshold = config === null || config === void 0 ? void 0 : config.threshold) !== null && _config$threshold !== void 0 ? _config$threshold : 0
     };
   };
   const TRACK_REGULAR = 1; // only entering/leaving root

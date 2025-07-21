@@ -100,13 +100,14 @@ export class CheckTrigger extends Trigger {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
+    var _MH$targetOf;
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     this.getConfig = () => MH.copyObject(config);
     if (!MH.lengthOf(actions)) {
       return;
     }
-    const target = MH.targetOf(config) || element;
+    const target = (_MH$targetOf = MH.targetOf(config)) !== null && _MH$targetOf !== void 0 ? _MH$targetOf : element;
     if (!MH.isInstanceOf(target, HTMLInputElement)) {
       return;
     }

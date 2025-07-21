@@ -106,7 +106,7 @@ export class Trigger extends Widget {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    var _config$once, _config$oneWay, _config$doDelay, _config$undoDelay;
+    var _config$once, _config$oneWay, _config$delay, _config$doDelay, _config$undoDelay;
     super(element, config);
     /**
      * "Do"es all the {@link Action}s linked to the trigger.
@@ -137,7 +137,7 @@ export class Trigger extends Widget {
     }) : null;
     const once = (_config$once = config === null || config === void 0 ? void 0 : config.once) !== null && _config$once !== void 0 ? _config$once : false;
     const oneWay = (_config$oneWay = config === null || config === void 0 ? void 0 : config.oneWay) !== null && _config$oneWay !== void 0 ? _config$oneWay : false;
-    const delay = (config === null || config === void 0 ? void 0 : config.delay) || 0;
+    const delay = (_config$delay = config === null || config === void 0 ? void 0 : config.delay) !== null && _config$delay !== void 0 ? _config$delay : 0;
     const doDelay = (_config$doDelay = config === null || config === void 0 ? void 0 : config.doDelay) !== null && _config$doDelay !== void 0 ? _config$doDelay : delay;
     const undoDelay = (_config$undoDelay = config === null || config === void 0 ? void 0 : config.undoDelay) !== null && _config$undoDelay !== void 0 ? _config$undoDelay : delay;
     let lastCallId;
@@ -257,10 +257,10 @@ export const registerTrigger = (name, newTrigger, configValidator) => {
       const config = await fetchWidgetConfig(configSpec, MH.assign(baseConfigValidator, thisConfigValidator), OPTION_PREF_CHAR);
       const actionTarget = (_config$actOn = config.actOn) !== null && _config$actOn !== void 0 ? _config$actOn : element;
       const actions = [];
-      for (const actionSpec of splitOn(allActionSpecs || "", ACTION_PREF_CHAR, true)) {
+      for (const actionSpec of splitOn(allActionSpecs !== null && allActionSpecs !== void 0 ? allActionSpecs : "", ACTION_PREF_CHAR, true)) {
         const [name, actionArgsAndOptions] = splitOn(actionSpec, ACTION_ARGS_PREF_CHAR, true, 1);
         try {
-          actions.push(await fetchAction(actionTarget, name, actionArgsAndOptions || ""));
+          actions.push(await fetchAction(actionTarget, name, actionArgsAndOptions !== null && actionArgsAndOptions !== void 0 ? actionArgsAndOptions : ""));
         } catch (err) {
           if (MH.isInstanceOf(err, LisnUsageError)) {
             // fetchAction would have logged an error

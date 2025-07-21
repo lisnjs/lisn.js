@@ -755,10 +755,11 @@ const copyStyle = async (fromElement, toElement, includeComputedProps) => {
  */
 exports.copyStyle = copyStyle;
 const setNumericStyleJsVarsNow = (element, props, options = {}) => {
+  var _options$_prefix;
   if (!(0, _domQuery.isDOMElement)(element)) {
     return;
   }
-  const varPrefix = MH.prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
+  const varPrefix = MH.prefixCssJsVar((_options$_prefix = options === null || options === void 0 ? void 0 : options._prefix) !== null && _options$_prefix !== void 0 ? _options$_prefix : "");
   for (const prop in props) {
     const cssPropSuffix = (0, _text.camelToKebabCase)(prop);
     const varName = `${varPrefix}${cssPropSuffix}`;
@@ -774,7 +775,8 @@ const setNumericStyleJsVarsNow = (element, props, options = {}) => {
     if (value === null) {
       delStylePropNow(element, varName);
     } else {
-      setStylePropNow(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
+      var _options$_units;
+      setStylePropNow(element, varName, value + ((_options$_units = options === null || options === void 0 ? void 0 : options._units) !== null && _options$_units !== void 0 ? _options$_units : ""));
     }
   }
 };

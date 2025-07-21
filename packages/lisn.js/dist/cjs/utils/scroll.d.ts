@@ -34,7 +34,8 @@ export type ScrollToOptions = {
      */
     offset?: CoordinateOffset;
     /**
-     * The duration of the scroll animation. If not given, it is instant.
+     * The duration of the scroll animation in milliseconds. If not given, it is
+     * instant.
      *
      * @defaultValue 0
      */

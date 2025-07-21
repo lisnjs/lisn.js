@@ -73,19 +73,19 @@ var LISN = (function (exports) {
   const S_DEBOUNCE_WINDOW = "debounceWindow";
   const S_TOGGLE = "toggle";
   const S_CANCEL = "cancel";
-  const S_KEYDOWN = S_KEY + S_DOWN;
-  const S_MOUSEUP = S_MOUSE + S_UP;
-  const S_MOUSEDOWN = S_MOUSE + S_DOWN;
-  const S_POINTERUP = S_POINTER + S_UP;
-  const S_POINTERDOWN = S_POINTER + S_DOWN;
+  const S_KEYDOWN = `${S_KEY}${S_DOWN}`;
+  const S_MOUSEUP = `${S_MOUSE}${S_UP}`;
+  const S_MOUSEDOWN = `${S_MOUSE}${S_DOWN}`;
+  const S_POINTERUP = `${S_POINTER}${S_UP}`;
+  const S_POINTERDOWN = `${S_POINTER}${S_DOWN}`;
   const S_POINTERENTER = `${S_POINTER}enter`;
   const S_POINTERLEAVE = `${S_POINTER}leave`;
   const S_POINTERMOVE = `${S_POINTER}move`;
-  const S_POINTERCANCEL = S_POINTER + S_CANCEL;
+  const S_POINTERCANCEL = `${S_POINTER}${S_CANCEL}`;
   const S_TOUCHSTART = `${S_TOUCH}start`;
   const S_TOUCHEND = `${S_TOUCH}end`;
   const S_TOUCHMOVE = `${S_TOUCH}move`;
-  const S_TOUCHCANCEL = S_TOUCH + S_CANCEL;
+  const S_TOUCHCANCEL = `${S_TOUCH}${S_CANCEL}`;
   const S_DRAGSTART = `${S_DRAG}start`;
   const S_DRAGEND = `${S_DRAG}end`;
   const S_DRAGENTER = `${S_DRAG}enter`;
@@ -121,8 +121,6 @@ var LISN = (function (exports) {
   const PREFIX_ANIMATE_DISABLE = `${ANIMATE_PREFIX}disable`;
   const PREFIX_ANIMATE_PAUSE = `${ANIMATE_PREFIX}pause`;
   const PREFIX_ANIMATE_REVERSE = `${ANIMATE_PREFIX}${S_REVERSE}`;
-  const USER_AGENT = typeof navigator === "undefined" ? "" : navigator.userAgent;
-  const IS_MOBILE = USER_AGENT.match(/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/) !== null;
 
   /**
    * @module Errors
@@ -165,6 +163,7 @@ var LISN = (function (exports) {
 
   // credit: underscore.js
   const root = typeof self === "object" && self.self === self && self || typeof global == "object" && global.global === global && global || Function("return this")() || {};
+  const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
   const kebabToCamelCase$1 = str => str.replace(/-./g, m => toUpperCase(m.charAt(1)));
   const camelToKebabCase$1 = str => str.replace(/[A-Z][a-z]/g, m => "-" + toLowerCase(m)).replace(/[A-Z]+/, m => "-" + toLowerCase(m));
   const prefixName = name => `${PREFIX}-${name}`;
@@ -263,7 +262,6 @@ var LISN = (function (exports) {
     return (_obj$length = obj === null || obj === void 0 ? void 0 : obj.length) !== null && _obj$length !== void 0 ? _obj$length : 0;
   };
   const lastOf = a => a === null || a === void 0 ? void 0 : a.slice(-1)[0];
-  const firstOf = a => a === null || a === void 0 ? void 0 : a.slice(0, 1)[0];
   const tagName = element => element.tagName;
   const hasTagName = (element, tag) => toLowerCase(tagName(element)) === toLowerCase(tag);
   const preventDefault = event => event.preventDefault();
@@ -292,6 +290,7 @@ var LISN = (function (exports) {
   const abs = MATH.abs.bind(MATH);
   const round = MATH.round.bind(MATH);
   const pow = MATH.pow.bind(MATH);
+  const exp = MATH.exp.bind(MATH);
   const parseFloat = NUMBER.parseFloat.bind(NUMBER);
   const isNaN = NUMBER.isNaN.bind(NUMBER);
   const isInstanceOf = (value, Class) => value instanceof Class;
@@ -301,7 +300,10 @@ var LISN = (function (exports) {
     var _constructorOf;
     return isObject(obj) ? (_constructorOf = constructorOf(obj)) === null || _constructorOf === void 0 ? void 0 : _constructorOf.name : typeOf(obj);
   };
-  const parentOf = element => (element === null || element === void 0 ? void 0 : element.parentElement) || null;
+  const parentOf = element => {
+    var _element$parentElemen;
+    return (_element$parentElemen = element === null || element === void 0 ? void 0 : element.parentElement) !== null && _element$parentElemen !== void 0 ? _element$parentElemen : null;
+  };
   const childrenOf = element => (element === null || element === void 0 ? void 0 : element.children) || [];
   const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
   const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;
@@ -1024,18 +1026,64 @@ var LISN = (function (exports) {
   };
 
   /**
-   * Returns the value that an "easing" quadratic function would have at the
-   * given x.
+   * Returns the new position and velocity for a critically damped user-driven
+   * spring state toward a current target position.
    *
-   * @see https://easings.net/#easeInOutQuad
+   * @param [settings.lTarget]       Target final position.
+   * @param [settings.dt]            Time step in milliseconds since the last call.
+   *                                 Must be small for the returned values to be
+   *                                 meaningful.
+   * @param [settings.lag]           Lag in milliseconds (how long it should take
+   *                                 for it to reach the final position). Must be
+   *                                 positive.
+   * @param [settings.l = 0]         Current position (starting or one returned by
+   *                                 previous call).
+   * @param [settings.v = 0]         Current velocity (returned by previous call).
+   * @param [settings.precision = 2] Number of decimal places to round position to
+   *                                 in order to determine when it's "done".
+   * @returns Updated position and velocity
    *
-   * @param x Must be between 0 and 1.
-   *
-   * @returns The current y-axis value between 0 and 1.
+   * @since v1.2.0
    *
    * @category Math
    */
-  const easeInOutQuad = x => x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;
+  const criticallyDamped = settings => {
+    const {
+      lTarget,
+      precision = 2
+    } = settings;
+    const lag = toNumWithBounds(settings.lag, {
+      min: 1
+    }) / 1000; // to seconds
+
+    // Since the position only approaches asymptotically the target it never truly
+    // reaches it exactly we need an approximation to calculate w0. N determines
+    // how far away from the target position we are after `lag` milliseconds.
+    const N = 7;
+    const w0 = N / lag;
+    let {
+      l = 0,
+      v = 0,
+      dt
+    } = settings;
+    dt /= 1000; // to seconds
+
+    if (roundNumTo(l - lTarget, precision) === 0) {
+      // we're done
+      l = lTarget;
+      v = 0;
+    } else if (dt > 0) {
+      const A = l - lTarget;
+      const B = v + w0 * A;
+      const e = exp(-w0 * dt);
+      l = lTarget + (A + B * dt) * e;
+      v = (B - w0 * (A + B * dt)) * e;
+    }
+    return {
+      l,
+      v
+    };
+  };
 
   /**
    * Returns an array of object's keys sorted by the numeric value they hold.
@@ -1079,16 +1127,6 @@ var LISN = (function (exports) {
    * @internal
    */
 
-
-  /**
-   * @since v1.2.0
-   */
-  const supportsSticky = () => hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
-
-  /**
-   * @since v1.2.0
-   */
-  const isInQuirksMode = () => hasDOM() ? document.compatMode === "BackCompat" : false;
   const copyExistingKeys = (fromObj, toObj) => {
     for (const key in toObj) {
       if (!hasOwnProp(toObj, key)) {
@@ -1297,7 +1335,7 @@ var LISN = (function (exports) {
   const toMargins = (value, absoluteSize) => {
     var _parts$, _parts$2, _ref, _parts$3;
     const toPxValue = (strValue, index) => {
-      let margin = parseFloat(strValue || "") || 0;
+      let margin = parseFloat(strValue !== null && strValue !== void 0 ? strValue : "") || 0;
       if (strValue === margin + "%") {
         margin *= index % 2 ? absoluteSize[S_HEIGHT] : absoluteSize[S_WIDTH];
       }
@@ -2902,10 +2940,11 @@ var LISN = (function (exports) {
    * @internal
    */
   const setNumericStyleJsVarsNow = (element, props, options = {}) => {
+    var _options$_prefix;
     if (!isDOMElement(element)) {
       return;
     }
-    const varPrefix = prefixCssJsVar((options === null || options === void 0 ? void 0 : options._prefix) || "");
+    const varPrefix = prefixCssJsVar((_options$_prefix = options === null || options === void 0 ? void 0 : options._prefix) !== null && _options$_prefix !== void 0 ? _options$_prefix : "");
     for (const prop in props) {
       const cssPropSuffix = camelToKebabCase(prop);
       const varName = `${varPrefix}${cssPropSuffix}`;
@@ -2921,7 +2960,8 @@ var LISN = (function (exports) {
       if (value === null) {
         delStylePropNow(element, varName);
       } else {
-        setStylePropNow(element, varName, value + ((options === null || options === void 0 ? void 0 : options._units) || ""));
+        var _options$_units;
+        setStylePropNow(element, varName, value + ((_options$_units = options === null || options === void 0 ? void 0 : options._units) !== null && _options$_units !== void 0 ? _options$_units : ""));
       }
     }
   };
@@ -3141,7 +3181,8 @@ var LISN = (function (exports) {
    * @category DOM: Altering
    */
   const moveElementNow = (element, options) => {
-    let parentEl = (options === null || options === void 0 ? void 0 : options.to) || null;
+    var _options$to;
+    let parentEl = (_options$to = options === null || options === void 0 ? void 0 : options.to) !== null && _options$to !== void 0 ? _options$to : null;
     const position = (options === null || options === void 0 ? void 0 : options.position) || "append";
     if (position === "before" || position === "after") {
       parentEl = parentOf(options === null || options === void 0 ? void 0 : options.to);
@@ -3205,14 +3246,15 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    *
-   * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+   * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+   *                             disable check.
    *
    * @since v1.2.0
    */
   const getWrapper = (element, options) => {
     const {
-      tagName,
-      classNames = [PREFIX_WRAPPER$3]
+      _tagName: tagName,
+      _classNames: classNames = [PREFIX_WRAPPER$3]
     } = options !== null && options !== void 0 ? options : {};
     const parent = parentOf(element);
     if (lengthOf(childrenOf(parent)) === 1 && isHTMLElement(parent) && (!tagName || hasTagName(parent, tagName)) && (!classNames || hasAnyClass(parent, ...classNames))) {
@@ -3226,14 +3268,15 @@ var LISN = (function (exports) {
    * @ignore
    * @internal
    *
-   * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+   * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+   *                             disable check.
    *
    * @since v1.2.0
    */
   const getContentWrapper = (element, options) => {
     const {
-      tagName,
-      classNames = [PREFIX_WRAPPER$3]
+      _tagName: tagName,
+      _classNames: classNames = [PREFIX_WRAPPER$3]
     } = options !== null && options !== void 0 ? options : {};
     const firstChild = childrenOf(element)[0];
     if (lengthOf(childrenOf(element)) === 1 && isHTMLElement(firstChild) && (!tagName || hasTagName(firstChild, tagName)) && (!classNames || hasAnyClass(firstChild, ...classNames))) {
@@ -3325,10 +3368,10 @@ var LISN = (function (exports) {
     clone.id = "";
     addClassesNow(clone, PREFIX_GHOST, PREFIX_TRANSITION_DISABLE, PREFIX_ANIMATE_DISABLE);
     const wrapper = _tryWrapNow(clone, {
-      required: true
+      _required: true
     });
     moveElementNow(wrapper, {
-      to: insertBefore || element,
+      to: insertBefore !== null && insertBefore !== void 0 ? insertBefore : element,
       position: "before",
       ignoreMove: true
     });
@@ -3352,16 +3395,22 @@ var LISN = (function (exports) {
    *
    * Exposed via DOMWatcher
    */
-  const ignoreMove = (target, options) => recordsToSkipOnce.set(target, {
-    from: options.from || null,
-    to: options.to || null
-  });
+  const ignoreMove = (target, options) => {
+    var _options$from, _options$to2;
+    return recordsToSkipOnce.set(target, {
+      from: (_options$from = options.from) !== null && _options$from !== void 0 ? _options$from : null,
+      to: (_options$to2 = options.to) !== null && _options$to2 !== void 0 ? _options$to2 : null
+    });
+  };
 
   /**
    * @ignore
    * @internal
    */
-  const getIgnoreMove = target => recordsToSkipOnce.get(target) || null;
+  const getIgnoreMove = target => {
+    var _recordsToSkipOnce$ge;
+    return (_recordsToSkipOnce$ge = recordsToSkipOnce.get(target)) !== null && _recordsToSkipOnce$ge !== void 0 ? _recordsToSkipOnce$ge : null;
+  };
 
   /**
    * @ignore
@@ -3412,11 +3461,11 @@ var LISN = (function (exports) {
   const _tryWrapNow = (element, options, wrapContent = false // if true, wrap its children, otherwise given element
   ) => {
     const {
-      tagName: tagName$1,
-      classNames = [PREFIX_WRAPPER$3],
-      ignoreMove = true,
-      required = false,
-      requiredBy = ""
+      _tagName: tagName$1,
+      _classNames: classNames = [PREFIX_WRAPPER$3],
+      _ignoreMove: ignoreMove = true,
+      _required: required = false,
+      _requiredBy: requiredBy = ""
     } = options !== null && options !== void 0 ? options : {};
     const getWrapperFn = wrapContent ? getContentWrapper : getWrapper;
     const wrapFn = wrapContent ? wrapChildrenNow : wrapElementNow;
@@ -3971,9 +4020,10 @@ var LISN = (function (exports) {
       // ----------
 
       const setupOnMutation = async (handler, userOptions) => {
+        var _config$_root;
         const options = getOptions$3(userOptions !== null && userOptions !== void 0 ? userOptions : {});
         const callback = createCallback(handler, options);
-        let root = config._root || getBody();
+        let root = (_config$_root = config._root) !== null && _config$_root !== void 0 ? _config$_root : getBody();
         if (!root) {
           root = await waitForElement(getBody);
         } else {
@@ -4091,6 +4141,7 @@ var LISN = (function (exports) {
       // ----------
 
       const shouldSkipOperation = operation => {
+        var _config$_root2;
         const target = operation._target;
         const requestToSkip = getIgnoreMove(target);
         if (!requestToSkip) {
@@ -4100,7 +4151,7 @@ var LISN = (function (exports) {
         const addedTo = parentOf(target);
         const requestFrom = requestToSkip.from;
         const requestTo = requestToSkip.to;
-        const root = config._root || getBody();
+        const root = (_config$_root2 = config._root) !== null && _config$_root2 !== void 0 ? _config$_root2 : getBody();
         // If "from" is currently outside our root, we may not have seen a
         // removal operation.
         if ((removedFrom === requestFrom || !root.contains(requestFrom)) && addedTo === requestTo) {
@@ -4151,9 +4202,9 @@ var LISN = (function (exports) {
   const CONSTRUCTOR_KEY$6 = SYMBOL();
   const instances$8 = newXMap(() => newMap());
   const getConfig$6 = config => {
-    var _config$subtree;
+    var _config$root, _config$subtree;
     return {
-      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
       _subtree: (_config$subtree = config === null || config === void 0 ? void 0 : config.subtree) !== null && _config$subtree !== void 0 ? _config$subtree : true
     };
   };
@@ -4165,6 +4216,7 @@ var LISN = (function (exports) {
   // ----------------------------------------
 
   const getOptions$3 = options => {
+    var _options$selector, _options$target;
     let categoryBitmask = 0;
     const categories = validateStrList("categories", options.categories, DOM_CATEGORIES_SPACE.has);
     if (categories) {
@@ -4174,14 +4226,14 @@ var LISN = (function (exports) {
     } else {
       categoryBitmask = DOM_CATEGORIES_SPACE.bitmask; // default: all
     }
-    const selector = options.selector || "";
+    const selector = (_options$selector = options.selector) !== null && _options$selector !== void 0 ? _options$selector : "";
     if (!isString(selector)) {
       throw usageError("'selector' must be a string");
     }
     return {
       _categoryBitmask: categoryBitmask,
-      _target: options.target || null,
-      _selector: options.selector || ""
+      _target: (_options$target = options.target) !== null && _options$target !== void 0 ? _options$target : null,
+      _selector: selector
     };
   };
   const getDiffOperation = (operationA, operationB) => {
@@ -4421,9 +4473,11 @@ var LISN = (function (exports) {
    */
   const callEventListener = (handler, event) => {
     if (isFunction(handler)) {
-      handler.call(event.currentTarget || self, event);
+      var _event$currentTarget;
+      handler.call((_event$currentTarget = event.currentTarget) !== null && _event$currentTarget !== void 0 ? _event$currentTarget : self, event);
     } else {
-      handler.handleEvent.call(event.currentTarget || self, event);
+      var _event$currentTarget2;
+      handler.handleEvent.call((_event$currentTarget2 = event.currentTarget) !== null && _event$currentTarget2 !== void 0 ? _event$currentTarget2 : self, event);
     }
   };
 
@@ -4764,6 +4818,7 @@ var LISN = (function (exports) {
       deltaY = 0,
       deltaZ = 1;
     for (const event of events) {
+      var _deltasForKey$event$k;
       if (!isKeyboardEvent(event) || event.type !== S_KEYDOWN) {
         continue;
       }
@@ -4785,7 +4840,7 @@ var LISN = (function (exports) {
         "=": event.ctrlKey ? deltasIn : null,
         "-": deltasOut
       };
-      const theseDeltas = deltasForKey[event.key] || null;
+      const theseDeltas = (_deltasForKey$event$k = deltasForKey[event.key]) !== null && _deltasForKey$event$k !== void 0 ? _deltasForKey$event$k : null;
       if (!theseDeltas) {
         // not a relevant key
         continue;
@@ -5558,8 +5613,8 @@ var LISN = (function (exports) {
       const setupOnGesture = async (target, handler, userOptions) => {
         const options = getOptions$2(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
         createCallback(target, handler, options);
-        for (const device of options._devices || DEVICES) {
-          var _allListeners$get;
+        for (const device of (_options$_devices = options._devices) !== null && _options$_devices !== void 0 ? _options$_devices : DEVICES) {
+          var _options$_devices, _allListeners$get;
           let listeners = (_allListeners$get = allListeners.get(target)) === null || _allListeners$get === void 0 ? void 0 : _allListeners$get.get(device);
           if (listeners) ; else {
             listeners = setupListeners(target, device, options);
@@ -5577,8 +5632,8 @@ var LISN = (function (exports) {
       const deleteHandler = (target, handler, options) => {
         deleteKey(allCallbacks.get(target), handler);
         allCallbacks.prune(target);
-        for (const device of options._devices || DEVICES) {
-          var _allListeners$get2;
+        for (const device of (_options$_devices2 = options._devices) !== null && _options$_devices2 !== void 0 ? _options$_devices2 : DEVICES) {
+          var _options$_devices2, _allListeners$get2;
           const listeners = (_allListeners$get2 = allListeners.get(target)) === null || _allListeners$get2 === void 0 ? void 0 : _allListeners$get2.get(device);
           if (listeners) {
             listeners._nCallbacks--;
@@ -5596,8 +5651,8 @@ var LISN = (function (exports) {
       // ----------
 
       const invokeCallbacks = (target, device, event) => {
-        var _allListeners$get3;
-        const preventDefault = (((_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) || 0) > 0;
+        var _allListeners$get$get, _allListeners$get3;
+        const preventDefault = ((_allListeners$get$get = (_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) !== null && _allListeners$get$get !== void 0 ? _allListeners$get$get : 0) > 0;
         let isTerminated = false;
         for (const {
           _wrapper
@@ -5789,14 +5844,14 @@ var LISN = (function (exports) {
     [S_WHEEL]: getWheelGestureFragment
   };
   const getOptions$2 = (config, options) => {
-    var _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
+    var _validateStrList, _validateStrList2, _validateStrList3, _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
     const debounceWindow = toNonNegNum(options[S_DEBOUNCE_WINDOW], config._debounceWindow // watcher is never debounced, so apply default here
     );
     const deltaThreshold = toNonNegNum(options.deltaThreshold, config._deltaThreshold);
     return {
-      _devices: validateStrList("devices", options.devices, isValidInputDevice) || null,
-      _directions: validateStrList("directions", options.directions, isValidDirection) || null,
-      _intents: validateStrList("intents", options.intents, isValidIntent) || null,
+      _devices: (_validateStrList = validateStrList("devices", options.devices, isValidInputDevice)) !== null && _validateStrList !== void 0 ? _validateStrList : null,
+      _directions: (_validateStrList2 = validateStrList("directions", options.directions, isValidDirection)) !== null && _validateStrList2 !== void 0 ? _validateStrList2 : null,
+      _intents: (_validateStrList3 = validateStrList("intents", options.intents, isValidIntent)) !== null && _validateStrList3 !== void 0 ? _validateStrList3 : null,
       _minTotalDeltaX: (_options$minTotalDelt = options.minTotalDeltaX) !== null && _options$minTotalDelt !== void 0 ? _options$minTotalDelt : null,
       _maxTotalDeltaX: (_options$maxTotalDelt = options.maxTotalDeltaX) !== null && _options$maxTotalDelt !== void 0 ? _options$maxTotalDelt : null,
       _minTotalDeltaY: (_options$minTotalDelt2 = options.minTotalDeltaY) !== null && _options$minTotalDelt2 !== void 0 ? _options$minTotalDelt2 : null,
@@ -6146,21 +6201,27 @@ var LISN = (function (exports) {
   };
 
   /**
-   * The callback is passed two arguments:
-   * 1. The total elapsed time in milliseconds since the start
-   * 2. The elapsed time in milliseconds since the previous frame
+   * The callback is as an argument the {@link ElapsedTimes | elapsed times}:
+   * - The total elapsed time in milliseconds since the start
+   * - The elapsed time in milliseconds since the previous frame
    *
-   * The first time this callback is called both of these will be 0.
+   * The first time this callback is called both of these will be 0 unless seed
+   * values were provided.
    *
    * The callback must return `true` if it wants to animate again on the next
    * frame and `false` if done.
+   *
+   * @since v1.2.0
+   *
+   * @category Animations
    */
 
   /**
    * Returns a promise that resolves at the next animation frame. Async/await
-   * version of requestAnimationFrame.
+   * version of
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame | requestAnimationFrame}.
    *
-   * @returns The timestamp gotten from requestAnimationFrame
+   * @returns The timestamp gotten from `requestAnimationFrame`
    *
    * @category Animations
    */
@@ -6176,7 +6237,7 @@ var LISN = (function (exports) {
    *
    * @example
    * ```javascript
-   * for await (const [totalElapsed, elapsedSinceLast] of animationFrameIterator()) {
+   * for await (const elapsed of newAnimationFrameIterator()) {
    *   // ... do something
    *   if (done) break;
    * }
@@ -6186,45 +6247,88 @@ var LISN = (function (exports) {
    *
    * @category Animations
    */
-  function animationFrameIterator() {
-    return _animationFrameIterator.apply(this, arguments);
+  function newAnimationFrameIterator(_x) {
+    return _newAnimationFrameIterator.apply(this, arguments);
   }
 
   /**
-   * @param webAnimationCallback This function is called for each
-   *                             {@link https://developer.mozilla.org/en-US/docs/Web/API/Animation | Animation}
-   *                             on the element. It {@link waitForMeasureTime}
-   *                             before reading the animations.
-   * @param legacyCallback       This function is called if the browser does not
-   *                             support the Web Animations API. It is called
-   *                             after {@link waitForMutateTime} so it can safely
-   *                             modify styles.
-   * @param realtime             If true, then it does not
-   *                             {@link waitForMeasureTime} or
-   *                             {@link waitForMutateTime} and runs
-   *                             synchronously.
+   * Returns an animation iterator based on {@link criticallyDamped} that starts
+   * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
+   * the new position and velocity, and total time at every animation frame.
+   *
+   * @param [settings.l]         The initial starting position.
+   * @param [settings.lTarget]   The initial target position. Can be updated when
+   *                             calling next().
+   * @param [settings.lag]       See {@link criticallyDamped}.
+   * @param [settings.precision] See {@link criticallyDamped}.
+   *
+   * @returns An iterator whose `next` method accepts an optional new `lTarget`.
+   * The iterator yields an object containing successive values for:
+   * - position (`l`)
+   * - velocity (`v`)
+   * - total time elapsed (`t`)
+   *
+   * @example
+   * If you never need to update the target you can use a for await loop:
+   *
+   * ```javascript
+   * const iterator = newCriticallyDampedAnimationIterator({
+   *   l: 10,
+   *   lTarget: 100,
+   *   lag: 1500
+   * });
+   *
+   * for await (const { l, v, t } of iterator) {
+   *   console.log({ l, v, t });
+   * }
+   * ```
+   *
+   * @example
+   * If you do need to update the target, then call `next` explicitly:
+   *
+   * ```javascript
+   * const iterator = newCriticallyDampedAnimationIterator({
+   *   l: 10,
+   *   lTarget: 100,
+   *   lag: 1500
+   * });
+   *
+   * let { value: { l, v, t } } = await iterator.next();
+   * ({ value: { l, v, t } } = await iterator.next()); // updated
+   * ({ value: { l, v, t } } = await iterator.next(200)); // updated towards a new target
+   * ```
+   *
+   * @since v1.2.0
    *
    * @category Animations
    */
-  function _animationFrameIterator() {
-    _animationFrameIterator = _wrapAsyncGenerator(function* () {
+  function _newAnimationFrameIterator() {
+    _newAnimationFrameIterator = _wrapAsyncGenerator(function* (elapsed) {
       let startTime, previousTimeStamp;
+      const {
+        total: totalSeed = 0,
+        sinceLast: sinceLastSeed = 0
+      } = elapsed !== null && elapsed !== void 0 ? elapsed : {};
       const step = async () => {
         const timeStamp = await waitForAnimationFrame();
-        if (!startTime) {
-          startTime = timeStamp;
-          previousTimeStamp = timeStamp;
+        if (!startTime || !previousTimeStamp) {
+          // First time
+          startTime = timeStamp - totalSeed;
+          previousTimeStamp = timeStamp - sinceLastSeed;
         }
         const totalElapsed = timeStamp - startTime;
         const elapsedSinceLast = timeStamp - previousTimeStamp;
         previousTimeStamp = timeStamp;
-        return [totalElapsed, elapsedSinceLast];
+        return {
+          total: totalElapsed,
+          sinceLast: elapsedSinceLast
+        };
       };
       while (true) {
         yield step();
       }
     });
-    return _animationFrameIterator.apply(this, arguments);
+    return _newAnimationFrameIterator.apply(this, arguments);
   }
   const iterateAnimations = async (element, webAnimationCallback, legacyCallback, realtime = false) => {
     /* istanbul ignore next */ // jsdom doesn't support Web Animations
@@ -6394,9 +6498,9 @@ var LISN = (function (exports) {
    */
   const getCurrentScrollAction = scrollable => {
     scrollable = toScrollableOrDefault(scrollable);
-    const action = currentScrollAction.get(scrollable);
-    if (action) {
-      return copyObject(action);
+    const info = currentScrollInfos.get(scrollable);
+    if (info) {
+      return copyObject(info._action);
     }
     return null;
   };
@@ -6426,9 +6530,9 @@ var LISN = (function (exports) {
     const scrollable = options._scrollable;
 
     // cancel current scroll action if any
-    const currentScroll = currentScrollAction.get(scrollable);
-    if (currentScroll) {
-      if (!currentScroll.cancel()) {
+    const info = currentScrollInfos.get(scrollable);
+    if (info) {
+      if (!info._action.cancel()) {
         // current scroll action is not cancellable by us
         return null;
       }
@@ -6453,14 +6557,16 @@ var LISN = (function (exports) {
         });
       }
     }
-    const promise = initiateScroll(options, () => isCancelled);
-    const thisScrollAction = {
-      waitFor: () => promise,
-      cancel: cancelFn
+    const thisInfo = {
+      _action: {
+        waitFor: () => scrollActionPromise,
+        cancel: cancelFn
+      }
     };
     const cleanup = () => {
-      if (currentScrollAction.get(scrollable) === thisScrollAction) {
-        deleteKey(currentScrollAction, scrollable);
+      var _currentScrollInfos$g;
+      if (((_currentScrollInfos$g = currentScrollInfos.get(scrollable)) === null || _currentScrollInfos$g === void 0 ? void 0 : _currentScrollInfos$g._action) === thisInfo._action) {
+        deleteKey(currentScrollInfos, scrollable);
       }
       if (preventScrollHandler) {
         for (const eventType of scrollEvents) {
@@ -6470,9 +6576,10 @@ var LISN = (function (exports) {
         }
       }
     };
-    thisScrollAction.waitFor().then(cleanup).catch(cleanup);
-    currentScrollAction.set(scrollable, thisScrollAction);
-    return thisScrollAction;
+    const scrollActionPromise = initiateScroll(options, () => isCancelled);
+    thisInfo._action.waitFor().then(cleanup).catch(cleanup);
+    updateCurrentScrollInfo(scrollable, thisInfo);
+    return thisInfo._action;
   };
 
   /**
@@ -6513,7 +6620,7 @@ var LISN = (function (exports) {
    * Exposed via ScrollWatcher
    */
   const fetchMainContentElement = async () => {
-    await init$6();
+    await init$5();
     return mainContentElement;
   };
 
@@ -6530,7 +6637,7 @@ var LISN = (function (exports) {
    * Exposed via ScrollWatcher
    */
   const fetchMainScrollableElement = async () => {
-    await init$6();
+    await init$5();
     return mainScrollableElement;
   };
 
@@ -6539,8 +6646,9 @@ var LISN = (function (exports) {
    * @internal
    */
   const getDefaultScrollingElement = () => {
+    var _MH$getDocScrollingEl;
     const body = getBody();
-    return isScrollable(body) ? body : getDocScrollingElement() || body;
+    return isScrollable(body) ? body : (_MH$getDocScrollingEl = getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : body;
   };
 
   /**
@@ -6554,12 +6662,17 @@ var LISN = (function (exports) {
   const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
   const isScrollableCache = newXMap(() => newMap());
   const mappedScrollables = newMap();
-  const currentScrollAction = newMap();
+  const currentScrollInfos = newMap();
   const DIFF_THRESHOLD = 5;
-  const arePositionsDifferent = (start, end) => maxAbs(start.top - end.top, start.left - end.left) >= DIFF_THRESHOLD;
+  const arePositionsDifferent = (start, end, threshold = DIFF_THRESHOLD) => maxAbs(start.top - end.top, start.left - end.left) > threshold;
+
+  // must be called in "measure time"
+  const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+  const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
   const toScrollableOrMain = (target, getMain) => {
     if (isElement(target)) {
-      return mappedScrollables.get(target) || target;
+      var _mappedScrollables$ge;
+      return (_mappedScrollables$ge = mappedScrollables.get(target)) !== null && _mappedScrollables$ge !== void 0 ? _mappedScrollables$ge : target;
     }
     if (!target || target === getWindow() || target === getDoc()) {
       return getMain();
@@ -6568,30 +6681,40 @@ var LISN = (function (exports) {
   };
   const toScrollableOrDefault = scrollable => scrollable !== null && scrollable !== void 0 ? scrollable : getDefaultScrollingElement();
   const getOptions$1 = (to, options) => {
-    var _options$weCanInterru, _options$userCanInter;
+    var _options$offset, _options$altOffset, _options$duration, _options$weCanInterru, _options$userCanInter;
     const scrollable = toScrollableOrDefault(options === null || options === void 0 ? void 0 : options.scrollable);
     const target = getTargetCoordinates(scrollable, to);
     const altTarget = options !== null && options !== void 0 && options.altTarget ? getTargetCoordinates(scrollable, options === null || options === void 0 ? void 0 : options.altTarget) : null;
     return {
       _target: target,
-      _offset: (options === null || options === void 0 ? void 0 : options.offset) || null,
+      _offset: (_options$offset = options === null || options === void 0 ? void 0 : options.offset) !== null && _options$offset !== void 0 ? _options$offset : null,
       _altTarget: altTarget,
-      _altOffset: (options === null || options === void 0 ? void 0 : options.altOffset) || null,
+      _altOffset: (_options$altOffset = options === null || options === void 0 ? void 0 : options.altOffset) !== null && _options$altOffset !== void 0 ? _options$altOffset : null,
       _scrollable: scrollable,
-      _duration: (options === null || options === void 0 ? void 0 : options.duration) || 0,
+      _duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : 0,
       _weCanInterrupt: (_options$weCanInterru = options === null || options === void 0 ? void 0 : options.weCanInterrupt) !== null && _options$weCanInterru !== void 0 ? _options$weCanInterru : false,
       _userCanInterrupt: (_options$userCanInter = options === null || options === void 0 ? void 0 : options.userCanInterrupt) !== null && _options$userCanInter !== void 0 ? _options$userCanInter : false
     };
   };
+  const updateCurrentScrollInfo = (scrollable, newInfo) => {
+    var _newInfo$_action;
+    const existingScrollInfo = currentScrollInfos.get(scrollable);
+    const _action = (_newInfo$_action = newInfo._action) !== null && _newInfo$_action !== void 0 ? _newInfo$_action : existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._action;
+    if (_action) {
+      currentScrollInfos.set(scrollable, merge(existingScrollInfo, newInfo, {
+        _action
+      }));
+    }
+  };
   const getTargetCoordinates = (scrollable, target) => {
-    const docScrollingElement = getDocScrollingElement();
+    const isDocScrollingElement = scrollable === getDocScrollingElement();
     if (isElement(target)) {
       if (scrollable === target || !scrollable.contains(target)) {
         throw usageError("Target must be a descendant of the scrollable one");
       }
       return {
-        top: () => scrollable[S_SCROLL_TOP] + getBoundingClientRect(target).top - (scrollable === docScrollingElement ? 0 : getBoundingClientRect(scrollable).top),
-        left: () => scrollable[S_SCROLL_LEFT] + getBoundingClientRect(target).left - (scrollable === docScrollingElement ? 0 : getBoundingClientRect(scrollable).left)
+        top: () => getBoundingClientRect(target).top - getBoundingClientRect(scrollable).top + (isDocScrollingElement ? 0 : scrollable[S_SCROLL_TOP]),
+        left: () => getBoundingClientRect(target).left - getBoundingClientRect(scrollable).left + (isDocScrollingElement ? 0 : scrollable[S_SCROLL_LEFT])
       };
     }
     if (isString(target)) {
@@ -6609,8 +6732,9 @@ var LISN = (function (exports) {
   const getStartEndPosition = async options => {
     await waitForMeasureTime();
     const applyOffset = (position, offset) => {
-      position.top += (offset === null || offset === void 0 ? void 0 : offset.top) || 0;
-      position.left += (offset === null || offset === void 0 ? void 0 : offset.left) || 0;
+      var _offset$top, _offset$left;
+      position.top += (_offset$top = offset === null || offset === void 0 ? void 0 : offset.top) !== null && _offset$top !== void 0 ? _offset$top : 0;
+      position.left += (_offset$left = offset === null || offset === void 0 ? void 0 : offset.left) !== null && _offset$left !== void 0 ? _offset$left : 0;
     };
     const scrollable = options._scrollable;
     const start = {
@@ -6624,8 +6748,8 @@ var LISN = (function (exports) {
       applyOffset(end, options._altOffset);
     }
     return {
-      start,
-      end
+      _start: start,
+      _end: end
     };
   };
 
@@ -6660,41 +6784,66 @@ var LISN = (function (exports) {
     return endPosition;
   };
   const initiateScroll = async (options, isCancelled) => {
+    var _existingScrollInfo$_, _existingScrollInfo$_2;
     const position = await getStartEndPosition(options);
     const duration = options._duration;
     const scrollable = options._scrollable;
-    const currentPosition = position.start;
+    const existingScrollInfo = currentScrollInfos.get(scrollable);
+    const currentPosition = (_existingScrollInfo$_ = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._position) !== null && _existingScrollInfo$_ !== void 0 ? _existingScrollInfo$_ : position._start;
+    const currentVelocity = (_existingScrollInfo$_2 = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._velocity) !== null && _existingScrollInfo$_2 !== void 0 ? _existingScrollInfo$_2 : {
+      [S_TOP]: 0,
+      [S_LEFT]: 0
+    };
+    let elapsed = existingScrollInfo === null || existingScrollInfo === void 0 ? void 0 : existingScrollInfo._elapsed;
+    const logger = null;
     var _iteratorAbruptCompletion = false;
     var _didIteratorError = false;
     var _iteratorError;
     try {
-      for (var _iterator = _asyncIterator(animationFrameIterator()), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
-        const [totalElapsed, elapsedSinceLast__ignored] = _step.value;
+      for (var _iterator = _asyncIterator(newAnimationFrameIterator(elapsed)), _step; _iteratorAbruptCompletion = !(_step = await _iterator.next()).done; _iteratorAbruptCompletion = false) {
+        elapsed = _step.value;
         {
+          const deltaTime = elapsed.sinceLast;
+          if (deltaTime === 0) {
+            // First time
+            continue;
+          }
+
           // Element.scrollTo equates to a measurement and needs to run after
           // painting to avoid forced layout.
           await waitForMeasureTime();
           if (isCancelled()) {
             // Reject the promise
+            logger === null || logger === void 0 || logger.debug8("Cancelled");
             throw currentPosition;
           }
-          if (totalElapsed === 0) {
-            // First frame
-            // If it's very close to the target, no need to scroll smoothly
-            if (duration === 0 || !arePositionsDifferent(currentPosition, position.end)) {
-              elScrollTo(scrollable, position.end);
-              return position.end;
-            }
-          } else {
-            const progress = easeInOutQuad(min(1, totalElapsed / duration));
-            for (const s of [S_LEFT, S_TOP]) {
-              currentPosition[s] = position.start[s] + (position.end[s] - position.start[s]) * progress;
-            }
-            elScrollTo(scrollable, currentPosition);
-            if (progress === 1) {
-              // done
-              break;
-            }
+          for (const s of [S_LEFT, S_TOP]) {
+            const {
+              l,
+              v
+            } = criticallyDamped({
+              l: currentPosition[s],
+              v: currentVelocity[s],
+              lTarget: position._end[s],
+              dt: deltaTime,
+              lag: duration
+            });
+            currentPosition[s] = l;
+            currentVelocity[s] = v;
+          }
+          updateCurrentScrollInfo(scrollable, {
+            _position: currentPosition,
+            _velocity: currentVelocity,
+            _elapsed: elapsed
+          });
+          const isDone = !arePositionsDifferent(currentPosition, position._end, 0.5);
+          if (isDone) {
+            assign(currentPosition, position._end); // use exact final coordinates
+          }
+          elScrollTo(scrollable, currentPosition);
+          if (isDone) {
+            logger === null || logger === void 0 || logger.debug8("Done");
+            break;
           }
         }
       }
@@ -6714,17 +6863,13 @@ var LISN = (function (exports) {
     }
     return currentPosition;
   };
-  const isScrollableBodyInQuirks = element => element === getBody() && getDocScrollingElement() === null;
-
-  // must be called in "measure time"
-  const getBorderWidth = (element, side) => ceil(parseFloat(getComputedStylePropNow(element, `border-${side}`)));
 
   // ------------------------------
 
   let mainContentElement;
   let mainScrollableElement;
   let initPromise$1 = null;
-  const init$6 = () => {
+  const init$5 = () => {
     if (!initPromise$1) {
       initPromise$1 = (async () => {
         const mainScrollableElementSelector = settings.mainScrollableElementSelector;
@@ -6750,7 +6895,7 @@ var LISN = (function (exports) {
   // Try to find the main scrollable/content elements asap so that tryGetMain*
   // can return them if called before fetchMain*
   if (hasDOM()) {
-    waitForInteractive().then(init$6);
+    waitForInteractive().then(init$5);
   }
 
   /**
@@ -6808,9 +6953,9 @@ var LISN = (function (exports) {
       // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
       // olverlays anyway.
       parentEl = await tryWrapContent(parentEl, {
-        classNames: [PREFIX_WRAPPER$3, PREFIX_WRAPPER$2],
-        required: true,
-        requiredBy: "percentage offset view trigger with scrolling root"
+        _classNames: [PREFIX_WRAPPER$3, PREFIX_WRAPPER$2],
+        _required: true,
+        _requiredBy: "percentage offset view trigger with scrolling root"
       });
     }
     if (options._style.position === S_ABSOLUTE) {
@@ -6842,11 +6987,10 @@ var LISN = (function (exports) {
   };
   const getOverlayKey = (style, data) => objToStrKey(style) + "|" + objToStrKey(data);
   const getCssProperties = style => {
-    const finalCssProperties = merge({
-      position: S_ABSOLUTE
-    },
-    // default
-    style);
+    const finalCssProperties = merge(style, {
+      position: (style === null || style === void 0 ? void 0 : style.position) || S_ABSOLUTE
+    } // default
+    );
     if (finalCssProperties.position === S_ABSOLUTE || finalCssProperties.position === S_FIXED) {
       if (isEmpty(finalCssProperties.top) && isEmpty(finalCssProperties.bottom)) {
         finalCssProperties.top = "0px";
@@ -6947,7 +7091,7 @@ var LISN = (function (exports) {
    * Exposed via SizeWatcher
    */
   const fetchViewportOverlay = async () => {
-    await init$5();
+    await init$4();
     return viewportOverlay;
   };
 
@@ -6956,14 +7100,14 @@ var LISN = (function (exports) {
    * @internal
    */
   const fetchViewportSize = async (realtime = false) => {
-    var _MH$getDocScrollingEl;
+    var _MH$getDocScrollingEl, _root$clientWidth, _root$clientHeight;
     if (!realtime) {
       await waitForMeasureTime();
     }
     const root = hasDOM() ? (_MH$getDocScrollingEl = getDocScrollingElement()) !== null && _MH$getDocScrollingEl !== void 0 ? _MH$getDocScrollingEl : getBody() : null;
     return {
-      [S_WIDTH]: (root === null || root === void 0 ? void 0 : root.clientWidth) || 0,
-      [S_HEIGHT]: (root === null || root === void 0 ? void 0 : root.clientHeight) || 0
+      [S_WIDTH]: (_root$clientWidth = root === null || root === void 0 ? void 0 : root.clientWidth) !== null && _root$clientWidth !== void 0 ? _root$clientWidth : 0,
+      [S_HEIGHT]: (_root$clientHeight = root === null || root === void 0 ? void 0 : root.clientHeight) !== null && _root$clientHeight !== void 0 ? _root$clientHeight : 0
     };
   };
 
@@ -6992,7 +7136,7 @@ var LISN = (function (exports) {
 
   let viewportOverlay;
   let initPromise = null;
-  const init$5 = () => {
+  const init$4 = () => {
     if (!initPromise) {
       initPromise = (async () => {
         viewportOverlay = await createOverlay({
@@ -7055,7 +7199,7 @@ var LISN = (function (exports) {
       // a counter of 1 or 2 for how many more calls to ignore.
       const targetsToSkip = newWeakMap();
       let observedTargets = newWeakSet();
-      debounceWindow = debounceWindow || 0;
+      debounceWindow !== null && debounceWindow !== void 0 ? debounceWindow : debounceWindow = 0;
       let timer = null;
       const resizeHandler = entries => {
         // Override entries for previous targets, but keep entries whose targets
@@ -7773,6 +7917,7 @@ var LISN = (function (exports) {
   const PREFIX_DEVICE = prefixName("device");
   const PREFIX_ASPECTR = prefixName("aspect-ratio");
   const getConfig$3 = config => {
+    var _config$root;
     const deviceBreakpoints = copyObject(settings.deviceBreakpoints);
     if (config !== null && config !== void 0 && config.deviceBreakpoints) {
       copyExistingKeys(config.deviceBreakpoints, deviceBreakpoints);
@@ -7782,7 +7927,7 @@ var LISN = (function (exports) {
       copyExistingKeys(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
     }
     return {
-      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
       _deviceBreakpoints: deviceBreakpoints,
       _aspectRatioBreakpoints: aspectRatioBreakpoints
     };
@@ -8499,7 +8644,7 @@ var LISN = (function (exports) {
 
         // And also its children (if possible, a single wrapper around them
         const wrapper = await tryWrapContent(element, {
-          classNames: [PREFIX_WRAPPER$3, PREFIX_WRAPPER$1]
+          _classNames: [PREFIX_WRAPPER$3, PREFIX_WRAPPER$1]
         });
         if (wrapper) {
           setupOnResize(wrapper);
@@ -8548,7 +8693,7 @@ var LISN = (function (exports) {
       // ----------
 
       const scrollHandler = async event => {
-        var _activeListeners$get;
+        var _activeListeners$get$, _activeListeners$get;
         // We cannot use event.currentTarget because scrollHandler is called inside
         // a setTimeout so by that time, currentTarget is null or something else.
         //
@@ -8568,7 +8713,7 @@ var LISN = (function (exports) {
           return;
         }
         const element = await fetchScrollableElement(scrollable);
-        const realtime = (((_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) || 0) > 0;
+        const realtime = ((_activeListeners$get$ = (_activeListeners$get = activeListeners.get(scrollable)) === null || _activeListeners$get === void 0 ? void 0 : _activeListeners$get._nRealtime) !== null && _activeListeners$get$ !== void 0 ? _activeListeners$get$ : 0) > 0;
         const latestData = await fetchCurrentScroll(element, realtime, true);
         allScrollData.set(element, latestData);
         for (const entry of ((_allCallbacks$get3 = allCallbacks.get(element)) === null || _allCallbacks$get3 === void 0 ? void 0 : _allCallbacks$get3.values()) || []) {
@@ -8633,14 +8778,14 @@ var LISN = (function (exports) {
 
       // ----------
 
-      this.scrollTo = async (to, options) => scrollTo(to, merge({
-        duration: config._scrollDuration
-      },
-      // default
-      options, {
-        scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable)
-      } // override
-      ));
+      this.scrollTo = async (to, options) => {
+        var _options$duration;
+        return scrollTo(to, merge(options, {
+          duration: (_options$duration = options === null || options === void 0 ? void 0 : options.duration) !== null && _options$duration !== void 0 ? _options$duration : config._scrollDuration,
+          // default
+          scrollable: await fetchScrollableElement(options === null || options === void 0 ? void 0 : options.scrollable) // override
+        }));
+      };
 
       // ----------
 
@@ -8770,6 +8915,7 @@ var LISN = (function (exports) {
     return checkTop && topDiff >= threshold || checkLeft && leftDiff >= threshold;
   };
   const fetchScrollData = async (element, previousEventData, realtime) => {
+    var _previousEventData$sc, _previousEventData$sc2;
     if (!realtime) {
       await waitForMeasureTime();
     }
@@ -8781,19 +8927,19 @@ var LISN = (function (exports) {
     const clientHeight = getClientHeightNow(element);
     const scrollTopFraction = round(scrollTop) / (scrollHeight - clientHeight || INFINITY);
     const scrollLeftFraction = round(scrollLeft) / (scrollWidth - clientWidth || INFINITY);
-    const prevScrollTop = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) || 0;
-    const prevScrollLeft = (previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) || 0;
+    const prevScrollTop = (_previousEventData$sc = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollTop) !== null && _previousEventData$sc !== void 0 ? _previousEventData$sc : 0;
+    const prevScrollLeft = (_previousEventData$sc2 = previousEventData === null || previousEventData === void 0 ? void 0 : previousEventData.scrollLeft) !== null && _previousEventData$sc2 !== void 0 ? _previousEventData$sc2 : 0;
     const direction = getMaxDeltaDirection(scrollLeft - prevScrollLeft, scrollTop - prevScrollTop);
     return {
       direction,
+      [S_CLIENT_WIDTH]: clientWidth,
+      [S_CLIENT_HEIGHT]: clientHeight,
+      [S_SCROLL_WIDTH]: scrollWidth,
+      [S_SCROLL_HEIGHT]: scrollHeight,
       [S_SCROLL_TOP]: scrollTop,
       [S_SCROLL_TOP_FRACTION]: scrollTopFraction,
       [S_SCROLL_LEFT]: scrollLeft,
-      [S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
-      [S_SCROLL_WIDTH]: scrollWidth,
-      [S_SCROLL_HEIGHT]: scrollHeight,
-      [S_CLIENT_WIDTH]: clientWidth,
-      [S_CLIENT_HEIGHT]: clientHeight
+      [S_SCROLL_LEFT_FRACTION]: scrollLeftFraction
     };
   };
   const setScrollCssProps = (element, scrollData) => {
@@ -9562,11 +9708,11 @@ var LISN = (function (exports) {
   const CONSTRUCTOR_KEY = SYMBOL();
   const instances$2 = newXMap(() => newMap());
   const getConfig = config => {
-    var _config$rootMargin;
+    var _config$root, _config$rootMargin, _config$threshold;
     return {
-      _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+      _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
       _rootMargin: (_config$rootMargin = config === null || config === void 0 ? void 0 : config.rootMargin) !== null && _config$rootMargin !== void 0 ? _config$rootMargin : "0px 0px 0px 0px",
-      _threshold: (config === null || config === void 0 ? void 0 : config.threshold) || 0
+      _threshold: (_config$threshold = config === null || config === void 0 ? void 0 : config.threshold) !== null && _config$threshold !== void 0 ? _config$threshold : 0
     };
   };
   const TRACK_REGULAR = 1; // only entering/leaving root
@@ -9941,8 +10087,8 @@ var LISN = (function (exports) {
      * Retrieve an existing widget by element and ID.
      */
     static get(element, id) {
-      var _instances$get;
-      return ((_instances$get = instances$1.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) || null;
+      var _instances$get$get, _instances$get;
+      return (_instances$get$get = (_instances$get = instances$1.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) !== null && _instances$get$get !== void 0 ? _instances$get$get : null;
     }
 
     /**
@@ -10070,7 +10216,6 @@ var LISN = (function (exports) {
    *                  be called once for each configuration.
    */
   const registerWidget = async (name, newWidget, configValidator, options) => {
-    var _options$selector;
     if (registeredWidgets.has(name)) {
       return;
     }
@@ -10080,7 +10225,7 @@ var LISN = (function (exports) {
     // straight after loading LISN.js
     await waitForInteractive();
     const prefixedName = prefixName(name);
-    const selector = (_options$selector = options === null || options === void 0 ? void 0 : options.selector) !== null && _options$selector !== void 0 ? _options$selector : getDefaultWidgetSelector(prefixedName);
+    const selector = (options === null || options === void 0 ? void 0 : options.selector) || getDefaultWidgetSelector(prefixedName);
     if (settings.autoWidgets) {
       const domWatcher = DOMWatcher.reuse();
       domWatcher.onMutation(async operation => {
@@ -10277,7 +10422,7 @@ var LISN = (function (exports) {
     if (!newActionFromSpec) {
       throw usageError(`Unknown action '${name}'`);
     }
-    return await newActionFromSpec(element, argsAndOptions || "");
+    return await newActionFromSpec(element, argsAndOptions !== null && argsAndOptions !== void 0 ? argsAndOptions : "");
   };
 
   // --------------------
@@ -10902,7 +11047,8 @@ var LISN = (function (exports) {
       selector = matchOp + refOrCls;
     } else {
       if (!refOrCls) {
-        refOrCls = getData(thisElement, PREFIX_REF) || "";
+        var _getData;
+        refOrCls = (_getData = getData(thisElement, PREFIX_REF)) !== null && _getData !== void 0 ? _getData : "";
       }
       if (!refOrCls) {
         throw usageError(`No reference name in '${spec}'`);
@@ -10956,7 +11102,8 @@ var LISN = (function (exports) {
   const getNextReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, false);
   const getPrevReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, true);
   const getNextOrPrevReferenceElement = (selector, thisElement, goBackward) => {
-    thisElement = getThisReferenceElement(selector, thisElement) || thisElement;
+    var _getThisReferenceElem, _allRefs$refIndex;
+    thisElement = (_getThisReferenceElem = getThisReferenceElement(selector, thisElement)) !== null && _getThisReferenceElem !== void 0 ? _getThisReferenceElem : thisElement;
     if (!getDoc().contains(thisElement)) {
       return null;
     }
@@ -10983,7 +11130,7 @@ var LISN = (function (exports) {
         break;
       }
     }
-    return allRefs[refIndex] || null;
+    return (_allRefs$refIndex = allRefs[refIndex]) !== null && _allRefs$refIndex !== void 0 ? _allRefs$refIndex : null;
   };
 
   /**
@@ -11099,11 +11246,11 @@ var LISN = (function (exports) {
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
-      var _config$once, _config$oneWay, _config$doDelay, _config$undoDelay;
+      var _config$once, _config$oneWay, _config$delay, _config$doDelay, _config$undoDelay;
       super(element, config);
       const once = (_config$once = config === null || config === void 0 ? void 0 : config.once) !== null && _config$once !== void 0 ? _config$once : false;
       const oneWay = (_config$oneWay = config === null || config === void 0 ? void 0 : config.oneWay) !== null && _config$oneWay !== void 0 ? _config$oneWay : false;
-      const delay = (config === null || config === void 0 ? void 0 : config.delay) || 0;
+      const delay = (_config$delay = config === null || config === void 0 ? void 0 : config.delay) !== null && _config$delay !== void 0 ? _config$delay : 0;
       const doDelay = (_config$doDelay = config === null || config === void 0 ? void 0 : config.doDelay) !== null && _config$doDelay !== void 0 ? _config$doDelay : delay;
       const undoDelay = (_config$undoDelay = config === null || config === void 0 ? void 0 : config.undoDelay) !== null && _config$undoDelay !== void 0 ? _config$undoDelay : delay;
       let lastCallId;
@@ -11219,10 +11366,10 @@ var LISN = (function (exports) {
         const config = await fetchWidgetConfig(configSpec, assign(baseConfigValidator, thisConfigValidator), OPTION_PREF_CHAR);
         const actionTarget = (_config$actOn = config.actOn) !== null && _config$actOn !== void 0 ? _config$actOn : element;
         const actions = [];
-        for (const actionSpec of splitOn(allActionSpecs || "", ACTION_PREF_CHAR, true)) {
+        for (const actionSpec of splitOn(allActionSpecs !== null && allActionSpecs !== void 0 ? allActionSpecs : "", ACTION_PREF_CHAR, true)) {
           const [name, actionArgsAndOptions] = splitOn(actionSpec, ACTION_ARGS_PREF_CHAR, true, 1);
           try {
-            actions.push(await fetchAction(actionTarget, name, actionArgsAndOptions || ""));
+            actions.push(await fetchAction(actionTarget, name, actionArgsAndOptions !== null && actionArgsAndOptions !== void 0 ? actionArgsAndOptions : ""));
           } catch (err) {
             if (isInstanceOf(err, LisnUsageError)) {
               // fetchAction would have logged an error
@@ -11494,6 +11641,7 @@ var LISN = (function (exports) {
    * - Accepted options:
    *   - `offsetX`: A number.
    *   - `offsetY`: A number.
+   *   - `duration`: A number.
    *   - `scrollable`: A string element specification for an element (see
    *     {@link Utils.getReferenceElement | getReferenceElement}). Note that,
    *     unless it's a DOM ID, the specification is parsed relative to the
@@ -11524,11 +11672,11 @@ var LISN = (function (exports) {
    *
    * @example
    * When the user clicks the button, scroll the main scrolling element to
-   * element's position 10px _down_ and 50px _left_:
+   * element's position 10px _down_ and 50px _left_, with a duration of 200ms:
    *
    * ```html
    * <button id="btn">Scroll to/back</button>
-   * <div data-lisn-on-click="@scroll-to: offsetY=10, offsetX=-50 +target=#btn"></div>
+   * <div data-lisn-on-click="@scroll-to: offsetY=10, offsetX=-50, duration=200 +target=#btn"></div>
    * ```
    *
    * @example
@@ -11577,25 +11725,24 @@ var LISN = (function (exports) {
           top: config.offsetY
         } : undefined;
         return new ScrollTo(element, {
-          scrollable: config === null || config === void 0 ? void 0 : config.scrollable,
-          offset
+          offset,
+          duration: config === null || config === void 0 ? void 0 : config.duration,
+          scrollable: config === null || config === void 0 ? void 0 : config.scrollable
         });
       }, newConfigValidator$8);
     }
     constructor(element, config) {
-      const offset = config === null || config === void 0 ? void 0 : config.offset;
-      const scrollable = config === null || config === void 0 ? void 0 : config.scrollable;
       const watcher = ScrollWatcher.reuse();
+      const {
+        scrollable
+      } = config !== null && config !== void 0 ? config : {};
       let prevScrollTop = -1,
         prevScrollLeft = -1;
       this.do = async () => {
-        const current = await watcher.fetchCurrentScroll();
+        const current = await watcher.fetchCurrentScroll(scrollable);
         prevScrollTop = current[S_SCROLL_TOP];
         prevScrollLeft = current[S_SCROLL_LEFT];
-        const action = await watcher.scrollTo(element, {
-          offset,
-          scrollable
-        });
+        const action = await watcher.scrollTo(element, config);
         await (action === null || action === void 0 ? void 0 : action.waitFor());
       };
       this.undo = async () => {
@@ -11603,30 +11750,31 @@ var LISN = (function (exports) {
           const action = await watcher.scrollTo({
             top: prevScrollTop,
             left: prevScrollLeft
-          });
+          }, omitKeys(config !== null && config !== void 0 ? config : {}, {
+            offset: true
+          }) // no offset when undoing
+          );
           await (action === null || action === void 0 ? void 0 : action.waitFor());
         }
       };
       this[S_TOGGLE] = async () => {
-        const start = await watcher.fetchCurrentScroll();
+        const start = await watcher.fetchCurrentScroll(scrollable);
         const canReverse = prevScrollTop !== -1;
         let hasReversed = false;
 
-        // Try to scroll to the element, but if we're already at it, then reverse
-        // to previous position if any.
+        // Try to scroll to the element, but if we're already close to it, then
+        // reverse to previous position if any.
         const altTarget = {
           top: () => {
-            hasReversed = true;
+            hasReversed = true; // detect if we have reversed
             return prevScrollTop;
           },
           left: prevScrollLeft
         };
-        const action = await watcher.scrollTo(element, canReverse ? {
-          altTarget,
-          offset
-        } : {
-          offset
-        });
+        const action = await watcher.scrollTo(element, merge(config, canReverse ? {
+          altTarget
+        } // no altOffset when reversing
+        : {}));
         await (action === null || action === void 0 ? void 0 : action.waitFor());
         if (!hasReversed) {
           // We've scrolled to the element, so save the starting position as the
@@ -11655,6 +11803,7 @@ var LISN = (function (exports) {
         var _validateNumber2;
         return (_validateNumber2 = validateNumber(key, value)) !== null && _validateNumber2 !== void 0 ? _validateNumber2 : 0;
       },
+      duration: (key, value) => validateNumber(key, value),
       scrollable: (key, value) => {
         var _ref;
         return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
@@ -11785,7 +11934,7 @@ var LISN = (function (exports) {
         return new SetAttribute(element, {
           [args[0]]: config !== null && config !== void 0 ? config : {}
         });
-      }, configValidator$9);
+      }, configValidator$8);
     }
     constructor(element, attributes) {
       if (!attributes) {
@@ -11827,7 +11976,7 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const configValidator$9 = {
+  const configValidator$8 = {
     on: validateString,
     off: validateString
   };
@@ -12094,9 +12243,10 @@ var LISN = (function (exports) {
      * created for it will be returned.
      */
     static get(element) {
+      var _instances$get;
       // We manage the instances here since we also map associated elements and
       // not just the main content element that created the widget.
-      return instances.get(element) || null;
+      return (_instances$get = instances.get(element)) !== null && _instances$get !== void 0 ? _instances$get : null;
     }
     constructor(element, properties) {
       super(element);
@@ -12612,7 +12762,7 @@ var LISN = (function (exports) {
       registerOpenable(WIDGET_NAME_POPUP, (el, config) => new Popup(el, config), popupConfigValidator);
     }
     constructor(element, config) {
-      var _config$autoClose2, _config$closeButton, _config$position;
+      var _config$autoClose2, _config$closeButton;
       super(element, {
         name: WIDGET_NAME_POPUP,
         id: config === null || config === void 0 ? void 0 : config.id,
@@ -12625,7 +12775,7 @@ var LISN = (function (exports) {
       });
       const root = this.getRoot();
       const container = this.getContainer();
-      const position = (_config$position = config === null || config === void 0 ? void 0 : config.position) !== null && _config$position !== void 0 ? _config$position : S_AUTO;
+      const position = (config === null || config === void 0 ? void 0 : config.position) || S_AUTO;
       if (position !== S_AUTO) {
         setData(root, PREFIX_PLACE, position);
       }
@@ -13064,13 +13214,14 @@ var LISN = (function (exports) {
     };
   };
   const findContainer = (content, cls) => {
+    var _currWidget$getRoot;
     const currWidget = instances.get(content);
     // If there's an existing widget that we're about to destroy, the content
     // element will be wrapped in several elements and won't be restored until
     // the next mutate time. In that case, to correctly determine the container
     // element, use the current widget's root element, which is located in the
     // content element's original place.
-    let childRef = (currWidget === null || currWidget === void 0 ? void 0 : currWidget.getRoot()) || content;
+    let childRef = (_currWidget$getRoot = currWidget === null || currWidget === void 0 ? void 0 : currWidget.getRoot()) !== null && _currWidget$getRoot !== void 0 ? _currWidget$getRoot : content;
     if (!parentOf(childRef)) {
       // The current widget is not yet initialized (i.e. we are re-creating it
       // immediately after it was constructed)
@@ -13475,10 +13626,10 @@ var LISN = (function (exports) {
   // COLLAPSIBLE ------------------------------
 
   const insertCollapsibleIcon = (trigger, triggerConfig, widget, widgetConfig) => {
-    var _triggerConfig$icon, _ref2, _triggerConfig$iconCl, _ref3, _triggerConfig$iconOp;
+    var _triggerConfig$icon, _triggerConfig$iconCl, _triggerConfig$iconOp;
     const iconPosition = (_triggerConfig$icon = triggerConfig.icon) !== null && _triggerConfig$icon !== void 0 ? _triggerConfig$icon : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.icon;
-    const iconClosed = (_ref2 = (_triggerConfig$iconCl = triggerConfig.iconClosed) !== null && _triggerConfig$iconCl !== void 0 ? _triggerConfig$iconCl : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconClosed) !== null && _ref2 !== void 0 ? _ref2 : "plus";
-    const iconOpen = (_ref3 = (_triggerConfig$iconOp = triggerConfig.iconOpen) !== null && _triggerConfig$iconOp !== void 0 ? _triggerConfig$iconOp : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconOpen) !== null && _ref3 !== void 0 ? _ref3 : "minus";
+    const iconClosed = ((_triggerConfig$iconCl = triggerConfig.iconClosed) !== null && _triggerConfig$iconCl !== void 0 ? _triggerConfig$iconCl : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconClosed) || "plus";
+    const iconOpen = ((_triggerConfig$iconOp = triggerConfig.iconOpen) !== null && _triggerConfig$iconOp !== void 0 ? _triggerConfig$iconOp : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconOpen) || "minus";
     if (iconPosition) {
       addClasses(trigger, PREFIX_ICON_WRAPPER);
       setData(trigger, PREFIX_ICON_POSITION, iconPosition);
@@ -13898,19 +14049,19 @@ var LISN = (function (exports) {
      */
 
     static get(element) {
-      const instance = super.get(element, DUMMY_ID$a);
+      const instance = super.get(element, DUMMY_ID$9);
       if (isInstanceOf(instance, Pager)) {
         return instance;
       }
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$a, (element, config) => {
+      registerWidget(WIDGET_NAME$9, (element, config) => {
         if (!Pager.get(element)) {
           return new Pager(element, config);
         }
         return null;
-      }, configValidator$8);
+      }, configValidator$7);
     }
 
     /**
@@ -13919,17 +14070,17 @@ var LISN = (function (exports) {
      *                page is not a descendant of the main pager element.
      */
     constructor(element, config) {
-      var _Pager$get;
+      var _Pager$get, _config$nextSwitch, _config$prevSwitch;
       const destroyPromise = (_Pager$get = Pager.get(element)) === null || _Pager$get === void 0 ? void 0 : _Pager$get.destroy();
       super(element, {
-        id: DUMMY_ID$a
+        id: DUMMY_ID$9
       });
       const pages = (config === null || config === void 0 ? void 0 : config.pages) || [];
       const toggles = (config === null || config === void 0 ? void 0 : config.toggles) || [];
       const switches = (config === null || config === void 0 ? void 0 : config.switches) || [];
       const nextPrevSwitch = {
-        _next: (config === null || config === void 0 ? void 0 : config.nextSwitch) || null,
-        _prev: (config === null || config === void 0 ? void 0 : config.prevSwitch) || null
+        _next: (_config$nextSwitch = config === null || config === void 0 ? void 0 : config.nextSwitch) !== null && _config$nextSwitch !== void 0 ? _config$nextSwitch : null,
+        _prev: (_config$prevSwitch = config === null || config === void 0 ? void 0 : config.prevSwitch) !== null && _config$prevSwitch !== void 0 ? _config$prevSwitch : null
       };
       const pageSelector = getDefaultWidgetSelector(PREFIX_PAGE__FOR_SELECT);
       const toggleSelector = getDefaultWidgetSelector(PREFIX_TOGGLE__FOR_SELECT);
@@ -13974,7 +14125,7 @@ var LISN = (function (exports) {
         if (this.isDestroyed()) {
           return;
         }
-        init$4(this, element, components, config, methods);
+        init$3(this, element, components, config, methods);
       });
       this.nextPage = () => methods._nextPage();
       this.prevPage = () => methods._prevPage();
@@ -14012,21 +14163,21 @@ var LISN = (function (exports) {
   const S_VISIBLE_PAGES = "visible-pages";
   const S_CURRENT_PAGE = "current-page";
   const S_PAGE_NUMBER = "page-number";
-  const WIDGET_NAME$a = "pager";
-  const PREFIXED_NAME$6 = prefixName(WIDGET_NAME$a);
-  const PREFIX_ROOT$5 = `${PREFIXED_NAME$6}__root`;
-  const PREFIX_PAGE_CONTAINER = `${PREFIXED_NAME$6}__page-container`;
+  const WIDGET_NAME$9 = "pager";
+  const PREFIXED_NAME$5 = prefixName(WIDGET_NAME$9);
+  const PREFIX_ROOT$4 = `${PREFIXED_NAME$5}__root`;
+  const PREFIX_PAGE_CONTAINER = `${PREFIXED_NAME$5}__page-container`;
 
   // Use different classes for styling items to the one used for auto-discovering
   // them, so that re-creating existing widgets can correctly find the items to
   // be used by the new widget synchronously before the current one is destroyed.
-  const PREFIX_PAGE = `${PREFIXED_NAME$6}__page`;
-  const PREFIX_PAGE__FOR_SELECT = `${PREFIXED_NAME$6}-page`;
-  const PREFIX_TOGGLE__FOR_SELECT = `${PREFIXED_NAME$6}-toggle`;
-  const PREFIX_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-switch`;
-  const PREFIX_NEXT_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-next-switch`;
-  const PREFIX_PREV_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-prev-switch`;
-  const PREFIX_STYLE = `${PREFIXED_NAME$6}-style`;
+  const PREFIX_PAGE = `${PREFIXED_NAME$5}__page`;
+  const PREFIX_PAGE__FOR_SELECT = `${PREFIXED_NAME$5}-page`;
+  const PREFIX_TOGGLE__FOR_SELECT = `${PREFIXED_NAME$5}-toggle`;
+  const PREFIX_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-switch`;
+  const PREFIX_NEXT_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-next-switch`;
+  const PREFIX_PREV_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-prev-switch`;
+  const PREFIX_STYLE = `${PREFIXED_NAME$5}-style`;
   const PREFIX_IS_FULLSCREEN = prefixName("is-fullscreen");
   const PREFIX_USE_PARALLAX = prefixName("use-parallax");
   const PREFIX_TOTAL_PAGES = prefixName(S_TOTAL_PAGES);
@@ -14047,10 +14198,10 @@ var LISN = (function (exports) {
 
   // Only one Pager widget per element is allowed, but Widget requires a
   // non-blank ID.
-  const DUMMY_ID$a = PREFIXED_NAME$6;
+  const DUMMY_ID$9 = PREFIXED_NAME$5;
   const SUPPORTED_STYLES = ["slider", "carousel", "tabs"];
   const isValidStyle = value => includes(SUPPORTED_STYLES, value);
-  const configValidator$8 = {
+  const configValidator$7 = {
     initialPage: validateNumber,
     style: (key, value) => validateString(key, value, isValidStyle),
     pageSize: validateNumber,
@@ -14112,8 +14263,8 @@ var LISN = (function (exports) {
     setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
     return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
   };
-  const init$4 = (widget, element, components, config, methods) => {
-    var _config$initialPage, _config$style, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
+  const init$3 = (widget, element, components, config, methods) => {
+    var _config$initialPage, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
     const pages = components._pages;
     const toggles = components._toggles;
     const switches = components._switches;
@@ -14121,7 +14272,7 @@ var LISN = (function (exports) {
     const prevSwitch = components._nextPrevSwitch._prev;
     const pageContainer = parentOf(pages[0]);
     let initialPage = toInt((_config$initialPage = config === null || config === void 0 ? void 0 : config.initialPage) !== null && _config$initialPage !== void 0 ? _config$initialPage : 1);
-    const pagerStyle = (_config$style = config === null || config === void 0 ? void 0 : config.style) !== null && _config$style !== void 0 ? _config$style : "slider";
+    const pagerStyle = (config === null || config === void 0 ? void 0 : config.style) || "slider";
     const isCarousel = pagerStyle === "carousel";
     const minPageSize = (_config$pageSize = config === null || config === void 0 ? void 0 : config.pageSize) !== null && _config$pageSize !== void 0 ? _config$pageSize : 300;
     const enablePeek = (_config$peek = config === null || config === void 0 ? void 0 : config.peek) !== null && _config$peek !== void 0 ? _config$peek : false;
@@ -14285,7 +14436,7 @@ var LISN = (function (exports) {
       if (prevSwitch) {
         removeEventListenerFrom(prevSwitch, S_CLICK, prevSwitchClickListener);
       }
-      removeClassesNow(element, PREFIX_ROOT$5);
+      removeClassesNow(element, PREFIX_ROOT$4);
       if (pageContainer) {
         removeClassesNow(pageContainer, PREFIX_PAGE_CONTAINER);
       }
@@ -14294,7 +14445,7 @@ var LISN = (function (exports) {
       widget.onTransition(() => recalculateCarouselProps());
     }
     addWatchers();
-    addClasses(element, PREFIX_ROOT$5);
+    addClasses(element, PREFIX_ROOT$4);
     if (pageContainer) {
       addClasses(pageContainer, PREFIX_PAGE_CONTAINER);
     }
@@ -14919,12 +15070,13 @@ var LISN = (function (exports) {
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
+      var _MH$targetOf;
       super(element, actions, config);
       this.getConfig = () => copyObject(config);
       if (!lengthOf(actions)) {
         return;
       }
-      const target = targetOf(config) || element;
+      const target = (_MH$targetOf = targetOf(config)) !== null && _MH$targetOf !== void 0 ? _MH$targetOf : element;
       if (!isInstanceOf(target, HTMLInputElement)) {
         return;
       }
@@ -15277,11 +15429,12 @@ var LISN = (function (exports) {
     };
   };
   const setupWatcher = (widget, element, actions, config, action) => {
+    var _MH$targetOf;
     if (!lengthOf(actions)) {
       return;
     }
     config !== null && config !== void 0 ? config : config = {};
-    const target = targetOf(config) || element;
+    const target = (_MH$targetOf = targetOf(config)) !== null && _MH$targetOf !== void 0 ? _MH$targetOf : element;
 
     // For clicks use the trigger's own toggle function so that it remembers ITS
     // state rather than the odd/even clicks. Otherwise if the trigger is
@@ -15408,8 +15561,9 @@ var LISN = (function (exports) {
   class LayoutTrigger extends Trigger {
     static register() {
       registerTrigger("layout", (element, args, actions, config) => {
+        var _args$;
         return new LayoutTrigger(element, actions, assign(config, {
-          layout: validateStringRequired("layout", strReplace(strReplace(args[0] || "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => isValidDeviceList(value) || isValidAspectRatioList(value))
+          layout: validateStringRequired("layout", strReplace(strReplace((_args$ = args[0]) !== null && _args$ !== void 0 ? _args$ : "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => isValidDeviceList(value) || isValidAspectRatioList(value))
         }));
       }, newConfigValidator$5);
     }
@@ -15421,7 +15575,8 @@ var LISN = (function (exports) {
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
-      const layout = (config === null || config === void 0 ? void 0 : config.layout) || "";
+      var _config$layout;
+      const layout = (_config$layout = config === null || config === void 0 ? void 0 : config.layout) !== null && _config$layout !== void 0 ? _config$layout : "";
       if (!layout) {
         throw usageError("'layout' is required");
       }
@@ -15828,7 +15983,7 @@ var LISN = (function (exports) {
      *                If the config is invalid.
      */
     constructor(element, actions, config) {
-      var _config$rootMargin;
+      var _config$rootMargin, _config$target;
       super(element, actions, config);
       this.getConfig = () => copyObject(config);
       if (!lengthOf(actions)) {
@@ -15839,7 +15994,7 @@ var LISN = (function (exports) {
         rootMargin: config === null || config === void 0 || (_config$rootMargin = config.rootMargin) === null || _config$rootMargin === void 0 ? void 0 : _config$rootMargin.replace(/,/g, " "),
         threshold: config === null || config === void 0 ? void 0 : config.threshold
       });
-      const target = (config === null || config === void 0 ? void 0 : config.target) || element;
+      const target = (_config$target = config === null || config === void 0 ? void 0 : config.target) !== null && _config$target !== void 0 ? _config$target : element;
       const views = (config === null || config === void 0 ? void 0 : config.views) || S_AT;
       const oppositeViews = getOppositeViews(views);
       const setupWatcher = target => {
@@ -16196,21 +16351,21 @@ var LISN = (function (exports) {
      */
     static get(element) {
       if (!element) {
-        return mainWidget$3;
+        return mainWidget$2;
       }
-      const instance = super.get(element, DUMMY_ID$9);
+      const instance = super.get(element, DUMMY_ID$8);
       if (isInstanceOf(instance, PageLoader)) {
         return instance;
       }
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$9, (element, config) => {
+      registerWidget(WIDGET_NAME$8, (element, config) => {
         if (!PageLoader.get(element)) {
           return new PageLoader(element, config);
         }
         return null;
-      }, configValidator$7);
+      }, configValidator$6);
     }
 
     /**
@@ -16221,8 +16376,8 @@ var LISN = (function (exports) {
       const loader = createElement("div");
       const widget = new PageLoader(loader, config);
       widget.onDestroy(() => {
-        if (mainWidget$3 === widget) {
-          mainWidget$3 = null;
+        if (mainWidget$2 === widget) {
+          mainWidget$2 = null;
         }
         return moveElement(loader);
       });
@@ -16233,21 +16388,21 @@ var LISN = (function (exports) {
           });
         }
       });
-      mainWidget$3 = widget;
+      mainWidget$2 = widget;
       return widget;
     }
     constructor(element, config) {
       var _PageLoader$get;
       const destroyPromise = (_PageLoader$get = PageLoader.get(element)) === null || _PageLoader$get === void 0 ? void 0 : _PageLoader$get.destroy();
       super(element, {
-        id: DUMMY_ID$9
+        id: DUMMY_ID$8
       });
       (destroyPromise || promiseResolve()).then(() => {
         var _config$autoRemove;
         if (this.isDestroyed()) {
           return;
         }
-        addClasses(element, PREFIX_ROOT$4);
+        addClasses(element, PREFIX_ROOT$3);
         const spinner = createElement("div");
         addClasses(spinner, PREFIX_SPINNER);
         moveElement(spinner, {
@@ -16260,7 +16415,7 @@ var LISN = (function (exports) {
         }
         this.onDisable(() => {
           undisplayElement(element);
-          if (!docQuerySelector(`.${PREFIX_ROOT$4}`)) {
+          if (!docQuerySelector(`.${PREFIX_ROOT$3}`)) {
             delHasModal();
           }
         });
@@ -16269,7 +16424,7 @@ var LISN = (function (exports) {
         });
         this.onDestroy(async () => {
           moveElement(spinner); // remove
-          await removeClasses(element, PREFIX_ROOT$4);
+          await removeClasses(element, PREFIX_ROOT$3);
           await displayElement(element); // revert undisplay by onDisable
         });
       });
@@ -16282,17 +16437,17 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const WIDGET_NAME$9 = "page-loader";
-  const PREFIXED_NAME$5 = prefixName(WIDGET_NAME$9);
-  const PREFIX_ROOT$4 = `${PREFIXED_NAME$5}__root`;
+  const WIDGET_NAME$8 = "page-loader";
+  const PREFIXED_NAME$4 = prefixName(WIDGET_NAME$8);
+  const PREFIX_ROOT$3 = `${PREFIXED_NAME$4}__root`;
   const PREFIX_SPINNER = prefixName("spinner");
   // Only one PageLoader widget per element is allowed, but Widget requires a
   // non-blank ID.
   // In fact, it doesn't make much sense to have more than 1 page loader on the
   // whole page, but we support it, hence use a class rather than a DOM ID.
-  const DUMMY_ID$9 = PREFIXED_NAME$5;
-  let mainWidget$3 = null;
-  const configValidator$7 = {
+  const DUMMY_ID$8 = PREFIXED_NAME$4;
+  let mainWidget$2 = null;
+  const configValidator$6 = {
     autoRemove: validateBoolean
   };
 
@@ -16466,14 +16621,14 @@ var LISN = (function (exports) {
      * instance is returned. Otherwise null.
      */
     static get(containerElement) {
-      const instance = super.get(containerElement, DUMMY_ID$8);
+      const instance = super.get(containerElement, DUMMY_ID$7);
       if (isInstanceOf(instance, SameHeight)) {
         return instance;
       }
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$8, (element, config) => {
+      registerWidget(WIDGET_NAME$7, (element, config) => {
         if (isHTMLElement(element)) {
           if (!SameHeight.get(element)) {
             return new SameHeight(element, config);
@@ -16482,13 +16637,13 @@ var LISN = (function (exports) {
           logError(usageError("Only HTMLElement is supported for SameHeight widget"));
         }
         return null;
-      }, configValidator$6);
+      }, configValidator$5);
     }
     constructor(containerElement, config) {
       var _SameHeight$get;
       const destroyPromise = (_SameHeight$get = SameHeight.get(containerElement)) === null || _SameHeight$get === void 0 ? void 0 : _SameHeight$get.destroy();
       super(containerElement, {
-        id: DUMMY_ID$8
+        id: DUMMY_ID$7
       });
       const items = getItemsFrom(containerElement, config === null || config === void 0 ? void 0 : config.items);
       if (sizeOf(items) < 2) {
@@ -16504,7 +16659,7 @@ var LISN = (function (exports) {
           if (this.isDestroyed()) {
             return;
           }
-          init$3(this, containerElement, items, fullConfig);
+          init$2(this, containerElement, items, fullConfig);
         });
       });
       this.toColumn = () => setData(containerElement, PREFIX_ORIENTATION, S_VERTICAL);
@@ -16520,26 +16675,26 @@ var LISN = (function (exports) {
 
   // ------------------------------
 
-  const WIDGET_NAME$8 = "same-height";
-  const PREFIXED_NAME$4 = prefixName(WIDGET_NAME$8);
-  const PREFIX_ROOT$3 = `${PREFIXED_NAME$4}__root`;
+  const WIDGET_NAME$7 = "same-height";
+  const PREFIXED_NAME$3 = prefixName(WIDGET_NAME$7);
+  const PREFIX_ROOT$2 = `${PREFIXED_NAME$3}__root`;
 
   // Use different classes for styling items to the one used for auto-discovering
   // them, so that re-creating existing widgets can correctly find the items to
   // be used by the new widget synchronously before the current one is destroyed.
-  const PREFIX_ITEM$1 = `${PREFIXED_NAME$4}__item`;
-  const PREFIX_ITEM__FOR_SELECT$1 = `${PREFIXED_NAME$4}-item`;
+  const PREFIX_ITEM$1 = `${PREFIXED_NAME$3}__item`;
+  const PREFIX_ITEM__FOR_SELECT$1 = `${PREFIXED_NAME$3}-item`;
   const S_TEXT = "text";
   const S_IMAGE = "image";
 
   // Only one SameHeight widget per element is allowed, but Widget requires a
   // non-blank ID.
-  const DUMMY_ID$8 = PREFIXED_NAME$4;
+  const DUMMY_ID$7 = PREFIXED_NAME$3;
 
   // We consider elements that have text content of at least <MIN_CHARS_FOR_TEXT>
   // characters to be text.
   const MIN_CHARS_FOR_TEXT = 100;
-  const configValidator$6 = {
+  const configValidator$5 = {
     diffTolerance: validateNumber,
     resizeThreshold: validateNumber,
     [S_DEBOUNCE_WINDOW]: validateNumber,
@@ -16607,7 +16762,7 @@ var LISN = (function (exports) {
     }
     return itemMap;
   };
-  const init$3 = (widget, containerElement, items, config) => {
+  const init$2 = (widget, containerElement, items, config) => {
     const diffTolerance = config._diffTolerance;
     const debounceWindow = config._debounceWindow;
     const sizeWatcher = SizeWatcher.reuse({
@@ -16722,7 +16877,7 @@ var LISN = (function (exports) {
         }
       }
       allItems.clear();
-      await removeClasses(containerElement, PREFIX_ROOT$3);
+      await removeClasses(containerElement, PREFIX_ROOT$2);
     });
 
     // Find all relevant items: the container, its direct children and the
@@ -16750,7 +16905,7 @@ var LISN = (function (exports) {
         }
       }
     }
-    addClasses(containerElement, PREFIX_ROOT$3);
+    addClasses(containerElement, PREFIX_ROOT$2);
     observeAll();
   };
 
@@ -16908,6 +17063,28 @@ var LISN = (function (exports) {
   };
 
   /**
+   * @module
+   * @ignore
+   * @internal
+   */
+
+
+  /**
+   * @since v1.2.0
+   */
+  const supportsSticky = () => hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
+
+  /**
+   * @since v1.2.0
+   */
+  const isInQuirksMode = () => hasDOM() ? document.compatMode === "BackCompat" : false;
+
+  /**
+   * @since v1.2.0
+   */
+  const isMobile = () => hasDOM() ? userAgent.match(/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/) !== null : false;
+
+  /**
    * @module Widgets
    */
 
@@ -17047,12 +17224,12 @@ var LISN = (function (exports) {
      */
     static get(scrollable) {
       if (!scrollable) {
-        return mainWidget$2;
+        return mainWidget$1;
       }
       if (scrollable === getDocElement()) {
         scrollable = getBody();
       }
-      const instance = super.get(scrollable, DUMMY_ID$7);
+      const instance = super.get(scrollable, DUMMY_ID$6);
       if (isInstanceOf(instance, Scrollbar)) {
         return instance;
       }
@@ -17075,15 +17252,15 @@ var LISN = (function (exports) {
       const scrollable = await ScrollWatcher.fetchMainScrollableElement();
       const widget = new Scrollbar(scrollable, config);
       widget.onDestroy(() => {
-        if (mainWidget$2 === widget) {
-          mainWidget$2 = null;
+        if (mainWidget$1 === widget) {
+          mainWidget$1 = null;
         }
       });
-      mainWidget$2 = widget;
+      mainWidget$1 = widget;
       return widget;
     }
     static register() {
-      registerWidget(WIDGET_NAME$7, (element, config) => {
+      registerWidget(WIDGET_NAME$6, (element, config) => {
         if (isHTMLElement(element)) {
           if (!Scrollbar.get(element)) {
             return new Scrollbar(element, config);
@@ -17092,7 +17269,7 @@ var LISN = (function (exports) {
           logError(usageError("Only HTMLElement is supported for Scrollbar widget"));
         }
         return null;
-      }, configValidator$5);
+      }, configValidator$4);
     }
 
     /**
@@ -17106,7 +17283,7 @@ var LISN = (function (exports) {
       }
       const destroyPromise = (_Scrollbar$get = Scrollbar.get(scrollable)) === null || _Scrollbar$get === void 0 ? void 0 : _Scrollbar$get.destroy();
       super(scrollable, {
-        id: DUMMY_ID$7
+        id: DUMMY_ID$6
       });
       const props = getScrollableProps(scrollable);
       const ourScrollable = props.scrollable;
@@ -17114,7 +17291,7 @@ var LISN = (function (exports) {
         if (this.isDestroyed()) {
           return;
         }
-        init$2(this, scrollable, props, config);
+        init$1(this, scrollable, props, config);
       });
       this.getScrollable = () => ourScrollable;
     }
@@ -17126,32 +17303,32 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const WIDGET_NAME$7 = "scrollbar";
-  const PREFIXED_NAME$3 = prefixName(WIDGET_NAME$7);
+  const WIDGET_NAME$6 = "scrollbar";
+  const PREFIXED_NAME$2 = prefixName(WIDGET_NAME$6);
   // Only one Scrollbar widget per element is allowed, but Widget
   // requires a non-blank ID.
-  const DUMMY_ID$7 = PREFIXED_NAME$3;
-  const PREFIX_ROOT$2 = `${PREFIXED_NAME$3}__root`;
-  const PREFIX_CONTAINER = `${PREFIXED_NAME$3}__container`;
-  const PREFIX_CONTENT = `${PREFIXED_NAME$3}__content`;
-  const PREFIX_BAR = `${PREFIXED_NAME$3}__bar`;
-  const PREFIX_WRAPPER = `${PREFIXED_NAME$3}__wrapper`;
-  const PREFIX_FILL = `${PREFIXED_NAME$3}__fill`;
-  const PREFIX_SPACER = `${PREFIXED_NAME$3}__spacer`;
-  const PREFIX_HANDLE = `${PREFIXED_NAME$3}__handle`;
+  const DUMMY_ID$6 = PREFIXED_NAME$2;
+  const PREFIX_ROOT$1 = `${PREFIXED_NAME$2}__root`;
+  const PREFIX_CONTAINER = `${PREFIXED_NAME$2}__container`;
+  const PREFIX_CONTENT = `${PREFIXED_NAME$2}__content`;
+  const PREFIX_BAR = `${PREFIXED_NAME$2}__bar`;
+  const PREFIX_WRAPPER = `${PREFIXED_NAME$2}__wrapper`;
+  const PREFIX_FILL = `${PREFIXED_NAME$2}__fill`;
+  const PREFIX_SPACER = `${PREFIXED_NAME$2}__spacer`;
+  const PREFIX_HANDLE = `${PREFIXED_NAME$2}__handle`;
   const PREFIX_DRAGGABLE = prefixName("draggable");
   const PREFIX_CLICKABLE = prefixName("clickable");
   const PREFIX_HAS_WRAPPER = prefixName("has-wrapper");
   const PREFIX_ALLOW_COLLAPSE = prefixName("allow-collapse");
-  const PREFIX_HAS_V_SCROLL$1 = prefixName("has-v-scroll");
+  const PREFIX_HAS_V_SCROLL = prefixName("has-v-scroll");
   const PREFIX_HAS_SCROLLBAR = prefixName("has-scrollbar");
   const PREFIX_HIDE_SCROLL = prefixName("hide-scroll");
   const S_SET_POINTER_CAPTURE = "setPointerCapture";
   const S_RELEASE_POINTER_CAPTURE = "releasePointerCapture";
   const S_ARIA_VALUENOW = ARIA_PREFIX + "valuenow";
   const S_SCROLLBAR = "scrollbar";
-  let mainWidget$2 = null;
-  const configValidator$5 = {
+  let mainWidget$1 = null;
+  const configValidator$4 = {
     id: validateString,
     className: validateStrList,
     hideNative: validateBoolean,
@@ -17186,7 +17363,7 @@ var LISN = (function (exports) {
     if (!isMainScrollable && !isBody) {
       // we need to wrap if possible
       contentWrapper = getContentWrapper(containerElement, {
-        classNames: [PREFIX_CONTENT]
+        _classNames: [PREFIX_CONTENT]
       });
       hasExistingWrapper = !isNullish(contentWrapper);
       if (!contentWrapper) {
@@ -17218,7 +17395,7 @@ var LISN = (function (exports) {
       hasVScroll
     };
   };
-  const init$2 = (widget, containerElement, props, config) => {
+  const init$1 = (widget, containerElement, props, config) => {
     var _ref, _config$onMobile, _ref2, _config$hideNative, _config$autoHide, _config$clickScroll, _ref3, _config$dragScroll, _ref4, _config$useHandle;
     const {
       supported,
@@ -17243,7 +17420,7 @@ var LISN = (function (exports) {
     const clickScroll = (_config$clickScroll = config === null || config === void 0 ? void 0 : config.clickScroll) !== null && _config$clickScroll !== void 0 ? _config$clickScroll : settings.scrollbarClickScroll;
     const dragScroll = (_ref3 = (_config$dragScroll = config === null || config === void 0 ? void 0 : config.dragScroll) !== null && _config$dragScroll !== void 0 ? _config$dragScroll : settings.scrollbarDragScroll) !== null && _ref3 !== void 0 ? _ref3 : false;
     const useHandle = (_ref4 = (_config$useHandle = config === null || config === void 0 ? void 0 : config.useHandle) !== null && _config$useHandle !== void 0 ? _config$useHandle : settings.scrollbarUseHandle) !== null && _ref4 !== void 0 ? _ref4 : false;
-    if (IS_MOBILE && !onMobile) {
+    if (isMobile() && !onMobile) {
       return;
     }
 
@@ -17484,9 +17661,9 @@ var LISN = (function (exports) {
     if (!isMainScrollable && !isBody) {
       addClasses(containerElement, PREFIX_CONTAINER);
     }
-    setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !IS_MOBILE);
+    setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !isMobile());
     setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
-    setBooleanData(containerElement, PREFIX_HAS_V_SCROLL$1, !!contentWrapper && hasVScroll);
+    setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, !!contentWrapper && hasVScroll);
 
     // Wrap children if needed
     if (contentWrapper && !hasExistingWrapper) {
@@ -17507,7 +17684,7 @@ var LISN = (function (exports) {
     const scrollDomID =
     // for ARIA
     clickScroll || dragScroll ? getOrAssignID(scrollable, S_SCROLLBAR) : "";
-    addClasses(barParent, PREFIX_ROOT$2);
+    addClasses(barParent, PREFIX_ROOT$1);
     const wrapper = createElement("div");
     preventSelect(wrapper);
     addClasses(wrapper, PREFIX_NO_TOUCH_ACTION);
@@ -17576,14 +17753,14 @@ var LISN = (function (exports) {
         removeEventListenerFrom(scrollbarH, S_POINTERDOWN, onClickOrDragH);
         removeEventListenerFrom(scrollbarV, S_POINTERDOWN, onClickOrDragV);
       }
-      removeClassesNow(barParent, PREFIX_ROOT$2);
+      removeClassesNow(barParent, PREFIX_ROOT$1);
       removeClassesNow(containerElement, PREFIX_CONTAINER);
       for (const position of [S_TOP, S_BOTTOM, S_LEFT, S_RIGHT]) {
         delDataNow(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
       }
       delDataNow(containerElement, PREFIX_ALLOW_COLLAPSE);
       delDataNow(containerElement, PREFIX_HAS_WRAPPER);
-      delDataNow(containerElement, PREFIX_HAS_V_SCROLL$1);
+      delDataNow(containerElement, PREFIX_HAS_V_SCROLL);
     });
   };
   const isHorizontal = scrollbar => getData(scrollbar, PREFIX_ORIENTATION) === S_HORIZONTAL;
@@ -17735,16 +17912,16 @@ var LISN = (function (exports) {
      */
     static get(element) {
       if (!element) {
-        return mainWidget$1;
+        return mainWidget;
       }
-      const instance = super.get(element, DUMMY_ID$6);
+      const instance = super.get(element, DUMMY_ID$5);
       if (isInstanceOf(instance, ScrollToTop)) {
         return instance;
       }
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$6, (element, config) => {
+      registerWidget(WIDGET_NAME$5, (element, config) => {
         if (!ScrollToTop.get(element)) {
           return new ScrollToTop(element, config);
         }
@@ -17760,8 +17937,8 @@ var LISN = (function (exports) {
       const button = createButton("Back to top");
       const widget = new ScrollToTop(button, config);
       widget.onDestroy(() => {
-        if (mainWidget$1 === widget) {
-          mainWidget$1 = null;
+        if (mainWidget === widget) {
+          mainWidget = null;
         }
         return moveElement(button);
       });
@@ -17772,14 +17949,14 @@ var LISN = (function (exports) {
           });
         }
       });
-      mainWidget$1 = widget;
+      mainWidget = widget;
       return widget;
     }
     constructor(element, config) {
       var _ScrollToTop$get;
       const destroyPromise = (_ScrollToTop$get = ScrollToTop.get(element)) === null || _ScrollToTop$get === void 0 ? void 0 : _ScrollToTop$get.destroy();
       super(element, {
-        id: DUMMY_ID$6
+        id: DUMMY_ID$5
       });
       const offset = (config === null || config === void 0 ? void 0 : config.offset) || `${S_TOP}: var(${prefixCssVar("scroll-to-top--offset")}, 200vh)`;
       const position = (config === null || config === void 0 ? void 0 : config.position) || S_RIGHT;
@@ -17839,7 +18016,7 @@ var LISN = (function (exports) {
           });
         }
         disableInitialTransition(root);
-        addClassesNow(root, PREFIX_ROOT$1);
+        addClassesNow(root, PREFIX_ROOT);
         addClassesNow(element, PREFIX_BTN);
         setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
         setDataNow(root, PREFIX_PLACE, position);
@@ -17862,7 +18039,7 @@ var LISN = (function (exports) {
         this.onDestroy(async () => {
           await waitForMutateTime();
           removeEventListenerFrom(element, S_CLICK, clickListener);
-          removeClassesNow(root, PREFIX_ROOT$1);
+          removeClassesNow(root, PREFIX_ROOT);
           removeClassesNow(element, PREFIX_BTN);
           delDataNow(root, PREFIX_FIXED);
           delDataNow(root, PREFIX_PLACE);
@@ -17896,15 +18073,15 @@ var LISN = (function (exports) {
 
   // --------------------
 
-  const WIDGET_NAME$6 = "scroll-to-top";
-  const PREFIXED_NAME$2 = prefixName(WIDGET_NAME$6);
+  const WIDGET_NAME$5 = "scroll-to-top";
+  const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
   // Only one ScrollToTop widget per element is allowed, but Widget requires a
   // non-blank ID.
-  const DUMMY_ID$6 = PREFIXED_NAME$2;
-  const PREFIX_ROOT$1 = `${PREFIXED_NAME$2}__root`;
-  const PREFIX_BTN = `${PREFIXED_NAME$2}__btn`;
+  const DUMMY_ID$5 = PREFIXED_NAME$1;
+  const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
+  const PREFIX_BTN = `${PREFIXED_NAME$1}__btn`;
   const PREFIX_FIXED = prefixName("fixed");
-  let mainWidget$1 = null;
+  let mainWidget = null;
   const newConfigValidator$1 = element => {
     return {
       offset: (key, value) => validateString(key, value, isValidScrollOffset),
@@ -17914,448 +18091,6 @@ var LISN = (function (exports) {
         return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
       }
     };
-  };
-
-  /**
-   * @module Widgets
-   */
-
-
-  /**
-   * Configures the given element as a {@link SmoothScroll} widget.
-   *
-   * The SmoothScroll widget creates a configurable smooth scrolling
-   * experience, including support for lag and speed, and using a custom element
-   * that only takes up part of the page, all while preserving native scrolling
-   * behaviour (i.e. it does not disable native scroll and does not use fake
-   * scrollbars).
-   *
-   * **IMPORTANT:** The scrollable element you pass must have its children
-   * wrapped. This will be done automatically unless you create these wrappers
-   * yourself by ensuring your structure is as follows:
-   *
-   * ```html
-   * <!-- If using the document as the scrollable -->
-   * <body><!-- Element you instantiate as SmoothScroll, or you can pass documentElement -->
-   *   <div class="lisn-smooth-scroll__content"><!-- Required wrapper; will be created if missing -->
-   *     <div class="lisn-smooth-scroll__inner"><!-- Required inner wrapper; will be created if missing -->
-   *       <!-- YOUR CONTENT -->
-   *     </div>
-   *   </div>
-   * </body>
-   * ```
-   *
-   * ```html
-   * <!-- If using a custom scrollable -->
-   * <div class="scrollable"><!-- Element you instantiate as SmoothScroll -->
-   *   <div class="lisn-smooth-scroll__content"><!-- Required outer wrapper; will be created if missing -->
-   *     <div class="lisn-smooth-scroll__inner"><!-- Required inner wrapper; will be created if missing -->
-   *       <!-- YOUR CONTENT -->
-   *     </div>
-   *   </div>
-   * </div>
-   * ```
-   *
-   * **IMPORTANT:** If the scrollable element you pass is other than
-   * `document.documentElement` or `document.body`, SmoothScroll will then rely on
-   * position: sticky. XXX TODO
-   *
-   * **IMPORTANT:** You should not instantiate more than one
-   * {@link SmoothScroll} widget on a given element. Use
-   * {@link SmoothScroll.get} to get an existing instance if any. If there is
-   * already a widget instance, it will be destroyed!
-   *
-   * -----
-   *
-   * To use with auto-widgets (HTML API) (see
-   * {@link Settings.settings.autoWidgets | settings.autoWidgets}), the following
-   * CSS classes or data attributes are recognized:
-   * - `lisn-smooth-scroll` class or `data-lisn-smooth-scroll` attribute set
-   *   on the container element that constitutes the scrollable container
-   *
-   * See below examples for what values you can use set for the data attribute
-   * in order to modify the configuration of the automatically created widget.
-   *
-   * @example
-   * This will create a smooth scroller for
-   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
-   *
-   * This will work even if {@link settings.autoWidgets}) is false
-   *
-   * ```html
-   * <!-- LISN should be loaded beforehand -->
-   * <script>
-   *   // You can also just customise global default settings:
-   *   // LISN.settings.smoothScroll = "TODO";
-   *
-   *   LISN.widgets.SmoothScroll.enableMain({
-   *     XXX: "TODO",
-   *   });
-   * </script>
-   * ```
-   *
-   * @example
-   * This will create a smooth scroller for a custom scrolling element (i.e. one
-   * with overflow "auto" or "scroll").
-   *
-   * ```html
-   * <div class="scrolling lisn-smooth-scroll">
-   *   <!-- content here... -->
-   * </div>
-   * ```
-   *
-   * @example
-   * As above but with custom settings.
-   *
-   * ```html
-   * <div
-   *   class="scrolling"
-   *   data-lisn-smooth-scroll="XXX=TODO
-   *                            | XXX=TODO
-   *                        ">
-   *   <!-- content here... -->
-   * </div>
-   * ```
-   */
-  class SmoothScroll extends Widget {
-    // XXX TODO getScrollable ?
-
-    /**
-     * If element is omitted, returns the instance created by {@link enableMain}
-     * if any.
-     */
-    static get(scrollable) {
-      if (!scrollable) {
-        return mainWidget;
-      }
-      if (scrollable === getDocElement()) {
-        scrollable = getBody();
-      }
-      const instance = super.get(scrollable, DUMMY_ID$5);
-      if (isInstanceOf(instance, SmoothScroll)) {
-        return instance;
-      }
-      return null;
-    }
-
-    /**
-     * Creates a smooth scroller for the
-     * {@link settings.mainScrollableElementSelector | the main scrolling element}.
-     *
-     * **NOTE:** It returns a Promise to a widget because it will wait for the
-     * main scrollable element to be present in the DOM if not already.
-     */
-    static async enableMain(config) {
-      const scrollable = await ScrollWatcher.fetchMainScrollableElement();
-      const widget = new SmoothScroll(scrollable, config);
-      widget.onDestroy(() => {
-        if (mainWidget === widget) {
-          mainWidget = null;
-        }
-      });
-      mainWidget = widget;
-      return widget;
-    }
-    static register() {
-      registerWidget(WIDGET_NAME$5, (element, config) => {
-        if (isHTMLElement(element)) {
-          if (!SmoothScroll.get(element)) {
-            return new SmoothScroll(element, config);
-          }
-        } else {
-          logError(usageError("Only HTMLElement is supported for SmoothScroll widget"));
-        }
-        return null;
-      }, configValidator$4);
-    }
-
-    /**
-     * Note that passing `document.body` is considered equivalent to
-     * `document.documentElement`.
-     */
-    constructor(scrollable, config) {
-      var _SmoothScroll$get;
-      if (scrollable === getDocElement()) {
-        scrollable = getBody();
-      }
-      const destroyPromise = (_SmoothScroll$get = SmoothScroll.get(scrollable)) === null || _SmoothScroll$get === void 0 ? void 0 : _SmoothScroll$get.destroy();
-      super(scrollable, {
-        id: DUMMY_ID$5
-      });
-
-      // const props = getScrollableProps(scrollable); // XXX
-      // const ourScrollable = props.scrollable; // XXX
-
-      (destroyPromise || promiseResolve()).then(async () => {
-        if (this.isDestroyed()) {
-          return;
-        }
-        init$1(this, scrollable, config);
-        // XXX init(this, scrollable, props, config);
-      });
-    }
-  }
-
-  /**
-   * @interface
-   */
-
-  // --------------------
-
-  const WIDGET_NAME$5 = "smooth-scroll";
-  const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
-  // Only one SmoothScroll widget per element is allowed, but Widget requires a
-  // non-blank ID.
-  const DUMMY_ID$5 = PREFIXED_NAME$1;
-  const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
-  const PREFIX_DUMMY = `${PREFIXED_NAME$1}__dummy`;
-  const PREFIX_OUTER_WRAPPER = `${PREFIXED_NAME$1}__content`;
-  const PREFIX_INNER_WRAPPER = `${PREFIXED_NAME$1}__inner`;
-  const PREFIX_HAS_H_SCROLL = prefixName("has-h-scroll");
-  const PREFIX_HAS_V_SCROLL = prefixName("has-v-scroll");
-  const PREFIX_USES_STICKY = prefixName("uses-sticky");
-  let mainWidget = null;
-  const configValidator$4 = {
-    id: validateString,
-    className: validateStrList,
-    lag: validateNumber
-  };
-  const createWrappers = (element, classNamesEntries) => {
-    const wrapContentNow = (element, classNames) => tryWrapContentNow(element, {
-      classNames,
-      required: true,
-      requiredBy: "SmoothScroll"
-    });
-    let lastWrapper = element;
-    const result = {};
-    let createdByUs = [];
-    const unwrapFn = () => {
-      for (const [wrapper, classNames] of createdByUs) {
-        unwrapContentNow(wrapper, classNames);
-      }
-      createdByUs = [];
-    };
-    for (const [key, classNames, skip] of classNamesEntries) {
-      let wrapper = skip ? lastWrapper : getContentWrapper(lastWrapper, {
-        classNames
-      });
-      if (!wrapper) {
-        wrapper = wrapContentNow(lastWrapper, classNames);
-        createdByUs.push([wrapper, classNames]);
-      }
-      lastWrapper = wrapper;
-      result[key] = wrapper;
-    }
-    return {
-      wrappers: result,
-      unwrapFn
-    };
-  };
-
-  // XXX TODO children can use unique lag factor
-  const init$1 = async (widget, scrollable, config) => {
-    const docEl = getDocElement();
-    const body = getBody();
-    const defaultScrollable = getDefaultScrollingElement();
-    let needsSticky = true;
-    let root = scrollable;
-    if (scrollable === docEl || scrollable === body) {
-      scrollable = defaultScrollable;
-      root = body;
-      needsSticky = false;
-    }
-    if (needsSticky && !supportsSticky()) {
-      logError("SmoothScroll on elements other than the document relies on " + "position: sticky, but this browser does not support sticky.");
-      return;
-    }
-    const scrollWatcher = ScrollWatcher.reuse({
-      [S_DEBOUNCE_WINDOW]: 0
-    });
-    const sizeWatcher = SizeWatcher.reuse({
-      [S_DEBOUNCE_WINDOW]: 0
-    });
-    await waitForMeasureTime();
-    const initialWidth = scrollable[S_SCROLL_WIDTH];
-    const initialHeight = scrollable[S_SCROLL_HEIGHT];
-
-    // We only care if it has horizontal/vertical scroll if we're using a custom
-    // scrollable, so no need to check otherwise.
-    const hasHScroll = needsSticky ? isScrollable(scrollable, {
-      axis: "x"
-    }) : false;
-    const hasVScroll = needsSticky ? isScrollable(scrollable, {
-      axis: "y"
-    }) : false;
-
-    // ----------
-
-    const setSizeVars = (element, width, height, now = false) => {
-      (now ? setNumericStyleJsVarsNow : setNumericStyleJsVars)(element, {
-        width,
-        height
-      }, {
-        _units: "px",
-        _numDecimal: 2
-      });
-    };
-
-    // If there's a scroll or size change for the scrollable container, update the
-    // transforms and possibly the width/height of the content (if it uses sticky)
-    // .
-    const updatePropsOnScroll = (target, scrollData) => {
-      applyTransforms(scrollData);
-
-      // If the scrollable scrolls horizontally we need to set a fixed width on
-      // the inner wrapper, and if it scrolls vertically we need to set a fixed
-      // height.
-      if (needsSticky) {
-        setSizeVars(innerWrapper, hasHScroll ? scrollData[S_CLIENT_WIDTH] : NaN, hasVScroll ? scrollData[S_CLIENT_HEIGHT] : NaN);
-      }
-    };
-
-    // If content is resized, update the dummy overflow to match its size
-    const updatePropsOnResize = (target, sizeData) => {
-      setSizeVars(dummy, sizeData.border[S_WIDTH], sizeData.border[S_HEIGHT]);
-    };
-
-    // ----------
-
-    const startOffsets = {
-      [S_SCROLL_LEFT]: 0,
-      [S_SCROLL_TOP]: 0
-    };
-    const currentOffsets = copyObject(startOffsets);
-    const targetOffsetsQueue = {
-      [S_SCROLL_LEFT]: [],
-      [S_SCROLL_TOP]: []
-    }; // checkpoints, each time it has to reverse direction
-
-    const applyTransforms = scrollData => {
-      let isDone = true;
-      for (const s of [S_SCROLL_LEFT, S_SCROLL_TOP]) {
-        var _MH$firstOf;
-        const newTarget = scrollData[s];
-        const currentPosition = currentOffsets[s];
-        const currentStart = startOffsets[s];
-        // Take from the front of the queue
-        const currentTarget = (_MH$firstOf = firstOf(targetOffsetsQueue[s])) !== null && _MH$firstOf !== void 0 ? _MH$firstOf : newTarget;
-        const currentElapsed = round(abs(currentPosition - currentStart));
-        const currentTotal = round(abs(currentTarget - currentStart));
-
-        // XXX TODO dependent on lag
-        if (currentTotal <= 0) {
-          continue;
-        }
-        const progress = easeInOutQuad(min(1, currentElapsed / currentTotal));
-        currentOffsets[s] = currentStart + (currentTarget - currentStart) * progress;
-        if (Number.isNaN(progress) || currentPosition === currentOffsets[s]) {
-          return;
-        }
-
-        // Check if we need to save the new target as a checkpoint, in case it's
-        // the first one or it has reversed directions (the sign of the difference
-        // between current and target has changed).
-        const lastTarget = lastOf(targetOffsetsQueue[s]);
-        const isScrolling = !isNullish(lastTarget);
-        const hasReversedDirection = isScrolling && newTarget <= currentPosition !== lastTarget <= currentPosition;
-        if (!isScrolling || hasReversedDirection) {
-          // save this as a "checkpoint" in the queue
-          targetOffsetsQueue[s].push(newTarget);
-        }
-        if (progress === 1) {
-          // pop from the front of the queue
-          targetOffsetsQueue[s].shift();
-        }
-        if (lengthOf(targetOffsetsQueue[s]) > 0) {
-          isDone = false;
-        }
-      }
-      setNumericStyleJsVars(innerWrapper, {
-        offsetX: -currentOffsets[S_SCROLL_LEFT],
-        offsetY: -currentOffsets[S_SCROLL_TOP]
-      }, {
-        _units: "px",
-        _numDecimal: 2
-      });
-      if (!isDone) {
-        onAnimationFrame(() => applyTransforms(scrollData));
-      }
-    };
-
-    // ----------
-
-    const addWatchers = () => {
-      // Track scroll in any direction as well as changes in border or content size
-      // of the element and its contents.
-      scrollWatcher.trackScroll(updatePropsOnScroll, {
-        threshold: 0,
-        scrollable
-      });
-
-      // Track changes in content or border size of the inner content wrapper.
-      sizeWatcher.onResize(updatePropsOnResize, {
-        target: innerWrapper,
-        threshold: 0
-      });
-    };
-    const removeWatchers = () => {
-      scrollWatcher.noTrackScroll(updatePropsOnScroll, scrollable);
-      sizeWatcher.offResize(updatePropsOnResize, innerWrapper);
-    };
-
-    // SETUP ------------------------------
-
-    await waitForMutateTime();
-    addClassesNow(root, PREFIX_ROOT);
-
-    // Wrap the contents in a fixed/sticky positioned wrapper and insert a dummy
-    // overflow element of the same size.
-    const {
-      wrappers,
-      unwrapFn
-    } = createWrappers(root, [["o", [PREFIX_OUTER_WRAPPER], false], ["i", [PREFIX_INNER_WRAPPER], !needsSticky]]);
-    const outerWrapper = wrappers.o;
-    const innerWrapper = wrappers.i;
-    // [TODO v2]: Better way to centrally manage wrapping and wrapping of elements
-    setBooleanDataNow(root, PREFIX_NO_WRAP); // prevent ScrollWatcher from wrapping it; XXX TODO remove this on destroy if it was added by us
-    if (needsSticky) {
-      setBooleanDataNow(root, PREFIX_HAS_H_SCROLL, hasHScroll);
-      setBooleanDataNow(root, PREFIX_HAS_V_SCROLL, hasVScroll);
-      setBooleanDataNow(root, PREFIX_USES_STICKY);
-    }
-    if (config !== null && config !== void 0 && config.id) {
-      outerWrapper.id = config.id;
-    }
-    if (config !== null && config !== void 0 && config.className) {
-      addClassesNow(outerWrapper, ...toArrayIfSingle(config.className));
-    }
-    const dummy = createElement("div");
-    addClassesNow(dummy, PREFIX_DUMMY);
-    // set its size now to prevent initial layout shifts
-    setSizeVars(dummy, initialWidth, initialHeight, true);
-    moveElementNow(dummy, {
-      to: root,
-      ignoreMove: true
-    });
-    addWatchers();
-    widget.onDisable(() => {
-      removeWatchers();
-      // XXX TODO re-enable regular scrolling
-    });
-    widget.onEnable(() => {
-      addWatchers();
-      // XXX TODO re-enable smooth scrolling
-    });
-    widget.onDestroy(async () => {
-      await waitForMutateTime();
-      unwrapFn();
-      moveElementNow(dummy); // remove
-
-      removeClassesNow(root, PREFIX_ROOT);
-      delDataNow(root, PREFIX_HAS_H_SCROLL);
-      delDataNow(root, PREFIX_HAS_V_SCROLL);
-      delDataNow(root, PREFIX_USES_STICKY);
-    });
   };
 
   /**
@@ -19115,7 +18850,6 @@ var LISN = (function (exports) {
     SameHeight: SameHeight,
     ScrollToTop: ScrollToTop,
     Scrollbar: Scrollbar,
-    SmoothScroll: SmoothScroll,
     Sortable: Sortable,
     TrackGesture: TrackGesture,
     TrackScroll: TrackScroll,
@@ -19175,7 +18909,7 @@ var LISN = (function (exports) {
   SameHeight.register();
   Scrollbar.register();
   ScrollToTop.register();
-  SmoothScroll.register();
+  // widgets.SmoothScroll.register();
   Sortable.register();
   TrackGesture.register();
   TrackScroll.register();

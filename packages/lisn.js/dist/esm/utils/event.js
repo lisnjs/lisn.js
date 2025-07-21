@@ -16,9 +16,11 @@ import { newXMapGetter, newXWeakMap } from "../modules/x-map.js";
  */
 export const callEventListener = (handler, event) => {
   if (MH.isFunction(handler)) {
-    handler.call(event.currentTarget || self, event);
+    var _event$currentTarget;
+    handler.call((_event$currentTarget = event.currentTarget) !== null && _event$currentTarget !== void 0 ? _event$currentTarget : self, event);
   } else {
-    handler.handleEvent.call(event.currentTarget || self, event);
+    var _event$currentTarget2;
+    handler.handleEvent.call((_event$currentTarget2 = event.currentTarget) !== null && _event$currentTarget2 !== void 0 ? _event$currentTarget2 : self, event);
   }
 };
 

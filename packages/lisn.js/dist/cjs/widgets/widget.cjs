@@ -64,8 +64,8 @@ class Widget {
    * Retrieve an existing widget by element and ID.
    */
   static get(element, id) {
-    var _instances$get;
-    return ((_instances$get = instances.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) || null;
+    var _instances$get$get, _instances$get;
+    return (_instances$get$get = (_instances$get = instances.get(element)) === null || _instances$get === void 0 ? void 0 : _instances$get.get(id)) !== null && _instances$get$get !== void 0 ? _instances$get$get : null;
   }
 
   /**
@@ -244,7 +244,6 @@ exports.Widget = Widget;
  *                  be called once for each configuration.
  */
 const registerWidget = async (name, newWidget, configValidator, options) => {
-  var _options$selector;
   if (registeredWidgets.has(name)) {
     return;
   }
@@ -254,7 +253,7 @@ const registerWidget = async (name, newWidget, configValidator, options) => {
   // straight after loading LISN.js
   await (0, _domEvents.waitForInteractive)();
   const prefixedName = MH.prefixName(name);
-  const selector = (_options$selector = options === null || options === void 0 ? void 0 : options.selector) !== null && _options$selector !== void 0 ? _options$selector : getDefaultWidgetSelector(prefixedName);
+  const selector = (options === null || options === void 0 ? void 0 : options.selector) || getDefaultWidgetSelector(prefixedName);
   if (_settings.settings.autoWidgets) {
     const domWatcher = _domWatcher.DOMWatcher.reuse();
     domWatcher.onMutation(async operation => {

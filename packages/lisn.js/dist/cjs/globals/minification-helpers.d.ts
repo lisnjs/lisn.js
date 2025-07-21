@@ -7,6 +7,8 @@
  */
 import { BoundingRect, IterableObject, Constructor, InstanceType, MapBase, SetBase, Spread } from "../globals/types.cjs";
 import { LisnUsageError, LisnBugError } from "../globals/errors.cjs";
+export declare const root: any;
+export declare const userAgent: string;
 export declare const kebabToCamelCase: (str: string) => string;
 export declare const camelToKebabCase: (str: string) => string;
 export declare const prefixName: (name: string) => string;
@@ -128,6 +130,7 @@ export declare const min: (...values: number[]) => number;
 export declare const abs: (x: number) => number;
 export declare const round: (x: number) => number;
 export declare const pow: (x: number, y: number) => number;
+export declare const exp: (x: number) => number;
 export declare const parseFloat: (string: string) => number;
 export declare const isNaN: (number: unknown) => boolean;
 export declare const isInstanceOf: <C extends Constructor<unknown>>(value: unknown, Class: C) => value is InstanceType<C>;

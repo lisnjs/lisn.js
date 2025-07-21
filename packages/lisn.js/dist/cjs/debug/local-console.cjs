@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.LocalConsole = void 0;
-var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _text = require("../utils/text.cjs");
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
@@ -38,9 +37,9 @@ class LocalConsole {
 
 // ------------------------------
 exports.LocalConsole = LocalConsole;
-const isiOS = MH.includes(MC.USER_AGENT, "iPhone OS") || false;
+const isiOS = MH.includes(MH.userAgent, "iPhone OS");
 const iOSlog = (...args) => MH.consoleInfo((0, _text.joinAsString)(" ", ...args));
-const isJest = MH.includes(MC.USER_AGENT, " jsdom/") || false;
+const isJest = MH.includes(MH.userAgent, " jsdom/");
 const jestLog = {
   debug: (...args) => MH.consoleDebug((0, _text.joinAsString)(" ", ...args)),
   log: (...args) => MH.consoleLog((0, _text.joinAsString)(" ", ...args)),

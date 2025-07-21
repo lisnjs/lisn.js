@@ -497,11 +497,11 @@ exports.ViewWatcher = ViewWatcher;
 const CONSTRUCTOR_KEY = MC.SYMBOL();
 const instances = (0, _xMap.newXMap)(() => MH.newMap());
 const getConfig = config => {
-  var _config$rootMargin;
+  var _config$root, _config$rootMargin, _config$threshold;
   return {
-    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
     _rootMargin: (_config$rootMargin = config === null || config === void 0 ? void 0 : config.rootMargin) !== null && _config$rootMargin !== void 0 ? _config$rootMargin : "0px 0px 0px 0px",
-    _threshold: (config === null || config === void 0 ? void 0 : config.threshold) || 0
+    _threshold: (_config$threshold = config === null || config === void 0 ? void 0 : config.threshold) !== null && _config$threshold !== void 0 ? _config$threshold : 0
   };
 };
 const TRACK_REGULAR = 1; // only entering/leaving root

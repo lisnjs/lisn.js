@@ -145,8 +145,8 @@ export class GestureWatcher {
     const setupOnGesture = async (target, handler, userOptions) => {
       const options = getOptions(config, userOptions !== null && userOptions !== void 0 ? userOptions : {});
       createCallback(target, handler, options);
-      for (const device of options._devices || DEVICES) {
-        var _allListeners$get;
+      for (const device of (_options$_devices = options._devices) !== null && _options$_devices !== void 0 ? _options$_devices : DEVICES) {
+        var _options$_devices, _allListeners$get;
         let listeners = (_allListeners$get = allListeners.get(target)) === null || _allListeners$get === void 0 ? void 0 : _allListeners$get.get(device);
         if (listeners) {
           debug: logger === null || logger === void 0 || logger.debug4(`Listeners already added for ${device}`, target, options);
@@ -167,8 +167,8 @@ export class GestureWatcher {
     const deleteHandler = (target, handler, options) => {
       MH.deleteKey(allCallbacks.get(target), handler);
       allCallbacks.prune(target);
-      for (const device of options._devices || DEVICES) {
-        var _allListeners$get2;
+      for (const device of (_options$_devices2 = options._devices) !== null && _options$_devices2 !== void 0 ? _options$_devices2 : DEVICES) {
+        var _options$_devices2, _allListeners$get2;
         const listeners = (_allListeners$get2 = allListeners.get(target)) === null || _allListeners$get2 === void 0 ? void 0 : _allListeners$get2.get(device);
         if (listeners) {
           listeners._nCallbacks--;
@@ -187,8 +187,8 @@ export class GestureWatcher {
     // ----------
 
     const invokeCallbacks = (target, device, event) => {
-      var _allListeners$get3;
-      const preventDefault = (((_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) || 0) > 0;
+      var _allListeners$get$get, _allListeners$get3;
+      const preventDefault = ((_allListeners$get$get = (_allListeners$get3 = allListeners.get(target)) === null || _allListeners$get3 === void 0 || (_allListeners$get3 = _allListeners$get3.get(device)) === null || _allListeners$get3 === void 0 ? void 0 : _allListeners$get3._nPreventDefault) !== null && _allListeners$get$get !== void 0 ? _allListeners$get$get : 0) > 0;
       let isTerminated = false;
       for (const {
         _wrapper
@@ -382,14 +382,14 @@ const fragmentGetters = {
   [MC.S_WHEEL]: getWheelGestureFragment
 };
 const getOptions = (config, options) => {
-  var _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
+  var _validateStrList, _validateStrList2, _validateStrList3, _options$minTotalDelt, _options$maxTotalDelt, _options$minTotalDelt2, _options$maxTotalDelt2, _options$minTotalDelt3, _options$maxTotalDelt3, _options$preventDefau, _options$naturalTouch, _options$touchDragHol, _options$touchDragNum;
   const debounceWindow = toNonNegNum(options[MC.S_DEBOUNCE_WINDOW], config._debounceWindow // watcher is never debounced, so apply default here
   );
   const deltaThreshold = toNonNegNum(options.deltaThreshold, config._deltaThreshold);
   return {
-    _devices: validateStrList("devices", options.devices, isValidInputDevice) || null,
-    _directions: validateStrList("directions", options.directions, isValidDirection) || null,
-    _intents: validateStrList("intents", options.intents, isValidIntent) || null,
+    _devices: (_validateStrList = validateStrList("devices", options.devices, isValidInputDevice)) !== null && _validateStrList !== void 0 ? _validateStrList : null,
+    _directions: (_validateStrList2 = validateStrList("directions", options.directions, isValidDirection)) !== null && _validateStrList2 !== void 0 ? _validateStrList2 : null,
+    _intents: (_validateStrList3 = validateStrList("intents", options.intents, isValidIntent)) !== null && _validateStrList3 !== void 0 ? _validateStrList3 : null,
     _minTotalDeltaX: (_options$minTotalDelt = options.minTotalDeltaX) !== null && _options$minTotalDelt !== void 0 ? _options$minTotalDelt : null,
     _maxTotalDeltaX: (_options$maxTotalDelt = options.maxTotalDeltaX) !== null && _options$maxTotalDelt !== void 0 ? _options$maxTotalDelt : null,
     _minTotalDeltaY: (_options$minTotalDelt2 = options.minTotalDeltaY) !== null && _options$minTotalDelt2 !== void 0 ? _options$minTotalDelt2 : null,

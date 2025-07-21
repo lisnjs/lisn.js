@@ -7,6 +7,7 @@ exports.Scrollbar = void 0;
 var MC = _interopRequireWildcard(require("../globals/minification-constants.cjs"));
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _settings = require("../globals/settings.cjs");
+var _browser = require("../utils/browser.cjs");
 var _cssAlter = require("../utils/css-alter.cjs");
 var _domAlter = require("../utils/dom-alter.cjs");
 var _domOptimize = require("../utils/dom-optimize.cjs");
@@ -292,7 +293,7 @@ const getScrollableProps = containerElement => {
   const root = isMainScrollable ? mainScrollableElement : isBody ? defaultScrollable : containerElement;
 
   // check if we're using body in quirks mode
-  const isBodyInQuirks = isBody && (0, _misc.isInQuirksMode)();
+  const isBodyInQuirks = isBody && (0, _browser.isInQuirksMode)();
   const allowedToWrap = (0, _domAlter.isAllowedToWrap)(containerElement);
   const barParent = isMainScrollable ? body : containerElement;
   const hasVScroll = (0, _scroll.isScrollable)(root, {
@@ -304,7 +305,7 @@ const getScrollableProps = containerElement => {
   if (!isMainScrollable && !isBody) {
     // we need to wrap if possible
     contentWrapper = (0, _domAlter.getContentWrapper)(containerElement, {
-      classNames: [PREFIX_CONTENT]
+      _classNames: [PREFIX_CONTENT]
     });
     hasExistingWrapper = !MH.isNullish(contentWrapper);
     if (!contentWrapper) {
@@ -313,7 +314,7 @@ const getScrollableProps = containerElement => {
         // we'll wrap later, but create the wrapper now as it will be the actual
         // scrollable
         contentWrapper = MH.createElement("div");
-      } else if ((0, _misc.supportsSticky)()) {
+      } else if ((0, _browser.supportsSticky)()) {
         (0, _log.logWarn)(`${warnMsgPrefix}, is experimental and may not work properly.`);
       } else {
         (0, _log.logError)(`${warnMsgPrefix}, but this browser does not support sticky.`);
@@ -368,7 +369,7 @@ const init = (widget, containerElement, props, config) => {
   const clickScroll = (_config$clickScroll = config === null || config === void 0 ? void 0 : config.clickScroll) !== null && _config$clickScroll !== void 0 ? _config$clickScroll : _settings.settings.scrollbarClickScroll;
   const dragScroll = (_ref3 = (_config$dragScroll = config === null || config === void 0 ? void 0 : config.dragScroll) !== null && _config$dragScroll !== void 0 ? _config$dragScroll : _settings.settings.scrollbarDragScroll) !== null && _ref3 !== void 0 ? _ref3 : false;
   const useHandle = (_ref4 = (_config$useHandle = config === null || config === void 0 ? void 0 : config.useHandle) !== null && _config$useHandle !== void 0 ? _config$useHandle : _settings.settings.scrollbarUseHandle) !== null && _ref4 !== void 0 ? _ref4 : false;
-  if (MC.IS_MOBILE && !onMobile) {
+  if ((0, _browser.isMobile)() && !onMobile) {
     return;
   }
 
@@ -424,7 +425,7 @@ const init = (widget, containerElement, props, config) => {
     const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
     const completeFraction = tracksH ? scrollData[MC.S_SCROLL_LEFT_FRACTION] : scrollData[MC.S_SCROLL_TOP_FRACTION];
     const viewFraction = tracksH ? scrollData[MC.S_CLIENT_WIDTH] / scrollData[MC.S_SCROLL_WIDTH] : scrollData[MC.S_CLIENT_HEIGHT] / scrollData[MC.S_SCROLL_HEIGHT];
-    logger === null || logger === void 0 || logger.debug9("Updating progress", {
+    debug: logger === null || logger === void 0 || logger.debug9("Updating progress", {
       tracksH,
       completeFraction,
       viewFraction
@@ -492,7 +493,7 @@ const init = (widget, containerElement, props, config) => {
       isDragging = true;
       setOrReleasePointerCapture(event, scrollbar, S_SET_POINTER_CAPTURE);
     }
-    logger === null || logger === void 0 || logger.debug10("Click or drag", {
+    debug: logger === null || logger === void 0 || logger.debug10("Click or drag", {
       eventType,
       isClick,
       isHandleClick,
@@ -515,7 +516,7 @@ const init = (widget, containerElement, props, config) => {
     // event target is and what transforms is has applied.
     const rect = MH.getBoundingClientRect(scrollbar);
     const offset = barIsHorizontal ? event.clientX - rect.left : event.clientY - rect.top;
-    logger === null || logger === void 0 || logger.debug10("Pointer offset", offset);
+    debug: logger === null || logger === void 0 || logger.debug10("Pointer offset", offset);
     if (offset === lastOffset) {
       return;
     }
@@ -541,7 +542,7 @@ const init = (widget, containerElement, props, config) => {
     } : {
       top: targetScrollOffset
     };
-    logger === null || logger === void 0 || logger.debug10("Scroll target offset", {
+    debug: logger === null || logger === void 0 || logger.debug10("Scroll target offset", {
       lastTargetFraction,
       targetCoordinates
     });
@@ -626,7 +627,7 @@ const init = (widget, containerElement, props, config) => {
   if (!isMainScrollable && !isBody) {
     (0, _cssAlter.addClasses)(containerElement, PREFIX_CONTAINER);
   }
-  (0, _cssAlter.setBooleanData)(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  (0, _cssAlter.setBooleanData)(containerElement, PREFIX_ALLOW_COLLAPSE, !(0, _browser.isMobile)());
   (0, _cssAlter.setBooleanData)(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
   (0, _cssAlter.setBooleanData)(containerElement, PREFIX_HAS_V_SCROLL, !!contentWrapper && hasVScroll);
 

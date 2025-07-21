@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75.61% </span>
+                <span class="strong">75.07% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>245/324</span>
+                <span class='fraction'>247/329</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.72% </span>
+                <span class="strong">76.8% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>244/318</span>
+                <span class='fraction'>245/319</span>
             </div>
         
             
@@ -1101,10 +1101,7 @@
 <a name='L1036'></a><a href='#L1036'>1036</a>
 <a name='L1037'></a><a href='#L1037'>1037</a>
 <a name='L1038'></a><a href='#L1038'>1038</a>
-<a name='L1039'></a><a href='#L1039'>1039</a>
-<a name='L1040'></a><a href='#L1040'>1040</a>
-<a name='L1041'></a><a href='#L1041'>1041</a>
-<a name='L1042'></a><a href='#L1042'>1042</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1039'></a><a href='#L1039'>1039</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1120,6 +1117,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">93x</span>
 <span class="cline-any cline-yes">93x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1162,10 +1160,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">93x</span>
 <span class="cline-any cline-yes">93x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">93x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2161,6 +2155,7 @@ import { settings } from "@lisn/globals/settings";
 &nbsp;
 import { Position } from "@lisn/globals/types";
 &nbsp;
+import { supportsSticky, isMobile, isInQuirksMode } from "@lisn/utils/browser";
 import {
   showElement,
   hideElement,
@@ -2202,11 +2197,7 @@ import {
   preventSelect,
 } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
-import {
-  toArrayIfSingle,
-  supportsSticky,
-  isInQuirksMode,
-} from "@lisn/utils/misc";
+import { toArrayIfSingle } from "@lisn/utils/misc";
 import {
   isScrollable,
   getDefaultScrollingElement,
@@ -2641,7 +2632,7 @@ const getScrollableProps = (containerElement: HTMLElement) =&gt; {
   if (!isMainScrollable &amp;&amp; !isBody) {
     // we need to wrap if possible
     contentWrapper = getContentWrapper(containerElement, {
-      classNames: [PREFIX_CONTENT],
+      _classNames: [PREFIX_CONTENT],
     });
     hasExistingWrapper = !MH.isNullish(contentWrapper);
 &nbsp;
@@ -2721,7 +2712,7 @@ const init = (
     config?.dragScroll ?? settings.scrollbarDragScroll ?? <span class="branch-2 cbranch-no" title="branch not covered" >false;</span>
   const useHandle = config?.useHandle ?? settings.scrollbarUseHandle ?? <span class="branch-2 cbranch-no" title="branch not covered" >false;</span>
 &nbsp;
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (MC.IS_MOBILE &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >!onMobile)</span> {
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (isMobile() &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >!onMobile)</span> {
 <span class="cstat-no" title="statement not covered" >    return;</span>
   }
 &nbsp;
@@ -2790,7 +2781,7 @@ const init = (
       ? scrollData[MC.S_CLIENT_WIDTH] / scrollData[MC.S_SCROLL_WIDTH]
       : scrollData[MC.S_CLIENT_HEIGHT] / scrollData[MC.S_SCROLL_HEIGHT];
 &nbsp;
-    logger?.debug9("Updating progress", {
+    debug: logger?.debug9("Updating progress", {
       tracksH,
       completeFraction,
       viewFraction,
@@ -2872,7 +2863,7 @@ const init = (
 <span class="cstat-no" title="statement not covered" >      setOrReleasePointerCapture(event, scrollbar, S_SET_POINTER_CAPTURE);</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    logger?.debug10("Click or drag", {</span>
+<span class="cstat-no" title="statement not covered" >    debug: <span class="cstat-no" title="statement not covered" >logger?.debug10("Click or drag", {</span></span>
       eventType,
       isClick,
       isHandleClick,
@@ -2909,7 +2900,7 @@ const init = (
       ? event.clientX - rect.left
       : event.clientY - rect.top;
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    logger?.debug10("Pointer offset", offset);</span>
+<span class="cstat-no" title="statement not covered" >    debug: <span class="cstat-no" title="statement not covered" >logger?.debug10("Pointer offset", offset);</span></span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (offset === lastOffset) {</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
@@ -2948,7 +2939,7 @@ const init = (
       ? { left: targetScrollOffset }
       : { top: targetScrollOffset };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    logger?.debug10("Scroll target offset", {</span>
+<span class="cstat-no" title="statement not covered" >    debug: <span class="cstat-no" title="statement not covered" >logger?.debug10("Scroll target offset", {</span></span>
       lastTargetFraction,
       targetCoordinates,
     });
@@ -3036,7 +3027,7 @@ const init = (
     addClasses(containerElement, PREFIX_CONTAINER);
   }
 &nbsp;
-  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !MC.IS_MOBILE);
+  setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !isMobile());
   setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
   setBooleanData(
     containerElement,
@@ -3193,7 +3184,7 @@ const setOrReleasePointerCapture = <span class="fstat-no" title="function not co
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-19T06:50:43.490Z
+                at 2025-07-20T16:27:25.598Z
             </div>
         <script src="../prettify.js"></script>
         <script>

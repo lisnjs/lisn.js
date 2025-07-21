@@ -89,7 +89,8 @@ const getReferenceElement = (spec, thisElement) => {
     selector = matchOp + refOrCls;
   } else {
     if (!refOrCls) {
-      refOrCls = (0, _cssAlter.getData)(thisElement, PREFIX_REF) || "";
+      var _getData;
+      refOrCls = (_getData = (0, _cssAlter.getData)(thisElement, PREFIX_REF)) !== null && _getData !== void 0 ? _getData : "";
     }
     if (!refOrCls) {
       throw MH.usageError(`No reference name in '${spec}'`);
@@ -144,7 +145,8 @@ const getThisReferenceElement = (selector, thisElement) => thisElement.closest(s
 const getNextReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, false);
 const getPrevReferenceElement = (selector, thisElement) => getNextOrPrevReferenceElement(selector, thisElement, true);
 const getNextOrPrevReferenceElement = (selector, thisElement, goBackward) => {
-  thisElement = getThisReferenceElement(selector, thisElement) || thisElement;
+  var _getThisReferenceElem, _allRefs$refIndex;
+  thisElement = (_getThisReferenceElem = getThisReferenceElement(selector, thisElement)) !== null && _getThisReferenceElem !== void 0 ? _getThisReferenceElem : thisElement;
   if (!MH.getDoc().contains(thisElement)) {
     return null;
   }
@@ -171,6 +173,6 @@ const getNextOrPrevReferenceElement = (selector, thisElement, goBackward) => {
       break;
     }
   }
-  return allRefs[refIndex] || null;
+  return (_allRefs$refIndex = allRefs[refIndex]) !== null && _allRefs$refIndex !== void 0 ? _allRefs$refIndex : null;
 };
 //# sourceMappingURL=dom-search.cjs.map

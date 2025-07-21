@@ -119,8 +119,9 @@ function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = 
 class LayoutTrigger extends _trigger.Trigger {
   static register() {
     (0, _trigger.registerTrigger)("layout", (element, args, actions, config) => {
+      var _args$;
       return new LayoutTrigger(element, actions, MH.assign(config, {
-        layout: (0, _validation.validateStringRequired)("layout", MH.strReplace(MH.strReplace(args[0] || "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => (0, _layout.isValidDeviceList)(value) || (0, _layout.isValidAspectRatioList)(value))
+        layout: (0, _validation.validateStringRequired)("layout", MH.strReplace(MH.strReplace((_args$ = args[0]) !== null && _args$ !== void 0 ? _args$ : "", /(min|max)-/g, "$1 "), /-to-/g, " to "), value => (0, _layout.isValidDeviceList)(value) || (0, _layout.isValidAspectRatioList)(value))
       }));
     }, newConfigValidator);
   }
@@ -132,7 +133,8 @@ class LayoutTrigger extends _trigger.Trigger {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    const layout = (config === null || config === void 0 ? void 0 : config.layout) || "";
+    var _config$layout;
+    const layout = (_config$layout = config === null || config === void 0 ? void 0 : config.layout) !== null && _config$layout !== void 0 ? _config$layout : "";
     if (!layout) {
       throw MH.usageError("'layout' is required");
     }

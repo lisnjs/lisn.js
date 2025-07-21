@@ -55,7 +55,7 @@ widgets.Pager.register();
 widgets.SameHeight.register();
 widgets.Scrollbar.register();
 widgets.ScrollToTop.register();
-widgets.SmoothScroll.register();
+// widgets.SmoothScroll.register();
 widgets.Sortable.register();
 widgets.TrackGesture.register();
 widgets.TrackScroll.register();

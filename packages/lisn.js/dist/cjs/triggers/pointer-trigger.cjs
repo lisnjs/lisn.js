@@ -343,11 +343,12 @@ const newConfigValidator = element => {
   };
 };
 const setupWatcher = (widget, element, actions, config, action) => {
+  var _MH$targetOf;
   if (!MH.lengthOf(actions)) {
     return;
   }
   config !== null && config !== void 0 ? config : config = {};
-  const target = MH.targetOf(config) || element;
+  const target = (_MH$targetOf = MH.targetOf(config)) !== null && _MH$targetOf !== void 0 ? _MH$targetOf : element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS
   // state rather than the odd/even clicks. Otherwise if the trigger is

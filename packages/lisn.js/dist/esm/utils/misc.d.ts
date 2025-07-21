@@ -3,15 +3,6 @@
  * @ignore
  * @internal
  */
-export declare const isTouchScreen: () => boolean;
-/**
- * @since v1.2.0
- */
-export declare const supportsSticky: () => boolean;
-/**
- * @since v1.2.0
- */
-export declare const isInQuirksMode: () => boolean;
 export declare const copyExistingKeys: <T extends object>(fromObj: T, toObj: T) => void;
 export declare const omitKeys: <O extends object, R extends { [K in keyof O]?: unknown; }>(obj: O, keysToRm: R) => Omit<O, keyof R>;
 export declare const compareValuesIn: <T extends object>(objA: T, objB: T, roundTo?: number) => boolean;

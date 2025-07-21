@@ -96,6 +96,7 @@ const getKeyGestureFragment = (events, options) => {
     deltaY = 0,
     deltaZ = 1;
   for (const event of events) {
+    var _deltasForKey$event$k;
     if (!MH.isKeyboardEvent(event) || event.type !== MC.S_KEYDOWN) {
       continue;
     }
@@ -117,7 +118,7 @@ const getKeyGestureFragment = (events, options) => {
       "=": event.ctrlKey ? deltasIn : null,
       "-": deltasOut
     };
-    const theseDeltas = deltasForKey[event.key] || null;
+    const theseDeltas = (_deltasForKey$event$k = deltasForKey[event.key]) !== null && _deltasForKey$event$k !== void 0 ? _deltasForKey$event$k : null;
     if (!theseDeltas) {
       // not a relevant key
       continue;

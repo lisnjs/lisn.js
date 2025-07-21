@@ -83,9 +83,10 @@ export class Openable extends Widget {
    * created for it will be returned.
    */
   static get(element) {
+    var _instances$get;
     // We manage the instances here since we also map associated elements and
     // not just the main content element that created the widget.
-    return instances.get(element) || null;
+    return (_instances$get = instances.get(element)) !== null && _instances$get !== void 0 ? _instances$get : null;
   }
   constructor(element, properties) {
     super(element);
@@ -651,7 +652,7 @@ export class Popup extends Openable {
     registerOpenable(WIDGET_NAME_POPUP, (el, config) => new Popup(el, config), popupConfigValidator);
   }
   constructor(element, config) {
-    var _config$autoClose2, _config$closeButton, _config$position;
+    var _config$autoClose2, _config$closeButton;
     super(element, {
       name: WIDGET_NAME_POPUP,
       id: config === null || config === void 0 ? void 0 : config.id,
@@ -664,7 +665,7 @@ export class Popup extends Openable {
     });
     const root = this.getRoot();
     const container = this.getContainer();
-    const position = (_config$position = config === null || config === void 0 ? void 0 : config.position) !== null && _config$position !== void 0 ? _config$position : S_AUTO;
+    const position = (config === null || config === void 0 ? void 0 : config.position) || S_AUTO;
     if (position !== S_AUTO) {
       setData(root, MC.PREFIX_PLACE, position);
     }
@@ -1103,13 +1104,14 @@ const getPrefixedNames = name => {
   };
 };
 const findContainer = (content, cls) => {
+  var _currWidget$getRoot;
   const currWidget = instances.get(content);
   // If there's an existing widget that we're about to destroy, the content
   // element will be wrapped in several elements and won't be restored until
   // the next mutate time. In that case, to correctly determine the container
   // element, use the current widget's root element, which is located in the
   // content element's original place.
-  let childRef = (currWidget === null || currWidget === void 0 ? void 0 : currWidget.getRoot()) || content;
+  let childRef = (_currWidget$getRoot = currWidget === null || currWidget === void 0 ? void 0 : currWidget.getRoot()) !== null && _currWidget$getRoot !== void 0 ? _currWidget$getRoot : content;
   if (!MH.parentOf(childRef)) {
     // The current widget is not yet initialized (i.e. we are re-creating it
     // immediately after it was constructed)
@@ -1514,10 +1516,10 @@ const setupListeners = (widget, elements, properties, prefixedNames) => {
 // COLLAPSIBLE ------------------------------
 
 const insertCollapsibleIcon = (trigger, triggerConfig, widget, widgetConfig) => {
-  var _triggerConfig$icon, _ref2, _triggerConfig$iconCl, _ref3, _triggerConfig$iconOp;
+  var _triggerConfig$icon, _triggerConfig$iconCl, _triggerConfig$iconOp;
   const iconPosition = (_triggerConfig$icon = triggerConfig.icon) !== null && _triggerConfig$icon !== void 0 ? _triggerConfig$icon : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.icon;
-  const iconClosed = (_ref2 = (_triggerConfig$iconCl = triggerConfig.iconClosed) !== null && _triggerConfig$iconCl !== void 0 ? _triggerConfig$iconCl : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconClosed) !== null && _ref2 !== void 0 ? _ref2 : "plus";
-  const iconOpen = (_ref3 = (_triggerConfig$iconOp = triggerConfig.iconOpen) !== null && _triggerConfig$iconOp !== void 0 ? _triggerConfig$iconOp : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconOpen) !== null && _ref3 !== void 0 ? _ref3 : "minus";
+  const iconClosed = ((_triggerConfig$iconCl = triggerConfig.iconClosed) !== null && _triggerConfig$iconCl !== void 0 ? _triggerConfig$iconCl : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconClosed) || "plus";
+  const iconOpen = ((_triggerConfig$iconOp = triggerConfig.iconOpen) !== null && _triggerConfig$iconOp !== void 0 ? _triggerConfig$iconOp : widgetConfig === null || widgetConfig === void 0 ? void 0 : widgetConfig.iconOpen) || "minus";
   if (iconPosition) {
     addClasses(trigger, PREFIX_ICON_WRAPPER);
     setData(trigger, PREFIX_ICON_POSITION, iconPosition);

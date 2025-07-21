@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.toBoolean = exports.toBool = exports.toArrayIfSingle = exports.supportsSticky = exports.omitKeys = exports.keyExists = exports.isTouchScreen = exports.isInQuirksMode = exports.copyExistingKeys = exports.compareValuesIn = void 0;
+exports.toBoolean = exports.toBool = exports.toArrayIfSingle = exports.omitKeys = exports.keyExists = exports.copyExistingKeys = exports.compareValuesIn = void 0;
 var MH = _interopRequireWildcard(require("../globals/minification-helpers.cjs"));
 var _math = require("./math.cjs");
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
@@ -13,20 +13,6 @@ function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r
  * @internal
  */
 
-const isTouchScreen = () => MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
-
-/**
- * @since v1.2.0
- */
-exports.isTouchScreen = isTouchScreen;
-const supportsSticky = () => MH.hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
-
-/**
- * @since v1.2.0
- */
-exports.supportsSticky = supportsSticky;
-const isInQuirksMode = () => MH.hasDOM() ? document.compatMode === "BackCompat" : false;
-exports.isInQuirksMode = isInQuirksMode;
 const copyExistingKeys = (fromObj, toObj) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {

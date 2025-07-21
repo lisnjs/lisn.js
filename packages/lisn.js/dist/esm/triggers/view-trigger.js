@@ -148,7 +148,7 @@ export class ViewTrigger extends Trigger {
    *                If the config is invalid.
    */
   constructor(element, actions, config) {
-    var _config$rootMargin;
+    var _config$rootMargin, _config$target;
     super(element, actions, config);
     _defineProperty(this, "getConfig", void 0);
     const logger = debug ? new debug.Logger({
@@ -163,7 +163,7 @@ export class ViewTrigger extends Trigger {
       rootMargin: config === null || config === void 0 || (_config$rootMargin = config.rootMargin) === null || _config$rootMargin === void 0 ? void 0 : _config$rootMargin.replace(/,/g, " "),
       threshold: config === null || config === void 0 ? void 0 : config.threshold
     });
-    const target = (config === null || config === void 0 ? void 0 : config.target) || element;
+    const target = (_config$target = config === null || config === void 0 ? void 0 : config.target) !== null && _config$target !== void 0 ? _config$target : element;
     const views = (config === null || config === void 0 ? void 0 : config.views) || MC.S_AT;
     const oppositeViews = getOppositeViews(views);
     const setupWatcher = target => {

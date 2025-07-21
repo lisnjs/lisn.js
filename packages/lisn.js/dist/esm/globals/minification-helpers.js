@@ -10,7 +10,8 @@ import * as MC from "./minification-constants.js";
 import { LisnUsageError, LisnBugError } from "./errors.js";
 
 // credit: underscore.js
-const root = typeof self === "object" && self.self === self && self || typeof global == "object" && global.global === global && global || Function("return this")() || {};
+export const root = typeof self === "object" && self.self === self && self || typeof global == "object" && global.global === global && global || Function("return this")() || {};
+export const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
 export const kebabToCamelCase = str => str.replace(/-./g, m => toUpperCase(m.charAt(1)));
 export const camelToKebabCase = str => str.replace(/[A-Z][a-z]/g, m => "-" + toLowerCase(m)).replace(/[A-Z]+/, m => "-" + toLowerCase(m));
 export const prefixName = name => `${MC.PREFIX}-${name}`;
@@ -141,6 +142,7 @@ export const min = MC.MATH.min.bind(MC.MATH);
 export const abs = MC.MATH.abs.bind(MC.MATH);
 export const round = MC.MATH.round.bind(MC.MATH);
 export const pow = MC.MATH.pow.bind(MC.MATH);
+export const exp = MC.MATH.exp.bind(MC.MATH);
 export const parseFloat = MC.NUMBER.parseFloat.bind(MC.NUMBER);
 export const isNaN = MC.NUMBER.isNaN.bind(MC.NUMBER);
 export const isInstanceOf = (value, Class) => value instanceof Class;
@@ -150,7 +152,10 @@ export const typeOrClassOf = obj => {
   var _constructorOf;
   return isObject(obj) ? (_constructorOf = constructorOf(obj)) === null || _constructorOf === void 0 ? void 0 : _constructorOf.name : typeOf(obj);
 };
-export const parentOf = element => (element === null || element === void 0 ? void 0 : element.parentElement) || null;
+export const parentOf = element => {
+  var _element$parentElemen;
+  return (_element$parentElemen = element === null || element === void 0 ? void 0 : element.parentElement) !== null && _element$parentElemen !== void 0 ? _element$parentElemen : null;
+};
 export const childrenOf = element => (element === null || element === void 0 ? void 0 : element.children) || [];
 export const targetOf = obj => obj === null || obj === void 0 ? void 0 : obj.target;
 export const currentTargetOf = obj => obj === null || obj === void 0 ? void 0 : obj.currentTarget;

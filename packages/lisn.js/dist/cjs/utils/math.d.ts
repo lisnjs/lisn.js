@@ -180,6 +180,39 @@ export declare const quadraticRoots: (a: number, b: number, c: number) => number
  */
 export declare const easeInOutQuad: (x: number) => number;
 /**
+ * Returns the new position and velocity for a critically damped user-driven
+ * spring state toward a current target position.
+ *
+ * @param [settings.lTarget]       Target final position.
+ * @param [settings.dt]            Time step in milliseconds since the last call.
+ *                                 Must be small for the returned values to be
+ *                                 meaningful.
+ * @param [settings.lag]           Lag in milliseconds (how long it should take
+ *                                 for it to reach the final position). Must be
+ *                                 positive.
+ * @param [settings.l = 0]         Current position (starting or one returned by
+ *                                 previous call).
+ * @param [settings.v = 0]         Current velocity (returned by previous call).
+ * @param [settings.precision = 2] Number of decimal places to round position to
+ *                                 in order to determine when it's "done".
+ * @returns Updated position and velocity
+ *
+ * @since v1.2.0
+ *
+ * @category Math
+ */
+export declare const criticallyDamped: (settings: {
+    lTarget: number;
+    dt: number;
+    lag: number;
+    l?: number;
+    v?: number;
+    precision?: number;
+}) => {
+    l: number;
+    v: number;
+};
+/**
  * Returns an array of object's keys sorted by the numeric value they hold.
  *
  * @category Math

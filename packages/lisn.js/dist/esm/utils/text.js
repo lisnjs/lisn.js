@@ -156,7 +156,7 @@ export const randId = (nChars = 8) => {
 export const toMargins = (value, absoluteSize) => {
   var _parts$, _parts$2, _ref, _parts$3;
   const toPxValue = (strValue, index) => {
-    let margin = MH.parseFloat(strValue || "") || 0;
+    let margin = MH.parseFloat(strValue !== null && strValue !== void 0 ? strValue : "") || 0;
     if (strValue === margin + "%") {
       margin *= index % 2 ? absoluteSize[MC.S_HEIGHT] : absoluteSize[MC.S_WIDTH];
     }

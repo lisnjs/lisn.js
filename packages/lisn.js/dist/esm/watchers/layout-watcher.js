@@ -308,6 +308,7 @@ const VAR_BORDER_HEIGHT = MH.prefixCssJsVar("border-height");
 const PREFIX_DEVICE = MH.prefixName("device");
 const PREFIX_ASPECTR = MH.prefixName("aspect-ratio");
 const getConfig = config => {
+  var _config$root;
   const deviceBreakpoints = MH.copyObject(settings.deviceBreakpoints);
   if (config !== null && config !== void 0 && config.deviceBreakpoints) {
     copyExistingKeys(config.deviceBreakpoints, deviceBreakpoints);
@@ -317,7 +318,7 @@ const getConfig = config => {
     copyExistingKeys(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
   }
   return {
-    _root: (config === null || config === void 0 ? void 0 : config.root) || null,
+    _root: (_config$root = config === null || config === void 0 ? void 0 : config.root) !== null && _config$root !== void 0 ? _config$root : null,
     _deviceBreakpoints: deviceBreakpoints,
     _aspectRatioBreakpoints: aspectRatioBreakpoints
   };

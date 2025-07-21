@@ -685,7 +685,11 @@
 <a name='L620'></a><a href='#L620'>620</a>
 <a name='L621'></a><a href='#L621'>621</a>
 <a name='L622'></a><a href='#L622'>622</a>
-<a name='L623'></a><a href='#L623'>623</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L623'></a><a href='#L623'>623</a>
+<a name='L624'></a><a href='#L624'>624</a>
+<a name='L625'></a><a href='#L625'>625</a>
+<a name='L626'></a><a href='#L626'>626</a>
+<a name='L627'></a><a href='#L627'>627</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1008,37 +1012,41 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">93x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">93x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">93x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1202,7 +1210,7 @@
 <span class="cline-any cline-yes">93x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1020x</span>
+<span class="cline-any cline-yes">1021x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1551,7 +1559,7 @@ export const moveElementNow = (
     ignoreMove?: boolean;
   },
 ) =&gt; {
-  let parentEl = options?.to || null;
+  let parentEl = options?.to ?? null;
   const position = options?.position || "append";
   if (position === "before" || position === "after") {
     parentEl = MH.parentOf(options?.to);
@@ -1626,18 +1634,20 @@ export const isAllowedToWrap = (element: Element) =&gt;
  * @ignore
  * @internal
  *
- * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
  *
  * @since v1.2.0
  */
 export const getWrapper = <span class="fstat-no" title="function not covered" >(</span>
   element: Element,
   options?: {
-    tagName?: keyof HTMLElementTagNameMap;
-    classNames?: string[] | null;
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
   },
 ) =&gt; {
-  const { tagName, classNames = <span class="branch-0 cbranch-no" title="branch not covered" >[MC.PREFIX_WRAPPER] </span>} = <span class="cstat-no" title="statement not covered" >options ?? {};</span>
+  const { _tagName: tagName, _classNames: classNames = <span class="branch-0 cbranch-no" title="branch not covered" >[MC.PREFIX_WRAPPER] </span>} =
+<span class="cstat-no" title="statement not covered" >    options ?? {};</span>
   const parent = <span class="cstat-no" title="statement not covered" >MH.parentOf(element);</span>
 <span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (</span>
     MH.lengthOf(MH.childrenOf(parent)) === 1 &amp;&amp;
@@ -1656,18 +1666,20 @@ export const getWrapper = <span class="fstat-no" title="function not covered" >(
  * @ignore
  * @internal
  *
- * @param classNames Default is [MC.PREFIX_WRAPPER]. Pass `null` to disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
+ *                             disable check.
  *
  * @since v1.2.0
  */
 export const getContentWrapper = (
   element: Element,
   options?: {
-    tagName?: keyof HTMLElementTagNameMap;
-    classNames?: string[] | null;
+    _tagName?: keyof HTMLElementTagNameMap;
+    _classNames?: string[] | null;
   },
 ) =&gt; {
-  const { tagName, classNames = <span class="branch-0 cbranch-no" title="branch not covered" >[MC.PREFIX_WRAPPER] </span>} = options ?? <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
+  const { _tagName: tagName, _classNames: classNames = <span class="branch-0 cbranch-no" title="branch not covered" >[MC.PREFIX_WRAPPER] </span>} =
+    options ?? <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
   const firstChild = MH.childrenOf(element)[0];
   if (
     MH.lengthOf(MH.childrenOf(element)) === 1 &amp;&amp;
@@ -1783,10 +1795,10 @@ export const insertGhostCloneNow = <span class="fstat-no" title="function not co
     MC.PREFIX_ANIMATE_DISABLE,
   );
 &nbsp;
-  const wrapper = <span class="cstat-no" title="statement not covered" >_tryWrapNow(clone, { required: true });</span>
+  const wrapper = <span class="cstat-no" title="statement not covered" >_tryWrapNow(clone, { _required: true });</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  moveElementNow(wrapper, {</span>
-    to: insertBefore || element,
+    to: insertBefore ?? element,
     position: "before",
     ignoreMove: true,
   });
@@ -1813,8 +1825,8 @@ export const ignoreMove = (
   options: { from?: Element | null; to?: Element | null },
 ) =&gt;
   recordsToSkipOnce.set(target, {
-    from: options.from || null,
-    to: options.to || null,
+    from: options.from ?? null,
+    to: options.to ?? null,
   });
 &nbsp;
 /**
@@ -1824,7 +1836,7 @@ export const ignoreMove = (
 export const getIgnoreMove = (
   target: Element,
 ): { from: Element | null; to: Element | null } | null =&gt;
-  recordsToSkipOnce.get(target) || null;
+  recordsToSkipOnce.get(target) ?? null;
 &nbsp;
 /**
  * @ignore
@@ -1859,11 +1871,11 @@ export const insertArrow = (
 // ----------------------------------------
 &nbsp;
 type ContentWrappingOptions = {
-  tagName?: keyof HTMLElementTagNameMap;
-  classNames?: string[]; // if the wrapper has any one of these, it will be re-used
-  ignoreMove?: boolean; // default is true here
-  required?: boolean; // if true, will ignore contentWrappingAllowed and data-lisn-no-wrap
-  requiredBy?: string; // for logging purposes
+  _tagName?: keyof HTMLElementTagNameMap;
+  _classNames?: string[]; // if the wrapper has any one of these, it will be re-used
+  _ignoreMove?: boolean; // default is true here
+  _required?: boolean; // if true, will ignore contentWrappingAllowed and data-lisn-no-wrap
+  _requiredBy?: string; // for logging purposes
 };
 &nbsp;
 const recordsToSkipOnce = MH.newMap&lt;
@@ -1897,11 +1909,11 @@ const _tryWrapNow = &lt;O extends ContentWrappingOptions&gt;(
   wrapContent = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span> // if true, wrap its children, otherwise given element
 ) =&gt; {
   const {
-    tagName,
-    classNames = <span class="branch-0 cbranch-no" title="branch not covered" >[MC.PREFIX_WRAPPER],</span>
-    ignoreMove = true,
-    required = false,
-    requiredBy = "",
+    _tagName: tagName,
+    _classNames: classNames = <span class="branch-0 cbranch-no" title="branch not covered" >[MC.PREFIX_WRAPPER],</span>
+    _ignoreMove: ignoreMove = true,
+    _required: required = false,
+    _requiredBy: requiredBy = "",
   } = options ?? <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
 &nbsp;
   const getWrapperFn = wrapContent ? getContentWrapper : <span class="branch-1 cbranch-no" title="branch not covered" >getWrapper;</span>
@@ -1925,7 +1937,7 @@ const _tryWrapNow = &lt;O extends ContentWrappingOptions&gt;(
     }
   }
 &nbsp;
-  return wrapper as O extends { required: true }
+  return wrapper as O extends { _required: true }
     ? HTMLElement
     : HTMLElement | null;
 };
@@ -1936,7 +1948,7 @@ const _tryWrapNow = &lt;O extends ContentWrappingOptions&gt;(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-19T06:50:43.490Z
+                at 2025-07-20T16:27:25.598Z
             </div>
         <script src="../prettify.js"></script>
         <script>

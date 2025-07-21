@@ -16,7 +16,6 @@ import {
   setNumericStyleJsVarsNow,
 } from "@lisn/utils/css-alter";
 import {
-  moveElementNow,
   getContentWrapper,
   tryWrapContentNow,
   unwrapContentNow,
@@ -27,7 +26,7 @@ import {
 } from "@lisn/utils/dom-optimize";
 import { logError } from "@lisn/utils/log";
 import { toArrayIfSingle } from "@lisn/utils/misc";
-import { isScrollable, getDefaultScrollingElement } from "@lisn/utils/scroll";
+import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { formatAsString } from "@lisn/utils/text";
 import {
   validateStrList,
@@ -276,7 +275,6 @@ const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
 // non-blank ID.
 const DUMMY_ID = PREFIXED_NAME;
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
-const PREFIX_DUMMY = `${PREFIXED_NAME}__dummy`;
 const PREFIX_OUTER_WRAPPER = `${PREFIXED_NAME}__content`;
 const PREFIX_INNER_WRAPPER = `${PREFIXED_NAME}__inner`;
 const PREFIX_HAS_H_SCROLL = MH.prefixName("has-h-scroll");
@@ -302,7 +300,7 @@ const createWrappers = <K extends string>(
   //   key to use in the returned object,
   //   classNames to add,
   // ]
-  classNamesEntries: readonly [K, string[]][],
+  classNamesEntries: readonly [K, string[], string[]][],
 ): { wrappers: WrappersFor<K>; unwrapFn: () => void } => {
   const wrapContentNow = (element: HTMLElement, classNames: string[]) =>
     tryWrapContentNow(element, {
@@ -322,15 +320,16 @@ const createWrappers = <K extends string>(
     createdByUs = [];
   };
 
-  for (const [key, classNames] of classNamesEntries) {
-    // Add generic lisn-wrapper class to allow ScrollWatcher to reuse it
-    const allClassNames = [...classNames, MC.PREFIX_WRAPPER];
+  for (const [key, classNames, extraClassNames] of classNamesEntries) {
     let wrapper = getContentWrapper(lastWrapper, {
-      _classNames: allClassNames,
+      _classNames: [...classNames, ...extraClassNames],
     });
 
     if (!wrapper) {
-      wrapper = wrapContentNow(lastWrapper, allClassNames);
+      wrapper = wrapContentNow(lastWrapper, [
+        ...classNames,
+        ...extraClassNames,
+      ]);
       createdByUs.push([wrapper, classNames]); // only remove the specific classes
     }
 
@@ -351,23 +350,23 @@ const init = async (
   const docEl = MH.getDocElement();
   const body = MH.getBody();
   const defaultScrollable = getDefaultScrollingElement();
-  let needsSticky = true;
+  let isBody = false;
   let root = scrollable;
 
   if (scrollable === docEl || scrollable === body) {
     scrollable = defaultScrollable;
     root = body;
-    needsSticky = false;
+    isBody = true;
   }
 
   const logger = debug
     ? new debug.Logger({
         name: `SmoothScroll-${formatAsString(scrollable)}`,
-        logAtCreation: { config, needsSticky },
+        logAtCreation: { config, isBody },
       })
     : null;
 
-  if (needsSticky && !supportsSticky()) {
+  if (!isBody && !supportsSticky()) {
     logError(
       "SmoothScroll on elements other than the document relies on " +
         "position: sticky, but this browser does not support sticky.",
@@ -378,24 +377,15 @@ const init = async (
   const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
   const sizeWatcher = SizeWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
 
-  await waitForMeasureTime();
-  const initialContentWidth = scrollable[MC.S_SCROLL_WIDTH];
-  const initialContentHeight = scrollable[MC.S_SCROLL_HEIGHT];
-  debug: logger?.debug5({
-    clientWidth: scrollable.clientWidth,
-    clientHeight: scrollable.clientHeight,
-    scrollWidth: initialContentWidth,
-    scrollHeight: initialContentHeight,
-  });
-
   // We only care if it has horizontal/vertical scroll if we're using a custom
   // scrollable, so no need to check otherwise.
-  const hasHScroll = needsSticky
-    ? isScrollable(scrollable, { axis: "x" })
-    : false;
-  const hasVScroll = needsSticky
-    ? isScrollable(scrollable, { axis: "y" })
-    : false;
+  // XXX
+  // const hasHScroll = needsSticky
+  //   ? isScrollable(scrollable, { axis: "x" })
+  //   : false;
+  // const hasVScroll = needsSticky
+  //   ? isScrollable(scrollable, { axis: "y" })
+  //   : false;
 
   // ----------
 
@@ -413,27 +403,29 @@ const init = async (
   };
 
   // If there's a scroll or size change for the scrollable container, update the
-  // transforms and possibly the width/height of the content (if it uses sticky)
-  // .
+  // transforms and possibly the width/height of the content (if it uses sticky).
   const updatePropsOnScroll = (target: Element, scrollData: ScrollData) => {
+    console.log("XXX", scrollData);
     updateTargetPosition(scrollData);
 
     // If the scrollable scrolls horizontally we need to set a fixed width on
     // the inner wrapper, and if it scrolls vertically we need to set a fixed
     // height.
-    if (needsSticky) {
-      setSizeVars(
-        innerWrapper,
-        hasHScroll ? scrollData[MC.S_CLIENT_WIDTH] : NaN,
-        hasVScroll ? scrollData[MC.S_CLIENT_HEIGHT] : NaN,
-      );
-    }
+    // XXX
+    // if (needsSticky) {
+    //   setSizeVars(
+    //     innerWrapper,
+    //     hasHScroll ? scrollData[MC.S_CLIENT_WIDTH] : NaN,
+    //     hasVScroll ? scrollData[MC.S_CLIENT_HEIGHT] : NaN,
+    //   );
+    // }
   };
 
-  // If content is resized, update the dummy overflow to match its size
+  // If content is resized, update the body size to match its size
   const updatePropsOnResize = (target: Element, sizeData: SizeData) => {
+    console.log("XXX", sizeData);
     setSizeVars(
-      dummy,
+      root,
       sizeData.border[MC.S_WIDTH],
       sizeData.border[MC.S_HEIGHT],
     );
@@ -503,14 +495,11 @@ const init = async (
   // ----------
 
   const addWatchers = () => {
-    // Track scroll in any direction as well as changes in border or content size
-    // of the element and its contents.
-    scrollWatcher.trackScroll(updatePropsOnScroll, {
+    scrollWatcher.onScroll(updatePropsOnScroll, {
       threshold: 0,
       scrollable,
     });
 
-    // Track changes in content or border size of the inner content wrapper.
     sizeWatcher.onResize(updatePropsOnResize, {
       target: innerWrapper,
       threshold: 0,
@@ -518,29 +507,45 @@ const init = async (
   };
 
   const removeWatchers = () => {
-    scrollWatcher.noTrackScroll(updatePropsOnScroll, scrollable);
+    scrollWatcher.offScroll(updatePropsOnScroll, scrollable);
     sizeWatcher.offResize(updatePropsOnResize, innerWrapper);
   };
 
   // SETUP ------------------------------
 
+  let initialContentWidth = 0,
+    initialContentHeight = 0;
+  // TODO also measure the margins on body and set those on the outerWrapper
+  if (isBody) {
+    await waitForMeasureTime();
+    initialContentWidth = scrollable[MC.S_SCROLL_WIDTH];
+    initialContentHeight = scrollable[MC.S_SCROLL_HEIGHT];
+
+    debug: logger?.debug5({
+      clientWidth: scrollable.clientWidth,
+      clientHeight: scrollable.clientHeight,
+      scrollWidth: initialContentWidth,
+      scrollHeight: initialContentHeight,
+    });
+  }
+
   await waitForMutateTime();
   addClassesNow(root, PREFIX_ROOT);
 
-  // Wrap the contents in a fixed/sticky positioned wrapper and insert a dummy
-  // overflow element of the same size.
+  // Wrap the contents in a fixed/sticky positioned wrapper.
   // [TODO v2]: Better way to centrally manage wrapping and wrapping of elements
   const { wrappers, unwrapFn } = createWrappers(root, [
-    ["o", [PREFIX_OUTER_WRAPPER]],
-    ["i", [PREFIX_INNER_WRAPPER]],
+    ["o", [PREFIX_OUTER_WRAPPER], [MC.PREFIX_WRAPPER]],
+    ["i", [PREFIX_INNER_WRAPPER], [MC.PREFIX_WRAPPER_INLINE]],
   ]);
 
   const outerWrapper = wrappers.o;
   const innerWrapper = wrappers.i;
 
-  if (needsSticky) {
-    setBooleanDataNow(root, PREFIX_HAS_H_SCROLL, hasHScroll);
-    setBooleanDataNow(root, PREFIX_HAS_V_SCROLL, hasVScroll);
+  if (!isBody) {
+    // XXX
+    // setBooleanDataNow(root, PREFIX_HAS_H_SCROLL, hasHScroll);
+    // setBooleanDataNow(root, PREFIX_HAS_V_SCROLL, hasVScroll);
     setBooleanDataNow(root, PREFIX_USES_STICKY);
   }
 
@@ -552,11 +557,10 @@ const init = async (
     addClassesNow(outerWrapper, ...toArrayIfSingle(config.className));
   }
 
-  const dummy = MH.createElement("div");
-  addClassesNow(dummy, PREFIX_DUMMY);
-  // set its size now to prevent initial layout shifts
-  setSizeVars(dummy, initialContentWidth, initialContentHeight, true);
-  moveElementNow(dummy, { to: root, ignoreMove: true });
+  if (isBody) {
+    // set its size now to prevent initial layout shifts
+    setSizeVars(root, initialContentWidth, initialContentHeight, true);
+  }
 
   addWatchers();
 
@@ -574,11 +578,13 @@ const init = async (
     await waitForMutateTime();
 
     unwrapFn();
-    moveElementNow(dummy); // remove
+
+    // delete CSS vars from root
+    setSizeVars(root, NaN, NaN, true);
 
     removeClassesNow(root, PREFIX_ROOT);
-    delDataNow(root, PREFIX_HAS_H_SCROLL);
-    delDataNow(root, PREFIX_HAS_V_SCROLL);
+    // delDataNow(root, PREFIX_HAS_H_SCROLL); // XXX
+    // delDataNow(root, PREFIX_HAS_V_SCROLL); // XXX
     delDataNow(root, PREFIX_USES_STICKY);
   });
 };

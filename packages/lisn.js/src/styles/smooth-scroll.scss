@@ -9,6 +9,8 @@
     overflow: visible;
     top: 0;
     left: 0;
+    max-height: 100%;
+    max-width: 100%;
   }
 
   & .lisn-smooth-scroll__inner {
@@ -22,7 +24,7 @@
     will-change: transform;
   }
 
-  & .lisn-smooth-scroll__dummy {
+  &:is(body) {
     width: var(--lisn-js--width); /* content (scroll) width */
     height: var(--lisn-js--height); /* content (scroll) height */
   }
@@ -32,32 +34,6 @@
 
     & .lisn-smooth-scroll__content {
       position: sticky;
-    }
-
-    & .lisn-smooth-scroll__inner {
-      overflow: hidden;
-    }
-
-    &[data-lisn-has-h-scroll="true"] {
-      & .lisn-smooth-scroll__content {
-        /* sticky wrapper */
-        width: 0;
-      }
-
-      & .lisn-smooth-scroll__inner {
-        width: var(--lisn-js--width); /* fixed client width */
-      }
-    }
-
-    &[data-lisn-has-v-scroll="true"] {
-      & .lisn-smooth-scroll__content {
-        /* sticky wrapper */
-        height: 0;
-      }
-
-      & .lisn-smooth-scroll__inner {
-        height: var(--lisn-js--height); /* fixed client height */
-      }
     }
   }
 }

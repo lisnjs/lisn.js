@@ -150,6 +150,15 @@ export const settings = MH.preventExtensions({
 
   /**
    * Default setting for
+   * {@link Widgets.SmoothScroll.lag | SmoothScroll.lag}.
+   *
+   * @defaultValue 1000
+   * @category Widgets/SmoothScroll
+   */
+  smoothScrollLag: 1000,
+
+  /**
+   * Default setting for
    * {@link Widgets.ScrollbarConfig.hideNative | ScrollbarConfig.hideNative}.
    *
    * @defaultValue true

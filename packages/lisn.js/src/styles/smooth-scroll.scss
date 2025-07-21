@@ -16,8 +16,8 @@
   & .lisn-smooth-scroll__inner {
     /* force GPU acceleration */
     transform: translate3d(
-      var(--lisn-js--offset-x, 0px),
-      var(--lisn-js--offset-y, 0px),
+      calc(-1px * var(--lisn-js--offset-x, 0)),
+      calc(-1px * var(--lisn-js--offset-y, 0)),
       0.1px
     ) !important;
     transition: transform 0.05s linear; /* smooth it out */

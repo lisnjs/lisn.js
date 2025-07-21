@@ -6,7 +6,7 @@
     <script src="assets/js/lisn.ln.js" charset="utf-8"></script>
     <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
     <script charset="utf-8">
-      window.LISN.widgets.PageLoader.enableMain();
+      LISN.widgets.PageLoader.enableMain();
     </script>
     <link
       rel="stylesheet"
@@ -22,7 +22,7 @@
       const foo = document.getElementById("foo");
       foo.innerText = `Do nc -l -s ${MY_IP_ADDRESS} -p 8085 -k`;
       const img = document.createElement("img");
-      (img.src = `http://${MY_IP_ADDRESS}:8085`), document.body.append(img);
+      ((img.src = `http://${MY_IP_ADDRESS}:8085`), document.body.append(img));
     </script>
   </body>
 </html>

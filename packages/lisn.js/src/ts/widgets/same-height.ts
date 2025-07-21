@@ -406,7 +406,7 @@ import debug from "@lisn/debug/debug";
  * To use with auto-widgets (HTML API) (see {@link settings.autoWidgets}), the
  * following CSS classes or data attributes are recognized:
  * - `lisn-same-height` class or `data-lisn-same-height` attribute set on the
- *   container element that constitutes the widget
+ *   container element that constitutes the widget.
  *
  * When using auto-widgets, the elements that will be used as items are
  * discovered in the following way:

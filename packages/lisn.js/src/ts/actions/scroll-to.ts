@@ -44,8 +44,8 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * trigger option.
  *
  * @example
- * When the user clicks the button, scroll the main scrolling element to
- * element's position:
+ * When the user clicks the button (click target), scroll the main scrolling
+ * element to position of the element (on which the trigger is defined):
  *
  * ```html
  * <button id="btn">Scroll to/back</button>
@@ -53,8 +53,9 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * ```
  *
  * @example
- * When the user clicks the button, scroll the main scrolling element to
- * element's position +10px down:
+ * When the user clicks the button (click target), scroll the main scrolling
+ * element to position of the element (on which the trigger is defined) +10px
+ * down:
  *
  * ```html
  * <button id="btn">Scroll to/back</button>
@@ -62,8 +63,9 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * ```
  *
  * @example
- * When the user clicks the button, scroll the main scrolling element to
- * element's position 10px _down_ and 50px _left_, with a duration of 200ms:
+ * When the user clicks the button (click target), scroll the main scrolling
+ * element to position of the element (on which the trigger is defined) plus
+ * 10px _down_ and 50px _left_, with a duration of 200ms:
  *
  * ```html
  * <button id="btn">Scroll to/back</button>
@@ -71,8 +73,9 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * ```
  *
  * @example
- * When the user clicks the button, scroll the closest parent element with
- * class `scrollable` to the element's position:
+ * When the user clicks the button (click target), scroll the closest parent
+ * element with class `scrollable` to the position of the element (on which the
+ * trigger is defined):
  *
  * ```html
  * <button id="btn">Scroll to/back</button>

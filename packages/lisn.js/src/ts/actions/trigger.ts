@@ -37,10 +37,10 @@ import { Action, registerAction } from "@lisn/actions/action";
  * ```html
  * <button id="btn">Enable/disable</button>
  * <button data-lisn-on-click="
- *         @enable=triggerA,triggerB +target=#btn
- *         @add-class=clsA +id=triggerA
+ *         @enable: triggerA,triggerB +target=#btn
+ *         @add-class: clsA +id=triggerA
  *      "
- *      data-lisn-on-click="@add-class=clsB +id=triggerB"
+ *      data-lisn-on-click="@add-class: clsB +id=triggerB"
  * ></button>
  * ```
  *
@@ -93,10 +93,10 @@ export class Enable implements Action {
  * ```html
  * <button id="btn">Enable/disable</button>
  * <button data-lisn-on-click="
- *         @disable=triggerA,triggerB +target=#btn
- *         @add-class=clsA +id=triggerA
+ *         @disable: triggerA,triggerB +target=#btn
+ *         @add-class: clsA +id=triggerA
  *      "
- *      data-lisn-on-click="@add-class=clsB +id=triggerB"
+ *      data-lisn-on-click="@add-class: clsB +id=triggerB"
  * ></button>
  * ```
  *
@@ -145,10 +145,10 @@ export class Disable implements Action {
  * @example
  * ```html
  * <button data-lisn-on-click="
- *         @run=triggerA,triggerB
- *         @add-class=clsA +id=triggerA
+ *         @run: triggerA,triggerB
+ *         @add-class: clsA +id=triggerA
  *      "
- *      data-lisn-on-run="@add-class=clsB +id=triggerB"
+ *      data-lisn-on-run="@add-class: clsB +id=triggerB"
  * ></button>
  * ```
  *

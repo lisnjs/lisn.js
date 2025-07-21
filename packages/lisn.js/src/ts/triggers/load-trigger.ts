@@ -32,14 +32,14 @@ import {
  * Scroll to the given element when the page is loaded:
  *
  * ```html
- * <div data-lisn-on-load=":scroll-to"></div>
+ * <div data-lisn-on-load="@scroll-to"></div>
  * ```
  *
  * @example
  * Scroll to 100px above the given element 500ms after the page is loaded:
  *
  * ```html
- * <div data-lisn-on-load="@scroll-to=0,-100 +delay=500"></div>
+ * <div data-lisn-on-load="@scroll-to: offsetY=-100 +delay=500"></div>
  * ```
  *
  * @example
@@ -47,7 +47,7 @@ import {
  * play animations defined on it 500ms later (1000ms after it's loaded):
  *
  * ```html
- * <div data-lisn-on-load="@scroll-to=0,-100 +delay=500 ;
+ * <div data-lisn-on-load="@scroll-to: offsetY=-100 +delay=500 ;
  *                         @animate +delay=1000"
  * ></div>
  * ```

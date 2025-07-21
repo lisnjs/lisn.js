@@ -31,7 +31,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * specification.
  *
  * - Arguments: none
- * - Additional trigger options:
+ * - Additional trigger options (see {@link CheckTriggerConfig}:
  *   - `target`: A string element specification.
  *     See {@link Utils.getReferenceElement | getReferenceElement}.
  *
@@ -40,14 +40,14 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * remove them when unchecked.
  *
  * ```html
- * <input type="checkbox" data-lisn-on-check="@add-class=active,checked"/>
+ * <input type="checkbox" data-lisn-on-check="@add-class: active,checked"/>
  * ```
  *
  * @example
  * As above, but using a CSS class instead of data attribute:
  *
  * ```html
- * <input type="checkbox" class="lisn-on-check--@add-class=active,checked"/>
+ * <input type="checkbox" class="lisn-on-check--@add-class: active,checked"/>
  * ```
  *
  * @example
@@ -65,7 +65,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * user toggles the reference checkbox.
  *
  * ```html
- * <div data-lisn-on-check="@add-class=used +once ;
+ * <div data-lisn-on-check="@add-class: used +once ;
  *                          @animate +delay=200 +target=next.checkbox"
  * ></div>
  * <input type="checkbox" class="checkbox"/>
@@ -78,7 +78,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * the reference checkbox.
  *
  * ```html
- * <div data-lisn-on-check="@add-class=c1,c2 @enable=my-trigger +target=next.checkbox"
+ * <div data-lisn-on-check="@add-class: c1,c2 @enable: my-trigger +target=next.checkbox"
  *      data-lisn-on-run="@show +id=my-trigger"
  * ></div>
  * <input type="checkbox" class="checkbox"/>
@@ -88,7 +88,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * As above, but using `data-lisn-ref` attribute instead of class selector.
  *
  * ```html
- * <div data-lisn-on-check="@add-class=c1,c2 @enable=my-trigger +target=next-checkbox"
+ * <div data-lisn-on-check="@add-class: c1,c2 @enable: my-trigger +target=next-checkbox"
  *      data-lisn-on-run="@show +id=my-trigger"
  * ></div>
  * <input type="checkbox" data-lisn-ref="checkbox"/>

@@ -55,9 +55,10 @@ import debug from "@lisn/debug/debug";
  * To use with auto-widgets (HTML API), see {@link registerTrigger} for the
  * specification.
  *
- * - Arguments (optional): One or more (comma-separated) {@link View}s.
- *   Default is "at".
- * - Additional trigger options:
+ * - Arguments (optional): One or more (comma-separated)
+ *   {@link ViewTriggerConfig.views | views}. Default is "at".
+ *
+ * - Additional trigger options (see {@link ViewTriggerConfig}):
  *   - `target`: A string element specification for an element (see
  *     {@link Utils.getReferenceElement | getReferenceElement}) or a
  *     {@link Types.ScrollOffsetSpec | ScrollOffsetSpec}.
@@ -100,7 +101,7 @@ import debug from "@lisn/debug/debug";
  * reverse the animations as soon as it goes out of view.
  *
  * ```html
- * <div data-lisn-on-view="@add-class=seen +once ;
+ * <div data-lisn-on-view="@add-class: seen +once ;
  *                         @animate +do-delay=1000"
  * ></div>
  * ```
@@ -112,7 +113,7 @@ import debug from "@lisn/debug/debug";
  * action. See {@link getOppositeViews}:
  *
  * ```html
- * <div data-lisn-on-view="at,below @add-class=seen"></div>
+ * <div data-lisn-on-view="at,below @add-class: seen"></div>
  * ```
  *
  * @example
@@ -121,7 +122,7 @@ import debug from "@lisn/debug/debug";
  * viewport is either at, below or to the right of the element.
  *
  * ```html
- * <div data-lisn-on-view="above,left @add-class=cls"></div>
+ * <div data-lisn-on-view="above,left @add-class: cls"></div>
  * ```
  *
  * @example
@@ -147,6 +148,21 @@ import debug from "@lisn/debug/debug";
  *
  * ```html
  * <div data-lisn-on-view="@open +target=top:75%"></div>
+ * ```
+ *
+ * @example
+ * As above but using a custom {@link Watchers/ViewWatcher.ViewWatcherConfig.root | root},
+ * {@link Watchers/ViewWatcher.ViewWatcherConfig.rootMargin | rootMargin} and
+ * {@link Watchers/ViewWatcher.ViewWatcherConfig.threshold | threshold} for the
+ * {@link ViewWatcher}.
+ *
+ * ```html
+ * <div data-lisn-on-view="@open
+ *                         +target=top:75%
+ *                         +root=#root
+ *                         +rootMargin=10% 20% 10% 20%
+ *                         +threshold=0.3"
+ * ></div>
  * ```
  *
  * @category View

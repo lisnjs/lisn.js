@@ -149,7 +149,7 @@ import debug from "@lisn/debug/debug";
  * To use with auto-widgets (HTML API) (see {@link settings.autoWidgets}), the
  * following CSS classes or data attributes are recognized:
  * - `lisn-scrollbar` class or `data-lisn-scrollbar` attribute set on the
- *   scrollable element that you want to enable custom scrollbars for
+ *   scrollable element that you want to enable custom scrollbars for.
  *
  * See below examples for what values you can use set for the data attribute
  * in order to modify the configuration of the automatically created widget.

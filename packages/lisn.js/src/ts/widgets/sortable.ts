@@ -67,7 +67,7 @@ import {
  * {@link Settings.settings.autoWidgets | settings.autoWidgets}), the following
  * CSS classes or data attributes are recognized:
  * - `lisn-sortable` class or `data-lisn-sortable` attribute set on the
- *   container element that constitutes the sortable container
+ *   container element that constitutes the sortable container.
  * - `lisn-sortable-item` class or `data-lisn-sortable-item` attribute set on
  *   elements that should act as the items.
  *

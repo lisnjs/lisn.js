@@ -159,7 +159,7 @@ export const createOverlay = async (userOptions?: OverlayOptions) => {
 
   if (options._style.position === MC.S_ABSOLUTE) {
     // Ensure parent has non-static positioning
-    addClasses(parentEl, MH.prefixName("overlay-container"));
+    addClasses(parentEl, MC.PREFIX_RELATIVE);
   }
 
   await moveElement(overlay, { to: parentEl });

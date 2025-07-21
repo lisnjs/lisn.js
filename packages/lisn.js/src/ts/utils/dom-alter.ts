@@ -317,8 +317,8 @@ export const isAllowedToWrap = (element: Element) =>
  * @ignore
  * @internal
  *
- * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
- *                             disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER].
+ *                             Pass `null` to disable check.
  *
  * @since v1.2.0
  */
@@ -349,8 +349,8 @@ export const getWrapper = (
  * @ignore
  * @internal
  *
- * @param [options.classNames] Default is [MC.PREFIX_WRAPPER]. Pass `null` to
- *                             disable check.
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER_INLINE].
+ *                             Pass `null` to disable check.
  *
  * @since v1.2.0
  */
@@ -361,8 +361,10 @@ export const getContentWrapper = (
     _classNames?: string[] | null;
   },
 ) => {
-  const { _tagName: tagName, _classNames: classNames = [MC.PREFIX_WRAPPER] } =
-    options ?? {};
+  const {
+    _tagName: tagName,
+    _classNames: classNames = [MC.PREFIX_WRAPPER_INLINE],
+  } = options ?? {};
   const firstChild = MH.childrenOf(element)[0];
   if (
     MH.lengthOf(MH.childrenOf(element)) === 1 &&
@@ -478,7 +480,10 @@ export const insertGhostCloneNow = <E extends Element>(
     MC.PREFIX_ANIMATE_DISABLE,
   );
 
-  const wrapper = _tryWrapNow(clone, { _required: true });
+  const wrapper = _tryWrapNow(clone, {
+    _classNames: [MC.PREFIX_RELATIVE, MC.PREFIX_WRAPPER],
+    _required: true,
+  });
 
   moveElementNow(wrapper, {
     to: insertBefore ?? element,
@@ -593,7 +598,9 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
 ) => {
   const {
     _tagName: tagName,
-    _classNames: classNames = [MC.PREFIX_WRAPPER],
+    _classNames: classNames = wrapContent
+      ? [MC.PREFIX_WRAPPER_INLINE]
+      : [MC.PREFIX_WRAPPER],
     _ignoreMove: ignoreMove = true,
     _required: required = false,
     _requiredBy: requiredBy = "",
@@ -608,9 +615,6 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
     wrapper = wrapFn(element, { wrapper: tagName, ignoreMove });
     if (classNames) {
       addClassesNow(wrapper, ...classNames);
-    }
-    if (isInlineTag(MH.tagName(wrapper))) {
-      addClassesNow(wrapper, MC.PREFIX_INLINE_WRAPPER);
     }
 
     if (!allowedToWrap && requiredBy) {

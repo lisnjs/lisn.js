@@ -129,8 +129,9 @@ export const S_VISIBLE = "visible";
 export const ARIA_PREFIX = "aria-";
 export const S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
 
+export const PREFIX_RELATIVE = `${PREFIX}-relative`;
 export const PREFIX_WRAPPER = `${PREFIX}-wrapper`;
-export const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER}-inline`;
+export const PREFIX_WRAPPER_INLINE = `${PREFIX_WRAPPER}-inline`;
 export const PREFIX_TRANSITION = `${PREFIX}-transition`;
 export const PREFIX_TRANSITION_DISABLE = `${PREFIX_TRANSITION}__disable`;
 export const PREFIX_HIDE = `${PREFIX}-hide`;

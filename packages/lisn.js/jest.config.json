@@ -13,6 +13,7 @@
       "lines": 90
     }
   },
+  "maxWorkers": 2,
   "injectGlobals": false,
   "testEnvironment": "jsdom",
   "testPathIgnorePatterns": ["/node_modules/", "\\.IGNORE($|\\.)"],

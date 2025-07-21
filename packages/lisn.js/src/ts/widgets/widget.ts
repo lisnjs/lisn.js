@@ -29,9 +29,9 @@
  * There can be 0 or more spaces around any of the separator characters.
  *
  * Not all widgets support multiple instances per single element and therefore
- * multiple configurations. Refer to the specific widget.
+ * multiple configurations. Refer to each specific widget.
  *
- * The characters "|", ";", "=" are reserved separators and cannot be used
+ * The characters `|`, `;`, `=` are reserved separators and cannot be used
  * literally as part of an option value.
  *
  * @module Widgets

@@ -41,7 +41,7 @@
  *
  * At least one action (with a preceding "@" character) is always required.
  *
- * The characters ";", ",", "=", "@", "+" and ":" are reserved separators and
+ * The characters `;`, `,`, `=`, `@`, `+` and `:` are reserved separators and
  * cannot be used literally as part of an argument or option value.
  *
  * @module Triggers

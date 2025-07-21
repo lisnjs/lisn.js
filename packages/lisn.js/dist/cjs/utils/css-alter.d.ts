@@ -1,14 +1,24 @@
 /**
  * @module Utils
  *
- * @categoryDescription CSS: Altering
+ * @categoryDescription DOM: Querying
+ * These functions query the style, attributes or other aspects of elements, but
+ * could lead to forced layout if not scheduled using {@link waitForMeasureTime}.
+ *
+ * @categoryDescription DOM: Querying (optimized)
+ * These functions query the style, attributes or other aspects of elements in
+ * an optimized way. Functions that could cause a forced layout use
+ * {@link waitForMeasureTime} and so are asynchronous. Functions that can
+ * perform the check without forcing a re-layout are synchronous.
+ *
+ * @categoryDescription Style: Altering
  * These functions transition an element from one CSS class to another, but
  * could lead to forced layout if not scheduled using {@link waitForMutateTime}.
  * If a delay is supplied, then the transition is "scheduled" and if the
  * opposite transition is executed before the scheduled one, the original one
  * is cancelled. See {@link transitionElement} for an example.
  *
- * @categoryDescription CSS: Altering (optimized)
+ * @categoryDescription Style: Altering (optimized)
  * These functions transition an element from one CSS class to another in an
  * optimized way using {@link waitForMutateTime} and so are asynchronous.
  * If a delay is supplied, then the transition is "scheduled" and if the
@@ -26,7 +36,7 @@ import { FlexDirection } from "../globals/types.cjs";
  * @returns True if there was a change made (class removed or added), false
  * otherwise.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const transitionElementNow: (element: Element, fromCls: string, toCls: string) => boolean;
 /**
@@ -73,7 +83,7 @@ export declare const transitionElementNow: (element: Element, fromCls: string, t
  * showElement(someElement, 100);
  * ```
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const transitionElement: (element: Element, fromCls: string, toCls: string, delay?: number) => Promise<boolean>;
 /**
@@ -86,7 +96,7 @@ export declare const transitionElement: (element: Element, fromCls: string, toCl
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const displayElementNow: (element: Element) => boolean;
 /**
@@ -95,7 +105,7 @@ export declare const displayElementNow: (element: Element) => boolean;
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const displayElement: (element: Element, delay?: number) => Promise<boolean>;
 /**
@@ -103,7 +113,7 @@ export declare const displayElement: (element: Element, delay?: number) => Promi
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const undisplayElementNow: (element: Element) => boolean;
 /**
@@ -112,7 +122,7 @@ export declare const undisplayElementNow: (element: Element) => boolean;
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const undisplayElement: (element: Element, delay?: number) => Promise<boolean>;
 /**
@@ -122,7 +132,7 @@ export declare const undisplayElement: (element: Element, delay?: number) => Pro
  *
  * @see {@link transitionElementNow}.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const showElementNow: (element: Element) => boolean;
 /**
@@ -131,7 +141,7 @@ export declare const showElementNow: (element: Element) => boolean;
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const showElement: (element: Element, delay?: number) => Promise<boolean>;
 /**
@@ -139,7 +149,7 @@ export declare const showElement: (element: Element, delay?: number) => Promise<
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const hideElementNow: (element: Element) => boolean;
 /**
@@ -148,7 +158,7 @@ export declare const hideElementNow: (element: Element) => boolean;
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const hideElement: (element: Element, delay?: number) => Promise<boolean>;
 /**
@@ -157,7 +167,7 @@ export declare const hideElement: (element: Element, delay?: number) => Promise<
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const toggleDisplayElementNow: (element: Element) => boolean;
 /**
@@ -166,7 +176,7 @@ export declare const toggleDisplayElementNow: (element: Element) => boolean;
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const toggleDisplayElement: (element: Element, delay?: number) => Promise<boolean>;
 /**
@@ -175,7 +185,7 @@ export declare const toggleDisplayElement: (element: Element, delay?: number) =>
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const toggleShowElementNow: (element: Element) => boolean;
 /**
@@ -184,25 +194,25 @@ export declare const toggleShowElementNow: (element: Element) => boolean;
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const toggleShowElement: (element: Element, delay?: number) => Promise<boolean>;
 /**
  * Returns true if the element's class list contains `lisn-hide`.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const isElementHidden: (element: Element) => boolean;
 /**
  * Returns true if the element's class list contains `lisn-undisplay`.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const isElementUndisplayed: (element: Element) => boolean;
 /**
  * Returns true if the element's class list contains the given class.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const hasClass: (element: Element, className: string) => boolean;
 /**
@@ -210,7 +220,7 @@ export declare const hasClass: (element: Element, className: string) => boolean;
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const hasAllClasses: (element: Element, ...classNames: string[]) => boolean;
 /**
@@ -218,31 +228,31 @@ export declare const hasAllClasses: (element: Element, ...classNames: string[]) 
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const hasAnyClass: (element: Element, ...classNames: string[]) => boolean;
 /**
  * Adds the given classes to the element.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const addClassesNow: (element: Element, ...classNames: string[]) => void;
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const addClasses: (element: Element, ...classNames: string[]) => Promise<void>;
 /**
  * Removes the given classes to the element.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const removeClassesNow: (element: Element, ...classNames: string[]) => void;
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const removeClasses: (element: Element, ...classNames: string[]) => Promise<void>;
 /**
@@ -250,13 +260,13 @@ export declare const removeClasses: (element: Element, ...classNames: string[]) 
  *
  * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const toggleClassNow: (element: Element, className: string, force?: boolean) => boolean;
 /**
  * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const toggleClass: (element: Element, className: string, force?: boolean | undefined) => Promise<boolean>;
 /**
@@ -265,7 +275,7 @@ export declare const toggleClass: (element: Element, className: string, force?: 
  *
  * @since v1.2.0
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const toggleClassesNow: (element: Element, ...classNames: string[]) => void;
 /**
@@ -273,17 +283,15 @@ export declare const toggleClassesNow: (element: Element, ...classNames: string[
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const toggleClasses: (element: Element, ...classNames: string[]) => Promise<void>;
 /**
  * Replaces the given class on the element with a new one.
  *
- * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
- *
  * @since v1.2.0
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const replaceClassNow: (element: Element, oldClassName: string, newClassName: string) => boolean;
 /**
@@ -291,7 +299,7 @@ export declare const replaceClassNow: (element: Element, oldClassName: string, n
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const replaceClass: (element: Element, oldClassName: string, newClassName: string) => Promise<boolean>;
 /**
@@ -299,7 +307,7 @@ export declare const replaceClass: (element: Element, oldClassName: string, newC
  * must _not_ start with `data`. It can be in either camelCase or kebab-case,
  * it is converted as needed.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const getData: (element: Element, name: string) => string | null;
 /**
@@ -312,7 +320,7 @@ export declare const getData: (element: Element, name: string) => string | null;
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const getBooleanData: (element: Element, name: string) => boolean;
 /**
@@ -326,13 +334,13 @@ export declare const getBoolData: (element: Element, name: string) => boolean;
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const setDataNow: (element: Element, name: string, value: string) => void;
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const setData: (element: Element, name: string, value: string) => Promise<void>;
 /**
@@ -343,7 +351,7 @@ export declare const setData: (element: Element, name: string, value: string) =>
  *
  * @since v1.2.0
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const setBooleanDataNow: (element: Element, name: string, value?: boolean) => void;
 /**
@@ -356,7 +364,7 @@ export declare const setBoolDataNow: (element: Element, name: string, value?: bo
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const setBooleanData: (element: Element, name: string, value?: boolean | undefined) => Promise<void>;
 /**
@@ -372,7 +380,7 @@ export declare const setBoolData: (element: Element, name: string, value?: boole
  *
  * @since v1.2.0
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const unsetBooleanDataNow: (element: Element, name: string) => void;
 /**
@@ -385,7 +393,7 @@ export declare const unsetBoolDataNow: (element: Element, name: string) => void;
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const unsetBooleanData: (element: Element, name: string) => Promise<void>;
 /**
@@ -399,39 +407,39 @@ export declare const unsetBoolData: (element: Element, name: string) => Promise<
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export declare const delDataNow: (element: Element, name: string) => void;
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export declare const delData: (element: Element, name: string) => Promise<void>;
 /**
  * Returns the value of the given property from the computed style of the
  * element.
  *
- * @category DOM: Altering
+ * @category DOM: Querying
  */
 export declare const getComputedStylePropNow: (element: Element, prop: string) => string;
 /**
  * Like {@link getComputedStylePropNow} except it will {@link waitForMeasureTime}.
  *
- * @category DOM: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const getComputedStyleProp: (element: Element, prop: string) => Promise<string>;
 /**
  * Returns the value of the given property from the inline style of the
  * element.
  *
- * @category DOM: Altering
+ * @category DOM: Querying
  */
 export declare const getStylePropNow: (element: Element, prop: string) => string;
 /**
  * Like {@link getStylePropNow} except it will {@link waitForMeasureTime}.
  *
- * @category DOM: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export declare const getStyleProp: (element: Element, prop: string) => Promise<string>;
 /**
@@ -463,6 +471,8 @@ export declare const delStyleProp: (element: Element, prop: string) => Promise<s
  *
  * @returns `null` if the element does not have a flex layout.
  *
+ * @category DOM: Querying (optimized)
+ *
  * @since v1.2.0
  */
 export declare const getFlexDirection: (element: Element) => Promise<FlexDirection | null>;
@@ -472,6 +482,8 @@ export declare const getFlexDirection: (element: Element) => Promise<FlexDirecti
  *
  * @returns `null` if the element's parent does not have a flex layout.
  *
+ * @category DOM: Querying (optimized)
+ *
  * @since v1.2.0
  */
 export declare const getParentFlexDirection: (element: Element) => Promise<FlexDirection | null>;
@@ -479,12 +491,16 @@ export declare const getParentFlexDirection: (element: Element) => Promise<FlexD
  * Returns true if the given element has a flex layout. If direction is given,
  * then it also needs to match.
  *
+ * @category DOM: Querying (optimized)
+ *
  * @since v1.2.0
  */
 export declare const isFlex: (element: Element, direction?: FlexDirection) => Promise<boolean>;
 /**
  * Returns true if the given element's parent has a flex layout. If direction is
  * given, then it also needs to match.
+ *
+ * @category DOM: Querying (optimized)
  *
  * @since v1.2.0
  */

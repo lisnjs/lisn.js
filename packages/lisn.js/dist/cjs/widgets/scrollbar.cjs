@@ -229,7 +229,7 @@ class Scrollbar extends _widget.Widget {
     _defineProperty(this, "getScrollable", void 0);
     const props = getScrollableProps(scrollable);
     const ourScrollable = props.scrollable;
-    (destroyPromise || MH.promiseResolve()).then(async () => {
+    (destroyPromise || MH.promiseResolve()).then(() => {
       if (this.isDestroyed()) {
         return;
       }
@@ -420,7 +420,7 @@ const init = (widget, containerElement, props, config) => {
 
   // ----------
 
-  const setProgress = async (scrollData, tracksH) => {
+  const setProgress = (scrollData, tracksH) => {
     const scrollbar = tracksH ? scrollbarH : scrollbarV;
     const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
     const completeFraction = tracksH ? scrollData[MC.S_SCROLL_LEFT_FRACTION] : scrollData[MC.S_SCROLL_TOP_FRACTION];
@@ -438,9 +438,15 @@ const init = (widget, containerElement, props, config) => {
       _numDecimal: 4
     });
     const scrollAxis = tracksH ? "x" : "y";
-    if ((0, _scroll.isScrollable)(scrollable, {
-      axis: scrollAxis
-    }) && viewFraction < 1) {
+    // TODO When using content-box, reading scrollWidth/Height even on the
+    // subsequent measure time still shows the "old" value that includes the
+    // border width before it seems to adjust. So sometimes it gives false
+    // positives for it being scrollable.
+    const canScroll = viewFraction < 0.99 && (completeFraction > 0 || (0, _scroll.isScrollable)(scrollable, {
+      axis: scrollAxis,
+      noCache: true
+    }));
+    if (canScroll) {
       (0, _cssAlter.setBooleanData)(containerElement, hasBarPrefix);
       (0, _cssAlter.displayElement)(scrollbar);
     } else {
@@ -452,11 +458,11 @@ const init = (widget, containerElement, props, config) => {
   // ----------
 
   const updateProgress = (target, scrollData) => {
-    setProgress(scrollData, true);
-    setProgress(scrollData, false);
     if (!isMainScrollable && !isBody) {
       setBoxMeasureProps(containerElement);
     }
+    setProgress(scrollData, true);
+    setProgress(scrollData, false);
     if (autoHideDelay > 0) {
       (0, _cssAlter.showElement)(wrapper).then(() => (0, _cssAlter.hideElement)(wrapper, autoHideDelay));
     }
@@ -733,8 +739,8 @@ const isHorizontal = scrollbar => (0, _cssAlter.getData)(scrollbar, MC.PREFIX_OR
 const setBoxMeasureProps = async element => {
   for (const side of [MC.S_TOP, MC.S_RIGHT, MC.S_BOTTOM, MC.S_LEFT]) {
     for (const key of [`padding-${side}`, `border-${side}-width`]) {
-      const padding = await (0, _cssAlter.getComputedStyleProp)(element, key);
-      (0, _cssAlter.setStyleProp)(element, MH.prefixCssJsVar(key), padding);
+      const value = await (0, _cssAlter.getComputedStyleProp)(element, key);
+      (0, _cssAlter.setStyleProp)(element, MH.prefixCssJsVar(key), value);
     }
   }
 };

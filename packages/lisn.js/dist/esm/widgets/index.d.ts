@@ -10,6 +10,7 @@ export * from "../widgets/pager.js";
 export * from "../widgets/same-height.js";
 export * from "../widgets/scrollbar.js";
 export * from "../widgets/scroll-to-top.js";
+export * from "../widgets/smooth-scroll.js";
 export * from "../widgets/sortable.js";
 export * from "../widgets/track-gesture.js";
 export * from "../widgets/track-scroll.js";

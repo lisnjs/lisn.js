@@ -107,70 +107,140 @@ svg { z-index: 99; position: fixed; border: 0px; top: 0px; right: 0; }
       The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>
       and this project adheres to <a href="https://semver.org/">Semantic Versioning</a>.
     </p>
-    <h2 id="112---2025-27-02"><a class="anchor" aria-hidden="true" tabindex="-1" href="#112---2025-27-02"><span class="octicon octicon-link"></span></a>[1.1.2] - 2025-27-02</h2>
+    <h2 id="12---2025-07-21"><a class="anchor" aria-hidden="true" tabindex="-1" href="#12---2025-07-21"><span class="octicon octicon-link"></span></a>[1.2] - 2025-07-21</h2>
+    <ul>
+      <li>
+        <p>ADDED: CheckTrigger widget</p>
+      </li>
+      <li>
+        <p>ADDED: ScrollToTop widget now supports a custom scrollable element</p>
+      </li>
+      <li>
+        <p>ADDED: TrackSize widget accepts config now</p>
+      </li>
+      <li>
+        <p>ADDED: Triggers clean up on being destroyed</p>
+      </li>
+      <li>
+        <p>ADDED: Scrollbar respects an existing wrapper elements and uses those</p>
+      </li>
+      <li>
+        <p>ADDED: ScrollTo action now accepts a duration option</p>
+      </li>
+      <li>
+        <p>ADDED: New utility functions:</p>
+        <ul>
+          <li>criticallyDamped</li>
+          <li>waitForAnimationFrame</li>
+          <li>onEveryAnimationFrame</li>
+          <li>newCriticallyDampedAnimationIterator</li>
+          <li>newAnimationFrameIterator</li>
+          <li>toggleClassesNow</li>
+          <li>toggleClasses</li>
+          <li>replaceClassNow</li>
+          <li>replaceClass</li>
+        </ul>
+      </li>
+      <li>
+        <p>FIXED: SctollTo action was not using the configured scrollable</p>
+      </li>
+      <li>
+        <p>
+          FIXED: isScrollable now handles overflowing elements that have overflow set to
+          something other than scroll or auto (previously it was returning a false
+          positive, true, when in fact it wasn't scrollable)
+        </p>
+      </li>
+      <li>
+        <p>FIXED: More reliable Scrollbar CSS</p>
+      </li>
+      <li>
+        <p>FIXED: Scrollbar additional clean up on destroy</p>
+      </li>
+      <li>
+        <p>FIXED: moveChildren* utility functions were always using ignoreMove: true</p>
+      </li>
+      <li>
+        <p>
+          CHANGED: Improved scroll animation: Now based on a critically damped spring.
+          It seamlessly resumes a previous scroll that was interrupted.
+        </p>
+      </li>
+      <li>
+        <p>
+          CHANGED: Scrollbar now checks for sticky support and aborts if it needs sticky
+          but browser does not support
+        </p>
+      </li>
+      <li>
+        <p>CHANGED: One-time triggers destroy themselves when done</p>
+      </li>
+    </ul>
+    <hr>
+    <h2 id="112---2025-02-27"><a class="anchor" aria-hidden="true" tabindex="-1" href="#112---2025-02-27"><span class="octicon octicon-link"></span></a>[1.1.2] - 2025-02-27</h2>
     <h3 id="minor-changes--updated-readme"><a class="anchor" aria-hidden="true" tabindex="-1" href="#minor-changes--updated-readme"><span class="octicon octicon-link"></span></a>Minor changes + updated README</h3>
     <ul>
       <li>
-        get/set/unset/delBoolData are now called get/set/unset/delBooleanData (old
-        deprecated name maintained for backwards compatibility)
+        CHANGED: get/set/unset/delBoolData are now called get/set/unset/delBooleanData
+        (old deprecated name maintained for backwards compatibility)
       </li>
     </ul>
     <hr>
-    <h2 id="111---2025-26-02"><a class="anchor" aria-hidden="true" tabindex="-1" href="#111---2025-26-02"><span class="octicon octicon-link"></span></a>[1.1.1] - 2025-26-02</h2>
+    <h2 id="111---2025-02-26"><a class="anchor" aria-hidden="true" tabindex="-1" href="#111---2025-02-26"><span class="octicon octicon-link"></span></a>[1.1.1] - 2025-02-26</h2>
     <h3 id="minor-css-fix"><a class="anchor" aria-hidden="true" tabindex="-1" href="#minor-css-fix"><span class="octicon octicon-link"></span></a>Minor CSS fix</h3>
     <ul>
-      <li>Setting max-width/height to 100% for carousel page container.</li>
+      <li>CHANGED: Setting max-width/height to 100% for carousel page container.</li>
     </ul>
     <hr>
-    <h2 id="110---2025-26-02"><a class="anchor" aria-hidden="true" tabindex="-1" href="#110---2025-26-02"><span class="octicon octicon-link"></span></a>[1.1.0] - 2025-26-02</h2>
+    <h2 id="110---2025-02-26"><a class="anchor" aria-hidden="true" tabindex="-1" href="#110---2025-02-26"><span class="octicon octicon-link"></span></a>[1.1.0] - 2025-02-26</h2>
     <h3 id="added-built-in-pager-styles"><a class="anchor" aria-hidden="true" tabindex="-1" href="#added-built-in-pager-styles"><span class="octicon octicon-link"></span></a>Added built-in pager styles</h3>
     <ul>
-      <li>Basic CSS for slider (still the default), carousel and tabs.</li>
-      <li>Removed page box-shadow from pager CSS.</li>
-      <li>Bug fix: data-lisn-current-page-is-last was set incorrectly</li>
+      <li>ADDED: Basic CSS for slider (still the default), carousel and tabs.</li>
+      <li>REMOVED: page box-shadow from pager CSS.</li>
+      <li>FIXED: data-lisn-current-page-is-last was set incorrectly</li>
     </ul>
     <hr>
-    <h2 id="104---2025-22-02"><a class="anchor" aria-hidden="true" tabindex="-1" href="#104---2025-22-02"><span class="octicon octicon-link"></span></a>[1.0.4] - 2025-22-02</h2>
+    <h2 id="104---2025-02-22"><a class="anchor" aria-hidden="true" tabindex="-1" href="#104---2025-02-22"><span class="octicon octicon-link"></span></a>[1.0.4] - 2025-02-22</h2>
     <h3 id="improved-compatibility-with-vite-and-webpack"><a class="anchor" aria-hidden="true" tabindex="-1" href="#improved-compatibility-with-vite-and-webpack"><span class="octicon octicon-link"></span></a>Improved compatibility with Vite and Webpack</h3>
     <ul>
       <li>
-        Conditional import of socket.io-client now uses a method that doesn't result
-        in even a warning with Webpack.
+        CHANGED: Conditional import of socket.io-client now uses a method that doesn't
+        result in even a warning with Webpack.
       </li>
     </ul>
     <hr>
-    <h2 id="103---2025-22-02"><a class="anchor" aria-hidden="true" tabindex="-1" href="#103---2025-22-02"><span class="octicon octicon-link"></span></a>[1.0.3] - 2025-22-02</h2>
+    <h2 id="103---2025-02-22"><a class="anchor" aria-hidden="true" tabindex="-1" href="#103---2025-02-22"><span class="octicon octicon-link"></span></a>[1.0.3] - 2025-02-22</h2>
     <h3 id="improved-compatibility-with-vite"><a class="anchor" aria-hidden="true" tabindex="-1" href="#improved-compatibility-with-vite"><span class="octicon octicon-link"></span></a>Improved compatibility with Vite</h3>
     <ul>
       <li>
-        Conditional import of socket.io-client now uses a dynamic import with
-        non-literal string in order to work with Vite. The downside is that in
-        Webpack there is a warning (but not a fatal error).
+        CHANGED: Conditional import of socket.io-client now uses a dynamic import with
+        non-literal string in order to work with Vite. The downside is that in Webpack
+        there is a warning (but not a fatal error).
       </li>
     </ul>
     <hr>
-    <h2 id="102---2025-17-02"><a class="anchor" aria-hidden="true" tabindex="-1" href="#102---2025-17-02"><span class="octicon octicon-link"></span></a>[1.0.2] - 2025-17-02</h2>
+    <h2 id="102---2025-02-17"><a class="anchor" aria-hidden="true" tabindex="-1" href="#102---2025-02-17"><span class="octicon octicon-link"></span></a>[1.0.2] - 2025-02-17</h2>
     <h3 id="improved-compatibility-with-older-environments"><a class="anchor" aria-hidden="true" tabindex="-1" href="#improved-compatibility-with-older-environments"><span class="octicon octicon-link"></span></a>Improved compatibility with older environments</h3>
     <ul>
       <li>
-        Removed use of named regex capture groups to support older browsers (though
+        REMOVED: use of named regex capture groups to support older browsers (though
         said browsers would still need polyfills for ResizeObserver)
       </li>
       <li>
-        Added a <code>/* webpackIgnore: true */</code> in front of dynamic import of socket.io to
-        make it work with Webpack (and hence Next.js pre version 15). Prior to this
+        ADDED: a <code>/* webpackIgnore: true */</code> in front of dynamic import of socket.io
+        to make it work with Webpack (and hence Next.js pre version 15). Prior to this
         version, Webpack would throw an error about module not found even though it's
         wrapped in a try/catch block.
       </li>
     </ul>
     <hr>
-    <h2 id="101---2025-16-02"><a class="anchor" aria-hidden="true" tabindex="-1" href="#101---2025-16-02"><span class="octicon octicon-link"></span></a>[1.0.1] - 2025-16-02</h2>
+    <h2 id="101---2025-02-16"><a class="anchor" aria-hidden="true" tabindex="-1" href="#101---2025-02-16"><span class="octicon octicon-link"></span></a>[1.0.1] - 2025-02-16</h2>
     <h3 id="updated-build-to-remove-unnecessary-transpiling"><a class="anchor" aria-hidden="true" tabindex="-1" href="#updated-build-to-remove-unnecessary-transpiling"><span class="octicon octicon-link"></span></a>Updated build to remove unnecessary transpiling</h3>
     <ul>
-      <li>Updated browserslist to specific target browsers.</li>
+      <li>CHANGED: Updated browserslist to specific target browsers.</li>
     </ul>
     <hr>
-    <h2 id="100---2025-15-02"><a class="anchor" aria-hidden="true" tabindex="-1" href="#100---2025-15-02"><span class="octicon octicon-link"></span></a>[1.0.0] - 2025-15-02</h2>
+    <h2 id="100---2025-02-15"><a class="anchor" aria-hidden="true" tabindex="-1" href="#100---2025-02-15"><span class="octicon octicon-link"></span></a>[1.0.0] - 2025-02-15</h2>
     <h3 id="initial-release"><a class="anchor" aria-hidden="true" tabindex="-1" href="#initial-release"><span class="octicon octicon-link"></span></a>Initial Release</h3>
     <ul>
       <li>First stable release.</li>

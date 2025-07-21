@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75.07% </span>
+                <span class="strong">75.15% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>247/329</span>
+                <span class='fraction'>248/330</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">54.89% </span>
+                <span class="strong">54.59% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>101/184</span>
+                <span class='fraction'>101/185</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.8% </span>
+                <span class="strong">76.87% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>245/319</span>
+                <span class='fraction'>246/320</span>
             </div>
         
             
@@ -1101,7 +1101,19 @@
 <a name='L1036'></a><a href='#L1036'>1036</a>
 <a name='L1037'></a><a href='#L1037'>1037</a>
 <a name='L1038'></a><a href='#L1038'>1038</a>
-<a name='L1039'></a><a href='#L1039'>1039</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1039'></a><a href='#L1039'>1039</a>
+<a name='L1040'></a><a href='#L1040'>1040</a>
+<a name='L1041'></a><a href='#L1041'>1041</a>
+<a name='L1042'></a><a href='#L1042'>1042</a>
+<a name='L1043'></a><a href='#L1043'>1043</a>
+<a name='L1044'></a><a href='#L1044'>1044</a>
+<a name='L1045'></a><a href='#L1045'>1045</a>
+<a name='L1046'></a><a href='#L1046'>1046</a>
+<a name='L1047'></a><a href='#L1047'>1047</a>
+<a name='L1048'></a><a href='#L1048'>1048</a>
+<a name='L1049'></a><a href='#L1049'>1049</a>
+<a name='L1050'></a><a href='#L1050'>1050</a>
+<a name='L1051'></a><a href='#L1051'>1051</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1762,6 +1774,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1775,11 +1799,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -2436,7 +2460,7 @@ export class Scrollbar extends Widget {
     const props = getScrollableProps(scrollable);
     const ourScrollable = props.scrollable;
 &nbsp;
-    (destroyPromise || MH.promiseResolve()).then(async () =&gt; {
+    (destroyPromise || MH.promiseResolve()).then(() =&gt; {
       if (this.isDestroyed()) {
         return;
       }
@@ -2769,7 +2793,7 @@ const init = (
 &nbsp;
   // ----------
 &nbsp;
-  const setProgress = async (scrollData: ScrollData, tracksH: boolean) =&gt; {
+  const setProgress = (scrollData: ScrollData, tracksH: boolean) =&gt; {
     const scrollbar = tracksH ? scrollbarH : scrollbarV;
     const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
 &nbsp;
@@ -2800,7 +2824,19 @@ const init = (
     );
 &nbsp;
     const scrollAxis = tracksH ? "x" : "y";
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (isScrollable(scrollable, { axis: scrollAxis }) &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >viewFraction &lt; 1)</span> {
+    // TODO When using content-box, reading scrollWidth/Height even on the
+    // subsequent measure time still shows the "old" value that includes the
+    // border width before it seems to adjust. So sometimes it gives false
+    // positives for it being scrollable.
+    const canScroll =
+      viewFraction &lt; 0.99 &amp;&amp;
+      (<span class="branch-1 cbranch-no" title="branch not covered" >completeFraction &gt; 0 </span>||
+<span class="branch-2 cbranch-no" title="branch not covered" >        isScrollable(scrollable, {</span>
+          axis: scrollAxis,
+          noCache: true,
+        }));
+&nbsp;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (canScroll) {
 <span class="cstat-no" title="statement not covered" >      setBooleanData(containerElement, hasBarPrefix);</span>
 <span class="cstat-no" title="statement not covered" >      displayElement(scrollbar);</span>
     } else {
@@ -2812,12 +2848,12 @@ const init = (
   // ----------
 &nbsp;
   const updateProgress = (target: Element, scrollData: ScrollData) =&gt; {
-    setProgress(scrollData, true);
-    setProgress(scrollData, false);
-&nbsp;
     if (!isMainScrollable &amp;&amp; !isBody) {
       setBoxMeasureProps(containerElement);
     }
+&nbsp;
+    setProgress(scrollData, true);
+    setProgress(scrollData, false);
 &nbsp;
     <span class="missing-if-branch" title="if path not taken" >I</span>if (autoHideDelay &gt; 0) {
 <span class="cstat-no" title="statement not covered" >      showElement(wrapper).then(<span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >hideElement(wrapper, autoHideDelay))</span>;</span>
@@ -3162,8 +3198,8 @@ const isHorizontal = <span class="fstat-no" title="function not covered" >(s</sp
 const setBoxMeasureProps = async (element: HTMLElement) =&gt; {
   for (const side of [MC.S_TOP, MC.S_RIGHT, MC.S_BOTTOM, MC.S_LEFT]) {
     for (const key of [`padding-${side}`, `border-${side}-width`]) {
-      const padding = await getComputedStyleProp(element, key);
-      setStyleProp(element, MH.prefixCssJsVar(key), padding);
+      const value = await getComputedStyleProp(element, key);
+      setStyleProp(element, MH.prefixCssJsVar(key), value);
     }
   }
 };
@@ -3184,7 +3220,7 @@ const setOrReleasePointerCapture = <span class="fstat-no" title="function not co
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-20T16:27:25.598Z
+                at 2025-07-21T08:38:36.467Z
             </div>
         <script src="../prettify.js"></script>
         <script>

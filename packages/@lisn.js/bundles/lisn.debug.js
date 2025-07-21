@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.1.2
+ * LISN.js v1.2.0
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -99,6 +99,8 @@
   const S_DISABLED = "disabled";
   const S_ARROW = "arrow";
   const S_ROLE = "role";
+  const S_AUTO$1 = "auto";
+  const S_VISIBLE = "visible";
   const ARIA_PREFIX = "aria-";
   const S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
   const PREFIX_WRAPPER$3 = `${PREFIX}-wrapper`;
@@ -3021,14 +3023,24 @@
   /**
    * @module Utils
    *
-   * @categoryDescription CSS: Altering
+   * @categoryDescription DOM: Querying
+   * These functions query the style, attributes or other aspects of elements, but
+   * could lead to forced layout if not scheduled using {@link waitForMeasureTime}.
+   *
+   * @categoryDescription DOM: Querying (optimized)
+   * These functions query the style, attributes or other aspects of elements in
+   * an optimized way. Functions that could cause a forced layout use
+   * {@link waitForMeasureTime} and so are asynchronous. Functions that can
+   * perform the check without forcing a re-layout are synchronous.
+   *
+   * @categoryDescription Style: Altering
    * These functions transition an element from one CSS class to another, but
    * could lead to forced layout if not scheduled using {@link waitForMutateTime}.
    * If a delay is supplied, then the transition is "scheduled" and if the
    * opposite transition is executed before the scheduled one, the original one
    * is cancelled. See {@link transitionElement} for an example.
    *
-   * @categoryDescription CSS: Altering (optimized)
+   * @categoryDescription Style: Altering (optimized)
    * These functions transition an element from one CSS class to another in an
    * optimized way using {@link waitForMutateTime} and so are asynchronous.
    * If a delay is supplied, then the transition is "scheduled" and if the
@@ -3047,7 +3059,7 @@
    * @returns True if there was a change made (class removed or added), false
    * otherwise.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const transitionElementNow = (element, fromCls, toCls) => {
     cancelCSSTransitions(element, fromCls, toCls);
@@ -3109,7 +3121,7 @@
    * showElement(someElement, 100);
    * ```
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const transitionElement = async (element, fromCls, toCls, delay = 0) => {
     const thisTransition = scheduleCSSTransition(element, toCls);
@@ -3146,7 +3158,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const displayElementNow = element => transitionElementNow(element, PREFIX_UNDISPLAY, PREFIX_DISPLAY);
 
@@ -3156,7 +3168,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const displayElement = (element, delay = 0) => transitionElement(element, PREFIX_UNDISPLAY, PREFIX_DISPLAY, delay);
 
@@ -3165,7 +3177,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const undisplayElementNow = element => transitionElementNow(element, PREFIX_DISPLAY, PREFIX_UNDISPLAY);
 
@@ -3175,7 +3187,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const undisplayElement = (element, delay = 0) => transitionElement(element, PREFIX_DISPLAY, PREFIX_UNDISPLAY, delay);
 
@@ -3186,7 +3198,7 @@
    *
    * @see {@link transitionElementNow}.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const showElementNow = element => transitionElementNow(element, PREFIX_HIDE, PREFIX_SHOW);
 
@@ -3196,7 +3208,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const showElement = (element, delay = 0) => transitionElement(element, PREFIX_HIDE, PREFIX_SHOW, delay);
 
@@ -3205,7 +3217,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const hideElementNow = element => transitionElementNow(element, PREFIX_SHOW, PREFIX_HIDE);
 
@@ -3215,7 +3227,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const hideElement = (element, delay = 0) => transitionElement(element, PREFIX_SHOW, PREFIX_HIDE, delay);
 
@@ -3225,7 +3237,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const toggleDisplayElementNow = element => isElementUndisplayed(element) ? displayElementNow(element) : undisplayElementNow(element);
 
@@ -3235,7 +3247,7 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const toggleDisplayElement = (element, delay = 0) => isElementUndisplayed(element) ? displayElement(element, delay) : undisplayElement(element, delay);
 
@@ -3245,7 +3257,7 @@
    *
    * @see {@link transitionElementNow}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const toggleShowElementNow = element => isElementHidden(element) ? showElementNow(element) : hideElementNow(element);
 
@@ -3255,28 +3267,28 @@
    *
    * @see {@link transitionElement}
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const toggleShowElement = (element, delay = 0) => isElementHidden(element) ? showElement(element, delay) : hideElement(element, delay);
 
   /**
    * Returns true if the element's class list contains `lisn-hide`.
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const isElementHidden = element => hasClass(element, PREFIX_HIDE);
 
   /**
    * Returns true if the element's class list contains `lisn-undisplay`.
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const isElementUndisplayed = element => hasClass(element, PREFIX_UNDISPLAY);
 
   /**
    * Returns true if the element's class list contains the given class.
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const hasClass = (element, className) => classList(element).contains(className);
 
@@ -3285,7 +3297,7 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const hasAllClasses = (element, ...classNames) => lengthOf(classNames) > 0 && !some(classNames, className => !hasClass(element, className));
 
@@ -3294,35 +3306,35 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const hasAnyClass = (element, ...classNames) => some(classNames, className => hasClass(element, className));
 
   /**
    * Adds the given classes to the element.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const addClassesNow = (element, ...classNames) => classList(element).add(...classNames);
 
   /**
    * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const addClasses = asyncMutatorFor(addClassesNow);
 
   /**
    * Removes the given classes to the element.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const removeClassesNow = (element, ...classNames) => classList(element).remove(...classNames);
 
   /**
    * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const removeClasses = asyncMutatorFor(removeClassesNow);
 
@@ -3331,14 +3343,14 @@
    *
    * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const toggleClassNow = (element, className, force) => classList(element).toggle(className, force);
 
   /**
    * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const toggleClass = asyncMutatorFor(toggleClassNow);
 
@@ -3348,7 +3360,7 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const toggleClassesNow = (element, ...classNames) => {
     for (const cls of classNames) {
@@ -3361,18 +3373,16 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const toggleClasses = asyncMutatorFor(toggleClassesNow);
 
   /**
    * Replaces the given class on the element with a new one.
    *
-   * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
-   *
    * @since v1.2.0
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const replaceClassNow = (element, oldClassName, newClassName) => classList(element).replace(oldClassName, newClassName);
 
@@ -3381,7 +3391,7 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const replaceClass = asyncMutatorFor(replaceClassNow);
 
@@ -3393,7 +3403,7 @@
    * must _not_ start with `data`. It can be in either camelCase or kebab-case,
    * it is converted as needed.
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const getData = (element, name) => getAttr(element, prefixData(name));
 
@@ -3407,7 +3417,7 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const getBooleanData = (element, name) => {
     const value = getData(element, name);
@@ -3426,14 +3436,14 @@
    * The name of the attribute must _not_ start with `data`. It can be in either
    * camelCase or kebab-case, it is converted as needed.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const setDataNow = (element, name, value) => setAttr(element, prefixData(name), value);
 
   /**
    * Like {@link setDataNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const setData = asyncMutatorFor(setDataNow);
 
@@ -3445,7 +3455,7 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const setBooleanDataNow = (element, name, value = true) => setAttr(element, prefixData(name), value + "");
 
@@ -3460,7 +3470,7 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const setBooleanData = asyncMutatorFor(setBooleanDataNow);
 
@@ -3478,7 +3488,7 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const unsetBooleanDataNow = (element, name) => unsetAttr(element, prefixData(name));
 
@@ -3493,7 +3503,7 @@
    *
    * @since v1.2.0
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const unsetBooleanData = asyncMutatorFor(unsetBooleanDataNow);
 
@@ -3509,14 +3519,14 @@
    * The name of the attribute must _not_ start with `data`. It can be in either
    * camelCase or kebab-case, it is converted as needed.
    *
-   * @category CSS: Altering
+   * @category Style: Altering
    */
   const delDataNow = (element, name) => delAttr(element, prefixData(name));
 
   /**
    * Like {@link delDataNow} except it will {@link waitForMutateTime}.
    *
-   * @category CSS: Altering (optimized)
+   * @category Style: Altering (optimized)
    */
   const delData = asyncMutatorFor(delDataNow);
 
@@ -3524,14 +3534,14 @@
    * Returns the value of the given property from the computed style of the
    * element.
    *
-   * @category DOM: Altering
+   * @category DOM: Querying
    */
   const getComputedStylePropNow = (element, prop) => getComputedStyle(element).getPropertyValue(prop);
 
   /**
    * Like {@link getComputedStylePropNow} except it will {@link waitForMeasureTime}.
    *
-   * @category DOM: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const getComputedStyleProp = asyncMeasurerFor(getComputedStylePropNow);
 
@@ -3539,7 +3549,7 @@
    * Returns the value of the given property from the inline style of the
    * element.
    *
-   * @category DOM: Altering
+   * @category DOM: Querying
    */
   const getStylePropNow = (element, prop) => {
     var _style;
@@ -3549,7 +3559,7 @@
   /**
    * Like {@link getStylePropNow} except it will {@link waitForMeasureTime}.
    *
-   * @category DOM: Altering (optimized)
+   * @category DOM: Querying (optimized)
    */
   const getStyleProp = asyncMeasurerFor(getStylePropNow);
 
@@ -3592,6 +3602,8 @@
    *
    * @returns `null` if the element does not have a flex layout.
    *
+   * @category DOM: Querying (optimized)
+   *
    * @since v1.2.0
    */
   const getFlexDirection = async element => {
@@ -3608,6 +3620,8 @@
    *
    * @returns `null` if the element's parent does not have a flex layout.
    *
+   * @category DOM: Querying (optimized)
+   *
    * @since v1.2.0
    */
   const getParentFlexDirection = async element => {
@@ -3618,6 +3632,8 @@
   /**
    * Returns true if the given element has a flex layout. If direction is given,
    * then it also needs to match.
+   *
+   * @category DOM: Querying (optimized)
    *
    * @since v1.2.0
    */
@@ -3632,6 +3648,8 @@
   /**
    * Returns true if the given element's parent has a flex layout. If direction is
    * given, then it also needs to match.
+   *
+   * @category DOM: Querying (optimized)
    *
    * @since v1.2.0
    */
@@ -6917,6 +6935,12 @@
   };
 
   /**
+   * @since v1.2.0
+   *
+   * @category Animations
+   */
+
+  /**
    * The callback is as an argument the {@link ElapsedTimes | elapsed times}:
    * - The total elapsed time in milliseconds since the start
    * - The elapsed time in milliseconds since the previous frame
@@ -7017,10 +7041,10 @@
    * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
    * the new position and velocity, and total time at every animation frame.
    *
-   * @param [settings.l]         The initial starting position.
    * @param [settings.lTarget]   The initial target position. Can be updated when
    *                             calling next().
    * @param [settings.lag]       See {@link criticallyDamped}.
+   * @param [settings.l = 0]     The initial starting position.
    * @param [settings.precision] See {@link criticallyDamped}.
    *
    * @returns An iterator whose `next` method accepts an optional new `lTarget`.
@@ -7118,7 +7142,8 @@
         lTarget
       } = settings;
       const {
-        lag
+        lag,
+        precision
       } = settings;
       let v = 0,
         t = 0,
@@ -7128,11 +7153,12 @@
           l,
           v
         } = criticallyDamped({
-          l,
-          v,
           lTarget,
           dt,
-          lag
+          lag,
+          l,
+          v,
+          precision
         }));
         return {
           l,
@@ -7301,9 +7327,11 @@
       result = canScroll;
     } else {
       const dimension = axis === "x" ? "Width" : "Height";
+      const isDocScrollable = element === getDocScrollingElement();
       const hasOverflow = element[`scroll${dimension}`] > element[`client${dimension}`];
       const overflowProp = getComputedStylePropNow(element, "overflow");
-      result = hasOverflow && includes(["scroll", "auto"], overflowProp);
+      const scrollingOverflows = [S_SCROLL, S_AUTO$1, ...(isDocScrollable ? [S_VISIBLE] : [])];
+      result = hasOverflow && includes(scrollingOverflows, overflowProp);
     }
     if (!noCache) {
       isScrollableCache.sGet(element).set(axis, result);
@@ -7479,7 +7507,7 @@
    * Exposed via ScrollWatcher
    */
   const fetchMainContentElement = async () => {
-    await init$5();
+    await init$6();
     return mainContentElement;
   };
 
@@ -7496,7 +7524,7 @@
    * Exposed via ScrollWatcher
    */
   const fetchMainScrollableElement = async () => {
-    await init$5();
+    await init$6();
     return mainScrollableElement;
   };
 
@@ -7743,7 +7771,7 @@
   let mainContentElement;
   let mainScrollableElement;
   let initPromise$1 = null;
-  const init$5 = () => {
+  const init$6 = () => {
     if (!initPromise$1) {
       initPromise$1 = (async () => {
         const mainScrollableElementSelector = settings.mainScrollableElementSelector;
@@ -7769,7 +7797,7 @@
   // Try to find the main scrollable/content elements asap so that tryGetMain*
   // can return them if called before fetchMain*
   if (hasDOM()) {
-    waitForInteractive().then(init$5);
+    waitForInteractive().then(init$6);
   }
 
   /**
@@ -8002,7 +8030,7 @@
    * Exposed via SizeWatcher
    */
   const fetchViewportOverlay = async () => {
-    await init$4();
+    await init$5();
     return viewportOverlay;
   };
 
@@ -8047,7 +8075,7 @@
 
   let viewportOverlay;
   let initPromise = null;
-  const init$4 = () => {
+  const init$5 = () => {
     if (!initPromise) {
       initPromise = (async () => {
         viewportOverlay = await createOverlay({
@@ -12958,7 +12986,7 @@
         return new SetAttribute(element, {
           [args[0]]: config !== null && config !== void 0 ? config : {}
         });
-      }, configValidator$8);
+      }, configValidator$9);
     }
     constructor(element, attributes) {
       if (!attributes) {
@@ -13000,7 +13028,7 @@
 
   // --------------------
 
-  const configValidator$8 = {
+  const configValidator$9 = {
     on: validateString,
     off: validateString
   };
@@ -15073,19 +15101,19 @@
      */
 
     static get(element) {
-      const instance = super.get(element, DUMMY_ID$9);
+      const instance = super.get(element, DUMMY_ID$a);
       if (isInstanceOf(instance, Pager)) {
         return instance;
       }
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$9, (element, config) => {
+      registerWidget(WIDGET_NAME$a, (element, config) => {
         if (!Pager.get(element)) {
           return new Pager(element, config);
         }
         return null;
-      }, configValidator$7);
+      }, configValidator$8);
     }
 
     /**
@@ -15097,7 +15125,7 @@
       var _Pager$get, _config$nextSwitch, _config$prevSwitch;
       const destroyPromise = (_Pager$get = Pager.get(element)) === null || _Pager$get === void 0 ? void 0 : _Pager$get.destroy();
       super(element, {
-        id: DUMMY_ID$9
+        id: DUMMY_ID$a
       });
       const pages = (config === null || config === void 0 ? void 0 : config.pages) || [];
       const toggles = (config === null || config === void 0 ? void 0 : config.toggles) || [];
@@ -15149,7 +15177,7 @@
         if (this.isDestroyed()) {
           return;
         }
-        init$3(this, element, components, config, methods);
+        init$4(this, element, components, config, methods);
       });
       this.nextPage = () => methods._nextPage();
       this.prevPage = () => methods._prevPage();
@@ -15187,21 +15215,21 @@
   const S_VISIBLE_PAGES = "visible-pages";
   const S_CURRENT_PAGE = "current-page";
   const S_PAGE_NUMBER = "page-number";
-  const WIDGET_NAME$9 = "pager";
-  const PREFIXED_NAME$5 = prefixName(WIDGET_NAME$9);
-  const PREFIX_ROOT$4 = `${PREFIXED_NAME$5}__root`;
-  const PREFIX_PAGE_CONTAINER = `${PREFIXED_NAME$5}__page-container`;
+  const WIDGET_NAME$a = "pager";
+  const PREFIXED_NAME$6 = prefixName(WIDGET_NAME$a);
+  const PREFIX_ROOT$5 = `${PREFIXED_NAME$6}__root`;
+  const PREFIX_PAGE_CONTAINER = `${PREFIXED_NAME$6}__page-container`;
 
   // Use different classes for styling items to the one used for auto-discovering
   // them, so that re-creating existing widgets can correctly find the items to
   // be used by the new widget synchronously before the current one is destroyed.
-  const PREFIX_PAGE = `${PREFIXED_NAME$5}__page`;
-  const PREFIX_PAGE__FOR_SELECT = `${PREFIXED_NAME$5}-page`;
-  const PREFIX_TOGGLE__FOR_SELECT = `${PREFIXED_NAME$5}-toggle`;
-  const PREFIX_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-switch`;
-  const PREFIX_NEXT_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-next-switch`;
-  const PREFIX_PREV_SWITCH__FOR_SELECT = `${PREFIXED_NAME$5}-prev-switch`;
-  const PREFIX_STYLE = `${PREFIXED_NAME$5}-style`;
+  const PREFIX_PAGE = `${PREFIXED_NAME$6}__page`;
+  const PREFIX_PAGE__FOR_SELECT = `${PREFIXED_NAME$6}-page`;
+  const PREFIX_TOGGLE__FOR_SELECT = `${PREFIXED_NAME$6}-toggle`;
+  const PREFIX_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-switch`;
+  const PREFIX_NEXT_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-next-switch`;
+  const PREFIX_PREV_SWITCH__FOR_SELECT = `${PREFIXED_NAME$6}-prev-switch`;
+  const PREFIX_STYLE = `${PREFIXED_NAME$6}-style`;
   const PREFIX_IS_FULLSCREEN = prefixName("is-fullscreen");
   const PREFIX_USE_PARALLAX = prefixName("use-parallax");
   const PREFIX_TOTAL_PAGES = prefixName(S_TOTAL_PAGES);
@@ -15222,10 +15250,10 @@
 
   // Only one Pager widget per element is allowed, but Widget requires a
   // non-blank ID.
-  const DUMMY_ID$9 = PREFIXED_NAME$5;
+  const DUMMY_ID$a = PREFIXED_NAME$6;
   const SUPPORTED_STYLES = ["slider", "carousel", "tabs"];
   const isValidStyle = value => includes(SUPPORTED_STYLES, value);
-  const configValidator$7 = {
+  const configValidator$8 = {
     initialPage: validateNumber,
     style: (key, value) => validateString(key, value, isValidStyle),
     pageSize: validateNumber,
@@ -15287,7 +15315,7 @@
     setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED, isFirstEnabled);
     return setBooleanData(pagerEl, PREFIX_CURRENT_PAGE_IS_LAST_ENABLED, isLastEnabled);
   };
-  const init$3 = (widget, element, components, config, methods) => {
+  const init$4 = (widget, element, components, config, methods) => {
     var _config$initialPage, _config$pageSize, _config$peek, _config$fullscreen, _config$parallax, _config$horizontal, _config$useGestures, _config$alignGestureD, _config$preventDefaul;
     const logger = result ? new result.Logger({
       name: `Pager-${formatAsString(element)}`,
@@ -15478,7 +15506,7 @@
       if (prevSwitch) {
         removeEventListenerFrom(prevSwitch, S_CLICK, prevSwitchClickListener);
       }
-      removeClassesNow(element, PREFIX_ROOT$4);
+      removeClassesNow(element, PREFIX_ROOT$5);
       if (pageContainer) {
         removeClassesNow(pageContainer, PREFIX_PAGE_CONTAINER);
       }
@@ -15487,7 +15515,7 @@
       widget.onTransition(() => recalculateCarouselProps());
     }
     addWatchers();
-    addClasses(element, PREFIX_ROOT$4);
+    addClasses(element, PREFIX_ROOT$5);
     if (pageContainer) {
       addClasses(pageContainer, PREFIX_PAGE_CONTAINER);
     }
@@ -17398,21 +17426,21 @@
      */
     static get(element) {
       if (!element) {
-        return mainWidget$2;
+        return mainWidget$3;
       }
-      const instance = super.get(element, DUMMY_ID$8);
+      const instance = super.get(element, DUMMY_ID$9);
       if (isInstanceOf(instance, PageLoader)) {
         return instance;
       }
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$8, (element, config) => {
+      registerWidget(WIDGET_NAME$9, (element, config) => {
         if (!PageLoader.get(element)) {
           return new PageLoader(element, config);
         }
         return null;
-      }, configValidator$6);
+      }, configValidator$7);
     }
 
     /**
@@ -17423,8 +17451,8 @@
       const loader = createElement("div");
       const widget = new PageLoader(loader, config);
       widget.onDestroy(() => {
-        if (mainWidget$2 === widget) {
-          mainWidget$2 = null;
+        if (mainWidget$3 === widget) {
+          mainWidget$3 = null;
         }
         return moveElement(loader);
       });
@@ -17435,21 +17463,21 @@
           });
         }
       });
-      mainWidget$2 = widget;
+      mainWidget$3 = widget;
       return widget;
     }
     constructor(element, config) {
       var _PageLoader$get;
       const destroyPromise = (_PageLoader$get = PageLoader.get(element)) === null || _PageLoader$get === void 0 ? void 0 : _PageLoader$get.destroy();
       super(element, {
-        id: DUMMY_ID$8
+        id: DUMMY_ID$9
       });
       (destroyPromise || promiseResolve()).then(() => {
         var _config$autoRemove;
         if (this.isDestroyed()) {
           return;
         }
-        addClasses(element, PREFIX_ROOT$3);
+        addClasses(element, PREFIX_ROOT$4);
         const spinner = createElement("div");
         addClasses(spinner, PREFIX_SPINNER);
         moveElement(spinner, {
@@ -17462,7 +17490,7 @@
         }
         this.onDisable(() => {
           undisplayElement(element);
-          if (!docQuerySelector(`.${PREFIX_ROOT$3}`)) {
+          if (!docQuerySelector(`.${PREFIX_ROOT$4}`)) {
             delHasModal();
           }
         });
@@ -17471,7 +17499,7 @@
         });
         this.onDestroy(async () => {
           moveElement(spinner); // remove
-          await removeClasses(element, PREFIX_ROOT$3);
+          await removeClasses(element, PREFIX_ROOT$4);
           await displayElement(element); // revert undisplay by onDisable
         });
       });
@@ -17484,17 +17512,17 @@
 
   // --------------------
 
-  const WIDGET_NAME$8 = "page-loader";
-  const PREFIXED_NAME$4 = prefixName(WIDGET_NAME$8);
-  const PREFIX_ROOT$3 = `${PREFIXED_NAME$4}__root`;
+  const WIDGET_NAME$9 = "page-loader";
+  const PREFIXED_NAME$5 = prefixName(WIDGET_NAME$9);
+  const PREFIX_ROOT$4 = `${PREFIXED_NAME$5}__root`;
   const PREFIX_SPINNER = prefixName("spinner");
   // Only one PageLoader widget per element is allowed, but Widget requires a
   // non-blank ID.
   // In fact, it doesn't make much sense to have more than 1 page loader on the
   // whole page, but we support it, hence use a class rather than a DOM ID.
-  const DUMMY_ID$8 = PREFIXED_NAME$4;
-  let mainWidget$2 = null;
-  const configValidator$6 = {
+  const DUMMY_ID$9 = PREFIXED_NAME$5;
+  let mainWidget$3 = null;
+  const configValidator$7 = {
     autoRemove: validateBoolean
   };
 
@@ -17668,14 +17696,14 @@
      * instance is returned. Otherwise null.
      */
     static get(containerElement) {
-      const instance = super.get(containerElement, DUMMY_ID$7);
+      const instance = super.get(containerElement, DUMMY_ID$8);
       if (isInstanceOf(instance, SameHeight)) {
         return instance;
       }
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$7, (element, config) => {
+      registerWidget(WIDGET_NAME$8, (element, config) => {
         if (isHTMLElement(element)) {
           if (!SameHeight.get(element)) {
             return new SameHeight(element, config);
@@ -17684,13 +17712,13 @@
           logError(usageError("Only HTMLElement is supported for SameHeight widget"));
         }
         return null;
-      }, configValidator$5);
+      }, configValidator$6);
     }
     constructor(containerElement, config) {
       var _SameHeight$get;
       const destroyPromise = (_SameHeight$get = SameHeight.get(containerElement)) === null || _SameHeight$get === void 0 ? void 0 : _SameHeight$get.destroy();
       super(containerElement, {
-        id: DUMMY_ID$7
+        id: DUMMY_ID$8
       });
       const items = getItemsFrom(containerElement, config === null || config === void 0 ? void 0 : config.items);
       if (sizeOf(items) < 2) {
@@ -17706,7 +17734,7 @@
           if (this.isDestroyed()) {
             return;
           }
-          init$2(this, containerElement, items, fullConfig);
+          init$3(this, containerElement, items, fullConfig);
         });
       });
       this.toColumn = () => setData(containerElement, PREFIX_ORIENTATION, S_VERTICAL);
@@ -17722,26 +17750,26 @@
 
   // ------------------------------
 
-  const WIDGET_NAME$7 = "same-height";
-  const PREFIXED_NAME$3 = prefixName(WIDGET_NAME$7);
-  const PREFIX_ROOT$2 = `${PREFIXED_NAME$3}__root`;
+  const WIDGET_NAME$8 = "same-height";
+  const PREFIXED_NAME$4 = prefixName(WIDGET_NAME$8);
+  const PREFIX_ROOT$3 = `${PREFIXED_NAME$4}__root`;
 
   // Use different classes for styling items to the one used for auto-discovering
   // them, so that re-creating existing widgets can correctly find the items to
   // be used by the new widget synchronously before the current one is destroyed.
-  const PREFIX_ITEM$1 = `${PREFIXED_NAME$3}__item`;
-  const PREFIX_ITEM__FOR_SELECT$1 = `${PREFIXED_NAME$3}-item`;
+  const PREFIX_ITEM$1 = `${PREFIXED_NAME$4}__item`;
+  const PREFIX_ITEM__FOR_SELECT$1 = `${PREFIXED_NAME$4}-item`;
   const S_TEXT = "text";
   const S_IMAGE = "image";
 
   // Only one SameHeight widget per element is allowed, but Widget requires a
   // non-blank ID.
-  const DUMMY_ID$7 = PREFIXED_NAME$3;
+  const DUMMY_ID$8 = PREFIXED_NAME$4;
 
   // We consider elements that have text content of at least <MIN_CHARS_FOR_TEXT>
   // characters to be text.
   const MIN_CHARS_FOR_TEXT = 100;
-  const configValidator$5 = {
+  const configValidator$6 = {
     diffTolerance: validateNumber,
     resizeThreshold: validateNumber,
     [S_DEBOUNCE_WINDOW]: validateNumber,
@@ -17809,7 +17837,7 @@
     }
     return itemMap;
   };
-  const init$2 = (widget, containerElement, items, config) => {
+  const init$3 = (widget, containerElement, items, config) => {
     const logger = result ? new result.Logger({
       name: `SameHeight-${formatAsString(containerElement)}`
     }) : null;
@@ -17931,7 +17959,7 @@
         }
       }
       allItems.clear();
-      await removeClasses(containerElement, PREFIX_ROOT$2);
+      await removeClasses(containerElement, PREFIX_ROOT$3);
     });
 
     // Find all relevant items: the container, its direct children and the
@@ -17959,7 +17987,7 @@
         }
       }
     }
-    addClasses(containerElement, PREFIX_ROOT$2);
+    addClasses(containerElement, PREFIX_ROOT$3);
     observeAll();
   };
 
@@ -18170,23 +18198,42 @@
   };
 
   /**
-   * @module
-   * @ignore
-   * @internal
+   * @module Utils
    */
 
 
   /**
+   * Returns true if the device has a touch screen.
+   *
+   * @category Browser info
+   *
+   * @since v1.2.0
+   */
+  const isTouchScreen = () => hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
+
+  /**
+   * Returns true if the browser supports position: sticky.
+   *
+   * @category Browser info
+   *
    * @since v1.2.0
    */
   const supportsSticky = () => hasDOM() ? typeof CSS !== "undefined" && CSS.supports("position", "sticky") : false;
 
   /**
+   * Returns true if the page is in quirks mode.
+   *
+   * @category Browser info
+   *
    * @since v1.2.0
    */
   const isInQuirksMode = () => hasDOM() ? document.compatMode === "BackCompat" : false;
 
   /**
+   * Returns true if the device is mobile (based on user agent).
+   *
+   * @category Browser info
+   *
    * @since v1.2.0
    */
   const isMobile = () => hasDOM() ? userAgent.match(/Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/) !== null : false;
@@ -18331,12 +18378,12 @@
      */
     static get(scrollable) {
       if (!scrollable) {
-        return mainWidget$1;
+        return mainWidget$2;
       }
       if (scrollable === getDocElement()) {
         scrollable = getBody();
       }
-      const instance = super.get(scrollable, DUMMY_ID$6);
+      const instance = super.get(scrollable, DUMMY_ID$7);
       if (isInstanceOf(instance, Scrollbar)) {
         return instance;
       }
@@ -18359,15 +18406,15 @@
       const scrollable = await ScrollWatcher.fetchMainScrollableElement();
       const widget = new Scrollbar(scrollable, config);
       widget.onDestroy(() => {
-        if (mainWidget$1 === widget) {
-          mainWidget$1 = null;
+        if (mainWidget$2 === widget) {
+          mainWidget$2 = null;
         }
       });
-      mainWidget$1 = widget;
+      mainWidget$2 = widget;
       return widget;
     }
     static register() {
-      registerWidget(WIDGET_NAME$6, (element, config) => {
+      registerWidget(WIDGET_NAME$7, (element, config) => {
         if (isHTMLElement(element)) {
           if (!Scrollbar.get(element)) {
             return new Scrollbar(element, config);
@@ -18376,7 +18423,7 @@
           logError(usageError("Only HTMLElement is supported for Scrollbar widget"));
         }
         return null;
-      }, configValidator$4);
+      }, configValidator$5);
     }
 
     /**
@@ -18390,15 +18437,15 @@
       }
       const destroyPromise = (_Scrollbar$get = Scrollbar.get(scrollable)) === null || _Scrollbar$get === void 0 ? void 0 : _Scrollbar$get.destroy();
       super(scrollable, {
-        id: DUMMY_ID$6
+        id: DUMMY_ID$7
       });
       const props = getScrollableProps(scrollable);
       const ourScrollable = props.scrollable;
-      (destroyPromise || promiseResolve()).then(async () => {
+      (destroyPromise || promiseResolve()).then(() => {
         if (this.isDestroyed()) {
           return;
         }
-        init$1(this, scrollable, props, config);
+        init$2(this, scrollable, props, config);
       });
       this.getScrollable = () => ourScrollable;
     }
@@ -18410,32 +18457,32 @@
 
   // --------------------
 
-  const WIDGET_NAME$6 = "scrollbar";
-  const PREFIXED_NAME$2 = prefixName(WIDGET_NAME$6);
+  const WIDGET_NAME$7 = "scrollbar";
+  const PREFIXED_NAME$3 = prefixName(WIDGET_NAME$7);
   // Only one Scrollbar widget per element is allowed, but Widget
   // requires a non-blank ID.
-  const DUMMY_ID$6 = PREFIXED_NAME$2;
-  const PREFIX_ROOT$1 = `${PREFIXED_NAME$2}__root`;
-  const PREFIX_CONTAINER = `${PREFIXED_NAME$2}__container`;
-  const PREFIX_CONTENT = `${PREFIXED_NAME$2}__content`;
-  const PREFIX_BAR = `${PREFIXED_NAME$2}__bar`;
-  const PREFIX_WRAPPER = `${PREFIXED_NAME$2}__wrapper`;
-  const PREFIX_FILL = `${PREFIXED_NAME$2}__fill`;
-  const PREFIX_SPACER = `${PREFIXED_NAME$2}__spacer`;
-  const PREFIX_HANDLE = `${PREFIXED_NAME$2}__handle`;
+  const DUMMY_ID$7 = PREFIXED_NAME$3;
+  const PREFIX_ROOT$2 = `${PREFIXED_NAME$3}__root`;
+  const PREFIX_CONTAINER = `${PREFIXED_NAME$3}__container`;
+  const PREFIX_CONTENT = `${PREFIXED_NAME$3}__content`;
+  const PREFIX_BAR = `${PREFIXED_NAME$3}__bar`;
+  const PREFIX_WRAPPER = `${PREFIXED_NAME$3}__wrapper`;
+  const PREFIX_FILL = `${PREFIXED_NAME$3}__fill`;
+  const PREFIX_SPACER = `${PREFIXED_NAME$3}__spacer`;
+  const PREFIX_HANDLE = `${PREFIXED_NAME$3}__handle`;
   const PREFIX_DRAGGABLE = prefixName("draggable");
   const PREFIX_CLICKABLE = prefixName("clickable");
   const PREFIX_HAS_WRAPPER = prefixName("has-wrapper");
   const PREFIX_ALLOW_COLLAPSE = prefixName("allow-collapse");
-  const PREFIX_HAS_V_SCROLL = prefixName("has-v-scroll");
+  const PREFIX_HAS_V_SCROLL$1 = prefixName("has-v-scroll");
   const PREFIX_HAS_SCROLLBAR = prefixName("has-scrollbar");
   const PREFIX_HIDE_SCROLL = prefixName("hide-scroll");
   const S_SET_POINTER_CAPTURE = "setPointerCapture";
   const S_RELEASE_POINTER_CAPTURE = "releasePointerCapture";
   const S_ARIA_VALUENOW = ARIA_PREFIX + "valuenow";
   const S_SCROLLBAR = "scrollbar";
-  let mainWidget$1 = null;
-  const configValidator$4 = {
+  let mainWidget$2 = null;
+  const configValidator$5 = {
     id: validateString,
     className: validateStrList,
     hideNative: validateBoolean,
@@ -18502,7 +18549,7 @@
       hasVScroll
     };
   };
-  const init$1 = (widget, containerElement, props, config) => {
+  const init$2 = (widget, containerElement, props, config) => {
     var _ref, _config$onMobile, _ref2, _config$hideNative, _config$autoHide, _config$clickScroll, _ref3, _config$dragScroll, _ref4, _config$useHandle;
     const {
       supported,
@@ -18585,7 +18632,7 @@
 
     // ----------
 
-    const setProgress = async (scrollData, tracksH) => {
+    const setProgress = (scrollData, tracksH) => {
       const scrollbar = tracksH ? scrollbarH : scrollbarV;
       const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
       const completeFraction = tracksH ? scrollData[S_SCROLL_LEFT_FRACTION] : scrollData[S_SCROLL_TOP_FRACTION];
@@ -18603,9 +18650,15 @@
         _numDecimal: 4
       });
       const scrollAxis = tracksH ? "x" : "y";
-      if (isScrollable(scrollable, {
-        axis: scrollAxis
-      }) && viewFraction < 1) {
+      // TODO When using content-box, reading scrollWidth/Height even on the
+      // subsequent measure time still shows the "old" value that includes the
+      // border width before it seems to adjust. So sometimes it gives false
+      // positives for it being scrollable.
+      const canScroll = viewFraction < 0.99 && (completeFraction > 0 || isScrollable(scrollable, {
+        axis: scrollAxis,
+        noCache: true
+      }));
+      if (canScroll) {
         setBooleanData(containerElement, hasBarPrefix);
         displayElement(scrollbar);
       } else {
@@ -18617,11 +18670,11 @@
     // ----------
 
     const updateProgress = (target, scrollData) => {
-      setProgress(scrollData, true);
-      setProgress(scrollData, false);
       if (!isMainScrollable && !isBody) {
         setBoxMeasureProps(containerElement);
       }
+      setProgress(scrollData, true);
+      setProgress(scrollData, false);
       if (autoHideDelay > 0) {
         showElement(wrapper).then(() => hideElement(wrapper, autoHideDelay));
       }
@@ -18794,7 +18847,7 @@
     }
     setBooleanData(containerElement, PREFIX_ALLOW_COLLAPSE, !isMobile());
     setBooleanData(containerElement, PREFIX_HAS_WRAPPER, !!contentWrapper);
-    setBooleanData(containerElement, PREFIX_HAS_V_SCROLL, !!contentWrapper && hasVScroll);
+    setBooleanData(containerElement, PREFIX_HAS_V_SCROLL$1, !!contentWrapper && hasVScroll);
 
     // Wrap children if needed
     if (contentWrapper && !hasExistingWrapper) {
@@ -18815,7 +18868,7 @@
     const scrollDomID =
     // for ARIA
     clickScroll || dragScroll ? getOrAssignID(scrollable, S_SCROLLBAR) : "";
-    addClasses(barParent, PREFIX_ROOT$1);
+    addClasses(barParent, PREFIX_ROOT$2);
     const wrapper = createElement("div");
     preventSelect(wrapper);
     addClasses(wrapper, PREFIX_NO_TOUCH_ACTION);
@@ -18884,22 +18937,22 @@
         removeEventListenerFrom(scrollbarH, S_POINTERDOWN, onClickOrDragH);
         removeEventListenerFrom(scrollbarV, S_POINTERDOWN, onClickOrDragV);
       }
-      removeClassesNow(barParent, PREFIX_ROOT$1);
+      removeClassesNow(barParent, PREFIX_ROOT$2);
       removeClassesNow(containerElement, PREFIX_CONTAINER);
       for (const position of [S_TOP, S_BOTTOM, S_LEFT, S_RIGHT]) {
         delDataNow(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
       }
       delDataNow(containerElement, PREFIX_ALLOW_COLLAPSE);
       delDataNow(containerElement, PREFIX_HAS_WRAPPER);
-      delDataNow(containerElement, PREFIX_HAS_V_SCROLL);
+      delDataNow(containerElement, PREFIX_HAS_V_SCROLL$1);
     });
   };
   const isHorizontal = scrollbar => getData(scrollbar, PREFIX_ORIENTATION) === S_HORIZONTAL;
   const setBoxMeasureProps = async element => {
     for (const side of [S_TOP, S_RIGHT, S_BOTTOM, S_LEFT]) {
       for (const key of [`padding-${side}`, `border-${side}-width`]) {
-        const padding = await getComputedStyleProp(element, key);
-        setStyleProp(element, prefixCssJsVar(key), padding);
+        const value = await getComputedStyleProp(element, key);
+        setStyleProp(element, prefixCssJsVar(key), value);
       }
     }
   };
@@ -19043,16 +19096,16 @@
      */
     static get(element) {
       if (!element) {
-        return mainWidget;
+        return mainWidget$1;
       }
-      const instance = super.get(element, DUMMY_ID$5);
+      const instance = super.get(element, DUMMY_ID$6);
       if (isInstanceOf(instance, ScrollToTop)) {
         return instance;
       }
       return null;
     }
     static register() {
-      registerWidget(WIDGET_NAME$5, (element, config) => {
+      registerWidget(WIDGET_NAME$6, (element, config) => {
         if (!ScrollToTop.get(element)) {
           return new ScrollToTop(element, config);
         }
@@ -19068,8 +19121,8 @@
       const button = createButton("Back to top");
       const widget = new ScrollToTop(button, config);
       widget.onDestroy(() => {
-        if (mainWidget === widget) {
-          mainWidget = null;
+        if (mainWidget$1 === widget) {
+          mainWidget$1 = null;
         }
         return moveElement(button);
       });
@@ -19080,14 +19133,14 @@
           });
         }
       });
-      mainWidget = widget;
+      mainWidget$1 = widget;
       return widget;
     }
     constructor(element, config) {
       var _ScrollToTop$get;
       const destroyPromise = (_ScrollToTop$get = ScrollToTop.get(element)) === null || _ScrollToTop$get === void 0 ? void 0 : _ScrollToTop$get.destroy();
       super(element, {
-        id: DUMMY_ID$5
+        id: DUMMY_ID$6
       });
       const offset = (config === null || config === void 0 ? void 0 : config.offset) || `${S_TOP}: var(${prefixCssVar("scroll-to-top--offset")}, 200vh)`;
       const position = (config === null || config === void 0 ? void 0 : config.position) || S_RIGHT;
@@ -19147,7 +19200,7 @@
           });
         }
         disableInitialTransition(root);
-        addClassesNow(root, PREFIX_ROOT);
+        addClassesNow(root, PREFIX_ROOT$1);
         addClassesNow(element, PREFIX_BTN);
         setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
         setDataNow(root, PREFIX_PLACE, position);
@@ -19170,7 +19223,7 @@
         this.onDestroy(async () => {
           await waitForMutateTime();
           removeEventListenerFrom(element, S_CLICK, clickListener);
-          removeClassesNow(root, PREFIX_ROOT);
+          removeClassesNow(root, PREFIX_ROOT$1);
           removeClassesNow(element, PREFIX_BTN);
           delDataNow(root, PREFIX_FIXED);
           delDataNow(root, PREFIX_PLACE);
@@ -19204,15 +19257,15 @@
 
   // --------------------
 
-  const WIDGET_NAME$5 = "scroll-to-top";
-  const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
+  const WIDGET_NAME$6 = "scroll-to-top";
+  const PREFIXED_NAME$2 = prefixName(WIDGET_NAME$6);
   // Only one ScrollToTop widget per element is allowed, but Widget requires a
   // non-blank ID.
-  const DUMMY_ID$5 = PREFIXED_NAME$1;
-  const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
-  const PREFIX_BTN = `${PREFIXED_NAME$1}__btn`;
+  const DUMMY_ID$6 = PREFIXED_NAME$2;
+  const PREFIX_ROOT$1 = `${PREFIXED_NAME$2}__root`;
+  const PREFIX_BTN = `${PREFIXED_NAME$2}__btn`;
   const PREFIX_FIXED = prefixName("fixed");
-  let mainWidget = null;
+  let mainWidget$1 = null;
   const newConfigValidator$1 = element => {
     return {
       offset: (key, value) => validateString(key, value, isValidScrollOffset),
@@ -19222,6 +19275,452 @@
         return (_ref = isLiteralString(value) ? waitForReferenceElement(value, element) : null) !== null && _ref !== void 0 ? _ref : undefined;
       }
     };
+  };
+
+  /**
+   * @module Widgets
+   */
+
+
+  /**
+   * Configures the given element as a {@link SmoothScroll} widget.
+   *
+   * The SmoothScroll widget creates a configurable smooth scrolling
+   * experience, including support for lag and parallax depth, and using a custom
+   * element that only takes up part of the page, all while preserving native
+   * scrolling behaviour (i.e. it does not disable native scroll and does not use
+   * fake scrollbars).
+   *
+   * **IMPORTANT:** The scrollable element you pass must have its children
+   * wrapped. This will be done automatically unless you create these wrappers
+   * yourself by ensuring your structure is as follows:
+   *
+   * ```html
+   * <!-- If using the document as the scrollable -->
+   * <body><!-- Element you instantiate as SmoothScroll, or you can pass documentElement -->
+   *   <div class="lisn-smooth-scroll__content"><!-- Required wrapper; will be created if missing -->
+   *     <div class="lisn-smooth-scroll__inner"><!-- Required inner wrapper; will be created if missing -->
+   *       <!-- YOUR CONTENT -->
+   *     </div>
+   *   </div>
+   * </body>
+   * ```
+   *
+   * ```html
+   * <!-- If using a custom scrollable -->
+   * <div class="scrollable"><!-- Element you instantiate as SmoothScroll -->
+   *   <div class="lisn-smooth-scroll__content"><!-- Required outer wrapper; will be created if missing -->
+   *     <div class="lisn-smooth-scroll__inner"><!-- Required inner wrapper; will be created if missing -->
+   *       <!-- YOUR CONTENT -->
+   *     </div>
+   *   </div>
+   * </div>
+   * ```
+   *
+   * **IMPORTANT:** If the scrollable element you pass is other than
+   * `document.documentElement` or `document.body`, SmoothScroll will then rely on
+   * position: sticky. XXX TODO
+   *
+   * **IMPORTANT:** You should not instantiate more than one
+   * {@link SmoothScroll} widget on a given element. Use
+   * {@link SmoothScroll.get} to get an existing instance if any. If there is
+   * already a widget instance, it will be destroyed!
+   *
+   * -----
+   *
+   * To use with auto-widgets (HTML API) (see
+   * {@link Settings.settings.autoWidgets | settings.autoWidgets}), the following
+   * CSS classes or data attributes are recognized:
+   * - `lisn-smooth-scroll` class or `data-lisn-smooth-scroll` attribute set
+   *   on the container element that constitutes the scrollable container
+   *
+   * See below examples for what values you can use set for the data attribute
+   * in order to modify the configuration of the automatically created widget.
+   *
+   * @example
+   * This will create a smooth scroller for
+   * {@link settings.mainScrollableElementSelector | the main scrolling element}.
+   *
+   * This will work even if {@link settings.autoWidgets}) is false
+   *
+   * ```html
+   * <!-- LISN should be loaded beforehand -->
+   * <script>
+   *   // You can also just customise global default settings:
+   *   // LISN.settings.smoothScroll = "TODO";
+   *
+   *   LISN.widgets.SmoothScroll.enableMain({
+   *     XXX: "TODO",
+   *   });
+   * </script>
+   * ```
+   *
+   * @example
+   * This will create a smooth scroller for a custom scrolling element (i.e. one
+   * with overflow "auto" or "scroll").
+   *
+   * ```html
+   * <div class="scrolling lisn-smooth-scroll">
+   *   <!-- content here... -->
+   * </div>
+   * ```
+   *
+   * @example
+   * As above but with custom settings.
+   *
+   * ```html
+   * <div
+   *   class="scrolling"
+   *   data-lisn-smooth-scroll="XXX=TODO
+   *                            | XXX=TODO
+   *                        ">
+   *   <!-- content here... -->
+   * </div>
+   * ```
+   */
+  class SmoothScroll extends Widget {
+    // XXX TODO getScrollable ?
+
+    /**
+     * If element is omitted, returns the instance created by {@link enableMain}
+     * if any.
+     */
+    static get(scrollable) {
+      if (!scrollable) {
+        return mainWidget;
+      }
+      if (scrollable === getDocElement()) {
+        scrollable = getBody();
+      }
+      const instance = super.get(scrollable, DUMMY_ID$5);
+      if (isInstanceOf(instance, SmoothScroll)) {
+        return instance;
+      }
+      return null;
+    }
+
+    /**
+     * Creates a smooth scroller for the
+     * {@link settings.mainScrollableElementSelector | the main scrolling element}.
+     *
+     * **NOTE:** It returns a Promise to a widget because it will wait for the
+     * main scrollable element to be present in the DOM if not already.
+     */
+    static async enableMain(config) {
+      const scrollable = await ScrollWatcher.fetchMainScrollableElement();
+      const widget = new SmoothScroll(scrollable, config);
+      widget.onDestroy(() => {
+        if (mainWidget === widget) {
+          mainWidget = null;
+        }
+      });
+      mainWidget = widget;
+      return widget;
+    }
+    static register() {
+      registerWidget(WIDGET_NAME$5, (element, config) => {
+        if (isHTMLElement(element)) {
+          if (!SmoothScroll.get(element)) {
+            return new SmoothScroll(element, config);
+          }
+        } else {
+          logError(usageError("Only HTMLElement is supported for SmoothScroll widget"));
+        }
+        return null;
+      }, configValidator$4);
+    }
+
+    /**
+     * Note that passing `document.body` is considered equivalent to
+     * `document.documentElement`.
+     */
+    constructor(scrollable, config) {
+      var _SmoothScroll$get;
+      if (scrollable === getDocElement()) {
+        scrollable = getBody();
+      }
+      const destroyPromise = (_SmoothScroll$get = SmoothScroll.get(scrollable)) === null || _SmoothScroll$get === void 0 ? void 0 : _SmoothScroll$get.destroy();
+      super(scrollable, {
+        id: DUMMY_ID$5
+      });
+
+      // const props = getScrollableProps(scrollable); // XXX
+      // const ourScrollable = props.scrollable; // XXX
+
+      (destroyPromise || promiseResolve()).then(async () => {
+        if (this.isDestroyed()) {
+          return;
+        }
+        init$1(this, scrollable, config);
+        // XXX init(this, scrollable, props, config);
+      });
+    }
+  }
+
+  /**
+   * @interface
+   */
+
+  // --------------------
+
+  const WIDGET_NAME$5 = "smooth-scroll";
+  const PREFIXED_NAME$1 = prefixName(WIDGET_NAME$5);
+  // Only one SmoothScroll widget per element is allowed, but Widget requires a
+  // non-blank ID.
+  const DUMMY_ID$5 = PREFIXED_NAME$1;
+  const PREFIX_ROOT = `${PREFIXED_NAME$1}__root`;
+  const PREFIX_DUMMY = `${PREFIXED_NAME$1}__dummy`;
+  const PREFIX_OUTER_WRAPPER = `${PREFIXED_NAME$1}__content`;
+  const PREFIX_INNER_WRAPPER = `${PREFIXED_NAME$1}__inner`;
+  const PREFIX_HAS_H_SCROLL = prefixName("has-h-scroll");
+  const PREFIX_HAS_V_SCROLL = prefixName("has-v-scroll");
+  const PREFIX_USES_STICKY = prefixName("uses-sticky");
+  let mainWidget = null;
+  const configValidator$4 = {
+    id: validateString,
+    className: validateStrList,
+    lag: validateNumber
+  };
+  const createWrappers = (element, classNamesEntries) => {
+    const wrapContentNow = (element, classNames) => tryWrapContentNow(element, {
+      _classNames: classNames,
+      _required: true,
+      _requiredBy: "SmoothScroll"
+    });
+    let lastWrapper = element;
+    const result = {};
+    let createdByUs = [];
+    const unwrapFn = () => {
+      for (const [wrapper, classNames] of createdByUs) {
+        unwrapContentNow(wrapper, classNames);
+      }
+      createdByUs = [];
+    };
+    for (const [key, classNames] of classNamesEntries) {
+      // Add generic lisn-wrapper class to allow ScrollWatcher to reuse it
+      const allClassNames = [...classNames, PREFIX_WRAPPER$3];
+      let wrapper = getContentWrapper(lastWrapper, {
+        _classNames: allClassNames
+      });
+      if (!wrapper) {
+        wrapper = wrapContentNow(lastWrapper, allClassNames);
+        createdByUs.push([wrapper, classNames]); // only remove the specific classes
+      }
+      lastWrapper = wrapper;
+      result[key] = wrapper;
+    }
+    return {
+      wrappers: result,
+      unwrapFn
+    };
+  };
+
+  // XXX TODO children can use unique lag factor
+  const init$1 = async (widget, scrollable, config) => {
+    const docEl = getDocElement();
+    const body = getBody();
+    const defaultScrollable = getDefaultScrollingElement();
+    let needsSticky = true;
+    let root = scrollable;
+    if (scrollable === docEl || scrollable === body) {
+      scrollable = defaultScrollable;
+      root = body;
+      needsSticky = false;
+    }
+    const logger = result ? new result.Logger({
+      name: `SmoothScroll-${formatAsString(scrollable)}`,
+      logAtCreation: {
+        config,
+        needsSticky
+      }
+    }) : null;
+    if (needsSticky && !supportsSticky()) {
+      logError("SmoothScroll on elements other than the document relies on " + "position: sticky, but this browser does not support sticky.");
+      return;
+    }
+    const scrollWatcher = ScrollWatcher.reuse({
+      [S_DEBOUNCE_WINDOW]: 0
+    });
+    const sizeWatcher = SizeWatcher.reuse({
+      [S_DEBOUNCE_WINDOW]: 0
+    });
+    await waitForMeasureTime();
+    const initialContentWidth = scrollable[S_SCROLL_WIDTH];
+    const initialContentHeight = scrollable[S_SCROLL_HEIGHT];
+    logger === null || logger === void 0 || logger.debug5({
+      clientWidth: scrollable.clientWidth,
+      clientHeight: scrollable.clientHeight,
+      scrollWidth: initialContentWidth,
+      scrollHeight: initialContentHeight
+    });
+
+    // We only care if it has horizontal/vertical scroll if we're using a custom
+    // scrollable, so no need to check otherwise.
+    const hasHScroll = needsSticky ? isScrollable(scrollable, {
+      axis: "x"
+    }) : false;
+    const hasVScroll = needsSticky ? isScrollable(scrollable, {
+      axis: "y"
+    }) : false;
+
+    // ----------
+
+    const setSizeVars = (element, width, height, now = false) => {
+      (now ? setNumericStyleJsVarsNow : setNumericStyleJsVars)(element, {
+        width,
+        height
+      }, {
+        _units: "px",
+        _numDecimal: 2
+      });
+    };
+
+    // If there's a scroll or size change for the scrollable container, update the
+    // transforms and possibly the width/height of the content (if it uses sticky)
+    // .
+    const updatePropsOnScroll = (target, scrollData) => {
+      updateTargetPosition(scrollData);
+
+      // If the scrollable scrolls horizontally we need to set a fixed width on
+      // the inner wrapper, and if it scrolls vertically we need to set a fixed
+      // height.
+      if (needsSticky) {
+        setSizeVars(innerWrapper, hasHScroll ? scrollData[S_CLIENT_WIDTH] : NaN, hasVScroll ? scrollData[S_CLIENT_HEIGHT] : NaN);
+      }
+    };
+
+    // If content is resized, update the dummy overflow to match its size
+    const updatePropsOnResize = (target, sizeData) => {
+      setSizeVars(dummy, sizeData.border[S_WIDTH], sizeData.border[S_HEIGHT]);
+    };
+
+    // ----------
+
+    const currentPositions = {
+      x: 0,
+      y: 0
+    };
+    const targetPositions = copyObject(currentPositions);
+    const updateTargetPosition = scrollData => {
+      for (const d of ["x", "y"]) {
+        const current = currentPositions[d];
+        const target = targetPositions[d];
+        const newTarget = scrollData[d === "x" ? S_SCROLL_LEFT : S_SCROLL_TOP];
+        const isOngoing = current !== target;
+        targetPositions[d] = newTarget;
+        if (!isOngoing) {
+          animateTransforms(d);
+        }
+      }
+    };
+    const animateTransforms = async d => {
+      var _config$lag;
+      const lag = (_config$lag = config === null || config === void 0 ? void 0 : config.lag) !== null && _config$lag !== void 0 ? _config$lag : 1000; // XXX
+      logger === null || logger === void 0 || logger.debug10(`Starting animating ${d} transforms with lag ${lag}`);
+      let target = targetPositions[d];
+      let current = currentPositions[d];
+      const iterator = newCriticallyDampedAnimationIterator({
+        l: current,
+        lTarget: target,
+        lag
+      });
+      while ({
+        l: current
+      } = (await iterator.next(target)).value) {
+        currentPositions[d] = current;
+        target = targetPositions[d];
+        setNumericStyleJsVars(innerWrapper, {
+          [d]: -current
+        }, {
+          _prefix: "offset-",
+          _units: "px",
+          _numDecimal: 2
+        });
+        console.log("XXX", JSON.stringify({
+          d,
+          current,
+          target
+        }));
+        if (current === target) {
+          logger === null || logger === void 0 || logger.debug10(`Done animating ${d} transforms`, target);
+          return;
+        }
+      }
+    };
+
+    // ----------
+
+    const addWatchers = () => {
+      // Track scroll in any direction as well as changes in border or content size
+      // of the element and its contents.
+      scrollWatcher.trackScroll(updatePropsOnScroll, {
+        threshold: 0,
+        scrollable
+      });
+
+      // Track changes in content or border size of the inner content wrapper.
+      sizeWatcher.onResize(updatePropsOnResize, {
+        target: innerWrapper,
+        threshold: 0
+      });
+    };
+    const removeWatchers = () => {
+      scrollWatcher.noTrackScroll(updatePropsOnScroll, scrollable);
+      sizeWatcher.offResize(updatePropsOnResize, innerWrapper);
+    };
+
+    // SETUP ------------------------------
+
+    await waitForMutateTime();
+    addClassesNow(root, PREFIX_ROOT);
+
+    // Wrap the contents in a fixed/sticky positioned wrapper and insert a dummy
+    // overflow element of the same size.
+    // [TODO v2]: Better way to centrally manage wrapping and wrapping of elements
+    const {
+      wrappers,
+      unwrapFn
+    } = createWrappers(root, [["o", [PREFIX_OUTER_WRAPPER]], ["i", [PREFIX_INNER_WRAPPER]]]);
+    const outerWrapper = wrappers.o;
+    const innerWrapper = wrappers.i;
+    if (needsSticky) {
+      setBooleanDataNow(root, PREFIX_HAS_H_SCROLL, hasHScroll);
+      setBooleanDataNow(root, PREFIX_HAS_V_SCROLL, hasVScroll);
+      setBooleanDataNow(root, PREFIX_USES_STICKY);
+    }
+    if (config !== null && config !== void 0 && config.id) {
+      outerWrapper.id = config.id;
+    }
+    if (config !== null && config !== void 0 && config.className) {
+      addClassesNow(outerWrapper, ...toArrayIfSingle(config.className));
+    }
+    const dummy = createElement("div");
+    addClassesNow(dummy, PREFIX_DUMMY);
+    // set its size now to prevent initial layout shifts
+    setSizeVars(dummy, initialContentWidth, initialContentHeight, true);
+    moveElementNow(dummy, {
+      to: root,
+      ignoreMove: true
+    });
+    addWatchers();
+    widget.onDisable(() => {
+      removeWatchers();
+      // XXX TODO re-enable regular scrolling
+    });
+    widget.onEnable(() => {
+      addWatchers();
+      // XXX TODO re-enable smooth scrolling
+    });
+    widget.onDestroy(async () => {
+      await waitForMutateTime();
+      unwrapFn();
+      moveElementNow(dummy); // remove
+
+      removeClassesNow(root, PREFIX_ROOT);
+      delDataNow(root, PREFIX_HAS_H_SCROLL);
+      delDataNow(root, PREFIX_HAS_V_SCROLL);
+      delDataNow(root, PREFIX_USES_STICKY);
+    });
   };
 
   /**
@@ -19981,6 +20480,7 @@
     SameHeight: SameHeight,
     ScrollToTop: ScrollToTop,
     Scrollbar: Scrollbar,
+    SmoothScroll: SmoothScroll,
     Sortable: Sortable,
     TrackGesture: TrackGesture,
     TrackScroll: TrackScroll,
@@ -20040,7 +20540,7 @@
   SameHeight.register();
   Scrollbar.register();
   ScrollToTop.register();
-  // widgets.SmoothScroll.register();
+  SmoothScroll.register();
   Sortable.register();
   TrackGesture.register();
   TrackScroll.register();
@@ -20175,9 +20675,12 @@
     isElementUndisplayed: isElementUndisplayed,
     isFlex: isFlex,
     isFlexChild: isFlexChild,
+    isInQuirksMode: isInQuirksMode,
     isInlineTag: isInlineTag,
+    isMobile: isMobile,
     isPageReady: isPageReady,
     isScrollable: isScrollable,
+    isTouchScreen: isTouchScreen,
     isValidAspectRatio: isValidAspectRatio,
     isValidAspectRatioList: isValidAspectRatioList,
     isValidBox: isValidBox,
@@ -20225,6 +20728,7 @@
     newAnimationFrameIterator: newAnimationFrameIterator,
     newCriticallyDampedAnimationIterator: newCriticallyDampedAnimationIterator,
     normalizeAngle: normalizeAngle,
+    normalizeWheel: normalizeWheel,
     objToStrKey: objToStrKey,
     omitKeys: omitKeys,
     onEveryAnimationFrame: onEveryAnimationFrame,
@@ -20259,6 +20763,7 @@
     showElementNow: showElementNow,
     sortedKeysByVal: sortedKeysByVal,
     splitOn: splitOn,
+    supportsSticky: supportsSticky,
     swapElements: swapElements,
     swapElementsNow: swapElementsNow,
     toArrayIfSingle: toArrayIfSingle,

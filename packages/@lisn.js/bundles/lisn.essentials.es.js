@@ -1,5 +1,5 @@
 /*!
- * LISN.js v1.1.2
+ * LISN.js v1.2.0
  * (c) 2025 @AaylaSecura
  * Released under the MIT License.
  */
@@ -80,6 +80,8 @@ const S_TOUCHCANCEL = `${S_TOUCH}${S_CANCEL}`;
 const S_SELECTSTART = "selectstart";
 const S_ATTRIBUTES = "attributes";
 const S_CHILD_LIST = "childList";
+const S_AUTO = "auto";
+const S_VISIBLE = "visible";
 const PREFIX_WRAPPER$2 = `${PREFIX}-wrapper`;
 const PREFIX_INLINE_WRAPPER = `${PREFIX_WRAPPER$2}-inline`;
 const PREFIX_NO_SELECT = `${PREFIX}-no-select`;
@@ -2088,14 +2090,24 @@ const inlineTags = newSet(["a", "abbr", "acronym", "b", "bdi", "bdo", "big", "bu
 /**
  * @module Utils
  *
- * @categoryDescription CSS: Altering
+ * @categoryDescription DOM: Querying
+ * These functions query the style, attributes or other aspects of elements, but
+ * could lead to forced layout if not scheduled using {@link waitForMeasureTime}.
+ *
+ * @categoryDescription DOM: Querying (optimized)
+ * These functions query the style, attributes or other aspects of elements in
+ * an optimized way. Functions that could cause a forced layout use
+ * {@link waitForMeasureTime} and so are asynchronous. Functions that can
+ * perform the check without forcing a re-layout are synchronous.
+ *
+ * @categoryDescription Style: Altering
  * These functions transition an element from one CSS class to another, but
  * could lead to forced layout if not scheduled using {@link waitForMutateTime}.
  * If a delay is supplied, then the transition is "scheduled" and if the
  * opposite transition is executed before the scheduled one, the original one
  * is cancelled. See {@link transitionElement} for an example.
  *
- * @categoryDescription CSS: Altering (optimized)
+ * @categoryDescription Style: Altering (optimized)
  * These functions transition an element from one CSS class to another in an
  * optimized way using {@link waitForMutateTime} and so are asynchronous.
  * If a delay is supplied, then the transition is "scheduled" and if the
@@ -2107,7 +2119,7 @@ const inlineTags = newSet(["a", "abbr", "acronym", "b", "bdi", "bdo", "big", "bu
 /**
  * Returns true if the element's class list contains the given class.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 const hasClass = (element, className) => classList(element).contains(className);
 
@@ -2116,35 +2128,35 @@ const hasClass = (element, className) => classList(element).contains(className);
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 const hasAnyClass = (element, ...classNames) => some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 const addClassesNow = (element, ...classNames) => classList(element).add(...classNames);
 
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 const addClasses = asyncMutatorFor(addClassesNow);
 
 /**
  * Removes the given classes to the element.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 const removeClassesNow = (element, ...classNames) => classList(element).remove(...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 const removeClasses = asyncMutatorFor(removeClassesNow);
 
@@ -2156,7 +2168,7 @@ const removeClasses = asyncMutatorFor(removeClassesNow);
  * must _not_ start with `data`. It can be in either camelCase or kebab-case,
  * it is converted as needed.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 const getData = (element, name) => getAttr(element, prefixData(name));
 
@@ -2166,7 +2178,7 @@ const getData = (element, name) => getAttr(element, prefixData(name));
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 const setDataNow = (element, name, value) => setAttr(element, prefixData(name), value);
 
@@ -2174,7 +2186,7 @@ const setDataNow = (element, name, value) => setAttr(element, prefixData(name), 
  * Returns the value of the given property from the computed style of the
  * element.
  *
- * @category DOM: Altering
+ * @category DOM: Querying
  */
 const getComputedStylePropNow = (element, prop) => getComputedStyle(element).getPropertyValue(prop);
 
@@ -5056,6 +5068,12 @@ const getBitmaskFromSpec = (keyName, spec, bitSpace) => {
 };
 
 /**
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
+
+/**
  * The callback is as an argument the {@link ElapsedTimes | elapsed times}:
  * - The total elapsed time in milliseconds since the start
  * - The elapsed time in milliseconds since the previous frame
@@ -5111,10 +5129,10 @@ function newAnimationFrameIterator(_x) {
  * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
  * the new position and velocity, and total time at every animation frame.
  *
- * @param [settings.l]         The initial starting position.
  * @param [settings.lTarget]   The initial target position. Can be updated when
  *                             calling next().
  * @param [settings.lag]       See {@link criticallyDamped}.
+ * @param [settings.l = 0]     The initial starting position.
  * @param [settings.precision] See {@link criticallyDamped}.
  *
  * @returns An iterator whose `next` method accepts an optional new `lTarget`.
@@ -5275,9 +5293,11 @@ const isScrollable = (element, options) => {
     result = canScroll;
   } else {
     const dimension = axis === "x" ? "Width" : "Height";
+    const isDocScrollable = element === getDocScrollingElement();
     const hasOverflow = element[`scroll${dimension}`] > element[`client${dimension}`];
     const overflowProp = getComputedStylePropNow(element, "overflow");
-    result = hasOverflow && includes(["scroll", "auto"], overflowProp);
+    const scrollingOverflows = [S_SCROLL, S_AUTO, ...(isDocScrollable ? [S_VISIBLE] : [])];
+    result = hasOverflow && includes(scrollingOverflows, overflowProp);
   }
   if (!noCache) {
     isScrollableCache.sGet(element).set(axis, result);

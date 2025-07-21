@@ -334,7 +334,14 @@
 <a name='L269'></a><a href='#L269'>269</a>
 <a name='L270'></a><a href='#L270'>270</a>
 <a name='L271'></a><a href='#L271'>271</a>
-<a name='L272'></a><a href='#L272'>272</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -383,9 +390,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">93x</span>
-<span class="cline-any cline-yes">327x</span>
-<span class="cline-any cline-yes">327x</span>
+<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">335x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -440,22 +452,22 @@
 <span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">60x</span>
-<span class="cline-any cline-yes">327x</span>
-<span class="cline-any cline-yes">327x</span>
+<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">335x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-yes">60x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">327x</span>
-<span class="cline-any cline-yes">327x</span>
-<span class="cline-any cline-yes">327x</span>
+<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">335x</span>
+<span class="cline-any cline-yes">335x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">327x</span>
+<span class="cline-any cline-yes">335x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">60x</span>
-<span class="cline-any cline-yes">327x</span>
+<span class="cline-any cline-yes">335x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -515,6 +527,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -523,6 +536,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -623,6 +637,11 @@ import {
 } from "@lisn/utils/dom-optimize";
 import { criticallyDamped } from "@lisn/utils/math";
 &nbsp;
+/**
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
 export type ElapsedTimes = {
   total: number;
   sinceLast: number;
@@ -735,10 +754,10 @@ export async function* newAnimationFrameIterator(
  * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
  * the new position and velocity, and total time at every animation frame.
  *
- * @param [settings.l]         The initial starting position.
  * @param [settings.lTarget]   The initial target position. Can be updated when
  *                             calling next().
  * @param [settings.lag]       See {@link criticallyDamped}.
+ * @param [settings.l = 0]     The initial starting position.
  * @param [settings.precision] See {@link criticallyDamped}.
  *
  * @returns An iterator whose `next` method accepts an optional new `lTarget`.
@@ -785,20 +804,22 @@ export async function* <span class="fstat-no" title="function not covered" >newC
   lTarget: number;
   lag: number;
   l?: number;
+  precision?: number;
 }): AsyncGenerator&lt;{ l: number; v: number; t: number }, never&gt; {
   let { l, lTarget } = <span class="cstat-no" title="statement not covered" >settings;</span>
-  const { lag } = <span class="cstat-no" title="statement not covered" >settings;</span>
+  const { lag, precision } = <span class="cstat-no" title="statement not covered" >settings;</span>
   let v = <span class="cstat-no" title="statement not covered" >0,</span>
     t = <span class="cstat-no" title="statement not covered" >0,</span>
     dt = <span class="cstat-no" title="statement not covered" >0;</span>
 &nbsp;
   const next = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    ({ l, v } = criticallyDamped({</span>
-      l,
-      v,
       lTarget,
       dt,
       lag,
+      l,
+      v,
+      precision,
     }));
 <span class="cstat-no" title="statement not covered" >    return { l, v, t };</span>
   };
@@ -883,7 +904,7 @@ export const resetCssAnimationsNow = (element: Element) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-20T16:27:25.598Z
+                at 2025-07-21T08:38:36.467Z
             </div>
         <script src="../prettify.js"></script>
         <script>

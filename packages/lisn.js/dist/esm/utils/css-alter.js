@@ -1,14 +1,24 @@
 /**
  * @module Utils
  *
- * @categoryDescription CSS: Altering
+ * @categoryDescription DOM: Querying
+ * These functions query the style, attributes or other aspects of elements, but
+ * could lead to forced layout if not scheduled using {@link waitForMeasureTime}.
+ *
+ * @categoryDescription DOM: Querying (optimized)
+ * These functions query the style, attributes or other aspects of elements in
+ * an optimized way. Functions that could cause a forced layout use
+ * {@link waitForMeasureTime} and so are asynchronous. Functions that can
+ * perform the check without forcing a re-layout are synchronous.
+ *
+ * @categoryDescription Style: Altering
  * These functions transition an element from one CSS class to another, but
  * could lead to forced layout if not scheduled using {@link waitForMutateTime}.
  * If a delay is supplied, then the transition is "scheduled" and if the
  * opposite transition is executed before the scheduled one, the original one
  * is cancelled. See {@link transitionElement} for an example.
  *
- * @categoryDescription CSS: Altering (optimized)
+ * @categoryDescription Style: Altering (optimized)
  * These functions transition an element from one CSS class to another in an
  * optimized way using {@link waitForMutateTime} and so are asynchronous.
  * If a delay is supplied, then the transition is "scheduled" and if the
@@ -34,7 +44,7 @@ import { camelToKebabCase, splitOn } from "./text.js";
  * @returns True if there was a change made (class removed or added), false
  * otherwise.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const transitionElementNow = (element, fromCls, toCls) => {
   cancelCSSTransitions(element, fromCls, toCls);
@@ -96,7 +106,7 @@ export const transitionElementNow = (element, fromCls, toCls) => {
  * showElement(someElement, 100);
  * ```
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const transitionElement = async (element, fromCls, toCls, delay = 0) => {
   const thisTransition = scheduleCSSTransition(element, toCls);
@@ -133,7 +143,7 @@ export const transitionElement = async (element, fromCls, toCls, delay = 0) => {
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const displayElementNow = element => transitionElementNow(element, MC.PREFIX_UNDISPLAY, MC.PREFIX_DISPLAY);
 
@@ -143,7 +153,7 @@ export const displayElementNow = element => transitionElementNow(element, MC.PRE
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const displayElement = (element, delay = 0) => transitionElement(element, MC.PREFIX_UNDISPLAY, MC.PREFIX_DISPLAY, delay);
 
@@ -152,7 +162,7 @@ export const displayElement = (element, delay = 0) => transitionElement(element,
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const undisplayElementNow = element => transitionElementNow(element, MC.PREFIX_DISPLAY, MC.PREFIX_UNDISPLAY);
 
@@ -162,7 +172,7 @@ export const undisplayElementNow = element => transitionElementNow(element, MC.P
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const undisplayElement = (element, delay = 0) => transitionElement(element, MC.PREFIX_DISPLAY, MC.PREFIX_UNDISPLAY, delay);
 
@@ -173,7 +183,7 @@ export const undisplayElement = (element, delay = 0) => transitionElement(elemen
  *
  * @see {@link transitionElementNow}.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const showElementNow = element => transitionElementNow(element, MC.PREFIX_HIDE, MC.PREFIX_SHOW);
 
@@ -183,7 +193,7 @@ export const showElementNow = element => transitionElementNow(element, MC.PREFIX
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const showElement = (element, delay = 0) => transitionElement(element, MC.PREFIX_HIDE, MC.PREFIX_SHOW, delay);
 
@@ -192,7 +202,7 @@ export const showElement = (element, delay = 0) => transitionElement(element, MC
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const hideElementNow = element => transitionElementNow(element, MC.PREFIX_SHOW, MC.PREFIX_HIDE);
 
@@ -202,7 +212,7 @@ export const hideElementNow = element => transitionElementNow(element, MC.PREFIX
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const hideElement = (element, delay = 0) => transitionElement(element, MC.PREFIX_SHOW, MC.PREFIX_HIDE, delay);
 
@@ -212,7 +222,7 @@ export const hideElement = (element, delay = 0) => transitionElement(element, MC
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const toggleDisplayElementNow = element => isElementUndisplayed(element) ? displayElementNow(element) : undisplayElementNow(element);
 
@@ -222,7 +232,7 @@ export const toggleDisplayElementNow = element => isElementUndisplayed(element) 
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const toggleDisplayElement = (element, delay = 0) => isElementUndisplayed(element) ? displayElement(element, delay) : undisplayElement(element, delay);
 
@@ -232,7 +242,7 @@ export const toggleDisplayElement = (element, delay = 0) => isElementUndisplayed
  *
  * @see {@link transitionElementNow}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const toggleShowElementNow = element => isElementHidden(element) ? showElementNow(element) : hideElementNow(element);
 
@@ -242,28 +252,28 @@ export const toggleShowElementNow = element => isElementHidden(element) ? showEl
  *
  * @see {@link transitionElement}
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const toggleShowElement = (element, delay = 0) => isElementHidden(element) ? showElement(element, delay) : hideElement(element, delay);
 
 /**
  * Returns true if the element's class list contains `lisn-hide`.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const isElementHidden = element => hasClass(element, MC.PREFIX_HIDE);
 
 /**
  * Returns true if the element's class list contains `lisn-undisplay`.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const isElementUndisplayed = element => hasClass(element, MC.PREFIX_UNDISPLAY);
 
 /**
  * Returns true if the element's class list contains the given class.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const hasClass = (element, className) => MH.classList(element).contains(className);
 
@@ -272,7 +282,7 @@ export const hasClass = (element, className) => MH.classList(element).contains(c
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const hasAllClasses = (element, ...classNames) => MH.lengthOf(classNames) > 0 && !MH.some(classNames, className => !hasClass(element, className));
 
@@ -281,35 +291,35 @@ export const hasAllClasses = (element, ...classNames) => MH.lengthOf(classNames)
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const hasAnyClass = (element, ...classNames) => MH.some(classNames, className => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const addClassesNow = (element, ...classNames) => MH.classList(element).add(...classNames);
 
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const addClasses = asyncMutatorFor(addClassesNow);
 
 /**
  * Removes the given classes to the element.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const removeClassesNow = (element, ...classNames) => MH.classList(element).remove(...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const removeClasses = asyncMutatorFor(removeClassesNow);
 
@@ -318,14 +328,14 @@ export const removeClasses = asyncMutatorFor(removeClassesNow);
  *
  * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle | DOMTokenList:toggle}
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const toggleClassNow = (element, className, force) => MH.classList(element).toggle(className, force);
 
 /**
  * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const toggleClass = asyncMutatorFor(toggleClassNow);
 
@@ -335,7 +345,7 @@ export const toggleClass = asyncMutatorFor(toggleClassNow);
  *
  * @since v1.2.0
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const toggleClassesNow = (element, ...classNames) => {
   for (const cls of classNames) {
@@ -348,18 +358,16 @@ export const toggleClassesNow = (element, ...classNames) => {
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const toggleClasses = asyncMutatorFor(toggleClassesNow);
 
 /**
  * Replaces the given class on the element with a new one.
  *
- * @param force See {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace | DOMTokenList:replace}
- *
  * @since v1.2.0
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const replaceClassNow = (element, oldClassName, newClassName) => MH.classList(element).replace(oldClassName, newClassName);
 
@@ -368,7 +376,7 @@ export const replaceClassNow = (element, oldClassName, newClassName) => MH.class
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const replaceClass = asyncMutatorFor(replaceClassNow);
 
@@ -380,7 +388,7 @@ export const replaceClass = asyncMutatorFor(replaceClassNow);
  * must _not_ start with `data`. It can be in either camelCase or kebab-case,
  * it is converted as needed.
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const getData = (element, name) => MH.getAttr(element, MH.prefixData(name));
 
@@ -394,7 +402,7 @@ export const getData = (element, name) => MH.getAttr(element, MH.prefixData(name
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const getBooleanData = (element, name) => {
   const value = getData(element, name);
@@ -413,14 +421,14 @@ export const getBoolData = getBooleanData;
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const setDataNow = (element, name, value) => MH.setAttr(element, MH.prefixData(name), value);
 
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const setData = asyncMutatorFor(setDataNow);
 
@@ -432,7 +440,7 @@ export const setData = asyncMutatorFor(setDataNow);
  *
  * @since v1.2.0
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const setBooleanDataNow = (element, name, value = true) => MH.setAttr(element, MH.prefixData(name), value + "");
 
@@ -447,7 +455,7 @@ export const setBoolDataNow = setBooleanDataNow;
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const setBooleanData = asyncMutatorFor(setBooleanDataNow);
 
@@ -465,7 +473,7 @@ export const setBoolData = setBooleanData;
  *
  * @since v1.2.0
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const unsetBooleanDataNow = (element, name) => MH.unsetAttr(element, MH.prefixData(name));
 
@@ -480,7 +488,7 @@ export const unsetBoolDataNow = unsetBooleanDataNow;
  *
  * @since v1.2.0
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const unsetBooleanData = asyncMutatorFor(unsetBooleanDataNow);
 
@@ -496,14 +504,14 @@ export const unsetBoolData = unsetBooleanData;
  * The name of the attribute must _not_ start with `data`. It can be in either
  * camelCase or kebab-case, it is converted as needed.
  *
- * @category CSS: Altering
+ * @category Style: Altering
  */
 export const delDataNow = (element, name) => MH.delAttr(element, MH.prefixData(name));
 
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.
  *
- * @category CSS: Altering (optimized)
+ * @category Style: Altering (optimized)
  */
 export const delData = asyncMutatorFor(delDataNow);
 
@@ -511,14 +519,14 @@ export const delData = asyncMutatorFor(delDataNow);
  * Returns the value of the given property from the computed style of the
  * element.
  *
- * @category DOM: Altering
+ * @category DOM: Querying
  */
 export const getComputedStylePropNow = (element, prop) => getComputedStyle(element).getPropertyValue(prop);
 
 /**
  * Like {@link getComputedStylePropNow} except it will {@link waitForMeasureTime}.
  *
- * @category DOM: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const getComputedStyleProp = asyncMeasurerFor(getComputedStylePropNow);
 
@@ -526,7 +534,7 @@ export const getComputedStyleProp = asyncMeasurerFor(getComputedStylePropNow);
  * Returns the value of the given property from the inline style of the
  * element.
  *
- * @category DOM: Altering
+ * @category DOM: Querying
  */
 export const getStylePropNow = (element, prop) => {
   var _style;
@@ -536,7 +544,7 @@ export const getStylePropNow = (element, prop) => {
 /**
  * Like {@link getStylePropNow} except it will {@link waitForMeasureTime}.
  *
- * @category DOM: Altering (optimized)
+ * @category DOM: Querying (optimized)
  */
 export const getStyleProp = asyncMeasurerFor(getStylePropNow);
 
@@ -579,6 +587,8 @@ export const delStyleProp = asyncMutatorFor(delStylePropNow);
  *
  * @returns `null` if the element does not have a flex layout.
  *
+ * @category DOM: Querying (optimized)
+ *
  * @since v1.2.0
  */
 export const getFlexDirection = async element => {
@@ -595,6 +605,8 @@ export const getFlexDirection = async element => {
  *
  * @returns `null` if the element's parent does not have a flex layout.
  *
+ * @category DOM: Querying (optimized)
+ *
  * @since v1.2.0
  */
 export const getParentFlexDirection = async element => {
@@ -605,6 +617,8 @@ export const getParentFlexDirection = async element => {
 /**
  * Returns true if the given element has a flex layout. If direction is given,
  * then it also needs to match.
+ *
+ * @category DOM: Querying (optimized)
  *
  * @since v1.2.0
  */
@@ -619,6 +633,8 @@ export const isFlex = async (element, direction) => {
 /**
  * Returns true if the given element's parent has a flex layout. If direction is
  * given, then it also needs to match.
+ *
+ * @category DOM: Querying (optimized)
  *
  * @since v1.2.0
  */

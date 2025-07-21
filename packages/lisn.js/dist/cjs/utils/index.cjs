@@ -14,6 +14,17 @@ Object.keys(_animations).forEach(function (key) {
     }
   });
 });
+var _browser = require("./browser.cjs");
+Object.keys(_browser).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _browser[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _browser[key];
+    }
+  });
+});
 var _cssAlter = require("./css-alter.cjs");
 Object.keys(_cssAlter).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
@@ -33,17 +44,6 @@ Object.keys(_directions).forEach(function (key) {
     enumerable: true,
     get: function () {
       return _directions[key];
-    }
-  });
-});
-var _dom = require("./dom.cjs");
-Object.keys(_dom).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  if (key in exports && exports[key] === _dom[key]) return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function () {
-      return _dom[key];
     }
   });
 });
@@ -99,6 +99,17 @@ Object.keys(_domSearch).forEach(function (key) {
     enumerable: true,
     get: function () {
       return _domSearch[key];
+    }
+  });
+});
+var _dom = require("./dom.cjs");
+Object.keys(_dom).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _dom[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _dom[key];
     }
   });
 });
@@ -212,6 +223,17 @@ Object.keys(_misc).forEach(function (key) {
     }
   });
 });
+var _normalizeWheel = require("./normalize-wheel.cjs");
+Object.keys(_normalizeWheel).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _normalizeWheel[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _normalizeWheel[key];
+    }
+  });
+});
 var _overlays = require("./overlays.cjs");
 Object.keys(_overlays).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
@@ -223,17 +245,6 @@ Object.keys(_overlays).forEach(function (key) {
     }
   });
 });
-var _position = require("./position.cjs");
-Object.keys(_position).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  if (key in exports && exports[key] === _position[key]) return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function () {
-      return _position[key];
-    }
-  });
-});
 var _pointer = require("./pointer.cjs");
 Object.keys(_pointer).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
@@ -242,6 +253,17 @@ Object.keys(_pointer).forEach(function (key) {
     enumerable: true,
     get: function () {
       return _pointer[key];
+    }
+  });
+});
+var _position = require("./position.cjs");
+Object.keys(_position).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (key in exports && exports[key] === _position[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _position[key];
     }
   });
 });

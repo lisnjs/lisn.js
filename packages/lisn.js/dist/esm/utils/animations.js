@@ -16,6 +16,12 @@ import { waitForMeasureTime, waitForMutateTime } from "./dom-optimize.js";
 import { criticallyDamped } from "./math.js";
 
 /**
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
+
+/**
  * The callback is as an argument the {@link ElapsedTimes | elapsed times}:
  * - The total elapsed time in milliseconds since the start
  * - The elapsed time in milliseconds since the previous frame
@@ -116,10 +122,10 @@ export function newAnimationFrameIterator(_x) {
  * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
  * the new position and velocity, and total time at every animation frame.
  *
- * @param [settings.l]         The initial starting position.
  * @param [settings.lTarget]   The initial target position. Can be updated when
  *                             calling next().
  * @param [settings.lag]       See {@link criticallyDamped}.
+ * @param [settings.l = 0]     The initial starting position.
  * @param [settings.precision] See {@link criticallyDamped}.
  *
  * @returns An iterator whose `next` method accepts an optional new `lTarget`.
@@ -217,7 +223,8 @@ function _newCriticallyDampedAnimationIterator() {
       lTarget
     } = settings;
     const {
-      lag
+      lag,
+      precision
     } = settings;
     let v = 0,
       t = 0,
@@ -227,11 +234,12 @@ function _newCriticallyDampedAnimationIterator() {
         l,
         v
       } = criticallyDamped({
-        l,
-        v,
         lTarget,
         dt,
-        lag
+        lag,
+        l,
+        v,
+        precision
       }));
       return {
         l,

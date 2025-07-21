@@ -192,10 +192,18 @@ export const isScrollable = (
     result = canScroll;
   } else {
     const dimension = axis === "x" ? "Width" : "Height";
+    const isDocScrollable = element === MH.getDocScrollingElement();
+
     const hasOverflow =
       element[`scroll${dimension}`] > element[`client${dimension}`];
     const overflowProp = getComputedStylePropNow(element, "overflow");
-    result = hasOverflow && MH.includes(["scroll", "auto"], overflowProp);
+    const scrollingOverflows = [
+      MC.S_SCROLL,
+      MC.S_AUTO,
+      ...(isDocScrollable ? [MC.S_VISIBLE] : []),
+    ];
+
+    result = hasOverflow && MH.includes(scrollingOverflows, overflowProp);
   }
 
   if (!noCache) {

@@ -92,6 +92,8 @@ export declare const S_DRAGGABLE = "draggable";
 export declare const S_DISABLED = "disabled";
 export declare const S_ARROW = "arrow";
 export declare const S_ROLE = "role";
+export declare const S_AUTO = "auto";
+export declare const S_VISIBLE = "visible";
 export declare const ARIA_PREFIX = "aria-";
 export declare const S_ARIA_CONTROLS: string;
 export declare const PREFIX_WRAPPER = "lisn-wrapper";

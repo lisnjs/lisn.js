@@ -295,7 +295,7 @@ export class Scrollbar extends Widget {
     const props = getScrollableProps(scrollable);
     const ourScrollable = props.scrollable;
 
-    (destroyPromise || MH.promiseResolve()).then(async () => {
+    (destroyPromise || MH.promiseResolve()).then(() => {
       if (this.isDestroyed()) {
         return;
       }
@@ -628,7 +628,7 @@ const init = (
 
   // ----------
 
-  const setProgress = async (scrollData: ScrollData, tracksH: boolean) => {
+  const setProgress = (scrollData: ScrollData, tracksH: boolean) => {
     const scrollbar = tracksH ? scrollbarH : scrollbarV;
     const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
 
@@ -659,7 +659,19 @@ const init = (
     );
 
     const scrollAxis = tracksH ? "x" : "y";
-    if (isScrollable(scrollable, { axis: scrollAxis }) && viewFraction < 1) {
+    // TODO When using content-box, reading scrollWidth/Height even on the
+    // subsequent measure time still shows the "old" value that includes the
+    // border width before it seems to adjust. So sometimes it gives false
+    // positives for it being scrollable.
+    const canScroll =
+      viewFraction < 0.99 &&
+      (completeFraction > 0 ||
+        isScrollable(scrollable, {
+          axis: scrollAxis,
+          noCache: true,
+        }));
+
+    if (canScroll) {
       setBooleanData(containerElement, hasBarPrefix);
       displayElement(scrollbar);
     } else {
@@ -671,12 +683,12 @@ const init = (
   // ----------
 
   const updateProgress = (target: Element, scrollData: ScrollData) => {
-    setProgress(scrollData, true);
-    setProgress(scrollData, false);
-
     if (!isMainScrollable && !isBody) {
       setBoxMeasureProps(containerElement);
     }
+
+    setProgress(scrollData, true);
+    setProgress(scrollData, false);
 
     if (autoHideDelay > 0) {
       showElement(wrapper).then(() => hideElement(wrapper, autoHideDelay));
@@ -1021,8 +1033,8 @@ const isHorizontal = (scrollbar: Element) =>
 const setBoxMeasureProps = async (element: HTMLElement) => {
   for (const side of [MC.S_TOP, MC.S_RIGHT, MC.S_BOTTOM, MC.S_LEFT]) {
     for (const key of [`padding-${side}`, `border-${side}-width`]) {
-      const padding = await getComputedStyleProp(element, key);
-      setStyleProp(element, MH.prefixCssJsVar(key), padding);
+      const value = await getComputedStyleProp(element, key);
+      setStyleProp(element, MH.prefixCssJsVar(key), value);
     }
   }
 };

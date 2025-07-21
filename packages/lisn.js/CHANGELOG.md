@@ -5,13 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [1.2] - 2025-XX-XX
+## [1.2] - 2025-07-21
 
-- ADDED: CheckTrigger
-- FIXED: Cleaning up when destroying triggers. Also, one-time triggers destroy
-  themselves when done
+- ADDED: CheckTrigger widget
+- ADDED: ScrollToTop widget now supports a custom scrollable element
+- ADDED: TrackSize widget accepts config now
+- ADDED: Triggers clean up on being destroyed
+- ADDED: Scrollbar respects an existing wrapper elements and uses those
+- ADDED: ScrollTo action now accepts a duration option
+- ADDED: New utility functions:
+  - criticallyDamped
+  - waitForAnimationFrame
+  - onEveryAnimationFrame
+  - newCriticallyDampedAnimationIterator
+  - newAnimationFrameIterator
+  - toggleClassesNow
+  - toggleClasses
+  - replaceClassNow
+  - replaceClass
 
-## [1.1.2] - 2025-27-02
+- FIXED: SctollTo action was not using the configured scrollable
+- FIXED: isScrollable now handles overflowing elements that have overflow set to
+  something other than scroll or auto (previously it was returning a false
+  positive, true, when in fact it wasn't scrollable)
+- FIXED: More reliable Scrollbar CSS
+- FIXED: Scrollbar additional clean up on destroy
+- FIXED: moveChildren\* utility functions were always using ignoreMove: true
+
+- CHANGED: Improved scroll animation: Now based on a critically damped spring.
+  It seamlessly resumes a previous scroll that was interrupted.
+- CHANGED: Scrollbar now checks for sticky support and aborts if it needs sticky
+  but browser does not support
+- CHANGED: One-time triggers destroy themselves when done
+
+---
+
+## [1.1.2] - 2025-02-27
 
 ### Minor changes + updated README
 
@@ -20,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.1] - 2025-26-02
+## [1.1.1] - 2025-02-26
 
 ### Minor CSS fix
 
@@ -28,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.1.0] - 2025-26-02
+## [1.1.0] - 2025-02-26
 
 ### Added built-in pager styles
 
@@ -38,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.4] - 2025-22-02
+## [1.0.4] - 2025-02-22
 
 ### Improved compatibility with Vite and Webpack
 
@@ -47,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.3] - 2025-22-02
+## [1.0.3] - 2025-02-22
 
 ### Improved compatibility with Vite
 
@@ -57,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.2] - 2025-17-02
+## [1.0.2] - 2025-02-17
 
 ### Improved compatibility with older environments
 
@@ -70,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.1] - 2025-16-02
+## [1.0.1] - 2025-02-16
 
 ### Updated build to remove unnecessary transpiling
 
@@ -78,7 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.0] - 2025-15-02
+## [1.0.0] - 2025-02-15
 
 ### Initial Release
 

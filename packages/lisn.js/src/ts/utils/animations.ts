@@ -16,6 +16,11 @@ import {
 } from "@lisn/utils/dom-optimize";
 import { criticallyDamped } from "@lisn/utils/math";
 
+/**
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
 export type ElapsedTimes = {
   total: number;
   sinceLast: number;
@@ -128,10 +133,10 @@ export async function* newAnimationFrameIterator(
  * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
  * the new position and velocity, and total time at every animation frame.
  *
- * @param [settings.l]         The initial starting position.
  * @param [settings.lTarget]   The initial target position. Can be updated when
  *                             calling next().
  * @param [settings.lag]       See {@link criticallyDamped}.
+ * @param [settings.l = 0]     The initial starting position.
  * @param [settings.precision] See {@link criticallyDamped}.
  *
  * @returns An iterator whose `next` method accepts an optional new `lTarget`.
@@ -178,20 +183,22 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
   lTarget: number;
   lag: number;
   l?: number;
+  precision?: number;
 }): AsyncGenerator<{ l: number; v: number; t: number }, never> {
   let { l, lTarget } = settings;
-  const { lag } = settings;
+  const { lag, precision } = settings;
   let v = 0,
     t = 0,
     dt = 0;
 
   const next = async () => {
     ({ l, v } = criticallyDamped({
-      l,
-      v,
       lTarget,
       dt,
       lag,
+      l,
+      v,
+      precision,
     }));
     return { l, v, t };
   };

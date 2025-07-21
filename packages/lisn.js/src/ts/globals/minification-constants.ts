@@ -123,6 +123,9 @@ export const S_ARROW = "arrow";
 
 export const S_ROLE = "role";
 
+export const S_AUTO = "auto";
+export const S_VISIBLE = "visible";
+
 export const ARIA_PREFIX = "aria-";
 export const S_ARIA_CONTROLS = ARIA_PREFIX + "controls";
 

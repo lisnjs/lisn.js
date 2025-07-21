@@ -1,6 +1,11 @@
 /**
  * @module Utils
  */
+/**
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
 export type ElapsedTimes = {
     total: number;
     sinceLast: number;
@@ -71,10 +76,10 @@ export declare function newAnimationFrameIterator(elapsed?: ElapsedTimes): Async
  * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
  * the new position and velocity, and total time at every animation frame.
  *
- * @param [settings.l]         The initial starting position.
  * @param [settings.lTarget]   The initial target position. Can be updated when
  *                             calling next().
  * @param [settings.lag]       See {@link criticallyDamped}.
+ * @param [settings.l = 0]     The initial starting position.
  * @param [settings.precision] See {@link criticallyDamped}.
  *
  * @returns An iterator whose `next` method accepts an optional new `lTarget`.
@@ -121,6 +126,7 @@ export declare function newCriticallyDampedAnimationIterator(settings: {
     lTarget: number;
     lag: number;
     l?: number;
+    precision?: number;
 }): AsyncGenerator<{
     l: number;
     v: number;

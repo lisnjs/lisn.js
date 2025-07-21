@@ -343,7 +343,7 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
 
           if (dataAttr !== null) {
             configSpecs.push(
-              ...(dataAttr ? splitOn(dataAttr, ";", true) : [""]),
+              ...(dataAttr ? splitOn(dataAttr, CONFIG_SEP_CHAR, true) : [""]),
             );
           }
         } else {
@@ -427,7 +427,7 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
 export const getWidgetConfig = <Config extends Record<string, unknown>>(
   input: Record<string, unknown> | string | null | undefined,
   validator: WidgetConfigValidatorObject<Config>,
-  separator = "|",
+  separator = OPT_SEP_CHAR,
 ): Config => {
   const config = {} as Config;
   if (!(input instanceof Object)) {
@@ -447,7 +447,7 @@ export const getWidgetConfig = <Config extends Record<string, unknown>>(
 export const fetchWidgetConfig = async <Config extends Record<string, unknown>>(
   input: Record<string, unknown> | string | null | undefined,
   validator: WidgetConfigAsyncValidatorObject<Config>,
-  separator = "|",
+  separator = OPT_SEP_CHAR,
 ): Promise<Config> => {
   const config = {} as Config;
   const configPromises = getWidgetConfig<{
@@ -491,10 +491,13 @@ export const fetchUniqueWidget = async <W extends Widget>(
   return widget;
 };
 
+// --------------------
+
+const CONFIG_SEP_CHAR = ";";
+const OPT_SEP_CHAR = "|";
+
 const instances = newXWeakMap<Element, Map<string, Widget>>(() => MH.newMap());
 const registeredWidgets = MH.newSet<string>();
-
-// --------------------
 
 const toOptionsObject = (
   input: string | null | undefined,

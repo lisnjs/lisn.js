@@ -300,7 +300,7 @@ export type WidgetConfigValidator<Config extends Record<string, unknown>> =
  * @param [options.supportsMultiple]
  *                  If true, and if `configValidator` is given, then the
  *                  value of the element's widget specific data attribute
- *                  will be split on ";" and each one parsed individually
+ *                  will be split on `;` and each one parsed individually
  *                  as a configuration. Then the `newWidget` function will
  *                  be called once for each configuration.
  */
@@ -401,7 +401,7 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
  *     <OptionName> "=" <OptionValue>
  * ```
  *
- * By default, for widgets `<separator>` is "|".
+ * By default, for widgets `<separator>` is `|`.
  *
  * **NOTE:** If `input` is a string, option names will be converted from
  * kebab-case to camelCase.

@@ -64,8 +64,8 @@ import debug from "@lisn/debug/debug";
  *     {@link Types.ScrollOffsetSpec | ScrollOffsetSpec}.
  *   - `root`: A string element specification. See
  *     {@link Utils.getReferenceElement | getReferenceElement}.
- *   - `rootMargin`: A string.
- *   - `threshold`: A number or list (comma-separated) of numbers.
+ *   - `rootMargin`: A string, a (comma or space-separated) list of margins.
+ *   - `threshold`: A number or a (comma-separated) list of numbers.
  *
  * @example
  * Show the element when it's in the viewport, hide otherwise.
@@ -160,7 +160,7 @@ import debug from "@lisn/debug/debug";
  * <div data-lisn-on-view="@open
  *                         +target=top:75%
  *                         +root=#root
- *                         +rootMargin=10% 20% 10% 20%
+ *                         +root-margin=10% 20% 10% 20%
  *                         +threshold=0.3"
  * ></div>
  * ```

@@ -45,7 +45,7 @@
  *
  * There can be 0 or more spaces around any of the separator characters.
  *
- * At least one action (with a preceding "@" character) is always required.
+ * At least one action (with a preceding `@` character) is always required.
  *
  * The characters `;`, `,`, `=`, `@`, `+` and `:` are reserved separators and
  * cannot be used literally as part of an argument or option value.
@@ -339,14 +339,8 @@ export type TriggerCreateFn<Config extends TriggerConfig> = (
  * Registers the given trigger as a widget to be automatically configured for
  * all elements that have a trigger specification with the given name.
  *
- * A trigger specification can be given as a
- * `data-lisn-on-<TriggerName>="<TriggerSpec> { ";" <TriggerSpec> }"` attribute
- * or as one or more `lisn-on-<TriggerName>--<TriggerSpec>` classes.
- *
- * See the top of the {@link Triggers} page for an explanation of `<TriggerSpec>`.
- *
- * Using classes instead of attributes is not recommended and only available as
- * a fallback option.
+ * See the {@link Triggers} page for an explanation of the string specification
+ * syntax.
  *
  * **IMPORTANT:** If a trigger by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.

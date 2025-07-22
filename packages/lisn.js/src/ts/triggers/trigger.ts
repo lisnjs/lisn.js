@@ -385,7 +385,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
       const [tmp, configSpec] = splitOn(spec, OPTION_PREF_CHAR, true, 1);
       const [argSpec, allActionSpecs] = splitOn(tmp, ACTION_PREF_CHAR, true, 1);
 
-      const args = MH.filterBlank(splitOn(argSpec, ",", true)) || [];
+      const args = MH.filterBlank(splitOn(argSpec, ARGS_SEP_CHAR, true)) || [];
 
       const config = await fetchWidgetConfig(
         configSpec,
@@ -439,6 +439,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
 // --------------------
 
 const TRIGGER_SEP = ";";
+const ARGS_SEP_CHAR = ",";
 const OPTION_PREF_CHAR = "+";
 const ACTION_PREF_CHAR = "@";
 const ACTION_ARGS_PREF_CHAR = ":";

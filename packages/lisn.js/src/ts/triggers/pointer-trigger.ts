@@ -50,7 +50,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * specification.
  *
  * - Arguments: none
- * - Additional trigger options: none
+ * - Additional trigger options:
  *   - `target`: A string element specification.
  *     See {@link Utils.getReferenceElement | getReferenceElement}.
  *   - `prevent-default`: A boolean.
@@ -158,7 +158,7 @@ export class ClickTrigger extends Trigger {
  * specification.
  *
  * - Arguments: none
- * - Additional trigger options: none
+ * - Additional trigger options:
  *   - `target`: A string element specification.
  *     See {@link Utils.getReferenceElement | getReferenceElement}.
  *   - `prevent-default`: boolean
@@ -267,7 +267,7 @@ export class PressTrigger extends Trigger {
  * specification.
  *
  * - Arguments: none
- * - Additional trigger options: none
+ * - Additional trigger options:
  *   - `target`: A string element specification.
  *     See {@link Utils.getReferenceElement | getReferenceElement}.
  *   - `prevent-default`: boolean

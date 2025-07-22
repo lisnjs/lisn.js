@@ -1,10 +1,10 @@
 /**
- * @module Actions
- *
  * ## Specification for the HTML API for actions
  *
  * When using the HTML API, actions are always used with triggers. Please see
  * {@link Triggers | the documentation on triggers} for the required syntax.
+ *
+ * @module Actions
  */
 
 import * as MH from "@lisn/globals/minification-helpers";

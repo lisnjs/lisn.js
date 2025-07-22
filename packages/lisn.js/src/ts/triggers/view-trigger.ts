@@ -56,7 +56,7 @@ import debug from "@lisn/debug/debug";
  * specification.
  *
  * - Arguments (optional): One or more (comma-separated)
- *   {@link TriggerConfig.views | views}. Default is "at".
+ *   {@link ViewTriggerConfig.views | views}. Default is "at".
  *
  * - Additional trigger options (see {@link ViewTriggerConfig}):
  *   - `target`: A string element specification for an element (see
@@ -151,9 +151,9 @@ import debug from "@lisn/debug/debug";
  * ```
  *
  * @example
- * As above but using a custom {@link ViewWatcherConfig.root | root},
- * {@link ViewWatcherConfig.rootMargin | rootMargin} and
- * {@link ViewWatcherConfig.threshold | threshold} for the
+ * As above but using a custom {@link Watchers/ViewWatcher.ViewWatcherConfig.root | root},
+ * {@link Watchers/ViewWatcher.ViewWatcherConfig.rootMargin | rootMargin} and
+ * {@link Watchers/ViewWatcher.ViewWatcherConfig.threshold | threshold} for the
  * {@link ViewWatcher}.
  *
  * ```html

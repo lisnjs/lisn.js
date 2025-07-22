@@ -85,7 +85,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * as they scroll down:
  *
  * ```html
- * <div data-lisn-on-scroll="@add-class=scrolled ;
+ * <div data-lisn-on-scroll="@add-class: scrolled ;
  *                           up @show +do-delay=1000"
  * ></div>
  * ```
@@ -97,7 +97,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  *
  * ```html
  * <div class="section">
- *   <div data-lisn-on-scroll="up,down @add-class=c1,c2 @enable=my-trigger +scrollable=this.section"
+ *   <div data-lisn-on-scroll="up,down @add-class: c1,c2 @enable: my-trigger +scrollable=this.section"
  *      data-lisn-on-run="@show +id=my-trigger"
  *   ></div>
  *</div>
@@ -108,7 +108,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  *
  * ```html
  * <div data-lisn-ref="section">
- *   <div data-lisn-on-scroll="up,down @add-class=c1,c2 @enable=my-trigger +scrollable=this-section"
+ *   <div data-lisn-on-scroll="up,down @add-class: c1,c2 @enable: my-trigger +scrollable=this-section"
  *      data-lisn-on-run="@show +id=my-trigger"
  *   ></div>
  *</div>

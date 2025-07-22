@@ -87,7 +87,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * otherwise:
  *
  * ```html
- * <div data-lisn-on-layout="min tablet @add-class=tablet"></div>
+ * <div data-lisn-on-layout="min tablet @add-class: tablet"></div>
  * ```
  *
  * @example
@@ -95,9 +95,9 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * class `tablet`, when it's "tablet" and so on; undo that otherwise:
  *
  * ```html
- * <div data-lisn-on-layout="max mobile-wide @add-class=mobile ;
- *                           tablet @add-class=tablet ;
- *                           desktop @add-class=desktop"
+ * <div data-lisn-on-layout="max mobile-wide @add-class: mobile ;
+ *                           tablet @add-class: tablet ;
+ *                           desktop @add-class: desktop"
  * ></div>
  * ```
  *
@@ -116,7 +116,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * otherwise (on other aspect ratios of the reference root):
  *
  * ```html
- * <div data-lisn-on-layout="square @add-class=c1,c2 @enable=my-trigger +root=next.box"
+ * <div data-lisn-on-layout="square @add-class: c1,c2 @enable: my-trigger +root=next.box"
  *      data-lisn-on-run="@show +id=my-trigger"
  * ></div>
  * <div class="box"></div>
@@ -126,7 +126,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * As above, but using `data-lisn-ref` attribute instead of class selector.
  *
  * ```html
- * <div data-lisn-on-layout="square @add-class=c1,c2 @enable=my-trigger +root=next-box"
+ * <div data-lisn-on-layout="square @add-class: c1,c2 @enable: my-trigger +root=next-box"
  *      data-lisn-on-run="@show +id=my-trigger"
  * ></div>
  * <div data-lisn-ref="box"></div>

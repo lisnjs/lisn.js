@@ -101,7 +101,7 @@ import debug from "@lisn/debug/debug";
  * reverse the animations as soon as it goes out of view.
  *
  * ```html
- * <div data-lisn-on-view="@add-class=seen +once ;
+ * <div data-lisn-on-view="@add-class: seen +once ;
  *                         @animate +do-delay=1000"
  * ></div>
  * ```
@@ -113,7 +113,7 @@ import debug from "@lisn/debug/debug";
  * action. See {@link getOppositeViews}:
  *
  * ```html
- * <div data-lisn-on-view="at,below @add-class=seen"></div>
+ * <div data-lisn-on-view="at,below @add-class: seen"></div>
  * ```
  *
  * @example
@@ -122,7 +122,7 @@ import debug from "@lisn/debug/debug";
  * viewport is either at, below or to the right of the element.
  *
  * ```html
- * <div data-lisn-on-view="above,left @add-class=cls"></div>
+ * <div data-lisn-on-view="above,left @add-class: cls"></div>
  * ```
  *
  * @example

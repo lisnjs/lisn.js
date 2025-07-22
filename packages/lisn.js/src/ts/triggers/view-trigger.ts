@@ -150,6 +150,21 @@ import debug from "@lisn/debug/debug";
  * <div data-lisn-on-view="@open +target=top:75%"></div>
  * ```
  *
+ * @example
+ * As above but using a custom {@link ViewWatcherConfig.root | root},
+ * {@link ViewWatcherConfig.rootMargin | rootMargin} and
+ * {@link ViewWatcherConfig.threshold | threshold} for the
+ * {@link ViewWatcher}.
+ *
+ * ```html
+ * <div data-lisn-on-view="@open
+ *                         +target=top:75%
+ *                         +root=#root
+ *                         +rootMargin=10% 20% 10% 20%
+ *                         +threshold=0.3"
+ * ></div>
+ * ```
+ *
  * @category View
  */
 export class ViewTrigger extends Trigger {

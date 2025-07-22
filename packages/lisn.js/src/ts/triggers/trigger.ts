@@ -9,7 +9,8 @@
  * A trigger specification should be given as a
  * `data-lisn-on-<TriggerName>="<TriggerSpecList>"` attribute.
  * A fallback option of using a CSS class of the form
- * `lisn-on-<TriggerName>--<TriggerSpec>` is also supported but not recommended.
+ * `lisn-on-<TriggerName>--<TriggerSpec>` is also supported if needed but is not
+ * recommended and may be deprecated in future.
  *
  * The general specification for a trigger is of the form:
  *
@@ -44,6 +45,8 @@
  * The characters `;`, `,`, `=`, `@`, `+` and `:` are reserved separators and
  * cannot be used literally as part of an argument or option value.
  *
+ * See documentation on a specific trigger or action for examples.
+ *
  * @module Triggers
  *
  * @categoryDescription Manual run
@@ -51,6 +54,8 @@
  * custom triggers and it also registers a trigger that needs to be run
  * manually (by e.g. the {@link Actions.Run | Run} action).
  */
+
+// [TODO v2]: Perhaps remove support for trigger spec as part of CSS classes?
 
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";

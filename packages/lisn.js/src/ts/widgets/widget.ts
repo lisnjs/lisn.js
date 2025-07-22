@@ -3,14 +3,15 @@
  *
  * The following describes the general syntax when using the HTML API for
  * automatic creation of widgets based on data attributes
- * ({@link Settings.settings.autoWidgets | settings.autoWidgets} must be true.
+ * {@link Settings.settings.autoWidgets | settings.autoWidgets} must be true.
  *
  * A widget specification should be given as a
  * `data-lisn-<WidgetName>="<WidgetConfList>"` attribute.
  *
  * Alternatively, if using all default configurations, you can simply add the
  * `lisn-<WidgetName>` CSS class. Specifying a configuration using CSS classes
- * is not currently possible for widgets, only triggers.
+ * is not currently possible for widgets, only for triggers (though it's
+ * discouraged).
  *
  * The general specification for a widget is of the form:
  *
@@ -33,6 +34,8 @@
  *
  * The characters `|`, `;`, `=` are reserved separators and cannot be used
  * literally as part of an option value.
+ *
+ * See documentation on a specific widget for examples.
  *
  * @module Widgets
  */

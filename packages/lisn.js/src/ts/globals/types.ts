@@ -309,6 +309,13 @@ export type OnlyOneOf<T, U> =
 /**
  * @category Utility
  */
+export type OnlyOne<T, Keys extends keyof T = keyof T> = {
+  [K in Keys]: { [P in K]: T[P] } & Partial<Record<Exclude<Keys, K>, never>>;
+}[Keys];
+
+/**
+ * @category Utility
+ */
 export type AtLeastOne<T, U = { [K in keyof T]: Pick<T, K> }> = Partial<T> &
   U[keyof U];
 

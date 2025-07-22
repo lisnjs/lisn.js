@@ -7,6 +7,13 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { settings } from "@lisn/globals/settings";
 
+import {
+  AtLeastOne,
+  OnlyOne,
+  View,
+  CommaSeparatedStr,
+} from "@lisn/globals/types";
+
 import { newCriticallyDampedAnimationIterator } from "@lisn/utils/animations";
 import { supportsSticky } from "@lisn/utils/browser";
 import {
@@ -37,12 +44,14 @@ import { validateNumber, validateString } from "@lisn/utils/validation";
 
 import { ScrollWatcher, ScrollData } from "@lisn/watchers/scroll-watcher";
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
+import { ViewWatcher } from "@lisn/watchers/view-watcher";
 
 import {
   Widget,
   WidgetConfigValidatorObject,
   registerWidget,
   getWidgetConfig,
+  fetchWidgetConfig,
 } from "@lisn/widgets/widget";
 
 import debug from "@lisn/debug/debug";
@@ -307,6 +316,8 @@ export type SmoothScrollConfig = {
   layers?: Element[] | Map<Element, SmoothScrollLayerConfig | null>;
 };
 
+export type AbsoluteOrRelativeNumber = number | `+${number}` | `-${number}`;
+
 /**
  * Custom lag, depth or transform for a descendant element of the scrollable.
  * Can either be given as an object as the value of the
@@ -326,41 +337,46 @@ export type SmoothScrollConfig = {
  */
 export type SmoothScrollLayerConfig = {
   /**
-   * Override the root's lag for this child. The value is absolute, not
-   * accumulative.
+   * Override the parent layer or root's lag for this child. It can either be
+   * given as a number, in which case the value is absolute, or as a numerical
+   * string prefixed with `+` or `-`, in which case it is relative to the
+   * nearest parent layer (or to the root scrollable).
    *
    * @defaultValue undefined
    */
-  lag?: number;
+  lag?: AbsoluteOrRelativeNumber;
 
   /**
-   * Override the root's horizontal lag for this child. The value is absolute,
-   * not accumulative.
+   * Like {@link lag} but it applies only for horizontal scrolls.
    *
    * @defaultValue undefined
    */
-  lagX?: number;
+  lagX?: AbsoluteOrRelativeNumber;
 
   /**
-   * Override the root's vertical lag for this child. The value is absolute,
-   * not accumulative.
+   * Like {@link lag} but it applies only for vertical scrolls.
    *
    * @defaultValue undefined
    */
-  lagY?: number;
+  lagY?: AbsoluteOrRelativeNumber;
 
   /**
-   * Override the root's transforms for this child. Note that transforms applied
-   * on the scrollable or on parent layers are not negated on child layers, so
-   * this value is always accumulative.
+   * Override the parent layer or root's transforms for this child. Note that
+   * transforms applied on the root scrollable or on parent layers are not
+   * negated on child layers, so this value is always accumulative.
    *
    * @defaultValue undefined
    */
   transforms?: ScrollTransforms;
 
   /**
-   * Parallax depth. This is a scaling ratio for the scroll offset. Values
-   * smaller than 1 will result in a smaller amount of transformation.
+   * Parallax depth. This is a scaling ratio for the scroll offset. It must be a
+   * positive number. Values smaller than 1 will result in a smaller amount of
+   * transformation.
+   *
+   * Like lag, if set as a numerical string with a prefix of `+` or `-` it will
+   * be relative to the nearest parent layer. Note that the root scrollable's
+   * depth is always 1.
    *
    * The special value "auto" is accepted only when using the default transform
    * (which shifts the content to simulate scrolling). When the depth is set to
@@ -368,7 +384,7 @@ export type SmoothScrollLayerConfig = {
    *
    * @defaultValue 1
    */
-  depth?: number;
+  depth?: AbsoluteOrRelativeNumber;
 
   // XXX TODO depthX and depthY?
 };
@@ -410,25 +426,52 @@ export type ScrollTransformCallback = (
 
 /**
  * An array of transforms, each one applying only for a given range of
- * horizontal/vertical scroll offset values.
+ * conditions. A condition could be a range of horizontal/vertical scroll offset
+ * values or the position of one or more elements relative to the viewport.
  */
-export type ScrollTransformList = Array<{
-  transform: ScrollTransformString | ScrollTransformCallback;
+export type ScrollTransformList = Array<
+  {
+    transform: ScrollTransformString | ScrollTransformCallback;
+  } & ScrollOffsetRange
+>;
 
-  /**
-   * The starting scroll offsets that this transform should apply from.
-   *
-   * @defaultValue 0
-   */
-  from?: ScrollOffsetReference;
+export type ScrollOffsetViewReference =
+  | Element
+  | {
+      views: CommaSeparatedStr<View> | View[];
+      target: Element;
+    };
 
-  /**
-   * The final scroll offsets that this transform should apply to.
-   *
-   * @defaultValue undefined // The maximum offset
-   */
-  to?: ScrollOffsetReference;
+export type ScrollOffsetXYReference = AtLeastOne<{
+  x: AbsoluteOrRelativeNumber;
+  y: AbsoluteOrRelativeNumber;
 }>;
+
+export type ScrollOffsetReference =
+  | ScrollOffsetViewReference
+  | ScrollOffsetXYReference;
+
+export type ScrollOffsetFrom = OnlyOne<{
+  from: ScrollOffsetReference;
+  fromAny: ScrollOffsetReference[];
+  fromAll: ScrollOffsetReference[];
+}>;
+
+export type ScrollOffsetTo = OnlyOne<{
+  to: ScrollOffsetReference;
+  toAny: ScrollOffsetReference[];
+  toAll: ScrollOffsetReference[];
+}>;
+
+export type ScrollOffsetWhile = OnlyOne<{
+  while: ScrollOffsetViewReference;
+  whileAny: ScrollOffsetViewReference[];
+  whileAll: ScrollOffsetViewReference[];
+}>;
+
+export type ScrollOffsetRange =
+  | (ScrollOffsetFrom & Partial<ScrollOffsetTo>)
+  | ScrollOffsetWhile;
 
 // --------------------
 

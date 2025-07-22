@@ -45,10 +45,12 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * To use with auto-widgets (HTML API), see {@link registerTrigger} for the
  * specification.
  *
- * - Arguments (optional): One or more (comma-separated) scroll directions.
+ * - Arguments (optional): One or more (comma-separated)
+ *   {@link ScrollTriggerConfig.directions | scroll directions}.
  *   Note that if you do not specify any directions, then the trigger will just
- *   run once, on any scroll.
- * - Additional trigger options:
+ *   run once, on the first scroll in any direction.
+ *
+ * - Additional trigger options (see {@link ScrollTriggerConfig}):
  *   - `scrollable`: A string element specification.
  *      See {@link Utils.getReferenceElement | getReferenceElement}.
  *   - `threshold`: A number.

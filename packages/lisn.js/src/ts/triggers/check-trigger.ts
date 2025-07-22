@@ -31,7 +31,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * specification.
  *
  * - Arguments: none
- * - Additional trigger options:
+ * - Additional trigger options (see {@link CheckTriggerConfig}:
  *   - `target`: A string element specification.
  *     See {@link Utils.getReferenceElement | getReferenceElement}.
  *

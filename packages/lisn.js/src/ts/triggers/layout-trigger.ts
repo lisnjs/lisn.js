@@ -50,11 +50,12 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  * specification.
  *
  * - Arguments (required): A single {@link DeviceSpec} or
- *   {@link AspectRatioSpec}. In this case you can use a dash ("-") instead of
- *   space if needed (for example if using CSS classes instead of data
- *   attributes), e.g. "min-tablet" instead of "min tablet".
+ *   {@link AspectRatioSpec} (see {@link LayoutTriggerConfig.layout}). In this
+ *   case you can use a dash ("-") instead of space if needed (for example if
+ *   using CSS classes instead of data attributes), e.g. "min-tablet" instead
+ *   of "min tablet".
  *
- * - Additional trigger options:
+ * - Additional trigger options (see {@link LayoutTriggerConfig}:
  *   - `root`: A string element specification. See
  *     {@link Utils.getReferenceElement | getReferenceElement}.
  *

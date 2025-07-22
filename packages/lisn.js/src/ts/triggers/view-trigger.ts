@@ -55,9 +55,10 @@ import debug from "@lisn/debug/debug";
  * To use with auto-widgets (HTML API), see {@link registerTrigger} for the
  * specification.
  *
- * - Arguments (optional): One or more (comma-separated) {@link View}s.
- *   Default is "at".
- * - Additional trigger options:
+ * - Arguments (optional): One or more (comma-separated)
+ *   {@link TriggerConfig.views | views}. Default is "at".
+ *
+ * - Additional trigger options (see {@link ViewTriggerConfig}):
  *   - `target`: A string element specification for an element (see
  *     {@link Utils.getReferenceElement | getReferenceElement}) or a
  *     {@link Types.ScrollOffsetSpec | ScrollOffsetSpec}.

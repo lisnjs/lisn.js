@@ -28,8 +28,8 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "scroll-to".
- * - Accepted string arguments: none
- * - Accepted options:
+ * - Arguments: none
+ * - Options (see {@link ScrollToConfig}):
  *   - `offsetX`: A number.
  *   - `offsetY`: A number.
  *   - `duration`: A number.

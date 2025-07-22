@@ -35,8 +35,8 @@ import { LoggerInterface } from "@lisn/debug/types";
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "animate".
- * - Accepted string arguments: none
- * - Accepted options: none
+ * - Arguments: none
+ * - Options: none
  *
  * @example
  * ```html

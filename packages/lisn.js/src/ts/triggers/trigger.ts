@@ -25,16 +25,21 @@
  *     <BooleanOptionName> [ "=" ( "false" | "true" ) ] |
  *     <OptionName> "=" <OptionValue>
  *
- * <ActionSpec> ::= <ActionName> [ ":" <ActionArgOrOption> { "," <ActionArgOrOption> } ]
+ * <ActionSpec> ::= <ActionName> [ ":" <ActionArgsAndOptions> ]
  *
- * <ActionArgOrOption> ::= <ActionArg> | <OptionName> "=" <OptionValue>
+ * <ActionArgsAndOptions> ::= <ActionArgs> [ "," <ActionOptions> ] |
+ *                            <ActionOptions>
+ *
+ * <ActionArgs> ::= <Arg> { "," <Arg> }
+ *
+ * <ActionOptions> ::= <OptionName> = <OptionValue> { "," <OptionName> = <OptionValue> }
  * ```
  *
- * where `<TriggerArg>` is the particular trigger's main argument, which could
- * be required or optional (and not all triggers accept an argument). See each
- * trigger's specification for their arguments and options.
- *
- * Also refer to each action for their accepted arguments and/or options if any.
+ * Some triggers or actions accept both arguments as well as `=` separated
+ * key=value options. Some accept only arguments or only options. See each
+ * trigger or actions's specification for their accepted or required arguments
+ * and options. When specifying action arguments and options, place the
+ * arguments first.
  *
  * **NOTE:**
  *
@@ -376,7 +381,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
 
     const allSpecs = splitOn(
       getData(element, MH.prefixName(`on-${name}`)) ?? "",
-      TRIGGER_SEP,
+      TRIGGER_SEP_CHAR,
       true,
     );
 
@@ -443,7 +448,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
 
 // --------------------
 
-const TRIGGER_SEP = ";";
+const TRIGGER_SEP_CHAR = ";";
 const ARGS_SEP_CHAR = ",";
 const OPTION_PREF_CHAR = "+";
 const ACTION_PREF_CHAR = "@";

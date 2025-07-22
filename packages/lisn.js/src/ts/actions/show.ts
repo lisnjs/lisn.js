@@ -23,8 +23,8 @@ import { Action, registerAction } from "@lisn/actions/action";
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "show".
- * - Accepted string arguments: none
- * - Accepted options: none
+ * - Arguments: none
+ * - Options: none
  *
  * @example
  * ```html
@@ -75,8 +75,8 @@ export class Show implements Action {
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "hide".
- * - Accepted string arguments: none
- * - Accepted options: none
+ * - Arguments: none
+ * - Options: none
  *
  * @example
  * ```html

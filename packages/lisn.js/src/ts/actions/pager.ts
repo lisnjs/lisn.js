@@ -29,8 +29,8 @@ import { Action, registerAction } from "@lisn/actions/action";
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "next-page".
- * - Accepted string arguments: none
- * - Accepted options: none
+ * - Arguments: none
+ * - Options: none
  *
  * @example
  * ```html
@@ -90,8 +90,8 @@ export class NextPage implements Action {
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "prev-page".
- * - Accepted string arguments: none
- * - Accepted options: none
+ * - Arguments: none
+ * - Options: none
  *
  * @example
  * ```html
@@ -152,8 +152,8 @@ export class PrevPage implements Action {
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "go-to-page".
- * - Accepted string arguments: the number of the target page
- * - Accepted options: none
+ * - Arguments (required): the number of the target page
+ * - Options: none
  *
  * @example
  * ```html
@@ -212,8 +212,8 @@ export class GoToPage implements Action {
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "enable-page".
- * - Accepted string arguments: the number of the target page
- * - Accepted options: none
+ * - Arguments (required): the number of the target page
+ * - Options: none
  *
  * @example
  * ```html
@@ -272,8 +272,8 @@ export class EnablePage implements Action {
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "disable-page".
- * - Accepted string arguments: the number of the target page
- * - Accepted options: none
+ * - Arguments (required): the number of the target page
+ * - Options: none
  *
  * @example
  * ```html

@@ -57,6 +57,11 @@ export const registerAction = <Config extends Record<string, unknown>>(
       : configValidator;
 
     const args: string[] = [];
+
+    // In general, if an action accepts a boolean *option* (not argument), it
+    // may not be followed by a =value. So we pass the full string to the
+    // fetchWidgetConfig which will parse such boolean options if they are
+    // defined in the config validator.
     const config = thisConfigValidator
       ? await fetchWidgetConfig(
           argsAndOptions,
@@ -67,7 +72,7 @@ export const registerAction = <Config extends Record<string, unknown>>(
 
     for (const entry of splitOn(argsAndOptions, ARG_SEP_CHAR, true)) {
       if (entry) {
-        if (!MH.includes(entry, "=")) {
+        if (!MH.includes(entry, "=") && !(config && entry in config)) {
           args.push(entry);
         }
       }

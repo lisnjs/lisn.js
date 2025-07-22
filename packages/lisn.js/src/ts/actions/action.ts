@@ -58,10 +58,14 @@ export const registerAction = <Config extends Record<string, unknown>>(
 
     const args: string[] = [];
     const config = thisConfigValidator
-      ? await fetchWidgetConfig(argsAndOptions, thisConfigValidator, ",")
+      ? await fetchWidgetConfig(
+          argsAndOptions,
+          thisConfigValidator,
+          ARG_SEP_CHAR,
+        )
       : undefined;
 
-    for (const entry of splitOn(argsAndOptions, ",", true)) {
+    for (const entry of splitOn(argsAndOptions, ARG_SEP_CHAR, true)) {
       if (entry) {
         if (!MH.includes(entry, "=")) {
           args.push(entry);
@@ -96,6 +100,8 @@ export const fetchAction = async (
 };
 
 // --------------------
+
+const ARG_SEP_CHAR = ",";
 
 const registeredActions = MH.newMap<
   string,

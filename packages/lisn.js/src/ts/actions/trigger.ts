@@ -29,9 +29,10 @@ import { Action, registerAction } from "@lisn/actions/action";
  * -------
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
- *   - Action name: "enable".
- *   - Accepted string arguments: one or more unique IDs of triggers defined on
- *     the given element
+ * - Action name: "enable".
+ * - Arguments (required): one or more unique IDs of triggers defined on the
+ *   given element
+ * - Options: none
  *
  * @example
  * ```html
@@ -85,9 +86,10 @@ export class Enable implements Action {
  * -------
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
- *   - Action name: "disable".
- *   - Accepted string arguments: one or more unique IDs of triggers defined on
- *     the given element
+ * - Action name: "disable".
+ * - Arguments (required): one or more unique IDs of triggers defined on the
+ *   given element
+ * - Options: none
  *
  * @example
  * ```html
@@ -138,9 +140,10 @@ export class Disable implements Action {
  * -------
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
- *   - Action name: "run".
- *   - Accepted string arguments: one or more unique IDs of triggers defined on
- *     the given element
+ * - Action name: "run".
+ * - Arguments (required): one or more unique IDs of triggers defined on the
+ *   given element
+ * - Options: none
  *
  * @example
  * ```html

@@ -26,8 +26,8 @@ import { Action, registerAction } from "@lisn/actions/action";
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "add-class".
- * - Accepted string arguments: one or more CSS classes
- * - Accepted options: none
+ * - Arguments (required): one or more CSS classes
+ * - Options: none
  *
  * @example
  * ```html
@@ -79,8 +79,8 @@ export class AddClass implements Action {
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "remove-class".
- * - Accepted string arguments: one or more CSS classes
- * - Accepted options: none
+ * - Arguments (required): one or more CSS classes
+ * - Options: none
  *
  * @example
  * ```html

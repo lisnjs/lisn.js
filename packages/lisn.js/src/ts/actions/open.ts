@@ -20,8 +20,8 @@ import { Action, registerAction } from "@lisn/actions/action";
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "open".
- * - Accepted string arguments: none
- * - Accepted options: none
+ * - Arguments: none
+ * - Options: none
  *
  * @example
  * ```html

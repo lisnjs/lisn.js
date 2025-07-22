@@ -27,8 +27,8 @@ import { WidgetConfigValidatorObject } from "@lisn/widgets/widget";
  *
  * To use with auto-widgets (HTML API) as part of a trigger specification:
  * - Action name: "set-attribute".
- * - Accepted string arguments: name of attribute
- * - Accepted options:
+ * - Arguments (required): name of attribute
+ * - Options (at least one required):
  *   - `on`: A string value for the attribute. Can be blank. Omit this option
  *     in order to have the attribute deleted when the action is done.
  *   - `off`: A string value for the attribute. Can be blank. Omit this option

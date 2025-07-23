@@ -37,7 +37,7 @@ import {
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
 import { logError } from "@lisn/utils/log";
-import { toNumWithBounds } from "@lisn/utils/math";
+import { toNum, toNumWithBounds } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { formatAsString } from "@lisn/utils/text";
 import { validateNumber, validateString } from "@lisn/utils/validation";
@@ -316,7 +316,20 @@ export type SmoothScrollConfig = {
   layers?: Element[] | Map<Element, SmoothScrollLayerConfig | null>;
 };
 
-export type AbsoluteOrRelativeNumber = number | `+${number}` | `-${number}`;
+/**
+ * If the value is a number, then it is taken as absolute. Otherwise, it should
+ * be a numerical string prefixed with `+`, `-` or `*`, in which case it is
+ * relative to the nearest parent layer (or to the root scrollable).
+ *
+ * - `+` prefix adds to the parent's value
+ * - `-` prefix subtracts from the parent's value
+ * - `*` prefix multiplies the parent's value
+ */
+export type AbsoluteOrRelativeNumber =
+  | number
+  | `+${number}`
+  | `-${number}`
+  | `*${number}`;
 
 /**
  * Custom lag, depth or transform for a descendant element of the scrollable.
@@ -337,24 +350,21 @@ export type AbsoluteOrRelativeNumber = number | `+${number}` | `-${number}`;
  */
 export type SmoothScrollLayerConfig = {
   /**
-   * Override the parent layer or root's lag for this child. It can either be
-   * given as a number, in which case the value is absolute, or as a numerical
-   * string prefixed with `+` or `-`, in which case it is relative to the
-   * nearest parent layer (or to the root scrollable).
+   * Override the parent layer or root's lag for this child.
    *
    * @defaultValue undefined
    */
   lag?: AbsoluteOrRelativeNumber;
 
   /**
-   * Like {@link lag} but it applies only for horizontal scrolls.
+   * Override the parent layer or root's horizontal lag for this child.
    *
    * @defaultValue undefined
    */
   lagX?: AbsoluteOrRelativeNumber;
 
   /**
-   * Like {@link lag} but it applies only for vertical scrolls.
+   * Override the parent layer or root's vertical lag for this child.
    *
    * @defaultValue undefined
    */
@@ -370,13 +380,9 @@ export type SmoothScrollLayerConfig = {
   transforms?: ScrollTransforms;
 
   /**
-   * Parallax depth. This is a scaling ratio for the scroll offset. It must be a
-   * positive number. Values smaller than 1 will result in a smaller amount of
-   * transformation.
-   *
-   * Like lag, if set as a numerical string with a prefix of `+` or `-` it will
-   * be relative to the nearest parent layer. Note that the root scrollable's
-   * depth is always 1.
+   * Parallax depth. This is a scaling ratio for the scroll offset. It must
+   * result in a positive number. Values smaller than 1 will result in a smaller
+   * amount of transformation.
    *
    * The special value "auto" is accepted only when using the default transform
    * (which shifts the content to simulate scrolling). When the depth is set to
@@ -435,6 +441,7 @@ export type ScrollTransformList = Array<
   } & ScrollOffsetRange
 >;
 
+// XX TODO doc
 export type ScrollOffsetViewReference =
   | Element
   | {
@@ -487,6 +494,14 @@ const PREFIX_USES_STICKY = MH.prefixName("uses-sticky");
 
 const PREFIX_LAYER = `${PREFIXED_NAME}-layer`;
 const PREFIX_TRANSFORM = `${PREFIXED_NAME}-transform`;
+const SELECTOR_LAYER = `[data-${PREFIX_LAYER}],[data-${PREFIX_TRANSFORM}]`;
+
+type SmoothScrollLayerConfigInternal = {
+  lagX: number;
+  lagY: number;
+  transforms: ScrollTransforms;
+  depth: number;
+};
 
 let mainWidget: SmoothScroll | null = null;
 
@@ -505,28 +520,109 @@ const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig>
     // XXX TODO
   };
 
+const toAbsoluteNumber = (
+  input: AbsoluteOrRelativeNumber | undefined,
+  reference: number,
+) => {
+  if (!MH.isString(input)) {
+    return input ?? reference;
+  }
+
+  const op = input.slice(0, 1);
+  switch (op) {
+    case "+":
+    case "-":
+      return reference + toNum(input);
+    case "*":
+      return reference * toNum(input.slice(1));
+    default:
+      logError(MH.usageError(`Invalid value for SmoothScroll option ${input}`));
+      return reference;
+  }
+};
+
+const getParentLayer = (layer: Element) =>
+  MH.closestParent(layer, SELECTOR_LAYER);
+
 const getLayersFrom = (
   scrollable: Element,
-  inputLayers: SmoothScrollConfig["layers"],
+  config: SmoothScrollConfig | undefined,
 ) => {
-  // XXX TODO transforms
-  const layerMap = MH.newMap<Element, SmoothScrollLayerConfig>();
+  const layerMap = MH.newMap<Element, SmoothScrollLayerConfigInternal>();
 
-  inputLayers = inputLayers ?? [
-    ...MH.querySelectorAll(scrollable, `[data-${PREFIX_LAYER}]`),
-  ];
+  const defaultLag = settings.smoothScrollLag;
+  const defaultTransforms = settings.smoothScrollTransforms;
 
-  if (MH.isArray(inputLayers)) {
-    for (const layer of inputLayers) {
-      layerMap.set(
-        layer,
-        getWidgetConfig(getData(layer, PREFIX_LAYER), layerConfigValidator),
+  const getLayerBaseConfig = (layer: Element) => {
+    let baseConfig: SmoothScrollLayerConfig;
+
+    if (MH.isArray(inputLayers)) {
+      // get it from the data attribute
+      baseConfig = getWidgetConfig(
+        getData(layer, PREFIX_LAYER),
+        layerConfigValidator,
+      );
+
+      // XXX TODO
+      // baseConfig.transforms = getWidgetConfig(
+      //   getData(layer, PREFIX_TRANSFORM),
+      //   transformConfigValidator,
+      // ).transforms;
+    } else {
+      baseConfig = getWidgetConfig(
+        inputLayers.get(layer), // should include transforms
+        layerConfigValidator,
       );
     }
-  } else if (MH.isInstanceOf(inputLayers, Map)) {
-    for (const [layer, layerConfig] of inputLayers.entries()) {
-      layerMap.set(layer, getWidgetConfig(layerConfig, layerConfigValidator));
+
+    return baseConfig;
+  };
+
+  const parseFullLayerConfig = (
+    layer: Element,
+  ): SmoothScrollLayerConfigInternal => {
+    let fullConfig = layerMap.get(layer);
+    if (!fullConfig) {
+      const baseConfig = getLayerBaseConfig(layer);
+      const parent = getParentLayer(layer);
+      const parentConfig = parent ? parseFullLayerConfig(parent) : null;
+
+      fullConfig = {
+        lagX: toAbsoluteNumber(
+          baseConfig.lagX,
+          parentConfig?.lagX ?? defaultLag,
+        ),
+        lagY: toAbsoluteNumber(
+          baseConfig.lagY,
+          parentConfig?.lagY ?? defaultLag,
+        ),
+        transforms:
+          baseConfig.transforms ??
+          parentConfig?.transforms ??
+          defaultTransforms,
+        depth: toNumWithBounds(
+          baseConfig.depth ?? parentConfig?.depth,
+          { min: 0.01 },
+          1,
+        ),
+      };
     }
+
+    return fullConfig;
+  };
+
+  // ----------
+
+  const inputLayers = config?.layers ?? [
+    ...MH.querySelectorAll(scrollable, SELECTOR_LAYER),
+  ];
+
+  const layersIterable = MH.isArray(inputLayers)
+    ? inputLayers
+    : (inputLayers?.keys() ?? []);
+
+  for (const layer of layersIterable) {
+    parseFullLayerConfig(layer);
   }
 
   return layerMap;
@@ -600,7 +696,7 @@ const init = async (
     isBody = true;
   }
 
-  const layers = getLayersFrom(scrollable, config?.layers);
+  const layers = getLayersFrom(scrollable, config);
 
   const logger = debug
     ? new debug.Logger({
@@ -686,13 +782,14 @@ const init = async (
       }
     }
 
-    const thisConfig: SmoothScrollLayerConfig =
-      layers.get(element) ?? config ?? {};
-    const thisLag =
-      thisConfig[d === "x" ? "lagX" : "lagY"] ??
-      thisConfig.lag ??
-      settings.smoothScrollLag;
-    const thisDepth = toNumWithBounds(thisConfig.depth ?? 1, { min: 0.01 });
+    const thisConfig = layers.get(element);
+    if (!thisConfig) {
+      logError(MH.bugError("No config saved for element"), element);
+      return;
+    }
+
+    const thisLag = thisConfig[d === "x" ? "lagX" : "lagY"];
+    const thisDepth = thisConfig.depth;
 
     debug: logger?.debug10(
       `Starting animating ${d} transforms with lag ${thisLag}`,

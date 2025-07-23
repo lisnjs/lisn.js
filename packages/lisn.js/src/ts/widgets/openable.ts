@@ -1789,9 +1789,14 @@ const findContainer = (content: Element, cls: string) => {
   }
 
   // Find the content container
-  let container: HTMLElement | null = childRef.closest(`.${cls}`);
+  let container = MH.closestParent(childRef, `.${cls}`);
   if (!container) {
     container = MH.parentOf(childRef);
+  }
+
+  if (container && !MH.isHTMLElement(container)) {
+    logError(MH.usageError("Openable widget supports only HTMLElement"));
+    return null;
   }
 
   return container;
@@ -2116,7 +2121,10 @@ const setupListeners = (
   const isTrigger = (element: Element) =>
     MH.includes(
       [...triggers.keys()],
-      element.closest(getDefaultWidgetSelector(prefixedNames._trigger)),
+      MH.closestParent(
+        element,
+        getDefaultWidgetSelector(prefixedNames._trigger),
+      ),
     );
 
   const shouldPreventDefault = (trigger: Element) =>

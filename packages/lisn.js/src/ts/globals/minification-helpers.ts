@@ -168,6 +168,9 @@ export const setTimer = root.setTimeout.bind(root);
 
 export const clearTimer = root.clearTimeout.bind(root);
 
+export const closestParent = (element: Element, selector: string) =>
+  element.closest(selector);
+
 export const getBoundingClientRect = (element: Element) =>
   element.getBoundingClientRect();
 

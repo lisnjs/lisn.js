@@ -163,7 +163,7 @@ const getLastReferenceElement = (selector: string): Element | null => {
 const getThisReferenceElement = (
   selector: string,
   thisElement: Element,
-): Element | null => thisElement.closest(selector);
+): Element | null => MH.closestParent(thisElement, selector);
 
 const getNextReferenceElement = (selector: string, thisElement: Element) =>
   getNextOrPrevReferenceElement(selector, thisElement, false);

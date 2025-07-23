@@ -37,7 +37,7 @@ import {
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
 import { logError } from "@lisn/utils/log";
-import { toNum, toNumWithBounds } from "@lisn/utils/math";
+import { toNum, toNumWithBounds, isValidNumerical } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { formatAsString } from "@lisn/utils/text";
 import { validateNumber, validateString } from "@lisn/utils/validation";
@@ -55,6 +55,7 @@ import {
 } from "@lisn/widgets/widget";
 
 import debug from "@lisn/debug/debug";
+import { toArrayIfSingle } from "@lisn/utils";
 
 /**
  * Configures the given element as a {@link SmoothScroll} widget.
@@ -317,21 +318,6 @@ export type SmoothScrollConfig = {
 };
 
 /**
- * If the value is a number, then it is taken as absolute. Otherwise, it should
- * be a numerical string prefixed with `+`, `-` or `*`, in which case it is
- * relative to the nearest parent layer (or to the root scrollable).
- *
- * - `+` prefix adds to the parent's value
- * - `-` prefix subtracts from the parent's value
- * - `*` prefix multiplies the parent's value
- */
-export type AbsoluteOrRelativeNumber =
-  | number
-  | `+${number}`
-  | `-${number}`
-  | `*${number}`;
-
-/**
  * Custom lag, depth or transform for a descendant element of the scrollable.
  * Can either be given as an object as the value of the
  * {@link SmoothScrollConfig.layers} map, or it can be set as a string
@@ -395,6 +381,21 @@ export type SmoothScrollLayerConfig = {
   // XXX TODO depthX and depthY?
 };
 
+/**
+ * If the value is a number, then it is taken as absolute. Otherwise, it should
+ * be a numerical string prefixed with `+`, `-` or `*`, in which case it is
+ * relative to the nearest parent layer (or to the root scrollable).
+ *
+ * - `+` prefix adds to the parent's value
+ * - `-` prefix subtracts from the parent's value
+ * - `*` prefix multiplies the parent's value
+ */
+export type AbsoluteOrRelativeNumber =
+  | number
+  | `+${number}`
+  | `-${number}`
+  | `*${number}`;
+
 export type ScrollTransforms =
   | ScrollTransformString
   | ScrollTransformCallback
@@ -431,17 +432,42 @@ export type ScrollTransformCallback = (
 ) => ScrollTransformString | ScrollTransformList;
 
 /**
- * An array of transforms, each one applying only for a given range of
- * conditions. A condition could be a range of horizontal/vertical scroll offset
- * values or the position of one or more elements relative to the viewport.
+ * A single transform or an array of transforms, each one applying only for a
+ * given range of conditions. A condition could be a range of
+ * horizontal/vertical scroll offset values or the position of one or more
+ * elements relative to the viewport.
  */
-export type ScrollTransformList = Array<
-  {
-    transform: ScrollTransformString | ScrollTransformCallback;
-  } & ScrollOffsetRange
->;
+export type ScrollTransformList =
+  | ScrollTransformRangeSpec
+  | ScrollTransformRangeSpec[];
+
+export type ScrollTransformRangeSpec = {
+  transform: ScrollTransformString | ScrollTransformCallback;
+} & ScrollOffsetRange;
 
 // XX TODO doc
+export type ScrollOffsetRange =
+  | (ScrollOffsetFrom & Partial<ScrollOffsetTo>)
+  | ScrollOffsetWhile;
+
+export type ScrollOffsetFrom = OnlyOne<{
+  from: ScrollOffsetViewReference | ScrollOffsetXYReference;
+  fromAny: ScrollOffsetViewReference[];
+  fromAll: ScrollOffsetViewReference[];
+}>;
+
+export type ScrollOffsetTo = OnlyOne<{
+  to: ScrollOffsetViewReference | ScrollOffsetXYReference;
+  toAny: ScrollOffsetViewReference[];
+  toAll: ScrollOffsetViewReference[];
+}>;
+
+export type ScrollOffsetWhile = OnlyOne<{
+  while: ScrollOffsetViewReference;
+  whileAny: ScrollOffsetViewReference[];
+  whileAll: ScrollOffsetViewReference[];
+}>;
+
 export type ScrollOffsetViewReference =
   | Element
   | {
@@ -453,32 +479,6 @@ export type ScrollOffsetXYReference = AtLeastOne<{
   x: AbsoluteOrRelativeNumber;
   y: AbsoluteOrRelativeNumber;
 }>;
-
-export type ScrollOffsetReference =
-  | ScrollOffsetViewReference
-  | ScrollOffsetXYReference;
-
-export type ScrollOffsetFrom = OnlyOne<{
-  from: ScrollOffsetReference;
-  fromAny: ScrollOffsetReference[];
-  fromAll: ScrollOffsetReference[];
-}>;
-
-export type ScrollOffsetTo = OnlyOne<{
-  to: ScrollOffsetReference;
-  toAny: ScrollOffsetReference[];
-  toAll: ScrollOffsetReference[];
-}>;
-
-export type ScrollOffsetWhile = OnlyOne<{
-  while: ScrollOffsetViewReference;
-  whileAny: ScrollOffsetViewReference[];
-  whileAll: ScrollOffsetViewReference[];
-}>;
-
-export type ScrollOffsetRange =
-  | (ScrollOffsetFrom & Partial<ScrollOffsetTo>)
-  | ScrollOffsetWhile;
 
 // --------------------
 
@@ -505,19 +505,61 @@ type SmoothScrollLayerConfigInternal = {
 
 let mainWidget: SmoothScroll | null = null;
 
+const validateAbsoluteOrRelativeNumber = (
+  key: string,
+  value: unknown,
+): AbsoluteOrRelativeNumber | undefined => {
+  const numerical = toNum(value, false);
+  if (numerical) {
+    return numerical;
+  }
+
+  if (!MH.isString(value)) {
+    return validateNumber(key, value);
+  }
+
+  // for type check
+  const isValidOp = (op: string): op is "+" | "-" | "*" =>
+    MH.includes(["+", "-", "*"], op);
+
+  const op = value.slice(0, 1);
+  if (!isValidOp(op) || !numerical) {
+    throw MH.usageError(
+      `'${key}' must be numerical with an optional prefix of +, - or *`,
+    );
+  }
+
+  return `${op}${numerical}` as const;
+};
+
+const validateTransforms = (key: string, value: unknown): ScrollTransforms => {
+  if (MH.isLiteralString(value) || MH.isFunction(value)) {
+    return value as ScrollTransforms;
+  }
+
+  for (const transform of toArrayIfSingle(value)) {
+    if (!MH.isObject(transform)) {
+      throw MH.usageError(`Invalid value for ${key}`);
+    }
+
+    // XXX TODO validate the range
+  }
+};
+
 const configValidator: WidgetConfigValidatorObject<SmoothScrollConfig> = {
   lag: validateNumber,
   lagX: validateNumber,
   lagY: validateNumber,
-  // XXX TODO
+  transforms: validateTransforms,
 };
 
 const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig> =
   {
-    lag: validateNumber,
-    lagX: validateNumber,
-    lagY: validateNumber,
-    // XXX TODO
+    lag: validateAbsoluteOrRelativeNumber,
+    lagX: validateAbsoluteOrRelativeNumber,
+    lagY: validateAbsoluteOrRelativeNumber,
+    depth: validateAbsoluteOrRelativeNumber,
+    transforms: validateTransforms,
   };
 
 const toAbsoluteNumber = (
@@ -536,17 +578,20 @@ const toAbsoluteNumber = (
     case "*":
       return reference * toNum(input.slice(1));
     default:
-      logError(MH.usageError(`Invalid value for SmoothScroll option ${input}`));
       return reference;
   }
 };
 
-const getParentLayer = (layer: Element) =>
-  MH.closestParent(layer, SELECTOR_LAYER);
+const getParentLayer = (scrollable: Element, layer: Element) => {
+  const closest = MH.closestParent(layer, SELECTOR_LAYER);
+  return closest && scrollable.contains(closest) && closest !== scrollable
+    ? closest
+    : null;
+};
 
 const getLayersFrom = (
   scrollable: Element,
-  config: SmoothScrollConfig | undefined,
+  rootConfig: SmoothScrollConfig | undefined,
 ) => {
   const layerMap = MH.newMap<Element, SmoothScrollLayerConfigInternal>();
 
@@ -563,11 +608,10 @@ const getLayersFrom = (
         layerConfigValidator,
       );
 
-      // XXX TODO
-      // baseConfig.transforms = getWidgetConfig(
-      //   getData(layer, PREFIX_TRANSFORM),
-      //   transformConfigValidator,
-      // ).transforms;
+      baseConfig.transforms = validateTransforms(
+        `data-${PREFIX_TRANSFORM}`,
+        getData(layer, PREFIX_TRANSFORM),
+      );
     } else {
       baseConfig = getWidgetConfig(
         inputLayers.get(layer), // should include transforms
@@ -584,8 +628,8 @@ const getLayersFrom = (
     let fullConfig = layerMap.get(layer);
     if (!fullConfig) {
       const baseConfig = getLayerBaseConfig(layer);
-      const parent = getParentLayer(layer);
-      const parentConfig = parent ? parseFullLayerConfig(parent) : null;
+      const parent = getParentLayer(scrollable, layer);
+      const parentConfig = parent ? parseFullLayerConfig(parent) : rootConfig;
 
       fullConfig = {
         lagX: toAbsoluteNumber(
@@ -601,7 +645,7 @@ const getLayersFrom = (
           parentConfig?.transforms ??
           defaultTransforms,
         depth: toNumWithBounds(
-          baseConfig.depth ?? parentConfig?.depth,
+          baseConfig.depth ?? (parentConfig as SmoothScrollLayerConfig)?.depth,
           { min: 0.01 },
           1,
         ),
@@ -613,7 +657,7 @@ const getLayersFrom = (
 
   // ----------
 
-  const inputLayers = config?.layers ?? [
+  const inputLayers = rootConfig?.layers ?? [
     ...MH.querySelectorAll(scrollable, SELECTOR_LAYER),
   ];
 

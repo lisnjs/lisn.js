@@ -26,6 +26,16 @@ export const isValidNum = (value: unknown): value is number =>
   MH.isNumber(value) && MC.NUMBER.isFinite(value);
 
 /**
+ * Returns true if the given value is a valid _finite_ number or a numerical
+ * string.
+ *
+ * @category Validation
+ */
+export const isValidNumerical = (
+  value: unknown,
+): value is number | `${number}` => !!toNum(value, false);
+
+/**
  * If the given value is a valid _finite_ number, it is returned, otherwise
  * the default is returned.
  *

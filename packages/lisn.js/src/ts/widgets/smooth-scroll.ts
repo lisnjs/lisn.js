@@ -359,7 +359,7 @@ export type SmoothScrollLayerConfig = {
   /**
    * Override the parent layer or root's transforms for this child. Note that
    * transforms applied on the root scrollable or on parent layers are not
-   * negated on child layers, so this value is always accumulative.
+   * negated on child layers, so this value is always accumulative. XXX
    *
    * @defaultValue undefined
    */
@@ -550,7 +550,7 @@ const configValidator: WidgetConfigValidatorObject<SmoothScrollConfig> = {
   lag: validateNumber,
   lagX: validateNumber,
   lagY: validateNumber,
-  transforms: validateTransforms,
+  transforms: validateTransforms, // only allowed here when using a config object and not a data attribute value
 };
 
 const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig> =
@@ -559,7 +559,7 @@ const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig>
     lagX: validateAbsoluteOrRelativeNumber,
     lagY: validateAbsoluteOrRelativeNumber,
     depth: validateAbsoluteOrRelativeNumber,
-    transforms: validateTransforms,
+    transforms: validateTransforms, // only allowed here when using a config object and not a data attribute value
   };
 
 const toAbsoluteNumber = (
@@ -598,24 +598,25 @@ const getLayersFrom = (
   const defaultLag = settings.smoothScrollLag;
   const defaultTransforms = settings.smoothScrollTransforms;
 
+  // XXX TODO how to detect if widget was instantiated using HTML API or not?
+  // rootConfig will be an object either way
   const getLayerBaseConfig = (layer: Element) => {
-    let baseConfig: SmoothScrollLayerConfig;
+    const inputConfig =
+      layer === scrollable
+        ? rootConfig // XXX
+        : MH.isArray(inputLayers)
+          ? (getData(layer, PREFIX_LAYER) ?? "")
+          : inputLayers.get(layer);
 
-    if (MH.isArray(inputLayers)) {
-      // get it from the data attribute
-      baseConfig = getWidgetConfig(
-        getData(layer, PREFIX_LAYER),
-        layerConfigValidator,
-      );
+    const baseConfig = getWidgetConfig(inputConfig, layerConfigValidator);
 
+    if (MH.isString(inputConfig)) {
+      // config was taken from data-lisn-smooth-scroll-layer attribute, so read
+      // transforms from the data-lisn-smooth-scroll-transforms attribute
       baseConfig.transforms = validateTransforms(
+        // XXX getWidgetConfig with validator
         `data-${PREFIX_TRANSFORM}`,
         getData(layer, PREFIX_TRANSFORM),
-      );
-    } else {
-      baseConfig = getWidgetConfig(
-        inputLayers.get(layer), // should include transforms
-        layerConfigValidator,
       );
     }
 

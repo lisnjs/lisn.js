@@ -461,9 +461,7 @@ export type OpenableConfig = {
   closeButton: boolean;
 
   /**
-   * The elements that open the widget when clicked on. You can also pass a map
-   * whose keys are the elements and values are {@link OpenableTriggerConfig}
-   * objects.
+   * The elements that open the widget when clicked on.
    *
    * If not given, then the elements that will be used as triggers are
    * discovered in the following way (`<name>` is what is given as
@@ -479,6 +477,12 @@ export type OpenableConfig = {
    *    class or `data-lisn-<name>-trigger` attribute and that do _not_ have a
    *    `data-lisn-<name>-content-id` attribute, and that are _not_ children of
    *    the content element.
+   *
+   * If you pass an array of elements, they will be used as triggers, and their
+   * {@link OpenableTriggerConfig | configuration} will be taken from the
+   * `data-lisn-<name>-trigger` attribute. If you pass a map, its keys are the
+   * elements and its values are used as the configuration, ignoring the data
+   * attribute.
    *
    * @defaultValue undefined
    */
@@ -822,24 +826,27 @@ export type CollapsibleConfig = {
   className?: string[] | string;
 
   /**
-   * The elements that open the widget when clicked on. You can also pass a map
-   * whose keys are the elements and values are {@link OpenableTriggerConfig}
-   * objects.
+   * The elements that open the widget when clicked on.
    *
    * If not given, then the elements that will be used as triggers are
    * discovered in the following way:
-   * 1. If the content element has a `data-lisn-collapsible-content-id`
-   *    attribute, then it must be a unique (for the current page) ID. In this
-   *    case, the trigger elements will be any element in the document that
-   *    has a `lisn-collapsible-trigger` class or
-   *    `data-lisn-collapsible-trigger` attribute and the same
-   *    `data-lisn-collapsible-content-id` attribute.
+   * 1. If the content element has a `data-lisn-collapsible-content-id` attribute,
+   *    then it must be a unique (for the current page) ID. In this case, the
+   *    trigger elements will be any element in the document that has a
+   *    `data-lisn-collapsible-trigger` class or `data-lisn-collapsible-trigger`
+   *    attribute and the same `data-lisn-collapsible-content-id` attribute.
    * 2. Otherwise, the closest ancestor that has a `lisn-collapsible-container`
    *    class, or if no such ancestor then the immediate parent of the content
    *    element, is searched for any elements that have a
    *    `lisn-collapsible-trigger` class or `data-lisn-collapsible-trigger`
    *    attribute and that do _not_ have a `data-lisn-collapsible-content-id`
    *    attribute, and that are _not_ children of the content element.
+   *
+   * If you pass an array of elements, they will be used as triggers, and their
+   * {@link OpenableTriggerConfig | configuration} will be taken from the
+   * `data-lisn-collapsible-trigger` attribute. If you pass a map, its keys are
+   * the elements and its values are used as the configuration, ignoring the
+   * data attribute.
    *
    * @defaultValue undefined
    */
@@ -1119,23 +1126,27 @@ export type PopupConfig = {
   className?: string[] | string;
 
   /**
-   * The elements that open the widget when clicked on. You can also pass a map
-   * whose keys are the elements and values are {@link OpenableTriggerConfig}
-   * objects.
+   * The elements that open the widget when clicked on.
    *
    * If not given, then the elements that will be used as triggers are
    * discovered in the following way:
    * 1. If the content element has a `data-lisn-popup-content-id` attribute,
    *    then it must be a unique (for the current page) ID. In this case, the
    *    trigger elements will be any element in the document that has a
-   *    `lisn-popup-trigger` class or `data-lisn-popup-trigger` attribute and
-   *    the same `data-lisn-popup-content-id` attribute.
-   * 2. Otherwise, the closest ancestor that has a `lisn-popup-container` class,
-   *    or if no such ancestor then the immediate parent of the content
+   *    `lisn-popup-trigger` class or `data-lisn-popup-trigger` attribute
+   *    and the same `data-lisn-popup-content-id` attribute.
+   * 2. Otherwise, the closest ancestor that has a `lisn-popup-container`
+   *    class, or if no such ancestor then the immediate parent of the content
    *    element, is searched for any elements that have a `lisn-popup-trigger`
    *    class or `data-lisn-popup-trigger` attribute and that do _not_ have a
    *    `data-lisn-popup-content-id` attribute, and that are _not_ children of
    *    the content element.
+   *
+   * If you pass an array of elements, they will be used as triggers, and their
+   * {@link OpenableTriggerConfig | configuration} will be taken from the
+   * `data-lisn-popup-trigger` attribute. If you pass a map, its keys are the
+   * elements and its values are used as the configuration, ignoring the data
+   * attribute.
    *
    * @defaultValue undefined
    */
@@ -1356,23 +1367,27 @@ export type ModalConfig = {
   className?: string[] | string;
 
   /**
-   * The elements that open the widget when clicked on. You can also pass a map
-   * whose keys are the elements and values are {@link OpenableTriggerConfig}
-   * objects.
+   * The elements that open the widget when clicked on.
    *
    * If not given, then the elements that will be used as triggers are
    * discovered in the following way:
    * 1. If the content element has a `data-lisn-modal-content-id` attribute,
    *    then it must be a unique (for the current page) ID. In this case, the
    *    trigger elements will be any element in the document that has a
-   *    `lisn-modal-trigger` class or `data-lisn-modal-trigger` attribute and
-   *    the same `data-lisn-modal-content-id` attribute.
-   * 2. Otherwise, the closest ancestor that has a `lisn-modal-container` class,
-   *    or if no such ancestor then the immediate parent of the content
+   *    `lisn-modal-trigger` class or `data-lisn-modal-trigger` attribute
+   *    and the same `data-lisn-modal-content-id` attribute.
+   * 2. Otherwise, the closest ancestor that has a `lisn-modal-container`
+   *    class, or if no such ancestor then the immediate parent of the content
    *    element, is searched for any elements that have a `lisn-modal-trigger`
    *    class or `data-lisn-modal-trigger` attribute and that do _not_ have a
    *    `data-lisn-modal-content-id` attribute, and that are _not_ children of
    *    the content element.
+   *
+   * If you pass an array of elements, they will be used as triggers, and their
+   * {@link OpenableTriggerConfig | configuration} will be taken from the
+   * `data-lisn-modal-trigger` attribute. If you pass a map, its keys are the
+   * elements and its values are used as the configuration, ignoring the data
+   * attribute.
    *
    * @defaultValue undefined
    */
@@ -1589,9 +1604,7 @@ export type OffcanvasConfig = {
   className?: string[] | string;
 
   /**
-   * The elements that open the widget when clicked on. You can also pass a map
-   * whose keys are the elements and values are {@link OpenableTriggerConfig}
-   * objects.
+   * The elements that open the widget when clicked on.
    *
    * If not given, then the elements that will be used as triggers are
    * discovered in the following way:
@@ -1606,6 +1619,12 @@ export type OffcanvasConfig = {
    *    `lisn-offcanvas-trigger` class or `data-lisn-offcanvas-trigger`
    *    attribute and that do _not_ have a `data-lisn-offcanvas-content-id`
    *    attribute, and that are _not_ children of the content element.
+   *
+   * If you pass an array of elements, they will be used as triggers, and their
+   * {@link OpenableTriggerConfig | configuration} will be taken from the
+   * `data-lisn-offcanvas-trigger` attribute. If you pass a map, its keys are
+   * the elements and its values are used as the configuration, ignoring the
+   * data attribute.
    *
    * @defaultValue undefined
    */

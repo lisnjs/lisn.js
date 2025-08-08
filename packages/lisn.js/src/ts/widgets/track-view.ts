@@ -159,6 +159,7 @@ const WIDGET_NAME = "track-view";
 // non-blank ID.
 const DUMMY_ID = WIDGET_NAME;
 
+// For HTML API only
 const newConfigValidator: WidgetConfigValidatorFunc<TrackViewConfig> = (
   element: Element,
 ) => {

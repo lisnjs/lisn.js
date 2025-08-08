@@ -194,6 +194,7 @@ const PREFIX_SPINNER = MH.prefixName("spinner");
 const DUMMY_ID = PREFIXED_NAME;
 let mainWidget: PageLoader | null = null;
 
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<PageLoaderConfig> = {
   autoRemove: validateBoolean,
 };

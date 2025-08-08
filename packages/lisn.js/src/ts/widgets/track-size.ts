@@ -117,6 +117,7 @@ const WIDGET_NAME = "track-size";
 // non-blank ID.
 const DUMMY_ID = WIDGET_NAME;
 
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<TrackSizeConfig> = {
   threshold: validateNumber,
   debounceWindow: validateNumber,

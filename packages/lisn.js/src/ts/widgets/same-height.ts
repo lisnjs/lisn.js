@@ -734,6 +734,7 @@ const DUMMY_ID = PREFIXED_NAME;
 // characters to be text.
 const MIN_CHARS_FOR_TEXT = 100;
 
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<SameHeightConfig> = {
   diffTolerance: validateNumber,
   resizeThreshold: validateNumber,

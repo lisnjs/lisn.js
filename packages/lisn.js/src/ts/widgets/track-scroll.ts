@@ -110,6 +110,7 @@ const WIDGET_NAME = "track-scroll";
 // non-blank ID.
 const DUMMY_ID = WIDGET_NAME;
 
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<TrackScrollConfig> = {
   threshold: validateNumber,
   debounceWindow: validateNumber,

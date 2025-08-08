@@ -1732,6 +1732,7 @@ const isValidIconClosed = (value: string): value is IconCloseType =>
 const isValidIconOpen = (value: string): value is IconOpenType =>
   MH.includes(ICON_OPEN_TYPES, value);
 
+// For HTML API only
 const triggerConfigValidator: WidgetConfigValidatorObject<OpenableTriggerConfig> =
   {
     id: validateString,
@@ -1747,6 +1748,7 @@ const triggerConfigValidator: WidgetConfigValidatorObject<OpenableTriggerConfig>
     iconOpen: (key, value) => validateString(key, value, isValidIconOpen),
   };
 
+// For HTML API only
 const collapsibleConfigValidator: WidgetConfigValidatorObject<CollapsibleConfig> =
   {
     id: validateString,
@@ -1763,6 +1765,7 @@ const collapsibleConfigValidator: WidgetConfigValidatorObject<CollapsibleConfig>
     iconOpen: (key, value) => validateString(key, value, isValidIconOpen),
   };
 
+// For HTML API only
 const popupConfigValidator: WidgetConfigValidatorObject<PopupConfig> = {
   id: validateString,
   className: validateStrList,
@@ -1776,6 +1779,7 @@ const popupConfigValidator: WidgetConfigValidatorObject<PopupConfig> = {
   autoClose: validateBoolean,
 };
 
+// For HTML API only
 const modalConfigValidator: WidgetConfigValidatorObject<ModalConfig> = {
   id: validateString,
   className: validateStrList,
@@ -1783,6 +1787,7 @@ const modalConfigValidator: WidgetConfigValidatorObject<ModalConfig> = {
   autoClose: validateBoolean,
 };
 
+// For HTML API only
 const offcanvasConfigValidator: WidgetConfigValidatorObject<OffcanvasConfig> = {
   id: validateString,
   className: validateStrList,

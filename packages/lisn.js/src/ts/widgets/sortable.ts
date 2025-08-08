@@ -281,6 +281,7 @@ const PREFIX_FLOATING_CLONE = `${PREFIXED_NAME}__ghost`;
 // non-blank ID.
 const DUMMY_ID = PREFIXED_NAME;
 
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<SortableConfig> = {
   mode: (key, value) =>
     validateString(key, value, (v) => v === "swap" || v === "move"),

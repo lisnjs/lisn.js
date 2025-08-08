@@ -398,6 +398,7 @@ const PREFIX_FIXED = MH.prefixName("fixed");
 
 let mainWidget: ScrollToTop | null = null;
 
+// For HTML API only
 const newConfigValidator: WidgetConfigValidatorFunc<ScrollToTopConfig> = (
   element,
 ) => {

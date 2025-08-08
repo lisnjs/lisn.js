@@ -741,6 +741,7 @@ type PagerStyle = (typeof SUPPORTED_STYLES)[number];
 const isValidStyle = (value: string): value is PagerStyle =>
   MH.includes(SUPPORTED_STYLES, value);
 
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<PagerConfig> = {
   initialPage: validateNumber,
   style: (key, value) => validateString(key, value, isValidStyle),

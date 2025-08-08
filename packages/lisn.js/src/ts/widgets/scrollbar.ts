@@ -446,6 +446,7 @@ const S_SCROLLBAR = "scrollbar";
 
 let mainWidget: Scrollbar | null = null;
 
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<ScrollbarConfig> = {
   id: validateString,
   className: validateStrList,

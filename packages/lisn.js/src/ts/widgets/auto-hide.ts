@@ -227,6 +227,7 @@ const WIDGET_NAME_REMOVE = "auto-remove";
 
 const DEFAULT_DELAY = 3000;
 
+// For HTML API only
 const newConfigValidator = (
   autoRemove: boolean,
 ): WidgetConfigValidatorObject<AutoHideConfig> => {

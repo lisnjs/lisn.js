@@ -161,6 +161,7 @@ const WIDGET_NAME = "track-gesture";
 // non-blank ID.
 const DUMMY_ID = WIDGET_NAME;
 
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<TrackGestureConfig> = {
   preventDefault: validateBoolean,
   minDeltaX: validateNumber,

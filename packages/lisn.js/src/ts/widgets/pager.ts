@@ -163,10 +163,19 @@ import debug from "@lisn/debug/debug";
  * ```
  *
  * @example
- * As above but with all settings explicitly set to their default (`false`).
+ * As above but with all settings explicitly set.
  *
  * ```html
- * <div data-lisn-pager="fullscreen=false | parallax=false | horizontal=false">
+ * <div data-lisn-pager="initial-page=1
+ *                       | style=carousel
+ *                       | page-size=200
+ *                       | peek
+ *                       | fullscreen=false
+ *                       | parallax
+ *                       | horizontal=false
+ *                       | use-gestures
+ *                       | align-gesture-direction
+ *                       | prevent-default">
  *   <div>Vertical: Page 1</div>
  *   <div>Vertical: Page 2</div>
  *   <div>Vertical: Page 3</div>

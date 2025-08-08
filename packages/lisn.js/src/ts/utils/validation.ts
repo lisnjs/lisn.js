@@ -38,8 +38,8 @@ export const isValidStrList = <T extends string = string>(
 };
 
 /**
- * Returns an array of strings from the given list while validating each one
- * using the `checkFn` function.
+ * Returns an array of strings from the given list (array or comma-separated
+ * string) while validating each one using the `checkFn` function.
  *
  * If it returns without throwing, the input is necessarily valid.
  * If the result is an empty array, it will return `null`.

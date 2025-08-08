@@ -311,11 +311,15 @@ export abstract class Openable extends Widget {
  * Per-trigger based configuration. Can either be given as an object as the
  * value of the {@link OpenableConfig.triggers} map, or it can be set as a
  * string configuration in the `data-lisn-<name>-trigger` data attribute. See
- * {@link getWidgetConfig} for the syntax.
+ * {@link getWidgetConfig} and the example below for the syntax.
  *
  * @example
  * ```html
- * <div data-lisn-collapsible-trigger="auto-close
+ * <div data-lisn-collapsible-trigger="id=my-trigger
+ *                                     | class-name=clsA,clsB
+ *                                     | auto-close
+ *                                     | hover
+ *                                     | prevent-default=false
  *                                     | icon=right
  *                                     | icon-closed=arrow-down
  *                                     | icon-open=x"
@@ -636,14 +640,16 @@ export type OpenableProperties = OpenableConfig;
  * ```
  *
  * @example
- * As above, but with all other possible configuration settings set explicitly.
+ * As above, but with all possible configuration settings set explicitly.
  *
  * ```html
  * <div>
  *   <div data-lisn-collapsible-content-id="readmore"
- *        data-lisn-collapsible="peek=50px
+ *        data-lisn-collapsible="id=my-collapsible
+ *                               | class-name=clsA,clsB
  *                               | horizontal=false
  *                               | reverse=false
+ *                               | peek=50px
  *                               | auto-close
  *                               | icon=right
  *                               | icon-closed=arrow-up"
@@ -1044,7 +1050,11 @@ export type CollapsibleConfig = {
  *
  * <div>
  *   <div data-lisn-popup-content-id="popup"
- *        data-lisn-popup="close-button | position=bottom | auto-close=false">
+ *        data-lisn-popup="id=my-popup
+ *                         | class-name=clsA,clsB
+ *                         | close-button
+ *                         | position=bottom
+ *                         | auto-close=false">
  *     Lorem ipsum odor amet, consectetuer adipiscing elit. Etiam duis viverra
  *     faucibus facilisis luctus. Nunc tellus turpis facilisi dapibus aliquet
  *     turpis. Diam potenti egestas dolor auctor nostra vestibulum. Tempus
@@ -1296,7 +1306,10 @@ export type PopupConfig = {
  * ```html
  * <div>
  *   <div data-lisn-modal-content-id="modal"
- *        data-lisn-modal="auto-close=false | close-button=true">
+ *        data-lisn-modal="id=my-modal
+ *                         | class-name=clsA,clsB
+ *                         | close-button=true
+ *                         | auto-close=false">
  *     Lorem ipsum odor amet, consectetuer adipiscing elit. Etiam duis viverra
  *     faucibus facilisis luctus. Nunc tellus turpis facilisi dapibus aliquet
  *     turpis. Diam potenti egestas dolor auctor nostra vestibulum. Tempus
@@ -1530,7 +1543,11 @@ export type ModalConfig = {
  * ```html
  * <div>
  *   <div data-lisn-offcanvas-content-id="offcanvas"
- *        data-lisn-offcanvas="position=top | auto-close=false | close-button=true">
+ *        data-lisn-offcanvas="id=my-offcanvas
+ *                             | class-name=clsA,clsB
+ *                             | close-button=true
+ *                             | position=top
+ *                             | auto-close=false">
  *     Lorem ipsum odor amet, consectetuer adipiscing elit. Etiam duis viverra
  *     faucibus facilisis luctus. Nunc tellus turpis facilisi dapibus aliquet
  *     turpis. Diam potenti egestas dolor auctor nostra vestibulum. Tempus
@@ -1718,21 +1735,22 @@ const isValidIconOpen = (value: string): value is IconOpenType =>
 const triggerConfigValidator: WidgetConfigValidatorObject<OpenableTriggerConfig> =
   {
     id: validateString,
-    className: (key, value) => validateStrList(key, toArrayIfSingle(value)),
+    className: validateStrList,
     autoClose: validateBoolean,
+    hover: validateBoolean,
+    preventDefault: validateBoolean,
     icon: (key, value) =>
       value && toBoolean(value) === false
         ? false
         : validateString(key, value, isValidPosition),
     iconClosed: (key, value) => validateString(key, value, isValidIconClosed),
     iconOpen: (key, value) => validateString(key, value, isValidIconOpen),
-    hover: validateBoolean,
   };
 
 const collapsibleConfigValidator: WidgetConfigValidatorObject<CollapsibleConfig> =
   {
     id: validateString,
-    className: (key, value) => validateStrList(key, toArrayIfSingle(value)),
+    className: validateStrList,
     horizontal: validateBoolean,
     reverse: validateBoolean,
     peek: validateBooleanOrString,
@@ -1747,7 +1765,7 @@ const collapsibleConfigValidator: WidgetConfigValidatorObject<CollapsibleConfig>
 
 const popupConfigValidator: WidgetConfigValidatorObject<PopupConfig> = {
   id: validateString,
-  className: (key, value) => validateStrList(key, toArrayIfSingle(value)),
+  className: validateStrList,
   closeButton: validateBoolean,
   position: (key, value) =>
     validateString(
@@ -1760,14 +1778,14 @@ const popupConfigValidator: WidgetConfigValidatorObject<PopupConfig> = {
 
 const modalConfigValidator: WidgetConfigValidatorObject<ModalConfig> = {
   id: validateString,
-  className: (key, value) => validateStrList(key, toArrayIfSingle(value)),
+  className: validateStrList,
   closeButton: validateBoolean,
   autoClose: validateBoolean,
 };
 
 const offcanvasConfigValidator: WidgetConfigValidatorObject<OffcanvasConfig> = {
   id: validateString,
-  className: (key, value) => validateStrList(key, toArrayIfSingle(value)),
+  className: validateStrList,
   closeButton: validateBoolean,
   position: (key, value) => validateString(key, value, isValidPosition),
   autoClose: validateBoolean,
@@ -1889,10 +1907,7 @@ const getTriggersFrom = (
     }
   } else if (MH.isInstanceOf(inputTriggers, Map)) {
     for (const [trigger, triggerConfig] of inputTriggers.entries()) {
-      addTrigger(
-        trigger,
-        getWidgetConfig(triggerConfig, triggerConfigValidator),
-      );
+      addTrigger(trigger, triggerConfig ?? {});
     }
   }
 

@@ -241,8 +241,9 @@ export type SortableConfig = {
    *
    * If this is not specified, then
    * 1. The top-level element that constitutes the widget is searched for any
-   *    elements that contain the class `lisn-sortable-item`. They do not
-   *    have to be immediate children of the root element.
+   *    elements that contain the `lisn-sortable-item` class or the
+   *    `data-lisn-sortable-item` attribute. They do not have to be immediate
+   *    children of the root element.
    * 2. If there are no such elements, all of the immediate children of the
    *    widget element (other than `script` and `style` elements) are taken as
    *    the items.

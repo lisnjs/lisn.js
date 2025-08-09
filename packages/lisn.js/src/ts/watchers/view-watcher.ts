@@ -177,7 +177,7 @@ export class ViewWatcher {
   }
 
   /**
-   * Returns an existing  instance of ViewWatcher with the given
+   * Returns an existing instance of ViewWatcher with the given
    * {@link ViewWatcherConfig}, or creates a new one.
    *
    * **NOTE:** It saves it for future reuse, so don't use this for temporary

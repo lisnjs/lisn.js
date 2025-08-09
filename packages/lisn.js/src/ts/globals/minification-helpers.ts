@@ -328,6 +328,12 @@ export const pow = MC.MATH.pow.bind(MC.MATH);
 
 export const exp = MC.MATH.exp.bind(MC.MATH);
 
+export const cos = MC.MATH.cos.bind(MC.MATH);
+
+export const sin = MC.MATH.sin.bind(MC.MATH);
+
+export const tan = MC.MATH.tan.bind(MC.MATH);
+
 export const parseFloat = MC.NUMBER.parseFloat.bind(MC.NUMBER);
 
 export const isNaN = MC.NUMBER.isNaN.bind(MC.NUMBER);

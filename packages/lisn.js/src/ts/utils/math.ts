@@ -209,6 +209,16 @@ export const normalizeAngle = (a: number) => {
 };
 
 /**
+ * Normalizes a vector defined by the given x, y and z coordinates to length 1.
+ *
+ * @since v1.3
+ */
+export const normalizeAxis = (x: number, y: number, z = 0) => {
+  const len = MH.sqrt(x * x + y * y + z * z);
+  return len > 0 ? [x / len, y / len, z / len] : [0, 0, 0];
+};
+
+/**
  * Converts the given angle in degrees to radians.
  *
  * @category Math

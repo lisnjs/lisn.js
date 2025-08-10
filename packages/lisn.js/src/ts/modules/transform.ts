@@ -17,6 +17,24 @@ export type TransformCategory =
   | typeof SKEW
   | typeof ROTATE;
 
+export type TransformOperationID =
+  | typeof RESET
+  | typeof TRANSLATE_X
+  | typeof TRANSLATE_Y
+  | typeof TRANSLATE_Z
+  | typeof TRANSLATE
+  | typeof SCALE_X
+  | typeof SCALE_Y
+  | typeof SCALE_Z
+  | typeof SCALE
+  | typeof SKEW_X
+  | typeof SKEW_Y
+  | typeof SKEW
+  | typeof ROTATE_X
+  | typeof ROTATE_Y
+  | typeof ROTATE_Z
+  | typeof ROTATE;
+
 export type TranslateOperation = ReturnType<
   | typeof Transform.translateX
   | typeof Transform.translateY
@@ -438,36 +456,36 @@ export class Transform {
    */
   readonly inverseApply: (...transforms: TransformOperation[]) => Transform;
 
-  static readonly reset = () => [RESET] as const;
-  static readonly translateX = (t: number) => [TRANSLATE_X, t] as const;
-  static readonly translateY = (t: number) => [TRANSLATE_Y, t] as const;
-  static readonly translateZ = (t: number) => [TRANSLATE_Z, t] as const;
+  static readonly reset = () => toOperation(RESET);
+  static readonly translateX = (t: number) => toOperation(TRANSLATE_X, t);
+  static readonly translateY = (t: number) => toOperation(TRANSLATE_Y, t);
+  static readonly translateZ = (t: number) => toOperation(TRANSLATE_Z, t);
   static readonly translate = (tx: number, ty: number, tz?: number) =>
-    [TRANSLATE, tx, ty, tz] as const;
+    toOperation(TRANSLATE, tx, ty, tz);
 
   static readonly scaleX = (s: number, origin?: Origin) =>
-    [SCALE_X, s, origin] as const;
+    toOperation(SCALE_X, s, origin);
   static readonly scaleY = (s: number, origin?: Origin) =>
-    [SCALE_Y, s, origin] as const;
+    toOperation(SCALE_Y, s, origin);
   static readonly scaleZ = (s: number, origin?: Origin) =>
-    [SCALE_Z, s, origin] as const;
+    toOperation(SCALE_Z, s, origin);
   static readonly scale = (
     sx: number,
     sy: number,
     sz?: number,
     origin?: Origin,
-  ) => [SCALE, sx, sy, sz, origin] as const;
+  ) => toOperation(SCALE, sx, sy, sz, origin);
 
-  static readonly skewX = (deg: number) => [SKEW_X, deg] as const;
-  static readonly skewY = (deg: number) => [SKEW_Y, deg] as const;
+  static readonly skewX = (deg: number) => toOperation(SKEW_X, deg);
+  static readonly skewY = (deg: number) => toOperation(SKEW_Y, deg);
   static readonly skew = (degX: number, degY: number) =>
-    [SKEW, degX, degY] as const;
+    toOperation(SKEW, degX, degY);
 
-  static readonly rotateX = (deg: number) => [ROTATE_X, deg] as const;
-  static readonly rotateY = (deg: number) => [ROTATE_Y, deg] as const;
-  static readonly rotateZ = (deg: number) => [ROTATE_Z, deg] as const;
+  static readonly rotateX = (deg: number) => toOperation(ROTATE_X, deg);
+  static readonly rotateY = (deg: number) => toOperation(ROTATE_Y, deg);
+  static readonly rotateZ = (deg: number) => toOperation(ROTATE_Z, deg);
   static readonly rotate = (deg: number, axis: Axis) =>
-    [ROTATE, deg, axis] as const;
+    toOperation(ROTATE, deg, axis);
 
   constructor(input?: Transform | DOMMatrix | Float32Array) {
     const selfM = newMatrix(input);
@@ -583,59 +601,59 @@ export class Transform {
       }
 
       for (const t of transforms) {
-        const op = t[0];
-        switch (op) {
+        const { operation, args } = t;
+        switch (operation) {
           case RESET:
             reset();
             break;
 
           case TRANSLATE_X:
-            (inverse ? inverseTranslateX : translateX)(t[1]);
+            (inverse ? inverseTranslateX : translateX)(...args);
             break;
           case TRANSLATE_Y:
-            (inverse ? inverseTranslateY : translateY)(t[1]);
+            (inverse ? inverseTranslateY : translateY)(...args);
             break;
           case TRANSLATE_Z:
-            (inverse ? inverseTranslateZ : translateZ)(t[1]);
+            (inverse ? inverseTranslateZ : translateZ)(...args);
             break;
           case TRANSLATE:
-            (inverse ? inverseTranslate : translate)(t[1], t[2], t[3]);
+            (inverse ? inverseTranslate : translate)(...args);
             break;
 
           case SCALE_X:
-            (inverse ? inverseScaleX : scaleX)(t[1], t[2]);
+            (inverse ? inverseScaleX : scaleX)(...args);
             break;
           case SCALE_Y:
-            (inverse ? inverseScaleY : scaleY)(t[1], t[2]);
+            (inverse ? inverseScaleY : scaleY)(...args);
             break;
           case SCALE_Z:
-            (inverse ? inverseScaleZ : scaleZ)(t[1], t[2]);
+            (inverse ? inverseScaleZ : scaleZ)(...args);
             break;
           case SCALE:
-            (inverse ? inverseScale : scale)(t[1], t[2], t[3], t[4]);
+            (inverse ? inverseScale : scale)(...args);
             break;
 
           case SKEW_X:
-            (inverse ? inverseSkewX : skewX)(t[1]);
+            (inverse ? inverseSkewX : skewX)(...args);
             break;
           case SKEW_Y:
-            (inverse ? inverseSkewY : skewY)(t[1]);
+            (inverse ? inverseSkewY : skewY)(...args);
             break;
           case SKEW:
-            (inverse ? inverseSkew : skew)(t[1], t[2]);
+            (inverse ? inverseSkew : skew)(...args);
             break;
 
           case ROTATE_X:
-            (inverse ? inverseRotateX : rotateX)(t[1]);
+            (inverse ? inverseRotateX : rotateX)(...args);
             break;
           case ROTATE_Y:
-            (inverse ? inverseRotateY : rotateY)(t[1]);
+            (inverse ? inverseRotateY : rotateY)(...args);
             break;
           case ROTATE_Z:
-            (inverse ? inverseRotateZ : rotateZ)(t[1]);
+            (inverse ? inverseRotateZ : rotateZ)(...args);
             break;
           case ROTATE:
-            (inverse ? inverseRotate : rotate)(t[1], t[2]);
+            (inverse ? inverseRotate : rotate)(...args);
             break;
 
           default:
@@ -745,3 +763,11 @@ const validateInputs = (
     }
   }
 };
+
+const toOperation = <
+  O extends TransformOperationID,
+  A extends readonly unknown[],
+>(
+  operation: O,
+  ...args: A
+) => ({ operation, args });

@@ -335,8 +335,10 @@ export const easeInOutQuad = (x: number) =>
  * @param [settings.precision = 2] Number of decimal places to round position to
  *                                 in order to determine when it's "done".
  *
- * @returns Updated position `l`, velocity `v` and fractional change in position,
- * `dlFr`.
+ * @returns Updated
+ * - `l`: position
+ * - `v`: velocity
+ * - `dlFr`: fractional change in position since the last call
  *
  * @since v1.2.0 (Fractional change in position in return value was added in
  * v1.3.0)
@@ -364,10 +366,12 @@ export const criticallyDamped = (settings: {
   dt /= 1000; // to seconds
 
   const lPrev = l;
+  let dlFr = 0;
   if (roundNumTo(l - lTarget, precision) === 0) {
     // we're done
     l = lTarget;
     v = 0;
+    dlFr = 1;
   } else if (dt > 0) {
     const A = l - lTarget;
     const B = v + w0 * A;
@@ -375,9 +379,10 @@ export const criticallyDamped = (settings: {
 
     l = lTarget + (A + B * dt) * e;
     v = (B - w0 * (A + B * dt)) * e;
+    dlFr = (l - lPrev) / (lTarget - lPrev);
   }
 
-  return { l, v, dlFr: (l - lPrev) / (lTarget - lPrev) };
+  return { l, v, dlFr };
 };
 
 /**

@@ -142,10 +142,10 @@ export async function* newAnimationFrameIterator(
  *
  * @returns An iterator whose `next` method accepts an optional new `lTarget`.
  * The iterator yields an object containing successive values for:
- * - position (`l`)
- * - velocity (`v`)
- * - total time elapsed (`t`)
- * - fractional (from 0 to 1) change in position since the last frame (`dlFr`)
+ * - `l`: position
+ * - `v`: velocity
+ * - `t`: total time elapsed
+ * - `dlFr`: fractional (from 0 to 1) change in position since the last frame
  *
  * @example
  * If you never need to update the target you can use a for await loop:

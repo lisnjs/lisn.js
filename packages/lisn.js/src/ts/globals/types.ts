@@ -255,6 +255,22 @@ export type Vector = [
   /** deltaY/y component */ number,
 ];
 
+export type Axis =
+  | [/** x component */ number, /** y component */ number]
+  | [
+      /** x component */ number,
+      /** y component */ number,
+      /** z component */ number,
+    ];
+
+export type Origin =
+  | [/** x coordinate */ number, /** y coordinate */ number]
+  | [
+      /** x coordinate */ number,
+      /** y coordinate */ number,
+      /** z coordinate */ number,
+    ];
+
 /**
  * @category Misc
  */

@@ -182,6 +182,12 @@ export const havingMinAbs = (...values: number[]) =>
     : MC.INFINITY;
 
 /**
+ * @since v1.3.0
+ */
+export const sum = (...values: number[]) =>
+  values.reduce((total, current) => total + current, 0);
+
+/**
  * Returns the angle (in radians) that the vector defined by the given x, y
  * makes with the positive horizontal axis.
  *
@@ -211,7 +217,7 @@ export const normalizeAngle = (a: number) => {
 /**
  * Normalizes a vector defined by the given x, y and z coordinates to length 1.
  *
- * @since v1.3
+ * @since v1.3.0
  */
 export const normalizeAxis = (x: number, y: number, z = 0) => {
   const len = MH.sqrt(x * x + y * y + z * z);

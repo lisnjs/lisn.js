@@ -11,24 +11,45 @@ import { Axis, Origin } from "@lisn/globals/types";
 
 import { isValidNum, sum } from "@lisn/utils/math";
 
-export type TransformOperation = ReturnType<
-  | typeof Transform.RESET
-  | typeof Transform.TRANSLATE_X
-  | typeof Transform.TRANSLATE_Y
-  | typeof Transform.TRANSLATE_Z
-  | typeof Transform.TRANSLATE
-  | typeof Transform.SCALE_X
-  | typeof Transform.SCALE_Y
-  | typeof Transform.SCALE_Z
-  | typeof Transform.SCALE
-  | typeof Transform.SKEW_X
-  | typeof Transform.SKEW_Y
-  | typeof Transform.SKEW
-  | typeof Transform.ROTATE_X
-  | typeof Transform.ROTATE_Y
-  | typeof Transform.ROTATE_Z
-  | typeof Transform.ROTATE
+export type TransformCategory =
+  | typeof TRANSLATE
+  | typeof SCALE
+  | typeof SKEW
+  | typeof ROTATE;
+
+export type TranslateOperation = ReturnType<
+  | typeof Transform.translateX
+  | typeof Transform.translateY
+  | typeof Transform.translateZ
+  | typeof Transform.translate
 >;
+
+export type ScaleOperation = ReturnType<
+  | typeof Transform.scaleX
+  | typeof Transform.scaleY
+  | typeof Transform.scaleZ
+  | typeof Transform.scale
+>;
+
+export type SkewOperation = ReturnType<
+  typeof Transform.skewX | typeof Transform.skewY | typeof Transform.skew
+>;
+
+export type RotateOperation = ReturnType<
+  | typeof Transform.rotateX
+  | typeof Transform.rotateY
+  | typeof Transform.rotateZ
+  | typeof Transform.rotate
+>;
+
+export type ResetOperation = ReturnType<typeof Transform.reset>;
+
+export type TransformOperation =
+  | TranslateOperation
+  | ScaleOperation
+  | SkewOperation
+  | RotateOperation
+  | ResetOperation;
 
 /**
  * {@link Transform} represents a 3D transform matrix.
@@ -417,35 +438,35 @@ export class Transform {
    */
   readonly inverseApply: (...transforms: TransformOperation[]) => Transform;
 
-  static readonly RESET = () => [RESET] as const;
-  static readonly TRANSLATE_X = (t: number) => [TRANSLATE_X, t] as const;
-  static readonly TRANSLATE_Y = (t: number) => [TRANSLATE_Y, t] as const;
-  static readonly TRANSLATE_Z = (t: number) => [TRANSLATE_Z, t] as const;
-  static readonly TRANSLATE = (tx: number, ty: number, tz?: number) =>
+  static readonly reset = () => [RESET] as const;
+  static readonly translateX = (t: number) => [TRANSLATE_X, t] as const;
+  static readonly translateY = (t: number) => [TRANSLATE_Y, t] as const;
+  static readonly translateZ = (t: number) => [TRANSLATE_Z, t] as const;
+  static readonly translate = (tx: number, ty: number, tz?: number) =>
     [TRANSLATE, tx, ty, tz] as const;
 
-  static readonly SCALE_X = (s: number, origin?: Origin) =>
+  static readonly scaleX = (s: number, origin?: Origin) =>
     [SCALE_X, s, origin] as const;
-  static readonly SCALE_Y = (s: number, origin?: Origin) =>
+  static readonly scaleY = (s: number, origin?: Origin) =>
     [SCALE_Y, s, origin] as const;
-  static readonly SCALE_Z = (s: number, origin?: Origin) =>
+  static readonly scaleZ = (s: number, origin?: Origin) =>
     [SCALE_Z, s, origin] as const;
-  static readonly SCALE = (
+  static readonly scale = (
     sx: number,
     sy: number,
     sz?: number,
     origin?: Origin,
   ) => [SCALE, sx, sy, sz, origin] as const;
 
-  static readonly SKEW_X = (deg: number) => [SKEW_X, deg] as const;
-  static readonly SKEW_Y = (deg: number) => [SKEW_Y, deg] as const;
-  static readonly SKEW = (degX: number, degY: number) =>
+  static readonly skewX = (deg: number) => [SKEW_X, deg] as const;
+  static readonly skewY = (deg: number) => [SKEW_Y, deg] as const;
+  static readonly skew = (degX: number, degY: number) =>
     [SKEW, degX, degY] as const;
 
-  static readonly ROTATE_X = (deg: number) => [ROTATE_X, deg] as const;
-  static readonly ROTATE_Y = (deg: number) => [ROTATE_Y, deg] as const;
-  static readonly ROTATE_Z = (deg: number) => [ROTATE_Z, deg] as const;
-  static readonly ROTATE = (deg: number, axis: Axis) =>
+  static readonly rotateX = (deg: number) => [ROTATE_X, deg] as const;
+  static readonly rotateY = (deg: number) => [ROTATE_Y, deg] as const;
+  static readonly rotateZ = (deg: number) => [ROTATE_Z, deg] as const;
+  static readonly rotate = (deg: number, axis: Axis) =>
     [ROTATE, deg, axis] as const;
 
   constructor(input?: Transform | DOMMatrix | Float32Array) {
@@ -677,28 +698,28 @@ export class Transform {
   }
 }
 
+export const RESET: unique symbol = MC.SYMBOL() as typeof RESET;
+
+export const TRANSLATE_X: unique symbol = MC.SYMBOL() as typeof TRANSLATE_X;
+export const TRANSLATE_Y: unique symbol = MC.SYMBOL() as typeof TRANSLATE_Y;
+export const TRANSLATE_Z: unique symbol = MC.SYMBOL() as typeof TRANSLATE_Z;
+export const TRANSLATE: unique symbol = MC.SYMBOL() as typeof TRANSLATE;
+
+export const SCALE_X: unique symbol = MC.SYMBOL() as typeof SCALE_X;
+export const SCALE_Y: unique symbol = MC.SYMBOL() as typeof SCALE_Y;
+export const SCALE_Z: unique symbol = MC.SYMBOL() as typeof SCALE_Z;
+export const SCALE: unique symbol = MC.SYMBOL() as typeof SCALE;
+
+export const SKEW_X: unique symbol = MC.SYMBOL() as typeof SKEW_X;
+export const SKEW_Y: unique symbol = MC.SYMBOL() as typeof SKEW_Y;
+export const SKEW: unique symbol = MC.SYMBOL() as typeof SKEW;
+
+export const ROTATE_X: unique symbol = MC.SYMBOL() as typeof ROTATE_X;
+export const ROTATE_Y: unique symbol = MC.SYMBOL() as typeof ROTATE_Y;
+export const ROTATE_Z: unique symbol = MC.SYMBOL() as typeof ROTATE_Z;
+export const ROTATE: unique symbol = MC.SYMBOL() as typeof ROTATE;
+
 // ----------------------------------------
-
-const RESET: unique symbol = MC.SYMBOL() as typeof RESET;
-
-const TRANSLATE_X: unique symbol = MC.SYMBOL() as typeof TRANSLATE_X;
-const TRANSLATE_Y: unique symbol = MC.SYMBOL() as typeof TRANSLATE_Y;
-const TRANSLATE_Z: unique symbol = MC.SYMBOL() as typeof TRANSLATE_Z;
-const TRANSLATE: unique symbol = MC.SYMBOL() as typeof TRANSLATE;
-
-const SCALE_X: unique symbol = MC.SYMBOL() as typeof SCALE_X;
-const SCALE_Y: unique symbol = MC.SYMBOL() as typeof SCALE_Y;
-const SCALE_Z: unique symbol = MC.SYMBOL() as typeof SCALE_Z;
-const SCALE: unique symbol = MC.SYMBOL() as typeof SCALE;
-
-const SKEW_X: unique symbol = MC.SYMBOL() as typeof SKEW_X;
-const SKEW_Y: unique symbol = MC.SYMBOL() as typeof SKEW_Y;
-const SKEW: unique symbol = MC.SYMBOL() as typeof SKEW;
-
-const ROTATE_X: unique symbol = MC.SYMBOL() as typeof ROTATE_X;
-const ROTATE_Y: unique symbol = MC.SYMBOL() as typeof ROTATE_Y;
-const ROTATE_Z: unique symbol = MC.SYMBOL() as typeof ROTATE_Z;
-const ROTATE: unique symbol = MC.SYMBOL() as typeof ROTATE;
 
 const newMatrix = (input?: Transform | DOMMatrix | Float32Array) => {
   const inputM = MH.isInstanceOf(input, Transform) ? input.matrix : input;

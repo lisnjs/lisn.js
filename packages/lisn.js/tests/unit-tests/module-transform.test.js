@@ -748,7 +748,7 @@ describe("apply", () => {
     tRef.translateX(100);
 
     const t = new Transform();
-    t.apply(Transform.TRANSLATE_X(100));
+    t.apply(Transform.translateX(100));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -758,7 +758,7 @@ describe("apply", () => {
     tRef.translateY(100);
 
     const t = new Transform();
-    t.apply(Transform.TRANSLATE_Y(100));
+    t.apply(Transform.translateY(100));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -768,7 +768,7 @@ describe("apply", () => {
     tRef.translateZ(100);
 
     const t = new Transform();
-    t.apply(Transform.TRANSLATE_Z(100));
+    t.apply(Transform.translateZ(100));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -778,7 +778,7 @@ describe("apply", () => {
     tRef.translate(10, 20, 30);
 
     const t = new Transform();
-    t.apply(Transform.TRANSLATE(10, 20, 30));
+    t.apply(Transform.translate(10, 20, 30));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -788,7 +788,7 @@ describe("apply", () => {
     tRef.scaleX(10);
 
     const t = new Transform();
-    t.apply(Transform.SCALE_X(10));
+    t.apply(Transform.scaleX(10));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -798,7 +798,7 @@ describe("apply", () => {
     tRef.scaleY(10);
 
     const t = new Transform();
-    t.apply(Transform.SCALE_Y(10));
+    t.apply(Transform.scaleY(10));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -808,7 +808,7 @@ describe("apply", () => {
     tRef.scaleZ(10);
 
     const t = new Transform();
-    t.apply(Transform.SCALE_Z(10));
+    t.apply(Transform.scaleZ(10));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -818,7 +818,7 @@ describe("apply", () => {
     tRef.scale(5, 10, 20);
 
     const t = new Transform();
-    t.apply(Transform.SCALE(5, 10, 20));
+    t.apply(Transform.scale(5, 10, 20));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -828,7 +828,7 @@ describe("apply", () => {
     tRef.skewX(30);
 
     const t = new Transform();
-    t.apply(Transform.SKEW_X(30));
+    t.apply(Transform.skewX(30));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -838,7 +838,7 @@ describe("apply", () => {
     tRef.skewY(30);
 
     const t = new Transform();
-    t.apply(Transform.SKEW_Y(30));
+    t.apply(Transform.skewY(30));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -848,7 +848,7 @@ describe("apply", () => {
     tRef.skew(30, 45);
 
     const t = new Transform();
-    t.apply(Transform.SKEW(30, 45));
+    t.apply(Transform.skew(30, 45));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -858,7 +858,7 @@ describe("apply", () => {
     tRef.rotateX(30);
 
     const t = new Transform();
-    t.apply(Transform.ROTATE_X(30));
+    t.apply(Transform.rotateX(30));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -868,7 +868,7 @@ describe("apply", () => {
     tRef.rotateY(30);
 
     const t = new Transform();
-    t.apply(Transform.ROTATE_Y(30));
+    t.apply(Transform.rotateY(30));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -878,7 +878,7 @@ describe("apply", () => {
     tRef.rotateZ(30);
 
     const t = new Transform();
-    t.apply(Transform.ROTATE_Z(30));
+    t.apply(Transform.rotateZ(30));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -888,7 +888,7 @@ describe("apply", () => {
     tRef.rotate(30, [1, 2, 3]);
 
     const t = new Transform();
-    t.apply(Transform.ROTATE(30, [1, 2, 3]));
+    t.apply(Transform.rotate(30, [1, 2, 3]));
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -901,9 +901,9 @@ describe("apply", () => {
 
     const t = new Transform();
     t.apply(
-      Transform.TRANSLATE(10, 20, 30),
-      Transform.SCALE(5, 10, 20),
-      Transform.ROTATE(30, [1, 2, 3]),
+      Transform.translate(10, 20, 30),
+      Transform.scale(5, 10, 20),
+      Transform.rotate(30, [1, 2, 3]),
     );
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
@@ -916,9 +916,9 @@ describe("apply", () => {
     t.rotate(30, [1, 2, 3]);
 
     t.inverseApply(
-      Transform.TRANSLATE(10, 20, 30),
-      Transform.SCALE(5, 10, 20),
-      Transform.ROTATE(30, [1, 2, 3]),
+      Transform.translate(10, 20, 30),
+      Transform.scale(5, 10, 20),
+      Transform.rotate(30, [1, 2, 3]),
     );
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
   });

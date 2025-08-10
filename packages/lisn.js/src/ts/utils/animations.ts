@@ -131,7 +131,8 @@ export async function* newAnimationFrameIterator(
 /**
  * Returns an animation iterator based on {@link criticallyDamped} that starts
  * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
- * the new position and velocity, and total time at every animation frame.
+ * the new position and velocity, total time and fractional change in position
+ * at every animation frame.
  *
  * @param [settings.lTarget]   The initial target position. Can be updated when
  *                             calling next().
@@ -144,6 +145,7 @@ export async function* newAnimationFrameIterator(
  * - position (`l`)
  * - velocity (`v`)
  * - total time elapsed (`t`)
+ * - fractional (from 0 to 1) change in position since the last frame (`dlFr`)
  *
  * @example
  * If you never need to update the target you can use a for await loop:
@@ -155,8 +157,8 @@ export async function* newAnimationFrameIterator(
  *   lag: 1500
  * });
  *
- * for await (const { l, v, t } of iterator) {
- *   console.log({ l, v, t });
+ * for await (const { l, v, t, dlFr } of iterator) {
+ *   console.log({ l, v, t, dlFr });
  * }
  * ```
  *
@@ -170,12 +172,13 @@ export async function* newAnimationFrameIterator(
  *   lag: 1500
  * });
  *
- * let { value: { l, v, t } } = await iterator.next();
- * ({ value: { l, v, t } } = await iterator.next()); // updated
- * ({ value: { l, v, t } } = await iterator.next(200)); // updated towards a new target
+ * let { value: { l, v, t, dlFr } } = await iterator.next();
+ * ({ value: { l, v, t, dlFr } } = await iterator.next()); // updated
+ * ({ value: { l, v, t, dlFr } } = await iterator.next(200)); // updated towards a new target
  * ```
  *
- * @since v1.2.0
+ * @since v1.2.0 (Fractional change in position in return value was added in
+ * v1.3.0)
  *
  * @category Animations
  */
@@ -184,15 +187,16 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
   lag: number;
   l?: number;
   precision?: number;
-}): AsyncGenerator<{ l: number; v: number; t: number }, never> {
+}): AsyncGenerator<{ l: number; v: number; t: number; dlFr: number }, never> {
   let { l, lTarget } = settings;
   const { lag, precision } = settings;
   let v = 0,
     t = 0,
-    dt = 0;
+    dt = 0,
+    dlFr = 0;
 
-  const next = async () => {
-    ({ l, v } = criticallyDamped({
+  const next = () => {
+    ({ l, v, dlFr } = criticallyDamped({
       lTarget,
       dt,
       lag,
@@ -200,7 +204,7 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
       v,
       precision,
     }));
-    return { l, v, t };
+    return { l, v, t, dlFr };
   };
 
   for await ({ total: t, sinceLast: dt } of newAnimationFrameIterator()) {

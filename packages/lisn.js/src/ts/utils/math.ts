@@ -138,6 +138,41 @@ export const toNumWithBounds = <D extends number | false | null = number>(
 };
 
 /**
+ * Converts the given {@link RawOrRelativeNumber} to a raw number using the
+ * given reference. If the input is invalid, reference is returned. If the final
+ * result is not finite, the default is returned.
+ *
+ * @since v1.3.0
+ *
+ * @category Math
+ */
+export const toRawNum = <D extends number | false | null = 0>(
+  input: unknown,
+  reference: number,
+  defaultValue?: D,
+) => {
+  const numerical = toNum(input, NaN);
+  let result = isValidNum(numerical) ? numerical : reference;
+
+  if (MH.isString(input)) {
+    const op = input.slice(0, 1);
+    switch (op) {
+      case "+":
+      case "-":
+        result = reference + numerical;
+        break;
+      case "*":
+        result = reference * toNum(input.slice(1), NaN);
+        break;
+      // otherwise if input was pure number string, numerical is valid, and
+      // otherwise, result is the reference
+    }
+  }
+
+  return toNum(result, defaultValue);
+};
+
+/**
  * Returns the largest absolute value among the given ones.
  *
  * The result is always positive.
@@ -182,7 +217,11 @@ export const havingMinAbs = (...values: number[]) =>
     : MC.INFINITY;
 
 /**
+ * Returns the sum of the given values.
+ *
  * @since v1.3.0
+ *
+ * @category Math
  */
 export const sum = (...values: number[]) =>
   values.reduce((total, current) => total + current, 0);
@@ -218,6 +257,8 @@ export const normalizeAngle = (a: number) => {
  * Normalizes a vector defined by the given x, y and z coordinates to length 1.
  *
  * @since v1.3.0
+ *
+ * @category Math
  */
 export const normalizeAxis = (x: number, y: number, z = 0) => {
   const len = MH.sqrt(x * x + y * y + z * z);

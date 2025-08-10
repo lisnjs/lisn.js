@@ -239,6 +239,26 @@ export type GestureDevice = "key" | "pointer" | "touch" | "wheel";
 export type GestureIntent = "scroll" | "zoom" | "drag" | "unknown";
 
 /**
+ * Represents an absolute or relative numerical value. If the value is a number,
+ * then it is taken as absolute. Otherwise, it should be a numerical string
+ * prefixed with `+`, `-` or `*`, in which case it is relative to a given
+ * reference.
+ *
+ * - `+` prefix adds to the reference value
+ * - `-` prefix subtracts from the reference value
+ * - `*` prefix multiplies the reference value
+ *
+ * @since v1.3.0
+ *
+ * @category Misc
+ */
+export type RawOrRelativeNumber =
+  | number
+  | `+${number}`
+  | `-${number}`
+  | `*${number}`;
+
+/**
  * Screen coordinate. 0, 0 is top-left corner.
  *
  * @category Misc
@@ -255,6 +275,11 @@ export type Vector = [
   /** deltaY/y component */ number,
 ];
 
+/**
+ * @since v1.3.0
+ *
+ * @category Misc
+ */
 export type Axis =
   | [/** x component */ number, /** y component */ number]
   | [
@@ -263,6 +288,11 @@ export type Axis =
       /** z component */ number,
     ];
 
+/**
+ * @since v1.3.0
+ *
+ * @category Misc
+ */
 export type Origin =
   | [/** x coordinate */ number, /** y coordinate */ number]
   | [

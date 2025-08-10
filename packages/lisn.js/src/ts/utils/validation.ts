@@ -6,7 +6,7 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { LisnUsageError } from "@lisn/globals/errors";
 
-import { CommaSeparatedStr } from "@lisn/globals/types";
+import { CommaSeparatedStr, RawOrRelativeNumber } from "@lisn/globals/types";
 
 import { toNum } from "@lisn/utils/math";
 import { toBoolean } from "@lisn/utils/misc";
@@ -188,6 +188,8 @@ export const validateStringRequired = <T extends string = string>(
  *                      valid and false otherwise. If it is not given, then any
  *                      literal string is accepted.
  *
+ * @returns `undefined` if the input is nullish.
+ *
  * @category Validation
  */
 export const validateBooleanOrString = <T extends string = string>(
@@ -195,6 +197,50 @@ export const validateBooleanOrString = <T extends string = string>(
   value: unknown,
   stringCheckFn?: (value: string) => value is T,
 ) => _validateBooleanOrString(key, value, stringCheckFn);
+
+/**
+ * Returns an {@link RawOrRelativeNumber} corresponding to the supplied
+ * value, ensuring the supplied value is a valid number or a string containing
+ * only a number with the allowed prefix characters (`+`, `-` or `*`).
+ *
+ * @param key Used in the error message thrown
+ *
+ * @returns `undefined` if the input is nullish.
+ *
+ * @since v1.3.0
+ *
+ * @category Validation
+ */
+export const validateRawOrRelativeNumber = (
+  key: string,
+  value: unknown,
+): RawOrRelativeNumber | undefined => {
+  if (MH.isNullish(value)) {
+    return;
+  }
+
+  if (MH.isString(value)) {
+    // for type check
+    const isValidOp = (op: string): op is "+" | "-" | "*" =>
+      MH.includes(["+", "-", "*"], op);
+
+    const op = value.slice(0, 1);
+    const numerical = toNum(value.slice(1), false);
+    if (isValidOp(op) && numerical !== false) {
+      return `${op}${numerical}` as const;
+    }
+  }
+
+  const numerical = toNum(value, false);
+  if (numerical !== false) {
+    // it must have been a number or plain number string without a prefix
+    return numerical;
+  }
+
+  throw MH.usageError(
+    `'${key}' must be numerical with an optional prefix of +, - or *`,
+  );
+};
 
 // --------------------
 

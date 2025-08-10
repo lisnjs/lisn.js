@@ -143,6 +143,33 @@ describe("toNumWithBounds", () => {
   });
 });
 
+test("toRawNum", () => {
+  expect(utils.toRawNum(1, 10, null)).toBe(1);
+  expect(utils.toRawNum(0, 10, null)).toBe(0);
+  expect(utils.toRawNum(-1, 10, null)).toBe(-1);
+  expect(utils.toRawNum(1.1, 10, null)).toBe(1.1);
+
+  expect(utils.toRawNum(null, 10, null)).toBe(10);
+  expect(utils.toRawNum(undefined, 10, null)).toBe(10);
+
+  expect(utils.toRawNum(Infinity, 10, null)).toBe(10);
+  expect(utils.toRawNum(NaN, 10, null)).toBe(10);
+  expect(utils.toRawNum("1x", 10, null)).toBe(10);
+  expect(utils.toRawNum("x1", 10, null)).toBe(10);
+
+  expect(utils.toRawNum("0", 10, null)).toBe(0);
+  expect(utils.toRawNum("1", 10, null)).toBe(1);
+
+  expect(utils.toRawNum("-5", 10, null)).toBe(5);
+  expect(utils.toRawNum("+10", 10, null)).toBe(20);
+  expect(utils.toRawNum("*3", 10, null)).toBe(30);
+
+  expect(utils.toRawNum("1", NaN, null)).toBe(1);
+
+  expect(utils.toRawNum("-5", NaN, null)).toBe(null);
+  expect(utils.toRawNum("x", NaN, null)).toBe(null);
+});
+
 test("quadraticRoots", () => {
   expect(utils.quadraticRoots(0, 0, 0)).toEqual([NaN, NaN]);
   expect(utils.quadraticRoots(1, 0, 0)).toEqual([0, -0]);

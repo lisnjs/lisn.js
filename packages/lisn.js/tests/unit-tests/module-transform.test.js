@@ -979,7 +979,7 @@ describe("apply", () => {
 });
 
 test("interpolate", () => {
-  const target = newTestArray();
+  const target = newTestArray((i) => (i % 2 ? i + 1 : -i - 1));
   const tA = new Transform();
   const initial = toArray(tA);
   const tB = new Transform(target);

@@ -739,3 +739,67 @@ describe("areParallel/AntiParallel", () => {
     });
   }
 });
+
+describe("criticallyDamped", () => {
+  test("to larger", () => {
+    const lTarget = 200;
+    const lag = 1000;
+    const dt = 200;
+    let l = 100,
+      v = 0,
+      dlFr,
+      i;
+    for (i = 0; i < 50; i++) {
+      ({ l, v, dlFr } = utils.criticallyDamped({
+        l,
+        v,
+        lTarget,
+        lag,
+        dt,
+        precision: 1,
+      }));
+
+      if (i == Math.round(lag / dt) - 1) {
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(2);
+      }
+
+      if (l === lTarget) {
+        expect(dlFr).toBe(1);
+        break;
+      }
+    }
+
+    expect(i).toBeLessThan(10);
+  });
+
+  test("to smaller", () => {
+    const lTarget = 100;
+    const lag = 1000;
+    const dt = 200;
+    let l = 200,
+      v = 0,
+      dlFr,
+      i;
+    for (i = 0; i < 50; i++) {
+      ({ l, v, dlFr } = utils.criticallyDamped({
+        l,
+        v,
+        lTarget,
+        lag,
+        dt,
+        precision: 1,
+      }));
+
+      if (i == Math.round(lag / dt) - 1) {
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(2);
+      }
+
+      if (l === lTarget) {
+        expect(dlFr).toBe(1);
+        break;
+      }
+    }
+
+    expect(i).toBeLessThan(10);
+  });
+});

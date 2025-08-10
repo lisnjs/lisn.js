@@ -13,7 +13,7 @@ const blankRect = {
   left: 0,
 };
 
-window.IntersectionObserverEntry = class {
+class IntersectionObserverEntry {
   boundingClientRect;
   rootBounds;
   intersectionRect;
@@ -115,9 +115,9 @@ window.IntersectionObserverEntry = class {
       this.intersectionRect = { ...blankRect };
     }
   }
-};
+}
 
-window.IntersectionObserver = class {
+class IntersectionObserver {
   static instances = new Map();
   static instancesList = [];
   static onNextInstance = [];
@@ -210,4 +210,7 @@ window.IntersectionObserver = class {
       cbk(this);
     }
   }
-};
+}
+
+window.IntersectionObserverEntry = IntersectionObserverEntry;
+window.IntersectionObserver = IntersectionObserver;

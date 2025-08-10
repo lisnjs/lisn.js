@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/no-unused-vars: ["error", { "varsIgnorePattern": "__ignored" }] */
 
-window.ResizeObserverEntry = class {
+class ResizeObserverEntry {
   borderBoxSize = [{ blockSize: 0, inlineSize: 0 }];
   contentBoxSize = [{ blockSize: 0, inlineSize: 0 }];
   contentRect = {
@@ -23,9 +23,9 @@ window.ResizeObserverEntry = class {
     this.contentRect.width = content[0];
     this.contentRect.height = content[1];
   }
-};
+}
 
-window.ResizeObserver = class {
+class ResizeObserver {
   static instances = new Map();
   static instancesList = [];
   static onNextInstance = [];
@@ -124,4 +124,7 @@ window.ResizeObserver = class {
       cbk(this);
     }
   }
-};
+}
+
+window.ResizeObserverEntry = ResizeObserverEntry;
+window.ResizeObserver = ResizeObserver;

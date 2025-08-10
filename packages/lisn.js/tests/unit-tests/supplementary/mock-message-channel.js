@@ -20,9 +20,12 @@ class MessagePort {
   }
 }
 
-window.MessageChannel = class {
+class MessageChannel {
   constructor() {
     this.port1 = new MessagePort(this);
     this.port2 = new MessagePort(this);
   }
-};
+}
+
+window.MessagePort = MessagePort;
+window.MessageChannel = MessageChannel;

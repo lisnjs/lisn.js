@@ -1,23 +1,23 @@
-window.DOMMatrix = class {
+class DOMMatrixReadOnly {
   constructor(init) {
-    this.m11 = 1;
-    this.m12 = 0;
-    this.m13 = 0;
-    this.m14 = 0;
-    this.m21 = 0;
-    this.m22 = 1;
-    this.m23 = 0;
-    this.m24 = 0;
-    this.m31 = 0;
-    this.m32 = 0;
-    this.m33 = 1;
-    this.m34 = 0;
-    this.m41 = 0;
-    this.m42 = 0;
-    this.m43 = 0;
-    this.m44 = 1;
+    this._m11 = 1;
+    this._m12 = 0;
+    this._m13 = 0;
+    this._m14 = 0;
+    this._m21 = 0;
+    this._m22 = 1;
+    this._m23 = 0;
+    this._m24 = 0;
+    this._m31 = 0;
+    this._m32 = 0;
+    this._m33 = 1;
+    this._m34 = 0;
+    this._m41 = 0;
+    this._m42 = 0;
+    this._m43 = 0;
+    this._m44 = 1;
 
-    if (init instanceof DOMMatrix) {
+    if (init instanceof DOMMatrixReadOnly) {
       Object.assign(this, init);
     } else if (
       init instanceof Object &&
@@ -25,27 +25,151 @@ window.DOMMatrix = class {
       init.length === 16
     ) {
       [
-        this.m11,
-        this.m12,
-        this.m13,
-        this.m14,
-        this.m21,
-        this.m22,
-        this.m23,
-        this.m24,
-        this.m31,
-        this.m32,
-        this.m33,
-        this.m34,
-        this.m41,
-        this.m42,
-        this.m43,
-        this.m44,
+        this._m11,
+        this._m12,
+        this._m13,
+        this._m14,
+        this._m21,
+        this._m22,
+        this._m23,
+        this._m24,
+        this._m31,
+        this._m32,
+        this._m33,
+        this._m34,
+        this._m41,
+        this._m42,
+        this._m43,
+        this._m44,
       ] = init;
     }
   }
 
-  invertSelf() {
+  get m11() {
+    return this._m11;
+  }
+
+  get m12() {
+    return this._m12;
+  }
+
+  get m13() {
+    return this._m13;
+  }
+
+  get m14() {
+    return this._m14;
+  }
+
+  get m21() {
+    return this._m21;
+  }
+
+  get m22() {
+    return this._m22;
+  }
+
+  get m23() {
+    return this._m23;
+  }
+
+  get m24() {
+    return this._m24;
+  }
+
+  get m31() {
+    return this._m31;
+  }
+
+  get m32() {
+    return this._m32;
+  }
+
+  get m33() {
+    return this._m33;
+  }
+
+  get m34() {
+    return this._m34;
+  }
+
+  get m41() {
+    return this._m41;
+  }
+
+  get m42() {
+    return this._m42;
+  }
+
+  get m43() {
+    return this._m43;
+  }
+
+  get m44() {
+    return this._m44;
+  }
+
+  get a() {
+    return this._m11;
+  }
+
+  get b() {
+    return this._m12;
+  }
+
+  get c() {
+    return this._m21;
+  }
+
+  get d() {
+    return this._m22;
+  }
+
+  get e() {
+    return this._m41;
+  }
+
+  get f() {
+    return this._m42;
+  }
+
+  get is2D() {
+    return (
+      this._m13 === 0 &&
+      this._m14 === 0 &&
+      this._m23 === 0 &&
+      this._m24 === 0 &&
+      this._m31 === 0 &&
+      this._m32 === 0 &&
+      this._m33 === 1 &&
+      this._m34 === 0 &&
+      this._m43 === 0 &&
+      this._m44 === 1
+    );
+  }
+
+  get isIdentity() {
+    return (
+      this._m11 === 1 &&
+      this._m12 === 0 &&
+      this._m13 === 0 &&
+      this._m14 === 0 &&
+      this._m21 === 0 &&
+      this._m22 === 1 &&
+      this._m23 === 0 &&
+      this._m24 === 0 &&
+      this._m31 === 0 &&
+      this._m32 === 0 &&
+      this._m33 === 1 &&
+      this._m34 === 0 &&
+      this._m41 === 0 &&
+      this._m42 === 0 &&
+      this._m43 === 0 &&
+      this._m44 === 1
+    );
+  }
+
+  inverse() {
     const m = this.toFloat32Array();
     const inv = new Float32Array(16);
 
@@ -178,11 +302,12 @@ window.DOMMatrix = class {
       }
     }
 
-    Object.assign(this, new DOMMatrix(Array.from(inv)));
+    return new this.constructor(Array.from(inv));
+    Object.assign(this, new DOMMatrix(Array.from(inv))); // XXX
     return this;
   }
 
-  rotateAxisAngleSelf(x, y, z, angle) {
+  rotateAxisAngle(x, y, z, angle) {
     const rad = (angle * Math.PI) / 180;
     const len = Math.hypot(x, y, z);
     if (len === 0) return this;
@@ -192,7 +317,7 @@ window.DOMMatrix = class {
     const c = Math.cos(rad);
     const s = Math.sin(rad);
     const t = 1 - c;
-    const rot = new DOMMatrix([
+    const rot = new this.constructor([
       x * x * t + c,
       y * x * t + z * s,
       z * x * t - y * s,
@@ -210,10 +335,11 @@ window.DOMMatrix = class {
       0,
       1,
     ]);
-    return this._multiplySelf(rot);
+
+    return this.multiply(rot);
   }
 
-  scaleSelf(
+  scale(
     scaleX,
     scaleY = scaleX,
     scaleZ = 1,
@@ -222,7 +348,7 @@ window.DOMMatrix = class {
     originZ = 0,
   ) {
     // Translate to origin, scale, then translate back
-    const translateToOrigin = new DOMMatrix([
+    const translateToOrigin = new this.constructor([
       1,
       0,
       0,
@@ -241,7 +367,7 @@ window.DOMMatrix = class {
       1,
     ]);
 
-    const scale = new DOMMatrix([
+    const scale = new this.constructor([
       scaleX,
       0,
       0,
@@ -260,7 +386,7 @@ window.DOMMatrix = class {
       1,
     ]);
 
-    const translateBack = new DOMMatrix([
+    const translateBack = new this.constructor([
       1,
       0,
       0,
@@ -279,14 +405,18 @@ window.DOMMatrix = class {
       1,
     ]);
 
-    return this._multiplySelf(translateBack)
-      ._multiplySelf(scale)
-      ._multiplySelf(translateToOrigin);
+    return this.multiply(translateBack)
+      .multiply(scale)
+      .multiply(translateToOrigin);
   }
 
-  skewXSelf(angle) {
+  scale3d(scale, originX = 0, originY = 0, originZ = 0) {
+    return this.scale(scale, scale, scale, originX, originY, originZ);
+  }
+
+  skewX(angle) {
     const t = Math.tan((angle * Math.PI) / 180);
-    const skew = new DOMMatrix([
+    const skew = new this.constructor([
       1,
       0,
       0,
@@ -304,12 +434,12 @@ window.DOMMatrix = class {
       0,
       1,
     ]);
-    return this._multiplySelf(skew);
+    return this.multiply(skew);
   }
 
-  skewYSelf(angle) {
+  skewY(angle) {
     const t = Math.tan((angle * Math.PI) / 180);
-    const skew = new DOMMatrix([
+    const skew = new this.constructor([
       1,
       t,
       0,
@@ -327,11 +457,11 @@ window.DOMMatrix = class {
       0,
       1,
     ]);
-    return this._multiplySelf(skew);
+    return this.multiply(skew);
   }
 
-  translateSelf(tx, ty = 0, tz = 0) {
-    const trans = new DOMMatrix([
+  translate(tx, ty = 0, tz = 0) {
+    const trans = new this.constructor([
       1,
       0,
       0,
@@ -349,52 +479,52 @@ window.DOMMatrix = class {
       tz,
       1,
     ]);
-    return this._multiplySelf(trans);
+    return this.multiply(trans);
   }
 
   toString() {
     return `matrix3d([${[
-      this.m11,
-      this.m12,
-      this.m13,
-      this.m14,
-      this.m21,
-      this.m22,
-      this.m23,
-      this.m24,
-      this.m31,
-      this.m32,
-      this.m33,
-      this.m34,
-      this.m41,
-      this.m42,
-      this.m43,
-      this.m44,
+      this._m11,
+      this._m12,
+      this._m13,
+      this._m14,
+      this._m21,
+      this._m22,
+      this._m23,
+      this._m24,
+      this._m31,
+      this._m32,
+      this._m33,
+      this._m34,
+      this._m41,
+      this._m42,
+      this._m43,
+      this._m44,
     ].join(", ")}])`;
   }
 
   toFloat32Array() {
     return new Float32Array([
-      this.m11,
-      this.m12,
-      this.m13,
-      this.m14,
-      this.m21,
-      this.m22,
-      this.m23,
-      this.m24,
-      this.m31,
-      this.m32,
-      this.m33,
-      this.m34,
-      this.m41,
-      this.m42,
-      this.m43,
-      this.m44,
+      this._m11,
+      this._m12,
+      this._m13,
+      this._m14,
+      this._m21,
+      this._m22,
+      this._m23,
+      this._m24,
+      this._m31,
+      this._m32,
+      this._m33,
+      this._m34,
+      this._m41,
+      this._m42,
+      this._m43,
+      this._m44,
     ]);
   }
 
-  _multiplySelf(other) {
+  multiply(other) {
     const a = this.toFloat32Array();
     const b = other.toFloat32Array();
     const r = new Float32Array(16);
@@ -408,7 +538,253 @@ window.DOMMatrix = class {
         r[row * 4 + col] = sum;
       }
     }
-    Object.assign(this, new DOMMatrix(Array.from(r)));
+
+    return new this.constructor(Array.from(r));
+  }
+}
+
+class DOMMatrix extends DOMMatrixReadOnly {
+  constructor(init) {
+    super(init);
+  }
+
+  get m11() {
+    return this._m11;
+  }
+
+  get m12() {
+    return this._m12;
+  }
+
+  get m13() {
+    return this._m13;
+  }
+
+  get m14() {
+    return this._m14;
+  }
+
+  get m21() {
+    return this._m21;
+  }
+
+  get m22() {
+    return this._m22;
+  }
+
+  get m23() {
+    return this._m23;
+  }
+
+  get m24() {
+    return this._m24;
+  }
+
+  get m31() {
+    return this._m31;
+  }
+
+  get m32() {
+    return this._m32;
+  }
+
+  get m33() {
+    return this._m33;
+  }
+
+  get m34() {
+    return this._m34;
+  }
+
+  get m41() {
+    return this._m41;
+  }
+
+  get m42() {
+    return this._m42;
+  }
+
+  get m43() {
+    return this._m43;
+  }
+
+  get m44() {
+    return this._m44;
+  }
+
+  get a() {
+    return this._m11;
+  }
+
+  get b() {
+    return this._m12;
+  }
+
+  get c() {
+    return this._m21;
+  }
+
+  get d() {
+    return this._m22;
+  }
+
+  get e() {
+    return this._m41;
+  }
+
+  get f() {
+    return this._m42;
+  }
+
+  set m11(v) {
+    this._m11 = v;
+  }
+
+  set m12(v) {
+    this._m12 = v;
+  }
+
+  set m13(v) {
+    this._m13 = v;
+  }
+
+  set m14(v) {
+    this._m14 = v;
+  }
+
+  set m21(v) {
+    this._m21 = v;
+  }
+
+  set m22(v) {
+    this._m22 = v;
+  }
+
+  set m23(v) {
+    this._m23 = v;
+  }
+
+  set m24(v) {
+    this._m24 = v;
+  }
+
+  set m31(v) {
+    this._m31 = v;
+  }
+
+  set m32(v) {
+    this._m32 = v;
+  }
+
+  set m33(v) {
+    this._m33 = v;
+  }
+
+  set m34(v) {
+    this._m34 = v;
+  }
+
+  set m41(v) {
+    this._m41 = v;
+  }
+
+  set m42(v) {
+    this._m42 = v;
+  }
+
+  set m43(v) {
+    this._m43 = v;
+  }
+
+  set m44(v) {
+    this._m44 = v;
+  }
+
+  set a(v) {
+    this._m11 = v;
+  }
+
+  set b(v) {
+    this._m12 = v;
+  }
+
+  set c(v) {
+    this._m21 = v;
+  }
+
+  set d(v) {
+    this._m22 = v;
+  }
+
+  set e(v) {
+    this._m41 = v;
+  }
+
+  set f(v) {
+    this._m42 = v;
+  }
+
+  invertSelf() {
+    const res = this.inverse();
+    Object.assign(this, res);
     return this;
   }
-};
+
+  rotateAxisAngleSelf(x, y, z, angle) {
+    const res = this.rotateAxisAngle(x, y, z, angle);
+    Object.assign(this, res);
+    return this;
+  }
+
+  scaleSelf(
+    scaleX,
+    scaleY = scaleX,
+    scaleZ = 1,
+    originX = 0,
+    originY = 0,
+    originZ = 0,
+  ) {
+    const res = this.scale(scaleX, scaleY, scaleZ, originX, originY, originZ);
+    Object.assign(this, res);
+    return this;
+  }
+
+  scale3dSelf(scale, originX = 0, originY = 0, originZ = 0) {
+    const res = this.scale3d(scale, originX, originY, originZ);
+    Object.assign(this, res);
+    return this;
+  }
+
+  skewXSelf(angle) {
+    const res = this.skewX(angle);
+    Object.assign(this, res);
+    return this;
+  }
+
+  skewYSelf(angle) {
+    const res = this.skewY(angle);
+    Object.assign(this, res);
+    return this;
+  }
+
+  translateSelf(tx, ty = 0, tz = 0) {
+    const res = this.translate(tx, ty, tz);
+    Object.assign(this, res);
+    return this;
+  }
+
+  multiplySelf(other) {
+    const res = this.multiply(other);
+    Object.assign(this, res);
+    return this;
+  }
+
+  setMatrixValue(transformList) {
+    const res = new this.constructor(transformList);
+    Object.assign(this, res);
+    return this;
+  }
+}
+
+window.DOMMatrixReadOnly = DOMMatrixReadOnly;
+window.DOMMatrix = DOMMatrix;

@@ -945,10 +945,10 @@ export type ScrollOptions = ScrollToOptions & {
  *
  * - The element that has been resized.
  * - The latest {@link ScrollData} for the element.
- * - The {@link ScrollData} for the element when the thresholds for this
- *   callback were last exceeded. If the callback is called for any scroll
- *   direction, then this will be the data when it was last invoked.
- *   Will be `undefined` the first time.
+ * - (since v1.3.0) The {@link ScrollData} for the element when the thresholds
+ *   for this callback were last exceeded. If the callback is called for any
+ *   scroll direction, then this will be the data when it was last invoked. Will
+ *   be `undefined` the first time.
  */
 export type OnScrollHandlerArgs = [Element, ScrollData, ScrollData | undefined];
 export type OnScrollCallback = Callback<OnScrollHandlerArgs>;

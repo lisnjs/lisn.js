@@ -92,7 +92,11 @@ describe("initial call", () => {
 
     await window.waitForAF();
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith(element, defaultScrollData);
+    expect(callback).toHaveBeenCalledWith(
+      element,
+      defaultScrollData,
+      undefined,
+    );
 
     const callbackB = jest.fn();
     await watcher.onScroll(callbackB, { scrollable: element });
@@ -100,7 +104,11 @@ describe("initial call", () => {
     await window.waitForAF();
     expect(callback).toHaveBeenCalledTimes(1); // no new calls
     expect(callbackB).toHaveBeenCalledTimes(1);
-    expect(callbackB).toHaveBeenCalledWith(element, defaultScrollData);
+    expect(callbackB).toHaveBeenCalledWith(
+      element,
+      defaultScrollData,
+      undefined,
+    );
   });
 
   test("with threshold: first and subsequent of type", async () => {
@@ -109,7 +117,11 @@ describe("initial call", () => {
 
     await window.waitForAF();
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith(element, defaultScrollData);
+    expect(callback).toHaveBeenCalledWith(
+      element,
+      defaultScrollData,
+      undefined,
+    );
 
     const callbackB = jest.fn();
     await watcher.onScroll(callbackB, { scrollable: element, threshold: 50 });
@@ -117,7 +129,11 @@ describe("initial call", () => {
     await window.waitForAF();
     expect(callback).toHaveBeenCalledTimes(1); // no new calls
     expect(callbackB).toHaveBeenCalledTimes(1);
-    expect(callbackB).toHaveBeenCalledWith(element, defaultScrollData);
+    expect(callbackB).toHaveBeenCalledWith(
+      element,
+      defaultScrollData,
+      undefined,
+    );
   });
 
   test("with debounceWindow: first and subsequent of type", async () => {
@@ -130,7 +146,11 @@ describe("initial call", () => {
     await window.waitForAF();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith(element, defaultScrollData);
+    expect(callback).toHaveBeenCalledWith(
+      element,
+      defaultScrollData,
+      undefined,
+    );
 
     element.scrollTo(1, 0);
     await window.waitForAF();
@@ -183,12 +203,10 @@ describe("initial call", () => {
     element.scrollTo(1, 0);
 
     await window.waitForAF();
+    const data = getScrollDataAfterScroll("right", 1, 0);
     for (const cbk of [callback, callbackB, callbackC]) {
       expect(cbk).toHaveBeenCalledTimes(1);
-      expect(cbk).toHaveBeenCalledWith(
-        element,
-        getScrollDataAfterScroll("right", 1, 0),
-      );
+      expect(cbk).toHaveBeenCalledWith(element, data, defaultScrollData);
     }
 
     const callbackD = jest.fn();
@@ -213,10 +231,7 @@ describe("initial call", () => {
     expect(callbackD).toHaveBeenCalledWith(
       element,
       getScrollDataAfterScroll("right", 2, 0),
-    );
-    expect(callbackD).toHaveBeenCalledWith(
-      element,
-      getScrollDataAfterScroll("right", 2, 0),
+      data,
     );
   });
 
@@ -230,6 +245,7 @@ describe("initial call", () => {
     expect(callback).toHaveBeenCalledWith(
       element,
       getScrollDataAfterScroll("down", 0, 10),
+      undefined,
     );
 
     // there's already a previous event data
@@ -245,6 +261,7 @@ describe("initial call", () => {
       expect(cbk).toHaveBeenCalledWith(
         element,
         getScrollDataAfterScroll("down", 0, 10),
+        undefined,
       );
     }
   });
@@ -456,6 +473,7 @@ describe("scrollable", () => {
       expect(callback).toHaveBeenCalledWith(
         document.documentElement,
         defaultScrollData,
+        undefined,
       );
     });
   }
@@ -480,6 +498,8 @@ describe("threshold", () => {
       await window.waitForAF();
 
       let nCalls = 0;
+      let data = getScrollDataAfterScroll("down", 40, 50);
+      let lastData;
       if (onScrollConf.skipInitial) {
         expect(callback).toHaveBeenCalledTimes(0); // skipped
       } else {
@@ -488,9 +508,11 @@ describe("threshold", () => {
         expect(callback).toHaveBeenNthCalledWith(
           nCalls,
           element,
-          getScrollDataAfterScroll("down", 40, 50),
+          data,
+          lastData,
         );
       }
+      lastData = data;
 
       element.scrollTo(30, 50); // max change of -10
       await window.waitForAF();
@@ -504,12 +526,10 @@ describe("threshold", () => {
       // a scroll left
       element.scrollTo(10, 100); // max change of +50 => trigger
       await window.waitForAF();
+      data = getScrollDataAfterScroll("left", 10, 100);
       expect(callback).toHaveBeenCalledTimes(++nCalls);
-      expect(callback).toHaveBeenNthCalledWith(
-        nCalls,
-        element,
-        getScrollDataAfterScroll("left", 10, 100),
-      );
+      expect(callback).toHaveBeenNthCalledWith(nCalls, element, data, lastData);
+      lastData = data;
 
       element.scrollTo(20, 51); // max change of -49
       await window.waitForAF();
@@ -519,12 +539,10 @@ describe("threshold", () => {
       // a scroll right
       element.scrollTo(30, 50); // max change of -50 => trigger
       await window.waitForAF();
+      data = getScrollDataAfterScroll("right", 30, 50);
       expect(callback).toHaveBeenCalledTimes(++nCalls);
-      expect(callback).toHaveBeenNthCalledWith(
-        nCalls,
-        element,
-        getScrollDataAfterScroll("right", 30, 50),
-      );
+      expect(callback).toHaveBeenNthCalledWith(nCalls, element, data, lastData);
+      lastData = data;
     });
   }
 });
@@ -623,17 +641,24 @@ describe("direction (0 threshold, effective 1)", () => {
     expect(callback).toHaveBeenCalledTimes(2);
   });
 
-  for (const [startCoords, endCoords, expDirection, expDirectionRev] of [
+  for (const [
+    startCoords,
+    endCoords,
+    initDirection,
+    expDirection,
+    expDirectionRev,
+  ] of [
     // TODO test.each
-    [[50, 50], [20, 0], "up", "down"], // deltaY is larger => up
-    [[50, 50], [20, 100], "down", "up"], // deltaY is larger => down
-    [[50, 50], [0, 10], "left", "right"], // deltaX is larger => left
-    [[50, 50], [100, 10], "right", "left"], // deltaX is larger => right
-    [[50, 50], [100, 100], "ambiguous", "ambiguous"], // equal deltas => ambiguous
+    [[50, 50], [20, 0], "ambiguous", "up", "down"], // deltaY is larger => up
+    [[50, 50], [20, 100], "ambiguous", "down", "up"], // deltaY is larger => down
+    [[50, 50], [0, 10], "ambiguous", "left", "right"], // deltaX is larger => left
+    [[50, 50], [100, 10], "ambiguous", "right", "left"], // deltaX is larger => right
+    [[50, 50], [100, 100], "ambiguous", "ambiguous", "ambiguous"], // equal deltas => ambiguous
   ]) {
     test(`scroll ${expDirection}, then back ${expDirectionRev}`, async () => {
       const { watcher, callback, element } = newWatcherElement();
       element.scrollTo(...startCoords);
+      let data = getScrollDataAfterScroll(initDirection, ...startCoords);
 
       await watcher.onScroll(callback, {
         // any direction
@@ -664,11 +689,15 @@ describe("direction (0 threshold, effective 1)", () => {
 
       element.scrollTo(...endCoords);
       await window.waitForAF();
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(
-        element,
-        getScrollDataAfterScroll(expDirection, ...endCoords, ...startCoords),
+      let lastData = data;
+      data = getScrollDataAfterScroll(
+        expDirection,
+        ...endCoords,
+        ...startCoords,
       );
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(element, data, lastData);
+      lastData = data;
 
       const nCalls = {};
       for (const direction of DIRECTIONS) {
@@ -681,11 +710,14 @@ describe("direction (0 threshold, effective 1)", () => {
       // back the other way
       element.scrollTo(...startCoords);
       await window.waitForAF();
-      expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenCalledWith(
-        element,
-        getScrollDataAfterScroll(expDirectionRev, ...startCoords, ...endCoords),
+      data = getScrollDataAfterScroll(
+        expDirectionRev,
+        ...startCoords,
+        ...endCoords,
       );
+      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenCalledWith(element, data, lastData);
+      lastData = data;
 
       for (const direction of DIRECTIONS) {
         nCalls[direction] += direction === expDirectionRev ? 1 : 0;
@@ -698,17 +730,24 @@ describe("direction (0 threshold, effective 1)", () => {
 });
 
 describe("direction + threshold", () => {
-  for (const [startCoords, endCoords, expDirection, expDirectionRev] of [
+  for (const [
+    startCoords,
+    endCoords,
+    initDirection,
+    expDirection,
+    expDirectionRev,
+  ] of [
     // TODO test.each
-    [[50, 50], [20, 0], "up", "down"], // deltaY is larger => up
-    [[50, 50], [20, 100], "down", "up"], // deltaY is larger => down
-    [[50, 50], [0, 10], "left", "right"], // deltaX is larger => left
-    [[50, 50], [100, 10], "right", "left"], // deltaX is larger => right
-    [[50, 50], [100, 100], "ambiguous", "ambiguous"], // equal deltas => ambiguous
+    [[50, 50], [20, 0], "ambiguous", "up", "down"], // deltaY is larger => up
+    [[50, 50], [20, 100], "ambiguous", "down", "up"], // deltaY is larger => down
+    [[50, 50], [0, 10], "ambiguous", "left", "right"], // deltaX is larger => left
+    [[50, 50], [100, 10], "ambiguous", "right", "left"], // deltaX is larger => right
+    [[50, 50], [100, 100], "ambiguous", "ambiguous", "ambiguous"], // equal deltas => ambiguous
   ]) {
     test(`scroll ${expDirection}, then back ${expDirectionRev}`, async () => {
       const { watcher, callback, element } = newWatcherElement();
       element.scrollTo(...startCoords);
+      let data = getScrollDataAfterScroll(initDirection, ...startCoords);
 
       await watcher.onScroll(callback, {
         // any direction
@@ -739,11 +778,15 @@ describe("direction + threshold", () => {
 
       element.scrollTo(...endCoords);
       await window.waitForAF();
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(
-        element,
-        getScrollDataAfterScroll(expDirection, ...endCoords, ...startCoords),
+      let lastData = data;
+      data = getScrollDataAfterScroll(
+        expDirection,
+        ...endCoords,
+        ...startCoords,
       );
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(element, data, lastData);
+      lastData = data;
 
       const nCalls = {};
       for (const direction of DIRECTIONS) {
@@ -756,11 +799,14 @@ describe("direction + threshold", () => {
       // back the other way
       element.scrollTo(...startCoords);
       await window.waitForAF();
-      expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenCalledWith(
-        element,
-        getScrollDataAfterScroll(expDirectionRev, ...startCoords, ...endCoords),
+      data = getScrollDataAfterScroll(
+        expDirectionRev,
+        ...startCoords,
+        ...endCoords,
       );
+      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenCalledWith(element, data, lastData);
+      lastData = data;
 
       for (const direction of DIRECTIONS) {
         nCalls[direction] += direction === expDirectionRev ? 1 : 0;

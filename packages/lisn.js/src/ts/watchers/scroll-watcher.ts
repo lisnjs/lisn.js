@@ -640,6 +640,7 @@ export class ScrollWatcher {
 
         // If threshold has been exceeded, always update the latest data for
         // this callback.
+        const prevData = entry._data;
         entry._data = latestData;
 
         if (!directionMatches(options._directions, latestData.direction)) {
@@ -651,7 +652,7 @@ export class ScrollWatcher {
           continue;
         }
 
-        invokeCallback(entry._callback, element, latestData);
+        invokeCallback(entry._callback, element, latestData, prevData);
       }
     };
 
@@ -940,12 +941,16 @@ export type ScrollOptions = ScrollToOptions & {
 };
 
 /**
- * The handler is invoked with two arguments:
+ * The handler is invoked with three arguments:
  *
- * - the element that has been resized
- * - the {@link ScrollData} for the element
+ * - The element that has been resized.
+ * - The latest {@link ScrollData} for the element.
+ * - The {@link ScrollData} for the element when the thresholds for this
+ *   callback were last exceeded. If the callback is called for any scroll
+ *   direction, then this will be the data when it was last invoked.
+ *   Will be `undefined` the first time.
  */
-export type OnScrollHandlerArgs = [Element, ScrollData];
+export type OnScrollHandlerArgs = [Element, ScrollData, ScrollData | undefined];
 export type OnScrollCallback = Callback<OnScrollHandlerArgs>;
 export type OnScrollHandler =
   | CallbackHandler<OnScrollHandlerArgs>
@@ -1184,4 +1189,12 @@ const invokeCallback = (
   callback: OnScrollCallback,
   element: Element,
   scrollData: ScrollData,
-) => callback.invoke(element, MH.copyObject(scrollData)).catch(logError);
+  lastScrollData?: ScrollData,
+) =>
+  callback
+    .invoke(
+      element,
+      MH.copyObject(scrollData),
+      lastScrollData, // no need to copy that one
+    )
+    .catch(logError);

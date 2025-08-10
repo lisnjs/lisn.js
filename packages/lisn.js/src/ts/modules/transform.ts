@@ -1,5 +1,5 @@
 /**
- * @module Modules/XMap
+ * @module Modules/Transform
  *
  * @since v1.3.0
  */
@@ -503,6 +503,37 @@ export class Transform {
   static readonly rotateZ = (deg: number) => toOperation(ROTATE_Z, deg);
   static readonly rotate = (deg: number, axis: Axis) =>
     toOperation(ROTATE, deg, axis);
+
+  static getCategoryOf(
+    transform: TransformOperation,
+  ): TransformCategory | null {
+    const op = transform.operation;
+    switch (op) {
+      case TRANSLATE_X:
+      case TRANSLATE_Y:
+      case TRANSLATE_Z:
+      case TRANSLATE:
+        return TRANSLATE;
+
+      case SCALE_X:
+      case SCALE_Y:
+      case SCALE_Z:
+      case SCALE:
+        return SCALE;
+
+      case SKEW_X:
+      case SKEW_Y:
+      case SKEW:
+        return SKEW;
+
+      case ROTATE_X:
+      case ROTATE_Y:
+      case ROTATE_Z:
+      case ROTATE:
+        return ROTATE;
+    }
+    return null;
+  }
 
   constructor(input?: Transform | DOMMatrix | Float32Array) {
     const selfM = newMatrix(false, input);

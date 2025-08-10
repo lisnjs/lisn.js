@@ -76,10 +76,14 @@ export type TransformOperation =
  */
 export class Transform {
   /**
-   * Returns a reference to the internal 4x4 transform matrix. Modifying it will
-   * modify the effective transform.
+   * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array | Float32Array} representing the transform.
    */
-  matrix: DOMMatrix;
+  readonly toFloat32Array: () => Float32Array;
+
+  /**
+   * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrixReadOnly | DOMMatrixReadOnly} representing the transform.
+   */
+  readonly toMatrix: () => DOMMatrixReadOnly;
 
   /**
    * Returns a `matrix3d(...)` string for use as a CSS property.
@@ -501,7 +505,7 @@ export class Transform {
     toOperation(ROTATE, deg, axis);
 
   constructor(input?: Transform | DOMMatrix | Float32Array) {
-    const selfM = newMatrix(input);
+    const selfM = newMatrix(false, input);
 
     const reset = () => {
       selfM.m12 =
@@ -679,8 +683,8 @@ export class Transform {
 
     // ----------
 
-    this.matrix = selfM;
-
+    this.toFloat32Array = () => selfM.toFloat32Array();
+    this.toMatrix = () => newMatrix(true, selfM);
     this.toString = () => selfM.toString();
     this.clone = () => new Transform(selfM);
     this.reset = reset;
@@ -728,7 +732,7 @@ export class Transform {
     this.inverseApply = (...transforms) => apply(transforms, true);
 
     this.interpolate = (target, fraction) => {
-      const targetM = newMatrix(target);
+      const targetM = newMatrix(true, target);
 
       selfM.m11 += fraction * (targetM.m11 - selfM.m11);
       selfM.m12 += fraction * (targetM.m12 - selfM.m12);
@@ -778,15 +782,20 @@ export const ROTATE: unique symbol = MC.SYMBOL() as typeof ROTATE;
 
 // ----------------------------------------
 
-const newMatrix = (input?: Transform | DOMMatrix | Float32Array) => {
-  const inputM = MH.isInstanceOf(input, Transform) ? input.matrix : input;
-  return new DOMMatrix(
+const newMatrix = <B extends boolean>(
+  readonly: B,
+  input?: Transform | DOMMatrix | Float32Array,
+) => {
+  const inputM = MH.isInstanceOf(input, Transform) ? input.toMatrix() : input;
+  return new (readonly ? DOMMatrixReadOnly : DOMMatrix)(
     MH.isNullish(inputM)
       ? inputM
       : MH.arrayFrom(
-          MH.isInstanceOf(inputM, DOMMatrix) ? inputM.toFloat32Array() : inputM,
+          MH.isInstanceOf(inputM, DOMMatrixReadOnly)
+            ? inputM.toFloat32Array()
+            : inputM,
         ),
-  );
+  ) as typeof readonly extends true ? DOMMatrixReadOnly : DOMMatrix;
 };
 
 const validateInputs = (

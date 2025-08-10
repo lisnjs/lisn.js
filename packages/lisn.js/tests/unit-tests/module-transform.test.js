@@ -158,10 +158,11 @@ describe("invert", () => {
     ]);
 
     const t = new Transform(input);
-    t.invert();
-    const res = toArray(t.matrix);
+    const res = t.invert();
+    expect(res).toBe(t); // same object
+    const resArr = toArray(t.matrix);
     for (let i = 0; i < 16; i++) {
-      expect(res[i]).toBeNaN();
+      expect(resArr[i]).toBeNaN();
     }
   });
 });
@@ -232,10 +233,12 @@ describe("translate", () => {
     ]);
 
     const t = new Transform();
-    t.translateX(100);
+    let res = t.translateX(100);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseTranslateX(100);
+    res = t.inverseTranslateX(100);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.translateX(50);
@@ -255,10 +258,12 @@ describe("translate", () => {
     ]);
 
     const t = new Transform();
-    t.translateY(100);
+    let res = t.translateY(100);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseTranslateY(100);
+    res = t.inverseTranslateY(100);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.translateY(50);
@@ -278,10 +283,12 @@ describe("translate", () => {
     ]);
 
     const t = new Transform();
-    t.translateZ(100);
+    let res = t.translateZ(100);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseTranslateZ(100);
+    res = t.inverseTranslateZ(100);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.translateZ(50);
@@ -301,10 +308,12 @@ describe("translate", () => {
     ]);
 
     const t = new Transform();
-    t.translate(10, 20);
+    let res = t.translate(10, 20);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseTranslate(10, 20);
+    res = t.inverseTranslate(10, 20);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.translate(5, 10);
@@ -324,10 +333,12 @@ describe("translate", () => {
     ]);
 
     const t = new Transform();
-    t.translate(10, 20, 30);
+    let res = t.translate(10, 20, 30);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseTranslate(10, 20, 30);
+    res = t.inverseTranslate(10, 20, 30);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.translate(5, 10, 15);
@@ -369,10 +380,12 @@ describe("scale", () => {
     ]);
 
     const t = new Transform();
-    t.scaleX(10);
+    let res = t.scaleX(10);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseScaleX(10);
+    res = t.inverseScaleX(10);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.scaleX(5);
@@ -392,10 +405,12 @@ describe("scale", () => {
     ]);
 
     const t = new Transform();
-    t.scaleY(10);
+    let res = t.scaleY(10);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseScaleY(10);
+    res = t.inverseScaleY(10);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.scaleY(5);
@@ -415,10 +430,12 @@ describe("scale", () => {
     ]);
 
     const t = new Transform();
-    t.scaleZ(10);
+    let res = t.scaleZ(10);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseScaleZ(10);
+    res = t.inverseScaleZ(10);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.scaleZ(5);
@@ -438,10 +455,12 @@ describe("scale", () => {
     ]);
 
     const t = new Transform();
-    t.scale(10, 20);
+    let res = t.scale(10, 20);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseScale(10, 20);
+    res = t.inverseScale(10, 20);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.scale(5, 10);
@@ -461,10 +480,12 @@ describe("scale", () => {
     ]);
 
     const t = new Transform();
-    t.scale(10, 20, 40);
+    let res = t.scale(10, 20, 40);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseScale(10, 20, 40);
+    res = t.inverseScale(10, 20, 40);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.scale(5, 10, 10);
@@ -535,10 +556,12 @@ describe("skew", () => {
     ]);
 
     const t = new Transform();
-    t.skewX(deg);
+    let res = t.skewX(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseSkewX(deg);
+    res = t.inverseSkewX(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
   });
 
@@ -551,10 +574,12 @@ describe("skew", () => {
     ]);
 
     const t = new Transform();
-    t.skewY(deg);
+    let res = t.skewY(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseSkewY(deg);
+    res = t.inverseSkewY(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
   });
 
@@ -567,10 +592,12 @@ describe("skew", () => {
     ]);
 
     const t = new Transform();
-    t.skew(deg, deg2);
+    let res = t.skew(deg, deg2);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseSkew(deg, deg2);
+    res = t.inverseSkew(deg, deg2);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
   });
 
@@ -609,10 +636,12 @@ describe("rotate", () => {
     ]);
 
     const t = new Transform();
-    t.rotateX(deg);
+    let res = t.rotateX(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseRotateX(deg);
+    res = t.inverseRotateX(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.rotateX(deg / 2);
@@ -629,10 +658,12 @@ describe("rotate", () => {
     ]);
 
     const t = new Transform();
-    t.rotateY(deg);
+    let res = t.rotateY(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseRotateY(deg);
+    res = t.inverseRotateY(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.rotateY(deg / 2);
@@ -649,10 +680,12 @@ describe("rotate", () => {
     ]);
 
     const t = new Transform();
-    t.rotateZ(deg);
+    let res = t.rotateZ(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseRotateZ(deg);
+    res = t.inverseRotateZ(deg);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
 
     t.rotateZ(deg / 2);
@@ -690,10 +723,12 @@ describe("rotate", () => {
     ]);
 
     const t = new Transform();
-    t.rotate(30, [1, 2]);
+    let res = t.rotate(30, [1, 2]);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseRotate(30, [1, 2]);
+    res = t.inverseRotate(30, [1, 2]);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
   });
 
@@ -709,10 +744,12 @@ describe("rotate", () => {
     ]);
 
     const t = new Transform();
-    t.rotate(30, [1, 2, 3]);
+    let res = t.rotate(30, [1, 2, 3]);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, expected);
 
-    t.inverseRotate(30, [1, 2, 3]);
+    res = t.inverseRotate(30, [1, 2, 3]);
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
   });
 
@@ -748,7 +785,8 @@ describe("apply", () => {
     tRef.translateX(100);
 
     const t = new Transform();
-    t.apply(Transform.translateX(100));
+    const res = t.apply(Transform.translateX(100));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -758,7 +796,8 @@ describe("apply", () => {
     tRef.translateY(100);
 
     const t = new Transform();
-    t.apply(Transform.translateY(100));
+    const res = t.apply(Transform.translateY(100));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -768,7 +807,8 @@ describe("apply", () => {
     tRef.translateZ(100);
 
     const t = new Transform();
-    t.apply(Transform.translateZ(100));
+    const res = t.apply(Transform.translateZ(100));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -778,7 +818,8 @@ describe("apply", () => {
     tRef.translate(10, 20, 30);
 
     const t = new Transform();
-    t.apply(Transform.translate(10, 20, 30));
+    const res = t.apply(Transform.translate(10, 20, 30));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -788,7 +829,8 @@ describe("apply", () => {
     tRef.scaleX(10);
 
     const t = new Transform();
-    t.apply(Transform.scaleX(10));
+    const res = t.apply(Transform.scaleX(10));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -798,7 +840,8 @@ describe("apply", () => {
     tRef.scaleY(10);
 
     const t = new Transform();
-    t.apply(Transform.scaleY(10));
+    const res = t.apply(Transform.scaleY(10));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -808,7 +851,8 @@ describe("apply", () => {
     tRef.scaleZ(10);
 
     const t = new Transform();
-    t.apply(Transform.scaleZ(10));
+    const res = t.apply(Transform.scaleZ(10));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -818,7 +862,8 @@ describe("apply", () => {
     tRef.scale(5, 10, 20);
 
     const t = new Transform();
-    t.apply(Transform.scale(5, 10, 20));
+    const res = t.apply(Transform.scale(5, 10, 20));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -828,7 +873,8 @@ describe("apply", () => {
     tRef.skewX(30);
 
     const t = new Transform();
-    t.apply(Transform.skewX(30));
+    const res = t.apply(Transform.skewX(30));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -838,7 +884,8 @@ describe("apply", () => {
     tRef.skewY(30);
 
     const t = new Transform();
-    t.apply(Transform.skewY(30));
+    const res = t.apply(Transform.skewY(30));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -848,7 +895,8 @@ describe("apply", () => {
     tRef.skew(30, 45);
 
     const t = new Transform();
-    t.apply(Transform.skew(30, 45));
+    const res = t.apply(Transform.skew(30, 45));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -858,7 +906,8 @@ describe("apply", () => {
     tRef.rotateX(30);
 
     const t = new Transform();
-    t.apply(Transform.rotateX(30));
+    const res = t.apply(Transform.rotateX(30));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -868,7 +917,8 @@ describe("apply", () => {
     tRef.rotateY(30);
 
     const t = new Transform();
-    t.apply(Transform.rotateY(30));
+    const res = t.apply(Transform.rotateY(30));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -878,7 +928,8 @@ describe("apply", () => {
     tRef.rotateZ(30);
 
     const t = new Transform();
-    t.apply(Transform.rotateZ(30));
+    const res = t.apply(Transform.rotateZ(30));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -888,7 +939,8 @@ describe("apply", () => {
     tRef.rotate(30, [1, 2, 3]);
 
     const t = new Transform();
-    t.apply(Transform.rotate(30, [1, 2, 3]));
+    const res = t.apply(Transform.rotate(30, [1, 2, 3]));
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -900,11 +952,12 @@ describe("apply", () => {
     tRef.rotate(30, [1, 2, 3]);
 
     const t = new Transform();
-    t.apply(
+    const res = t.apply(
       Transform.translate(10, 20, 30),
       Transform.scale(5, 10, 20),
       Transform.rotate(30, [1, 2, 3]),
     );
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, tRef.matrix);
     expectNotToBeCloseToMatrix(t.matrix, IDENTITY);
   });
@@ -915,11 +968,32 @@ describe("apply", () => {
     t.scale(5, 10, 20);
     t.rotate(30, [1, 2, 3]);
 
-    t.inverseApply(
+    const res = t.inverseApply(
       Transform.translate(10, 20, 30),
       Transform.scale(5, 10, 20),
       Transform.rotate(30, [1, 2, 3]),
     );
+    expect(res).toBe(t); // same object
     expectToBeCloseToMatrix(t.matrix, IDENTITY);
   });
+});
+
+test("interpolate", () => {
+  const target = newTestArray();
+  const tA = new Transform();
+  const initial = toArray(tA);
+  const tB = new Transform(target);
+
+  const res = tA.interpolate(tB, 0.5);
+  expect(res).toBe(tA); // same object
+  let arrA = toArray(tA);
+  for (let i = 0; i < 16; i++) {
+    expect(arrA[i]).toBe(initial[i] + 0.5 * (target[i] - initial[i]));
+  }
+
+  tA.interpolate(tB, 0.5);
+  arrA = toArray(tA);
+  for (let i = 0; i < 16; i++) {
+    expect(arrA[i]).toBe(initial[i] + 0.75 * (target[i] - initial[i]));
+  }
 });

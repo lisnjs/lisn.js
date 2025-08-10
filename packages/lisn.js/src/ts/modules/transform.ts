@@ -456,6 +456,19 @@ export class Transform {
    */
   readonly inverseApply: (...transforms: TransformOperation[]) => Transform;
 
+  /**
+   * Interpolates each element in the transform towards the given target by the
+   * given fractional change. I.e. for each element:
+   *
+   * ```
+   *   source.m<ij> += fraction * (target.m<ij> - source.m<ij>)
+   * ```
+   */
+  readonly interpolate: (
+    target: Transform | DOMMatrix | Float32Array,
+    fraction: number,
+  ) => Transform;
+
   static readonly reset = () => toOperation(RESET);
   static readonly translateX = (t: number) => toOperation(TRANSLATE_X, t);
   static readonly translateY = (t: number) => toOperation(TRANSLATE_Y, t);
@@ -713,6 +726,32 @@ export class Transform {
 
     this.apply = (...transforms) => apply(transforms, false);
     this.inverseApply = (...transforms) => apply(transforms, true);
+
+    this.interpolate = (target, fraction) => {
+      const targetM = newMatrix(target);
+
+      selfM.m11 += fraction * (targetM.m11 - selfM.m11);
+      selfM.m12 += fraction * (targetM.m12 - selfM.m12);
+      selfM.m13 += fraction * (targetM.m13 - selfM.m13);
+      selfM.m14 += fraction * (targetM.m14 - selfM.m14);
+
+      selfM.m21 += fraction * (targetM.m21 - selfM.m21);
+      selfM.m22 += fraction * (targetM.m22 - selfM.m22);
+      selfM.m23 += fraction * (targetM.m23 - selfM.m23);
+      selfM.m24 += fraction * (targetM.m24 - selfM.m24);
+
+      selfM.m31 += fraction * (targetM.m31 - selfM.m31);
+      selfM.m32 += fraction * (targetM.m32 - selfM.m32);
+      selfM.m33 += fraction * (targetM.m33 - selfM.m33);
+      selfM.m34 += fraction * (targetM.m34 - selfM.m34);
+
+      selfM.m41 += fraction * (targetM.m41 - selfM.m41);
+      selfM.m42 += fraction * (targetM.m42 - selfM.m42);
+      selfM.m43 += fraction * (targetM.m43 - selfM.m43);
+      selfM.m44 += fraction * (targetM.m44 - selfM.m44);
+
+      return this;
+    };
   }
 }
 

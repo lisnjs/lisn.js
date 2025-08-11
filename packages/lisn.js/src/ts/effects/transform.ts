@@ -135,7 +135,11 @@ export class Transform implements Effect {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly apply: (element: Element, offsets: ScrollOffsets) => Transform;
+  readonly apply: (
+    element: Element,
+    offsets: ScrollOffsets,
+    relativeTo?: Transform | DOMMatrix | Float32Array,
+  ) => Transform;
 
   constructor(config?: TransformConfig) {
     const { isIncremental, init } = config ?? {};
@@ -228,7 +232,7 @@ export class Transform implements Effect {
       return this;
     };
 
-    this.apply = (element, offsets) => {
+    this.apply = (element, offsets, relativeTo) => {
       if (!isIncremental) {
         reset();
       }
@@ -237,7 +241,7 @@ export class Transform implements Effect {
         handler(offsets);
       }
 
-      setStyleProp(element, "transform", this.toString());
+      setStyleProp(element, "transform", this.toString(relativeTo));
       return this;
     };
   }

@@ -833,10 +833,30 @@ describe("chaining", () => {
   });
 });
 
-test("apply", async () => {
-  const el = document.createElement("div");
-  const t = newIncrementalTransform();
-  t.apply(el, DEFAULT_OFFSETS);
-  await window.waitForAF();
-  expect(el.style.transform).toBe(new DOMMatrixReadOnly(IDENTITY).toString());
+describe("apply", () => {
+  test("basic", async () => {
+    const el = document.createElement("div");
+    const t = newIncrementalTransform();
+    t.apply(el, DEFAULT_OFFSETS);
+    await window.waitForAF();
+    expect(el.style.transform).toBe(new DOMMatrixReadOnly(IDENTITY).toString());
+  });
+
+  test("relativeTo", async () => {
+    const init = newTestMatrix();
+    const ref = new DOMMatrixReadOnly([
+      ...[8, -6, -3, -5],
+      ...[-2, 7, -8, -5],
+      ...[-9, -3, 7, 8],
+      ...[-4, -3, 1, -10],
+    ]);
+
+    const expected = ref.inverse().multiply(init);
+
+    const el = document.createElement("div");
+    const t = newIncrementalTransform(init);
+    t.apply(el, DEFAULT_OFFSETS, ref);
+    await window.waitForAF();
+    expect(el.style.transform).toBe(new DOMMatrixReadOnly(expected).toString());
+  });
 });

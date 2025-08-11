@@ -11,7 +11,7 @@ import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 import { setStyleProp } from "@lisn/utils/css-alter";
 import { isValidNum, sum } from "@lisn/utils/math";
 
-import { Effect, EffectCallback, ScrollOffsets } from "@lisn/effects/effect";
+import { Effect, EffectHandler, ScrollOffsets } from "@lisn/effects/effect";
 
 /**
  * {@link Transform} controls an element's transform a 3D transform matrix.
@@ -57,19 +57,17 @@ export class Transform implements Effect {
    * transforms and subsequent calls to this method always override previous
    * ones.
    *
-   * @param callback The callback that returns the perspective as a number (in
+   * @param handler The handler that returns the perspective as a number (in
    *                 pixels) or CSS perspective string
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly perspective: (
-    callback: EffectCallback<number | string>,
-  ) => Transform;
+  readonly perspective: (handler: EffectHandler<number | string>) => Transform;
 
   /**
    * Translates the transform.
    *
-   * @param callback The callback that returns one or more of:
+   * @param handler The handler that returns one or more of:
    *                 - x The translation distance in pixels along the X-axis.
    *                 - y The translation distance in pixels along the Y-axis.
    *                 - z The translation distance in pixels along the Z-axis.
@@ -77,13 +75,13 @@ export class Transform implements Effect {
    * @returns The same {@link Transform} instance.
    */
   readonly translate: (
-    callback: EffectCallback<AtLeastOne<{ x: number; y: number; z: number }>>,
+    handler: EffectHandler<AtLeastOne<{ x: number; y: number; z: number }>>,
   ) => Transform;
 
   /**
    * Scales the transform.
    *
-   * @param callback The callback that returns one or more of:
+   * @param handler The handler that returns one or more of:
    *                 - s      The default scaling factor for any axis if not
    *                          overridden by sx, sy or sz.
    *                 - sx     The translation distance in pixels along the X-axis.
@@ -94,7 +92,7 @@ export class Transform implements Effect {
    * @returns The same {@link Transform} instance.
    */
   readonly scale: (
-    callback: EffectCallback<
+    handler: EffectHandler<
       AtLeastOne<{ s: number; sx: number; sy: number; sz: number }> & {
         origin?: Origin;
       }
@@ -106,7 +104,7 @@ export class Transform implements Effect {
    * `degY` given, or `deg` is given), then skewing is done first along X, then
    * along Y.
    *
-   * @param callback The callback that returns one or more of:
+   * @param handler The handler that returns one or more of:
    *                 - deg  The skewing angle in degrees for either axis if not
    *                        overridden by degX or degY.
    *                 - degX The skewing angle in degrees along the X-axis.
@@ -115,7 +113,7 @@ export class Transform implements Effect {
    * @returns The same {@link Transform} instance.
    */
   readonly skew: (
-    callback: EffectCallback<
+    handler: EffectHandler<
       AtLeastOne<{ deg: number; degX: number; degY: number }>
     >,
   ) => Transform;
@@ -123,21 +121,21 @@ export class Transform implements Effect {
   /**
    * Rotates the transform around the given axis.
    *
-   * @param callback The callback that returns one or more of:
+   * @param handler The handler that returns one or more of:
    *                 - deg  The angle in degrees to rotate.
    *                 - axis The axis of rotation. Default is Z-axis.
    *
    * @returns The same {@link Transform} instance.
    */
   readonly rotate: (
-    callback: EffectCallback<{ deg: number; axis?: Axis }>,
+    handler: EffectHandler<{ deg: number; axis?: Axis }>,
   ) => Transform;
 
   /**
    * Applies all transforms for the given scroll offsets.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
-   *                If any of the values returned by the {@link EffectCallback}
+   *                If any of the values returned by the {@link EffectHandler}
    *                s is invalid.
    *
    * @returns The same {@link Transform} instance.
@@ -146,11 +144,11 @@ export class Transform implements Effect {
 
   constructor(init?: Transform | DOMMatrix | Float32Array) {
     const selfM = newMatrix(false, init);
-    const callbacks: EffectCallback<void>[] = [];
+    const allHandlers: EffectHandler<void>[] = [];
     let perspective = "";
 
-    const addCallback = (callback: EffectCallback<void>) =>
-      callbacks.push(callback);
+    const addHandler = (handler: EffectHandler<void>) =>
+      allHandlers.push(handler);
 
     const toMatrix = (relativeTo?: Transform | DOMMatrix | Float32Array) => {
       const m = newMatrix(true, selfM);
@@ -182,32 +180,32 @@ export class Transform implements Effect {
       return this;
     };
 
-    this.perspective = (callback) => {
-      addCallback((offsets) => {
-        const res = callback(offsets);
+    this.perspective = (handler) => {
+      addHandler((offsets) => {
+        const res = handler(offsets);
         perspective = res ? (MH.isString(res) ? res : `${res}px`) : "";
       });
       return this;
     };
 
-    this.translate = (callback) => {
-      addCallback((offsets) => {
-        const { x = 0, y = 0, z = 0 } = callback(offsets) ?? {};
+    this.translate = (handler) => {
+      addHandler((offsets) => {
+        const { x = 0, y = 0, z = 0 } = handler(offsets) ?? {};
         validateInputs("Translate distance", [x, y, z]);
         selfM.translateSelf(x, y, z);
       });
       return this;
     };
 
-    this.scale = (callback) => {
-      addCallback((offsets) => {
+    this.scale = (handler) => {
+      addHandler((offsets) => {
         const {
           s = 1,
           sx = s,
           sy = s,
           sz = s,
           origin = [0, 0, 0],
-        } = callback(offsets) ?? {};
+        } = handler(offsets) ?? {};
         validateInputs("Scale factor", [sx, sy, sz], true);
         validateInputs("Origin", origin);
         selfM.scaleSelf(sx, sy, sz, ...origin);
@@ -215,18 +213,18 @@ export class Transform implements Effect {
       return this;
     };
 
-    this.skew = (callback) => {
-      addCallback((offsets) => {
-        const { deg = 0, degX = deg, degY = deg } = callback(offsets) ?? {};
+    this.skew = (handler) => {
+      addHandler((offsets) => {
+        const { deg = 0, degX = deg, degY = deg } = handler(offsets) ?? {};
         validateInputs("Skew angle", [degX, degY]);
         selfM.skewXSelf(degX).skewYSelf(degY);
       });
       return this;
     };
 
-    this.rotate = (callback) => {
-      addCallback((offsets) => {
-        const { deg = 0, axis = [0, 0, 1] } = callback(offsets) ?? {};
+    this.rotate = (handler) => {
+      addHandler((offsets) => {
+        const { deg = 0, axis = [0, 0, 1] } = handler(offsets) ?? {};
         validateInputs("Rotation angle", [deg]);
         validateInputs("Rotation axis", [sum(...axis)], true);
         selfM.rotateAxisAngleSelf(axis[0], axis[1] ?? 0, axis[2] ?? 0, deg);
@@ -235,8 +233,8 @@ export class Transform implements Effect {
     };
 
     this.apply = (element, offsets) => {
-      for (const callback of callbacks) {
-        callback(offsets);
+      for (const handler of allHandlers) {
+        handler(offsets);
       }
 
       setStyleProp(element, "transform", this.toString());

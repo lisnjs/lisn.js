@@ -11,7 +11,7 @@ export type Effect = {
   apply: (element: Element, offsets: ScrollOffsets) => Effect;
 };
 
-export type EffectCallback<R> = (offsets: ScrollOffsets) => R;
+export type EffectHandler<R> = (offsets: ScrollOffsets) => R;
 
 /**
  * The scroll offsets for the current animation frame, being smoothly

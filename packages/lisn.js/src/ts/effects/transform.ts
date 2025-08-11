@@ -11,62 +11,12 @@ import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 import { setStyleProp } from "@lisn/utils/css-alter";
 import { isValidNum, sum } from "@lisn/utils/math";
 
-export type EffectCallback<R> = (offsets: ScrollOffsets) => R;
-
-/**
- * The scroll offsets for the current animation frame, being smoothly
- * interpolated towards the target ones.
- *
- * @category Effects
- */
-export type ScrollOffsets = {
-  /**
-   * The current interpolated value for the scroll left offset.
-   */
-  x: number;
-
-  /**
-   * The change in {@link x} since the last animation frame.
-   */
-  dx: number;
-
-  /**
-   * Normalized {@link x}: {@link x} as a fraction from 0 to 1 (maximum scroll
-   * left offset).
-   */
-  nx: number;
-
-  /**
-   * The change in {@link nx} since the last animation frame.
-   */
-  dnx: number;
-
-  /**
-   * The current interpolated value for the scroll top offset.
-   */
-  y: number;
-
-  /**
-   * The change in {@link y} since the last animation frame.
-   */
-  dy: number;
-
-  /**
-   * Normalized {@link y}: {@link y} as a fraction from 0 to 1 (maximum scroll
-   * top offset).
-   */
-  ny: number;
-
-  /**
-   * The change in {@link ny} since the last animation frame.
-   */
-  dny: number;
-};
+import { Effect, EffectCallback, ScrollOffsets } from "@lisn/effects/effect";
 
 /**
  * {@link Transform} controls an element's transform a 3D transform matrix.
  */
-export class Transform {
+export class Transform implements Effect {
   /**
    * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrixReadOnly | DOMMatrixReadOnly} representing the transform.
    *

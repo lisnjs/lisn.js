@@ -20,35 +20,35 @@ implement any kind of scroll, view, size, layout or user gesture triggered
 actions or animations with minimal boilerplate, and even if you wish, with zero
 JavaScript, using the HTML-only mode (perfect for Wordpress for example!).
 
-* 100% vanilla TypeScript.
-* No layout thrashing.
-* Optimal performance.
-* Server-side rendering.
-* Flexible and customizable.
-* Easy and simple to use.
-* No dependencies.
-* HTML-only mode.
+- 100% vanilla TypeScript.
+- No layout thrashing.
+- Optimal performance.
+- Server-side rendering.
+- Flexible and customizable.
+- Easy and simple to use.
+- No dependencies.
+- HTML-only mode.
 
 There are **React wrappers** available as a separate package. It works in
 server-side rendering environments like Next.js.
 
 LISN also comes with many awesome widgets, like:
 
-* Collapsible
-* Floating popup/tooltip
-* Modal
-* Offcanvas menu
-* Pager (carousel/slider/tabs)
-* Flex same-height
-* Scrollbars (native scrolling)
-* Sortable
-* Auto-hide/remove matching elements
-* Scroll-to-top button
-* Page loader
+- Collapsible
+- Floating popup/tooltip
+- Modal
+- Offcanvas menu
+- Pager (carousel/slider/tabs)
+- Flex same-height
+- Scrollbars (native scrolling)
+- Sortable
+- Auto-hide/remove matching elements
+- Scroll-to-top button
+- Page loader
 
 Coming soon:
 
-* SmoothScroller (native scroll)
+- SmoothScroller (native scroll)
 
 # Basic concepts
 
@@ -99,14 +99,15 @@ Triggers are actually a special kind of a widget.
 Everything is available for importing from the main entry point `"lisn.js"`, but
 there are also sub-exports available, that correspond to the respective group:
 
-* `"lisn.js/watchers"`
-* `"lisn.js/triggers"`
-* `"lisn.js/actions"`
-* `"lisn.js/widgets"`
-* `"lisn.js/globals"`
-* `"lisn.js/modules"`
-* `"lisn.js/utils"`
-* `"lisn.js/debug"`
+- `"lisn.js/watchers"`
+- `"lisn.js/triggers"`
+- `"lisn.js/actions"`
+- `"lisn.js/widgets"`
+- `"lisn.js/globals"`
+- `"lisn.js/effects"`
+- `"lisn.js/modules"`
+- `"lisn.js/utils"`
+- `"lisn.js/debug"`
 
 ## Embedding the bundle
 
@@ -183,7 +184,7 @@ import { settings as lisnSettings } from "lisn.js";
 lisnSettings.autoWidgets = true;
 ```
 
-***
+---
 
 Then you can use auto-widgets for example like so:
 

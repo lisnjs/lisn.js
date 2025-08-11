@@ -36,6 +36,7 @@
       "src/ts/widgets/",
       "src/ts/triggers/",
       "src/ts/actions/",
+      "src/ts/effects/",
       "src/ts/modules/",
       "src/ts/utils/",
       "src/ts/globals/",

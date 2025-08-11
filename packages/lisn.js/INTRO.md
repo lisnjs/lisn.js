@@ -104,6 +104,7 @@ there are also sub-exports available, that correspond to the respective group:
 - `"lisn.js/actions"`
 - `"lisn.js/widgets"`
 - `"lisn.js/globals"`
+- `"lisn.js/effects"`
 - `"lisn.js/modules"`
 - `"lisn.js/utils"`
 - `"lisn.js/debug"`

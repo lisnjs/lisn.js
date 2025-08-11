@@ -1,6 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
-const { Transform } = window.LISN.modules;
+const { Transform } = window.LISN.effects;
 
 const dummyEl = document.createElement("div");
 

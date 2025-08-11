@@ -105,6 +105,18 @@
       },
       "default": "./dist/esm/globals/index.js"
     },
+    "./effects": {
+      "module": "./dist/esm/effects/index.js",
+      "import": {
+        "types": "./dist/esm/effects/index.d.ts",
+        "default": "./dist/esm/effects/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/effects/index.d.ts",
+        "default": "./dist/cjs/effects/index.cjs"
+      },
+      "default": "./dist/esm/effects/index.js"
+    },
     "./modules": {
       "module": "./dist/esm/modules/index.js",
       "import": {

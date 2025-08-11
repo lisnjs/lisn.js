@@ -14,7 +14,7 @@ import { isValidNum, sum } from "@lisn/utils/math";
 import { Effect, EffectHandler, ScrollOffsets } from "@lisn/effects/effect";
 
 /**
- * {@link Transform} controls an element's transform a 3D transform matrix.
+ * {@link Transform} controls an element's transform as a 3D matrix.
  */
 export class Transform implements Effect {
   /**
@@ -48,14 +48,9 @@ export class Transform implements Effect {
   ) => string;
 
   /**
-   * Resets the transformation back to the default (identity) one.
-   */
-  readonly reset: () => Transform;
-
-  /**
    * Sets the transform's perspective. Perspective applies at the start of
    * transforms and subsequent calls to this method always override previous
-   * ones.
+   * ones, i.e. it is not additive.
    *
    * @param handler The handler that returns the perspective as a number (in
    *                 pixels) or CSS perspective string
@@ -142,7 +137,8 @@ export class Transform implements Effect {
    */
   readonly apply: (element: Element, offsets: ScrollOffsets) => Transform;
 
-  constructor(init?: Transform | DOMMatrix | Float32Array) {
+  constructor(config?: TransformConfig) {
+    const { isIncremental, init } = config ?? {};
     const selfM = newMatrix(false, init);
     const allHandlers: EffectHandler<void>[] = [];
     let perspective = "";
@@ -156,13 +152,7 @@ export class Transform implements Effect {
       return relM ? relM.inverse().multiply(m) : m;
     };
 
-    this.toMatrix = toMatrix;
-    this.toFloat32Array = (relativeTo) => toMatrix(relativeTo).toFloat32Array();
-    this.toString = (relativeTo) =>
-      (perspective ? `perspective(${perspective}) ` : "") +
-      toMatrix(relativeTo).toString();
-
-    this.reset = () => {
+    const reset = () => {
       selfM.m12 =
         selfM.m13 =
         selfM.m14 =
@@ -179,6 +169,12 @@ export class Transform implements Effect {
       selfM.m11 = selfM.m22 = selfM.m33 = selfM.m44 = 1;
       return this;
     };
+
+    this.toMatrix = toMatrix;
+    this.toFloat32Array = (relativeTo) => toMatrix(relativeTo).toFloat32Array();
+    this.toString = (relativeTo) =>
+      (perspective ? `perspective(${perspective}) ` : "") +
+      toMatrix(relativeTo).toString();
 
     this.perspective = (handler) => {
       addHandler((offsets) => {
@@ -233,6 +229,10 @@ export class Transform implements Effect {
     };
 
     this.apply = (element, offsets) => {
+      if (!isIncremental) {
+        reset();
+      }
+
       for (const handler of allHandlers) {
         handler(offsets);
       }
@@ -242,6 +242,28 @@ export class Transform implements Effect {
     };
   }
 }
+
+export type TransformConfig = {
+  /**
+   * By default {@link Transform.apply | Applying} this transform will reset the
+   * current matrix back to the identity and start from scratch. This means that
+   * the return values from your {@link EffectHandler}s should use the absolute
+   * offsets in {@link ScrollOffsets}. If you want to use the delta values instead
+   * and have the previous matrix be preserved and multiplied by the new matrix at
+   * each frame, set `isIncremental` to `true`
+   *
+   * @defaultValue false
+   */
+  isIncremental?: boolean;
+
+  /**
+   * Initial transform to begin with. Only useful if {@link isIncremental} is
+   * `true`, otherwise it will be discarded on {@link Transform.apply | apply}.
+   *
+   * @defaultValue undefined // identity matrix
+   */
+  init?: Transform | DOMMatrix | Float32Array;
+};
 
 // ----------------------------------------
 

@@ -190,23 +190,27 @@ describe("validateBooleanOrString", () => {
 describe("validateRawOrRelativeNumber", () => {
   test("invalid", () => {
     expect(() => utils.validateRawOrRelativeNumber("key", "1px")).toThrow(
-      /'key' must be numerical with an optional prefix of \+, - or \*/,
+      /'key' must be numerical with an optional prefix of /,
     );
 
     expect(() => utils.validateRawOrRelativeNumber("key", false)).toThrow(
-      /'key' must be numerical with an optional prefix of \+, - or \*/,
+      /'key' must be numerical with an optional prefix of /,
     );
 
     expect(() => utils.validateRawOrRelativeNumber("key", true)).toThrow(
-      /'key' must be numerical with an optional prefix of \+, - or \*/,
+      /'key' must be numerical with an optional prefix of /,
     );
 
     expect(() => utils.validateRawOrRelativeNumber("key", "")).toThrow(
-      /'key' must be numerical with an optional prefix of \+, - or \*/,
+      /'key' must be numerical with an optional prefix of /,
     );
 
-    expect(() => utils.validateRawOrRelativeNumber("key", "/1")).toThrow(
-      /'key' must be numerical with an optional prefix of \+, - or \*/,
+    expect(() => utils.validateRawOrRelativeNumber("key", "*1")).toThrow(
+      /'key' must be numerical with an optional prefix of /,
+    );
+
+    expect(() => utils.validateRawOrRelativeNumber("key", "+1%")).toThrow(
+      /'key' must be numerical with an optional prefix of /,
     );
   });
 
@@ -222,10 +226,10 @@ describe("validateRawOrRelativeNumber", () => {
 
     expect(utils.validateRawOrRelativeNumber("key", "+1")).toBe("+1");
     expect(utils.validateRawOrRelativeNumber("key", "-1")).toBe("-1");
-    expect(utils.validateRawOrRelativeNumber("key", "*1")).toBe("*1");
+    expect(utils.validateRawOrRelativeNumber("key", "10%")).toBe("10%");
 
     expect(utils.validateRawOrRelativeNumber("key", "+0")).toBe("+0");
     expect(utils.validateRawOrRelativeNumber("key", "-0")).toBe("-0");
-    expect(utils.validateRawOrRelativeNumber("key", "*0")).toBe("*0");
+    expect(utils.validateRawOrRelativeNumber("key", "0%")).toBe("0%");
   });
 });

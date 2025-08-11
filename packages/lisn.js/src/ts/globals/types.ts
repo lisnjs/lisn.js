@@ -241,12 +241,13 @@ export type GestureIntent = "scroll" | "zoom" | "drag" | "unknown";
 /**
  * Represents an absolute or relative numerical value. If the value is a number,
  * then it is taken as absolute. Otherwise, it should be a numerical string
- * prefixed with `+`, `-` or `*`, in which case it is relative to a given
- * reference.
+ * prefixed with `+` or `-`, or suffixed with `%`, in which case it is relative
+ * to a given reference.
  *
- * - `+` prefix adds to the reference value
- * - `-` prefix subtracts from the reference value
- * - `*` prefix multiplies the reference value
+ * - `+` prefix adds to the reference value.
+ * - `-` prefix subtracts from the reference value.
+ * - `%` suffix multiplies the reference value by that percentage (i.e. 50%
+ *   multiplies the reference by 0.5). The percentage must be positive.
  *
  * @since v1.3.0
  *

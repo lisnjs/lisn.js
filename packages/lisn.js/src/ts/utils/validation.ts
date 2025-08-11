@@ -8,7 +8,7 @@ import { LisnUsageError } from "@lisn/globals/errors";
 
 import { CommaSeparatedStr, RawOrRelativeNumber } from "@lisn/globals/types";
 
-import { toNum } from "@lisn/utils/math";
+import { toNum, toRawNum } from "@lisn/utils/math";
 import { toBoolean } from "@lisn/utils/misc";
 import { splitOn } from "@lisn/utils/text";
 
@@ -200,8 +200,7 @@ export const validateBooleanOrString = <T extends string = string>(
 
 /**
  * Returns an {@link RawOrRelativeNumber} corresponding to the supplied
- * value, ensuring the supplied value is a valid number or a string containing
- * only a number with the allowed prefix characters (`+`, `-` or `*`).
+ * value.
  *
  * @param key Used in the error message thrown
  *
@@ -215,31 +214,20 @@ export const validateRawOrRelativeNumber = (
   key: string,
   value: unknown,
 ): RawOrRelativeNumber | undefined => {
-  if (MH.isNullish(value)) {
-    return;
-  }
+  const typeDescription =
+    "numerical with an optional prefix of + or -, or suffix of %";
 
   if (MH.isString(value)) {
-    // for type check
-    const isValidOp = (op: string): op is "+" | "-" | "*" =>
-      MH.includes(["+", "-", "*"], op);
-
-    const op = value.slice(0, 1);
-    const numerical = toNum(value.slice(1), false);
-    if (isValidOp(op) && numerical !== false) {
-      return `${op}${numerical}` as const;
+    const isRaw = toRawNum(value, NaN, false) !== false; // reference was not used
+    const raw = toRawNum(value, 1, false);
+    if (raw === false) {
+      throw MH.usageError(`'${key}' must be ${typeDescription}`);
     }
+
+    return isRaw ? raw : (value as RawOrRelativeNumber);
   }
 
-  const numerical = toNum(value, false);
-  if (numerical !== false) {
-    // it must have been a number or plain number string without a prefix
-    return numerical;
-  }
-
-  throw MH.usageError(
-    `'${key}' must be numerical with an optional prefix of +, - or *`,
-  );
+  return _validateNumber(key, value, typeDescription);
 };
 
 // --------------------

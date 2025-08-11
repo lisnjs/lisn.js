@@ -139,8 +139,7 @@ export const toNumWithBounds = <D extends number | false | null = number>(
 
 /**
  * Converts the given {@link RawOrRelativeNumber} to a raw number using the
- * given reference. If the input is invalid, reference is returned. If the final
- * result is not finite, the default is returned.
+ * given reference. If the input is invalid, the default is returned.
  *
  * @since v1.3.0
  *
@@ -151,21 +150,20 @@ export const toRawNum = <D extends number | false | null = 0>(
   reference: number,
   defaultValue?: D,
 ) => {
-  const numerical = toNum(input, NaN);
-  let result = isValidNum(numerical) ? numerical : reference;
+  let result = input;
 
   if (MH.isString(input)) {
-    const op = input.slice(0, 1);
-    switch (op) {
-      case "+":
-      case "-":
-        result = reference + numerical;
-        break;
-      case "*":
-        result = reference * toNum(input.slice(1), NaN);
-        break;
-      // otherwise if input was pure number string, numerical is valid, and
-      // otherwise, result is the reference
+    const opA = input.slice(0, 1);
+    const numericalA = toNum(input, NaN);
+    const opB = input.slice(-1);
+    const numericalB = toNum(input.slice(0, -1), NaN);
+
+    if (opA === "+" || opA === "-") {
+      if (isValidNum(numericalA)) {
+        result = reference + numericalA;
+      }
+    } else if (opB === "%" && isValidNum(numericalB)) {
+      result = (reference * numericalB) / 100;
     }
   }
 

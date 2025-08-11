@@ -293,7 +293,8 @@ export type WidgetConfigValidator<Config extends Record<string, unknown>> =
  *                  object, for all options supported by the widget. If
  *                  given, then the `newWidget` function will also be
  *                  passed a configuration object constructed from the
- *                  element's data attribute.
+ *                  element's data attribute. The widget's configuration is read
+ *                  from the `data-lisn-<name>` attribute.
  * @param [options.selector]
  *                  The selector to match elements for. If not given, then
  *                  uses a default value of `[data-lisn-<name>], .lisn-<name>`
@@ -311,6 +312,7 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
   options?: {
     selector?: string;
     supportsMultiple?: boolean;
+    // TODO options for separators
   },
 ) => {
   if (registeredWidgets.has(name)) {
@@ -323,8 +325,8 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
   // straight after loading LISN.js
   await waitForInteractive();
 
-  const prefixedName = MH.prefixName(name);
-  const selector = options?.selector || getDefaultWidgetSelector(prefixedName);
+  const selector =
+    options?.selector || getDefaultWidgetSelector(MH.prefixName(name));
 
   if (settings.autoWidgets) {
     const domWatcher = DOMWatcher.reuse();
@@ -336,22 +338,11 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
           : configValidator;
 
         const widgets: Widget[] = [];
-        const configSpecs: string[] = [];
-        const dataAttr = getData(element, prefixedName);
-
-        if (options?.supportsMultiple) {
-          if (hasClass(element, prefixedName)) {
-            configSpecs.push("");
-          }
-
-          if (dataAttr !== null) {
-            configSpecs.push(
-              ...(dataAttr ? splitOn(dataAttr, CONFIG_SEP_CHAR, true) : [""]),
-            );
-          }
-        } else {
-          configSpecs.push(dataAttr ?? "");
-        }
+        const configSpecs = getDataAttrConfigSpecs(
+          name,
+          element,
+          options?.supportsMultiple ? CONFIG_SEP_CHAR : null,
+        );
 
         for (const spec of configSpecs) {
           const config = thisConfigValidator
@@ -419,13 +410,14 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
  * The final configuration contains all keys from the `validator` object with
  * the value that the validating function for each key returned.
  *
- * There are several built-in validating functions that you can make use of.
- *
- * @see {@link Utils.validateStrList}
- * @see {@link Utils.validateNumber}
- * @see {@link Utils.validateBoolean}
- * @see {@link Utils.validateString}
- * @see {@link Utils.validateBooleanOrString}
+ * There are several built-in validating functions that you can make use of:
+ * - {@link Utils.validateStrList}
+ * - {@link Utils.validateNumList}
+ * - {@link Utils.validateNumber}
+ * - {@link Utils.validateBoolean}
+ * - {@link Utils.validateString}
+ * - {@link Utils.validateStringRequired}
+ * - {@link Utils.validateBooleanOrString}
  */
 export const getWidgetConfig = <Config extends Record<string, unknown>>(
   input: Record<string, unknown> | string | null | undefined,
@@ -462,6 +454,37 @@ export const fetchWidgetConfig = async <Config extends Record<string, unknown>>(
   }
 
   return config;
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const getDataAttrConfigSpecs = (
+  name: string,
+  element: Element,
+  separator?: null | string, // If given, it will split input
+) => {
+  const prefixedName = MH.prefixName(name);
+  const configSpecs: string[] = [];
+  const dataAttr = getData(element, prefixedName);
+
+  if (MH.isNullish(separator)) {
+    // Does not support multiple configs
+    configSpecs.push(dataAttr ?? "");
+  } else {
+    if (hasClass(element, prefixedName)) {
+      configSpecs.push("");
+    }
+
+    if (dataAttr !== null) {
+      configSpecs.push(
+        ...(dataAttr ? splitOn(dataAttr, CONFIG_SEP_CHAR, true) : [""]),
+      );
+    }
+  }
+
+  return configSpecs;
 };
 
 /**

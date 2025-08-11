@@ -139,7 +139,18 @@ export const toNumWithBounds = <D extends number | false | null = number>(
 
 /**
  * Converts the given {@link RawOrRelativeNumber} to a raw number using the
- * given reference. If the input is invalid, the default is returned.
+ * given reference(s). If the input is invalid, the default is returned.
+ *
+ * @param reference The reference value used. If given a function, then it is
+ *                  invoked with an object containing the following properties:
+ *                  - `isAdditive`: a boolean indicating whether there was a `+`
+ *                    or `-` prefix present
+ *                  - `isPercent`: a boolean indicating whether there was a `%`
+ *                    suffix present
+ *                  - `numerical`: the numerical value after stripping the `%`
+ *                    suffix if any, but not the prefix (i.e. it will be
+ *                    negative if there was a `-` prefix)
+ *                  The function should return the reference value to use
  *
  * @since v1.3.0
  *
@@ -147,23 +158,40 @@ export const toNumWithBounds = <D extends number | false | null = number>(
  */
 export const toRawNum = <D extends number | false | null = 0>(
   input: unknown,
-  reference: number,
+  reference:
+    | number
+    | ((props: {
+        isAdditive: boolean;
+        isPercent: boolean;
+        numerical: number;
+      }) => number),
   defaultValue?: D,
 ) => {
-  let result = input;
+  let numerical = NaN,
+    isAdditive = false,
+    isPercent = false;
 
-  if (MH.isString(input)) {
+  if (MH.isNumber(input)) {
+    numerical = input;
+  } else if (MH.isString(input)) {
     const opA = input.slice(0, 1);
-    const numericalA = toNum(input, NaN);
     const opB = input.slice(-1);
-    const numericalB = toNum(input.slice(0, -1), NaN);
+    isAdditive = opA === "+" || opA === "-";
+    isPercent = opB === "%";
+    numerical = toNum(isPercent ? input.slice(0, -1) : input, NaN);
+  }
 
-    if (opA === "+" || opA === "-") {
-      if (isValidNum(numericalA)) {
-        result = reference + numericalA;
-      }
-    } else if (opB === "%" && isValidNum(numericalB)) {
-      result = (reference * numericalB) / 100;
+  let result = numerical;
+  if (isAdditive || isPercent) {
+    const referenceValue = MH.isFunction(reference)
+      ? reference({ isAdditive, isPercent, numerical })
+      : reference;
+
+    if (isPercent) {
+      result =
+        (referenceValue * numerical) / 100 + (isAdditive ? referenceValue : 0);
+    } else {
+      result = referenceValue + numerical;
     }
   }
 

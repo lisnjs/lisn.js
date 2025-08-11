@@ -1,4 +1,4 @@
-const { describe, test, expect } = require("@jest/globals");
+const { jest, describe, test, expect } = require("@jest/globals");
 
 const utils = window.LISN.utils;
 
@@ -143,34 +143,98 @@ describe("toNumWithBounds", () => {
   });
 });
 
-test("toRawNum", () => {
-  expect(utils.toRawNum(null, 10, null)).toBe(null);
-  expect(utils.toRawNum(undefined, 10, null)).toBe(null);
+describe("toRawNum", () => {
+  test("basic", () => {
+    expect(utils.toRawNum(null, 10, null)).toBe(null);
+    expect(utils.toRawNum(undefined, 10, null)).toBe(null);
 
-  expect(utils.toRawNum(Infinity, 10, null)).toBe(null);
-  expect(utils.toRawNum(NaN, 10, null)).toBe(null);
-  expect(utils.toRawNum("1x", 10, null)).toBe(null);
-  expect(utils.toRawNum("x1", 10, null)).toBe(null);
-  expect(utils.toRawNum("+1x", 10, null)).toBe(null);
-  expect(utils.toRawNum("-300%", 10, null)).toBe(null);
-  expect(utils.toRawNum("+300%", 10, null)).toBe(null);
+    expect(utils.toRawNum(Infinity, 10, null)).toBe(null);
+    expect(utils.toRawNum(NaN, 10, null)).toBe(null);
+    expect(utils.toRawNum("1x", 10, null)).toBe(null);
+    expect(utils.toRawNum("x1", 10, null)).toBe(null);
+    expect(utils.toRawNum("+1x", 10, null)).toBe(null);
 
-  expect(utils.toRawNum("-3", NaN, null)).toBe(null);
+    expect(utils.toRawNum("-3", NaN, null)).toBe(null);
 
-  expect(utils.toRawNum(1, 10, null)).toBe(1);
-  expect(utils.toRawNum(0, 10, null)).toBe(0);
-  expect(utils.toRawNum(-1, 10, null)).toBe(-1);
-  expect(utils.toRawNum(1.1, 10, null)).toBe(1.1);
+    expect(utils.toRawNum(1, 10, null)).toBe(1);
+    expect(utils.toRawNum(0, 10, null)).toBe(0);
+    expect(utils.toRawNum(-1, 10, null)).toBe(-1);
+    expect(utils.toRawNum(1.1, 10, null)).toBe(1.1);
 
-  expect(utils.toRawNum("0", 10, null)).toBe(0);
-  expect(utils.toRawNum("1", 10, null)).toBe(1);
-  expect(utils.toRawNum("1.1", 10, null)).toBe(1.1);
+    expect(utils.toRawNum("0", 10, null)).toBe(0);
+    expect(utils.toRawNum("1", 10, null)).toBe(1);
+    expect(utils.toRawNum("1.1", 10, null)).toBe(1.1);
 
-  expect(utils.toRawNum("1", NaN, null)).toBe(1);
+    expect(utils.toRawNum("0", NaN, null)).toBe(0);
+    expect(utils.toRawNum("1", NaN, null)).toBe(1);
 
-  expect(utils.toRawNum("-3", 10, null)).toBe(7);
-  expect(utils.toRawNum("+3", 10, null)).toBe(13);
-  expect(utils.toRawNum("300%", 10, null)).toBe(30);
+    expect(utils.toRawNum("-3", 10, null)).toBe(7);
+    expect(utils.toRawNum("+3", 10, null)).toBe(13);
+    expect(utils.toRawNum("30%", 10, null)).toBe(3);
+    expect(utils.toRawNum("300%", 10, null)).toBe(30);
+    expect(utils.toRawNum("+30%", 10, null)).toBe(13);
+    expect(utils.toRawNum("-30%", 10, null)).toBe(7);
+
+    expect(utils.toRawNum("+10", 0, null)).toBe(10);
+    expect(utils.toRawNum("-10", 0, null)).toBe(-10);
+    expect(utils.toRawNum("10%", 0, null)).toBe(0);
+    expect(utils.toRawNum("+10%", 0, null)).toBe(0);
+    expect(utils.toRawNum("-10%", 0, null)).toBe(0);
+
+    expect(utils.toRawNum("+0", 1, null)).toBe(1);
+    expect(utils.toRawNum("-0", 1, null)).toBe(1);
+    expect(utils.toRawNum("0%", 1, null)).toBe(0);
+    expect(utils.toRawNum("+0%", 1, null)).toBe(1);
+    expect(utils.toRawNum("-0%", 1, null)).toBe(1);
+  });
+
+  test("with reference function", () => {
+    const ref = jest.fn(() => 10);
+
+    expect(utils.toRawNum("3", ref, null)).toBe(3);
+    expect(ref).toHaveBeenCalledTimes(0);
+
+    let nCalls = 0;
+    expect(utils.toRawNum("-3", ref, null)).toBe(7);
+    expect(ref).toHaveBeenCalledTimes(++nCalls);
+    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+      isAdditive: true,
+      isPercent: false,
+      numerical: -3,
+    });
+
+    expect(utils.toRawNum("+3", ref, null)).toBe(13);
+    expect(ref).toHaveBeenCalledTimes(++nCalls);
+    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+      isAdditive: true,
+      isPercent: false,
+      numerical: 3,
+    });
+
+    expect(utils.toRawNum("30%", ref, null)).toBe(3);
+    expect(ref).toHaveBeenCalledTimes(++nCalls);
+    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+      isAdditive: false,
+      isPercent: true,
+      numerical: 30,
+    });
+
+    expect(utils.toRawNum("+30%", ref, null)).toBe(13);
+    expect(ref).toHaveBeenCalledTimes(++nCalls);
+    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+      isAdditive: true,
+      isPercent: true,
+      numerical: 30,
+    });
+
+    expect(utils.toRawNum("-30%", ref, null)).toBe(7);
+    expect(ref).toHaveBeenCalledTimes(++nCalls);
+    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+      isAdditive: true,
+      isPercent: true,
+      numerical: -30,
+    });
+  });
 });
 
 test("quadraticRoots", () => {

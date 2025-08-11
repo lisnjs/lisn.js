@@ -240,14 +240,20 @@ export type GestureIntent = "scroll" | "zoom" | "drag" | "unknown";
 
 /**
  * Represents an absolute or relative numerical value. If the value is a number,
- * then it is taken as absolute. Otherwise, it should be a numerical string
- * prefixed with `+` or `-`, or suffixed with `%`, in which case it is relative
- * to a given reference.
+ * then it is taken as the actual value. Otherwise, it should be a numerical
+ * string that is either prefixed with `+` or `-`, and/or suffixed with `%`.
+ * Each of those has a different meaning. Refer to the respective use-case of to
+ * see what the reference value is and how percentage values are treated.
  *
- * - `+` prefix adds to the reference value.
- * - `-` prefix subtracts from the reference value.
- * - `%` suffix multiplies the reference value by that percentage (i.e. 50%
- *   multiplies the reference by 0.5). The percentage must be positive.
+ * @example
+ * - `10` is treated as `10` ignoring the reference value
+ * - `+10` adds `10` to the reference value
+ * - `-10` subtracts `10` from the reference value
+ * - `10%` multiplies the reference by `0.1`
+ * - `+10%` effectively multiplies the reference by `1.1`, but may be treated
+ *   differently to `110%`
+ * - `-10%` effectively multiplies the reference by `0.9`, but may be treated
+ *   differently to `90%`
  *
  * @since v1.3.0
  *
@@ -255,9 +261,12 @@ export type GestureIntent = "scroll" | "zoom" | "drag" | "unknown";
  */
 export type RawOrRelativeNumber =
   | number
+  | `${number}`
   | `+${number}`
   | `-${number}`
-  | `*${number}`;
+  | `${number}%`
+  | `+${number}%`
+  | `-${number}%`;
 
 /**
  * Screen coordinate. 0, 0 is top-left corner.

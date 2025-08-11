@@ -208,10 +208,6 @@ describe("validateRawOrRelativeNumber", () => {
     expect(() => utils.validateRawOrRelativeNumber("key", "*1")).toThrow(
       /'key' must be numerical with an optional prefix of /,
     );
-
-    expect(() => utils.validateRawOrRelativeNumber("key", "+1%")).toThrow(
-      /'key' must be numerical with an optional prefix of /,
-    );
   });
 
   test("basic", () => {
@@ -227,9 +223,13 @@ describe("validateRawOrRelativeNumber", () => {
     expect(utils.validateRawOrRelativeNumber("key", "+1")).toBe("+1");
     expect(utils.validateRawOrRelativeNumber("key", "-1")).toBe("-1");
     expect(utils.validateRawOrRelativeNumber("key", "10%")).toBe("10%");
+    expect(utils.validateRawOrRelativeNumber("key", "+10%")).toBe("+10%");
+    expect(utils.validateRawOrRelativeNumber("key", "-10%")).toBe("-10%");
 
     expect(utils.validateRawOrRelativeNumber("key", "+0")).toBe("+0");
     expect(utils.validateRawOrRelativeNumber("key", "-0")).toBe("-0");
     expect(utils.validateRawOrRelativeNumber("key", "0%")).toBe("0%");
+    expect(utils.validateRawOrRelativeNumber("key", "+0%")).toBe("+0%");
+    expect(utils.validateRawOrRelativeNumber("key", "-0%")).toBe("-0%");
   });
 });

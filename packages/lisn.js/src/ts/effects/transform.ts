@@ -8,7 +8,6 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
-import { setStyleProp } from "@lisn/utils/css-alter";
 import { isValidNum, sum } from "@lisn/utils/math";
 
 import { Effect, EffectHandler, ScrollOffsets } from "@lisn/effects/effect";
@@ -135,11 +134,7 @@ export class Transform implements Effect {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly apply: (
-    element: Element,
-    offsets: ScrollOffsets,
-    relativeTo?: Transform | DOMMatrix | Float32Array,
-  ) => Transform;
+  readonly apply: (offsets: ScrollOffsets) => Transform;
 
   constructor(config?: TransformConfig) {
     const { isIncremental, init } = config ?? {};
@@ -232,7 +227,7 @@ export class Transform implements Effect {
       return this;
     };
 
-    this.apply = (element, offsets, relativeTo) => {
+    this.apply = (offsets) => {
       if (!isIncremental) {
         reset();
       }
@@ -241,7 +236,6 @@ export class Transform implements Effect {
         handler(offsets);
       }
 
-      setStyleProp(element, "transform", this.toString(relativeTo));
       return this;
     };
   }

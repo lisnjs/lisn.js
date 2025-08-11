@@ -2,8 +2,6 @@ const { jest, describe, test, expect } = require("@jest/globals");
 
 const { Transform } = window.LISN.effects;
 
-const dummyEl = document.createElement("div");
-
 const IDENTITY = new DOMMatrixReadOnly([
   ...[1, 0, 0, 0],
   ...[0, 1, 0, 0],
@@ -111,8 +109,8 @@ describe("constructor", () => {
     const t = newIncrementalTransform();
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: dB }));
-    t.apply(dummyEl, DEFAULT_OFFSETS);
-    t.apply(dummyEl, DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -129,8 +127,8 @@ describe("constructor", () => {
     const t = new Transform();
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: dB }));
-    t.apply(dummyEl, DEFAULT_OFFSETS);
-    t.apply(dummyEl, DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
     expectToBeCloseToMatrix(t, expected);
   });
 });
@@ -246,13 +244,13 @@ describe("toString", () => {
 test("perspective", () => {
   const t = newIncrementalTransform();
   t.perspective(() => 500);
-  t.apply(dummyEl, DEFAULT_OFFSETS);
+  t.apply(DEFAULT_OFFSETS);
   expect(t.toString()).toBe(
     "perspective(500px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
   );
 
   t.perspective(() => "30rem");
-  t.apply(dummyEl, DEFAULT_OFFSETS);
+  t.apply(DEFAULT_OFFSETS);
   expect(t.toString()).toBe(
     "perspective(30rem) " + new DOMMatrixReadOnly(IDENTITY).toString(),
   );
@@ -265,7 +263,7 @@ describe("translate", () => {
     t.translate(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(dummyEl, DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenCalledWith(DEFAULT_OFFSETS);
   });
@@ -283,14 +281,14 @@ describe("translate", () => {
     t.translate((d) => ({ x: d.x }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: d });
+    t.apply({ ...DEFAULT_OFFSETS, x: d });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: -d });
+    t.apply({ ...DEFAULT_OFFSETS, x: -d });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: d / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: d / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, x: d / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, x: d / 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -307,14 +305,14 @@ describe("translate", () => {
     t.translate((d) => ({ y: d.y }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: d });
+    t.apply({ ...DEFAULT_OFFSETS, y: d });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: -d });
+    t.apply({ ...DEFAULT_OFFSETS, y: -d });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: d / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: d / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, y: d / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, y: d / 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -331,14 +329,14 @@ describe("translate", () => {
     t.translate((d) => ({ z: d.ny }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: d });
+    t.apply({ ...DEFAULT_OFFSETS, ny: d });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: -d });
+    t.apply({ ...DEFAULT_OFFSETS, ny: -d });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: d / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: d / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: d / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: d / 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -357,14 +355,14 @@ describe("translate", () => {
     t.translate((d) => ({ x: d.x, y: d.y, z: d.ny }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: dx, y: dy, ny: dz });
+    t.apply({ ...DEFAULT_OFFSETS, x: dx, y: dy, ny: dz });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: -dx, y: -dy, ny: -dz });
+    t.apply({ ...DEFAULT_OFFSETS, x: -dx, y: -dy, ny: -dz });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: dx / 2, y: dy / 2, ny: dz / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: dx / 2, y: dy / 2, ny: dz / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, x: dx / 2, y: dy / 2, ny: dz / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, x: dx / 2, y: dy / 2, ny: dz / 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 });
@@ -376,7 +374,7 @@ describe("scale", () => {
     t.scale(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(dummyEl, DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenCalledWith(DEFAULT_OFFSETS);
   });
@@ -394,14 +392,14 @@ describe("scale", () => {
     t.scale((d) => ({ sx: d.nx }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, nx: s });
+    t.apply({ ...DEFAULT_OFFSETS, nx: s });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, nx: 1 / s });
+    t.apply({ ...DEFAULT_OFFSETS, nx: 1 / s });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, nx: s / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, nx: 2 });
+    t.apply({ ...DEFAULT_OFFSETS, nx: s / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, nx: 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -418,14 +416,14 @@ describe("scale", () => {
     t.scale((d) => ({ sy: d.ny }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: s });
+    t.apply({ ...DEFAULT_OFFSETS, ny: s });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: 1 / s });
+    t.apply({ ...DEFAULT_OFFSETS, ny: 1 / s });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: s / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: s / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -442,14 +440,14 @@ describe("scale", () => {
     t.scale((d) => ({ sz: d.dny }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, dny: s });
+    t.apply({ ...DEFAULT_OFFSETS, dny: s });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, dny: 1 / s });
+    t.apply({ ...DEFAULT_OFFSETS, dny: 1 / s });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, dny: s / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, dny: 2 });
+    t.apply({ ...DEFAULT_OFFSETS, dny: s / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, dny: 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -473,10 +471,10 @@ describe("scale", () => {
     }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, nx: sx, ny: sy, dny: sz });
+    t.apply({ ...DEFAULT_OFFSETS, nx: sx, ny: sy, dny: sz });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, {
+    t.apply({
       ...DEFAULT_OFFSETS,
       nx: 1 / sx,
       ny: 1 / sy,
@@ -484,13 +482,13 @@ describe("scale", () => {
     });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, {
+    t.apply({
       ...DEFAULT_OFFSETS,
       nx: sx / 2,
       ny: sy / 2,
       dny: sz / 4,
     });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, nx: 2, ny: 2, dny: 4 });
+    t.apply({ ...DEFAULT_OFFSETS, nx: 2, ny: 2, dny: 4 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -507,14 +505,14 @@ describe("scale", () => {
     t.scale((d) => ({ s: d.ny }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: s });
+    t.apply({ ...DEFAULT_OFFSETS, ny: s });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: 1 / s });
+    t.apply({ ...DEFAULT_OFFSETS, ny: 1 / s });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: s / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: s / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -536,10 +534,10 @@ describe("scale", () => {
     t.scale((d) => ({ sx: d.nx, sy: d.ny, sz: d.dny, origin: [ox, oy, oz] }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, nx: sx, ny: sy, dny: sz });
+    t.apply({ ...DEFAULT_OFFSETS, nx: sx, ny: sy, dny: sz });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, {
+    t.apply({
       ...DEFAULT_OFFSETS,
       nx: 1 / sx,
       ny: 1 / sy,
@@ -547,13 +545,13 @@ describe("scale", () => {
     });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, {
+    t.apply({
       ...DEFAULT_OFFSETS,
       nx: sx / 2,
       ny: sy / 2,
       dny: sz / 4,
     });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, nx: 2, ny: 2, dny: 4 });
+    t.apply({ ...DEFAULT_OFFSETS, nx: 2, ny: 2, dny: 4 });
     expectToBeCloseToMatrix(t, expected);
   });
 });
@@ -571,7 +569,7 @@ describe("skew", () => {
     t.skew(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(dummyEl, DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenCalledWith(DEFAULT_OFFSETS);
   });
@@ -588,10 +586,10 @@ describe("skew", () => {
     t.skew((d) => ({ degX: d.x }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: deg });
+    t.apply({ ...DEFAULT_OFFSETS, x: deg });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: -deg });
+    t.apply({ ...DEFAULT_OFFSETS, x: -deg });
     expectToBeCloseToMatrix(t, IDENTITY);
   });
 
@@ -607,10 +605,10 @@ describe("skew", () => {
     t.skew((d) => ({ degY: d.y }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: deg });
+    t.apply({ ...DEFAULT_OFFSETS, y: deg });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: -deg });
+    t.apply({ ...DEFAULT_OFFSETS, y: -deg });
     expectToBeCloseToMatrix(t, IDENTITY);
   });
 
@@ -626,11 +624,11 @@ describe("skew", () => {
     t.skew((d) => ({ deg: d.x + d.y /* ignored */, degX: d.x, degY: d.y }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: deg, y: deg2 });
+    t.apply({ ...DEFAULT_OFFSETS, x: deg, y: deg2 });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: -deg2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: -deg });
+    t.apply({ ...DEFAULT_OFFSETS, y: -deg2 });
+    t.apply({ ...DEFAULT_OFFSETS, x: -deg });
     expectToBeCloseToMatrix(t, IDENTITY);
   });
 
@@ -646,7 +644,7 @@ describe("skew", () => {
     t.skew((d) => ({ deg: d.y }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: deg });
+    t.apply({ ...DEFAULT_OFFSETS, y: deg });
     expectToBeCloseToMatrix(t, expected);
   });
 });
@@ -662,7 +660,7 @@ describe("rotate", () => {
     t.rotate(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(dummyEl, DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenCalledWith(DEFAULT_OFFSETS);
   });
@@ -679,14 +677,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.x, axis: [1, 0, 0] }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: deg });
+    t.apply({ ...DEFAULT_OFFSETS, x: deg });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: -deg });
+    t.apply({ ...DEFAULT_OFFSETS, x: -deg });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: deg / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: deg / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, x: deg / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, x: deg / 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -702,14 +700,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.y, axis: [0, 1, 0] }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: deg });
+    t.apply({ ...DEFAULT_OFFSETS, y: deg });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: -deg });
+    t.apply({ ...DEFAULT_OFFSETS, y: -deg });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: deg / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: deg / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -725,14 +723,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.ny, axis: [0, 0, 1] }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: deg });
+    t.apply({ ...DEFAULT_OFFSETS, ny: deg });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: -deg });
+    t.apply({ ...DEFAULT_OFFSETS, ny: -deg });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: deg / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, ny: deg / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: deg / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: deg / 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -753,7 +751,7 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.ny, axis: [0, 0, 1] }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, x: degX, y: degY, ny: degZ });
+    t.apply({ ...DEFAULT_OFFSETS, x: degX, y: degY, ny: degZ });
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -769,14 +767,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.y, axis: [1, 2, 3] }));
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: deg });
+    t.apply({ ...DEFAULT_OFFSETS, y: deg });
     expectToBeCloseToMatrix(t, expected);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: -deg });
+    t.apply({ ...DEFAULT_OFFSETS, y: -deg });
     expectToBeCloseToMatrix(t, IDENTITY);
 
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: deg / 2 });
-    t.apply(dummyEl, { ...DEFAULT_OFFSETS, y: deg / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
     expectToBeCloseToMatrix(t, expected);
   });
 });
@@ -803,7 +801,7 @@ describe("chaining", () => {
     t.scale(() => ({ sx, sy, sz }));
     t.rotate(() => ({ deg: r, axis: ra }));
     t.skew(() => ({ degY: sk }));
-    t.apply(dummyEl, DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
     expectToBeCloseToMatrix(t, expected);
   });
 
@@ -828,35 +826,7 @@ describe("chaining", () => {
     t.rotate(() => ({ deg: r, axis: ra }));
     t.scale(() => ({ sx, sy, sz }));
     t.translate(() => ({ x: dx, y: dy, z: dz }));
-    t.apply(dummyEl, DEFAULT_OFFSETS);
+    t.apply(DEFAULT_OFFSETS);
     expectToBeCloseToMatrix(t, expected);
-  });
-});
-
-describe("apply", () => {
-  test("basic", async () => {
-    const el = document.createElement("div");
-    const t = newIncrementalTransform();
-    t.apply(el, DEFAULT_OFFSETS);
-    await window.waitForAF();
-    expect(el.style.transform).toBe(new DOMMatrixReadOnly(IDENTITY).toString());
-  });
-
-  test("relativeTo", async () => {
-    const init = newTestMatrix();
-    const ref = new DOMMatrixReadOnly([
-      ...[8, -6, -3, -5],
-      ...[-2, 7, -8, -5],
-      ...[-9, -3, 7, 8],
-      ...[-4, -3, 1, -10],
-    ]);
-
-    const expected = ref.inverse().multiply(init);
-
-    const el = document.createElement("div");
-    const t = newIncrementalTransform(init);
-    t.apply(el, DEFAULT_OFFSETS, ref);
-    await window.waitForAF();
-    expect(el.style.transform).toBe(new DOMMatrixReadOnly(expected).toString());
   });
 });

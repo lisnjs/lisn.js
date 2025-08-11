@@ -1,5 +1,5 @@
 /**
- * @module Modules/Effects
+ * @module Effects/Transform
  *
  * @since v1.3.0
  */
@@ -8,6 +8,7 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
+import { setStyleProp } from "@lisn/utils/css-alter";
 import { isValidNum, sum } from "@lisn/utils/math";
 
 export type EffectCallback<R> = (offsets: ScrollOffsets) => R;
@@ -191,7 +192,7 @@ export class Transform {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly apply: (offsets: ScrollOffsets) => Transform;
+  readonly apply: (element: Element, offsets: ScrollOffsets) => Transform;
 
   constructor(init?: Transform | DOMMatrix | Float32Array) {
     const selfM = newMatrix(false, init);
@@ -283,11 +284,12 @@ export class Transform {
       return this;
     };
 
-    this.apply = (offsets) => {
+    this.apply = (element, offsets) => {
       for (const callback of callbacks) {
         callback(offsets);
       }
 
+      setStyleProp(element, "transform", this.toString());
       return this;
     };
   }

@@ -188,48 +188,53 @@ describe("toRawNum", () => {
     expect(utils.toRawNum("-0%", 1, null)).toBe(1);
   });
 
-  test("with reference function", () => {
-    const ref = jest.fn(() => 10);
+  test("with calculator function", () => {
+    const calc = jest.fn(({ input }) => utils.toRawNum(input, 10));
 
-    expect(utils.toRawNum("3", ref, null)).toBe(3);
-    expect(ref).toHaveBeenCalledTimes(0);
+    expect(utils.toRawNum("3", calc, null)).toBe(3);
+    expect(calc).toHaveBeenCalledTimes(0);
 
     let nCalls = 0;
-    expect(utils.toRawNum("-3", ref, null)).toBe(7);
-    expect(ref).toHaveBeenCalledTimes(++nCalls);
-    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+    expect(utils.toRawNum("-3", calc, null)).toBe(7);
+    expect(calc).toHaveBeenCalledTimes(++nCalls);
+    expect(calc).toHaveBeenNthCalledWith(nCalls, {
+      input: "-3",
       isAdditive: true,
       isPercent: false,
       numerical: -3,
     });
 
-    expect(utils.toRawNum("+3", ref, null)).toBe(13);
-    expect(ref).toHaveBeenCalledTimes(++nCalls);
-    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+    expect(utils.toRawNum("+3", calc, null)).toBe(13);
+    expect(calc).toHaveBeenCalledTimes(++nCalls);
+    expect(calc).toHaveBeenNthCalledWith(nCalls, {
+      input: "+3",
       isAdditive: true,
       isPercent: false,
       numerical: 3,
     });
 
-    expect(utils.toRawNum("30%", ref, null)).toBe(3);
-    expect(ref).toHaveBeenCalledTimes(++nCalls);
-    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+    expect(utils.toRawNum("30%", calc, null)).toBe(3);
+    expect(calc).toHaveBeenCalledTimes(++nCalls);
+    expect(calc).toHaveBeenNthCalledWith(nCalls, {
+      input: "30%",
       isAdditive: false,
       isPercent: true,
       numerical: 30,
     });
 
-    expect(utils.toRawNum("+30%", ref, null)).toBe(13);
-    expect(ref).toHaveBeenCalledTimes(++nCalls);
-    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+    expect(utils.toRawNum("+30%", calc, null)).toBe(13);
+    expect(calc).toHaveBeenCalledTimes(++nCalls);
+    expect(calc).toHaveBeenNthCalledWith(nCalls, {
+      input: "+30%",
       isAdditive: true,
       isPercent: true,
       numerical: 30,
     });
 
-    expect(utils.toRawNum("-30%", ref, null)).toBe(7);
-    expect(ref).toHaveBeenCalledTimes(++nCalls);
-    expect(ref).toHaveBeenNthCalledWith(nCalls, {
+    expect(utils.toRawNum("-30%", calc, null)).toBe(7);
+    expect(calc).toHaveBeenCalledTimes(++nCalls);
+    expect(calc).toHaveBeenNthCalledWith(nCalls, {
+      input: "-30%",
       isAdditive: true,
       isPercent: true,
       numerical: -30,

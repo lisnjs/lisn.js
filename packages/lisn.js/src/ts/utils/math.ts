@@ -138,33 +138,85 @@ export const toNumWithBounds = <D extends number | false | null = number>(
 };
 
 /**
- * Converts the given {@link RawOrRelativeNumber} to a raw number using the
- * given reference(s). If the input is invalid, the default is returned.
- *
- * @param reference The reference value used. If given a function, then it is
- *                  invoked with an object containing the following properties:
- *                  - `isAdditive`: a boolean indicating whether there was a `+`
- *                    or `-` prefix present
- *                  - `isPercent`: a boolean indicating whether there was a `%`
- *                    suffix present
- *                  - `numerical`: the numerical value after stripping the `%`
- *                    suffix if any, but not the prefix (i.e. it will be
- *                    negative if there was a `-` prefix)
- *                  The function should return the reference value to use
+ * Used as a custom calculator for {@link toRawNum}. The function should return
+ * the final numerical result.
  *
  * @since v1.3.0
  *
  * @category Math
  */
+export type RawNumberCalculator = (props: {
+  /**
+   * The original value passed to {@link toRawNum}
+   */
+  input: unknown;
+
+  /**
+   * Whether `+` or `-` prefix is present in {@link input}. At least one of
+   * {@link isAdditive} or {@link isPercent} is guaranteed to be true.
+   */
+  isAdditive: boolean;
+
+  /**
+   * Whether `%` suffix is present in {@link input}. At least one of
+   * {@link isAdditive} or {@link isPercent} is guaranteed to be true.
+   */
+  isPercent: boolean;
+
+  /**
+   * The actual numerical value of {@link input} after stripping the `%` suffix
+   * if any, but not the prefix (i.e. it will be negative if there was a `-`
+   * prefix)
+   */
+  numerical: number;
+}) => number;
+
+/**
+ * Converts the given {@link RawOrRelativeNumber} to a raw number using the
+ * given reference or calculator function. If the final result is invalid, the
+ * default is returned.
+ *
+ * The default calculation process, if `input` is relative and if
+ * `referenceOrCalculator` is only a number is as follows:
+ * - If `input` is percentage, it is multiplied with the reference value.
+ *   Afterwards, if `input` also has a `+` or `-` prefix, the resulting
+ *   percentage is added to the reference. I.e:
+ *   - `"30%"` results in `0.3 * reference`
+ *   - `"+30%"` results in `1.3 * reference`
+ *   - `"-30%"` results in `0.7 * reference`
+ * - Otherwise, if `input` only has a `+` or `-` prefix it is added or
+ *   subtracted from the reference.
+ *
+ * @param input     If it's a pure number or a positive numerical string without
+ *                  `+` prefix, it is treated as the raw value to use and no
+ *                  reference or further calculation is used. Otherwise the raw
+ *                  value is calculated using `referenceOrCalculator`
+ * @param referenceOrCalculator
+ *                  If given as a number, it will be the reference value used
+ *                  with the default calculation process (see above).
+ *                  Otherwise, if given as a function, then it is used as the
+ *                  calculator and its return value is used as the final result.
+ *
+ * @since v1.3.0
+ *
+ * @example
+ * If you want to use the default calculator function, but specify a custom
+ * reference value based on the type of input, you could call {@link toRawNum}
+ * recursively like so:
+ *
+ * ```javascript
+ * const calculator = ({input, isAdditive, isPercent, numerical}) => {
+ *   return toRawNum(input, isAdditive && isPercent ? referenceA : referenceB);
+ * }
+ *
+ * toRawNum(input, calculator);
+ * ```
+ *
+ * @category Math
+ */
 export const toRawNum = <D extends number | false | null = 0>(
   input: unknown,
-  reference:
-    | number
-    | ((props: {
-        isAdditive: boolean;
-        isPercent: boolean;
-        numerical: number;
-      }) => number),
+  referenceOrCalculator: number | RawNumberCalculator,
   defaultValue?: D,
 ) => {
   let numerical = NaN,
@@ -183,16 +235,17 @@ export const toRawNum = <D extends number | false | null = 0>(
 
   let result = numerical;
   if (isAdditive || isPercent) {
-    const referenceValue = MH.isFunction(reference)
-      ? reference({ isAdditive, isPercent, numerical })
-      : reference;
+    const calculator: RawNumberCalculator = MH.isFunction(referenceOrCalculator)
+      ? referenceOrCalculator
+      : ({ isAdditive, isPercent, numerical }) => {
+          const reference = referenceOrCalculator;
+          if (isPercent) {
+            return (reference * numerical) / 100 + (isAdditive ? reference : 0);
+          }
+          return reference + numerical;
+        };
 
-    if (isPercent) {
-      result =
-        (referenceValue * numerical) / 100 + (isAdditive ? referenceValue : 0);
-    } else {
-      result = referenceValue + numerical;
-    }
+    result = calculator({ input, isAdditive, isPercent, numerical });
   }
 
   return toNum(result, defaultValue);

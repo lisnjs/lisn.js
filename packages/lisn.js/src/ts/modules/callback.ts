@@ -143,7 +143,7 @@ export class Callback<Args extends unknown[] = []> {
    * when the original (given) callback is removed. However, removing the
    * returned wrapper callback will _not_ cause the original callback (being
    * wrapped) to be removed. If you want to do this, then do
-   * `wrapper.onRemove(wrapped.remove)`.
+   * `wrapper.onRemove(original.remove)`.
    *
    * Note that if the argument is a callback that's already debounced by a
    * _larger_ window, then `debounceWindow` will have no effect.

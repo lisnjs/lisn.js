@@ -11,13 +11,9 @@ const IDENTITY = new DOMMatrixReadOnly([
 
 const DEFAULT_OFFSETS = {
   x: 0,
-  dx: 0,
   nx: 0,
-  dnx: 0,
   y: 0,
-  dy: 0,
   ny: 0,
-  dny: 0,
 };
 
 const newIncrementalTransform = (init) =>
@@ -34,46 +30,15 @@ const newTestMatrix = (toValue = (i) => i + 1) => {
   return new DOMMatrixReadOnly(init);
 };
 
-const toArray = (m) => {
-  let a = m;
-  if (a instanceof Transform || a instanceof DOMMatrixReadOnly) {
-    a = a.toFloat32Array();
-  }
-
-  return Array.from(a);
-};
-
-const expectToBeCloseToMatrix = (mA, mB, precision = 4) => {
-  const a = toArray(mA);
-  const b = toArray(mB);
-  expect(a.length).toBe(b.length);
-  for (let i = 0; i < a.length; i++) {
-    expect(a[i]).toBeCloseTo(b[i], precision);
-  }
-};
-
-const expectNotToBeCloseToMatrix = (mA, mB, precision = 4) => {
-  const a = toArray(mA);
-  const b = toArray(mB);
-  let areEqual = a.length === b.length;
-
-  for (let i = 0; i < a.length; i++) {
-    if (!areEqual) break;
-    areEqual &&= Math.abs(a[i] - b[i]) < Math.pow(10, -precision) / 2;
-  }
-
-  expect(areEqual).toBe(false);
-};
-
 describe("constructor", () => {
   test("no init", () => {
     const t = newIncrementalTransform();
     expect(t.isAbsolute()).toBe(false);
     expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
-    expectToBeCloseToMatrix(t.toMatrix(), IDENTITY);
+    expect(t.toMatrix()).toBeCloseToArray(IDENTITY);
 
     expect(t.toFloat32Array()).toBeInstanceOf(Float32Array);
-    expectToBeCloseToMatrix(t.toFloat32Array(), IDENTITY);
+    expect(t.toFloat32Array()).toBeCloseToArray(IDENTITY);
 
     expect(t.toString()).toBe(new DOMMatrixReadOnly(IDENTITY).toString());
   });
@@ -82,22 +47,22 @@ describe("constructor", () => {
     const init = newTestMatrix();
     const t = newIncrementalTransform(init);
     expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
-    expectToBeCloseToMatrix(t.toMatrix(), init);
+    expect(t.toMatrix()).toBeCloseToArray(init);
 
     expect(t.toFloat32Array()).toBeInstanceOf(Float32Array);
-    expectToBeCloseToMatrix(t.toFloat32Array(), init);
+    expect(t.toFloat32Array()).toBeCloseToArray(init);
 
     expect(t.toString()).toBe(new DOMMatrixReadOnly(init).toString());
   });
 
   test("modifying init", () => {
-    const init = toArray(newTestMatrix());
-    const copy = new Float32Array(toArray(init));
+    const init = window.toArray(newTestMatrix());
+    const copy = new Float32Array(window.toArray(init));
     const t = newIncrementalTransform(init);
 
     init[4] *= 2;
-    expectNotToBeCloseToMatrix(t, init);
-    expectToBeCloseToMatrix(t, copy);
+    expect(t).not.toBeCloseToArray(init);
+    expect(t).toBeCloseToArray(copy);
   });
 
   test("incremental w multiple transforms", () => {
@@ -115,7 +80,7 @@ describe("constructor", () => {
     t.translate(() => ({ x: dB }));
     t.apply(DEFAULT_OFFSETS);
     t.apply(DEFAULT_OFFSETS);
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("non-incremental w multiple transforms", () => {
@@ -134,7 +99,7 @@ describe("constructor", () => {
     t.translate(() => ({ x: dB }));
     t.apply(DEFAULT_OFFSETS);
     t.apply(DEFAULT_OFFSETS);
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 });
 
@@ -144,7 +109,7 @@ describe("toMatrix", () => {
     const t = newIncrementalTransform(init);
     const m = t.toMatrix();
     expect(m).toBeInstanceOf(DOMMatrixReadOnly);
-    expectToBeCloseToMatrix(m, init);
+    expect(m).toBeCloseToArray(init);
   });
 
   test("relativeTo", () => {
@@ -160,22 +125,22 @@ describe("toMatrix", () => {
 
     const t = newIncrementalTransform(init);
     const m = t.toMatrix(ref);
-    expectToBeCloseToMatrix(m, expected);
+    expect(m).toBeCloseToArray(expected);
 
     // not modified
-    expectToBeCloseToMatrix(t, init);
+    expect(t).toBeCloseToArray(init);
   });
 
   test("modifying", () => {
     const init = newTestMatrix();
-    const copy = new Float32Array(toArray(init));
+    const copy = new Float32Array(window.toArray(init));
     const t = newIncrementalTransform(init);
     const m = t.toMatrix();
     m.m21 *= 2;
 
     // not modified
-    expectToBeCloseToMatrix(init, copy);
-    expectToBeCloseToMatrix(t, init);
+    expect(init).toBeCloseToArray(copy);
+    expect(t).toBeCloseToArray(init);
   });
 });
 
@@ -185,7 +150,7 @@ describe("toFloat32Array", () => {
     const t = newIncrementalTransform(init);
     const m = t.toFloat32Array();
     expect(m).toBeInstanceOf(Float32Array);
-    expectToBeCloseToMatrix(m, init);
+    expect(m).toBeCloseToArray(init);
   });
 
   test("relativeTo", () => {
@@ -201,22 +166,22 @@ describe("toFloat32Array", () => {
 
     const t = newIncrementalTransform(init);
     const m = t.toFloat32Array(ref);
-    expectToBeCloseToMatrix(m, expected);
+    expect(m).toBeCloseToArray(expected);
 
     // not modified
-    expectToBeCloseToMatrix(t, init);
+    expect(t).toBeCloseToArray(init);
   });
 
   test("modifying", () => {
     const init = newTestMatrix();
-    const copy = new Float32Array(toArray(init));
+    const copy = new Float32Array(window.toArray(init));
     const t = newIncrementalTransform(init);
     const m = t.toFloat32Array();
     m[4] *= 2;
 
     // not modified
-    expectToBeCloseToMatrix(init, copy);
-    expectToBeCloseToMatrix(t, init);
+    expect(init).toBeCloseToArray(copy);
+    expect(t).toBeCloseToArray(init);
   });
 });
 
@@ -242,7 +207,7 @@ describe("toString", () => {
     expect(t.toString(ref)).toBe(new DOMMatrixReadOnly(expected).toString());
 
     // not modified
-    expectToBeCloseToMatrix(t, init);
+    expect(t).toBeCloseToArray(init);
   });
 });
 
@@ -272,7 +237,7 @@ describe("toCss", () => {
     });
 
     // not modified
-    expectToBeCloseToMatrix(t, init);
+    expect(t).toBeCloseToArray(init);
   });
 });
 
@@ -315,13 +280,13 @@ describe("toComposition", () => {
       .scale(1, 1, sz);
 
     const composed = tA.toComposition(tB, tC);
-    expectToBeCloseToMatrix(composed, expectedInit);
+    expect(composed).toBeCloseToArray(expectedInit);
 
     composed.apply(DEFAULT_OFFSETS);
-    expectToBeCloseToMatrix(composed, expectedFinal);
-    expectToBeCloseToMatrix(tA, initA); // unchanged
-    expectToBeCloseToMatrix(tB, initB); // unchanged
-    expectToBeCloseToMatrix(tC, initC); // unchanged
+    expect(composed).toBeCloseToArray(expectedFinal);
+    expect(tA).toBeCloseToArray(initA); // unchanged
+    expect(tB).toBeCloseToArray(initB); // unchanged
+    expect(tC).toBeCloseToArray(initC); // unchanged
 
     expect(composed.isAbsolute()).toBe(false);
     expect(composed.toPerspective()).toBeUndefined();
@@ -366,14 +331,14 @@ describe("toComposition", () => {
       .scale(1, 1, sz);
 
     const composed = tA.toComposition(tB, tC, tD);
-    expectToBeCloseToMatrix(composed, expectedInit);
+    expect(composed).toBeCloseToArray(expectedInit);
 
     composed.apply(DEFAULT_OFFSETS);
-    expectToBeCloseToMatrix(composed, expectedFinal);
-    expectToBeCloseToMatrix(tA, initA); // unchanged
-    expectToBeCloseToMatrix(tB, initB); // unchanged
-    expectToBeCloseToMatrix(tC, initC); // unchanged
-    expectToBeCloseToMatrix(tD, initD); // unchanged
+    expect(composed).toBeCloseToArray(expectedFinal);
+    expect(tA).toBeCloseToArray(initA); // unchanged
+    expect(tB).toBeCloseToArray(initB); // unchanged
+    expect(tC).toBeCloseToArray(initC); // unchanged
+    expect(tD).toBeCloseToArray(initD); // unchanged
 
     expect(composed.isAbsolute()).toBe(true);
     expect(composed.toPerspective()).toBeUndefined();
@@ -451,17 +416,17 @@ describe("translate", () => {
 
     const t = newIncrementalTransform();
     t.translate((d) => ({ x: d.x }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: d });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, x: -d });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: d / 2 });
     t.apply({ ...DEFAULT_OFFSETS, x: d / 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("Y", () => {
@@ -475,17 +440,17 @@ describe("translate", () => {
 
     const t = newIncrementalTransform();
     t.translate((d) => ({ y: d.y }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, y: d });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, y: -d });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, y: d / 2 });
     t.apply({ ...DEFAULT_OFFSETS, y: d / 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("Z", () => {
@@ -499,17 +464,17 @@ describe("translate", () => {
 
     const t = newIncrementalTransform();
     t.translate((d) => ({ z: d.ny }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: d });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: -d });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: d / 2 });
     t.apply({ ...DEFAULT_OFFSETS, ny: d / 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("XYZ", () => {
@@ -525,17 +490,17 @@ describe("translate", () => {
 
     const t = newIncrementalTransform();
     t.translate((d) => ({ x: d.x, y: d.y, z: d.ny }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: dx, y: dy, ny: dz });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, x: -dx, y: -dy, ny: -dz });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: dx / 2, y: dy / 2, ny: dz / 2 });
     t.apply({ ...DEFAULT_OFFSETS, x: dx / 2, y: dy / 2, ny: dz / 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 });
 
@@ -562,17 +527,17 @@ describe("scale", () => {
 
     const t = newIncrementalTransform();
     t.scale((d) => ({ sx: d.nx }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, nx: s });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, nx: 1 / s });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, nx: s / 2 });
     t.apply({ ...DEFAULT_OFFSETS, nx: 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("Y", () => {
@@ -586,17 +551,17 @@ describe("scale", () => {
 
     const t = newIncrementalTransform();
     t.scale((d) => ({ sy: d.ny }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: s });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: 1 / s });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: s / 2 });
     t.apply({ ...DEFAULT_OFFSETS, ny: 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("Z", () => {
@@ -609,24 +574,24 @@ describe("scale", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.scale((d) => ({ sz: d.dny }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    t.scale((d) => ({ sz: d.ny }));
+    expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, dny: s });
-    expectToBeCloseToMatrix(t, expected);
+    t.apply({ ...DEFAULT_OFFSETS, ny: s });
+    expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, dny: 1 / s });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    t.apply({ ...DEFAULT_OFFSETS, ny: 1 / s });
+    expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, dny: s / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, dny: 2 });
-    expectToBeCloseToMatrix(t, expected);
+    t.apply({ ...DEFAULT_OFFSETS, ny: s / 2 });
+    t.apply({ ...DEFAULT_OFFSETS, ny: 2 });
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("XYZ", () => {
     const sx = 10,
       sy = 20,
-      sz = 30;
+      sz = sx * sy;
     const expected = new Float32Array([
       ...[sx, 0, 0, 0],
       ...[0, sy, 0, 0],
@@ -636,32 +601,30 @@ describe("scale", () => {
 
     const t = newIncrementalTransform();
     t.scale((d) => ({
-      s: d.nx + d.ny + d.dny /* ignored */,
+      s: d.nx + d.ny /* ignored */,
       sx: d.nx,
       sy: d.ny,
-      sz: d.dny,
+      sz: d.nx * d.ny,
     }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, nx: sx, ny: sy, dny: sz });
-    expectToBeCloseToMatrix(t, expected);
+    t.apply({ ...DEFAULT_OFFSETS, nx: sx, ny: sy });
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({
       ...DEFAULT_OFFSETS,
       nx: 1 / sx,
       ny: 1 / sy,
-      dny: 1 / sz,
     });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({
       ...DEFAULT_OFFSETS,
       nx: sx / 2,
-      ny: sy / 2,
-      dny: sz / 4,
+      ny: sy / 4,
     });
-    t.apply({ ...DEFAULT_OFFSETS, nx: 2, ny: 2, dny: 4 });
-    expectToBeCloseToMatrix(t, expected);
+    t.apply({ ...DEFAULT_OFFSETS, nx: 2, ny: 4 });
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("XYZ v2", () => {
@@ -675,23 +638,23 @@ describe("scale", () => {
 
     const t = newIncrementalTransform();
     t.scale((d) => ({ s: d.ny }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: s });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: 1 / s });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: s / 2 });
     t.apply({ ...DEFAULT_OFFSETS, ny: 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("at origin", () => {
     const sx = 10,
       sy = 20,
-      sz = 40;
+      sz = sx * sy;
     const ox = 100,
       oy = 200,
       oz = 400;
@@ -703,28 +666,31 @@ describe("scale", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.scale((d) => ({ sx: d.nx, sy: d.ny, sz: d.dny, origin: [ox, oy, oz] }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    t.scale((d) => ({
+      sx: d.nx,
+      sy: d.ny,
+      sz: d.nx * d.ny,
+      origin: [ox, oy, oz],
+    }));
+    expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, nx: sx, ny: sy, dny: sz });
-    expectToBeCloseToMatrix(t, expected);
+    t.apply({ ...DEFAULT_OFFSETS, nx: sx, ny: sy });
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({
       ...DEFAULT_OFFSETS,
       nx: 1 / sx,
       ny: 1 / sy,
-      dny: 1 / sz,
     });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({
       ...DEFAULT_OFFSETS,
       nx: sx / 2,
-      ny: sy / 2,
-      dny: sz / 4,
+      ny: sy / 4,
     });
-    t.apply({ ...DEFAULT_OFFSETS, nx: 2, ny: 2, dny: 4 });
-    expectToBeCloseToMatrix(t, expected);
+    t.apply({ ...DEFAULT_OFFSETS, nx: 2, ny: 4 });
+    expect(t).toBeCloseToArray(expected);
   });
 });
 
@@ -756,13 +722,13 @@ describe("skew", () => {
 
     const t = newIncrementalTransform();
     t.skew((d) => ({ degX: d.x }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: deg });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, x: -deg });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
   });
 
   test("Y", () => {
@@ -775,13 +741,13 @@ describe("skew", () => {
 
     const t = newIncrementalTransform();
     t.skew((d) => ({ degY: d.y }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, y: deg });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, y: -deg });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
   });
 
   test("XY", () => {
@@ -794,14 +760,14 @@ describe("skew", () => {
 
     const t = newIncrementalTransform();
     t.skew((d) => ({ deg: d.x + d.y /* ignored */, degX: d.x, degY: d.y }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: deg, y: deg2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, y: -deg2 });
     t.apply({ ...DEFAULT_OFFSETS, x: -deg });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
   });
 
   test("XY v2", () => {
@@ -814,10 +780,10 @@ describe("skew", () => {
 
     const t = newIncrementalTransform();
     t.skew((d) => ({ deg: d.y }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, y: deg });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 });
 
@@ -847,17 +813,17 @@ describe("rotate", () => {
 
     const t = newIncrementalTransform();
     t.rotate((d) => ({ deg: d.x, axis: [1, 0, 0] }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: deg });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, x: -deg });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: deg / 2 });
     t.apply({ ...DEFAULT_OFFSETS, x: deg / 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("Y", () => {
@@ -870,17 +836,17 @@ describe("rotate", () => {
 
     const t = newIncrementalTransform();
     t.rotate((d) => ({ deg: d.y, axis: [0, 1, 0] }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, y: deg });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, y: -deg });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
     t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("Z", () => {
@@ -893,17 +859,17 @@ describe("rotate", () => {
 
     const t = newIncrementalTransform();
     t.rotate((d) => ({ deg: d.ny, axis: [0, 0, 1] }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: deg });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: -deg });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, ny: deg / 2 });
     t.apply({ ...DEFAULT_OFFSETS, ny: deg / 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("X.Y.Z", () => {
@@ -921,10 +887,10 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.x, axis: [1, 0, 0] }));
     t.rotate((d) => ({ deg: d.y, axis: [0, 1, 0] }));
     t.rotate((d) => ({ deg: d.ny, axis: [0, 0, 1] }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, x: degX, y: degY, ny: degZ });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("XYZ", () => {
@@ -937,17 +903,17 @@ describe("rotate", () => {
 
     const t = newIncrementalTransform();
     t.rotate((d) => ({ deg: d.y, axis: [1, 2, 3] }));
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, y: deg });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
 
     t.apply({ ...DEFAULT_OFFSETS, y: -deg });
-    expectToBeCloseToMatrix(t, IDENTITY);
+    expect(t).toBeCloseToArray(IDENTITY);
 
     t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
     t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 });
 
@@ -974,7 +940,7 @@ describe("chaining", () => {
     t.rotate(() => ({ deg: r, axis: ra }));
     t.skew(() => ({ degY: sk }));
     t.apply(DEFAULT_OFFSETS);
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 
   test("order 2", () => {
@@ -999,6 +965,6 @@ describe("chaining", () => {
     t.scale(() => ({ sx, sy, sz }));
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.apply(DEFAULT_OFFSETS);
-    expectToBeCloseToMatrix(t, expected);
+    expect(t).toBeCloseToArray(expected);
   });
 });

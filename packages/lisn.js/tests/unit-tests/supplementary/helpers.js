@@ -83,3 +83,14 @@ window.newTouch = (type, ...xy) => {
 
   return new TouchEvent("touch" + type, { touches, cancelable: true });
 };
+
+window.toArray = (a) => {
+  if ("toFloat32Array" in a) {
+    a = a.toFloat32Array();
+  } else if ("toFloat64Array" in a) {
+    a = a.toFloat64Array();
+  } else if ("toArray" in a) {
+    a = a.toArray();
+  }
+  return Array.from(a);
+};

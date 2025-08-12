@@ -24,10 +24,12 @@ import { wrapCallback } from "@lisn/modules/callback";
 
 import {
   Effect,
+  // EffectInterface, // XXX
   EffectsList,
   EffectRegistry,
   ScrollOffsets,
 } from "@lisn/effects/effect";
+// import { Transform } from "@lisn/effects/transform"; // XXX
 
 import {
   ScrollWatcher,
@@ -70,8 +72,8 @@ export class FXController {
    *
    * @returns The same {@link FXController} instance.
    */
-  readonly add: <T extends readonly (keyof EffectRegistry)[]>(
-    effects: EffectsList<T>,
+  readonly add: <TL extends readonly (keyof EffectRegistry)[]>(
+    effects: EffectsList<TL>,
     range?: EffectRange,
   ) => FXController;
 
@@ -102,6 +104,13 @@ export class FXController {
   readonly apply: (offsets: ScrollOffsets) => FXController;
 
   /**
+   * Returns the combined effect for the given type.
+   */
+  readonly getComposition: <T extends keyof EffectRegistry>(
+    type: T,
+  ) => Effect<T> | undefined;
+
+  /**
    * Returns an object with the CSS properties and their values to set for the
    * element being animated.
    *
@@ -115,37 +124,57 @@ export class FXController {
   constructor(config?: FXControllerConfig) {
     const { scrollable } = config ?? {};
 
-    let entries: Array<EffectState>;
+    const effectsMap: EffectsMap = new Map();
+    const compositionsMap: CompositionMap = new Map();
+    const callbacks: Array<OnScrollCallback | OnViewCallback> = [];
 
     this.add = (effects, range) => {
-      entries.push(newEffectsEntry(scrollable, effects, range));
+      const state = newEffectState(scrollable, callbacks, range);
+
+      for (const effect of effects) {
+        const states = effectsMap.get(effect.type) ?? [];
+        states.push({ _effect: effect, _state: state });
+      }
       return this;
     };
 
     this.clear = () => {
-      for (const e of entries) {
-        for (const c of e._callbacks) {
-          c.remove();
-        }
+      for (const cbk of callbacks) {
+        cbk.remove();
       }
-      entries = [];
+      callbacks.splice(0, MH.lengthOf(callbacks));
+      effectsMap.clear();
       return this;
     };
 
     this.apply = (offsets) => {
-      for (const e of entries) {
-        for (const effects of e._effects.values()) {
-          for (const effect of effects) {
-            effect.apply(offsets);
+      for (const [type, entries] of effectsMap) {
+        const toCompose: Effect<typeof type>[] = [];
+
+        for (const entry of entries) {
+          if (entry._state !== null) {
+            toCompose.push(entry._effect.apply(offsets) as Effect<typeof type>);
           }
+        }
+
+        const composed = toCompose[0]?.toComposition(...toCompose.slice(1));
+        if (composed) {
+          compositionsMap.set(type, composed);
+        } else {
+          compositionsMap.delete(type);
         }
       }
       return this;
     };
 
+    this.getComposition = (type) => compositionsMap.get(type);
+
     this.toCss = (relativeTo) => {
       const css: Record<string, string> = {};
-      // XXX TODO
+      for (const [type, effect] of compositionsMap) {
+        const referenceEffect = relativeTo?.getComposition(type);
+        MH.assign(css, effect.toCss(referenceEffect));
+      }
       return css;
     };
   }
@@ -164,43 +193,69 @@ export type FXControllerConfig = {
 // ------------------------------
 
 interface EffectsMap {
-  get<K extends keyof EffectRegistry>(key: K): Effect<K>[] | undefined;
-  set<K extends keyof EffectRegistry>(key: K, value: Effect<K>[]): this;
-  has<K extends keyof EffectRegistry>(key: K): boolean;
-  delete<K extends keyof EffectRegistry>(key: K): boolean;
+  get<T extends keyof EffectRegistry>(key: T): EffectEntry<T>[] | undefined;
+  set<T extends keyof EffectRegistry>(key: T, value: EffectEntry<T>[]): this;
+  has<T extends keyof EffectRegistry>(key: T): boolean;
+  delete<T extends keyof EffectRegistry>(key: T): boolean;
+  clear(): void;
   keys(): IterableIterator<keyof EffectRegistry>;
-  values(): IterableIterator<Effect<keyof EffectRegistry>[]>;
-  entries(): IterableIterator<
-    [keyof EffectRegistry, Effect<keyof EffectRegistry>[]]
+  values(): IterableIterator<EffectEntry<keyof EffectRegistry>[]>;
+  entries<T extends keyof EffectRegistry>(): IterableIterator<
+    [T, EffectEntry<T>[]]
   >;
-  [Symbol.iterator](): IterableIterator<
-    [keyof EffectRegistry, Effect<keyof EffectRegistry>[]]
+  forEach<T extends keyof EffectRegistry>(
+    callbackfn: (value: Effect<T>[], key: T, map: this) => void,
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    thisArg?: any,
+  ): void;
+  [Symbol.iterator]<T extends keyof EffectRegistry>(): IterableIterator<
+    [T, EffectEntry<T>[]]
   >;
 }
 
+interface CompositionMap {
+  get<T extends keyof EffectRegistry>(key: T): Effect<T> | undefined;
+  set<T extends keyof EffectRegistry>(key: T, value: Effect<T>): this;
+  has<T extends keyof EffectRegistry>(key: T): boolean;
+  delete<T extends keyof EffectRegistry>(key: T): boolean;
+  clear(): void;
+  keys(): IterableIterator<keyof EffectRegistry>;
+  values(): IterableIterator<Effect<keyof EffectRegistry>>;
+  entries(): IterableIterator<
+    [keyof EffectRegistry, Effect<keyof EffectRegistry>]
+  >;
+  forEach(
+    callbackfn: (
+      value: Effect<keyof EffectRegistry>[],
+      key: keyof EffectRegistry,
+      map: this,
+    ) => void,
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    thisArg?: any,
+  ): void;
+  [Symbol.iterator](): IterableIterator<
+    [keyof EffectRegistry, Effect<keyof EffectRegistry>]
+  >;
+}
+
+type EffectEntry<T extends keyof EffectRegistry> = {
+  _effect: Effect<T>;
+  _state: EffectState;
+};
+
 type EffectState = {
-  _effects: EffectsMap;
-  _callbacks: Array<OnScrollCallback | OnViewCallback>;
   _activeSince: ScrollData | null;
 };
 
-const newEffectsEntry = <T extends readonly (keyof EffectRegistry)[]>(
+const newEffectState = (
   scrollable: ScrollTarget | undefined,
-  effects: EffectsList<T>,
+  callbacks: Array<OnScrollCallback | OnViewCallback>,
   range: EffectRange | undefined,
 ) => {
   const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
   const viewWatcher = ViewWatcher.reuse();
-  const effectsMap: EffectsMap = new Map();
-  for (const e of effects) {
-    const arr = effectsMap.get(e.type) ?? [];
-    arr.push(e);
-    effectsMap.set(e.type, arr);
-  }
 
   const state: EffectState = {
-    _effects: effectsMap,
-    _callbacks: [],
     _activeSince: null,
   };
 
@@ -222,7 +277,7 @@ const newEffectsEntry = <T extends readonly (keyof EffectRegistry)[]>(
     });
 
     scrollWatcher.onScroll(cbk, { scrollable });
-    state._callbacks.push(cbk);
+    callbacks.push(cbk);
   };
 
   const addViewCondition = (
@@ -236,7 +291,7 @@ const newEffectsEntry = <T extends readonly (keyof EffectRegistry)[]>(
     });
 
     viewWatcher.onView(target, cbk, { views });
-    state._callbacks.push(cbk);
+    callbacks.push(cbk);
   };
 
   const addCondition = (
@@ -312,12 +367,17 @@ const offsetIsPastRef = (
 //   }
 // }
 //
-// const foo = <T extends readonly (keyof EffectRegistry)[]>(
-//   effects: EffectsList<T>,
+// const fx = new FXController();
+// fx.add([new Transform(), new Foo()]).add([new Transform()]);
+// const tr1__ignored = fx.getComposition("transform");
+// const tr2__ignored: Transform | undefined = fx.getComposition("transform");
+//
+// const foo = <TL extends readonly (keyof EffectRegistry)[]>(
+//   effects: EffectsList<TL>,
 // ) => effects;
 //
-// const bar = <T extends readonly (keyof EffectRegistry)[]>(
-//   ...effects: EffectsList<T>
+// const bar = <TL extends readonly (keyof EffectRegistry)[]>(
+//   ...effects: EffectsList<TL>
 // ) => effects;
 //
 // const x1__ignored = foo([new Transform()]);
@@ -328,11 +388,27 @@ const offsetIsPastRef = (
 // const x6__ignored = bar(new Transform(), new Foo());
 //
 // const effectsMap: EffectsMap = new Map();
-// effectsMap.set("transform", [new Transform()]);
-// effectsMap.set("transform", [new Foo()]);
-// effectsMap.set("foo", [new Foo()]);
-// effectsMap.set("foo", [new Foo(), new Foo()]);
+// effectsMap.set("transform", [
+//   { _effect: new Transform(), _state: { _activeSince: null } },
+// ]);
+// effectsMap.set("transform", [
+//   { _effect: new Foo(), _state: { _activeSince: null } },
+// ]); // should error
+// effectsMap.set("foo", [
+//   { _effect: new Transform(), _state: { _activeSince: null } },
+// ]); // should error
+// effectsMap.set("foo", [{ _effect: new Foo(), _state: { _activeSince: null } }]);
 // const x__ignored = effectsMap.get("transform");
 // const y__ignored = effectsMap.get("foo");
 // const z__ignored = effectsMap.keys();
 // const zz__ignored = effectsMap.values();
+//
+// const t = new Transform();
+// const ta__ignored = t.apply({} as ScrollOffsets);
+//
+// const baz = <T extends keyof EffectRegistry>(e: Effect<T>) => {
+//   const res = e.apply({} as ScrollOffsets);
+//   return res;
+// };
+//
+// const zzz__ignored = baz(new Transform());

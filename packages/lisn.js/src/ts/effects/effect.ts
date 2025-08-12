@@ -7,19 +7,19 @@
 /**
  * @interface
  */
-export type EffectInterface<T extends keyof EffectRegistry> = {
+export interface EffectInterface<T extends keyof EffectRegistry> {
   type: T;
-  apply: (offsets: ScrollOffsets) => EffectRegistry[T];
-  toComposition: (...others: EffectRegistry[T][]) => EffectRegistry[T];
-  toCss: (relativeTo?: EffectRegistry[T]) => Record<string, string>;
-};
+  apply: (offsets: ScrollOffsets) => Effect<T>;
+  toComposition: (...others: Effect<T>[]) => Effect<T>;
+  toCss: (relativeTo?: Effect<T>) => Record<string, string>;
+}
 
 export type Effect<T extends keyof EffectRegistry> = EffectRegistry[T] &
   EffectInterface<T>;
 
-export type EffectsList<T extends readonly (keyof EffectRegistry)[]> = [
+export type EffectsList<TL extends readonly (keyof EffectRegistry)[]> = [
   ...{
-    [K in keyof T]: Effect<T[K]>;
+    [T in keyof TL]: Effect<TL[T]>;
   },
 ];
 

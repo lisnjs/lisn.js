@@ -7,9 +7,21 @@
 /**
  * @interface
  */
-export type Effect = {
-  apply: (element: Element, offsets: ScrollOffsets) => Effect;
+export type EffectInterface<T extends keyof EffectRegistry> = {
+  type: T;
+  apply: (offsets: ScrollOffsets) => EffectRegistry[T];
+  toComposition: (...others: EffectRegistry[T][]) => EffectRegistry[T];
+  toCss: (relativeTo?: EffectRegistry[T]) => Record<string, string>;
 };
+
+export type Effect<T extends keyof EffectRegistry> = EffectRegistry[T] &
+  EffectInterface<T>;
+
+export type EffectsList<T extends readonly (keyof EffectRegistry)[]> = [
+  ...{
+    [K in keyof T]: Effect<T[K]>;
+  },
+];
 
 export type EffectHandler<R> = (offsets: ScrollOffsets) => R;
 
@@ -62,3 +74,9 @@ export type ScrollOffsets = {
    */
   dny: number;
 };
+
+/**
+ * Add to this when registering a new effect.
+ */
+/* eslint-disable-next-line @typescript-eslint/no-empty-object-type */
+export interface EffectRegistry {}

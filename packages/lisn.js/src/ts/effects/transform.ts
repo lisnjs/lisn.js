@@ -10,30 +10,34 @@ import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
 import { isValidNum, sum } from "@lisn/utils/math";
 
-import { Effect, EffectHandler, ScrollOffsets } from "@lisn/effects/effect";
+import {
+  EffectInterface,
+  EffectHandler,
+  ScrollOffsets,
+} from "@lisn/effects/effect";
+
+export type TransformLike = Transform | DOMMatrix | Float32Array;
 
 /**
  * {@link Transform} controls an element's transform as a 3D matrix.
  */
-export class Transform implements Effect {
+export class Transform implements EffectInterface<"transform"> {
+  readonly type = "transform";
+
   /**
    * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrixReadOnly | DOMMatrixReadOnly} representing the transform.
    *
    * @param relativeTo If given, then this matrix is first inverted and used as
    *                   a pre-multiplication
    */
-  readonly toMatrix: (
-    relativeTo?: Transform | DOMMatrix | Float32Array,
-  ) => DOMMatrixReadOnly;
+  readonly toMatrix: (relativeTo?: TransformLike) => DOMMatrixReadOnly;
 
   /**
    * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array | Float32Array} representing the transform.
    *
    * @param relativeTo See {@link toMatrix}
    */
-  readonly toFloat32Array: (
-    relativeTo?: Transform | DOMMatrix | Float32Array,
-  ) => Float32Array;
+  readonly toFloat32Array: (relativeTo?: TransformLike) => Float32Array;
 
   /**
    * Returns a `perspective(...) matrix3d(...)` string for use as a CSS property.
@@ -42,9 +46,26 @@ export class Transform implements Effect {
    *
    * @param relativeTo See {@link toMatrix}
    */
-  readonly toString: (
-    relativeTo?: Transform | DOMMatrix | Float32Array,
-  ) => string;
+  readonly toString: (relativeTo?: TransformLike) => string;
+
+  /**
+   * Returns an object with the `transform` property and value equal to what's
+   * returned by {@link toString}.
+   *
+   * @param relativeTo See {@link toMatrix}
+   */
+  readonly toCss: (relativeTo?: TransformLike) => Record<string, string>;
+
+  /**
+   * Returns a new {@link Transform} that's the product of this one with all the
+   * other given ones in order.
+   *
+   * The perspective in the last transform that sets one is the one that's
+   * preserved.
+   *
+   * @returns **A new** {@link Transform} instance.
+   */
+  readonly toComposition: (...others: Array<TransformLike>) => Transform;
 
   /**
    * Sets the transform's perspective. Perspective applies at the start of
@@ -145,7 +166,7 @@ export class Transform implements Effect {
     const addHandler = (handler: EffectHandler<void>) =>
       allHandlers.push(handler);
 
-    const toMatrix = (relativeTo?: Transform | DOMMatrix | Float32Array) => {
+    const toMatrix = (relativeTo?: TransformLike) => {
       const m = newMatrix(true, selfM);
       const relM = relativeTo ? newMatrix(true, relativeTo) : null;
       return relM ? relM.inverse().multiply(m) : m;
@@ -174,6 +195,14 @@ export class Transform implements Effect {
     this.toString = (relativeTo) =>
       (perspective ? `perspective(${perspective}) ` : "") +
       toMatrix(relativeTo).toString();
+    this.toCss = (relativeTo) => ({ transform: this.toString(relativeTo) });
+    this.toComposition = (...others) => {
+      const matrix = newMatrix(false, selfM);
+      for (const o of others) {
+        matrix.multiplySelf(newMatrix(true, o));
+      }
+      return new Transform({ init: matrix });
+    };
 
     this.perspective = (handler) => {
       addHandler((offsets) => {
@@ -260,15 +289,12 @@ export type TransformConfig = {
    *
    * @defaultValue undefined // identity matrix
    */
-  init?: Transform | DOMMatrix | Float32Array;
+  init?: TransformLike;
 };
 
 // ----------------------------------------
 
-const newMatrix = <B extends boolean>(
-  readonly: B,
-  init?: Transform | DOMMatrix | Float32Array,
-) => {
+const newMatrix = <B extends boolean>(readonly: B, init?: TransformLike) => {
   const initM = MH.isInstanceOf(init, Transform) ? init.toMatrix() : init;
   return new (readonly ? DOMMatrixReadOnly : DOMMatrix)(
     MH.isNullish(initM)
@@ -294,3 +320,9 @@ const validateInputs = (
     }
   }
 };
+
+declare module "@lisn/effects/effect" {
+  interface EffectRegistry {
+    transform: Transform;
+  }
+}

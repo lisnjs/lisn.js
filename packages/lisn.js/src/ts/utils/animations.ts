@@ -14,7 +14,7 @@ import {
   waitForMeasureTime,
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
-import { criticallyDamped } from "@lisn/utils/math";
+import { criticallyDamped, isValidNum } from "@lisn/utils/math";
 
 /**
  * @since v1.2.0
@@ -214,7 +214,7 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
 
     const result = next();
     lTarget = (yield result) ?? lTarget;
-    if (l === lTarget) {
+    if (l === lTarget || !isValidNum(l)) {
       return result;
     }
   }

@@ -8,9 +8,38 @@
  * @interface
  */
 export interface EffectInterface<T extends keyof EffectRegistry> {
+  /**
+   * Unique type for the transform
+   */
   type: T;
+
+  /**
+   * Returns true if the effect is absolute. If true, its handlers receive
+   * absolute offsets instead of delta values and applying the effect discards
+   * all previous ones of its type.
+   */
+  isAbsolute: () => boolean;
+
+  /**
+   * Applies all added effects for the given scroll offsets.
+   */
   apply: (offsets: ScrollOffsets) => Effect<T>;
+
+  /**
+   * Returns a **new** live effect that has all the handlers from this one and
+   * the given effects, in order. The resulting state/value is the combined
+   * product of its current state and that of all the other given ones.
+   *
+   * **NOTE:** If any of the given effects is
+   * {@link TransformConfig.isAbsolute | absolute}, all previous ones are
+   * essentially discarded and the resulting effect becomes absolute.
+   */
   toComposition: (...others: Effect<T>[]) => Effect<T>;
+
+  /**
+   * Returns an object with CSS properties and their values that represent the
+   * effect.
+   */
   toCss: (relativeTo?: Effect<T>) => Record<string, string>;
 }
 
@@ -29,18 +58,22 @@ export type EffectHandler<R> = (offsets: ScrollOffsets) => R;
  * The scroll offsets for the current animation frame, being smoothly
  * interpolated towards the target ones.
  *
+ * **IMPORTANT:** They may either be absolute (actual offsets) or incremental
+ * (delta values), depending on whether the {@link Effect} using those is
+ * {@link Effect.isAbsolute | absolute} or not.
+ *
  * @category Effects
  */
 export type ScrollOffsets = {
   /**
-   * The current interpolated value for the scroll left offset.
+   * If the effect is absolute, this holds the current interpolated value for
+   * the scroll left offset scaled by the parallax depth of the element being
+   * animated.
+   *
+   * If the effect is incremental, then this holds the change in this absolute
+   * value since the last animation frame.
    */
   x: number;
-
-  /**
-   * The change in {@link x} since the last animation frame.
-   */
-  dx: number;
 
   /**
    * Normalized {@link x}: {@link x} as a fraction from 0 to 1 (maximum scroll
@@ -49,30 +82,20 @@ export type ScrollOffsets = {
   nx: number;
 
   /**
-   * The change in {@link nx} since the last animation frame.
-   */
-  dnx: number;
-
-  /**
-   * The current interpolated value for the scroll top offset.
+   * If the effect is absolute, this holds the current interpolated value for
+   * the scroll top offset scaled by the parallax depth of the element being
+   * animated.
+   *
+   * If the effect is incremental, then this holds the change in this absolute
+   * value since the last animation frame.
    */
   y: number;
-
-  /**
-   * The change in {@link y} since the last animation frame.
-   */
-  dy: number;
 
   /**
    * Normalized {@link y}: {@link y} as a fraction from 0 to 1 (maximum scroll
    * top offset).
    */
   ny: number;
-
-  /**
-   * The change in {@link ny} since the last animation frame.
-   */
-  dny: number;
 };
 
 /**

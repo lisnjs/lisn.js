@@ -4,11 +4,14 @@
  * @since v1.3.0
  */
 
+import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
 import { isValidNum, sum } from "@lisn/utils/math";
+
+import { newXWeakMap } from "@lisn/modules/x-map";
 
 import {
   EffectInterface,
@@ -23,6 +26,64 @@ export type TransformLike = Transform | DOMMatrix | Float32Array;
  */
 export class Transform implements EffectInterface<"transform"> {
   readonly type = "transform";
+
+  /**
+   * Returns true if the transform is absolute. If true, its handlers receive
+   * absolute offsets instead of delta values and applying the transform
+   * discards all previous ones, including their {@link perspective}.
+   */
+  readonly isAbsolute: () => boolean;
+
+  /**
+   * Applies all transforms for the given scroll offsets.
+   *
+   * @throws {@link Errors.LisnUsageError | LisnUsageError}
+   *                If any of the values returned by the {@link EffectHandler}
+   *                s is invalid.
+   *
+   * @returns The same {@link Transform} instance.
+   */
+  readonly apply: (offsets: ScrollOffsets) => Transform;
+
+  /**
+   * Returns a **new** live transform that has all the handlers from this one
+   * and the given transforms, in order. The resulting effective state (matrix)
+   * is the combined product of its current matrix and that of all the other
+   * given ones.
+   *
+   * **NOTE:** If any of the given transforms is
+   * {@link TransformConfig.isAbsolute | absolute}, all previous ones are
+   * essentially discarded and the resulting transform becomes absolute.
+   *
+   * @returns **A new** {@link Transform} instance.
+   */
+  readonly toComposition: (...others: Transform[]) => Transform;
+
+  /**
+   * Returns an object with the `transform` property and value equal to what's
+   * returned by {@link toString}.
+   *
+   * @param relativeTo See {@link toMatrix}
+   */
+  readonly toCss: (relativeTo?: TransformLike) => Record<string, string>;
+
+  /**
+   * Returns a `perspective(...) matrix3d(...)` string for use as a CSS property.
+   *
+   * If no perspective has been set, it's omitted from the string.
+   *
+   * @param relativeTo See {@link toMatrix}
+   */
+  readonly toString: (relativeTo?: TransformLike) => string;
+
+  /**
+   * Returns the current effective perspective (since the last call to
+   * {@link apply} set on the transform. If a number was passed, it is converted
+   * to a CSS length string in pixels.
+   *
+   * @returns A non-empty CSS string for perspective or `undefined`
+   */
+  readonly toPerspective: () => string | undefined;
 
   /**
    * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrixReadOnly | DOMMatrixReadOnly} representing the transform.
@@ -40,44 +101,17 @@ export class Transform implements EffectInterface<"transform"> {
   readonly toFloat32Array: (relativeTo?: TransformLike) => Float32Array;
 
   /**
-   * Returns a `perspective(...) matrix3d(...)` string for use as a CSS property.
-   *
-   * If no perspective has been set, it's omitted from the string.
-   *
-   * @param relativeTo See {@link toMatrix}
-   */
-  readonly toString: (relativeTo?: TransformLike) => string;
-
-  /**
-   * Returns an object with the `transform` property and value equal to what's
-   * returned by {@link toString}.
-   *
-   * @param relativeTo See {@link toMatrix}
-   */
-  readonly toCss: (relativeTo?: TransformLike) => Record<string, string>;
-
-  /**
-   * Returns a new {@link Transform} that's the product of this one with all the
-   * other given ones in order.
-   *
-   * The perspective in the last transform that sets one is the one that's
-   * preserved.
-   *
-   * @returns **A new** {@link Transform} instance.
-   */
-  readonly toComposition: (...others: Array<TransformLike>) => Transform;
-
-  /**
    * Sets the transform's perspective. Perspective applies at the start of
    * transforms and subsequent calls to this method always override previous
-   * ones, i.e. it is not additive.
+   * ones, i.e. it is not additive. Passing an empty string results in clearing
+   * the perspective completely.
    *
    * @param handler The handler that returns the perspective as a number (in
    *                 pixels) or CSS perspective string
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly perspective: (handler: EffectHandler<number | string>) => Transform;
+  readonly perspective: (handler: PerspectiveHandler) => Transform;
 
   /**
    * Translates the transform.
@@ -89,9 +123,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly translate: (
-    handler: EffectHandler<AtLeastOne<{ x: number; y: number; z: number }>>,
-  ) => Transform;
+  readonly translate: (handler: TranslateHandler) => Transform;
 
   /**
    * Scales the transform.
@@ -106,13 +138,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly scale: (
-    handler: EffectHandler<
-      AtLeastOne<{ s: number; sx: number; sy: number; sz: number }> & {
-        origin?: Origin;
-      }
-    >,
-  ) => Transform;
+  readonly scale: (handler: ScaleHandler) => Transform;
 
   /**
    * Skews the transform. If skewing along both axis (i.e. both `degX` and
@@ -127,11 +153,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly skew: (
-    handler: EffectHandler<
-      AtLeastOne<{ deg: number; degX: number; degY: number }>
-    >,
-  ) => Transform;
+  readonly skew: (handler: SkewHandler) => Transform;
 
   /**
    * Rotates the transform around the given axis.
@@ -142,29 +164,21 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly rotate: (
-    handler: EffectHandler<{ deg: number; axis?: Axis }>,
-  ) => Transform;
-
-  /**
-   * Applies all transforms for the given scroll offsets.
-   *
-   * @throws {@link Errors.LisnUsageError | LisnUsageError}
-   *                If any of the values returned by the {@link EffectHandler}
-   *                s is invalid.
-   *
-   * @returns The same {@link Transform} instance.
-   */
-  readonly apply: (offsets: ScrollOffsets) => Transform;
+  readonly rotate: (handler: RotateHandler) => Transform;
 
   constructor(config?: TransformConfig) {
-    const { isIncremental, init } = config ?? {};
+    const { isAbsolute = false, init } = config ?? {};
     const selfM = newMatrix(false, init);
-    const allHandlers: EffectHandler<void>[] = [];
-    let perspective = "";
+    const processedHandlers: EffectHandler<void>[] = [];
+    let perspective: string | undefined = undefined;
 
-    const addHandler = (handler: EffectHandler<void>) =>
-      allHandlers.push(handler);
+    const addOwnHandler = <T extends HandlerTuple>(
+      original: T,
+      processed: EffectHandler<void>,
+    ) => {
+      processedHandlers.push(processed);
+      saveHandlerFor(this, original);
+    };
 
     const toMatrix = (relativeTo?: TransformLike) => {
       const m = newMatrix(true, selfM);
@@ -190,30 +204,77 @@ export class Transform implements EffectInterface<"transform"> {
       return this;
     };
 
-    this.toMatrix = toMatrix;
-    this.toFloat32Array = (relativeTo) => toMatrix(relativeTo).toFloat32Array();
+    // ----------
+
+    this.isAbsolute = () => isAbsolute;
+
+    this.apply = (offsets) => {
+      if (isAbsolute) {
+        reset();
+      }
+
+      for (const handler of processedHandlers) {
+        handler(offsets);
+      }
+
+      return this;
+    };
+
+    this.toComposition = (...others) => {
+      let toCombine: Transform[] = [];
+      let resIsAbsolute = false;
+      // Avoid computing products unnecessarily, so filter first.
+      for (const t of [this, ...others]) {
+        if (t.isAbsolute()) {
+          resIsAbsolute = true;
+          toCombine = [];
+        }
+
+        toCombine.push(t);
+      }
+
+      const resultInit = new DOMMatrix();
+      const resultHandlers: HandlerTuple[] = [];
+      for (const t of toCombine) {
+        resultInit.multiplySelf(t.toMatrix());
+        resultHandlers.push(...getHandlersFor(t));
+      }
+
+      const result = new Transform({
+        isAbsolute: resIsAbsolute,
+        init: resultInit,
+      });
+
+      for (const h of resultHandlers) {
+        addAndSaveHandlerFor(result, h);
+      }
+
+      return result;
+    };
+
+    this.toCss = (relativeTo) => ({ transform: this.toString(relativeTo) });
     this.toString = (relativeTo) =>
       (perspective ? `perspective(${perspective}) ` : "") +
       toMatrix(relativeTo).toString();
-    this.toCss = (relativeTo) => ({ transform: this.toString(relativeTo) });
-    this.toComposition = (...others) => {
-      const matrix = newMatrix(false, selfM);
-      for (const o of others) {
-        matrix.multiplySelf(newMatrix(true, o));
-      }
-      return new Transform({ init: matrix });
-    };
+    this.toPerspective = () => perspective;
+
+    this.toMatrix = toMatrix;
+    this.toFloat32Array = (relativeTo) => toMatrix(relativeTo).toFloat32Array();
 
     this.perspective = (handler) => {
-      addHandler((offsets) => {
+      addOwnHandler([PERSPECTIVE, handler], (offsets) => {
         const res = handler(offsets);
-        perspective = res ? (MH.isString(res) ? res : `${res}px`) : "";
+        perspective = MH.isEmpty(res)
+          ? undefined
+          : MH.isString(res)
+            ? res
+            : `${res}px`;
       });
       return this;
     };
 
     this.translate = (handler) => {
-      addHandler((offsets) => {
+      addOwnHandler([TRANSLATE, handler], (offsets) => {
         const { x = 0, y = 0, z = 0 } = handler(offsets) ?? {};
         validateInputs("Translate distance", [x, y, z]);
         selfM.translateSelf(x, y, z);
@@ -222,7 +283,7 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.scale = (handler) => {
-      addHandler((offsets) => {
+      addOwnHandler([SCALE, handler], (offsets) => {
         const {
           s = 1,
           sx = s,
@@ -238,7 +299,7 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.skew = (handler) => {
-      addHandler((offsets) => {
+      addOwnHandler([SKEW, handler], (offsets) => {
         const { deg = 0, degX = deg, degY = deg } = handler(offsets) ?? {};
         validateInputs("Skew angle", [degX, degY]);
         selfM.skewXSelf(degX).skewYSelf(degY);
@@ -247,7 +308,7 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.rotate = (handler) => {
-      addHandler((offsets) => {
+      addOwnHandler([ROTATE, handler], (offsets) => {
         const { deg = 0, axis = [0, 0, 1] } = handler(offsets) ?? {};
         validateInputs("Rotation angle", [deg]);
         validateInputs("Rotation axis", [sum(...axis)], true);
@@ -255,36 +316,39 @@ export class Transform implements EffectInterface<"transform"> {
       });
       return this;
     };
-
-    this.apply = (offsets) => {
-      if (!isIncremental) {
-        reset();
-      }
-
-      for (const handler of allHandlers) {
-        handler(offsets);
-      }
-
-      return this;
-    };
   }
 }
 
+export type PerspectiveHandler = EffectHandler<number | string>;
+export type TranslateHandler = EffectHandler<
+  AtLeastOne<{ x: number; y: number; z: number }>
+>;
+export type ScaleHandler = EffectHandler<
+  AtLeastOne<{ s: number; sx: number; sy: number; sz: number }> & {
+    origin?: Origin;
+  }
+>;
+export type SkewHandler = EffectHandler<
+  AtLeastOne<{ deg: number; degX: number; degY: number }>
+>;
+export type RotateHandler = EffectHandler<{ deg: number; axis?: Axis }>;
+
 export type TransformConfig = {
   /**
-   * By default {@link Transform.apply | Applying} this transform will reset the
-   * current matrix back to the identity and start from scratch. This means that
-   * the return values from your {@link EffectHandler}s should use the absolute
-   * offsets in {@link ScrollOffsets}. If you want to use the delta values instead
-   * and have the previous matrix be preserved and multiplied by the new matrix at
-   * each frame, set `isIncremental` to `true`
+   * If this is true, the {@link EffectHandler}s will receive absolute scroll
+   * offsets in {@link ScrollOffsets} and the current matrix will be reset back
+   * to the identity at each invocation to {@link Transform.apply | apply}.
+   *
+   * Otherwise, the {@link EffectHandler}s will receive delta values for the
+   * scroll offsets and the current matrix will be multiplied by the new
+   * transforms returned by the handlers.
    *
    * @defaultValue false
    */
-  isIncremental?: boolean;
+  isAbsolute?: boolean;
 
   /**
-   * Initial transform to begin with. Only useful if {@link isIncremental} is
+   * Initial transform to begin with. Only useful if {@link isAbsolute} is
    * `true`, otherwise it will be discarded on {@link Transform.apply | apply}.
    *
    * @defaultValue undefined // identity matrix
@@ -293,6 +357,63 @@ export type TransformConfig = {
 };
 
 // ----------------------------------------
+
+const PERSPECTIVE: unique symbol = MC.SYMBOL() as typeof PERSPECTIVE;
+const TRANSLATE: unique symbol = MC.SYMBOL() as typeof TRANSLATE;
+const SCALE: unique symbol = MC.SYMBOL() as typeof SCALE;
+const SKEW: unique symbol = MC.SYMBOL() as typeof SKEW;
+const ROTATE: unique symbol = MC.SYMBOL() as typeof ROTATE;
+
+type HandlersMap = {
+  [PERSPECTIVE]: PerspectiveHandler;
+  [TRANSLATE]: TranslateHandler;
+  [SCALE]: ScaleHandler;
+  [SKEW]: SkewHandler;
+  [ROTATE]: RotateHandler;
+};
+
+type HandlerTuple = {
+  [K in keyof HandlersMap]: [K, HandlersMap[K]];
+}[keyof HandlersMap];
+
+const allUserHandlersMap = newXWeakMap<Transform, HandlerTuple[]>(() => []);
+
+const getHandlersFor = (t: Transform) => allUserHandlersMap.sGet(t);
+
+const saveHandlerFor = <T extends HandlerTuple>(
+  transform: Transform,
+  tuple: T,
+) => {
+  const handlers = getHandlersFor(transform);
+  handlers.push(tuple);
+};
+
+const addAndSaveHandlerFor = <T extends HandlerTuple>(
+  transform: Transform,
+  tuple: T,
+) => {
+  saveHandlerFor(transform, tuple);
+  const [type, handler] = tuple;
+  switch (type) {
+    case PERSPECTIVE:
+      transform.perspective(handler);
+      break;
+    case TRANSLATE:
+      transform.translate(handler);
+      break;
+    case SCALE:
+      transform.scale(handler);
+      break;
+    case SKEW:
+      transform.skew(handler);
+      break;
+    case ROTATE:
+      transform.rotate(handler);
+      break;
+    default:
+      throw MH.bugError("Unhandled transform effect category");
+  }
+};
 
 const newMatrix = <B extends boolean>(readonly: B, init?: TransformLike) => {
   const initM = MH.isInstanceOf(init, Transform) ? init.toMatrix() : init;

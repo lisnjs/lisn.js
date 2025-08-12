@@ -85,23 +85,25 @@ export class FXController {
   readonly clear: () => FXController;
 
   /**
-   * Applies all added effects for the given scroll offsets. Effects are only
+   * Applies all added effects for the given scroll data. Effects are only
    * applied if their range condition matches (or if no such condition was
    * supplied).
    *
-   * Effects are applied in order and each one adds to, if possible, or
-   * otherwise overrides previous ones of the same category. Transforms always
-   * multiply each previous one, however the final perspective used in the
-   * transform is that of the last one.
+   * Effects are applied in order of being added. Each effect adds to, or if it's
+   * {@link Effect.isAbsolute | absolute} overrides, previous ones of the same
+   * category.
    *
-   * @param parentController If the element being animated is nested inside
-   *                         another one like that, then pass the parent
-   *                         element's controller so that transforms can be set
-   *                         relative to the parent.
+   * @param depth          The parallax depth. Will result in offsets being scaled.
+   * @param scrollData     The current scroll offsets of the element.
+   * @param prevScrollData The last known scroll offsets of the element.
    *
    * @returns The same {@link FXController} instance.
    */
-  readonly apply: (offsets: ScrollOffsets) => FXController;
+  readonly apply: (
+    depth: number,
+    scrollData: ScrollData,
+    prevScrollData: ScrollData | undefined,
+  ) => FXController;
 
   /**
    * Returns the combined effect for the given type.
@@ -142,18 +144,26 @@ export class FXController {
       for (const cbk of callbacks) {
         cbk.remove();
       }
-      callbacks.splice(0, MH.lengthOf(callbacks));
+      callbacks.length = 0; // clear
       effectsMap.clear();
       return this;
     };
 
-    this.apply = (offsets) => {
+    this.apply = (depth, scrollData, prevScrollData) => {
+      const incrOffsets = getScrollOffsets(depth, scrollData, prevScrollData);
+      const absOffsets = getScrollOffsets(depth, scrollData);
+
       for (const [type, entries] of effectsMap) {
         const toCompose: Effect<typeof type>[] = [];
 
         for (const entry of entries) {
           if (entry._state !== null) {
-            toCompose.push(entry._effect.apply(offsets) as Effect<typeof type>);
+            const effect = entry._effect;
+            toCompose.push(
+              effect.apply(
+                effect.isAbsolute() ? absOffsets : incrOffsets,
+              ) as Effect<typeof type>,
+            );
           }
         }
 
@@ -353,12 +363,29 @@ const offsetIsPastRef = (
   return MH.isNumber(diff) ? diff < 0 : null;
 };
 
+const getScrollOffsets = (
+  depth: number,
+  scrollData: ScrollData,
+  prevScrollData?: ScrollData,
+): ScrollOffsets => {
+  const getValue = (key: Exclude<keyof ScrollData, "direction">) =>
+    scrollData[key] - (prevScrollData ? prevScrollData[key] : 0);
+
+  return {
+    x: getValue(MC.S_SCROLL_LEFT) / depth,
+    nx: getValue(MC.S_SCROLL_LEFT_FRACTION),
+    y: getValue(MC.S_SCROLL_TOP) / depth,
+    ny: getValue(MC.S_SCROLL_TOP_FRACTION),
+  };
+};
+
 // XXX type testing
 // export class Foo implements EffectInterface<"foo"> {
 //   readonly type = "foo";
+//   readonly isAbsolute!: () => boolean;
 //   readonly apply!: (offsets: ScrollOffsets) => Foo;
+//   readonly toComposition!: (...others: Foo[]) => Foo;
 //   readonly toCss!: (relativeTo?: Foo) => Record<string, string>;
-//   readonly toComposition!: (...others: Array<Foo>) => Foo;
 // }
 //
 // declare module "@lisn/effects/effect" {

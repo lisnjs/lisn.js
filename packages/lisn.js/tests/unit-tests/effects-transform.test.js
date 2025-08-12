@@ -21,7 +21,10 @@ const DEFAULT_OFFSETS = {
 };
 
 const newIncrementalTransform = (init) =>
-  new Transform({ init, isIncremental: true });
+  new Transform({ init, isAbsolute: false });
+
+const newAbsoluteTransform = (init) =>
+  new Transform({ init, isAbsolute: true });
 
 const newTestMatrix = (toValue = (i) => i + 1) => {
   const init = new Float32Array(16);
@@ -65,6 +68,7 @@ const expectNotToBeCloseToMatrix = (mA, mB, precision = 4) => {
 describe("constructor", () => {
   test("no init", () => {
     const t = newIncrementalTransform();
+    expect(t.isAbsolute()).toBe(false);
     expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
     expectToBeCloseToMatrix(t.toMatrix(), IDENTITY);
 
@@ -124,7 +128,8 @@ describe("constructor", () => {
       ...[dA + dB, 0, 0, 1],
     ]);
 
-    const t = new Transform();
+    const t = newAbsoluteTransform();
+    expect(t.isAbsolute()).toBe(true);
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: dB }));
     t.apply(DEFAULT_OFFSETS);
@@ -241,16 +246,183 @@ describe("toString", () => {
   });
 });
 
+describe("toCss", () => {
+  test("basic", () => {
+    const init = newTestMatrix();
+    const t = newIncrementalTransform(init);
+    expect(t.toCss()).toEqual({
+      transform: new DOMMatrixReadOnly(init).toString(),
+    });
+  });
+
+  test("relativeTo", () => {
+    const init = newTestMatrix();
+    const ref = new DOMMatrixReadOnly([
+      ...[8, -6, -3, -5],
+      ...[-2, 7, -8, -5],
+      ...[-9, -3, 7, 8],
+      ...[-4, -3, 1, -10],
+    ]);
+
+    const expected = ref.inverse().multiply(init);
+
+    const t = newIncrementalTransform(init);
+    expect(t.toCss(ref)).toEqual({
+      transform: new DOMMatrixReadOnly(expected).toString(),
+    });
+
+    // not modified
+    expectToBeCloseToMatrix(t, init);
+  });
+});
+
+describe("toComposition", () => {
+  test("all incremental", () => {
+    const dx = 100,
+      dy = 200,
+      dz = 300,
+      sx = 2,
+      sy = 4,
+      sz = 4,
+      r = 30,
+      ra = [1, 0, 0],
+      sk = 15;
+
+    const initA = newTestMatrix((i) => i + 1);
+    const tA = newIncrementalTransform(initA);
+    tA.translate(() => ({ x: dx, y: dy, z: dz }));
+    tA.scale(() => ({ sx, sy }));
+
+    const initB = newTestMatrix((i) => (i + 1) * 2);
+    const tB = newIncrementalTransform(initB);
+    tB.rotate(() => ({ deg: r, axis: ra }));
+
+    const initC = newTestMatrix((i) => (i + 1) * 3);
+    const tC = newIncrementalTransform(initC);
+    tC.skew(() => ({ degY: sk }));
+    tC.scale(() => ({ sz }));
+
+    const expectedInit = new DOMMatrixReadOnly()
+      .multiply(initA)
+      .multiply(initB)
+      .multiply(initC);
+
+    const expectedFinal = expectedInit
+      .translate(dx, dy, dz)
+      .scale(sx, sy, 1)
+      .rotateAxisAngle(...ra, r)
+      .skewY(sk)
+      .scale(1, 1, sz);
+
+    const composed = tA.toComposition(tB, tC);
+    expectToBeCloseToMatrix(composed, expectedInit);
+
+    composed.apply(DEFAULT_OFFSETS);
+    expectToBeCloseToMatrix(composed, expectedFinal);
+    expectToBeCloseToMatrix(tA, initA); // unchanged
+    expectToBeCloseToMatrix(tB, initB); // unchanged
+    expectToBeCloseToMatrix(tC, initC); // unchanged
+
+    expect(composed.isAbsolute()).toBe(false);
+    expect(composed.toPerspective()).toBeUndefined();
+  });
+
+  test("absolute ones", () => {
+    const dx = 100,
+      dy = 200,
+      dz = 300,
+      sx = 2,
+      sy = 4,
+      sz = 4,
+      r = 30,
+      ra = [1, 0, 0],
+      sk = 15;
+
+    const initA = newTestMatrix((i) => i + 1);
+    const tA = newIncrementalTransform(initA);
+    tA.translate(() => ({ x: dx, y: dy, z: dz }));
+
+    const initB = newTestMatrix((i) => (i + 1) * 2);
+    const tB = newAbsoluteTransform(initB); // discards tA
+    tB.scale(() => ({ sx, sy }));
+
+    const initC = newTestMatrix((i) => (i + 1) * 3);
+    const tC = newAbsoluteTransform(initC); // discards tB
+    tC.rotate(() => ({ deg: r, axis: ra }));
+    tC.skew(() => ({ degY: sk }));
+
+    const initD = newTestMatrix((i) => (i + 1) * 4);
+    const tD = newIncrementalTransform(initD);
+    tD.scale(() => ({ sz }));
+
+    const expectedInit = new DOMMatrixReadOnly()
+      .multiply(initC)
+      .multiply(initD);
+
+    // will be reset on apply, so init discarded
+    const expectedFinal = new DOMMatrixReadOnly()
+      .rotateAxisAngle(...ra, r)
+      .skewY(sk)
+      .scale(1, 1, sz);
+
+    const composed = tA.toComposition(tB, tC, tD);
+    expectToBeCloseToMatrix(composed, expectedInit);
+
+    composed.apply(DEFAULT_OFFSETS);
+    expectToBeCloseToMatrix(composed, expectedFinal);
+    expectToBeCloseToMatrix(tA, initA); // unchanged
+    expectToBeCloseToMatrix(tB, initB); // unchanged
+    expectToBeCloseToMatrix(tC, initC); // unchanged
+    expectToBeCloseToMatrix(tD, initD); // unchanged
+
+    expect(composed.isAbsolute()).toBe(true);
+    expect(composed.toPerspective()).toBeUndefined();
+  });
+
+  test("absolute clears perspective", () => {
+    const p = "100px";
+    const tA = newIncrementalTransform().perspective(() => p);
+    const tB = newAbsoluteTransform();
+
+    const composed = tA.toComposition(tB);
+    expect(composed.toPerspective()).toBeUndefined();
+
+    composed.apply(DEFAULT_OFFSETS);
+    expect(composed.toPerspective()).toBeUndefined();
+  });
+
+  test("multiple perspectives", () => {
+    const pB = "100px",
+      pC = "200px";
+    const tA = newIncrementalTransform();
+    const tB = newIncrementalTransform().perspective(() => pB);
+    const tC = newIncrementalTransform().perspective(() => pC);
+    const tD = newIncrementalTransform();
+
+    const composed = tA.toComposition(tB, tC, tD);
+    expect(composed.toPerspective()).toBeUndefined();
+
+    composed.apply(DEFAULT_OFFSETS);
+    expect(composed.toPerspective()).toBe(pC);
+  });
+});
+
 test("perspective", () => {
   const t = newIncrementalTransform();
   t.perspective(() => 500);
+  expect(t.toPerspective()).toBeUndefined();
+
   t.apply(DEFAULT_OFFSETS);
+  expect(t.toPerspective()).toBe("500px");
   expect(t.toString()).toBe(
     "perspective(500px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
   );
 
   t.perspective(() => "30rem");
+  expect(t.toPerspective()).toBe("500px");
+
   t.apply(DEFAULT_OFFSETS);
+  expect(t.toPerspective()).toBe("30rem");
   expect(t.toString()).toBe(
     "perspective(30rem) " + new DOMMatrixReadOnly(IDENTITY).toString(),
   );

@@ -1,4 +1,4 @@
-const { jest, test, expect } = require("@jest/globals");
+const { describe, jest, test, expect } = require("@jest/globals");
 
 const utils = window.LISN.utils;
 
@@ -29,4 +29,78 @@ test("onEveryAnimationFrame", async () => {
     callback.mock.calls[2][0].total,
   );
   expect(callback.mock.calls[3][0].sinceLast).toBeGreaterThan(0);
+});
+
+describe("newCriticallyDampedAnimationIterator", () => {
+  test("for loop", async () => {
+    const lTarget = 200;
+    const lag = 100;
+    const dt = 10;
+    let l = 100,
+      t = 0,
+      dlFr = 0,
+      i = 0;
+
+    const iterator = utils.newCriticallyDampedAnimationIterator({
+      l,
+      lTarget,
+      lag,
+    });
+
+    for await ({ l, t, dlFr } of iterator) {
+      i++;
+
+      if (i == Math.round(lag / dt) - 1) {
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(2);
+      }
+
+      if (l === lTarget) {
+        expect(dlFr).toBe(1);
+      }
+    }
+
+    expect(i).toBeLessThan((lag * 2) / dt);
+    expect(t).toBeLessThan(lag * 2);
+  });
+
+  test("with updating target", async () => {
+    const lTarget = 200;
+    const lag = 100;
+    const dt = 10;
+    let l = 100,
+      t = 0,
+      dlFr = 0,
+      i = 0;
+
+    const iterator = utils.newCriticallyDampedAnimationIterator({
+      l,
+      lTarget: lTarget / 2,
+      lag,
+    });
+
+    let done = false;
+    while (
+      ({
+        value: { l, t, dlFr },
+        done,
+      } = await iterator.next(i > 1 ? lTarget : undefined))
+    ) {
+      i++;
+
+      if (i == Math.round(lag / dt) - 1) {
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(2);
+      }
+
+      if (l === lTarget) {
+        expect(dlFr).toBe(1);
+      }
+
+      if (done) {
+        break;
+      }
+    }
+
+    expect(i).toBeLessThan((lag * 2) / dt);
+    expect(t).toBeLessThan(lag * 2);
+  });
 });

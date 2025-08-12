@@ -868,7 +868,7 @@ describe("criticallyDamped", () => {
       }
     }
 
-    expect(i).toBeLessThan(10);
+    expect(i).toBeLessThan((lag * 2) / dt);
   });
 
   test("to smaller", () => {

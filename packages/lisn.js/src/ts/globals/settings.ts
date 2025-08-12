@@ -159,17 +159,6 @@ export const settings = MH.preventExtensions({
 
   /**
    * Default setting for
-   * {@link Widgets.SmoothScroll.lag | SmoothScroll.lag}.
-   *
-   * @defaultValue 1000
-   * @category Widgets/SmoothScroll
-   */
-  smoothScrollTransforms:
-    "translate3d(calc(-1px * ${x}), calc(-1px * ${y}), 0.1px)",
-  // XXX TODO type
-
-  /**
-   * Default setting for
    * {@link Widgets.ScrollbarConfig.hideNative | ScrollbarConfig.hideNative}.
    *
    * @defaultValue true

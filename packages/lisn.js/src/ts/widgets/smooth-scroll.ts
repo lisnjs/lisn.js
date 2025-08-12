@@ -2,19 +2,16 @@
  * @module Widgets
  */
 
+// XXX TODO more effect types: opacity, color, background-color, filters, svg stroke, etc, and custom props
+// for svg stroke, see svg.getTotalLength, stroke-dasharray and stroke-offset
+
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { settings } from "@lisn/globals/settings";
 
-import {
-  AtLeastOne,
-  OnlyOne,
-  View,
-  CommaSeparatedStr,
-} from "@lisn/globals/types";
+import { RawOrRelativeNumber } from "@lisn/globals/types";
 
-import { newCriticallyDampedAnimationIterator } from "@lisn/utils/animations";
 import { supportsSticky } from "@lisn/utils/browser";
 import {
   addClassesNow,
@@ -37,25 +34,28 @@ import {
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
 import { logError } from "@lisn/utils/log";
-import { toNum, toNumWithBounds, isValidNumerical } from "@lisn/utils/math";
+import { toNumWithBounds, toRawNum } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { formatAsString } from "@lisn/utils/text";
-import { validateNumber, validateString } from "@lisn/utils/validation";
+import {
+  validateNumber,
+  validateRawOrRelativeNumber,
+} from "@lisn/utils/validation";
+
+import { FXController } from "@lisn/effects/fx-controller";
+import { Transform } from "@lisn/effects/transform";
 
 import { ScrollWatcher, ScrollData } from "@lisn/watchers/scroll-watcher";
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
-import { ViewWatcher } from "@lisn/watchers/view-watcher";
 
 import {
   Widget,
   WidgetConfigValidatorObject,
   registerWidget,
   getWidgetConfig,
-  fetchWidgetConfig,
 } from "@lisn/widgets/widget";
 
 import debug from "@lisn/debug/debug";
-import { toArrayIfSingle } from "@lisn/utils";
 
 /**
  * Configures the given element as a {@link SmoothScroll} widget.
@@ -112,17 +112,6 @@ import { toArrayIfSingle } from "@lisn/utils";
  *
  * -----
  *
- * The following dynamic CSS properties are set on the root scrollable as well
- * as on each layer element:
- * - `--lisn-js--offset-x`: the horizontal scroll offset in pixels (does not
- *   include "px" in the value); this is the scrollable's `scrollLeft` divided
- *   by the depth factor of the layer.
- * - `--lisn-js--offset-y`: the vertical scroll offset in pixels (does not
- *   include "px" in the value); this is the scrollable's `scrollTop` divided by
- *   the depth factor of the layer.
- *
- * -----
- *
  * To use with auto-widgets (HTML API) (see
  * {@link Settings.settings.autoWidgets | settings.autoWidgets}), the following
  * CSS classes or data attributes are recognized:
@@ -130,8 +119,9 @@ import { toArrayIfSingle } from "@lisn/utils";
  *   on the element that constitutes the scrollable container.
  * - `data-lisn-smooth-scroll-layer` attribute set on elements that want to
  *   define custom lag or depth values
- * - `data-lisn-smooth-scroll-transforms` attribute set on either the scrollable
- *   or on descendant elements that want to define custom transforms.
+ *
+ * Note that currently it is not possible to set custom effects using the HTML
+ * API.
  *
  * See below examples for what values you can use set for the data attribute
  * in order to modify the configuration of the automatically created widget.
@@ -186,8 +176,6 @@ import { toArrayIfSingle } from "@lisn/utils";
  * ```
  *
  * @example
- * This defines multiple layers with custom transforms for various scroll offset
- * bounds. These bounds are defined by reference offsets or elements.
  *
  * ```html
  * XXX TODO
@@ -240,6 +228,8 @@ export class SmoothScroll extends Widget {
       (element, config) => {
         if (MH.isHTMLElement(element)) {
           if (!SmoothScroll.get(element)) {
+            // TODO parse effects from the data-lisn-smooth-scroll-effects
+            // attribute?
             return new SmoothScroll(element, config);
           }
         } else {
@@ -304,25 +294,39 @@ export type SmoothScrollConfig = {
   lagY?: number;
 
   /**
-   * Transforms to apply based on scroll.
+   * The effect controller to use. If not given, a default controller will be
+   * used which creates a regular smooth scroll effect that tracks the actual
+   * scroll.
    *
-   * @defaultValue {@link settings.smoothScrollTransforms}
+   * @defaultValue undefined // Regular smooth scroll (translation)
    */
-  transforms?: ScrollTransforms;
+  controller?: FXController;
 
   /**
    * Elements which use custom animation settings. They must be descendants of
    * the scrollable.
+   *
+   * If this is not specified, then the top-level element that constitutes the
+   * widget is searched for any elements that contain the
+   * `data-lisn-smooth-scroll-layer` attribute.
+   *
+   * If you pass an array of elements, they will be used as layers, and their
+   * {@link SmoothScrollLayerConfig | configuration} will be taken from the
+   * `data-lisn-smooth-scroll-layer` attribute. If you pass a map, its keys are
+   * the elements and its values are used as the configuration, ignoring the
+   * data attribute.
+   *
+   * @defaultValue undefined
    */
   layers?: Element[] | Map<Element, SmoothScrollLayerConfig | null>;
 };
 
 /**
- * Custom lag, depth or transform for a descendant element of the scrollable.
+ * Custom lag, depth or controller for a descendant element of the scrollable.
  * Can either be given as an object as the value of the
  * {@link SmoothScrollConfig.layers} map, or it can be set as a string
- * configuration in the `data-lisn-smooth-scroll-layer` data attribute. See
- * {@link getWidgetConfig} for the syntax.
+ * configuration in the `data-lisn-smooth-scroll-layer` data attribute (except
+ * the effect controller). See {@link getWidgetConfig} for the syntax.
  *
  * @example
  * ```html
@@ -336,39 +340,44 @@ export type SmoothScrollConfig = {
  */
 export type SmoothScrollLayerConfig = {
   /**
-   * Override the parent layer or root's lag for this child.
+   * Override the parent layer or root's lag for this child. It can be relative
+   * to the parent's lag.
    *
    * @defaultValue undefined
    */
-  lag?: AbsoluteOrRelativeNumber;
+  lag?: RawOrRelativeNumber;
 
   /**
-   * Override the parent layer or root's horizontal lag for this child.
+   * Override the parent layer or root's horizontal lag for this child. It can
+   * be relative to the parent's lag.
    *
    * @defaultValue undefined
    */
-  lagX?: AbsoluteOrRelativeNumber;
+  lagX?: RawOrRelativeNumber;
 
   /**
-   * Override the parent layer or root's vertical lag for this child.
+   * Override the parent layer or root's vertical lag for this child. It can
+   * be relative to the parent's lag.
    *
    * @defaultValue undefined
    */
-  lagY?: AbsoluteOrRelativeNumber;
+  lagY?: RawOrRelativeNumber;
 
   /**
-   * Override the parent layer or root's transforms for this child. Note that
-   * transforms applied on the root scrollable or on parent layers are not
-   * negated on child layers, so this value is always accumulative. XXX
+   * Override the parent layer or root's effect controller for this child.
+   *
+   * Note that {@link Effects/Transform.Transform | transforms} applied to a parent layer are always inverted/negated
+   * on child layers so the transforms given for a layer will be its actual
+   * transform (relative to the viewport).
    *
    * @defaultValue undefined
    */
-  transforms?: ScrollTransforms;
+  controller?: FXController;
 
   /**
-   * Parallax depth. This is a scaling ratio for the scroll offset. It must
-   * result in a positive number. Values smaller than 1 will result in a smaller
-   * amount of transformation.
+   * Parallax depth. This is a scaling ratio for the scroll offset. It can be
+   * relative to the parent's depth. It must result in a positive number. Values
+   * larger than 1 will result in a smaller amount of transformation.
    *
    * The special value "auto" is accepted only when using the default transform
    * (which shifts the content to simulate scrolling). When the depth is set to
@@ -376,109 +385,8 @@ export type SmoothScrollLayerConfig = {
    *
    * @defaultValue 1
    */
-  depth?: AbsoluteOrRelativeNumber;
-
-  // XXX TODO depthX and depthY?
+  depth?: RawOrRelativeNumber;
 };
-
-/**
- * If the value is a number, then it is taken as absolute. Otherwise, it should
- * be a numerical string prefixed with `+`, `-` or `*`, in which case it is
- * relative to the nearest parent layer (or to the root scrollable).
- *
- * - `+` prefix adds to the parent's value
- * - `-` prefix subtracts from the parent's value
- * - `*` prefix multiplies the parent's value
- */
-export type AbsoluteOrRelativeNumber =
-  | number
-  | `+${number}`
-  | `-${number}`
-  | `*${number}`;
-
-export type ScrollTransforms =
-  | ScrollTransformString
-  | ScrollTransformCallback
-  | ScrollTransformList;
-
-/**
- * This is any valid value for the CSS transform property. It can contain the
- * following special placeholders which will be replaced with actual numerical
- * values:
- * - `${x}`: The calculated left offset in pixels for this layer, i.e. the
- *   scrollable's `scrollLeft` offset divided by the layer's depth.
- *   It is a positive number without units.
- * - `${y}`: The calculated top offset in pixels for this layer, i.e. the
- *   scrollable's `scrollTop` offset divided by the layer's depth.
- *   It is a positive number without units.
- * - `${maxX}`: The maximum left offset, i.e. the scrollable's `scrollWidth`
- *   divided by the layer's depth. It is a positive number without units.
- * - `${maxY}`: The maximum top offset, i.e. the scrollable's `scrollHeight`
- *   divided by the layer's depth. It is a positive number without units.
- *
- * @example
- * ```javascript
- * "translate(-${x}px, -${y}px) rotate(-180deg * ${y} / ${maxY})"
- * ```
- */
-export type ScrollTransformString = string;
-
-/**
- * The callback will be called with the current scroll data that was measured
- * during this scroll event and must return a valid transform string or list.
- */
-export type ScrollTransformCallback = (
-  scrollData: ScrollData,
-) => ScrollTransformString | ScrollTransformList;
-
-/**
- * A single transform or an array of transforms, each one applying only for a
- * given range of conditions. A condition could be a range of
- * horizontal/vertical scroll offset values or the position of one or more
- * elements relative to the viewport.
- */
-export type ScrollTransformList =
-  | ScrollTransformRangeSpec
-  | ScrollTransformRangeSpec[];
-
-export type ScrollTransformRangeSpec = {
-  transform: ScrollTransformString | ScrollTransformCallback;
-} & ScrollOffsetRange;
-
-// XX TODO doc
-export type ScrollOffsetRange =
-  | (ScrollOffsetFrom & Partial<ScrollOffsetTo>)
-  | ScrollOffsetWhile;
-
-export type ScrollOffsetFrom = OnlyOne<{
-  from: ScrollOffsetViewReference | ScrollOffsetXYReference;
-  fromAny: ScrollOffsetViewReference[];
-  fromAll: ScrollOffsetViewReference[];
-}>;
-
-export type ScrollOffsetTo = OnlyOne<{
-  to: ScrollOffsetViewReference | ScrollOffsetXYReference;
-  toAny: ScrollOffsetViewReference[];
-  toAll: ScrollOffsetViewReference[];
-}>;
-
-export type ScrollOffsetWhile = OnlyOne<{
-  while: ScrollOffsetViewReference;
-  whileAny: ScrollOffsetViewReference[];
-  whileAll: ScrollOffsetViewReference[];
-}>;
-
-export type ScrollOffsetViewReference =
-  | Element
-  | {
-      views: CommaSeparatedStr<View> | View[];
-      target: Element;
-    };
-
-export type ScrollOffsetXYReference = AtLeastOne<{
-  x: AbsoluteOrRelativeNumber;
-  y: AbsoluteOrRelativeNumber;
-}>;
 
 // --------------------
 
@@ -496,91 +404,33 @@ const PREFIX_LAYER = `${PREFIXED_NAME}-layer`;
 const PREFIX_TRANSFORM = `${PREFIXED_NAME}-transform`;
 const SELECTOR_LAYER = `[data-${PREFIX_LAYER}],[data-${PREFIX_TRANSFORM}]`;
 
-type SmoothScrollLayerConfigInternal = {
-  lagX: number;
-  lagY: number;
-  transforms: ScrollTransforms;
-  depth: number;
+type SmoothScrollLayerState = {
+  _lagX: number;
+  _lagY: number;
+  _depth: number;
+  _controller: FXController;
+  _children: Set<Element>;
+  _parentState: SmoothScrollLayerState | null;
+  _scrollData?: ScrollData;
 };
 
 let mainWidget: SmoothScroll | null = null;
 
-const validateAbsoluteOrRelativeNumber = (
-  key: string,
-  value: unknown,
-): AbsoluteOrRelativeNumber | undefined => {
-  const numerical = toNum(value, false);
-  if (numerical) {
-    return numerical;
-  }
-
-  if (!MH.isString(value)) {
-    return validateNumber(key, value);
-  }
-
-  // for type check
-  const isValidOp = (op: string): op is "+" | "-" | "*" =>
-    MH.includes(["+", "-", "*"], op);
-
-  const op = value.slice(0, 1);
-  if (!isValidOp(op) || !numerical) {
-    throw MH.usageError(
-      `'${key}' must be numerical with an optional prefix of +, - or *`,
-    );
-  }
-
-  return `${op}${numerical}` as const;
-};
-
-const validateTransforms = (key: string, value: unknown): ScrollTransforms => {
-  if (MH.isLiteralString(value) || MH.isFunction(value)) {
-    return value as ScrollTransforms;
-  }
-
-  for (const transform of toArrayIfSingle(value)) {
-    if (!MH.isObject(transform)) {
-      throw MH.usageError(`Invalid value for ${key}`);
-    }
-
-    // XXX TODO validate the range
-  }
-};
-
+// For HTML API only
 const configValidator: WidgetConfigValidatorObject<SmoothScrollConfig> = {
   lag: validateNumber,
   lagX: validateNumber,
   lagY: validateNumber,
-  transforms: validateTransforms, // only allowed here when using a config object and not a data attribute value
 };
 
+// For HTML API only
 const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig> =
   {
-    lag: validateAbsoluteOrRelativeNumber,
-    lagX: validateAbsoluteOrRelativeNumber,
-    lagY: validateAbsoluteOrRelativeNumber,
-    depth: validateAbsoluteOrRelativeNumber,
-    transforms: validateTransforms, // only allowed here when using a config object and not a data attribute value
+    lag: validateRawOrRelativeNumber,
+    lagX: validateRawOrRelativeNumber,
+    lagY: validateRawOrRelativeNumber,
+    depth: validateRawOrRelativeNumber,
   };
-
-const toAbsoluteNumber = (
-  input: AbsoluteOrRelativeNumber | undefined,
-  reference: number,
-) => {
-  if (!MH.isString(input)) {
-    return input ?? reference;
-  }
-
-  const op = input.slice(0, 1);
-  switch (op) {
-    case "+":
-    case "-":
-      return reference + toNum(input);
-    case "*":
-      return reference * toNum(input.slice(1));
-    default:
-      return reference;
-  }
-};
 
 const getParentLayer = (scrollable: Element, layer: Element) => {
   const closest = MH.closestParent(layer, SELECTOR_LAYER);
@@ -593,67 +443,81 @@ const getLayersFrom = (
   scrollable: Element,
   rootConfig: SmoothScrollConfig | undefined,
 ) => {
-  const layerMap = MH.newMap<Element, SmoothScrollLayerConfigInternal>();
+  const layerMap = MH.newMap<Element, SmoothScrollLayerState>(); // will include the root
 
   const defaultLag = settings.smoothScrollLag;
-  const defaultTransforms = settings.smoothScrollTransforms;
+  let defaultController: FXController;
 
-  // XXX TODO how to detect if widget was instantiated using HTML API or not?
-  // rootConfig will be an object either way
-  const getLayerBaseConfig = (layer: Element) => {
-    const inputConfig =
-      layer === scrollable
-        ? rootConfig // XXX
-        : MH.isArray(inputLayers)
-          ? (getData(layer, PREFIX_LAYER) ?? "")
-          : inputLayers.get(layer);
-
-    const baseConfig = getWidgetConfig(inputConfig, layerConfigValidator);
-
-    if (MH.isString(inputConfig)) {
-      // config was taken from data-lisn-smooth-scroll-layer attribute, so read
-      // transforms from the data-lisn-smooth-scroll-transforms attribute
-      baseConfig.transforms = validateTransforms(
-        // XXX getWidgetConfig with validator
-        `data-${PREFIX_TRANSFORM}`,
-        getData(layer, PREFIX_TRANSFORM),
-      );
-    }
-
-    return baseConfig;
+  const getDefaultController = () => {
+    defaultController ??= new FXController({ scrollable }).add([
+      new Transform({ isAbsolute: true }).translate((data) => ({
+        x: data.x,
+        y: data.y,
+      })),
+    ]);
+    return defaultController;
   };
 
-  const parseFullLayerConfig = (
-    layer: Element,
-  ): SmoothScrollLayerConfigInternal => {
-    let fullConfig = layerMap.get(layer);
-    if (!fullConfig) {
-      const baseConfig = getLayerBaseConfig(layer);
-      const parent = getParentLayer(scrollable, layer);
-      const parentConfig = parent ? parseFullLayerConfig(parent) : rootConfig;
+  const getLayerConfig = (layer: Element) => {
+    let config: SmoothScrollLayerConfig | null | undefined;
+    // let parseEffectsAttr = false;
 
-      fullConfig = {
-        lagX: toAbsoluteNumber(
-          baseConfig.lagX,
-          parentConfig?.lagX ?? defaultLag,
+    if (layer === scrollable) {
+      config = rootConfig;
+    } else if (MH.isArray(inputLayers)) {
+      // parseEffectsAttr = true;
+      config = getWidgetConfig(
+        getData(layer, PREFIX_LAYER) ?? "",
+        layerConfigValidator,
+      );
+    } else {
+      config = inputLayers.get(layer);
+    }
+
+    // TODO read effects from the data-lisn-smooth-scroll-effects attribute?
+    // if (parseEffectsAttr) {
+    // }
+
+    return config;
+  };
+
+  const getLayerState = (layer: Element): SmoothScrollLayerState => {
+    let state = layerMap.get(layer);
+    if (!state) {
+      const config = getLayerConfig(layer);
+      const parent = getParentLayer(scrollable, layer);
+      const parentState = parent ? getLayerState(parent) : null;
+
+      if (parentState) {
+        parentState._children.add(layer);
+      }
+
+      state = {
+        _lagX: toRawNum(
+          config?.lagX,
+          parentState?._lagX ?? rootConfig?.lagX ?? defaultLag,
         ),
-        lagY: toAbsoluteNumber(
-          baseConfig.lagY,
-          parentConfig?.lagY ?? defaultLag,
+        _lagY: toRawNum(
+          config?.lagY,
+          parentState?._lagY ?? rootConfig?.lagY ?? defaultLag,
         ),
-        transforms:
-          baseConfig.transforms ??
-          parentConfig?.transforms ??
-          defaultTransforms,
-        depth: toNumWithBounds(
-          baseConfig.depth ?? (parentConfig as SmoothScrollLayerConfig)?.depth,
+        _depth: toNumWithBounds(
+          toRawNum(config?.depth, parentState?._depth ?? 1),
           { min: 0.01 },
           1,
         ),
+        _controller:
+          config?.controller ??
+          parentState?._controller ??
+          getDefaultController(),
+        _children: MH.newSet(),
+        _parentState: parentState,
       };
+
+      layerMap.set(layer, state);
     }
 
-    return fullConfig;
+    return state;
   };
 
   // ----------
@@ -667,7 +531,7 @@ const getLayersFrom = (
     : (inputLayers?.keys() ?? []);
 
   for (const layer of layersIterable) {
-    parseFullLayerConfig(layer);
+    getLayerState(layer);
   }
 
   return layerMap;
@@ -679,12 +543,12 @@ type WrappersFor<K extends string> = {
 
 const createWrappersNow = <K extends string>(
   element: HTMLElement,
-  // from outer-most to inner-most:
-  // [
-  //   key to use in the returned object,
-  //   classNames to add,
-  // ]
-  classNamesEntries: readonly [K, string[], string[]][],
+  classNamesEntries: readonly [
+    // from outer-most to inner-most wrapper:
+    K, // key to use in the returned object,
+    string[], // classNames to add and remove on unwrap,
+    string[], // classNames to add but not remove,
+  ][],
 ): { wrappers: WrappersFor<K>; unwrapFn: () => void } => {
   const wrapContentNow = (element: HTMLElement, classNames: string[]) =>
     tryWrapContentNow(element, {
@@ -724,6 +588,19 @@ const createWrappersNow = <K extends string>(
   return { wrappers: result, unwrapFn };
 };
 
+const setSizeVars = (
+  element: Element,
+  width: number,
+  height: number,
+  now = false,
+) => {
+  (now ? setNumericStyleJsVarsNow : setNumericStyleJsVars)(
+    element,
+    { width, height },
+    { _units: "px", _numDecimal: 2 },
+  );
+};
+
 const init = async (
   widget: SmoothScroll,
   scrollable: HTMLElement,
@@ -750,7 +627,7 @@ const init = async (
       })
     : null;
 
-  // XXX TODO fallback to using scroll gestures
+  // TODO Fallback to using scroll gestures:
   // Position the outerWrapper as fixed, listen for gestures and initiate
   // scrolling on the scrollable
   if (!isBody && !supportsSticky()) {
@@ -761,43 +638,9 @@ const init = async (
     return;
   }
 
-  const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
   const sizeWatcher = isBody
     ? SizeWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 })
     : null;
-
-  // ----------
-
-  const setSizeVars = (
-    element: Element,
-    width: number,
-    height: number,
-    now = false,
-  ) => {
-    (now ? setNumericStyleJsVarsNow : setNumericStyleJsVars)(
-      element,
-      { width, height },
-      { _units: "px", _numDecimal: 2 },
-    );
-  };
-
-  // When there's a scroll, update the target scroll offset and if needed start
-  // the animation.
-  const updatePropsOnScroll = (target: Element, scrollData: ScrollData) => {
-    for (const d of ["x", "y"] as const) {
-      const current = currentPositions[d];
-      const target = targetPositions[d];
-      const newTarget =
-        scrollData[d === "x" ? MC.S_SCROLL_LEFT : MC.S_SCROLL_TOP];
-
-      const isOngoing = current !== target;
-      targetPositions[d] = newTarget;
-
-      if (!isOngoing) {
-        animateTransforms(d);
-      }
-    }
-  };
 
   // If the content is resized, update the body size to match its size.
   // Only applies when using the document scrolling element.
@@ -811,72 +654,7 @@ const init = async (
 
   // ----------
 
-  const currentPositions = { x: 0, y: 0 };
-  const targetPositions = MH.copyObject(currentPositions);
-
-  const animateTransforms = async (
-    d: "x" | "y",
-    element?: Element,
-  ): Promise<void> => {
-    if (!element) {
-      element = innerWrapper;
-
-      // animate all layers too
-      for (const layer of layers.keys()) {
-        animateTransforms(d, layer); // don't await here
-      }
-    }
-
-    const thisConfig = layers.get(element);
-    if (!thisConfig) {
-      logError(MH.bugError("No config saved for element"), element);
-      return;
-    }
-
-    const thisLag = thisConfig[d === "x" ? "lagX" : "lagY"];
-    const thisDepth = thisConfig.depth;
-
-    debug: logger?.debug10(
-      `Starting animating ${d} transforms with lag ${thisLag}`,
-      element,
-    );
-
-    let target = targetPositions[d];
-    let current = currentPositions[d];
-    const iterator = newCriticallyDampedAnimationIterator({
-      l: current,
-      lTarget: target,
-      lag: thisLag,
-    });
-
-    while (({ l: current } = (await iterator.next(target)).value)) {
-      currentPositions[d] = current;
-      target = targetPositions[d];
-
-      setNumericStyleJsVars(
-        element,
-        { [d]: current / thisDepth },
-        { _prefix: "offset-", _numDecimal: 2 },
-      );
-
-      if (current === target) {
-        debug: logger?.debug10(
-          `Done animating ${d} transforms to ${target}`,
-          element,
-        );
-        return;
-      }
-    }
-  };
-
-  // ----------
-
   const addWatchers = () => {
-    scrollWatcher.onScroll(updatePropsOnScroll, {
-      threshold: 0,
-      scrollable,
-    });
-
     sizeWatcher?.onResize(updatePropsOnResize, {
       target: innerWrapper,
       threshold: 0,
@@ -884,7 +662,6 @@ const init = async (
   };
 
   const removeWatchers = () => {
-    scrollWatcher.offScroll(updatePropsOnScroll, scrollable);
     sizeWatcher?.offResize(updatePropsOnResize, innerWrapper);
   };
 
@@ -951,6 +728,10 @@ const init = async (
   });
 
   widget.onDestroy(async () => {
+    for (const state of layers.values()) {
+      state._controller.clear();
+    }
+
     await waitForMutateTime();
 
     unwrapFn();

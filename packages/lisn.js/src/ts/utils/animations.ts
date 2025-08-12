@@ -187,7 +187,11 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
   lag: number;
   l?: number;
   precision?: number;
-}): AsyncGenerator<{ l: number; v: number; t: number; dlFr: number }> {
+}): AsyncGenerator<
+  { l: number; v: number; t: number; dlFr: number },
+  { l: number; v: number; t: number; dlFr: number },
+  number
+> {
   let { l, lTarget } = settings;
   const { lag, precision } = settings;
   let v = 0,
@@ -218,6 +222,8 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
       return result;
     }
   }
+
+  throw null; // tell TypeScript it never reaches here
 }
 
 /**

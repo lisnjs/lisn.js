@@ -439,6 +439,31 @@ export const easeInOutQuad = (x: number) =>
   x < 0.5 ? 2 * x * x : 1 - MH.pow(-2 * x + 2, 2) / 2;
 
 /**
+ * @since v1.3.0
+ *
+ * @category Math
+ */
+export type CriticallyDampedSettings = {
+  lTarget: number;
+  dt: number;
+  lag: number;
+  l?: number;
+  v?: number;
+  precision?: number;
+};
+
+/**
+ * @since v1.3.0
+ *
+ * @category Math
+ */
+export type CriticallyDampedState = {
+  l: number;
+  v: number;
+  dlFr: number;
+};
+
+/**
  * Returns the new position and velocity for a critically damped user-driven
  * spring state toward a current target position.
  *
@@ -464,14 +489,9 @@ export const easeInOutQuad = (x: number) =>
  *
  * @category Math
  */
-export const criticallyDamped = (settings: {
-  lTarget: number;
-  dt: number;
-  lag: number;
-  l?: number;
-  v?: number;
-  precision?: number;
-}) => {
+export const criticallyDamped = (
+  settings: CriticallyDampedSettings,
+): CriticallyDampedState => {
   const { lTarget, precision = 2 } = settings;
   const lag = toNumWithBounds(settings.lag, { min: 1 }) / 1000; // to seconds
 
@@ -519,14 +539,13 @@ export const criticallyDamped = (settings: {
  *
  * @category Math
  */
-export function* newCriticallyDampedIterator(settings: {
-  lTarget: number;
-  dt: number;
-  lag: number;
-  l?: number;
-  v?: number;
-  precision?: number;
-}): Generator<{ l: number; v: number; dlFr: number }> {
+export function* newCriticallyDampedIterator(
+  settings: CriticallyDampedSettings,
+): Generator<
+  CriticallyDampedState,
+  CriticallyDampedState,
+  Partial<CriticallyDampedSettings>
+> {
   let { lTarget, dt, lag, l, v, precision } = settings;
   let dlFr = 0;
 

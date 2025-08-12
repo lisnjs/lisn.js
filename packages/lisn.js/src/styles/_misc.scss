@@ -38,6 +38,11 @@ body[data-lisn-has-modal] {
   z-index: -1000;
 }
 
+.lisn-wrapper-content {
+  min-width: 100%;
+  display: inline-block;
+}
+
 .lisn-wrapper-inline {
   width: fit-content;
   display: inline-block;

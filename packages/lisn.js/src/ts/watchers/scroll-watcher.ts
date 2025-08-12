@@ -543,7 +543,7 @@ export class ScrollWatcher {
       const wrapper = await tryWrapContent(element, {
         _classNames: [
           MC.PREFIX_WRAPPER,
-          MC.PREFIX_WRAPPER_INLINE,
+          MC.PREFIX_WRAPPER_CONTENT,
           PREFIX_WRAPPER,
         ],
       });

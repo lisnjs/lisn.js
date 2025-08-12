@@ -1,6 +1,6 @@
 {
   "name": "@lisn.js/react",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "LISN.js for React.",
   "publishConfig": {
     "access": "public"
@@ -85,7 +85,7 @@
     "dist": "npm run dist:types && npm run dist:esm && npm run dist:cjs"
   },
   "dependencies": {
-    "lisn.js": "1.2.0"
+    "lisn.js": "1.2.1"
   },
   "peerDependencies": {
     "dequal": "^2.0.3",

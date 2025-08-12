@@ -349,7 +349,7 @@ export const getWrapper = (
  * @ignore
  * @internal
  *
- * @param [options.classNames] Default is [MC.PREFIX_WRAPPER_INLINE].
+ * @param [options.classNames] Default is [MC.PREFIX_WRAPPER_CONTENT].
  *                             Pass `null` to disable check.
  *
  * @since v1.2.0
@@ -363,7 +363,7 @@ export const getContentWrapper = (
 ) => {
   const {
     _tagName: tagName,
-    _classNames: classNames = [MC.PREFIX_WRAPPER_INLINE],
+    _classNames: classNames = [MC.PREFIX_WRAPPER_CONTENT],
   } = options ?? {};
   const firstChild = MH.childrenOf(element)[0];
   if (
@@ -603,7 +603,7 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
   const {
     _tagName: tagName,
     _classNames: classNames = wrapContent
-      ? [MC.PREFIX_WRAPPER_INLINE]
+      ? [MC.PREFIX_WRAPPER_CONTENT]
       : [MC.PREFIX_WRAPPER],
     _ignoreMove: ignoreMove = true,
     _required: required = false,

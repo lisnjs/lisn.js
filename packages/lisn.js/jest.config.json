@@ -25,7 +25,7 @@
     "^.+\\.ts$": ["ts-jest", { "diagnostics": { "ignoreCodes": ["TS151001"] } }]
   },
   "moduleNameMapper": {
-    "^@lisn-bundle$": "<rootDir>/bundles/lisn.debug.min.js",
+    "^@lisn-bundle$": "<rootDir>/../@lisn.js/bundles/lisn.debug.min.js",
     "^@lisn/(.*)$": "<rootDir>/src/ts/$1",
     "^(node_modules/.*)$": "<rootDir>/$1"
   }

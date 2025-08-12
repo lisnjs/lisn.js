@@ -460,8 +460,7 @@ export const easeInOutQuad = (x: number) =>
  * - `v`: velocity
  * - `dlFr`: fractional change in position since the last call
  *
- * @since v1.2.0 (Fractional change in position in return value was added in
- * v1.3.0)
+ * @since v1.2.0 (Fractional change in position in return value was added in v1.3.0)
  *
  * @category Math
  */
@@ -504,6 +503,61 @@ export const criticallyDamped = (settings: {
 
   return { l, v, dlFr };
 };
+
+/**
+ * An iterator version of {@link criticallyDamped}.
+ *
+ * @returns An iterator whose `next` method accepts an optional object with
+ * updated settings.
+ * The iterator yields an object containing successive values for:
+ * - `l`: position
+ * - `v`: velocity
+ * - `t`: total time elapsed
+ * - `dlFr`: fractional (from 0 to 1) change in position since the last frame
+ *
+ * @since v1.3.0
+ *
+ * @category Math
+ */
+export function* newCriticallyDampedIterator(settings: {
+  lTarget: number;
+  dt: number;
+  lag: number;
+  l?: number;
+  v?: number;
+  precision?: number;
+}): Generator<{ l: number; v: number; dlFr: number }> {
+  let { lTarget, dt, lag, l, v, precision } = settings;
+  let dlFr = 0;
+
+  const next = () => {
+    ({ l, v, dlFr } = criticallyDamped({
+      lTarget,
+      lag,
+      l,
+      dt,
+      v,
+      precision,
+    }));
+    return { l, v, dlFr };
+  };
+
+  while (true) {
+    const result = next();
+    ({
+      lTarget = lTarget,
+      dt = dt,
+      lag = lag,
+      l = l,
+      v = v,
+      precision = precision,
+    } = (yield result) ?? {});
+
+    if (l === lTarget) {
+      return result;
+    }
+  }
+}
 
 /**
  * Returns an array of object's keys sorted by the numeric value they hold.

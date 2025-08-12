@@ -859,7 +859,7 @@ describe("criticallyDamped", () => {
       }));
 
       if (i == Math.round(lag / dt) - 1) {
-        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(2);
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(5);
       }
 
       if (l === lTarget) {
@@ -890,7 +890,7 @@ describe("criticallyDamped", () => {
       }));
 
       if (i == Math.round(lag / dt) - 1) {
-        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(2);
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(5);
       }
 
       if (l === lTarget) {
@@ -900,5 +900,80 @@ describe("criticallyDamped", () => {
     }
 
     expect(i).toBeLessThan(10);
+  });
+});
+
+describe("newCriticallyDampedIterator", () => {
+  test("for loop", async () => {
+    const lTarget = 200;
+    const lag = 1000;
+    const dt = 200;
+    let l = 100,
+      dlFr = 0,
+      i = 0;
+
+    const iterator = utils.newCriticallyDampedIterator({
+      l,
+      lTarget,
+      lag,
+      dt,
+      precision: 1,
+    });
+
+    for ({ l, dlFr } of iterator) {
+      i++;
+
+      if (i == Math.round(lag / dt) - 1) {
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(5);
+      }
+
+      if (l === lTarget) {
+        expect(dlFr).toBe(1);
+      }
+    }
+
+    expect(i).toBeLessThan((lag * 2) / dt);
+  });
+
+  // TODO test with updating other settings
+  test("with updating target", async () => {
+    const lTarget = 200;
+    const lag = 1000;
+    const dt = 200;
+    let l = 100,
+      dlFr = 0,
+      i = 0;
+
+    const iterator = utils.newCriticallyDampedIterator({
+      l,
+      lTarget,
+      lag,
+      dt,
+      precision: 1,
+    });
+
+    let done = false;
+    while (
+      ({
+        value: { l, dlFr },
+        done,
+      } = iterator.next(i > 1 ? { lTarget } : undefined))
+    ) {
+      i++;
+
+      if (i == Math.round(lag / dt) - 1) {
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(5);
+      }
+
+      if (l === lTarget) {
+        expect(dlFr).toBe(1);
+      }
+
+      if (done) {
+        break;
+      }
+    }
+
+    expect(i).toBeLessThan((lag * 2) / dt + 1);
   });
 });

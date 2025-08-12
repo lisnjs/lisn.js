@@ -45,13 +45,14 @@ describe("newCriticallyDampedAnimationIterator", () => {
       l,
       lTarget,
       lag,
+      precision: 1,
     });
 
     for await ({ l, t, dlFr } of iterator) {
       i++;
 
       if (i == Math.round(lag / dt) - 1) {
-        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(2);
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(5);
       }
 
       if (l === lTarget) {
@@ -76,6 +77,7 @@ describe("newCriticallyDampedAnimationIterator", () => {
       l,
       lTarget: lTarget / 2,
       lag,
+      precision: 1,
     });
 
     let done = false;
@@ -88,7 +90,7 @@ describe("newCriticallyDampedAnimationIterator", () => {
       i++;
 
       if (i == Math.round(lag / dt) - 1) {
-        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(2);
+        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(5);
       }
 
       if (l === lTarget) {

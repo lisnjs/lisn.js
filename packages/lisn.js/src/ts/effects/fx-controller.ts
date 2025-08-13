@@ -531,13 +531,19 @@ export class FXController {
       const parentConfig = parent?.getConfig();
       const parentDepthX = parentConfig?.depthX ?? 1;
       const parentDepthY = parentConfig?.depthY ?? 1;
-      const rawDepthX = toRawNum(depth, parentDepthX, parentDepthX);
-      const rawDepthY = toRawNum(depthY ?? depth, parentDepthY, parentDepthY);
-      effectiveConfig.depthX = rawDepthX;
-      effectiveConfig.depthY = rawDepthY;
+      const newDepthX = toRawNum(depth, parentDepthX, parentDepthX);
+      const newDepthY = toRawNum(depthY ?? depth, parentDepthY, parentDepthY);
 
-      rescaleDataInPlace(currentFrameData, rawDepthX, rawDepthY);
-      interpolate(); // re-apply effects and call callbacks
+      if (
+        newDepthX !== effectiveConfig.depthX ||
+        newDepthY !== effectiveConfig.depthY
+      ) {
+        effectiveConfig.depthX = newDepthX;
+        effectiveConfig.depthY = newDepthY;
+
+        rescaleDataInPlace(currentFrameData, newDepthX, newDepthY);
+        interpolate(); // re-apply effects and call callbacks
+      }
     };
 
     // ----------

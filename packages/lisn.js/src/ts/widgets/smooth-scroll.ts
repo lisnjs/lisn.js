@@ -14,7 +14,9 @@ import { RawOrRelativeNumber } from "@lisn/globals/types";
 
 import { supportsSticky } from "@lisn/utils/browser";
 import {
+  addClasses,
   addClassesNow,
+  removeClasses,
   removeClassesNow,
   getData,
   setBooleanDataNow,
@@ -195,9 +197,10 @@ export class SmoothScroll extends Widget {
       return mainWidget;
     }
 
-    if (scrollable === MH.getDocElement()) {
-      scrollable = MH.getBody();
+    if (!MH.isHTMLElement(scrollable)) {
+      throw ONLY_HTML_ELEMENT_ERR;
     }
+    scrollable = toScrollable(scrollable);
 
     const instance = super.get(scrollable, DUMMY_ID);
     if (MH.isInstanceOf(instance, SmoothScroll)) {
@@ -237,11 +240,7 @@ export class SmoothScroll extends Widget {
             return new SmoothScroll(element, config);
           }
         } else {
-          logError(
-            MH.usageError(
-              "Only HTMLElement is supported for SmoothScroll widget",
-            ),
-          );
+          logError(ONLY_HTML_ELEMENT_ERR);
         }
         return null;
       },
@@ -254,18 +253,11 @@ export class SmoothScroll extends Widget {
    * `document.documentElement`.
    */
   constructor(scrollable: HTMLElement, config?: SmoothScrollConfig) {
-    if (scrollable === MH.getDocElement()) {
-      scrollable = MH.getBody();
-    }
+    scrollable = toScrollable(scrollable);
+    const isBody = scrollable === getDefaultScrollingElement();
 
     const destroyPromise = SmoothScroll.get(scrollable)?.destroy();
     super(scrollable, { id: DUMMY_ID });
-
-    let isBody = false;
-    if (scrollable === MH.getDocElement() || scrollable === MH.getBody()) {
-      scrollable = getDefaultScrollingElement();
-      isBody = true;
-    }
 
     const logger = debug
       ? new debug.Logger({
@@ -404,6 +396,9 @@ export type SmoothScrollLayerConfig = {
    * divided by the layer element's height (or width). It will also be
    * dynamically updated when either resizes.
    *
+   * Note that if using a relative numerical string, the parent's depth cannot
+   * be "auto".
+   *
    * @defaultValue 1
    */
   depth?: RawOrRelativeNumber | "auto";
@@ -449,6 +444,10 @@ const PREFIX_USES_STICKY = MH.prefixName("uses-sticky");
 const PREFIX_LAYER = `${PREFIXED_NAME}-layer`;
 const SELECTOR_LAYER = `[data-${PREFIX_LAYER}]`;
 
+const ONLY_HTML_ELEMENT_ERR = MH.usageError(
+  "Only HTMLElement is supported for SmoothScroll widget",
+);
+
 type SmoothScrollLayerState = {
   _lagX: number;
   _lagY: number;
@@ -458,7 +457,7 @@ type SmoothScrollLayerState = {
   _children: Set<Element>;
   _parentState: SmoothScrollLayerState | null;
   _scrollData?: ScrollData;
-  _sizeData?: SizeData;
+  _sizeData?: SizeData["border"];
 };
 
 let mainWidget: SmoothScroll | null = null;
@@ -480,6 +479,28 @@ const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig>
     depthX: validateRawOrRelativeNumber,
     depthY: validateRawOrRelativeNumber,
   };
+
+const stateUsesAutoDepth = (state: SmoothScrollLayerState) =>
+  state._depthX === MC.S_AUTO || state._depthY === MC.S_AUTO;
+
+const toScrollable = (scrollable: HTMLElement) =>
+  scrollable === MH.getDocElement() || scrollable === MH.getBody()
+    ? getDefaultScrollingElement()
+    : scrollable;
+
+const toDepth = (depth: unknown, parentDepth: number | "auto") => {
+  depth ??= parentDepth;
+  if (depth === MC.S_AUTO) {
+    return depth;
+  }
+
+  const reference = parentDepth === MC.S_AUTO ? 1 : parentDepth;
+  return toNumWithBounds(
+    toRawNum(depth, reference, reference),
+    { min: 0.01 },
+    1,
+  );
+};
 
 const getParentLayer = (scrollable: Element, layer: Element) => {
   let closest = MH.closestParent(layer, SELECTOR_LAYER) ?? scrollable;
@@ -574,16 +595,8 @@ const getLayersFrom = (
         parentLagY,
         parentLagY,
       );
-      const depthX = toNumWithBounds(
-        toRawNum(config?.depthX ?? config?.depth, parentDepthX, parentDepthX),
-        { min: 0.01 },
-        1,
-      );
-      const depthY = toNumWithBounds(
-        toRawNum(config?.depthY ?? config?.depth, parentDepthY, parentDepthY),
-        { min: 0.01 },
-        1,
-      );
+      const depthX = toDepth(config?.depthX ?? config?.depth, parentDepthX);
+      const depthY = toDepth(config?.depthY ?? config?.depth, parentDepthY);
       const useDefaultEffects = config?.defaultEffects ?? true;
 
       state = {
@@ -594,8 +607,8 @@ const getLayersFrom = (
         _controller: newController(useDefaultEffects, {
           lagX,
           lagY,
-          depthX,
-          depthY,
+          depthX: depthX === MC.S_AUTO ? 1 : depthX,
+          depthY: depthY === MC.S_AUTO ? 1 : depthY,
           parent: parentState?._controller,
         }),
         _children: MH.newSet(),
@@ -698,9 +711,35 @@ const init = async (
 ) => {
   const isBody = scrollable === getDefaultScrollingElement();
   const root = isBody ? MH.getBody() : scrollable;
-  const sizeWatcher = isBody
-    ? SizeWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 })
+  const anyIsAutoDepth = !![...layers].find(([__ignored, state]) =>
+    stateUsesAutoDepth(state),
+  );
+  const rootState = layers.get(scrollable);
+  if (!rootState) {
+    throw MH.bugError("No SmoothScroll state saved for the root");
+  }
+
+  const scrollWatcher = anyIsAutoDepth
+    ? ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 })
     : null;
+  const sizeWatcher =
+    anyIsAutoDepth || isBody
+      ? SizeWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 })
+      : null;
+
+  const updateScrollData = (target: Element, scrollData: ScrollData) => {
+    rootState._scrollData = scrollData;
+    resetAutoDepth();
+  };
+
+  const updateSizeData = (target: Element, sizeData: SizeData) => {
+    const state = layers.get(target);
+    if (!state) {
+      throw MH.bugError("No SmoothScroll state saved for layer");
+    }
+    state._sizeData = sizeData.border;
+    resetAutoDepth(state);
+  };
 
   // If the content is resized, update the body size to match its size.
   // Only applies when using the document scrolling element.
@@ -715,14 +754,53 @@ const init = async (
   // ----------
 
   const addWatchers = () => {
+    scrollWatcher?.trackScroll(updateScrollData, { scrollable });
     sizeWatcher?.onResize(updatePropsOnResize, {
       target: innerWrapper,
       threshold: 0,
     });
+
+    for (const [layer, state] of layers) {
+      if (stateUsesAutoDepth(state)) {
+        sizeWatcher?.onResize(updateSizeData, { target: layer, threshold: 0 });
+      }
+    }
   };
 
   const removeWatchers = () => {
+    scrollWatcher?.noTrackScroll(updateScrollData, scrollable);
     sizeWatcher?.offResize(updatePropsOnResize, innerWrapper);
+
+    for (const [layer, state] of layers) {
+      if (stateUsesAutoDepth(state)) {
+        sizeWatcher?.offResize(updateSizeData, layer);
+      }
+    }
+  };
+
+  const setControllersState = (enable: boolean) => {
+    for (const [__ignored, state] of layers) {
+      state._controller[enable ? "enable" : "disable"]();
+    }
+  };
+
+  const resetAutoDepth = (state?: SmoothScrollLayerState) => {
+    if (!state) {
+      for (const [__ignored, state] of layers) {
+        resetAutoDepth(state);
+      }
+      return;
+    }
+
+    const rootScrollData = rootState._scrollData;
+    const layerSize = state._sizeData;
+    if (!rootScrollData || !layerSize) {
+      throw MH.bugError("No size data saved for root or layer");
+    }
+
+    const depthX = rootScrollData[MC.S_SCROLL_WIDTH] / layerSize[MC.S_WIDTH];
+    const depthY = rootScrollData[MC.S_SCROLL_HEIGHT] / layerSize[MC.S_HEIGHT];
+    state._controller.setDepth(depthX, depthY);
   };
 
   // SETUP ------------------------------
@@ -776,18 +854,18 @@ const init = async (
   addClassesNow(root, PREFIX_ROOT);
 
   addWatchers();
-  // XXX TODO enable FXControllers
+  setControllersState(true);
 
   widget.onDisable(() => {
     removeWatchers();
-    // XXX TODO disable FXControllers
-    // XXX TODO remove fixed position and transforms, etc
+    setControllersState(false);
+    removeClasses(root, PREFIX_ROOT);
   });
 
   widget.onEnable(() => {
     addWatchers();
-    // XXX TODO re-enabled FXControllers
-    // XXX TODO re-add fixed position and transforms, etc
+    setControllersState(true);
+    addClasses(root, PREFIX_ROOT);
   });
 
   widget.onDestroy(async () => {

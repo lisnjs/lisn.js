@@ -164,6 +164,8 @@ export class Transform implements EffectInterface<"transform"> {
     const processedHandlers: EffectHandler<void>[] = [];
     let perspective: string | undefined = undefined;
 
+    // ----------
+
     const addOwnHandler = <T extends HandlerTuple>(
       original: T,
       processed: EffectHandler<void>,
@@ -172,11 +174,15 @@ export class Transform implements EffectInterface<"transform"> {
       saveHandlerFor(this, original);
     };
 
+    // ----------
+
     const toMatrix = (negate?: TransformLike) => {
       const m = newMatrix(true, selfM);
       const relM = negate ? newMatrix(true, negate) : null;
       return relM ? relM.inverse().multiply(m) : m;
     };
+
+    // ----------
 
     const reset = () => {
       selfM.m12 =
@@ -196,7 +202,7 @@ export class Transform implements EffectInterface<"transform"> {
       return this;
     };
 
-    // ----------
+    // --------------------
 
     this.isAbsolute = () => isAbsolute;
 

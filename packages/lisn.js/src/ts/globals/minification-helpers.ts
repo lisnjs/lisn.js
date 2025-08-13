@@ -16,6 +16,7 @@ import {
   MapBase,
   SetBase,
   Spread,
+  EmptyLiteral,
 } from "@lisn/globals/types";
 
 import { LisnUsageError, LisnBugError } from "@lisn/globals/errors";
@@ -291,8 +292,6 @@ export const merge = <A extends readonly (object | null | undefined)[]>(
   return assign({}, ...a) as Spread<A>;
 };
 
-const EMPTY__ignored = {} as const;
-type EmptyLiteral = typeof EMPTY__ignored;
 export function copyObject<T extends object>(obj: T): T;
 export function copyObject(obj: null | undefined): EmptyLiteral;
 // implementation (wide) — callers see the overloads, not this signature

@@ -224,9 +224,9 @@ const newConfigValidator: WidgetConfigValidatorFunc<
 > = (element) => {
   return {
     scrollable: (key, value) =>
-      (MH.isLiteralString(value)
-        ? waitForReferenceElement(value, element)
-        : null) ?? undefined,
+      MH.isLiteralString(value)
+        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
+        : undefined,
     threshold: validateNumber,
   };
 };

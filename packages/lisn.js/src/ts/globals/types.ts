@@ -453,6 +453,14 @@ export type SetBase<V> = {
   has: (value: V) => boolean;
 };
 
+const EMPTY__ignored = {} as const;
+
+/**
+ * @ignore
+ * @internal
+ */
+export type EmptyLiteral = typeof EMPTY__ignored;
+
 /**
  * @ignore
  * @internal
@@ -460,10 +468,10 @@ export type SetBase<V> = {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type Spread<A extends readonly [...any]> = A extends [infer L]
   ? L extends null | undefined
-    ? {}
+    ? EmptyLiteral
     : L
   : A extends [infer L, ...infer R]
-    ? SpreadTwo<L extends null | undefined ? {} : L, Spread<R>>
+    ? SpreadTwo<L extends null | undefined ? EmptyLiteral : L, Spread<R>>
     : unknown;
 
 // --------------------

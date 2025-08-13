@@ -68,6 +68,7 @@ import {
   ScrollAction,
 } from "@lisn/utils/scroll";
 import { formatAsString } from "@lisn/utils/text";
+import { isValidPosition } from "@lisn/utils/position";
 import {
   validateStrList,
   validateNumber,
@@ -452,8 +453,8 @@ const configValidator: WidgetConfigValidatorObject<ScrollbarConfig> = {
   className: validateStrList,
   hideNative: validateBoolean,
   onMobile: validateBoolean,
-  positionH: validateString,
-  positionV: validateString,
+  positionH: (key, value) => validateString(key, value, isValidPosition),
+  positionV: (key, value) => validateString(key, value, isValidPosition),
   autoHide: validateNumber,
   clickScroll: validateBoolean,
   dragScroll: validateBoolean,

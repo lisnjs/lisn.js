@@ -595,21 +595,11 @@ const recordsToSkipOnce = MH.newMap<
   { from: Element | null; to: Element | null }
 >();
 
-function _tryWrapNow<O extends ContentWrappingOptions>(
-  element: Element,
-  options: O & { _required: true },
-  wrapContent?: boolean,
-): HTMLElement;
-function _tryWrapNow<O extends ContentWrappingOptions>(
-  element: Element,
-  options: O | undefined,
-  wrapContent?: boolean,
-): HTMLElement | null;
-function _tryWrapNow<O extends ContentWrappingOptions>(
+const _tryWrapNow = <O extends ContentWrappingOptions>(
   element: Element,
   options: O | undefined,
   wrapContent = false, // if true, wrap its children, otherwise given element
-) {
+) => {
   const {
     _tagName: tagName,
     _classNames: classNames = wrapContent
@@ -638,5 +628,7 @@ function _tryWrapNow<O extends ContentWrappingOptions>(
     }
   }
 
-  return wrapper;
-}
+  return wrapper as O extends { _required: true }
+    ? HTMLElement
+    : HTMLElement | null;
+};

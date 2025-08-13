@@ -139,6 +139,7 @@ export class ClickTrigger extends Trigger {
     actions: Action[],
     config?: PointerTriggerConfig,
   ) {
+    config ??= {};
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
 
@@ -249,6 +250,7 @@ export class PressTrigger extends Trigger {
     actions: Action[],
     config?: PointerTriggerConfig,
   ) {
+    config ??= {};
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
 
@@ -356,6 +358,7 @@ export class HoverTrigger extends Trigger {
     actions: Action[],
     config?: PointerTriggerConfig,
   ) {
+    config ??= {};
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
 
@@ -397,9 +400,9 @@ const newConfigValidator: WidgetConfigValidatorFunc<PointerTriggerConfig> = (
 ) => {
   return {
     target: (key, value) =>
-      (MH.isLiteralString(value)
-        ? waitForReferenceElement(value, element)
-        : null) ?? undefined,
+      MH.isLiteralString(value)
+        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
+        : undefined,
     preventDefault: validateBoolean,
     preventSelect: validateBoolean,
   };
@@ -409,7 +412,7 @@ const setupWatcher = (
   widget: ClickTrigger | HoverTrigger | PressTrigger,
   element: Element,
   actions: Action[],
-  config: PointerTriggerConfig | undefined,
+  config: PointerTriggerConfig,
   action: "click" | "hover" | "press",
 ) => {
   if (!MH.lengthOf(actions)) {

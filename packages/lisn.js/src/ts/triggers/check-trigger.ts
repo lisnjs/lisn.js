@@ -119,6 +119,7 @@ export class CheckTrigger extends Trigger {
     actions: Action[],
     config?: CheckTriggerConfig,
   ) {
+    config ??= {};
     super(element, actions, config);
     this.getConfig = () => MH.copyObject(config);
 
@@ -162,8 +163,8 @@ const newConfigValidator: WidgetConfigValidatorFunc<CheckTriggerConfig> = (
 ) => {
   return {
     target: (key, value) =>
-      (MH.isLiteralString(value)
-        ? waitForReferenceElement(value, element)
-        : null) ?? undefined,
+      MH.isLiteralString(value)
+        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
+        : undefined,
   };
 };

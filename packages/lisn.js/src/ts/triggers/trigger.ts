@@ -160,6 +160,7 @@ export class Trigger extends Widget {
    *                If the config is invalid.
    */
   constructor(element: Element, actions: Action[], config?: TriggerConfig) {
+    config ??= {};
     super(element, config);
 
     const logger = debug
@@ -169,11 +170,11 @@ export class Trigger extends Widget {
         })
       : null;
 
-    const once = config?.once ?? false;
-    const oneWay = config?.oneWay ?? false;
-    const delay = config?.delay ?? 0;
-    const doDelay = config?.doDelay ?? delay;
-    const undoDelay = config?.undoDelay ?? delay;
+    const once = config.once ?? false;
+    const oneWay = config.oneWay ?? false;
+    const delay = config.delay ?? 0;
+    const doDelay = config.doDelay ?? delay;
+    const undoDelay = config.undoDelay ?? delay;
 
     let lastCallId: string;
     // false if next should be do; true if next should be undo.
@@ -459,8 +460,8 @@ const newBaseConfigValidator: WidgetConfigValidatorFunc<TriggerConfig> = (
     doDelay: validateNumber,
     undoDelay: validateNumber,
     actOn: (key, value) =>
-      (MH.isLiteralString(value)
-        ? waitForReferenceElement(value, element)
-        : null) ?? undefined,
+      MH.isLiteralString(value)
+        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
+        : undefined,
   };
 };

@@ -193,6 +193,7 @@ export class ViewTrigger extends Trigger {
    *                If the config is invalid.
    */
   constructor(element: Element, actions: Action[], config?: ViewTriggerConfig) {
+    config ??= {};
     super(element, actions, config);
 
     const logger = debug
@@ -208,13 +209,13 @@ export class ViewTrigger extends Trigger {
     }
 
     const watcher = ViewWatcher.reuse({
-      root: config?.root,
-      rootMargin: config?.rootMargin?.replace(/,/g, " "),
-      threshold: config?.threshold,
+      root: config.root,
+      rootMargin: config.rootMargin?.replace(/,/g, " "),
+      threshold: config.threshold,
     });
 
-    const target = config?.target ?? element;
-    const views = config?.views || MC.S_AT;
+    const target = config.target ?? element;
+    const views = config.views || MC.S_AT;
     const oppositeViews = getOppositeViews(views);
 
     const setupWatcher = (target: ViewTarget) => {
@@ -312,13 +313,13 @@ const newConfigValidator: WidgetConfigValidatorFunc<
     target: (key, value) =>
       MH.isLiteralString(value) && isValidScrollOffset(value)
         ? value
-        : ((MH.isLiteralString(value)
-            ? waitForReferenceElement(value, element)
-            : null) ?? undefined),
+        : MH.isLiteralString(value)
+          ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
+          : undefined,
     root: (key, value) =>
-      (MH.isLiteralString(value)
-        ? waitForReferenceElement(value, element)
-        : null) ?? undefined,
+      MH.isLiteralString(value)
+        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
+        : undefined,
     rootMargin: validateString,
     threshold: (key, value) => validateNumList(key, value),
   };

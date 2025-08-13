@@ -241,8 +241,8 @@ const newConfigValidator: WidgetConfigValidatorFunc<{
     offsetY: (key, value) => validateNumber(key, value) ?? 0,
     duration: validateNumber,
     scrollable: (key, value) =>
-      (MH.isLiteralString(value)
-        ? waitForReferenceElement(value, element)
-        : null) ?? undefined,
+      MH.isLiteralString(value)
+        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
+        : undefined,
   };
 };

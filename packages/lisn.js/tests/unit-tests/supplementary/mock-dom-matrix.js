@@ -303,8 +303,6 @@ class DOMMatrixReadOnly {
     }
 
     return new this.constructor(Array.from(inv));
-    Object.assign(this, new DOMMatrix(Array.from(inv))); // XXX
-    return this;
   }
 
   rotateAxisAngle(x, y, z, angle) {

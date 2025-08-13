@@ -157,6 +157,8 @@ describe("Trigger", () => {
     expect(action.toggle).toHaveBeenCalledTimes(0);
 
     // UNDO ----
+    await window.waitForAF(); // onDestroy callbacks are called asynchronously
+    expect(trigger.isDestroyed()).toBe(true);
     await expect(trigger.reverse()).rejects.toThrow(
       /Callback has been removed/,
     );
@@ -199,6 +201,8 @@ describe("Trigger", () => {
     expect(action.toggle).toHaveBeenCalledTimes(1);
 
     // DO ----
+    await window.waitForAF(); // onDestroy callbacks are called asynchronously
+    expect(trigger.isDestroyed()).toBe(true);
     await expect(trigger.run()).rejects.toThrow(/Callback has been removed/);
 
     expect(action.do).toHaveBeenCalledTimes(0); // it's done
@@ -225,6 +229,8 @@ describe("Trigger", () => {
     expect(action.toggle).toHaveBeenCalledTimes(1);
 
     // DO ----
+    await window.waitForAF(); // onDestroy callbacks are called asynchronously
+    expect(trigger.isDestroyed()).toBe(true);
     await expect(trigger.run()).rejects.toThrow(/Callback has been removed/);
 
     expect(action.do).toHaveBeenCalledTimes(0); // it's done

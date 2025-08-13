@@ -62,8 +62,6 @@ import {
   validateString,
 } from "@lisn/utils/validation";
 
-import { wrapCallback } from "@lisn/modules/callback";
-
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 import { ViewWatcher, ViewData } from "@lisn/watchers/view-watcher";
 
@@ -77,6 +75,7 @@ import {
   getWidgetConfig,
   getDefaultWidgetSelector,
   addWidgetCallback,
+  invokeWidgetCallbacks,
 } from "@lisn/widgets/widget";
 
 /* ********************
@@ -233,10 +232,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = true;
-
-      for (const callback of openCallbacks) {
-        await callback.invoke(this);
-      }
+      await invokeWidgetCallbacks(this, openCallbacks);
 
       if (isModal) {
         setHasModal();
@@ -253,10 +249,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = false;
-
-      for (const callback of closeCallbacks) {
-        await callback.invoke(this);
-      }
+      await invokeWidgetCallbacks(this, closeCallbacks);
 
       if (isModal) {
         delHasModal();

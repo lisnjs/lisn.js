@@ -41,8 +41,6 @@ import {
   validateBoolean,
 } from "@lisn/utils/validation";
 
-import { wrapCallback } from "@lisn/modules/callback";
-
 import {
   GestureWatcher,
   OnGestureOptions,
@@ -60,6 +58,7 @@ import {
   registerWidget,
   getDefaultWidgetSelector,
   addWidgetCallback,
+  invokeWidgetCallbacks,
 } from "@lisn/widgets/widget";
 
 import debug from "@lisn/debug/debug";
@@ -1239,9 +1238,7 @@ const getMethods = (
     lastPageNum = currPageNum > 0 ? currPageNum : pageNum;
     currPageNum = pageNum;
 
-    for (const callback of callbacks) {
-      await callback.invoke(widget);
-    }
+    await invokeWidgetCallbacks(widget, callbacks);
 
     MH.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
     for (

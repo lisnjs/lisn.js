@@ -155,10 +155,7 @@ export class Widget {
       if (!isDisabled) {
         debug: logger?.debug8("Disabling");
         isDisabled = true;
-
-        for (const callback of disableCallbacks) {
-          await callback.invoke(this);
-        }
+        await invokeWidgetCallbacks(this, disableCallbacks);
       }
     };
 
@@ -166,10 +163,7 @@ export class Widget {
       if (!isDestroyed && isDisabled) {
         debug: logger?.debug8("Enabling");
         isDisabled = false;
-
-        for (const callback of enableCallbacks) {
-          await callback.invoke(this);
-        }
+        await invokeWidgetCallbacks(this, enableCallbacks);
       }
     };
 
@@ -191,9 +185,7 @@ export class Widget {
           isDestroyed = true;
           await this.disable();
 
-          for (const callback of destroyCallbacks) {
-            await callback.invoke(this);
-          }
+          await invokeWidgetCallbacks(this, destroyCallbacks);
 
           enableCallbacks.clear();
           disableCallbacks.clear();
@@ -528,6 +520,19 @@ export const addWidgetCallback = (
   const callback = wrapCallback(handler);
   set.add(callback);
   callback.onRemove(() => MH.deleteKey(set, callback));
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const invokeWidgetCallbacks = async (
+  widget: Widget,
+  set: Set<WidgetCallback>,
+) => {
+  for (const callback of set) {
+    await callback.invoke(widget);
+  }
 };
 
 // --------------------

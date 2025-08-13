@@ -27,8 +27,6 @@ import {
 import { toInt } from "@lisn/utils/math";
 import { validateString } from "@lisn/utils/validation";
 
-import { wrapCallback } from "@lisn/modules/callback";
-
 import {
   Widget,
   WidgetConfigValidatorObject,
@@ -37,6 +35,7 @@ import {
   registerWidget,
   getDefaultWidgetSelector,
   addWidgetCallback,
+  invokeWidgetCallbacks,
 } from "@lisn/widgets/widget";
 
 /**
@@ -538,9 +537,7 @@ const getMethods = (
       });
     }
 
-    for (const callback of callbacks) {
-      await callback.invoke(widget);
-    }
+    await invokeWidgetCallbacks(widget, callbacks);
   };
 
   return {

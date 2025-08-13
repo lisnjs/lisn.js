@@ -62,6 +62,8 @@ import {
   validateString,
 } from "@lisn/utils/validation";
 
+import { addNewCallbackToSet, invokeCallbackSet } from "@lisn/modules/callback";
+
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 import { ViewWatcher, ViewData } from "@lisn/watchers/view-watcher";
 
@@ -74,8 +76,6 @@ import {
   registerWidget,
   getWidgetConfig,
   getDefaultWidgetSelector,
-  addWidgetCallback,
-  invokeWidgetCallbacks,
 } from "@lisn/widgets/widget";
 
 /* ********************
@@ -232,7 +232,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = true;
-      await invokeWidgetCallbacks(this, openCallbacks);
+      await invokeCallbackSet(openCallbacks, this);
 
       if (isModal) {
         setHasModal();
@@ -249,7 +249,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = false;
-      await invokeWidgetCallbacks(this, closeCallbacks);
+      await invokeCallbackSet(closeCallbacks, this);
 
       if (isModal) {
         delHasModal();
@@ -280,8 +280,8 @@ export abstract class Openable extends Widget {
     this.open = open;
     this.close = close;
     this[MC.S_TOGGLE] = () => (isOpen ? close() : open());
-    this.onOpen = (handler) => addWidgetCallback(handler, openCallbacks);
-    this.onClose = (handler) => addWidgetCallback(handler, closeCallbacks);
+    this.onOpen = (handler) => addNewCallbackToSet(handler, openCallbacks);
+    this.onClose = (handler) => addNewCallbackToSet(handler, closeCallbacks);
     this.isOpen = () => isOpen;
     this.getRoot = () => root;
     this.getContainer = () => container;

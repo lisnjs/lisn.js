@@ -63,7 +63,7 @@ export const scheduleHighPriorityTask = (task: () => void) => {
  *
  * @category Tasks
  */
-export const getDebouncedHandler = <Args extends unknown[]>(
+export const getDebouncedHandler = <Args extends readonly unknown[]>(
   debounceWindow: number,
   handler: (...args: Args) => void,
 ) => {

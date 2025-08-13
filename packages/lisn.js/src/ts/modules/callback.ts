@@ -12,7 +12,7 @@ import debug from "@lisn/debug/debug";
 /**
  * @typeParam Args See {@link Callback}
  */
-export type CallbackHandler<Args extends unknown[] = []> = (
+export type CallbackHandler<Args extends readonly unknown[] = []> = (
   ...args: Args
 ) => CallbackReturnType | Promise<CallbackReturnType>;
 
@@ -27,7 +27,7 @@ export type CallbackReturnType =
  * @ignore
  * @internal
  */
-export const wrapCallback = <Args extends unknown[] = []>(
+export const wrapCallback = <Args extends readonly unknown[] = []>(
   handlerOrCallback: CallbackHandler<Args> | Callback<Args>,
   debounceWindow = 0,
 ): Callback<Args> => {
@@ -74,7 +74,7 @@ export const wrapCallback = <Args extends unknown[] = []>(
  *
  * @typeParam Args The type of arguments that the callback expects.
  */
-export class Callback<Args extends unknown[] = []> {
+export class Callback<Args extends readonly unknown[] = []> {
   /**
    * Possible return value for the handler.
    *
@@ -218,6 +218,32 @@ export class Callback<Args extends unknown[] = []> {
   }
 }
 
+/**
+ * @ignore
+ * @internal
+ */
+export const addNewCallbackToSet = <Args extends readonly unknown[]>(
+  handler: CallbackHandler<Args> | Callback<Args>,
+  set: Set<Callback<Args>>,
+) => {
+  const callback = wrapCallback(handler);
+  set.add(callback);
+  callback.onRemove(() => MH.deleteKey(set, callback));
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const invokeCallbackSet = async <Args extends readonly unknown[]>(
+  set: Set<Callback<Args>>,
+  ...args: Args
+) => {
+  for (const callback of set) {
+    await callback.invoke(...args);
+  }
+};
+
 // ----------------------------------------
 
 type CallbackSchedulerTask = () => Promise<void>;
@@ -227,7 +253,9 @@ type CallbackSchedulerQueueItem = {
   _onRemove: (reason: typeof Callback.REMOVE) => void;
 };
 
-type CallableCallback<Args extends unknown[] = []> = (...args: Args) => void;
+type CallableCallback<Args extends readonly unknown[] = []> = (
+  ...args: Args
+) => void;
 
 const callablesMap = MH.newWeakMap<CallableCallback, Callback>();
 

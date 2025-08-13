@@ -55,7 +55,8 @@ import { formatAsString, kebabToCamelCase, splitOn } from "@lisn/utils/text";
 import {
   CallbackHandler,
   Callback,
-  wrapCallback,
+  addNewCallbackToSet,
+  invokeCallbackSet,
 } from "@lisn/modules/callback";
 import { newXWeakMap } from "@lisn/modules/x-map";
 
@@ -155,7 +156,7 @@ export class Widget {
       if (!isDisabled) {
         debug: logger?.debug8("Disabling");
         isDisabled = true;
-        await invokeWidgetCallbacks(this, disableCallbacks);
+        await invokeCallbackSet(disableCallbacks, this);
       }
     };
 
@@ -163,7 +164,7 @@ export class Widget {
       if (!isDestroyed && isDisabled) {
         debug: logger?.debug8("Enabling");
         isDisabled = false;
-        await invokeWidgetCallbacks(this, enableCallbacks);
+        await invokeCallbackSet(enableCallbacks, this);
       }
     };
 
@@ -173,8 +174,9 @@ export class Widget {
       }
     };
 
-    this.onDisable = (handler) => addWidgetCallback(handler, disableCallbacks);
-    this.onEnable = (handler) => addWidgetCallback(handler, enableCallbacks);
+    this.onDisable = (handler) =>
+      addNewCallbackToSet(handler, disableCallbacks);
+    this.onEnable = (handler) => addNewCallbackToSet(handler, enableCallbacks);
 
     this.isDisabled = () => isDisabled;
 
@@ -185,7 +187,7 @@ export class Widget {
           isDestroyed = true;
           await this.disable();
 
-          await invokeWidgetCallbacks(this, destroyCallbacks);
+          await invokeCallbackSet(destroyCallbacks, this);
 
           enableCallbacks.clear();
           disableCallbacks.clear();
@@ -204,7 +206,8 @@ export class Widget {
       return destroyPromise;
     };
 
-    this.onDestroy = (handler) => addWidgetCallback(handler, destroyCallbacks);
+    this.onDestroy = (handler) =>
+      addNewCallbackToSet(handler, destroyCallbacks);
 
     this.isDestroyed = () => isDestroyed;
 
@@ -507,32 +510,6 @@ export const fetchUniqueWidget = async <W extends Widget>(
   }
 
   return widget;
-};
-
-/**
- * @ignore
- * @internal
- */
-export const addWidgetCallback = (
-  handler: WidgetHandler,
-  set: Set<WidgetCallback>,
-) => {
-  const callback = wrapCallback(handler);
-  set.add(callback);
-  callback.onRemove(() => MH.deleteKey(set, callback));
-};
-
-/**
- * @ignore
- * @internal
- */
-export const invokeWidgetCallbacks = async (
-  widget: Widget,
-  set: Set<WidgetCallback>,
-) => {
-  for (const callback of set) {
-    await callback.invoke(widget);
-  }
 };
 
 // --------------------

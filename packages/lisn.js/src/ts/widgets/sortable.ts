@@ -27,6 +27,8 @@ import {
 import { toInt } from "@lisn/utils/math";
 import { validateString } from "@lisn/utils/validation";
 
+import { addNewCallbackToSet, invokeCallbackSet } from "@lisn/modules/callback";
+
 import {
   Widget,
   WidgetConfigValidatorObject,
@@ -34,8 +36,6 @@ import {
   WidgetHandler,
   registerWidget,
   getDefaultWidgetSelector,
-  addWidgetCallback,
-  invokeWidgetCallbacks,
 } from "@lisn/widgets/widget";
 
 /**
@@ -522,7 +522,7 @@ const getMethods = (
       : disableItem(itemNum, currentOrder);
 
   const onMove = (handler: WidgetHandler) =>
-    addWidgetCallback(handler, callbacks);
+    addNewCallbackToSet(handler, callbacks);
 
   // This is internal only for now...
   const dragItemOnto = async (dragged: Element, draggedOver: Element) => {
@@ -536,7 +536,7 @@ const getMethods = (
       });
     }
 
-    await invokeWidgetCallbacks(widget, callbacks);
+    await invokeCallbackSet(callbacks, widget);
   };
 
   return {

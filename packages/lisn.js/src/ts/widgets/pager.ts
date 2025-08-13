@@ -41,6 +41,8 @@ import {
   validateBoolean,
 } from "@lisn/utils/validation";
 
+import { addNewCallbackToSet, invokeCallbackSet } from "@lisn/modules/callback";
+
 import {
   GestureWatcher,
   OnGestureOptions,
@@ -57,8 +59,6 @@ import {
   WidgetHandler,
   registerWidget,
   getDefaultWidgetSelector,
-  addWidgetCallback,
-  invokeWidgetCallbacks,
 } from "@lisn/widgets/widget";
 
 import debug from "@lisn/debug/debug";
@@ -1238,7 +1238,7 @@ const getMethods = (
     lastPageNum = currPageNum > 0 ? currPageNum : pageNum;
     currPageNum = pageNum;
 
-    await invokeWidgetCallbacks(widget, callbacks);
+    await invokeCallbackSet(callbacks, widget);
 
     MH.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
     for (
@@ -1341,7 +1341,7 @@ const getMethods = (
     isPageDisabled(pageNum) ? enablePage(pageNum) : disablePage(pageNum);
 
   const onTransition = (handler: WidgetHandler) =>
-    addWidgetCallback(handler, callbacks);
+    addNewCallbackToSet(handler, callbacks);
 
   return {
     _nextPage: nextPage,

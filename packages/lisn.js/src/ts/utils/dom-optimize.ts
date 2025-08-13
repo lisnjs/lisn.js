@@ -78,7 +78,7 @@ export const waitForSubsequentMeasureTime = () =>
  * @since v1.2.0
  */
 export const asyncMutatorFor =
-  <Args extends unknown[], Ret>(func: (...args: Args) => Ret) =>
+  <Args extends readonly unknown[], Ret>(func: (...args: Args) => Ret) =>
   async (...args: Args) =>
     waitForMutateTime().then(() => func(...args));
 
@@ -89,7 +89,7 @@ export const asyncMutatorFor =
  * @since v1.2.0
  */
 export const asyncMeasurerFor =
-  <Args extends unknown[], Ret>(func: (...args: Args) => Ret) =>
+  <Args extends readonly unknown[], Ret>(func: (...args: Args) => Ret) =>
   async (...args: Args) =>
     waitForMeasureTime().then(() => func(...args));
 

@@ -260,9 +260,7 @@ export class LayoutWatcher {
 
       debug: logger?.debug5("Adding/updating handler", layoutBitmask);
       const callback = wrapCallback(handler);
-      callback.onRemove(() => {
-        deleteHandler(handler);
-      });
+      callback.onRemove(() => deleteHandler(handler));
 
       allCallbacks.set(handler, {
         _callback: callback,

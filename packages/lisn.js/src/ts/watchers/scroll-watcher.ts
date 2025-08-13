@@ -349,9 +349,7 @@ export class ScrollWatcher {
 
       debug: logger?.debug5("Adding/updating handler", options);
       const callback = wrapCallback(handler, options._debounceWindow);
-      callback.onRemove(() => {
-        deleteHandler(handler, options);
-      });
+      callback.onRemove(() => deleteHandler(handler, options));
 
       const entry = {
         _callback: callback,

@@ -287,9 +287,7 @@ export class ViewWatcher {
 
       debug: logger?.debug5("Adding/updating handler", options);
       const callback = wrapCallback(handler);
-      callback.onRemove(() => {
-        deleteHandler(handler, options);
-      });
+      callback.onRemove(() => deleteHandler(handler, options));
 
       allCallbacks.sGet(element).set(handler, {
         _callback: callback,

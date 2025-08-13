@@ -58,20 +58,30 @@ export type EffectHandler<R> = (offsets: ScrollOffsets) => R;
  * The scroll offsets for the current animation frame, being smoothly
  * interpolated towards the target ones.
  *
- * **IMPORTANT:** They may either be absolute (actual offsets) or incremental
- * (delta values), depending on whether the {@link Effect} using those is
- * {@link Effect.isAbsolute | absolute} or not.
- *
  * @category Effects
  */
 export type ScrollOffsets = {
   /**
-   * If the effect is absolute, this holds the current interpolated value for
-   * the scroll left offset scaled by the parallax depth of the element being
-   * animated.
+   * Indicates whether the values are absolute (actual offsets) or incremental
+   * (delta values since last frame). They would be incremental if this is
+   * being passed to an {@link EffectHandler} for an {@link Effect} that's not
+   * {@link Effect.isAbsolute | absolute}.
+   */
+  isAbsolute: boolean;
+
+  /**
+   * The {@link Effects/FXController.FXControllerConfig.depth | controller's depth}
+   * that has scaled the offsets. {@link x} and {@link y} are the actual
+   * element's scroll offset divided by this depth.
+   */
+  depth: number;
+
+  /**
+   * If the data is absolute, this holds the current interpolated value for
+   * the scroll left offset scaled by the parallax depth of the controller.
    *
-   * If the effect is incremental, then this holds the change in this absolute
-   * value since the last animation frame.
+   * Otherwise, this holds the change in this absolute value since the last
+   * animation frame.
    */
   x: number;
 
@@ -82,12 +92,11 @@ export type ScrollOffsets = {
   nx: number;
 
   /**
-   * If the effect is absolute, this holds the current interpolated value for
-   * the scroll top offset scaled by the parallax depth of the element being
-   * animated.
+   * If the data is absolute, this holds the current interpolated value for
+   * the scroll top offset scaled by the parallax depth of the controller.
    *
-   * If the effect is incremental, then this holds the change in this absolute
-   * value since the last animation frame.
+   * Otherwise, this holds the change in this absolute value since the last
+   * animation frame.
    */
   y: number;
 

@@ -288,10 +288,18 @@ export const defineProperty = MC.OBJECT.defineProperty.bind(MC.OBJECT);
 export const merge = <A extends readonly (object | null | undefined)[]>(
   ...a: [...A]
 ) => {
-  return MC.OBJECT.assign({}, ...a) as Spread<A>;
+  return assign({}, ...a) as Spread<A>;
 };
 
-export const copyObject = <T extends object | undefined>(obj: T) => merge(obj);
+const EMPTY__ignored = {} as const;
+type EmptyLiteral = typeof EMPTY__ignored;
+export function copyObject<T extends object>(obj: T): T;
+export function copyObject(obj: null | undefined): EmptyLiteral;
+// implementation (wide) — callers see the overloads, not this signature
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export function copyObject(obj: any) {
+  return merge(obj);
+}
 
 export const promiseResolve = MC.PROMISE.resolve.bind(MC.PROMISE);
 

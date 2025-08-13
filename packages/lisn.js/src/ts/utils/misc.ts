@@ -8,7 +8,24 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { roundNumTo } from "@lisn/utils/math";
 
-export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
+/**
+ * @since v1.3.0
+ */
+export const deepCopy = <T extends object>(obj: T): T => {
+  const clone = MH.copyObject(obj);
+  for (const key in clone) {
+    if (MH.isNonPrimitive(obj[key])) {
+      obj[key] = deepCopy(obj[key]);
+    }
+  }
+
+  return clone;
+};
+
+export const copyExistingKeys = <T extends object, F extends T>(
+  fromObj: F,
+  toObj: T,
+) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {
       continue;

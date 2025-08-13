@@ -458,12 +458,13 @@ export type SetBase<V> = {
  * @internal
  */
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export type Spread<A extends readonly [...any]> = A extends [
-  infer L,
-  ...infer R,
-]
-  ? SpreadTwo<L, Spread<R>>
-  : unknown;
+export type Spread<A extends readonly [...any]> = A extends [infer L]
+  ? L extends null | undefined
+    ? {}
+    : L
+  : A extends [infer L, ...infer R]
+    ? SpreadTwo<L extends null | undefined ? {} : L, Spread<R>>
+    : unknown;
 
 // --------------------
 

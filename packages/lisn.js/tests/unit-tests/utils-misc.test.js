@@ -8,6 +8,26 @@ const roundDiff = (x, y) => {
   return Math.floor(Math.abs(x - y));
 };
 
+test("deepCopy", () => {
+  const obj = {
+    a: 1,
+    o: {
+      a: 1,
+      o: {
+        a: 1,
+        o: {},
+      },
+    },
+  };
+
+  const clone = utils.deepCopy(obj);
+  expect(clone).toEqual(obj);
+  expect(clone).not.toBe(obj);
+  expect(clone.o).not.toBe(obj.o);
+  expect(clone.o.o).not.toBe(obj.o.o);
+  expect(clone.o.o.o).not.toBe(obj.o.o.o);
+});
+
 test("copyExistingKeys", () => {
   const objA = {
     a: 1,

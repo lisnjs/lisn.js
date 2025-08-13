@@ -55,6 +55,7 @@ import {
   getWidgetConfig,
 } from "@lisn/widgets/widget";
 
+import { LoggerInterface } from "@lisn/debug/types";
 import debug from "@lisn/debug/debug";
 
 /**
@@ -112,9 +113,8 @@ import debug from "@lisn/debug/debug";
  *
  * -----
  *
- * To use with auto-widgets (HTML API) (see
- * {@link Settings.settings.autoWidgets | settings.autoWidgets}), the following
- * CSS classes or data attributes are recognized:
+ * To use with auto-widgets (HTML API) (see {@link settings.autoWidgets}), the
+ * following CSS classes or data attributes are recognized:
  * - `lisn-smooth-scroll` class or `data-lisn-smooth-scroll` attribute set
  *   on the element that constitutes the scrollable container.
  * - `data-lisn-smooth-scroll-layer` attribute set on elements that want to
@@ -136,12 +136,10 @@ import debug from "@lisn/debug/debug";
  * <!-- LISN should be loaded beforehand -->
  * <script>
  *   // You can also just customise global default settings:
- *   // LISN.settings.smoothScrollLag = 800;
- *   // XXX TODO others
+ *   // LISN.settings.effectLag = 800;
  *
  *   LISN.widgets.SmoothScroll.enableMain({
  *     lag: 800,
- *     // XXX TODO others
  *   });
  * </script>
  * ```
@@ -182,6 +180,12 @@ import debug from "@lisn/debug/debug";
  * ```
  */
 export class SmoothScroll extends Widget {
+  /**
+   * Returns the {@link FXController} used for the root or the given layer. You
+   * can add custom effects to it.
+   */
+  readonly getController: (layer?: Element) => FXController | undefined;
+
   /**
    * If element is omitted, returns the instance created by {@link enableMain}
    * if any.
@@ -257,12 +261,42 @@ export class SmoothScroll extends Widget {
     const destroyPromise = SmoothScroll.get(scrollable)?.destroy();
     super(scrollable, { id: DUMMY_ID });
 
+    let isBody = false;
+    if (scrollable === MH.getDocElement() || scrollable === MH.getBody()) {
+      scrollable = getDefaultScrollingElement();
+      isBody = true;
+    }
+
+    const logger = debug
+      ? new debug.Logger({
+          name: `SmoothScroll-${formatAsString(scrollable)}`,
+          logAtCreation: { config, isBody },
+        })
+      : null;
+
+    let layers: Map<Element, SmoothScrollLayerState> | null = null;
+    this.getController = (layer) =>
+      layers?.get(layer ?? scrollable)?._controller;
+
+    // TODO Fallback to using scroll gestures:
+    // Position the outerWrapper as fixed, listen for gestures and initiate
+    // scrolling on the scrollable
+    if (!isBody && !supportsSticky()) {
+      logError(
+        "SmoothScroll on elements other than the document relies on " +
+          "position: sticky, but this browser does not support sticky.",
+      );
+      return;
+    }
+
+    layers = getLayersFrom(scrollable, config);
+
     (destroyPromise || MH.promiseResolve()).then(async () => {
       if (this.isDestroyed()) {
         return;
       }
 
-      init(this, scrollable, config);
+      init(this, scrollable, config, layers, logger);
     });
   }
 }
@@ -272,35 +306,25 @@ export class SmoothScroll extends Widget {
  */
 export type SmoothScrollConfig = {
   /**
-   * The time in milliseconds it takes for content to catch up to the actual
-   * scroll offset. This can be overridden for each layer.
+   * The lag for the {@link SmoothScroll.getController | root controller}.
    *
-   * @defaultValue {@link settings.smoothScrollLag}
+   * @defaultValue {@link settings.effectLag}
    */
   lag?: number;
 
   /**
-   * The lag along the horizontal axis. This can be overridden for each layer.
+   * The horizontal lag for the {@link SmoothScroll.getController | root controller}.
    *
    * @defaultValue {@link lag}
    */
   lagX?: number;
 
   /**
-   * The lag along the vertical axis. This can be overridden for each layer.
+   * The vertical lag for the {@link SmoothScroll.getController | root controller}.
    *
    * @defaultValue {@link lag}
    */
   lagY?: number;
-
-  /**
-   * The effect controller to use. If not given, a default controller will be
-   * used which creates a regular smooth scroll effect that tracks the actual
-   * scroll.
-   *
-   * @defaultValue undefined // Regular smooth scroll (translation)
-   */
-  controller?: FXController;
 
   /**
    * Elements which use custom animation settings. They must be descendants of
@@ -319,14 +343,23 @@ export type SmoothScrollConfig = {
    * @defaultValue undefined
    */
   layers?: Element[] | Map<Element, SmoothScrollLayerConfig | null>;
+
+  /**
+   * Set this to false to prevent adding the default
+   * {@link Transform | translation effect} to the
+   * {@link SmoothScroll.getController | root controller}.
+   *
+   * @defaultValue true
+   */
+  defaultEffects?: boolean;
 };
 
 /**
- * Custom lag, depth or controller for a descendant element of the scrollable.
- * Can either be given as an object as the value of the
- * {@link SmoothScrollConfig.layers} map, or it can be set as a string
- * configuration in the `data-lisn-smooth-scroll-layer` data attribute (except
- * the effect controller). See {@link getWidgetConfig} for the syntax.
+ * Custom lag or depth for a descendant element of the scrollable. Can either
+ * be given as an object as the value of the {@link SmoothScrollConfig.layers}
+ * map, or it can be set as a string configuration in the
+ * `data-lisn-smooth-scroll-layer` data attribute. See {@link getWidgetConfig}
+ * for the syntax.
  *
  * @example
  * ```html
@@ -340,52 +373,65 @@ export type SmoothScrollConfig = {
  */
 export type SmoothScrollLayerConfig = {
   /**
-   * Override the parent layer or root's lag for this child. It can be relative
-   * to the parent's lag.
+   * The lag for {@link SmoothScroll.getController | this layer's controller}.
    *
-   * @defaultValue undefined
+   * @defaultValue undefined // parent lag
    */
   lag?: RawOrRelativeNumber;
 
   /**
-   * Override the parent layer or root's horizontal lag for this child. It can
-   * be relative to the parent's lag.
+   * The horizontal lag for
+   * {@link SmoothScroll.getController | this layer's controller}.
    *
-   * @defaultValue undefined
+   * @defaultValue undefined // parent lagX
    */
   lagX?: RawOrRelativeNumber;
 
   /**
-   * Override the parent layer or root's vertical lag for this child. It can
-   * be relative to the parent's lag.
+   * The vertical lag for
+   * {@link SmoothScroll.getController | this layer's controller}.
    *
-   * @defaultValue undefined
+   * @defaultValue undefined // parent lagY
    */
   lagY?: RawOrRelativeNumber;
 
   /**
-   * Override the parent layer or root's effect controller for this child.
+   * The parallax depth for
+   * {@link SmoothScroll.getController | this layer's controller}.
    *
-   * Note that {@link Effects/Transform.Transform | transforms} applied to a parent layer are always inverted/negated
-   * on child layers so the transforms given for a layer will be its actual
-   * transform (relative to the viewport).
-   *
-   * @defaultValue undefined
-   */
-  controller?: FXController;
-
-  /**
-   * Parallax depth. This is a scaling ratio for the scroll offset. It can be
-   * relative to the parent's depth. It must result in a positive number. Values
-   * larger than 1 will result in a smaller amount of transformation.
-   *
-   * The special value "auto" is accepted only when using the default transform
-   * (which shifts the content to simulate scrolling). When the depth is set to
-   * "auto" the height/width of the element XXX TODO
+   * The special value "auto" is supported here and will result in vertical
+   * (or horizontal) depth equal to the scrollable's scroll height (or width)
+   * divided by the layer element's height (or width). It will also be
+   * dynamically updated when either resizes.
    *
    * @defaultValue 1
    */
-  depth?: RawOrRelativeNumber;
+  depth?: RawOrRelativeNumber | "auto";
+
+  /**
+   * The horizontal parallax depth for
+   * {@link SmoothScroll.getController | this layer's controller}.
+   *
+   * @defaultValue {@link depth}
+   */
+  depthX?: RawOrRelativeNumber | "auto";
+
+  /**
+   * The vertical parallax depth for
+   * {@link SmoothScroll.getController | this layer's controller}.
+   *
+   * @defaultValue {@link depth}
+   */
+  depthY?: RawOrRelativeNumber | "auto";
+
+  /**
+   * Set this to false to prevent adding the default
+   * {@link Transform | translation effect} to
+   * {@link SmoothScroll.getController | this layer's controller}.
+   *
+   * @defaultValue true
+   */
+  defaultEffects?: boolean;
 };
 
 // --------------------
@@ -401,17 +447,18 @@ const PREFIX_INNER_WRAPPER = `${PREFIXED_NAME}__inner`;
 const PREFIX_USES_STICKY = MH.prefixName("uses-sticky");
 
 const PREFIX_LAYER = `${PREFIXED_NAME}-layer`;
-const PREFIX_TRANSFORM = `${PREFIXED_NAME}-transform`;
-const SELECTOR_LAYER = `[data-${PREFIX_LAYER}],[data-${PREFIX_TRANSFORM}]`;
+const SELECTOR_LAYER = `[data-${PREFIX_LAYER}]`;
 
 type SmoothScrollLayerState = {
   _lagX: number;
   _lagY: number;
-  _depth: number;
+  _depthX: number | "auto";
+  _depthY: number | "auto";
   _controller: FXController;
   _children: Set<Element>;
   _parentState: SmoothScrollLayerState | null;
   _scrollData?: ScrollData;
+  _sizeData?: SizeData;
 };
 
 let mainWidget: SmoothScroll | null = null;
@@ -430,32 +477,52 @@ const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig>
     lagX: validateRawOrRelativeNumber,
     lagY: validateRawOrRelativeNumber,
     depth: validateRawOrRelativeNumber,
+    depthX: validateRawOrRelativeNumber,
+    depthY: validateRawOrRelativeNumber,
   };
 
 const getParentLayer = (scrollable: Element, layer: Element) => {
-  const closest = MH.closestParent(layer, SELECTOR_LAYER);
-  return closest && scrollable.contains(closest) && closest !== scrollable
-    ? closest
-    : null;
+  let closest = MH.closestParent(layer, SELECTOR_LAYER) ?? scrollable;
+  if (!scrollable.contains(closest)) {
+    closest = scrollable;
+  }
+
+  return closest !== layer ? closest : null;
 };
 
 const getLayersFrom = (
   scrollable: Element,
   rootConfig: SmoothScrollConfig | undefined,
 ) => {
-  const layerMap = MH.newMap<Element, SmoothScrollLayerState>(); // will include the root
+  // map will include the root scrollable
+  const layerMap = MH.newMap<Element, SmoothScrollLayerState>();
+  const defaultLag = rootConfig?.lag ?? settings.effectLag;
+  const defaultLagX = rootConfig?.lagX ?? defaultLag;
+  const defaultLagY = rootConfig?.lagY ?? defaultLag;
 
-  const defaultLag = settings.smoothScrollLag;
-  let defaultController: FXController;
+  const newController = (
+    useDefaultEffects: boolean,
+    config: {
+      lagX: number;
+      lagY: number;
+      depthX: number;
+      depthY: number;
+      parent?: FXController;
+    },
+  ) => {
+    const controller = new FXController(
+      MH.merge(config, { scrollable, disabled: true }),
+    );
+    if (useDefaultEffects) {
+      controller.add([
+        new Transform({ isAbsolute: true }).translate((data) => ({
+          x: data.x,
+          y: data.y,
+        })),
+      ]);
+    }
 
-  const getDefaultController = () => {
-    defaultController ??= new FXController({ scrollable }).add([
-      new Transform({ isAbsolute: true }).translate((data) => ({
-        x: data.x,
-        y: data.y,
-      })),
-    ]);
-    return defaultController;
+    return controller;
   };
 
   const getLayerConfig = (layer: Element) => {
@@ -492,24 +559,45 @@ const getLayersFrom = (
         parentState._children.add(layer);
       }
 
+      const parentLagX = parentState?._lagX ?? defaultLagX;
+      const parentLagY = parentState?._lagY ?? defaultLagY;
+      const parentDepthX = parentState?._depthX ?? 1;
+      const parentDepthY = parentState?._depthY ?? 1;
+
+      const lagX = toRawNum(
+        config?.lagX ?? config?.lag,
+        parentLagX,
+        parentLagX,
+      );
+      const lagY = toRawNum(
+        config?.lagY ?? config?.lag,
+        parentLagY,
+        parentLagY,
+      );
+      const depthX = toNumWithBounds(
+        toRawNum(config?.depthX ?? config?.depth, parentDepthX, parentDepthX),
+        { min: 0.01 },
+        1,
+      );
+      const depthY = toNumWithBounds(
+        toRawNum(config?.depthY ?? config?.depth, parentDepthY, parentDepthY),
+        { min: 0.01 },
+        1,
+      );
+      const useDefaultEffects = config?.defaultEffects ?? true;
+
       state = {
-        _lagX: toRawNum(
-          config?.lagX,
-          parentState?._lagX ?? rootConfig?.lagX ?? defaultLag,
-        ),
-        _lagY: toRawNum(
-          config?.lagY,
-          parentState?._lagY ?? rootConfig?.lagY ?? defaultLag,
-        ),
-        _depth: toNumWithBounds(
-          toRawNum(config?.depth, parentState?._depth ?? 1),
-          { min: 0.01 },
-          1,
-        ),
-        _controller:
-          config?.controller ??
-          parentState?._controller ??
-          getDefaultController(),
+        _lagX: lagX,
+        _lagY: lagY,
+        _depthX: depthX,
+        _depthY: depthY,
+        _controller: newController(useDefaultEffects, {
+          lagX,
+          lagY,
+          depthX,
+          depthY,
+          parent: parentState?._controller,
+        }),
         _children: MH.newSet(),
         _parentState: parentState,
       };
@@ -605,39 +693,11 @@ const init = async (
   widget: SmoothScroll,
   scrollable: HTMLElement,
   config: SmoothScrollConfig | undefined,
+  layers: Map<Element, SmoothScrollLayerState>,
+  logger: LoggerInterface | null,
 ) => {
-  const docEl = MH.getDocElement();
-  const body = MH.getBody();
-  const defaultScrollable = getDefaultScrollingElement();
-  let isBody = false;
-  let root = scrollable;
-
-  if (scrollable === docEl || scrollable === body) {
-    scrollable = defaultScrollable;
-    root = body;
-    isBody = true;
-  }
-
-  const layers = getLayersFrom(scrollable, config);
-
-  const logger = debug
-    ? new debug.Logger({
-        name: `SmoothScroll-${formatAsString(scrollable)}`,
-        logAtCreation: { config, isBody },
-      })
-    : null;
-
-  // TODO Fallback to using scroll gestures:
-  // Position the outerWrapper as fixed, listen for gestures and initiate
-  // scrolling on the scrollable
-  if (!isBody && !supportsSticky()) {
-    logError(
-      "SmoothScroll on elements other than the document relies on " +
-        "position: sticky, but this browser does not support sticky.",
-    );
-    return;
-  }
-
+  const isBody = scrollable === getDefaultScrollingElement();
+  const root = isBody ? MH.getBody() : scrollable;
   const sizeWatcher = isBody
     ? SizeWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 })
     : null;
@@ -716,15 +776,18 @@ const init = async (
   addClassesNow(root, PREFIX_ROOT);
 
   addWatchers();
+  // XXX TODO enable FXControllers
 
   widget.onDisable(() => {
     removeWatchers();
-    // XXX TODO re-enable regular scrolling
+    // XXX TODO disable FXControllers
+    // XXX TODO remove fixed position and transforms, etc
   });
 
   widget.onEnable(() => {
     addWatchers();
-    // XXX TODO re-enable animated scrolling
+    // XXX TODO re-enabled FXControllers
+    // XXX TODO re-add fixed position and transforms, etc
   });
 
   widget.onDestroy(async () => {

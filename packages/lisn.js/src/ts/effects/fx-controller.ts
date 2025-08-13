@@ -4,10 +4,12 @@
  * @since v1.3.0
  */
 
-// XXX TODO a way to temp disable watchers without clearing
+// TODO support critically damped or plain quadratic or custom interpolation function
 
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
+
+import { settings } from "@lisn/globals/settings";
 
 import {
   AtLeastOne,
@@ -114,11 +116,18 @@ export class FXController {
    * effects have been applied, such that calling {@link toCss} or
    * {@link getComposition} will reflect the latest effect states.
    *
-   * @param depth If given, the {@link ScrollOffsets} in the
-   * {@link AnimationFrameData} passed to the callback will be re-scaled to this
-   * depth. Otherwise the depth will be that of this controller.
+   * @param depth  If given, the {@link ScrollOffsets} in the
+   *               {@link AnimationFrameData} passed to the callback will be
+   *               re-scaled to this depth. Otherwise the depth will be that of
+   *               this controller.
+   * @param depthY If given, this will be the vertical depth. If not given,
+   *               `depth` will be used for both directions.
    */
-  readonly onAnimation: (handler: OnAnimationHandler, depth?: number) => void;
+  readonly onAnimation: (
+    handler: OnAnimationHandler,
+    depth?: number,
+    depthY?: number,
+  ) => void;
 
   /**
    * Removes a previously added handler.
@@ -129,12 +138,12 @@ export class FXController {
    * Returns an object with the CSS properties and their values to set for the
    * element being animated.
    *
-   * @param relativeTo If the element being animated is nested inside another
-   *                   one like that, then pass the parent element's controller
-   *                   so that transforms and other effects can be set relative
-   *                   to the parent.
+   * @param negate If given, then all effects added on this controller that
+   *               support negation (see {@link Effect.export}) will receive the
+   *               combined effect of their respective type as the one to
+   *               negate.
    */
-  readonly toCss: (relativeTo?: FXController) => Record<string, string>;
+  readonly toCss: (negate?: FXController) => Record<string, string>;
 
   /**
    * Returns the combined effect for the given type.
@@ -151,24 +160,39 @@ export class FXController {
    */
   readonly getConfig: () => FXControllerEffectiveConfig;
 
+  /**
+   * Updates the controller's {@link FXControllerConfig.lag | lag}
+   */
+  readonly setLag: (
+    lag: RawOrRelativeNumber,
+    lagY?: RawOrRelativeNumber,
+  ) => void;
+
+  /**
+   * Updates the controller's {@link FXControllerConfig.depth | depth}
+   *
+   * Note that this will result in the effects being rescaled to this depth.
+   */
+  readonly setDepth: (
+    depth: RawOrRelativeNumber,
+    depthY?: RawOrRelativeNumber,
+  ) => void;
+
   constructor(config?: FXControllerConfig) {
     const parent = config?.parent ?? null;
-    const parentConfig = parent?.getConfig();
-    const parentLagX = parentConfig?.lagX ?? 0;
-    const parentLagY = parentConfig?.lagY ?? 0;
-    const parentDepth = parentConfig?.depth ?? 1;
+    const parentScrollable = parent?.getConfig().scrollable;
+    const scrollable = config?.scrollable ?? parentScrollable;
+
     const effectiveConfig: FXControllerEffectiveConfig = {
-      scrollable: config?.scrollable ?? parentConfig?.scrollable,
+      scrollable,
       parent,
-      lagX: toRawNum(config?.lagX ?? config?.lag, parentLagX, parentLagX),
-      lagY: toRawNum(config?.lagY ?? config?.lag, parentLagY, parentLagY),
-      depth: toRawNum(config?.depth, parentDepth, parentDepth),
+      lagX: 0, // updated below in setLag
+      lagY: 0, // updated below in setLag
+      depthX: 1, // updated below in setDepth
+      depthY: 1, // updated below in setDepth
     };
 
-    const { scrollable, lagX, lagY, depth } = effectiveConfig;
-
-    const shouldUseParent =
-      parent && parentConfig && parentConfig.scrollable === scrollable;
+    const shouldUseParent = parent && parentScrollable === scrollable;
 
     const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
     const viewWatcher = ViewWatcher.reuse();
@@ -180,7 +204,7 @@ export class FXController {
     > = [];
     const animationCallbacks: Map<
       OnAnimationHandler,
-      [OnAnimationCallback, number | undefined]
+      [OnAnimationCallback, number | undefined, number | undefined]
     > = MH.newMap();
 
     const currentFrameData: Partial<AnimationFrameData> = {};
@@ -189,12 +213,14 @@ export class FXController {
     // ----------
 
     const onScroll: OnScrollHandler = (e, scrollData) => {
+      const { depthX, depthY } = effectiveConfig;
       currentFrameData.target = {
         isAbsolute: true,
-        depth,
-        x: scrollData[MC.S_SCROLL_LEFT] / depth,
+        depthX,
+        depthY,
+        x: scrollData[MC.S_SCROLL_LEFT] / depthX,
         nx: scrollData[MC.S_SCROLL_LEFT_FRACTION],
-        y: scrollData[MC.S_SCROLL_TOP] / depth,
+        y: scrollData[MC.S_SCROLL_TOP] / depthY,
         ny: scrollData[MC.S_SCROLL_TOP_FRACTION],
       };
       currentFrameData.scroll = scrollData;
@@ -210,8 +236,10 @@ export class FXController {
     };
 
     const callCallbacks = (data: AnimationFrameData) => {
-      for (const [cbk, thisDepth] of animationCallbacks.values()) {
-        cbk.invoke(cloneData(data, thisDepth), this);
+      for (const [cbk, thisDepth, thisDepthY] of animationCallbacks.values()) {
+        const thisData = deepCopy(data);
+        rescaleDataInPlace(thisData, thisDepth, thisDepthY);
+        cbk.invoke(thisData, this);
       }
     };
 
@@ -236,6 +264,7 @@ export class FXController {
           throw MH.bugError("No target offsets to interpolate to");
         }
 
+        const { lagX, lagY } = effectiveConfig;
         const prevOffsets = currentFrameData.current;
         const currentOffsets: ScrollOffsets = MH.copyObject(
           isFirstTimeAfterEnable || !prevOffsets ? targetOffsets : prevOffsets,
@@ -268,11 +297,7 @@ export class FXController {
           }
         }
 
-        const incrementalOffsets = getIncremental(
-          depth,
-          currentOffsets,
-          prevOffsets,
-        );
+        const incrementalOffsets = getIncremental(currentOffsets, prevOffsets);
 
         // onAnimationFrame will update currentFrameData
         onAnimationFrame({
@@ -430,7 +455,8 @@ export class FXController {
       }
 
       if (shouldUseParent) {
-        parent.onAnimation(onAnimationFrame, depth);
+        const { depthX, depthY } = effectiveConfig;
+        parent.onAnimation(onAnimationFrame, depthX, depthY);
       } else {
         scrollWatcher.onScroll(onScroll, { scrollable });
       }
@@ -450,22 +476,22 @@ export class FXController {
       effectsMap.clear();
     };
 
-    this.onAnimation = (handler, depth) => {
+    this.onAnimation = (handler, depth, depthY) => {
       const callback = wrapCallback(handler);
       callback.onRemove(() => {
         MH.deleteKey(animationCallbacks, handler);
       });
 
-      animationCallbacks.set(handler, [callback, depth]);
+      animationCallbacks.set(handler, [callback, depth, depthY]);
     };
 
     this.offAnimation = (handler) =>
       MH.remove((animationCallbacks?.get(handler) ?? [])[0]);
 
-    this.toCss = (relativeTo) => {
+    this.toCss = (negate) => {
       const css: Record<string, string> = {};
       for (const [type, effect] of compositionsMap) {
-        const referenceEffect = relativeTo?.getComposition(type);
+        const referenceEffect = negate?.getComposition(type);
         MH.assign(css, effect.toCss(referenceEffect));
       }
       return css;
@@ -475,8 +501,32 @@ export class FXController {
 
     this.getConfig = () => MH.copyObject(effectiveConfig);
 
+    this.setLag = (lag, lagY) => {
+      const defaultLag = settings.effectLag;
+      const parentConfig = parent?.getConfig();
+      const parentLagX = parentConfig?.lagX ?? defaultLag;
+      const parentLagY = parentConfig?.lagY ?? defaultLag;
+      effectiveConfig.lagX = toRawNum(lag, parentLagX, parentLagX);
+      effectiveConfig.lagY = toRawNum(lagY ?? lag, parentLagY, parentLagY);
+    };
+
+    this.setDepth = (depth, depthY) => {
+      const parentConfig = parent?.getConfig();
+      const parentDepthX = parentConfig?.depthX ?? 1;
+      const parentDepthY = parentConfig?.depthY ?? 1;
+      const rawDepthX = toRawNum(depth, parentDepthX, parentDepthX);
+      const rawDepthY = toRawNum(depthY ?? depth, parentDepthY, parentDepthY);
+      effectiveConfig.depthX = rawDepthX;
+      effectiveConfig.depthY = rawDepthY;
+
+      rescaleDataInPlace(currentFrameData, rawDepthX, rawDepthY);
+      interpolate(); // re-apply effects and call callbacks
+    };
+
     // ----------
 
+    this.setLag(config?.lagX ?? config?.lag ?? "+0", config?.lagY);
+    this.setDepth(config?.depthX ?? config?.depth ?? "+0", config?.depthY);
     this.enable();
   }
 }
@@ -490,13 +540,16 @@ export type FXControllerConfig = {
    * the same as the parent's scrollable), this controller will use the parent's
    * scroll tracking.
    *
-   * @defaultValue The parent's scrollable or if no parent, then {@link ScrollWatcher} default
+   * @defaultValue The parent's scrollable or if no parent, then
+   * {@link ScrollWatcher} default
    */
   scrollable?: ScrollTarget | undefined;
 
-  /** If the element being animated is nested inside another one like that, then
-   * pass the parent element's controller so that transforms and other effects
-   * can be set relative to the parent.
+  /**
+   * The parent controller. Used for
+   * - Resolving relative values of lag or depth.
+   * - Eliminating redundant scroll tracking if both parent and this controller
+   *   use the same scrollable.
    */
   parent?: FXController | null;
 
@@ -505,7 +558,7 @@ export type FXControllerConfig = {
    * actual scroll offset. It can be relative to the parent's lag. It must
    * result in a positive number.
    *
-   * @defaultValue 0 // instant
+   * @defaultValue {@link settings.effectLag}
    */
   lag?: RawOrRelativeNumber;
 
@@ -531,11 +584,23 @@ export type FXControllerConfig = {
    * larger than 1 will result in smaller values for the interpolated offsets
    * that effect handlers receive.
    *
-   * The special value "auto" is XXX
-   *
    * @defaultValue 1
    */
   depth?: RawOrRelativeNumber;
+
+  /**
+   * Parallax depth along the horizontal axis.
+   *
+   * @defaultValue {@link depth}
+   */
+  depthX?: RawOrRelativeNumber;
+
+  /**
+   * Parallax depth along the vertical axis.
+   *
+   * @defaultValue {@link depth}
+   */
+  depthY?: RawOrRelativeNumber;
 };
 
 export type FXControllerEffectiveConfig = {
@@ -543,7 +608,8 @@ export type FXControllerEffectiveConfig = {
   parent: FXController | null;
   lagX: number;
   lagY: number;
-  depth: number;
+  depthX: number;
+  depthY: number;
 };
 
 export type AnimationFrameData = {
@@ -672,26 +738,32 @@ const offsetIsPastRef = (
   return MH.isNumber(diff) ? diff < 0 : null;
 };
 
-const cloneData = (data: AnimationFrameData, newDepth: number | undefined) => {
-  data = deepCopy(data);
-  if (!MH.isNullish(newDepth)) {
-    const rescale = (offsets: ScrollOffsets) => {
-      const factor = offsets.depth / newDepth;
-      offsets.depth = newDepth;
-      offsets.x *= factor;
-      offsets.y *= factor;
-    };
-
-    rescale(data.target);
-    rescale(data.current);
-    rescale(data.sinceLast);
+const rescaleDataInPlace = (
+  data: Partial<AnimationFrameData>,
+  newDepth: number | undefined,
+  newDepthY: number | undefined,
+) => {
+  newDepthY ??= newDepth;
+  if (MH.isNullish(newDepth) || MH.isNullish(newDepthY)) {
+    return;
   }
 
-  return data;
+  const rescale = (offsets: ScrollOffsets | undefined) => {
+    if (offsets) {
+      offsets.x *= offsets.depthX / newDepth;
+      offsets.y *= offsets.depthY / newDepthY;
+
+      offsets.depthX = newDepth;
+      offsets.depthY = newDepthY;
+    }
+  };
+
+  rescale(data.target);
+  rescale(data.current);
+  rescale(data.sinceLast);
 };
 
 const getIncremental = (
-  depth: number,
   current: ScrollOffsets,
   previous: ScrollOffsets | undefined,
 ) => {
@@ -700,7 +772,8 @@ const getIncremental = (
 
   return {
     isAbsolute: false,
-    depth,
+    depthX: current.depthX,
+    depthY: current.depthY,
     x: getDiffOf("x"),
     nx: getDiffOf("nx"),
     y: getDiffOf("y"),

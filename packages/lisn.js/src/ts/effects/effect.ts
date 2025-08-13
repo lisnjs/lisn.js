@@ -26,7 +26,17 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
   apply: (offsets: ScrollOffsets) => Effect<T>;
 
   /**
-   * Returns a **new** live effect that has all the handlers from this one and
+   * Returns a **static copy** of the effect that has the current state/value of
+   * this effect, but no handlers.
+   *
+   * @param negate If given, `negate` will be inverted and used as the base
+   *               before adding the current effect's state. Not all effects may
+   *               implement this.
+   */
+  export: (negate?: Effect<T>) => Effect<T>;
+
+  /**
+   * Returns a **new live** effect that has all the handlers from this one and
    * the given effects, in order. The resulting state/value is the combined
    * product of its current state and that of all the other given ones.
    *
@@ -39,8 +49,10 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
   /**
    * Returns an object with CSS properties and their values that represent the
    * effect.
+   *
+   * @param negate See {@link export}.
    */
-  toCss: (relativeTo?: Effect<T>) => Record<string, string>;
+  toCss: (negate?: Effect<T>) => Record<string, string>;
 }
 
 export type Effect<T extends keyof EffectRegistry> = EffectRegistry[T] &
@@ -70,15 +82,23 @@ export type ScrollOffsets = {
   isAbsolute: boolean;
 
   /**
-   * The {@link Effects/FXController.FXControllerConfig.depth | controller's depth}
-   * that has scaled the offsets. {@link x} and {@link y} are the actual
-   * element's scroll offset divided by this depth.
+   * The {@link Effects/FXController.FXControllerConfig.depthX | controller's horizontal depth}
+   * that has scaled the x offsets. {@link x} is the actual element's scroll
+   * left offset divided by this depth.
    */
-  depth: number;
+  depthX: number;
+
+  /**
+   * The {@link Effects/FXController.FXControllerConfig.depthY | controller's vertical depth}
+   * that has scaled the y offsets. {@link y} is the actual element's scroll
+   * top offset divided by this depth.
+   */
+  depthY: number;
 
   /**
    * If the data is absolute, this holds the current interpolated value for
-   * the scroll left offset scaled by the parallax depth of the controller.
+   * the scroll left offset scaled by the horizontal parallax depth of the
+   * controller.
    *
    * Otherwise, this holds the change in this absolute value since the last
    * animation frame.
@@ -93,7 +113,8 @@ export type ScrollOffsets = {
 
   /**
    * If the data is absolute, this holds the current interpolated value for
-   * the scroll top offset scaled by the parallax depth of the controller.
+   * the scroll top offset scaled by the vertical parallax depth of the
+   * controller.
    *
    * Otherwise, this holds the change in this absolute value since the last
    * animation frame.

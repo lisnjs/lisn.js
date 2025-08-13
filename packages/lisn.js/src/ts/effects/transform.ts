@@ -19,7 +19,7 @@ import {
   ScrollOffsets,
 } from "@lisn/effects/effect";
 
-export type TransformLike = Transform | DOMMatrix | Float32Array;
+export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
 
 /**
  * {@link Transform} controls an element's transform as a 3D matrix.
@@ -46,7 +46,21 @@ export class Transform implements EffectInterface<"transform"> {
   readonly apply: (offsets: ScrollOffsets) => Transform;
 
   /**
-   * Returns a **new** live transform that has all the handlers from this one
+   * Returns a **static copy** of the transform that has the current state/value
+   * of this transform, but no handlers.
+   *
+   * @param negate If given, `negate` will be inverted and used as the
+   *               pre-multiplication matrix for the current transform matrix.
+   *               Useful if you want to apply the current transform to an
+   *               element that's a descendant of another transformed element
+   *               and you want to first "undo" the parent transform.
+   *
+   * @returns **A new** {@link Transform} instance with no handlers.
+   */
+  readonly export: (negate?: TransformLike) => Transform;
+
+  /**
+   * Returns a **new live** transform that has all the handlers from this one
    * and the given transforms, in order. The resulting effective state (matrix)
    * is the combined product of its current matrix and that of all the other
    * given ones.
@@ -55,7 +69,8 @@ export class Transform implements EffectInterface<"transform"> {
    * {@link TransformConfig.isAbsolute | absolute}, all previous ones are
    * essentially discarded and the resulting transform becomes absolute.
    *
-   * @returns **A new** {@link Transform} instance.
+   * @returns **A new** {@link Transform} instance with all the same handlers as
+   * this one.
    */
   readonly toComposition: (...others: Transform[]) => Transform;
 
@@ -63,18 +78,18 @@ export class Transform implements EffectInterface<"transform"> {
    * Returns an object with the `transform` property and value equal to what's
    * returned by {@link toString}.
    *
-   * @param relativeTo See {@link toMatrix}
+   * @param negate See {@link export}
    */
-  readonly toCss: (relativeTo?: TransformLike) => Record<string, string>;
+  readonly toCss: (negate?: TransformLike) => Record<string, string>;
 
   /**
    * Returns a `perspective(...) matrix3d(...)` string for use as a CSS property.
    *
    * If no perspective has been set, it's omitted from the string.
    *
-   * @param relativeTo See {@link toMatrix}
+   * @param negate See {@link export}
    */
-  readonly toString: (relativeTo?: TransformLike) => string;
+  readonly toString: (negate?: TransformLike) => string;
 
   /**
    * Returns the current effective perspective (since the last call to
@@ -88,17 +103,16 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrixReadOnly | DOMMatrixReadOnly} representing the transform.
    *
-   * @param relativeTo If given, then this matrix is first inverted and used as
-   *                   a pre-multiplication
+   * @param negate See {@link export}
    */
-  readonly toMatrix: (relativeTo?: TransformLike) => DOMMatrixReadOnly;
+  readonly toMatrix: (negate?: TransformLike) => DOMMatrixReadOnly;
 
   /**
    * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array | Float32Array} representing the transform.
    *
-   * @param relativeTo See {@link toMatrix}
+   * @param negate See {@link export}
    */
-  readonly toFloat32Array: (relativeTo?: TransformLike) => Float32Array;
+  readonly toFloat32Array: (negate?: TransformLike) => Float32Array;
 
   /**
    * Sets the transform's perspective. Perspective applies at the start of
@@ -158,9 +172,9 @@ export class Transform implements EffectInterface<"transform"> {
       saveHandlerFor(this, original);
     };
 
-    const toMatrix = (relativeTo?: TransformLike) => {
+    const toMatrix = (negate?: TransformLike) => {
       const m = newMatrix(true, selfM);
-      const relM = relativeTo ? newMatrix(true, relativeTo) : null;
+      const relM = negate ? newMatrix(true, negate) : null;
       return relM ? relM.inverse().multiply(m) : m;
     };
 
@@ -198,6 +212,8 @@ export class Transform implements EffectInterface<"transform"> {
       return this;
     };
 
+    this.export = (negate) => new Transform({ init: toMatrix(negate) });
+
     this.toComposition = (...others) => {
       let toCombine: Transform[] = [];
       let resIsAbsolute = false;
@@ -230,14 +246,14 @@ export class Transform implements EffectInterface<"transform"> {
       return result;
     };
 
-    this.toCss = (relativeTo) => ({ transform: this.toString(relativeTo) });
-    this.toString = (relativeTo) =>
+    this.toCss = (negate) => ({ transform: this.toString(negate) });
+    this.toString = (negate) =>
       (perspective ? `perspective(${perspective}) ` : "") +
-      toMatrix(relativeTo).toString();
+      toMatrix(negate).toString();
     this.toPerspective = () => perspective;
 
     this.toMatrix = toMatrix;
-    this.toFloat32Array = (relativeTo) => toMatrix(relativeTo).toFloat32Array();
+    this.toFloat32Array = (negate) => toMatrix(negate).toFloat32Array();
 
     this.perspective = (handler) => {
       addOwnHandler([PERSPECTIVE, handler], (offsets) => {

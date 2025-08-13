@@ -296,8 +296,7 @@ type EmptyLiteral = typeof EMPTY__ignored;
 export function copyObject<T extends object>(obj: T): T;
 export function copyObject(obj: null | undefined): EmptyLiteral;
 // implementation (wide) — callers see the overloads, not this signature
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export function copyObject(obj: any) {
+export function copyObject(obj: object | null | undefined) {
   return merge(obj);
 }
 

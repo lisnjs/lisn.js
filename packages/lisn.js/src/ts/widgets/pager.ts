@@ -305,8 +305,8 @@ export class Pager extends Widget {
   readonly getPreviousPageNum: () => number;
 
   /**
-   * The given handler will be called whenever there is a change of page. It
-   * will be called after the current page number is updated internally (so
+   * Calls the given handler whenever there is a change of page. It will be
+   * called after the current page number is updated internally (so
    * {@link getPreviousPageNum} and {@link getCurrentPageNum} will return the
    * updated numbers), but before the page transition styles are updated.
    *

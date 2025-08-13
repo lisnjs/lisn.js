@@ -140,10 +140,9 @@ export class Sortable extends Widget {
   readonly isItemDisabled: (itemNum: number, currentOrder?: boolean) => boolean;
 
   /**
-   * The given handler will be called whenever the user moves an item to
-   * another position. It will be called after the item is moved so
-   * {@link getItems} called with `currentOrder = true` will return the updated
-   * order.
+   * Calls the given handler whenever the user moves an item to another
+   * position. It will be called after the item is moved so {@link getItems}
+   * called with `currentOrder = true` will return the updated order.
    *
    * If the handler returns a promise, it will be awaited upon.
    */

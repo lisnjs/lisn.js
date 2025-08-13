@@ -154,14 +154,14 @@ export abstract class Openable extends Widget {
   readonly toggle: () => Promise<void>;
 
   /**
-   * The given handler will be called when the widget is open.
+   * Calls the given handler when the widget is opened.
    *
    * If it returns a promise, it will be awaited upon.
    */
   readonly onOpen: (handler: WidgetHandler) => void;
 
   /**
-   * The given handler will be called when the widget is closed.
+   * Calls the given handler when the widget is closed.
    *
    * If it returns a promise, it will be awaited upon.
    */

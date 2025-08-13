@@ -82,12 +82,12 @@ export class Widget {
   readonly toggleEnable: () => Promise<void>;
 
   /**
-   * The given handler will be called when the widget is disabled.
+   * Calls the given handler when the widget is disabled.
    */
   readonly onDisable: (handler: WidgetHandler) => void;
 
   /**
-   * The given handler will be called when the widget is enabled.
+   * Calls the given handler when the widget is enabled.
    */
   readonly onEnable: (handler: WidgetHandler) => void;
 
@@ -104,7 +104,7 @@ export class Widget {
   readonly destroy: () => Promise<void>;
 
   /**
-   * The given handler will be called when the widget is destroyed.
+   * Calls the given handler when the widget is destroyed.
    */
   readonly onDestroy: (handler: WidgetHandler) => void;
 

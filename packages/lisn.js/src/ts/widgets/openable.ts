@@ -76,6 +76,7 @@ import {
   registerWidget,
   getWidgetConfig,
   getDefaultWidgetSelector,
+  addWidgetCallback,
 } from "@lisn/widgets/widget";
 
 /* ********************
@@ -286,8 +287,8 @@ export abstract class Openable extends Widget {
     this.open = open;
     this.close = close;
     this[MC.S_TOGGLE] = () => (isOpen ? close() : open());
-    this.onOpen = (handler) => openCallbacks.add(wrapCallback(handler));
-    this.onClose = (handler) => closeCallbacks.add(wrapCallback(handler));
+    this.onOpen = (handler) => addWidgetCallback(handler, openCallbacks);
+    this.onClose = (handler) => addWidgetCallback(handler, closeCallbacks);
     this.isOpen = () => isOpen;
     this.getRoot = () => root;
     this.getContainer = () => container;

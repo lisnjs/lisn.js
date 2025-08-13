@@ -36,6 +36,7 @@ import {
   WidgetHandler,
   registerWidget,
   getDefaultWidgetSelector,
+  addWidgetCallback,
 } from "@lisn/widgets/widget";
 
 /**
@@ -523,7 +524,7 @@ const getMethods = (
       : disableItem(itemNum, currentOrder);
 
   const onMove = (handler: WidgetHandler) =>
-    callbacks.add(wrapCallback(handler));
+    addWidgetCallback(handler, callbacks);
 
   // This is internal only for now...
   const dragItemOnto = async (dragged: Element, draggedOver: Element) => {

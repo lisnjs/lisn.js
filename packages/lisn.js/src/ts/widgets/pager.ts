@@ -59,6 +59,7 @@ import {
   WidgetHandler,
   registerWidget,
   getDefaultWidgetSelector,
+  addWidgetCallback,
 } from "@lisn/widgets/widget";
 
 import debug from "@lisn/debug/debug";
@@ -1343,7 +1344,7 @@ const getMethods = (
     isPageDisabled(pageNum) ? enablePage(pageNum) : disablePage(pageNum);
 
   const onTransition = (handler: WidgetHandler) =>
-    callbacks.add(wrapCallback(handler));
+    addWidgetCallback(handler, callbacks);
 
   return {
     _nextPage: nextPage,

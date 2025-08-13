@@ -179,8 +179,8 @@ export class Widget {
       }
     };
 
-    this.onDisable = (handler) => disableCallbacks.add(wrapCallback(handler));
-    this.onEnable = (handler) => enableCallbacks.add(wrapCallback(handler));
+    this.onDisable = (handler) => addWidgetCallback(handler, disableCallbacks);
+    this.onEnable = (handler) => addWidgetCallback(handler, enableCallbacks);
 
     this.isDisabled = () => isDisabled;
 
@@ -212,7 +212,7 @@ export class Widget {
       return destroyPromise;
     };
 
-    this.onDestroy = (handler) => destroyCallbacks.add(wrapCallback(handler));
+    this.onDestroy = (handler) => addWidgetCallback(handler, destroyCallbacks);
 
     this.isDestroyed = () => isDestroyed;
 
@@ -515,6 +515,19 @@ export const fetchUniqueWidget = async <W extends Widget>(
   }
 
   return widget;
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const addWidgetCallback = (
+  handler: WidgetHandler,
+  set: Set<WidgetCallback>,
+) => {
+  const callback = wrapCallback(handler);
+  set.add(callback);
+  callback.onRemove(() => MH.deleteKey(set, callback));
 };
 
 // --------------------

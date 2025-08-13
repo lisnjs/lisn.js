@@ -1,6 +1,7 @@
 const { describe, test, expect } = require("@jest/globals");
 
 const utils = window.LISN.utils;
+window.LISN.settings.effectLag = 0;
 
 // one rAF for measure time and one to run first step of initiateScroll
 const minStartDelay = 20;

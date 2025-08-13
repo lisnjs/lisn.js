@@ -5,6 +5,8 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
+import { settings } from "@lisn/globals/settings";
+
 import { XYDirection, ScrollDirection, SizeTarget } from "@lisn/globals/types";
 
 import {
@@ -811,7 +813,7 @@ export type ScrollWatcherConfig = {
    * {@link ScrollOptions.duration | duration} in calls to
    * {@link ScrollWatcher.scroll} and {@link ScrollWatcher.scrollTo}.
    *
-   * @defaultValue 1000
+   * @defaultValue {@link settings.effectLag}
    */
   scrollDuration?: number;
 };
@@ -1024,7 +1026,7 @@ const getConfig = (
     _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
     _scrollThreshold: toNonNegNum(config.scrollThreshold, 50) || 1,
-    _scrollDuration: toNonNegNum(config.scrollDuration, 1000),
+    _scrollDuration: toNonNegNum(config.scrollDuration, settings.effectLag),
   };
 };
 

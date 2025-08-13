@@ -4,6 +4,8 @@
 
 import * as MH from "@lisn/globals/minification-helpers";
 
+// TODO add defaults for watchers' debounce window, thresholds
+
 /**
  * LISN's settings.
  * @readonly
@@ -149,13 +151,15 @@ export const settings = MH.preventExtensions({
   autoWidgets: false,
 
   /**
-   * Default setting for
-   * {@link Widgets.SmoothScroll.lag | SmoothScroll.lag}.
+   * Default lag value. Used by
+   * - {@link Widgets.SmoothScroll}
+   * - {@link Effects/FXController.FXController}
+   * - {@link Watchers/ScrollWatcher.ScrollWatcher} (default scroll duration)
    *
    * @defaultValue 1000
-   * @category Widgets/SmoothScroll
+   * @category Effects
    */
-  smoothScrollLag: 1000,
+  effectLag: 1000,
 
   /**
    * Default setting for

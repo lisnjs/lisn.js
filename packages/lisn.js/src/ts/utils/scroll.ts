@@ -2,6 +2,8 @@
  * @module Utils
  */
 
+// TODO support critically damped or plain quadratic or custom interpolation function
+
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
@@ -77,7 +79,7 @@ export type ScrollToOptions = {
    * The duration of the scroll animation in milliseconds. If not given, it is
    * instant.
    *
-   * @defaultValue 0
+   * @defaultValue {@link settings.effectLag}
    */
   duration?: number;
 
@@ -552,7 +554,7 @@ const getOptions = (
     _altTarget: altTarget,
     _altOffset: options?.altOffset ?? null,
     _scrollable: scrollable,
-    _duration: options?.duration ?? 0,
+    _duration: options?.duration ?? settings.effectLag,
     _weCanInterrupt: options?.weCanInterrupt ?? false,
     _userCanInterrupt: options?.userCanInterrupt ?? false,
   };

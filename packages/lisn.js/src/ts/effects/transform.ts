@@ -103,68 +103,46 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Sets the transform's perspective. Perspective applies at the start of
    * transforms and subsequent calls to this method always override previous
-   * ones, i.e. it is not additive. Passing an empty string results in clearing
-   * the perspective completely.
-   *
-   * @param handler The handler that returns the perspective as a number (in
-   *                 pixels) or CSS perspective string
+   * ones, i.e. it is not additive.
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly perspective: (handler: PerspectiveHandler) => Transform;
+  readonly perspective: (
+    handler: EffectHandler<PerspectiveHandlerReturn>,
+  ) => Transform;
 
   /**
    * Translates the transform.
    *
-   * @param handler The handler that returns one or more of:
-   *                 - x The translation distance in pixels along the X-axis.
-   *                 - y The translation distance in pixels along the Y-axis.
-   *                 - z The translation distance in pixels along the Z-axis.
-   *
    * @returns The same {@link Transform} instance.
    */
-  readonly translate: (handler: TranslateHandler) => Transform;
+  readonly translate: (
+    handler: EffectHandler<TranslateHandlerReturn>,
+  ) => Transform;
 
   /**
    * Scales the transform.
    *
-   * @param handler The handler that returns one or more of:
-   *                 - s      The default scaling factor for any axis if not
-   *                          overridden by sx, sy or sz.
-   *                 - sx     The translation distance in pixels along the X-axis.
-   *                 - sy     The translation distance in pixels along the Y-axis.
-   *                 - sz     The translation distance in pixels along the Z-axis.
-   *                 - origin The transform origin
-   *
    * @returns The same {@link Transform} instance.
    */
-  readonly scale: (handler: ScaleHandler) => Transform;
+  readonly scale: (handler: EffectHandler<ScaleHandlerReturn>) => Transform;
 
   /**
-   * Skews the transform. If skewing along both axis (i.e. both `degX` and
-   * `degY` given, or `deg` is given), then skewing is done first along X, then
-   * along Y.
+   * Skews the transform.
    *
-   * @param handler The handler that returns one or more of:
-   *                 - deg  The skewing angle in degrees for either axis if not
-   *                        overridden by degX or degY.
-   *                 - degX The skewing angle in degrees along the X-axis.
-   *                 - degY The skewing angle in degrees along the Y-axis.
+   * **NOTE:** If skewing along both axis (i.e. both `degX` and `degY` given,
+   * or `deg` is given), then skewing is done first along X, then along Y.
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly skew: (handler: SkewHandler) => Transform;
+  readonly skew: (handler: EffectHandler<SkewHandlerReturn>) => Transform;
 
   /**
    * Rotates the transform around the given axis.
    *
-   * @param handler The handler that returns one or more of:
-   *                 - deg  The angle in degrees to rotate.
-   *                 - axis The axis of rotation. Default is Z-axis.
-   *
    * @returns The same {@link Transform} instance.
    */
-  readonly rotate: (handler: RotateHandler) => Transform;
+  readonly rotate: (handler: EffectHandler<RotateHandlerReturn>) => Transform;
 
   constructor(config?: TransformConfig) {
     const { isAbsolute = false, init } = config ?? {};
@@ -319,19 +297,130 @@ export class Transform implements EffectInterface<"transform"> {
   }
 }
 
-export type PerspectiveHandler = EffectHandler<number | string>;
-export type TranslateHandler = EffectHandler<
-  AtLeastOne<{ x: number; y: number; z: number }>
->;
-export type ScaleHandler = EffectHandler<
-  AtLeastOne<{ s: number; sx: number; sy: number; sz: number }> & {
-    origin?: Origin;
-  }
->;
-export type SkewHandler = EffectHandler<
-  AtLeastOne<{ deg: number; degX: number; degY: number }>
->;
-export type RotateHandler = EffectHandler<{ deg: number; axis?: Axis }>;
+/**
+ * Should return the perspective as a number (if in pixels) or as a CSS
+ * perspective string.
+ *
+ * Returning an empty string results in clearing the perspective completely.
+ *
+ * @defaultValue undefined
+ */
+export type PerspectiveHandlerReturn = number | string;
+
+/**
+ * Should return the translation distances along one or more axes.
+ */
+export type TranslateHandlerReturn = AtLeastOne<{
+  /**
+   * The translation distance in pixels along the X-axis.
+   *
+   * @defaultValue 0
+   */
+  x: number;
+
+  /**
+   * The translation distance in pixels along the Y-axis.
+   *
+   * @defaultValue 0
+   */
+  y: number;
+
+  /**
+   * The translation distance in pixels along the Z-axis.
+   *
+   * @defaultValue 0
+   */
+  z: number;
+}>;
+
+/**
+ * Should return the scaling factor along one or more axes.
+ */
+export type ScaleHandlerReturn = AtLeastOne<{
+  /**
+   * The default scaling factor for any axis if not overridden by {@link sx},
+   * {@link sy} or {@link sz}. This would result in all three axes being
+   * scaled.
+   *
+   * @defaultValue 1
+   */
+  s: number;
+
+  /**
+   * The translation distance in pixels along the X-axis.
+   *
+   * @defaultValue {@link s}
+   */
+  sx: number;
+
+  /**
+   * The translation distance in pixels along the Y-axis.
+   *
+   * @defaultValue {@link s}
+   */
+  sy: number;
+
+  /**
+   * The translation distance in pixels along the Z-axis.
+   *
+   * @defaultValue {@link s}
+   */
+  sz: number;
+}> & {
+  /**
+   * The transform origin.
+   *
+   * @defaultValue [0,0,0]
+   */
+  origin?: Origin;
+};
+
+/**
+ * Should return the skewing angle along one or more axes.
+ *
+ * **NOTE:** If skewing along both axis (i.e. both `degX` and `degY` given, or
+ * `deg` is given), then skewing is done first along X, then along Y.
+ */
+export type SkewHandlerReturn = AtLeastOne<{
+  /**
+   * The skewing angle in degrees for either axis if not overridden by
+   * {@link degX} or {@link degY}. This would result in both axes being skewed.
+   *
+   * @defaultValue 0
+   */
+  deg: number;
+
+  /**
+   * The skewing angle in degrees along the X-axis.
+   *
+   * @defaultValue {@link deg}
+   */
+  degX: number;
+
+  /**
+   * The skewing angle in degrees along the Y-axis.
+   *
+   * @defaultValue {@link deg}
+   */
+  degY: number;
+}>;
+
+/**
+ * Should return the rotation angle and axis of rotation.
+ */
+export type RotateHandlerReturn = {
+  /**
+   * The angle in degrees to rotate.
+   */
+  deg: number;
+
+  /**
+   * The axis of rotation.
+   *
+   * @defaultValue [0,0,1] // The Z-axis
+   */
+  axis?: Axis;
+};
 
 export type TransformConfig = {
   /**
@@ -365,11 +454,11 @@ const SKEW: unique symbol = MC.SYMBOL() as typeof SKEW;
 const ROTATE: unique symbol = MC.SYMBOL() as typeof ROTATE;
 
 type HandlersMap = {
-  [PERSPECTIVE]: PerspectiveHandler;
-  [TRANSLATE]: TranslateHandler;
-  [SCALE]: ScaleHandler;
-  [SKEW]: SkewHandler;
-  [ROTATE]: RotateHandler;
+  [PERSPECTIVE]: EffectHandler<PerspectiveHandlerReturn>;
+  [TRANSLATE]: EffectHandler<TranslateHandlerReturn>;
+  [SCALE]: EffectHandler<ScaleHandlerReturn>;
+  [SKEW]: EffectHandler<SkewHandlerReturn>;
+  [ROTATE]: EffectHandler<RotateHandlerReturn>;
 };
 
 type HandlerTuple = {

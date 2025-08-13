@@ -106,6 +106,11 @@ export class FXController {
   readonly enable: () => void;
 
   /**
+   * Returns true if the controller is disabled.
+   */
+  readonly isDisabled: () => boolean;
+
+  /**
    * Removes all previously added effects.
    */
   readonly clear: () => void;
@@ -186,6 +191,7 @@ export class FXController {
     const effectiveConfig: FXControllerEffectiveConfig = {
       scrollable,
       parent,
+      disabled: config?.disabled ?? false,
       lagX: 0, // updated below in setLag
       lagY: 0, // updated below in setLag
       depthX: 1, // updated below in setDepth
@@ -211,6 +217,9 @@ export class FXController {
     let isFirstTimeAfterEnable = true;
 
     // ----------
+
+    const isDisabled = () => effectiveConfig.disabled;
+    const setDisabled = (d: boolean) => (effectiveConfig.disabled = d);
 
     const onScroll: OnScrollHandler = (e, scrollData) => {
       const { depthX, depthY } = effectiveConfig;
@@ -368,7 +377,9 @@ export class FXController {
           state._activeSince = isActive ? scrollData : null;
         });
 
-        scrollWatcher.onScroll(cbk, { scrollable });
+        if (!isDisabled()) {
+          scrollWatcher.onScroll(cbk, { scrollable });
+        }
         scrollConditionCallbacks.push(cbk);
       };
 
@@ -383,7 +394,9 @@ export class FXController {
             : null;
         });
 
-        viewWatcher.onView(target, cbk, { views });
+        if (!isDisabled()) {
+          viewWatcher.onView(target, cbk, { views });
+        }
         viewConditionCallbacks.push([cbk, target, views]);
       };
 
@@ -428,6 +441,7 @@ export class FXController {
     };
 
     this.disable = () => {
+      setDisabled(true);
       isFirstTimeAfterEnable = true;
 
       for (const cbk of scrollConditionCallbacks) {
@@ -446,6 +460,7 @@ export class FXController {
     };
 
     this.enable = () => {
+      setDisabled(false);
       for (const cbk of scrollConditionCallbacks) {
         scrollWatcher.onScroll(cbk, { scrollable });
       }
@@ -461,6 +476,8 @@ export class FXController {
         scrollWatcher.onScroll(onScroll, { scrollable });
       }
     };
+
+    this.isDisabled = isDisabled;
 
     this.clear = () => {
       for (const cbk of scrollConditionCallbacks) {
@@ -525,9 +542,17 @@ export class FXController {
 
     // ----------
 
-    this.setLag(config?.lagX ?? config?.lag ?? "+0", config?.lagY);
-    this.setDepth(config?.depthX ?? config?.depth ?? "+0", config?.depthY);
-    this.enable();
+    const defaultLag = config?.lag ?? "+0";
+    const defaultDepth = config?.depth ?? "+0";
+    this.setLag(config?.lagX ?? defaultLag, config?.lagY ?? defaultLag);
+    this.setDepth(
+      config?.depthX ?? defaultDepth,
+      config?.depthY ?? defaultDepth,
+    );
+
+    if (!isDisabled()) {
+      this.enable();
+    }
   }
 }
 
@@ -552,6 +577,13 @@ export type FXControllerConfig = {
    *   use the same scrollable.
    */
   parent?: FXController | null;
+
+  /**
+   * Whether to set the initial state of the controller to disabled.
+   *
+   * @defaultValue false
+   */
+  disabled?: boolean;
 
   /**
    * The time in milliseconds it takes for effect states to catch up to the
@@ -606,6 +638,7 @@ export type FXControllerConfig = {
 export type FXControllerEffectiveConfig = {
   scrollable: ScrollTarget | undefined;
   parent: FXController | null;
+  disabled: boolean;
   lagX: number;
   lagY: number;
   depthX: number;

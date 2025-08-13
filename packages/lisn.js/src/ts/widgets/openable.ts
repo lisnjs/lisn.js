@@ -407,6 +407,8 @@ export type OpenableTriggerConfig = {
 
 /**
  * @interface
+ *
+ * @since v1.2.1 Previously called `OpenableProperties`
  */
 export type OpenableConfig = {
   /**

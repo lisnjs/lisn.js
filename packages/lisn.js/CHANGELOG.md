@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [1.2.1] - 2025-08-12
 
-- FIXED: CSS for content wrapper (used in scrollbars, scroll tracking, etc) was
-  collapsing the wrapper width to `fit-content`. Now fixed.
+- FIXED: Content wrapping for scroll tracking: the wrapper it used wasn't
+  expanding width to accommodate its children, leading to it not detecting when
+  only the width of the content changed.
 - FIXED: Bug in newCriticallyDampedAnimationIterator where it couldn't be used
   inside a for loop. Also, it now ends when reaching the target instead if being
   never-ending.
+- CHANGED: Renamed types for consistency. Old names kept for backwards
+  compatibility.
+  - OpenableProperties -> OpenableConfig
+  - Offset -> Anchor
+  - ScrollOffset -> ScrollOffsetSpec
 
 ## [1.2] - 2025-07-21
 

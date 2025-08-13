@@ -40,6 +40,8 @@ export type AspectRatioSpec = LayoutSpec<AspectRatio>;
 
 /**
  * @category Layout
+ *
+ * @since v1.2.1 Previously called `Offset`
  */
 export type Anchor = "top" | "bottom" | "left" | "right";
 
@@ -95,6 +97,8 @@ export type View = "at" | "above" | "below" | "left" | "right";
  * * See for example {@link https://developer.mozilla.org/en-US/docs/Web/CSS/top}
  *
  * @category Views
+ *
+ * @since v1.2.1 Previously called `ScrollOffset`
  */
 export type ScrollOffsetSpec = `${Anchor}: ${string}`;
 

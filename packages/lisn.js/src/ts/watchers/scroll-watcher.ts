@@ -1195,6 +1195,6 @@ const invokeCallback = (
     .invoke(
       element,
       MH.copyObject(scrollData),
-      lastScrollData, // no need to copy that one
+      lastScrollData, // no need to copy that one as it's not used again
     )
     .catch(logError);

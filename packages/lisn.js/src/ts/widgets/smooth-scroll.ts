@@ -631,7 +631,7 @@ const getLayersFrom = (
     ? inputLayers
     : (inputLayers?.keys() ?? []);
 
-  for (const layer of layersIterable) {
+  for (const layer of [scrollable, ...layersIterable]) {
     getLayerState(layer);
   }
 
@@ -753,7 +753,7 @@ const init = async (
 
   // ----------
 
-  const addWatchers = () => {
+  const addWatchersAndControllers = () => {
     scrollWatcher?.trackScroll(updateScrollData, { scrollable });
     sizeWatcher?.onResize(updatePropsOnResize, {
       target: innerWrapper,
@@ -765,9 +765,12 @@ const init = async (
         sizeWatcher?.onResize(updateSizeData, { target: layer, threshold: 0 });
       }
     }
+
+    setControllersState("enable");
+    // XXX TODO add CSS from controller
   };
 
-  const removeWatchers = () => {
+  const removeWatchersAndControllers = () => {
     scrollWatcher?.noTrackScroll(updateScrollData, scrollable);
     sizeWatcher?.offResize(updatePropsOnResize, innerWrapper);
 
@@ -776,17 +779,20 @@ const init = async (
         sizeWatcher?.offResize(updateSizeData, layer);
       }
     }
+
+    setControllersState("disable");
+    // XXX TODO clear CSS from controller
   };
 
-  const setControllersState = (enable: boolean) => {
-    for (const [__ignored, state] of layers) {
-      state._controller[enable ? "enable" : "disable"]();
+  const setControllersState = (method: "enable" | "disable" | "clear") => {
+    for (const state of layers.values()) {
+      state._controller[method]();
     }
   };
 
   const resetAutoDepth = (state?: SmoothScrollLayerState) => {
     if (!state) {
-      for (const [__ignored, state] of layers) {
+      for (const state of layers.values()) {
         resetAutoDepth(state);
       }
       return;
@@ -853,25 +859,20 @@ const init = async (
 
   addClassesNow(root, PREFIX_ROOT);
 
-  addWatchers();
-  setControllersState(true);
+  addWatchersAndControllers();
 
   widget.onDisable(() => {
-    removeWatchers();
-    setControllersState(false);
+    removeWatchersAndControllers();
     removeClasses(root, PREFIX_ROOT);
   });
 
   widget.onEnable(() => {
-    addWatchers();
-    setControllersState(true);
+    addWatchersAndControllers();
     addClasses(root, PREFIX_ROOT);
   });
 
   widget.onDestroy(async () => {
-    for (const state of layers.values()) {
-      state._controller.clear();
-    }
+    setControllersState("clear");
 
     await waitForMutateTime();
 

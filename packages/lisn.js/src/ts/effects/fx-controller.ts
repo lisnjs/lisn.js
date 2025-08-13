@@ -4,7 +4,13 @@
  * @since v1.3.0
  */
 
-// TODO support critically damped or plain quadratic or custom interpolation function
+// XXX
+// TODO support critically damped or plain quadratic or custom interpolation **iterator**
+// TODO generalise:
+// - ScrollOffsets => generic
+// - remove scrollData
+// - manual call interpolate
+// - optionally enable scroll tracking
 
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
@@ -22,6 +28,7 @@ import {
 } from "@lisn/globals/types";
 
 import { newAnimationFrameIterator } from "@lisn/utils/animations";
+import { setStyleProp, delStyleProp } from "@lisn/utils/css-alter";
 import {
   newCriticallyDampedIterator,
   toNum,
@@ -35,6 +42,9 @@ import {
   CallbackHandler,
   Callback,
   wrapCallback,
+  addNewCallbackToSet,
+  addNewCallbackToMap,
+  invokeCallbackSet,
 } from "@lisn/modules/callback";
 
 import {
@@ -50,7 +60,11 @@ import {
   OnScrollHandler,
   OnScrollCallback,
 } from "@lisn/watchers/scroll-watcher";
-import { ViewWatcher, OnViewCallback } from "@lisn/watchers/view-watcher";
+import {
+  ViewWatcher,
+  OnViewCallback,
+  OnViewHandler,
+} from "@lisn/watchers/view-watcher";
 
 export type EffectRange = OnlyOneOf<EffectBoundedRange, EffectWhileRange>;
 
@@ -106,6 +120,16 @@ export class FXController {
   readonly enable: () => void;
 
   /**
+   * Calls the given handler when the controller is disabled.
+   */
+  readonly onDisable: (handler: FXControllerStateHandler) => void;
+
+  /**
+   * Calls the given handler when the controller is enabled.
+   */
+  readonly onEnable: (handler: FXControllerStateHandler) => void;
+
+  /**
    * Returns true if the controller is disabled.
    */
   readonly isDisabled: () => boolean;
@@ -114,6 +138,11 @@ export class FXController {
    * Removes all previously added effects.
    */
   readonly clear: () => void;
+
+  /**
+   * Calls the given handler when the controller is cleared.
+   */
+  readonly onClear: (handler: FXControllerStateHandler) => void;
 
   /**
    * Calls the given handler whenever the controller animates as a result of
@@ -138,6 +167,27 @@ export class FXController {
    * Removes a previously added handler.
    */
   readonly offAnimation: (handler: OnAnimationHandler) => void;
+
+  /**
+   * Will continually apply the latest {@link toCss | CSS} to the given
+   * elements, except while the controller is disabled.
+   *
+   * @param clearOnDisable If true, when the controller is disabled, the CSS
+   *                       properties will be cleared and reapplied on enabling
+   *                       the controller.
+   * @param negate         See {@link toCss}
+   */
+  readonly animate: (
+    elements: Element[],
+    clearOnDisable?: boolean,
+    negate?: FXController,
+  ) => void;
+
+  /**
+   * Will clear the relevant {@link toCss | CSS} properties from the given
+   * elements and stop animating them.
+   */
+  readonly deanimate: (elements: Element[]) => void;
 
   /**
    * Returns an object with the CSS properties and their values to set for the
@@ -184,13 +234,15 @@ export class FXController {
   ) => void;
 
   constructor(config?: FXControllerConfig) {
-    const parent = config?.parent ?? null;
+    const parent = config?.parent;
     const parentScrollable = parent?.getConfig().scrollable;
     const scrollable = config?.scrollable ?? parentScrollable;
+    const defaultNegate = config?.negate;
 
     const effectiveConfig: FXControllerEffectiveConfig = {
       scrollable,
       parent,
+      negate: defaultNegate,
       disabled: config?.disabled ?? false,
       lagX: 0, // updated below in setLag
       lagY: 0, // updated below in setLag
@@ -198,20 +250,31 @@ export class FXController {
       depthY: 1, // updated below in setDepth
     };
 
-    const shouldUseParent = parent && parentScrollable === scrollable;
+    const useParent = parent && parentScrollable === scrollable;
 
     const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
     const viewWatcher = ViewWatcher.reuse();
     const effectsMap: EffectsMap = new Map();
     const compositionsMap: CompositionMap = new Map();
-    const scrollConditionCallbacks: OnScrollCallback[] = [];
-    const viewConditionCallbacks: Array<
-      [OnViewCallback, ViewTarget, CommaSeparatedStr<View> | View[]]
-    > = [];
-    const animationCallbacks: Map<
+
+    const scrollConditionCallbacks = MH.newSet<OnScrollCallback>();
+    const viewConditionCallbacks = MH.newMap<
+      OnViewCallback,
+      [ViewTarget, CommaSeparatedStr<View> | View[]]
+    >();
+    const animationCallbacks = MH.newMap<
       OnAnimationHandler,
       [OnAnimationCallback, number | undefined, number | undefined]
-    > = MH.newMap();
+    >();
+
+    const enableCallbacks = MH.newSet<FXControllerStateCallback>();
+    const disableCallbacks = MH.newSet<FXControllerStateCallback>();
+    const clearCallbacks = MH.newSet<FXControllerStateCallback>();
+
+    const animatedElements = MH.newMap<
+      Element,
+      [OnAnimationHandler, Set<Element>]
+    >();
 
     const currentFrameData: Partial<AnimationFrameData> = {};
     let isFirstTimeAfterEnable = true;
@@ -220,6 +283,193 @@ export class FXController {
 
     const isDisabled = () => effectiveConfig.disabled;
     const setDisabled = (d: boolean) => (effectiveConfig.disabled = d);
+
+    // ----------
+
+    const disable = () => {
+      setDisabled(true);
+      invokeCallbackSet(disableCallbacks, this);
+
+      for (const cbk of scrollConditionCallbacks) {
+        scrollWatcher.offScroll(cbk, scrollable);
+      }
+
+      for (const [cbk, [target]] of viewConditionCallbacks) {
+        viewWatcher.offView(target, cbk);
+      }
+
+      if (useParent) {
+        parent.offAnimation(onAnimationFrame);
+      } else {
+        scrollWatcher.offScroll(onScroll, scrollable);
+      }
+    };
+
+    // ----------
+
+    const enable = () => {
+      isFirstTimeAfterEnable = true;
+      setDisabled(false);
+      invokeCallbackSet(enableCallbacks, this);
+
+      for (const cbk of scrollConditionCallbacks) {
+        scrollWatcher.onScroll(cbk, { scrollable });
+      }
+
+      for (const [cbk, [target, views]] of viewConditionCallbacks) {
+        viewWatcher.onView(target, cbk, { views });
+      }
+
+      if (useParent) {
+        const { depthX, depthY } = effectiveConfig;
+        parent.onAnimation(onAnimationFrame, depthX, depthY);
+      } else {
+        scrollWatcher.onScroll(onScroll, { scrollable });
+      }
+    };
+
+    // ----------
+
+    const onDisable = (handler: FXControllerStateHandler) =>
+      addNewCallbackToSet(handler, disableCallbacks);
+
+    const onEnable = (handler: FXControllerStateHandler) =>
+      addNewCallbackToSet(handler, enableCallbacks);
+
+    // ----------
+
+    const clear = () => {
+      invokeCallbackSet(clearCallbacks, this);
+
+      for (const cbk of [
+        ...scrollConditionCallbacks,
+        ...viewConditionCallbacks.keys(),
+      ]) {
+        MH.remove(cbk);
+      }
+
+      effectsMap.clear();
+    };
+
+    // ----------
+
+    const onClear = (handler: FXControllerStateHandler) =>
+      addNewCallbackToSet(handler, clearCallbacks);
+
+    // ----------
+
+    const animate = (
+      elements: Element[],
+      clearOnDisable?: boolean,
+      negate?: FXController,
+    ) => {
+      // Use a single callback for all elements for performance gain.
+      // Clean it up when all have been deanimated.
+      const allRelatedElements = MH.newSet(elements);
+      const animCallback = wrapCallback(() =>
+        applyCss(allRelatedElements, false, negate),
+      );
+
+      const data: [OnAnimationHandler, Set<Element>] = [
+        animCallback,
+        allRelatedElements,
+      ];
+
+      for (const element of elements) {
+        animatedElements.set(element, data);
+      }
+
+      animCallback.invoke(); // set the CSS now
+      onAnimation(animCallback);
+
+      if (clearOnDisable) {
+        const disableCbk = wrapCallback(() =>
+          applyCss(allRelatedElements, true),
+        );
+        animCallback.onRemove(disableCbk.remove);
+      }
+    };
+
+    // ----------
+
+    const deanimate = (elements: Element[]) => {
+      applyCss(elements, true); // clear the CSS
+
+      for (const element of elements) {
+        const [callback, allRelatedElements] =
+          animatedElements.get(element) ?? [];
+
+        MH.deleteKey(animatedElements, element);
+        MH.deleteKey(allRelatedElements, element);
+        if (callback && MH.sizeOf(allRelatedElements) === 0) {
+          offAnimation(callback);
+        }
+      }
+    };
+
+    // ----------
+
+    const setLag = (lag: RawOrRelativeNumber, lagY?: RawOrRelativeNumber) => {
+      const defaultLag = settings.effectLag;
+      const parentConfig = parent?.getConfig();
+      const parentLagX = parentConfig?.lagX ?? defaultLag;
+      const parentLagY = parentConfig?.lagY ?? defaultLag;
+      effectiveConfig.lagX = toRawNum(lag, parentLagX, parentLagX);
+      effectiveConfig.lagY = toRawNum(lagY ?? lag, parentLagY, parentLagY);
+    };
+
+    // ----------
+
+    const setDepth = (
+      depth: RawOrRelativeNumber,
+      depthY?: RawOrRelativeNumber,
+    ) => {
+      const parentConfig = parent?.getConfig();
+      const parentDepthX = parentConfig?.depthX ?? 1;
+      const parentDepthY = parentConfig?.depthY ?? 1;
+      const newDepthX = toRawNum(depth, parentDepthX, parentDepthX);
+      const newDepthY = toRawNum(depthY ?? depth, parentDepthY, parentDepthY);
+
+      if (
+        newDepthX !== effectiveConfig.depthX ||
+        newDepthY !== effectiveConfig.depthY
+      ) {
+        effectiveConfig.depthX = newDepthX;
+        effectiveConfig.depthY = newDepthY;
+
+        rescaleDataInPlace(currentFrameData, newDepthX, newDepthY);
+        interpolate(); // re-apply effects and call callbacks
+      }
+    };
+
+    // ----------
+
+    const toCss = (negate?: FXController) => {
+      negate ??= defaultNegate;
+      const css: Record<string, string> = {};
+      for (const [type, effect] of compositionsMap) {
+        const referenceEffect = negate?.getComposition(type);
+        MH.assign(css, effect.toCss(referenceEffect));
+      }
+      return css;
+    };
+
+    // ----------
+
+    const onAnimation = (
+      handler: OnAnimationHandler,
+      depth?: number,
+      depthY?: number,
+    ) => addNewCallbackToMap(handler, animationCallbacks, [depth, depthY]);
+
+    // ----------
+
+    const offAnimation = (handler: OnAnimationHandler) => {
+      const cbk = (animationCallbacks?.get(handler) ?? [])[0];
+      MH.remove(cbk);
+    };
+
+    // ----------
 
     const onScroll: OnScrollHandler = (e, scrollData) => {
       const { depthX, depthY } = effectiveConfig;
@@ -237,6 +487,8 @@ export class FXController {
       interpolate(); // don't await
     };
 
+    // ----------
+
     const onAnimationFrame = (data: AnimationFrameData) => {
       MH.assign(currentFrameData, data);
 
@@ -244,11 +496,32 @@ export class FXController {
       callCallbacks(data);
     };
 
+    // ----------
+
     const callCallbacks = (data: AnimationFrameData) => {
       for (const [cbk, thisDepth, thisDepthY] of animationCallbacks.values()) {
         const thisData = deepCopy(data);
         rescaleDataInPlace(thisData, thisDepth, thisDepthY);
         cbk.invoke(thisData, this);
+      }
+    };
+
+    // ----------
+
+    const applyCss = (
+      elements: Element[] | Set<Element>,
+      clear: boolean,
+      negate?: FXController,
+    ) => {
+      const css = toCss(negate);
+      for (const prop in css) {
+        for (const element of elements) {
+          if (clear) {
+            setStyleProp(element, prop, css[prop]);
+          } else {
+            delStyleProp(element, prop);
+          }
+        }
       }
     };
 
@@ -362,7 +635,7 @@ export class FXController {
         activate: boolean,
         { top, left }: ScrollReference,
       ) => {
-        const cbk: OnScrollCallback = wrapCallback((e__ignored, scrollData) => {
+        const handler: OnScrollHandler = (e__ignored, scrollData) => {
           // It's active if either this condition activates the effect and the
           // current offset is larger than the reference, or this condition
           // deactivates the effect but the current offset is still smaller than
@@ -375,30 +648,38 @@ export class FXController {
           const isActive = activate === (leftIsPastRef && topIsPastRef);
 
           state._activeSince = isActive ? scrollData : null;
-        });
+        };
+
+        const callback = addNewCallbackToSet(handler, scrollConditionCallbacks);
 
         if (!isDisabled()) {
-          scrollWatcher.onScroll(cbk, { scrollable });
+          scrollWatcher.onScroll(callback, { scrollable });
         }
-        scrollConditionCallbacks.push(cbk);
       };
 
       const addViewCondition = (
         activate: boolean,
         { views, target }: ViewReference,
       ) => {
-        const cbk = wrapCallback(async () => {
+        const handler: OnViewHandler = async () => {
           state._activeSince = activate
             ? (currentFrameData.scroll ??
               (await scrollWatcher.fetchCurrentScroll(scrollable)))
             : null;
-        });
+        };
+
+        const callback = addNewCallbackToMap(
+          handler,
+          viewConditionCallbacks,
+          [target, views],
+          true,
+        );
 
         if (!isDisabled()) {
-          viewWatcher.onView(target, cbk, { views });
+          viewWatcher.onView(target, callback, { views });
         }
-        viewConditionCallbacks.push([cbk, target, views]);
       };
+      // See note above about the scrollConditionCallbacks
 
       const addCondition = (
         activate: boolean,
@@ -427,7 +708,7 @@ export class FXController {
       return state;
     };
 
-    // ----------
+    // --------------------
 
     this.add = (effects, range) => {
       const state = newEffectState(range);
@@ -440,124 +721,36 @@ export class FXController {
       return this;
     };
 
-    this.disable = () => {
-      setDisabled(true);
-      isFirstTimeAfterEnable = true;
-
-      for (const cbk of scrollConditionCallbacks) {
-        scrollWatcher.offScroll(cbk, scrollable);
-      }
-
-      for (const [cbk, target] of viewConditionCallbacks) {
-        viewWatcher.offView(target, cbk);
-      }
-
-      if (shouldUseParent) {
-        parent.offAnimation(onAnimationFrame);
-      } else {
-        scrollWatcher.offScroll(onScroll, scrollable);
-      }
-    };
-
-    this.enable = () => {
-      setDisabled(false);
-      for (const cbk of scrollConditionCallbacks) {
-        scrollWatcher.onScroll(cbk, { scrollable });
-      }
-
-      for (const [cbk, target, views] of viewConditionCallbacks) {
-        viewWatcher.onView(target, cbk, { views });
-      }
-
-      if (shouldUseParent) {
-        const { depthX, depthY } = effectiveConfig;
-        parent.onAnimation(onAnimationFrame, depthX, depthY);
-      } else {
-        scrollWatcher.onScroll(onScroll, { scrollable });
-      }
-    };
-
+    this.disable = disable;
+    this.enable = enable;
     this.isDisabled = isDisabled;
+    this.onDisable = onDisable;
+    this.onEnable = onEnable;
 
-    this.clear = () => {
-      for (const cbk of scrollConditionCallbacks) {
-        MH.remove(cbk);
-      }
+    this.clear = clear;
+    this.onClear = onClear;
 
-      for (const [cbk] of viewConditionCallbacks) {
-        MH.remove(cbk);
-      }
+    this.onAnimation = onAnimation;
+    this.offAnimation = offAnimation;
 
-      scrollConditionCallbacks.length = 0; // clear
-      viewConditionCallbacks.length = 0; // clear
-      effectsMap.clear();
-    };
+    this.animate = animate;
+    this.deanimate = deanimate;
 
-    this.onAnimation = (handler, depth, depthY) => {
-      const callback = wrapCallback(handler);
-      callback.onRemove(() => {
-        MH.deleteKey(animationCallbacks, handler);
-      });
-
-      animationCallbacks.set(handler, [callback, depth, depthY]);
-    };
-
-    this.offAnimation = (handler) =>
-      MH.remove((animationCallbacks?.get(handler) ?? [])[0]);
-
-    this.toCss = (negate) => {
-      const css: Record<string, string> = {};
-      for (const [type, effect] of compositionsMap) {
-        const referenceEffect = negate?.getComposition(type);
-        MH.assign(css, effect.toCss(referenceEffect));
-      }
-      return css;
-    };
-
+    this.toCss = toCss;
     this.getComposition = (type) => compositionsMap.get(type);
-
     this.getConfig = () => MH.copyObject(effectiveConfig);
+    this.setLag = setLag;
+    this.setDepth = setDepth;
 
-    this.setLag = (lag, lagY) => {
-      const defaultLag = settings.effectLag;
-      const parentConfig = parent?.getConfig();
-      const parentLagX = parentConfig?.lagX ?? defaultLag;
-      const parentLagY = parentConfig?.lagY ?? defaultLag;
-      effectiveConfig.lagX = toRawNum(lag, parentLagX, parentLagX);
-      effectiveConfig.lagY = toRawNum(lagY ?? lag, parentLagY, parentLagY);
-    };
-
-    this.setDepth = (depth, depthY) => {
-      const parentConfig = parent?.getConfig();
-      const parentDepthX = parentConfig?.depthX ?? 1;
-      const parentDepthY = parentConfig?.depthY ?? 1;
-      const newDepthX = toRawNum(depth, parentDepthX, parentDepthX);
-      const newDepthY = toRawNum(depthY ?? depth, parentDepthY, parentDepthY);
-
-      if (
-        newDepthX !== effectiveConfig.depthX ||
-        newDepthY !== effectiveConfig.depthY
-      ) {
-        effectiveConfig.depthX = newDepthX;
-        effectiveConfig.depthY = newDepthY;
-
-        rescaleDataInPlace(currentFrameData, newDepthX, newDepthY);
-        interpolate(); // re-apply effects and call callbacks
-      }
-    };
-
-    // ----------
+    // --------------------
 
     const defaultLag = config?.lag ?? "+0";
     const defaultDepth = config?.depth ?? "+0";
-    this.setLag(config?.lagX ?? defaultLag, config?.lagY ?? defaultLag);
-    this.setDepth(
-      config?.depthX ?? defaultDepth,
-      config?.depthY ?? defaultDepth,
-    );
+    setLag(config?.lagX ?? defaultLag, config?.lagY ?? defaultLag);
+    setDepth(config?.depthX ?? defaultDepth, config?.depthY ?? defaultDepth);
 
     if (!isDisabled()) {
-      this.enable();
+      enable();
     }
   }
 }
@@ -581,8 +774,19 @@ export type FXControllerConfig = {
    * - Resolving relative values of lag or depth.
    * - Eliminating redundant scroll tracking if both parent and this controller
    *   use the same scrollable.
+   *
+   * @defaultValue undefined
    */
-  parent?: FXController | null;
+  parent?: FXController;
+
+  /**
+   * The default value for the controller to negate in calls to
+   * {@link FXController.animate | animate} and
+   * {@link FXController.toCss | toCss}
+   *
+   * @defaultValue undefined
+   */
+  negate?: FXController;
 
   /**
    * Whether to set the initial state of the controller to disabled.
@@ -643,7 +847,8 @@ export type FXControllerConfig = {
 
 export type FXControllerEffectiveConfig = {
   scrollable: ScrollTarget | undefined;
-  parent: FXController | null;
+  parent: FXController | undefined;
+  negate: FXController | undefined;
   disabled: boolean;
   lagX: number;
   lagY: number;
@@ -687,6 +892,12 @@ export type OnAnimationCallback = Callback<OnAnimationHandlerArgs>;
 export type OnAnimationHandler =
   | CallbackHandler<OnAnimationHandlerArgs>
   | OnAnimationCallback;
+
+export type FXControllerStateCallbackArgs = [FXController];
+export type FXControllerStateCallback = Callback<FXControllerStateCallbackArgs>;
+export type FXControllerStateHandler =
+  | FXControllerStateCallback
+  | CallbackHandler<FXControllerStateCallbackArgs>;
 
 // ------------------------------
 

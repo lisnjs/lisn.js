@@ -365,7 +365,7 @@ export const addClasses = asyncMutatorFor(addClassesNow);
  * @category Style: Altering
  */
 export const removeClassesNow = (element: Element, ...classNames: string[]) =>
-  MH.classList(element).remove(...classNames);
+  MH.remove(MH.classList(element), ...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.

@@ -228,10 +228,9 @@ const flattenForSorting = (obj: StrRecord): unknown[] => {
 const stringifyReplacer = (key: string, value: unknown) =>
   key ? maybeConvertToString(value, true) : value;
 
-const maybeConvertToString = <B extends boolean, V>(
-  value: V,
-  nested: B,
-): B extends false ? string : string | V => {
+function maybeConvertToString<V>(value: V, nested: true): string | V;
+function maybeConvertToString(value: unknown, nested: false): string;
+function maybeConvertToString<V>(value: V, nested: boolean) {
   let result: string | V = "";
 
   if (MH.isElement(value)) {
@@ -279,5 +278,5 @@ const maybeConvertToString = <B extends boolean, V>(
     result = nested ? value : MC.STRING(value);
   }
 
-  return result as B extends false ? string : string | V;
-};
+  return result;
+}

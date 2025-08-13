@@ -504,7 +504,9 @@ const addAndSaveHandlerFor = <T extends HandlerTuple>(
   }
 };
 
-const newMatrix = <B extends boolean>(readonly: B, init?: TransformLike) => {
+function newMatrix(readonly: true, init?: TransformLike): DOMMatrixReadOnly;
+function newMatrix(readonly: false, init?: TransformLike): DOMMatrix;
+function newMatrix(readonly: boolean, init?: TransformLike) {
   const initM = MH.isInstanceOf(init, Transform) ? init.toMatrix() : init;
   return new (readonly ? DOMMatrixReadOnly : DOMMatrix)(
     MH.isNullish(initM)
@@ -514,8 +516,8 @@ const newMatrix = <B extends boolean>(readonly: B, init?: TransformLike) => {
             ? initM.toFloat32Array()
             : initM,
         ),
-  ) as typeof readonly extends true ? DOMMatrixReadOnly : DOMMatrix;
-};
+  );
+}
 
 const validateInputs = (
   name: string,

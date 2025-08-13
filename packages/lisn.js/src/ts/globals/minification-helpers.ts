@@ -363,28 +363,23 @@ export const parentOf = (element: Element | undefined | null) =>
 export const childrenOf = (element: Element | undefined | null) =>
   element?.children || [];
 
-export const targetOf = <O extends { target?: unknown } | null | undefined>(
-  obj: O,
-) =>
-  obj?.target as O extends { target: infer T }
-    ? T
-    : O extends { target?: infer T }
-      ? T | undefined
-      : undefined;
+export function targetOf<T>(obj: { target: T }): T;
+export function targetOf(obj: object | null | undefined): undefined;
+export function targetOf(obj: object | null | undefined) {
+  return obj && "target" in obj ? obj.target : undefined;
+}
 
-export const currentTargetOf = <
-  O extends { currentTarget?: unknown } | null | undefined,
->(
-  obj: O,
-) =>
-  obj?.currentTarget as O extends { currentTarget: infer T }
-    ? T
-    : O extends { currentTarget?: infer T }
-      ? T | undefined
-      : undefined;
+export function currentTargetOf<T>(obj: { currentTarget: T }): T;
+export function currentTargetOf(obj: object | null | undefined): undefined;
+export function currentTargetOf(obj: object | null | undefined) {
+  return obj && "currentTarget" in obj ? obj.currentTarget : undefined;
+}
 
-export const classList = <T extends Element | null | undefined>(element: T) =>
-  element?.classList as T extends Element ? DOMTokenList : undefined;
+export function classList(element: Element): DOMTokenList;
+export function classList(element: null | undefined): undefined;
+export function classList(element: Element | null | undefined) {
+  return element?.classList;
+}
 
 const S_TABINDEX = "tabindex";
 export const getTabIndex = (element: Element) => getAttr(element, S_TABINDEX);
@@ -394,8 +389,10 @@ export const setTabIndex = (element: Element, index = "0") =>
 
 export const unsetTabIndex = (element: Element) => delAttr(element, S_TABINDEX);
 
-export const remove = (obj: { remove: () => void } | null | undefined) =>
-  obj?.remove();
+export const remove = <A extends readonly unknown[]>(
+  obj: { remove: (...args: A) => void } | null | undefined,
+  ...args: A
+) => obj?.remove(...args);
 
 export const deleteObjKey = <O extends object>(obj: O, key: keyof O) =>
   delete obj[key];

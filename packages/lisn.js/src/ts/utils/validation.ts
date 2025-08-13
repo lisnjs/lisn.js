@@ -287,12 +287,24 @@ const _validateBoolean = (
   return boolVal;
 };
 
-const _validateString = <T extends string = string>(
+function _validateString<T extends string = string>(
   key: string,
   value: unknown,
   checkFn?: (value: string) => value is T,
   typeDescription?: string,
-): (typeof checkFn extends null | undefined ? string : T) | undefined => {
+): T;
+function _validateString(
+  key: string,
+  value: unknown,
+  checkFn: null,
+  typeDescription: string,
+): string;
+function _validateString(
+  key: string,
+  value: unknown,
+  checkFn?: null | ((value: string) => boolean),
+  typeDescription?: string,
+) {
   if (MH.isNullish(value)) {
     return;
   }
@@ -303,8 +315,8 @@ const _validateString = <T extends string = string>(
     throw MH.usageError(`Invalid value for '${key}'`);
   }
 
-  return value as typeof checkFn extends null | undefined ? string : T;
-};
+  return value;
+}
 
 const _validateBooleanOrString = <T extends string = string>(
   key: string,

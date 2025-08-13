@@ -6,8 +6,6 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { settings } from "@lisn/globals/settings";
 
-import { NonNullableReturnType } from "@lisn/globals/types";
-
 /**
  * Returns a Promise that is resolved when the given `checkFn` function returns
  * a value other than `null` or `undefined`.
@@ -23,22 +21,17 @@ import { NonNullableReturnType } from "@lisn/globals/types";
  *
  * @category DOM: Events
  */
-export const waitForElement = <
-  F extends () => unknown,
-  T extends number | undefined = undefined,
->(
-  checkFn: F,
-  timeout?: number,
-) =>
-  MH.newPromise<
-    T extends undefined
-      ? NonNullableReturnType<F>
-      : null | NonNullableReturnType<F>
-  >((resolve) => {
+export function waitForElement<F>(checkFn: () => F): Promise<NonNullable<F>>;
+export function waitForElement<F>(
+  checkFn: () => F,
+  timeout: number,
+): Promise<null | NonNullable<F>>;
+export function waitForElement(checkFn: () => unknown, timeout?: number) {
+  return MH.newPromise((resolve) => {
     const callFn = () => {
       const result = checkFn();
       if (!MH.isNullish(result)) {
-        resolve(result as NonNullableReturnType<F>);
+        resolve(result);
         return true; // done
       }
       return false;
@@ -49,27 +42,24 @@ export const waitForElement = <
     }
 
     if (!MH.isNullish(timeout)) {
-      MH.setTimer(() => {
-        resolve(
-          null as T extends undefined
-            ? NonNullableReturnType<F>
-            : null | NonNullableReturnType<F>,
-        );
+      setTimeout(() => {
+        resolve(null);
         observer.disconnect();
       }, timeout);
     }
 
-    const observer = MH.newMutationObserver(() => {
+    const observer = new MutationObserver(() => {
       if (callFn()) {
         observer.disconnect();
       }
     });
 
-    observer.observe(MH.getDocElement(), {
+    observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
     });
   });
+}
 
 /**
  * Returns a Promise that is resolved when the given `checkFn` function returns
@@ -89,17 +79,15 @@ export const waitForElement = <
  *
  * @category DOM: Events
  */
-export const waitForElementOrInteractive = <F extends () => unknown>(
-  checkFn: F,
-) =>
-  MH.newPromise<NonNullableReturnType<F> | null>((resolve) => {
+export const waitForElementOrInteractive = <F>(checkFn: () => F) =>
+  MH.newPromise<NonNullable<true | F> | null>((resolve) => {
     let isInteractive = false;
     // Check element first, then readyState. The callback to waitForElement is
     // run synchronously first time, so isInteractive will be false and checkFn
     // will run.
     waitForElement(() => isInteractive || checkFn()).then((res) => {
       if (!isInteractive) {
-        resolve(res as NonNullableReturnType<F>);
+        resolve(res);
       } // else already resolved to null
     });
 

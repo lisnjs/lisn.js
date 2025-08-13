@@ -229,7 +229,81 @@ export const addNewCallbackToSet = <Args extends readonly unknown[]>(
   const callback = wrapCallback(handler);
   set.add(callback);
   callback.onRemove(() => MH.deleteKey(set, callback));
+  return callback;
 };
+
+/**
+ * Will save the original handler as the key.
+ *
+ * @ignore
+ * @internal
+ */
+export function addNewCallbackToMap<
+  Args extends readonly unknown[],
+  Handler extends CallbackHandler<Args> | Callback<Args>,
+  Data extends unknown[],
+>(
+  handler: Handler,
+  map: Map<Handler, [Callback<Args>, ...Data]>,
+  data: Data,
+  keyedByCallback?: false,
+): Callback<Args>;
+
+export function addNewCallbackToMap<
+  Args extends readonly unknown[],
+  Handler extends CallbackHandler<Args> | Callback<Args>,
+  Data,
+>(
+  handler: Handler,
+  map: Map<Handler, [Callback<Args>, Data]>,
+  data: Data,
+  keyedByCallback?: false,
+): Callback<Args>;
+
+export function addNewCallbackToMap<
+  Args extends readonly unknown[],
+  Handler extends CallbackHandler<Args> | Callback<Args>,
+>(
+  handler: Handler,
+  map: Map<Handler, Callback<Args>>,
+  data?: null,
+  keyedByCallback?: false,
+): Callback<Args>;
+
+export function addNewCallbackToMap<
+  Args extends readonly unknown[],
+  Handler extends CallbackHandler<Args> | Callback<Args>,
+  Data,
+>(
+  handler: Handler,
+  map: Map<Callback<Args>, Data>,
+  data: Data,
+  keyedByCallback: true,
+): Callback<Args>;
+
+export function addNewCallbackToMap(
+  handler: CallbackHandler<unknown[]> | Callback<unknown[]>,
+  map: Map<CallbackHandler<unknown[]> | Callback<unknown[]>, unknown>,
+  data?: unknown,
+  keyedByCallback?: boolean,
+) {
+  const callback = wrapCallback(handler);
+  let value: unknown = callback;
+  let key = handler;
+
+  if (keyedByCallback) {
+    key = callback;
+    value = data;
+  } else if (MH.isArray(data)) {
+    value = [callback, ...data];
+  } else if (!MH.isNullish(data)) {
+    value = [callback, data];
+  }
+
+  map.set(key, value);
+  callback.onRemove(() => MH.deleteKey(map, key));
+  return callback;
+}
 
 /**
  * @ignore

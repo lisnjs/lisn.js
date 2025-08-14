@@ -4,26 +4,33 @@
  * @since v1.3.0
  */
 
+import { FXController } from "@lisn/effects/fx-controller";
+
 /**
  * @interface
  */
 export interface EffectInterface<T extends keyof EffectRegistry> {
   /**
-   * Unique type for the transform
+   * Unique type for the effect
    */
   type: T;
 
   /**
-   * Returns true if the effect is absolute. If true, its handlers receive
-   * absolute offsets instead of delta values and applying the effect discards
-   * all previous ones of its type.
+   * Returns true if the effect is absolute. If true, the
+   * {@link FXHandler | handlers} receive absolute
+   * {@link FXParameters | parameters} and each call to {@link apply} will
+   * reset the effect back to the default/blank state.
+   *
+   * Otherwise, the handlers receive delta values reflecting the change in
+   * parameters since the last animation frame and the effect's state is
+   * preserved between calls to {@link apply}.
    */
   isAbsolute: () => boolean;
 
   /**
-   * Applies all added effects for the given scroll offsets.
+   * Applies all added effects for the given state.
    */
-  apply: (offsets: ScrollOffsets) => Effect<T>;
+  apply: (state: FXFrameState, controller: FXController) => Effect<T>;
 
   /**
    * Returns a **static copy** of the effect that has the current state/value of
@@ -41,14 +48,14 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
    * product of its current state and that of all the other given ones.
    *
    * **NOTE:** If any of the given effects is
-   * {@link TransformConfig.isAbsolute | absolute}, all previous ones are
-   * essentially discarded and the resulting effect becomes absolute.
+   * {@link Effect.isAbsolute | absolute}, all previous ones are essentially
+   * discarded and the resulting effect becomes absolute.
    */
   toComposition: (...others: Effect<T>[]) => Effect<T>;
 
   /**
    * Returns an object with CSS properties and their values that represent the
-   * effect.
+   * effect's current state.
    *
    * @param negate See {@link export}.
    */
@@ -64,72 +71,191 @@ export type EffectsList<TL extends readonly (keyof EffectRegistry)[]> = [
   },
 ];
 
-export type EffectHandler<R> = (offsets: ScrollOffsets) => R;
+export type FXHandler<R> = (
+  parameters: FXParameters,
+  state: FXFrameState,
+  controller: FXController,
+) => R;
 
 /**
- * The scroll offsets for the current animation frame, being smoothly
- * interpolated towards the target ones.
+ * The parameters for the current animation frame that {@link FXHandler}s should
+ * use.
  *
- * @category Effects
+ * If the effect is {@link Effect.isAbsolute | absolute} they will be based on
+ * the current values of the {@link FXFrameAxisState}s. Otherwise they will
+ * be based on the change in those values since the previous animation frame.
+ *
+ * Depending on each effect and effect category, these values may also be scaled
+ * by the parallax depth of the {@link Effects/FXController.FXController}.
  */
-export type ScrollOffsets = {
+export type FXParameters = {
   /**
-   * Indicates whether the values are absolute (actual offsets) or incremental
-   * (delta values since last frame). They would be incremental if this is
-   * being passed to an {@link EffectHandler} for an {@link Effect} that's not
-   * {@link Effect.isAbsolute | absolute}.
-   */
-  isAbsolute: boolean;
-
-  /**
-   * The {@link Effects/FXController.FXControllerConfig.depthX | controller's horizontal depth}
-   * that has scaled the x offsets. {@link x} is the actual element's scroll
-   * left offset divided by this depth.
-   */
-  depthX: number;
-
-  /**
-   * The {@link Effects/FXController.FXControllerConfig.depthY | controller's vertical depth}
-   * that has scaled the y offsets. {@link y} is the actual element's scroll
-   * top offset divided by this depth.
-   */
-  depthY: number;
-
-  /**
-   * If the data is absolute, this holds the current interpolated value for
-   * the scroll left offset scaled by the horizontal parallax depth of the
-   * controller.
-   *
-   * Otherwise, this holds the change in this absolute value since the last
-   * animation frame.
+   * The current value, or the change in current value, for the X-axis.
    */
   x: number;
 
   /**
-   * Normalized {@link x}: {@link x} as a fraction from 0 to 1 (maximum scroll
-   * left offset).
+   * The normalized {@link x}: from 0 ({@link FXFrameState.min | minimum}) to
+   * 1 ({@link FXFrameState.max | maximum}) value for this axis. It is always
+   * independent of parallax depth.
    */
   nx: number;
 
   /**
-   * If the data is absolute, this holds the current interpolated value for
-   * the scroll top offset scaled by the vertical parallax depth of the
-   * controller.
-   *
-   * Otherwise, this holds the change in this absolute value since the last
-   * animation frame.
+   * The current value, or the change in current value, for the Y-axis.
    */
   y: number;
 
   /**
-   * Normalized {@link y}: {@link y} as a fraction from 0 to 1 (maximum scroll
-   * top offset).
+   * The normalized {@link y}: from 0 ({@link FXFrameState.min | minimum}) to
+   * 1 ({@link FXFrameState.max | maximum}) value for this axis. It is always
+   * independent of parallax depth.
    */
   ny: number;
+
+  /**
+   * The current value, or the change in current value, for the Z-axis.
+   */
+  z: number;
+
+  /**
+   * The normalized {@link z}: from 0 ({@link FXFrameState.min | minimum}) to
+   * 1 ({@link FXFrameState.max | maximum}) value for this axis. It is always
+   * independent of parallax depth.
+   */
+  nz: number;
 };
 
 /**
- * Add to this when registering a new effect.
+ * The current state of an axis (X, Y or Z).
+ */
+export type FXFrameAxisState = {
+  /**
+   * The minimum possible value.
+   */
+  min: number;
+
+  /**
+   * The maximum possible value.
+   */
+  max: number;
+
+  /**
+   * The value at the last animation frame.
+   */
+  previous: number;
+
+  /**
+   * The current value.
+   */
+  current: number;
+
+  /**
+   * The target value which we're interpolating towards.
+   */
+  target: number;
+};
+
+export type FXFrameState = {
+  x: FXFrameAxisState;
+  y: FXFrameAxisState;
+  z: FXFrameAxisState;
+};
+
+/**
+ * Add to this interface to register a new effect type. The key must match the
+ * {@link Effect.type} property.
+ *
+ * @example
+ *
+ * ```typescript
+ * declare module "@lisn/effects/effect" {
+ *   interface EffectRegistry {
+ *     transform: Transform;
+ *   }
+ * }
  */
 /* eslint-disable-next-line @typescript-eslint/no-empty-object-type */
 export interface EffectRegistry {}
+
+/**
+ * Used to scale a parameter for one of the axis by the respective parallax
+ * depth.
+ *
+ * The function will receive the pre-scaled parameter value (which could be
+ * absolute or delta) for this axis and the controller's depth along this axis
+ * and should return the final parameter value to use.
+ */
+export type ParallaxScalerFn = (
+  param: number,
+  depth: number,
+  axis: "x" | "y" | "z",
+) => number;
+
+/**
+ * Returns the {@link FXParameters | parameters} for the given state.
+ *
+ * @param [options.isAbsolute] If false (default), the parameters will equal the
+ *                             change in values since the last animation frame.
+ *                             If true, they will equal the current values for
+ *                             the axes.
+ * @param [options.scalerFn]   If given, the parameters along each axis will be
+ *                             scaled by the controller's parallax depth for
+ *                             this axis.
+ */
+export const getParameters = (
+  state: FXFrameState,
+  controller: FXController,
+  options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
+) => {
+  const { isAbsolute, scalerFn } = options ?? {};
+
+  const getAxisParam = (axisState: FXFrameAxisState, normalized = false) => {
+    const { current, previous, max, min } = axisState;
+    let result = isAbsolute ? current : current - previous;
+
+    if (normalized) {
+      if (isAbsolute) {
+        result -= min;
+      }
+
+      result /= max - min;
+    }
+
+    return result;
+  };
+
+  const parameters: FXParameters = {
+    x: getAxisParam(state.x),
+    nx: getAxisParam(state.x, true),
+    y: getAxisParam(state.y),
+    ny: getAxisParam(state.y, true),
+    z: getAxisParam(state.z),
+    nz: getAxisParam(state.z, true),
+  };
+
+  return scalerFn
+    ? scaleParameters(parameters, controller, scalerFn)
+    : parameters;
+};
+
+/**
+ * Returns the parameters scaled by the given scaling function using the
+ * controller's parallax depths.
+ */
+export const scaleParameters = (
+  parameters: FXParameters,
+  controller: FXController,
+  scalerFn: ParallaxScalerFn,
+) => {
+  const { depthX, depthY, depthZ } = controller.getConfig();
+
+  return {
+    x: scalerFn(parameters.x, depthX, "x"),
+    nx: parameters.nx,
+    y: scalerFn(parameters.y, depthY, "y"),
+    ny: parameters.ny,
+    z: scalerFn(parameters.z, depthZ, "z"),
+    nz: parameters.nz,
+  };
+};

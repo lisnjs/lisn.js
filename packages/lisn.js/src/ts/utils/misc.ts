@@ -22,20 +22,19 @@ export const deepCopy = <T extends object>(obj: T): T => {
   return clone;
 };
 
-export const copyExistingKeys = <T extends object, F extends T>(
-  fromObj: F,
-  toObj: T,
-) => {
+export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {
       continue;
     }
 
     if (key in fromObj) {
-      if (MH.isNonPrimitive(fromObj[key]) && MH.isNonPrimitive(toObj[key])) {
-        copyExistingKeys(fromObj[key], toObj[key]);
-      } else {
-        toObj[key] = fromObj[key];
+      const current = toObj[key];
+      const updated = fromObj[key];
+      if (MH.isNonPrimitive(updated) && MH.isNonPrimitive(current)) {
+        copyExistingKeys(updated, current);
+      } else if (updated !== undefined) {
+        toObj[key] = updated;
       }
     }
   }

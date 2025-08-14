@@ -4,12 +4,8 @@
  * @since v1.3.0
  */
 
-// XXX
-// - can we remove EffectRegistry and just use string as the type
-// TODO support critically damped or plain quadratic or custom interpolation **iterator**
-// TODO generalise:
-// - manual call interpolate
-// - optionally enable scroll tracking
+// TODO
+// - support critically damped or plain quadratic or custom interpolation **iterator**
 // - custom range condition
 
 import * as MC from "@lisn/globals/minification-constants";
@@ -42,39 +38,28 @@ import {
   CallbackHandler,
   Callback,
   wrapCallback,
-  addNewCallbackToSet,
   addNewCallbackToMap,
-  invokeCallbackSet,
 } from "@lisn/modules/callback";
 
 import {
   Effect,
   EffectsList,
   EffectRegistry,
-  FXParameters,
-  FXFrameAxisState,
-  FXFrameState,
+  FXCalibration,
+  FXAxisState,
+  FXState,
 } from "@lisn/effects/effect";
 
-import {
-  ScrollWatcher,
-  ScrollData,
-  OnScrollHandler,
-  OnScrollCallback,
-} from "@lisn/watchers/scroll-watcher";
-import {
-  ViewWatcher,
-  OnViewCallback,
-  OnViewHandler,
-} from "@lisn/watchers/view-watcher";
+import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
+import { ViewWatcher, OnViewHandler } from "@lisn/watchers/view-watcher";
 
 export type EffectRange = OnlyOneOf<EffectBoundedRange, EffectWhileRange>;
 
 // TODO ALL and ANY multi-conditions
 // XXX Document these
 export type EffectBoundedRange = {
-  when: ViewReference | ParamReference;
-  until: ViewReference | ParamReference;
+  when: ViewReference | StateReference;
+  until: ViewReference | StateReference;
 };
 
 export type EffectWhileRange = {
@@ -86,7 +71,7 @@ export type ViewReference = {
   target: ViewTarget;
 };
 
-export type ParamReference = AtLeastOne<{
+export type StateReference = AtLeastOne<{
   x: number | RawOrRelativeNumber;
   y: number | RawOrRelativeNumber;
   z: number | RawOrRelativeNumber;
@@ -112,9 +97,8 @@ export class FXController {
 
   /**
    * Temporarily disables the controller. Scroll and view tracking, if any, is
-   * disabled, effects are not being updated and no {@link onAnimation}
-   * callbacks are called. XXX TODO children's onAnimationHandler should still be
-   * called
+   * disabled, effects are not being updated, the calibrator is not polled and
+   * no {@link onTween} callbacks are called.
    */
   readonly disable: () => void;
 
@@ -130,22 +114,17 @@ export class FXController {
   readonly toggleEnable: () => void;
 
   /**
-   * Calls the given handler when the controller is disabled. If the controller
-   * is already disabled, the handlers are not called.
+   * Calls the given handler when the controller is enabled or disabled.
    *
-   * The handler is called after setting the state to disabled, such that
-   * calling {@link isDisabled} from the handler will return `true`.
+   * The handler is called after updating its state the controller, such that
+   * calling {@link isDisabled} from the handler will return the new value.
    */
-  readonly onDisable: (handler: FXControllerStateHandler) => void;
+  readonly onToggle: (handler: FXControllerHandler) => void;
 
   /**
-   * Calls the given handler when the controller is enabled. If the controller
-   * is already enabled, the handlers are not called.
-   *
-   * The handler is called after setting the state to enabled, such that
-   * calling {@link isDisabled} from the handler will return `false`.
+   * Removes a previously added {@link onToggle} handler.
    */
-  readonly onEnable: (handler: FXControllerStateHandler) => void;
+  readonly offToggle: (handler: FXControllerHandler) => void;
 
   /**
    * Returns true if the controller is disabled.
@@ -165,22 +144,42 @@ export class FXController {
    *
    * The handler is called after clearing the effects.
    */
-  readonly onReset: (handler: FXControllerStateHandler) => void;
+  readonly onReset: (handler: FXControllerHandler) => void;
 
   /**
-   * Calls the given handler whenever the controller updates the effect
+   * Removes a previously added {@link onReset} handler.
+   */
+  readonly offReset: (handler: FXControllerHandler) => void;
+
+  /**
+   * Calls the given handler whenever the controller updates the minimum,
+   * maximum or target on the {@link FXState | state}.
+   *
+   * The handler is called after updating the state.
+   */
+  readonly onRecalibrate: (handler: FXControllerHandler) => void;
+
+  /**
+   * Removes a previously added {@link onRecalibrate} handler.
+   */
+  readonly offRecalibrate: (handler: FXControllerHandler) => void;
+
+  /**
+   * Calls the given handler whenever the controller interpolates the current
+   * {@link FXTweenStat}. This happens on every animation frame while
+   * interpolating the effects towards the {@link FXAxisState.target | target}
    * parameters.
    *
    * The handler is called during an animation frame **after** all effects have
    * been applied, such that calling {@link toCss} or {@link getComposition}
    * will reflect the latest effect states.
    */
-  readonly onAnimation: (handler: OnAnimationHandler) => void;
+  readonly onTween: (handler: FXControllerHandler) => void;
 
   /**
-   * Removes a previously added {@link onAnimation} handler.
+   * Removes a previously added {@link onTween} handler.
    */
-  readonly offAnimation: (handler: OnAnimationHandler) => void;
+  readonly offTween: (handler: FXControllerHandler) => void;
 
   /**
    * Will apply the latest {@link toCss | CSS} to the given elements once.
@@ -237,6 +236,11 @@ export class FXController {
   ) => Effect<T> | undefined;
 
   /**
+   * Returns a copy of the controller's {@link FXState}.
+   */
+  readonly getState: () => FXState;
+
+  /**
    * Returns the controller's **effective** configuration.
    */
   readonly getConfig: () => FXControllerEffectiveConfig;
@@ -276,17 +280,41 @@ export class FXController {
         }>,
   ) => void;
 
+  /**
+   * This creates a new async generator that will yield calibration data
+   * whenever the returned helper callback is called.
+   */
+  static createCalibrator(): FXControllerCalibrationPair {
+    let resolve: (data: FXCalibration) => void;
+
+    const nextPromise = () =>
+      MH.newPromise<FXCalibration>((r) => (resolve = r));
+
+    const calibrator: FXControllerCalibrator = async function* () {
+      while (true) {
+        yield await nextPromise();
+      }
+    };
+
+    const sendCalibration = (data: FXCalibration) => resolve(data);
+
+    return { calibrator, sendCalibration };
+  }
+
   constructor(config?: FXControllerConfig) {
-    const parent = config?.parent;
-    const parentScrollable = parent?.getConfig().scrollable;
-    const scrollable = config?.scrollable ?? parentScrollable;
-    const defaultNegate = config?.negate;
+    const {
+      parent,
+      negate: defaultNegate,
+      calibrator: userCalibrator = MC.S_SCROLL,
+    } = config ?? {};
+    const scrollable = config?.scrollable ?? parent?.getConfig().scrollable;
 
     const effectiveConfig: FXControllerEffectiveConfig = {
       scrollable,
       parent,
       negate: defaultNegate,
       disabled: config?.disabled ?? false,
+      calibrator: userCalibrator,
       // updated below in setLag
       lagX: 0,
       lagY: 0,
@@ -297,33 +325,37 @@ export class FXController {
       depthZ: 1,
     };
 
-    const useParent = parent && parentScrollable === scrollable;
-
-    const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
+    let scrollWatcher: ScrollWatcher | null = null;
     const viewWatcher = ViewWatcher.reuse();
+    let calibrator: FXControllerCalibrator;
+
     const effectsMap: EffectsMap = new Map();
     const compositionsMap: CompositionMap = new Map();
 
-    const scrollConditionCallbacks = MH.newSet<OnScrollCallback>();
-    const viewConditionCallbacks = MH.newMap<
-      OnViewCallback,
-      [ViewTarget, CommaSeparatedStr<View> | View[]]
+    const toggleCallbacks = MH.newMap<
+      FXControllerHandler,
+      FXControllerCallback
     >();
-    const animationCallbacks = MH.newMap<
-      OnAnimationHandler,
-      OnAnimationCallback
+    const resetCallbacks = MH.newMap<
+      FXControllerHandler,
+      FXControllerCallback
     >();
 
-    const enableCallbacks = MH.newSet<FXControllerStateCallback>();
-    const disableCallbacks = MH.newSet<FXControllerStateCallback>();
-    const resetCallbacks = MH.newSet<FXControllerStateCallback>();
+    const recalibrateCallbacks = MH.newMap<
+      FXControllerHandler,
+      FXControllerCallback
+    >();
+    const tweenCallbacks = MH.newMap<
+      FXControllerHandler,
+      FXControllerCallback
+    >();
 
     const animatedElements = MH.newMap<
       Element,
-      [OnAnimationHandler, Set<Element>]
+      [FXControllerHandler, Set<Element>]
     >();
 
-    let currentFrameState: FXFrameState | null = null;
+    const currentFrameState = newDefaultState();
     let isFirstTimeAfterEnable = true;
 
     // ----------
@@ -335,23 +367,7 @@ export class FXController {
     const disable = () => {
       if (!isDisabled()) {
         effectiveConfig.disabled = true;
-
-        invokeCallbackSet(disableCallbacks, this);
-
-        for (const cbk of scrollConditionCallbacks) {
-          scrollWatcher.offScroll(cbk, scrollable);
-        }
-
-        for (const [cbk, [target]] of viewConditionCallbacks) {
-          viewWatcher.offView(target, cbk);
-        }
-
-        if (useParent) {
-          parent.offAnimation(onAnimationHandler);
-        } else {
-          // XXX TODO if it has children relying on it, don't disable
-          scrollWatcher.offScroll(onScroll, scrollable);
-        }
+        callCallbacks(toggleCallbacks);
       }
     };
 
@@ -362,55 +378,35 @@ export class FXController {
         isFirstTimeAfterEnable = true;
         effectiveConfig.disabled = false;
 
-        invokeCallbackSet(enableCallbacks, this);
-
-        for (const cbk of scrollConditionCallbacks) {
-          scrollWatcher.onScroll(cbk, { scrollable });
-        }
-
-        for (const [cbk, [target, views]] of viewConditionCallbacks) {
-          viewWatcher.onView(target, cbk, { views });
-        }
-
-        if (useParent) {
-          parent.onAnimation(onAnimationHandler);
-          // XXX TODO manually apply effects with the latest data from the
-          // parent
-        } else {
-          scrollWatcher.onScroll(onScroll, { scrollable });
-        }
+        callCallbacks(toggleCallbacks);
+        pollCalibrator();
       }
     };
 
     // ----------
 
-    const onDisable = (handler: FXControllerStateHandler) =>
-      addNewCallbackToSet(handler, disableCallbacks);
+    const onToggle = (handler: FXControllerHandler) =>
+      addNewCallbackToMap(handler, toggleCallbacks);
 
-    const onEnable = (handler: FXControllerStateHandler) =>
-      addNewCallbackToSet(handler, enableCallbacks);
+    const offToggle = (handler: FXControllerHandler) =>
+      MH.remove(toggleCallbacks.get(handler));
 
     // ----------
 
     const reset = () => {
       if (MH.sizeOf(effectsMap) > 0) {
-        for (const cbk of [
-          ...scrollConditionCallbacks,
-          ...viewConditionCallbacks.keys(),
-        ]) {
-          MH.remove(cbk);
-        }
-
         effectsMap.clear();
-
-        invokeCallbackSet(resetCallbacks, this);
+        callCallbacks(resetCallbacks);
       }
     };
 
     // ----------
 
-    const onReset = (handler: FXControllerStateHandler) =>
-      addNewCallbackToSet(handler, resetCallbacks);
+    const onReset = (handler: FXControllerHandler) =>
+      addNewCallbackToMap(handler, resetCallbacks);
+
+    const offReset = (handler: FXControllerHandler) =>
+      MH.remove(resetCallbacks.get(handler));
 
     // ----------
 
@@ -430,20 +426,20 @@ export class FXController {
       // Clean it up when all have been called with stopAnimate.
       const relatedElements = MH.newSet(elements);
 
-      // Wrap it as a callback, since we'll be adding it as both onAnimation and
-      // onDisable/onEnable (if clearOnDisable is true). This way, if the
-      // original user callback is removed, our wrapped callback will be removed
-      // and subsequently, it's removed from all three callback sets.
+      // Wrap it as a callback, since we'll be adding it as both onTween and
+      // onToggle (if clearOnDisable is true). This way, if the original user
+      // callback is removed, our wrapped callback will be removed and
+      // subsequently, it's removed from all three callback sets.
       const callback = wrapCallback(() => {
         if (isDisabled()) {
-          // We would be here if we were called as an onDisable handler
+          // We would be here if we were called as an onToggle handler
           applyCss(relatedElements, true); // clear the CSS
         } else {
           applyCss(relatedElements, false, negate);
         }
       });
 
-      const data: [OnAnimationHandler, Set<Element>] = [
+      const data: [FXControllerHandler, Set<Element>] = [
         callback,
         relatedElements,
       ];
@@ -453,11 +449,10 @@ export class FXController {
       }
 
       callback.invoke(); // set the CSS now
-      onAnimation(callback);
+      onTween(callback);
 
       if (clearOnDisable) {
-        onDisable(callback);
-        onEnable(callback);
+        onToggle(callback);
       }
     };
 
@@ -474,7 +469,7 @@ export class FXController {
         MH.deleteKey(animatedElements, element);
         MH.deleteKey(relatedElements, element);
         if (callback && MH.sizeOf(relatedElements) === 0) {
-          offAnimation(callback);
+          offTween(callback);
         }
       }
     };
@@ -554,35 +549,27 @@ export class FXController {
 
     // ----------
 
-    const onAnimation = (handler: OnAnimationHandler) =>
-      addNewCallbackToMap(handler, animationCallbacks);
+    const onRecalibrate = (handler: FXControllerHandler) =>
+      addNewCallbackToMap(handler, recalibrateCallbacks);
+
+    const offRecalibrate = (handler: FXControllerHandler) =>
+      MH.remove(recalibrateCallbacks.get(handler));
 
     // ----------
 
-    const offAnimation = (handler: OnAnimationHandler) =>
-      MH.remove(animationCallbacks?.get(handler));
+    const onTween = (handler: FXControllerHandler) =>
+      addNewCallbackToMap(handler, tweenCallbacks);
+
+    const offTween = (handler: FXControllerHandler) =>
+      MH.remove(tweenCallbacks.get(handler));
 
     // ----------
 
-    const onScroll: OnScrollHandler = (e, scrollData) => {
-      // XXX TODO update currentFrameState
-
-      interpolate(); // don't await
-    };
-
-    // ----------
-
-    const onAnimationHandler = (state: FXFrameState) => {
-      currentFrameState = state;
-      applyEffects(state);
-      callCallbacks(state);
-    };
-
-    // ----------
-
-    const callCallbacks = (state: FXFrameState) => {
-      for (const cbk of animationCallbacks.values()) {
-        cbk.invoke(deepCopy(state), this);
+    const callCallbacks = (
+      callbacks: Map<FXControllerHandler, FXControllerCallback>,
+    ) => {
+      for (const cbk of callbacks.values()) {
+        cbk.invoke(deepCopy(currentFrameState), this);
       }
     };
 
@@ -609,7 +596,7 @@ export class FXController {
 
     let isAnimating = false;
     const interpolate = async () => {
-      if (isAnimating || !currentFrameState) {
+      if (isAnimating) {
         return;
       }
 
@@ -639,16 +626,16 @@ export class FXController {
           }
 
           if (!done) {
-            const state = {
+            const springState = {
               l: current,
               lTarget: target,
               lag,
               dt,
             };
 
-            iterators[axis] ??= newCriticallyDampedIterator(state);
+            iterators[axis] ??= newCriticallyDampedIterator(springState);
 
-            const result = iterators[axis].next(state);
+            const result = iterators[axis].next(springState);
             currentFrameState[axis].current = result.value.l;
             done = !!result.done;
           }
@@ -659,8 +646,8 @@ export class FXController {
           }
         }
 
-        // onAnimationHandler will update currentFrameData
-        onAnimationHandler(currentFrameState);
+        applyEffects();
+        callCallbacks(tweenCallbacks);
 
         if (!iterators.x && !iterators.y && !iterators.z) {
           isAnimating = false;
@@ -671,14 +658,18 @@ export class FXController {
 
     // ----------
 
-    const applyEffects = (state: FXFrameState) => {
+    const applyEffects = () => {
       for (const [type, entries] of effectsMap) {
         const toCompose: Effect<typeof type>[] = [];
 
         for (const entry of entries) {
-          if (entry._state._activeSince !== null) {
+          if (entry._data._activeSince !== null) {
             const effect = entry._effect;
-            toCompose.push(effect.apply(state, this) as Effect<typeof type>);
+            toCompose.push(
+              effect.apply(deepCopy(currentFrameState), this) as Effect<
+                typeof type
+              >,
+            );
           }
         }
 
@@ -695,71 +686,63 @@ export class FXController {
 
     // ----------
 
-    // XXX
-    const newEffectState = (range: EffectRange | undefined) => {
-      const state: EffectState = {
+    const newEffectData = (range: EffectRange | undefined) => {
+      const data: EffectData = {
         _activeSince: null,
       };
 
-      const addScrollCondition = (
+      const addStateCondition = (
         activate: boolean,
-        { top, left }: OffsetReference,
+        reference: StateReference,
       ) => {
-        const handler: OnScrollHandler = (e__ignored, scrollData) => {
+        const callback: FXControllerHandler = wrapCallback((state) => {
           // It's active if either this condition activates the effect and the
-          // current offset is larger than the reference, or this condition
-          // deactivates the effect but the current offset is still smaller than
-          // the reference.
+          // current state value is larger than (exceeds) the reference one, or
+          // this condition deactivates the effect but the current state value
+          // is still smaller than the reference.
 
-          const leftIsPastRef =
-            offsetIsPastRef(left, scrollData, "x") ?? activate;
-          const topIsPastRef =
-            offsetIsPastRef(top, scrollData, "y") ?? activate;
-          const isActive = activate === (leftIsPastRef && topIsPastRef);
+          const exceedsRef = (axis: "x" | "y" | "z") =>
+            currentExceedsRef(reference[axis], state[axis]) ?? activate;
 
-          state._activeSince = isActive ? scrollData : null;
-        };
+          const isActive =
+            activate ===
+            (exceedsRef("x") && exceedsRef("y") && exceedsRef("z"));
 
-        const callback = addNewCallbackToSet(handler, scrollConditionCallbacks);
+          data._activeSince = isActive ? state : null;
+        });
 
-        if (!isDisabled()) {
-          scrollWatcher.onScroll(callback, { scrollable });
-        }
+        onRecalibrate(callback);
+        onReset(callback.remove);
       };
 
       const addViewCondition = (
         activate: boolean,
         { views, target }: ViewReference,
       ) => {
-        const handler: OnViewHandler = async () => {
-          state._activeSince = activate
-            ? (currentFrameData.scroll ??
-              (await scrollWatcher.fetchCurrentScroll(scrollable)))
-            : null;
+        const viewHandler: OnViewHandler = async () => {
+          data._activeSince = activate ? currentFrameState : null;
         };
 
-        const callback = addNewCallbackToMap(
-          handler,
-          viewConditionCallbacks,
-          [target, views],
-          true,
+        const addOrRemoveWatcher = wrapCallback(() =>
+          isDisabled()
+            ? viewWatcher.offView(target, viewHandler)
+            : viewWatcher.onView(target, viewHandler, { views }),
         );
 
-        if (!isDisabled()) {
-          viewWatcher.onView(target, callback, { views });
-        }
+        addOrRemoveWatcher.invoke();
+        onToggle(addOrRemoveWatcher);
+        onReset(addOrRemoveWatcher.remove);
       };
-      // See note above about the scrollConditionCallbacks
 
       const addCondition = (
         activate: boolean,
-        ref: OffsetReference | ViewReference | undefined,
+        ref: StateReference | ViewReference | undefined,
       ) => {
         if (ref) {
           if ("target" in ref) {
             addViewCondition(true, ref);
           } else {
-            addScrollCondition(true, ref);
+            addStateCondition(true, ref);
           }
         }
       };
@@ -775,17 +758,45 @@ export class FXController {
         }
       }
 
-      return state;
+      return data;
+    };
+
+    // ----------
+
+    const pollCalibrator = async () => {
+      for await (const data of calibrator()) {
+        if (isDisabled()) {
+          return;
+        }
+
+        recalibrate(data);
+      }
+    };
+
+    // ----------
+
+    const recalibrate = (data: FXCalibration) => {
+      for (const axis of ["x", "y", "z"] as const) {
+        for (const key of ["min", "max", "target"] as const) {
+          const value = data[axis][key];
+          if (MH.isNumber(value)) {
+            currentFrameState[axis][key] = value;
+          }
+        }
+      }
+
+      interpolate();
+      callCallbacks(recalibrateCallbacks);
     };
 
     // --------------------
 
     this.add = (effects, range) => {
-      const state = newEffectState(range);
+      const effectData = newEffectData(range);
 
       for (const effect of effects) {
-        const states = effectsMap.get(effect.type) ?? [];
-        states.push({ _effect: effect, _state: state });
+        const allEffectData = effectsMap.get(effect.type) ?? [];
+        allEffectData.push({ _effect: effect, _data: effectData });
       }
 
       return this;
@@ -795,14 +806,18 @@ export class FXController {
     this.enable = enable;
     this.toggleEnable = () => (isDisabled() ? enable() : disable());
     this.isDisabled = isDisabled;
-    this.onDisable = onDisable;
-    this.onEnable = onEnable;
+    this.onToggle = onToggle;
+    this.offToggle = offToggle;
 
     this.reset = reset;
     this.onReset = onReset;
+    this.offReset = offReset;
 
-    this.onAnimation = onAnimation;
-    this.offAnimation = offAnimation;
+    this.onRecalibrate = onRecalibrate;
+    this.offRecalibrate = offRecalibrate;
+
+    this.onTween = onTween;
+    this.offTween = offTween;
 
     this.animate = animate;
     this.deanimate = deanimate;
@@ -811,17 +826,57 @@ export class FXController {
 
     this.toCss = toCss;
     this.getComposition = (type) => compositionsMap.get(type);
-    this.getConfig = () => MH.copyObject(effectiveConfig);
+    this.getState = () => deepCopy(currentFrameState);
+    this.getConfig = () => deepCopy(effectiveConfig);
     this.setLag = setLag;
     this.setDepth = setDepth;
 
     // --------------------
 
+    if (userCalibrator === MC.S_SCROLL) {
+      scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
+      let sendCalibration;
+      ({ calibrator, sendCalibration } = FXController.createCalibrator());
+
+      const scrollHandler: OnScrollHandler = (e, scrollData) =>
+        sendCalibration({
+          x: {
+            min: 0,
+            max: scrollData[MC.S_SCROLL_WIDTH],
+            target: scrollData[MC.S_SCROLL_LEFT],
+          },
+          y: {
+            min: 0,
+            max: scrollData[MC.S_SCROLL_HEIGHT],
+            target: scrollData[MC.S_SCROLL_TOP],
+          },
+          z: {
+            min: 0,
+            max: 0,
+            target: 0,
+          },
+        });
+
+      const addOrRemoveWatcher = () =>
+        isDisabled()
+          ? scrollWatcher?.offScroll(scrollHandler, scrollable)
+          : scrollWatcher?.onScroll(scrollHandler, { scrollable });
+
+      addOrRemoveWatcher();
+      onToggle(addOrRemoveWatcher);
+    } else if (MH.isFunction(userCalibrator)) {
+      calibrator = userCalibrator;
+    } else {
+      throw MH.usageError(
+        "FXController calibrator must be an async generator or 'scroll'",
+      );
+    }
+
     setLag(config);
     setDepth(config);
 
     if (!isDisabled()) {
-      enable();
+      pollCalibrator();
     }
   }
 }
@@ -829,11 +884,8 @@ export class FXController {
 export type FXControllerConfig = {
   /**
    * The parent scrollable element. Used for scroll-based
-   * {@link OffsetReference | offset conditions}.
-   *
-   * If a {@link parent} is given and no scrollable is supplied here (or it is
-   * the same as the parent's scrollable), this controller will use the parent's
-   * scroll tracking for efficiency.
+   * {@link StateReference | effect conditions} as well as scroll tracking if
+   * the default scroll-based calibrator is used.
    *
    * @defaultValue The parent's scrollable or if no parent, then
    * {@link ScrollWatcher} default
@@ -841,10 +893,7 @@ export type FXControllerConfig = {
   scrollable?: ScrollTarget | undefined;
 
   /**
-   * The parent controller. Used for
-   * - Resolving relative values of lag or depth.
-   * - Eliminating redundant scroll tracking if both parent and this controller
-   *   use the same scrollable.
+   * The parent controller. Used for resolving relative values of lag or depth.
    *
    * @defaultValue undefined
    */
@@ -862,16 +911,47 @@ export type FXControllerConfig = {
   negate?: FXController;
 
   /**
-   * Whether to set the initial state of the controller to disabled.
+   * Whether to disable the controller initially.
    *
    * @defaultValue false
    */
   disabled?: boolean;
 
   /**
+   * The "calibrator" to use to get new minimum, maximum and target values for
+   * the {@link FXAxisState}s.
+   *
+   * By default, an internal scroll-based calibrator is used which listens for
+   * scrolling and updates the state as follows:
+   * - x.min: 0
+   * - y.min: 0
+   * - z.min: 0
+   *
+   * - x.max: {@link scrollable}'s scroll width
+   * - y.max: {@link scrollable}'s scroll height
+   * - z.max: 0
+   *
+   * - x.target: {@link scrollable}'s scroll left offset
+   * - y.target: {@link scrollable}'s scroll top offset
+   * - z.target: 0
+   *
+   * If you want to use a custom calibrator it should be an infinite async
+   * generator that yields new {@link FXCalibration | calibration data}.
+   *
+   * If the data is coming from event-based triggers and you want to simply call
+   * a function when there's new data, you can use
+   * {@link FXController.createCalibrator}.
+   *
+   * @defaultValue "scroll"
+   */
+  calibrator?: "scroll" | FXControllerCalibrator;
+
+  // XXX custom interpolator or "criticallyDamped", "quadratic", etc
+
+  /**
    * The time in milliseconds it takes for effect states to catch up to the
-   * {@link FXFrameState | target parameters}. It can be relative to the
-   * parent's lag. It must result in a positive number.
+   * {@link FXState | target parameters}. It can be relative to the parent's
+   * lag. It must result in a positive number.
    *
    * @defaultValue undefined
    */
@@ -941,6 +1021,8 @@ export type FXControllerEffectiveConfig = {
   parent: FXController | undefined;
   negate: FXController | undefined;
   disabled: boolean;
+  calibrator: "scroll" | FXControllerCalibrator;
+  // XXX interpolator
   lagX: number;
   lagY: number;
   lagZ: number;
@@ -952,20 +1034,33 @@ export type FXControllerEffectiveConfig = {
 /**
  * The handler is invoked with two arguments:
  *
- * - The current {@link FXFrameState}
+ * - The current {@link FXState}
  * - The {@link FXController} instance.
  */
-export type OnAnimationHandlerArgs = [FXFrameState, FXController];
-export type OnAnimationCallback = Callback<OnAnimationHandlerArgs>;
-export type OnAnimationHandler =
-  | CallbackHandler<OnAnimationHandlerArgs>
-  | OnAnimationCallback;
+export type FXControllerCallbackArgs = [FXState, FXController];
+export type FXControllerCallback = Callback<FXControllerCallbackArgs>;
+export type FXControllerHandler =
+  | FXControllerCallback
+  | CallbackHandler<FXControllerCallbackArgs>;
 
-export type FXControllerStateCallbackArgs = [FXController];
-export type FXControllerStateCallback = Callback<FXControllerStateCallbackArgs>;
-export type FXControllerStateHandler =
-  | FXControllerStateCallback
-  | CallbackHandler<FXControllerStateCallbackArgs>;
+export type FXControllerCalibrator = () => AsyncGenerator<
+  FXCalibration,
+  never,
+  undefined
+>;
+
+export type FXControllerCalibrationPair = {
+  /**
+   * This is what you pass to {@link FXControllerConfig.calibrator}.
+   */
+  calibrator: FXControllerCalibrator;
+
+  /**
+   * This is what you call with your latest {@link FXCalibration} data to have
+   * it trigger the controller's recalibration.
+   */
+  sendCalibration: (data: FXCalibration) => void;
+};
 
 // ------------------------------
 
@@ -1019,40 +1114,43 @@ interface CompositionMap {
 
 type EffectEntry<T extends keyof EffectRegistry> = {
   _effect: Effect<T>;
-  _state: EffectState;
+  _data: EffectData;
 };
 
-type EffectState = { _activeSince: FXFrameState | null };
+type EffectData = { _activeSince: FXState | null };
 
-// XXX
-const offsetIsPastRef = (
-  input: RawOrRelativeNumber | undefined,
-  offsets: EffectOffsets,
-  direction: "x" | "y" | "z",
+const newDefaultState = (): FXState => {
+  const axisState: FXAxisState = {
+    min: 0,
+    max: 0,
+    previous: 0,
+    current: 0,
+    target: 0,
+  };
+  return deepCopy({ x: axisState, y: axisState, z: axisState });
+};
+
+const currentExceedsRef = (
+  reference: RawOrRelativeNumber | undefined,
+  state: FXAxisState,
 ): boolean | null => {
-  const directionC = MH.toUpperCase(direction) as "X" | "Y" | "Z";
-
-  const maxOffset = offsets[`max${directionC}`];
-  const minOffset = offsets[`min${directionC}`];
-  const currentOffset = offsets[direction];
+  const { min, max, current } = state;
 
   const calculator: RawNumberCalculator = ({
     isAdditive,
     isPercent,
     numerical,
   }) => {
-    let result = isPercent
-      ? minOffset + (numerical * (maxOffset - minOffset)) / 100
-      : numerical;
+    let result = isPercent ? min + (numerical * (max - min)) / 100 : numerical;
 
     if (isAdditive) {
-      result += currentOffset;
+      result += current;
     }
 
     return result;
   };
 
-  const refVal = toRawNum(input, calculator, NaN);
-  const diff = toNum(refVal - currentOffset, null);
+  const refNumber = toRawNum(reference, calculator, NaN);
+  const diff = toNum(refNumber - current, null);
   return MH.isNumber(diff) ? diff < 0 : null;
 };

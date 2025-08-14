@@ -16,7 +16,7 @@ import { newXWeakMap } from "@lisn/modules/x-map";
 import {
   EffectInterface,
   FXHandler,
-  FXFrameState,
+  FXState,
   getParameters,
   scaleParameters,
 } from "@lisn/effects/effect";
@@ -54,8 +54,8 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Returns true if the transform is absolute. If true, the
    * {@link FXHandler | handlers} receive absolute
-   * {@link FXParameters | parameters} and each call to {@link apply} will reset
-   * the transform back to the identity one.
+   * {@link Effects/Effect.FXTweenState | parameters} and each call to
+   * {@link apply} will reset the transform back to the identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the transform's state is
@@ -72,7 +72,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly apply: (state: FXFrameState, controller: FXController) => Transform;
+  readonly apply: (state: FXState, controller: FXController) => Transform;
 
   /**
    * Returns a **static copy** of the transform that has the current state/value
@@ -149,9 +149,9 @@ export class Transform implements EffectInterface<"transform"> {
    * all transforms and can be set only once. Subsequent calls to this method
    * always override previous perspective handlers.
    *
-   * The handler receives the unscaled original {@link FXParameters | parameters},
-   * regardless of the {@link Effects/FXController.FXController | controller}'s
-   * parallax depth.
+   * The handler receives the unscaled original
+   * {@link Effects/Effect.FXTweenState | parameters}, regardless of the
+   * {@link Effects/FXController.FXController | controller}'s parallax depth.
    *
    * @returns The same {@link Transform} instance.
    */
@@ -162,8 +162,9 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Adds a translation handler.
    *
-   * The handler receives scaled {@link FXParameters | parameters}, divided by
-   * the parallax depth along the respective axis.
+   * The handler receives scaled
+   * {@link Effects/Effect.FXTweenState | parameters}, divided by the parallax
+   * depth along the respective axis.
    *
    * @returns The same {@link Transform} instance.
    */
@@ -172,9 +173,9 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Adds a scaling handler.
    *
-   * The handler receives the unscaled original {@link FXParameters | parameters},
-   * regardless of the {@link Effects/FXController.FXController | controller}'s
-   * parallax depth.
+   * The handler receives the unscaled original
+   * {@link Effects/Effect.FXTweenState | parameters}, regardless of the
+   * {@link Effects/FXController.FXController | controller}'s parallax depth.
    *
    * @returns The same {@link Transform} instance.
    */
@@ -183,9 +184,9 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Adds a skewing handler.
    *
-   * The handler receives the unscaled original {@link FXParameters | parameters},
-   * regardless of the {@link Effects/FXController.FXController | controller}'s
-   * parallax depth.
+   * The handler receives the unscaled original
+   * {@link Effects/Effect.FXTweenState | parameters}, regardless of the
+   * {@link Effects/FXController.FXController | controller}'s parallax depth.
    *
    * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
    * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
@@ -197,8 +198,9 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Adds a rotation handler.
    *
-   * The handler receives scaled {@link FXParameters | parameters}, multiplied
-   * by the parallax depth along the respective axis.
+   * The handler receives scaled
+   * {@link Effects/Effect.FXTweenState | parameters}, multiplied by the
+   * parallax depth along the respective axis.
    *
    * @returns The same {@link Transform} instance.
    */
@@ -544,8 +546,8 @@ export type RotateHandlerReturn = {
 export type TransformConfig = {
   /**
    * If true, the {@link FXHandler | handlers} receive absolute
-   * {@link FXParameters | parameters} and each call to {@link apply} will reset
-   * the transform back to the identity one.
+   * {@link Effects/Effect.FXTweenState | parameters} and each call to
+   * {@link apply} will reset the transform back to the identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the transform's state is

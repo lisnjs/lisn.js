@@ -18,7 +18,7 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
   /**
    * Returns true if the effect is absolute. If true, the
    * {@link FXHandler | handlers} receive absolute
-   * {@link FXParameters | parameters} and each call to {@link apply} will
+   * {@link FXTweenState | parameters} and each call to {@link apply} will
    * reset the effect back to the default/blank state.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
@@ -30,7 +30,7 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
   /**
    * Applies all added effects for the given state.
    */
-  apply: (state: FXFrameState, controller: FXController) => Effect<T>;
+  apply: (state: FXState, controller: FXController) => Effect<T>;
 
   /**
    * Returns a **static copy** of the effect that has the current state/value of
@@ -72,8 +72,8 @@ export type EffectsList<TL extends readonly (keyof EffectRegistry)[]> = [
 ];
 
 export type FXHandler<R> = (
-  parameters: FXParameters,
-  state: FXFrameState,
+  parameters: FXTweenState,
+  state: FXState,
   controller: FXController,
 ) => R;
 
@@ -82,22 +82,22 @@ export type FXHandler<R> = (
  * use.
  *
  * If the effect is {@link Effect.isAbsolute | absolute} they will be based on
- * the current values of the {@link FXFrameAxisState}s. Otherwise they will
+ * the current values of the {@link FXAxisState}s. Otherwise they will
  * be based on the change in those values since the previous animation frame.
  *
  * Depending on each effect and effect category, these values may also be scaled
  * by the parallax depth of the {@link Effects/FXController.FXController}.
  */
-export type FXParameters = {
+export type FXTweenState = {
   /**
    * The current value, or the change in current value, for the X-axis.
    */
   x: number;
 
   /**
-   * The normalized {@link x}: from 0 ({@link FXFrameState.min | minimum}) to
-   * 1 ({@link FXFrameState.max | maximum}) value for this axis. It is always
-   * independent of parallax depth.
+   * The normalized {@link x}: from 0 ({@link FXAxisState.min | minimum})
+   * to 1 ({@link FXAxisState.max | maximum}) value for this axis. It is
+   * always independent of parallax depth.
    */
   nx: number;
 
@@ -107,9 +107,9 @@ export type FXParameters = {
   y: number;
 
   /**
-   * The normalized {@link y}: from 0 ({@link FXFrameState.min | minimum}) to
-   * 1 ({@link FXFrameState.max | maximum}) value for this axis. It is always
-   * independent of parallax depth.
+   * The normalized {@link y}: from 0 ({@link FXAxisState.min | minimum})
+   * to 1 ({@link FXAxisState.max | maximum}) value for this axis. It is
+   * always independent of parallax depth.
    */
   ny: number;
 
@@ -119,27 +119,43 @@ export type FXParameters = {
   z: number;
 
   /**
-   * The normalized {@link z}: from 0 ({@link FXFrameState.min | minimum}) to
-   * 1 ({@link FXFrameState.max | maximum}) value for this axis. It is always
-   * independent of parallax depth.
+   * The normalized {@link z}: from 0 ({@link FXAxisState.min | minimum})
+   * to 1 ({@link FXAxisState.max | maximum}) value for this axis. It is
+   * always independent of parallax depth.
    */
   nz: number;
 };
 
 /**
- * The current state of an axis (X, Y or Z).
+ * The "calibration" of an axis (minimum, maximum and target) values.
  */
-export type FXFrameAxisState = {
+export type FXAxisCalibration = {
   /**
-   * The minimum possible value.
+   * The minimum value.
    */
   min: number;
 
   /**
-   * The maximum possible value.
+   * The maximum value.
    */
   max: number;
 
+  /**
+   * The target value which we're interpolating towards.
+   */
+  target: number;
+};
+
+export type FXCalibration = {
+  x: FXAxisCalibration;
+  y: FXAxisCalibration;
+  z: FXAxisCalibration;
+};
+
+/**
+ * The current state of an axis (X, Y or Z).
+ */
+export type FXAxisState = FXAxisCalibration & {
   /**
    * The value at the last animation frame.
    */
@@ -149,17 +165,12 @@ export type FXFrameAxisState = {
    * The current value.
    */
   current: number;
-
-  /**
-   * The target value which we're interpolating towards.
-   */
-  target: number;
 };
 
-export type FXFrameState = {
-  x: FXFrameAxisState;
-  y: FXFrameAxisState;
-  z: FXFrameAxisState;
+export type FXState = {
+  x: FXAxisState;
+  y: FXAxisState;
+  z: FXAxisState;
 };
 
 /**
@@ -193,7 +204,7 @@ export type ParallaxScalerFn = (
 ) => number;
 
 /**
- * Returns the {@link FXParameters | parameters} for the given state.
+ * Returns the {@link FXTweenState | parameters} for the given state.
  *
  * @param [options.isAbsolute] If false (default), the parameters will equal the
  *                             change in values since the last animation frame.
@@ -204,13 +215,13 @@ export type ParallaxScalerFn = (
  *                             this axis.
  */
 export const getParameters = (
-  state: FXFrameState,
+  state: FXState,
   controller: FXController,
   options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
 ) => {
   const { isAbsolute, scalerFn } = options ?? {};
 
-  const getAxisParam = (axisState: FXFrameAxisState, normalized = false) => {
+  const getAxisParam = (axisState: FXAxisState, normalized = false) => {
     const { current, previous, max, min } = axisState;
     let result = isAbsolute ? current : current - previous;
 
@@ -225,7 +236,7 @@ export const getParameters = (
     return result;
   };
 
-  const parameters: FXParameters = {
+  const parameters: FXTweenState = {
     x: getAxisParam(state.x),
     nx: getAxisParam(state.x, true),
     y: getAxisParam(state.y),
@@ -244,7 +255,7 @@ export const getParameters = (
  * controller's parallax depths.
  */
 export const scaleParameters = (
-  parameters: FXParameters,
+  parameters: FXTweenState,
   controller: FXController,
   scalerFn: ParallaxScalerFn,
 ) => {

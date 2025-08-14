@@ -310,7 +310,7 @@ export function addNewCallbackToMap(
  * @internal
  */
 export const invokeCallbackSet = async <Args extends readonly unknown[]>(
-  set: Set<Callback<Args>>,
+  set: Iterable<Callback<Args>>,
   ...args: Args
 ) => {
   for (const callback of set) {

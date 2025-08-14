@@ -9,6 +9,7 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
+import { logError } from "@lisn/utils/log";
 import { isValidNum, sum } from "@lisn/utils/math";
 
 import { newXWeakMap } from "@lisn/modules/x-map";
@@ -647,8 +648,10 @@ const validateInputs = (
 ) => {
   for (const i of inputs) {
     if (!isValidNum(i) || (requireNonZero && MH.abs(i) < 1e-10)) {
-      throw MH.usageError(
-        `${name} must be finite${requireNonZero ? " and non-zero" : ""}`,
+      logError(
+        MH.usageError(
+          `${name} must be finite${requireNonZero ? " and non-zero" : ""}`,
+        ),
       );
     }
   }

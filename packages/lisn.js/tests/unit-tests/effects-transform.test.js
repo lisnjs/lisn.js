@@ -1,6 +1,13 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
-const { Transform } = window.LISN.effects;
+const { deepCopy, copyExistingKeys } = window.LISN.utils;
+const { Transform, FXController } = window.LISN.effects;
+
+// XXX TODO
+// - export
+// - parallax depths
+
+const DEFAULT_CONTROLLER = new FXController();
 
 const IDENTITY = new DOMMatrixReadOnly([
   ...[1, 0, 0, 0],
@@ -9,11 +16,37 @@ const IDENTITY = new DOMMatrixReadOnly([
   ...[0, 0, 0, 1],
 ]);
 
-const DEFAULT_OFFSETS = {
+const DEFAULT_TWEEN_STATE = {
   x: 0,
   nx: 0,
   y: 0,
   ny: 0,
+  z: 0,
+  nz: 0,
+};
+
+const DEFAULT_STATE = {
+  x: {
+    min: 0,
+    max: 1000,
+    previous: 0,
+    current: 0,
+    target: 500,
+  },
+  y: {
+    min: 0,
+    max: 100,
+    previous: 0,
+    current: 0,
+    target: 50,
+  },
+  z: {
+    min: 0,
+    max: 10,
+    previous: 0,
+    current: 0,
+    target: 5,
+  },
 };
 
 const newIncrementalTransform = (init) =>
@@ -28,6 +61,12 @@ const newTestMatrix = (toValue = (i) => i + 1) => {
     init[i] = toValue(i);
   }
   return new DOMMatrixReadOnly(init);
+};
+
+const newState = (partial) => {
+  const res = deepCopy(DEFAULT_STATE);
+  copyExistingKeys(partial, res);
+  return res;
 };
 
 describe("constructor", () => {
@@ -61,6 +100,8 @@ describe("constructor", () => {
     const t = newIncrementalTransform(init);
 
     init[4] *= 2;
+
+    // not modified
     expect(t).not.toBeCloseToArray(init);
     expect(t).toBeCloseToArray(copy);
   });
@@ -78,8 +119,8 @@ describe("constructor", () => {
     const t = newIncrementalTransform();
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: dB }));
-    t.apply(DEFAULT_OFFSETS);
-    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -97,8 +138,8 @@ describe("constructor", () => {
     expect(t.isAbsolute()).toBe(true);
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: dB }));
-    t.apply(DEFAULT_OFFSETS);
-    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 });
@@ -112,7 +153,7 @@ describe("toMatrix", () => {
     expect(m).toBeCloseToArray(init);
   });
 
-  test("relativeTo", () => {
+  test("negate", () => {
     const init = newTestMatrix();
     const ref = new DOMMatrixReadOnly([
       ...[8, -6, -3, -5],
@@ -153,7 +194,7 @@ describe("toFloat32Array", () => {
     expect(m).toBeCloseToArray(init);
   });
 
-  test("relativeTo", () => {
+  test("negate", () => {
     const init = newTestMatrix();
     const ref = new DOMMatrixReadOnly([
       ...[8, -6, -3, -5],
@@ -192,7 +233,7 @@ describe("toString", () => {
     expect(t.toString()).toBe(new DOMMatrixReadOnly(init).toString());
   });
 
-  test("relativeTo", () => {
+  test("negate", () => {
     const init = newTestMatrix();
     const ref = new DOMMatrixReadOnly([
       ...[8, -6, -3, -5],
@@ -220,7 +261,7 @@ describe("toCss", () => {
     });
   });
 
-  test("relativeTo", () => {
+  test("negate", () => {
     const init = newTestMatrix();
     const ref = new DOMMatrixReadOnly([
       ...[8, -6, -3, -5],
@@ -282,14 +323,14 @@ describe("toComposition", () => {
     const composed = tA.toComposition(tB, tC);
     expect(composed).toBeCloseToArray(expectedInit);
 
-    composed.apply(DEFAULT_OFFSETS);
+    composed.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(composed).toBeCloseToArray(expectedFinal);
     expect(tA).toBeCloseToArray(initA); // unchanged
     expect(tB).toBeCloseToArray(initB); // unchanged
     expect(tC).toBeCloseToArray(initC); // unchanged
 
     expect(composed.isAbsolute()).toBe(false);
-    expect(composed.toPerspective()).toBeUndefined();
+    expect(composed.toPerspective()).toBeNull();
   });
 
   test("absolute ones", () => {
@@ -333,7 +374,7 @@ describe("toComposition", () => {
     const composed = tA.toComposition(tB, tC, tD);
     expect(composed).toBeCloseToArray(expectedInit);
 
-    composed.apply(DEFAULT_OFFSETS);
+    composed.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(composed).toBeCloseToArray(expectedFinal);
     expect(tA).toBeCloseToArray(initA); // unchanged
     expect(tB).toBeCloseToArray(initB); // unchanged
@@ -341,56 +382,103 @@ describe("toComposition", () => {
     expect(tD).toBeCloseToArray(initD); // unchanged
 
     expect(composed.isAbsolute()).toBe(true);
-    expect(composed.toPerspective()).toBeUndefined();
+    expect(composed.toPerspective()).toBeNull();
   });
 
   test("absolute clears perspective", () => {
-    const p = "100px";
-    const tA = newIncrementalTransform().perspective(() => p);
+    const p = 100;
+    const tA = newIncrementalTransform().setPerspective(() => p);
     const tB = newAbsoluteTransform();
 
     const composed = tA.toComposition(tB);
-    expect(composed.toPerspective()).toBeUndefined();
-
-    composed.apply(DEFAULT_OFFSETS);
-    expect(composed.toPerspective()).toBeUndefined();
+    composed.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(composed.toPerspective()).toBeNull();
   });
 
   test("multiple perspectives", () => {
-    const pB = "100px",
-      pC = "200px";
+    const pB = 100,
+      pC = 200;
     const tA = newIncrementalTransform();
-    const tB = newIncrementalTransform().perspective(() => pB);
-    const tC = newIncrementalTransform().perspective(() => pC);
+    const tB = newIncrementalTransform().setPerspective(() => pB);
+    const tC = newIncrementalTransform().setPerspective(() => pC);
     const tD = newIncrementalTransform();
 
     const composed = tA.toComposition(tB, tC, tD);
-    expect(composed.toPerspective()).toBeUndefined();
+    expect(composed.toPerspective()).toBeNull();
 
-    composed.apply(DEFAULT_OFFSETS);
-    expect(composed.toPerspective()).toBe(pC);
+    composed.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(composed.toPerspective()).toBe(`${pC}px`);
   });
 });
 
-test("perspective", () => {
-  const t = newIncrementalTransform();
-  t.perspective(() => 500);
-  expect(t.toPerspective()).toBeUndefined();
+describe("perspective", () => {
+  test("incremental", () => {
+    const t = newIncrementalTransform();
+    t.setPerspective(() => 500);
+    expect(t.toPerspective()).toBeNull();
 
-  t.apply(DEFAULT_OFFSETS);
-  expect(t.toPerspective()).toBe("500px");
-  expect(t.toString()).toBe(
-    "perspective(500px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
-  );
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(t.toPerspective()).toBe("500px");
+    expect(t.toString()).toBe(
+      "perspective(500px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
+    );
 
-  t.perspective(() => "30rem");
-  expect(t.toPerspective()).toBe("500px");
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(t.toPerspective()).toBe("1000px");
+    expect(t.toString()).toBe(
+      "perspective(1000px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
+    );
 
-  t.apply(DEFAULT_OFFSETS);
-  expect(t.toPerspective()).toBe("30rem");
-  expect(t.toString()).toBe(
-    "perspective(30rem) " + new DOMMatrixReadOnly(IDENTITY).toString(),
-  );
+    // override handler
+    t.setPerspective(() => -200);
+    expect(t.toPerspective()).toBe("1000px");
+
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(t.toPerspective()).toBe("800px");
+    expect(t.toString()).toBe(
+      "perspective(800px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
+    );
+
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(t.toPerspective()).toBe("600px");
+    expect(t.toString()).toBe(
+      "perspective(600px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
+    );
+  });
+
+  test("absolute", () => {
+    const t = newAbsoluteTransform();
+    t.setPerspective(() => 500);
+    expect(t.toPerspective()).toBeNull();
+
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(t.toPerspective()).toBe("500px");
+    expect(t.toString()).toBe(
+      "perspective(500px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
+    );
+
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(t.toPerspective()).toBe("500px");
+    expect(t.toString()).toBe(
+      "perspective(500px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
+    );
+
+    // override handler
+    t.setPerspective(() => 200);
+    expect(t.toPerspective()).toBe("500px");
+
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(t.toPerspective()).toBe("200px");
+    expect(t.toString()).toBe(
+      "perspective(200px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
+    );
+
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    expect(t.toPerspective()).toBe("200px");
+    expect(t.toString()).toBe(
+      "perspective(200px) " + new DOMMatrixReadOnly(IDENTITY).toString(),
+    );
+  });
 });
 
 describe("translate", () => {
@@ -400,9 +488,13 @@ describe("translate", () => {
     t.translate(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenCalledWith(DEFAULT_OFFSETS);
+    expect(cbk).toHaveBeenCalledWith(
+      DEFAULT_TWEEN_STATE,
+      DEFAULT_STATE,
+      DEFAULT_CONTROLLER,
+    );
   });
 
   test("X", () => {
@@ -418,14 +510,14 @@ describe("translate", () => {
     t.translate((d) => ({ x: d.x }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: d });
+    t.apply(newState({ x: { current: d } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: -d });
+    t.apply(newState({ x: { current: -d } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: d / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, x: d / 2 });
+    t.apply(newState({ x: { current: d / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ x: { current: d / 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -442,14 +534,14 @@ describe("translate", () => {
     t.translate((d) => ({ y: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: d });
+    t.apply(newState({ y: { current: d } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: -d });
+    t.apply(newState({ y: { current: -d } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: d / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, y: d / 2 });
+    t.apply(newState({ y: { current: d / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ y: { current: d / 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -463,17 +555,17 @@ describe("translate", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.translate((d) => ({ z: d.ny }));
+    t.translate((d) => ({ z: d.z }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: d });
+    t.apply(newState({ z: { current: d } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: -d });
+    t.apply(newState({ z: { current: -d } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: d / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, ny: d / 2 });
+    t.apply(newState({ z: { current: d / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ z: { current: d / 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -489,17 +581,41 @@ describe("translate", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.translate((d) => ({ x: d.x, y: d.y, z: d.ny }));
+    t.translate((d) => ({ x: d.x, y: d.y, z: d.z }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: dx, y: dy, ny: dz });
+    t.apply(
+      newState({ x: { current: dx }, y: { current: dy }, z: { current: dz } }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: -dx, y: -dy, ny: -dz });
+    t.apply(
+      newState({
+        x: { current: -dx },
+        y: { current: -dy },
+        z: { current: -dz },
+      }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: dx / 2, y: dy / 2, ny: dz / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, x: dx / 2, y: dy / 2, ny: dz / 2 });
+    t.apply(
+      newState({
+        x: { current: dx / 2 },
+        y: { current: dy / 2 },
+        z: { current: dz / 2 },
+      }),
+      DEFAULT_CONTROLLER,
+    );
+    t.apply(
+      newState({
+        x: { current: dx / 2 },
+        y: { current: dy / 2 },
+        z: { current: dz / 2 },
+      }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(expected);
   });
 });
@@ -511,9 +627,13 @@ describe("scale", () => {
     t.scale(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenCalledWith(DEFAULT_OFFSETS);
+    expect(cbk).toHaveBeenCalledWith(
+      DEFAULT_TWEEN_STATE,
+      DEFAULT_STATE,
+      DEFAULT_CONTROLLER,
+    );
   });
 
   test("X", () => {
@@ -526,17 +646,17 @@ describe("scale", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.scale((d) => ({ sx: d.nx }));
+    t.scale((d) => ({ sx: d.x }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, nx: s });
+    t.apply(newState({ x: { current: s } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, nx: 1 / s });
+    t.apply(newState({ x: { current: 1 / s } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, nx: s / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, nx: 2 });
+    t.apply(newState({ x: { current: s / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ x: { current: 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -550,17 +670,17 @@ describe("scale", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.scale((d) => ({ sy: d.ny }));
+    t.scale((d) => ({ sy: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: s });
+    t.apply(newState({ y: { current: s } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: 1 / s });
+    t.apply(newState({ y: { current: 1 / s } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: s / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, ny: 2 });
+    t.apply(newState({ y: { current: s / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ y: { current: 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -574,24 +694,24 @@ describe("scale", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.scale((d) => ({ sz: d.ny }));
+    t.scale((d) => ({ sz: d.z }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: s });
+    t.apply(newState({ z: { current: s } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: 1 / s });
+    t.apply(newState({ z: { current: 1 / s } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: s / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, ny: 2 });
+    t.apply(newState({ z: { current: s / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ z: { current: 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
   test("XYZ", () => {
     const sx = 10,
       sy = 20,
-      sz = sx * sy;
+      sz = 30;
     const expected = new Float32Array([
       ...[sx, 0, 0, 0],
       ...[0, sy, 0, 0],
@@ -601,29 +721,39 @@ describe("scale", () => {
 
     const t = newIncrementalTransform();
     t.scale((d) => ({
-      s: d.nx + d.ny /* ignored */,
-      sx: d.nx,
-      sy: d.ny,
-      sz: d.nx * d.ny,
+      s: d.x * d.y * d.z /* ignored */,
+      sx: d.x,
+      sy: d.y,
+      sz: d.z,
     }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, nx: sx, ny: sy });
+    t.apply(
+      newState({ x: { current: sx }, y: { current: sy }, z: { current: sz } }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({
-      ...DEFAULT_OFFSETS,
-      nx: 1 / sx,
-      ny: 1 / sy,
-    });
+    t.apply(
+      newState({
+        x: { current: 1 / sx },
+        y: { current: 1 / sy },
+        z: { current: 1 / sz },
+      }),
+    );
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({
-      ...DEFAULT_OFFSETS,
-      nx: sx / 2,
-      ny: sy / 4,
-    });
-    t.apply({ ...DEFAULT_OFFSETS, nx: 2, ny: 4 });
+    t.apply(
+      newState({
+        x: { current: sx / 2 },
+        y: { current: sy / 2 },
+        z: { current: sz / 4 },
+      }),
+    );
+    t.apply(
+      newState({ x: { current: 2 }, y: { current: 2 }, z: { current: 4 } }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -637,24 +767,24 @@ describe("scale", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.scale((d) => ({ s: d.ny }));
+    t.scale((d) => ({ s: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: s });
+    t.apply(newState({ y: { current: s } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: 1 / s });
+    t.apply(newState({ y: { current: 1 / s } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: s / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, ny: 2 });
+    t.apply(newState({ y: { current: s / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ y: { current: 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
   test("at origin", () => {
     const sx = 10,
       sy = 20,
-      sz = sx * sy;
+      sz = 30;
     const ox = 100,
       oy = 200,
       oz = 400;
@@ -667,29 +797,39 @@ describe("scale", () => {
 
     const t = newIncrementalTransform();
     t.scale((d) => ({
-      sx: d.nx,
-      sy: d.ny,
-      sz: d.nx * d.ny,
+      sx: d.x,
+      sy: d.y,
+      sz: d.z,
       origin: [ox, oy, oz],
     }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, nx: sx, ny: sy });
+    t.apply(
+      newState({ x: { current: sx }, y: { current: sy }, z: { current: sz } }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({
-      ...DEFAULT_OFFSETS,
-      nx: 1 / sx,
-      ny: 1 / sy,
-    });
+    t.apply(
+      newState({
+        x: { current: 1 / sx },
+        y: { current: 1 / sy },
+        z: { current: 1 / sz },
+      }),
+    );
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({
-      ...DEFAULT_OFFSETS,
-      nx: sx / 2,
-      ny: sy / 4,
-    });
-    t.apply({ ...DEFAULT_OFFSETS, nx: 2, ny: 4 });
+    t.apply(
+      newState({
+        x: { current: sx / 2 },
+        y: { current: sy / 2 },
+        z: { current: sz / 4 },
+      }),
+    );
+    t.apply(
+      newState({ x: { current: 2 }, y: { current: 2 }, z: { current: 4 } }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(expected);
   });
 });
@@ -707,9 +847,13 @@ describe("skew", () => {
     t.skew(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenCalledWith(DEFAULT_OFFSETS);
+    expect(cbk).toHaveBeenCalledWith(
+      DEFAULT_TWEEN_STATE,
+      DEFAULT_STATE,
+      DEFAULT_CONTROLLER,
+    );
   });
 
   test("X", () => {
@@ -724,10 +868,10 @@ describe("skew", () => {
     t.skew((d) => ({ degX: d.x }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: deg });
+    t.apply(newState({ x: { current: deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: -deg });
+    t.apply(newState({ x: { current: -deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
   });
 
@@ -743,10 +887,10 @@ describe("skew", () => {
     t.skew((d) => ({ degY: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: deg });
+    t.apply(newState({ y: { current: deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: -deg });
+    t.apply(newState({ y: { current: -deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
   });
 
@@ -762,11 +906,14 @@ describe("skew", () => {
     t.skew((d) => ({ deg: d.x + d.y /* ignored */, degX: d.x, degY: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: deg, y: deg2 });
+    t.apply(
+      newState({ x: { current: deg }, y: { current: deg2 } }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: -deg2 });
-    t.apply({ ...DEFAULT_OFFSETS, x: -deg });
+    t.apply(newState({ y: { current: -deg2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ x: { current: -deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
   });
 
@@ -782,7 +929,7 @@ describe("skew", () => {
     t.skew((d) => ({ deg: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: deg });
+    t.apply(newState({ y: { current: deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 });
@@ -798,9 +945,13 @@ describe("rotate", () => {
     t.rotate(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenCalledWith(DEFAULT_OFFSETS);
+    expect(cbk).toHaveBeenCalledWith(
+      DEFAULT_TWEEN_STATE,
+      DEFAULT_STATE,
+      DEFAULT_CONTROLLER,
+    );
   });
 
   test("X", () => {
@@ -815,14 +966,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.x, axis: [1, 0, 0] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: deg });
+    t.apply(newState({ x: { current: deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: -deg });
+    t.apply(newState({ x: { current: -deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: deg / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, x: deg / 2 });
+    t.apply(newState({ x: { current: deg / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ x: { current: deg / 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -838,14 +989,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.y, axis: [0, 1, 0] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: deg });
+    t.apply(newState({ y: { current: deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: -deg });
+    t.apply(newState({ y: { current: -deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
+    t.apply(newState({ y: { current: deg / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ y: { current: deg / 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -858,17 +1009,17 @@ describe("rotate", () => {
     ]);
 
     const t = newIncrementalTransform();
-    t.rotate((d) => ({ deg: d.ny, axis: [0, 0, 1] }));
+    t.rotate((d) => ({ deg: d.z, axis: [0, 0, 1] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: deg });
+    t.apply(newState({ z: { current: deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: -deg });
+    t.apply(newState({ z: { current: -deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, ny: deg / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, ny: deg / 2 });
+    t.apply(newState({ z: { current: deg / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ z: { current: deg / 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -876,7 +1027,12 @@ describe("rotate", () => {
     const degX = 30,
       degY = 20,
       degZ = 10;
-    const expected = new Float32Array([
+    const expected = new DOMMatrixReadOnly()
+      .rotateAxisAngle(1, 0, 0, degX)
+      .rotateAxisAngle(0, 1, 0, degY)
+      .rotateAxisAngle(0, 0, 1, degZ);
+    const expected2 = new Float32Array([
+      // double check mock implementation
       ...[0.92541652, 0.31879577, -0.20487411, 0],
       ...[-0.16317591, 0.82317292, 0.54383814, 0],
       ...[0.34202015, -0.4698463, 0.81379765, 0],
@@ -886,15 +1042,24 @@ describe("rotate", () => {
     const t = newIncrementalTransform();
     t.rotate((d) => ({ deg: d.x, axis: [1, 0, 0] }));
     t.rotate((d) => ({ deg: d.y, axis: [0, 1, 0] }));
-    t.rotate((d) => ({ deg: d.ny, axis: [0, 0, 1] }));
+    t.rotate((d) => ({ deg: d.z, axis: [0, 0, 1] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, x: degX, y: degY, ny: degZ });
+    t.apply(
+      newState({
+        x: { current: degX },
+        y: { current: degY },
+        z: { current: degZ },
+      }),
+      DEFAULT_CONTROLLER,
+    );
     expect(t).toBeCloseToArray(expected);
+    expect(t).toBeCloseToArray(expected2);
   });
 
   test("XYZ", () => {
-    const expected = new Float32Array([
+    const expected = new DOMMatrixReadOnly().rotateAxisAngle(1, 2, 3, deg);
+    const expected2 = new Float32Array([
       ...[0.87559502, 0.42003109, -0.2385524, 0],
       ...[-0.38175263, 0.90430386, 0.19104831, 0],
       ...[0.29597008, -0.07621294, 0.95215193, 0],
@@ -905,15 +1070,16 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.y, axis: [1, 2, 3] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: deg });
+    t.apply(newState({ y: { current: deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: -deg });
+    t.apply(newState({ y: { current: -deg } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
-    t.apply({ ...DEFAULT_OFFSETS, y: deg / 2 });
+    t.apply(newState({ y: { current: deg / 2 } }), DEFAULT_CONTROLLER);
+    t.apply(newState({ y: { current: deg / 2 } }), DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
+    expect(t).toBeCloseToArray(expected2);
   });
 });
 
@@ -939,7 +1105,7 @@ describe("chaining", () => {
     t.scale(() => ({ sx, sy, sz }));
     t.rotate(() => ({ deg: r, axis: ra }));
     t.skew(() => ({ degY: sk }));
-    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -964,7 +1130,7 @@ describe("chaining", () => {
     t.rotate(() => ({ deg: r, axis: ra }));
     t.scale(() => ({ sx, sy, sz }));
     t.translate(() => ({ x: dx, y: dy, z: dz }));
-    t.apply(DEFAULT_OFFSETS);
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
     expect(t).toBeCloseToArray(expected);
   });
 });

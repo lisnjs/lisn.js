@@ -6,7 +6,7 @@
 
 // TODO
 // - support critically damped or plain quadratic or custom interpolation **iterator**
-// - custom range condition
+// - custom range condition => own class (FXStateCondition, FXViewCondition, etc)
 
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
@@ -883,6 +883,8 @@ export class FXController {
 
 export type FXControllerConfig = {
   /**
+   * XXX remove; part of ScrollCondition
+   *
    * The parent scrollable element. Used for scroll-based
    * {@link StateReference | effect conditions} as well as scroll tracking if
    * the default scroll-based calibrator is used.

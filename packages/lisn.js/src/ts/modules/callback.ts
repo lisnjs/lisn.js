@@ -119,7 +119,7 @@ export class Callback<Args extends readonly unknown[] = []> {
    * Future attempts to call it will result in
    * {@link Errors.LisnUsageError | LisnUsageError}.
    */
-  readonly remove: () => void;
+  readonly remove: () => typeof Callback.REMOVE;
 
   /**
    * Returns true if the callback has been removed and cannot be called again.
@@ -180,8 +180,11 @@ export class Callback<Args extends readonly unknown[] = []> {
           rmFn();
         }
 
+        onRemove.clear();
         CallbackScheduler._clear(id);
       }
+
+      return Callback.REMOVE;
     };
 
     this.onRemove = (fn) => onRemove.add(fn);

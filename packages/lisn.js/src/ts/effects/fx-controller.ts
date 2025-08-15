@@ -48,6 +48,7 @@ import {
   FXCalibration,
   FXAxisState,
   FXState,
+  recalibrateState,
 } from "@lisn/effects/effect";
 
 import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
@@ -775,15 +776,7 @@ export class FXController {
     // ----------
 
     const recalibrate = (data: FXCalibration) => {
-      for (const axis of ["x", "y", "z"] as const) {
-        for (const key of ["min", "max", "target"] as const) {
-          const value = data[axis][key];
-          if (MH.isNumber(value)) {
-            currentFrameState[axis][key] = value;
-          }
-        }
-      }
-
+      MH.assign(currentFrameState, recalibrateState(currentFrameState, data));
       interpolate();
       callCallbacks(recalibrateCallbacks);
     };

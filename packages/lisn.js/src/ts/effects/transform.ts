@@ -18,7 +18,7 @@ import {
   EffectInterface,
   FXHandler,
   FXState,
-  getParameters,
+  toParameters,
   scaleParameters,
 } from "@lisn/effects/effect";
 
@@ -273,7 +273,7 @@ export class Transform implements EffectInterface<"transform"> {
         reset();
       }
 
-      const parameters = getParameters(state, controller, { isAbsolute });
+      const parameters = toParameters(state, controller, { isAbsolute });
 
       for (const fn of [
         ...(perspectiveFn ? [perspectiveFn] : []),

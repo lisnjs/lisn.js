@@ -4,6 +4,10 @@
  * @since v1.3.0
  */
 
+import * as MH from "@lisn/globals/minification-helpers";
+
+import { toNum, toNumWithBounds, isValidNum } from "@lisn/utils/math";
+
 import { FXController } from "@lisn/effects/fx-controller";
 
 /**
@@ -80,48 +84,48 @@ export type FXHandler<R> = (
 /**
  * The parameters for the current animation frame that {@link FXHandler}s should
  * use.
- *
- * If the effect is {@link Effect.isAbsolute | absolute} they will be based on
- * the current values of the {@link FXAxisState}s. Otherwise they will
- * be based on the change in those values since the previous animation frame.
- *
- * Depending on each effect and effect category, these values may also be scaled
- * by the parallax depth of the {@link Effects/FXController.FXController}.
  */
 export type FXTweenState = {
   /**
-   * The current value, or the change in current value, for the X-axis.
+   * If the effect is {@link Effect.isAbsolute | absolute}, it is the current
+   * value for the X-axis. Otherwise it is the change in that value since the
+   * last animation frame.
+   *
+   * Depending on each effect and effect category, it may also be scaled by the
+   * parallax depth of the {@link Effects/FXController.FXController}.
    */
   x: number;
 
   /**
-   * The normalized {@link x}: from 0 ({@link FXAxisState.min | minimum})
-   * to 1 ({@link FXAxisState.max | maximum}) value for this axis. It is
-   * always independent of parallax depth.
+   * If the effect is {@link Effect.isAbsolute | absolute}, it is the normalized
+   * {@link x}: from 0 ({@link FXState.x.min}) to 1 ({@link FXState.x.max})
+   * value for this axis. If {@link FXState.x.min} equals {@link FXState.x.max},
+   * this will be set to 1.
+   *
+   * If the effect is not absolute, it is the change in the absolute normalized
+   * value since the last animation frame.
+   *
+   * It is always independent of parallax depth.
    */
   nx: number;
 
   /**
-   * The current value, or the change in current value, for the Y-axis.
+   * Like {@link x} but for the Y-axis.
    */
   y: number;
 
   /**
-   * The normalized {@link y}: from 0 ({@link FXAxisState.min | minimum})
-   * to 1 ({@link FXAxisState.max | maximum}) value for this axis. It is
-   * always independent of parallax depth.
+   * Like {@link nx} but for the Y-axis.
    */
   ny: number;
 
   /**
-   * The current value, or the change in current value, for the Z-axis.
+   * Like {@link x} but for the Z-axis.
    */
   z: number;
 
   /**
-   * The normalized {@link z}: from 0 ({@link FXAxisState.min | minimum})
-   * to 1 ({@link FXAxisState.max | maximum}) value for this axis. It is
-   * always independent of parallax depth.
+   * Like {@link nx} but for the Z-axis.
    */
   nz: number;
 };
@@ -130,6 +134,32 @@ export type FXTweenState = {
  * The "calibration" of an axis (minimum, maximum and target) values.
  */
 export type FXAxisCalibration = {
+  /**
+   * The minimum value.
+   */
+  min?: number;
+
+  /**
+   * The maximum value.
+   */
+  max?: number;
+
+  /**
+   * The target value which we're interpolating towards.
+   */
+  target?: number;
+};
+
+export type FXCalibration = {
+  x?: FXAxisCalibration;
+  y?: FXAxisCalibration;
+  z?: FXAxisCalibration;
+};
+
+/**
+ * The current state of an axis (X, Y or Z).
+ */
+export type FXAxisState = {
   /**
    * The minimum value.
    */
@@ -144,18 +174,7 @@ export type FXAxisCalibration = {
    * The target value which we're interpolating towards.
    */
   target: number;
-};
 
-export type FXCalibration = {
-  x: FXAxisCalibration;
-  y: FXAxisCalibration;
-  z: FXAxisCalibration;
-};
-
-/**
- * The current state of an axis (X, Y or Z).
- */
-export type FXAxisState = FXAxisCalibration & {
   /**
    * The value at the last animation frame.
    */
@@ -219,24 +238,40 @@ export type ParallaxScalerFn = (
  *                             scaled by the controller's parallax depth for
  *                             this axis.
  */
-export const getParameters = (
+export const toParameters = (
   state: FXState,
   controller: FXController,
   options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
 ) => {
+  state = recalibrateState(state, state); // validate
   const { isAbsolute, scalerFn } = options ?? {};
 
   const getAxisParam = (axisState: FXAxisState, normalized = false) => {
     const { current, previous, max, min } = axisState;
     let result = isAbsolute ? current : current - previous;
+    let maxResult = isAbsolute ? max : max - min;
+    let minResult = isAbsolute ? min : min - max;
 
     if (normalized) {
-      if (isAbsolute) {
-        result -= min;
-      }
+      maxResult = 1;
+      minResult = isAbsolute ? 0 : -1;
 
-      // XXX what if max === min or result > 1 or < 0
-      result /= max - min;
+      if (max === min) {
+        result = 1;
+      } else {
+        if (isAbsolute) {
+          result -= min;
+        }
+
+        result /= max - min;
+      }
+    }
+
+    if (!isValidNum(result) || result < minResult || result > maxResult) {
+      // recalibrateState should have ensured values are in range.
+      throw MH.bugError(
+        "FX: Calculated invalid value for normalized axis parameter",
+      );
     }
 
     return result;
@@ -274,5 +309,60 @@ export const scaleParameters = (
     ny: parameters.ny,
     z: scalerFn(parameters.z, depthZ, "z"),
     nz: parameters.nz,
+  };
+};
+
+/**
+ * Returns a new updated state as per the calibration data if any while
+ * enforcing valid values for all properties.
+ *
+ * @ignore
+ * @internal
+ */
+export const recalibrateState = (
+  state: FXState | undefined,
+  data?: FXCalibration,
+) => {
+  const validateAxis = (axisState: FXAxisState | undefined) => {
+    let min = toNum(axisState?.min, 0);
+    let max = toNum(axisState?.max, min > 0 ? min : 0);
+    if (min > max) {
+      [min, max] = [max, min];
+    }
+
+    const target = toNumWithBounds(axisState?.target, {
+      min,
+      max,
+    });
+    const previous = toNumWithBounds(axisState?.previous, {
+      min,
+      max,
+    });
+    const current = toNumWithBounds(axisState?.current, {
+      min,
+      max,
+    });
+
+    return { min, max, previous, current, target };
+  };
+
+  const calibrateAxis = (
+    axisState: FXAxisState | undefined,
+    axisCalibration: FXAxisCalibration | undefined,
+  ) => {
+    axisState = validateAxis(axisState);
+    axisCalibration ??= {};
+
+    for (const prop of ["min", "max", "target"] as const) {
+      axisState[prop] = toNum(axisCalibration[prop], axisState[prop]);
+    }
+
+    return validateAxis(axisState);
+  };
+
+  return {
+    x: calibrateAxis(state?.x, data?.x),
+    y: calibrateAxis(state?.y, data?.y),
+    z: calibrateAxis(state?.z, data?.z),
   };
 };

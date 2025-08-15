@@ -3,6 +3,8 @@ const { jest, describe, test, expect } = require("@jest/globals");
 const { deepCopy, copyExistingKeys } = window.LISN.utils;
 const { Transform, FXController, toParameters } = window.LISN.effects;
 
+window.LISN.settings.effectLag = 0;
+
 const DEFAULT_CONTROLLER = new FXController();
 
 const IDENTITY = new DOMMatrixReadOnly([
@@ -25,23 +27,32 @@ const DUMMY_STATE = {
   x: {
     min: -Number.MAX_SAFE_INTEGER,
     max: Number.MAX_SAFE_INTEGER,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 500,
+    lag: 0,
+    depth: 1,
   },
   y: {
     min: -Number.MAX_SAFE_INTEGER,
     max: Number.MAX_SAFE_INTEGER,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 50,
+    lag: 0,
+    depth: 1,
   },
   z: {
     min: -Number.MAX_SAFE_INTEGER,
     max: Number.MAX_SAFE_INTEGER,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 5,
+    lag: 0,
+    depth: 1,
   },
 };
 
@@ -433,23 +444,32 @@ describe("apply parameters", () => {
     x: {
       min: -1000,
       max: 1000,
+      initial: 0,
       previous: 0,
       current: 100,
       target: 500,
+      lag: 0,
+      depth: 1,
     },
     y: {
       min: -100,
       max: 100,
+      initial: 0,
       previous: 0,
       current: 10,
       target: 50,
+      lag: 0,
+      depth: 1,
     },
     z: {
       min: -10,
       max: 10,
+      initial: 0,
       previous: 0,
       current: 1,
       target: 5,
+      lag: 0,
+      depth: 1,
     },
   };
 
@@ -457,23 +477,32 @@ describe("apply parameters", () => {
     x: {
       min: -2000,
       max: 2000,
+      initial: 0,
       previous: 100,
       current: 150,
       target: 500,
+      lag: 0,
+      depth: 1,
     },
     y: {
       min: -100,
       max: 100,
+      initial: 0,
       previous: 10,
       current: 15,
       target: 50,
+      lag: 0,
+      depth: 1,
     },
     z: {
       min: -10,
       max: 10,
+      initial: 0,
       previous: 1,
       current: 2,
       target: 5,
+      lag: 0,
+      depth: 1,
     },
   };
 
@@ -1915,6 +1944,7 @@ describe("scale", () => {
         y: { current: 1 / sy },
         z: { current: 1 / sz },
       }),
+      DEFAULT_CONTROLLER,
     );
     expect(t).toBeCloseToArray(IDENTITY);
 
@@ -1924,6 +1954,7 @@ describe("scale", () => {
         y: { current: sy / 2 },
         z: { current: sz / 4 },
       }),
+      DEFAULT_CONTROLLER,
     );
     t.apply(
       newState({ x: { current: 2 }, y: { current: 2 }, z: { current: 4 } }),
@@ -1991,6 +2022,7 @@ describe("scale", () => {
         y: { current: 1 / sy },
         z: { current: 1 / sz },
       }),
+      DEFAULT_CONTROLLER,
     );
     expect(t).toBeCloseToArray(IDENTITY);
 
@@ -2000,6 +2032,7 @@ describe("scale", () => {
         y: { current: sy / 2 },
         z: { current: sz / 4 },
       }),
+      DEFAULT_CONTROLLER,
     );
     t.apply(
       newState({ x: { current: 2 }, y: { current: 2 }, z: { current: 4 } }),

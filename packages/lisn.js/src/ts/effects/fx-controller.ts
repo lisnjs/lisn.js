@@ -4,10 +4,6 @@
  * @since v1.3.0
  */
 
-// TODO
-// - support critically damped or plain quadratic or custom interpolation **iterator**
-// - custom range condition => own class (FXStateCondition, FXViewCondition, etc)
-
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
@@ -16,7 +12,6 @@ import { settings } from "@lisn/globals/settings";
 import {
   AtLeastOne,
   OnlyOneOf,
-  ScrollTarget,
   View,
   ViewTarget,
   RawOrRelativeNumber,
@@ -105,7 +100,7 @@ export class FXController {
 
   /**
    * Re-enables the controller. All effects will be applied to match the current
-   * state without animation/interpolation (i.e. instantly).
+   * state without tweening/interpolation (i.e. instantly).
    */
   readonly enable: () => void;
 
@@ -166,10 +161,10 @@ export class FXController {
   readonly offRecalibrate: (handler: FXControllerHandler) => void;
 
   /**
-   * Calls the given handler whenever the controller interpolates the current
-   * {@link FXTweenStat}. This happens on every animation frame while
-   * interpolating the effects towards the {@link FXAxisState.target | target}
-   * parameters.
+   * Calls the given handler whenever the controller tweens (i.e. interpolates)
+   * the current {@link FXParams}. This happens on every animation frame
+   * while interpolating the effects towards the
+   * {@link FXAxisState.target | target} parameters.
    *
    * The handler is called during an animation frame **after** all effects have
    * been applied, such that calling {@link toCss} or {@link getComposition}
@@ -285,13 +280,13 @@ export class FXController {
    * This creates a new async generator that will yield calibration data
    * whenever the returned helper callback is called.
    */
-  static createCalibrator(): FXControllerCalibrationPair {
+  static createCalibrator(): FXCalibrationPair {
     let resolve: (data: FXCalibration) => void;
 
     const nextPromise = () =>
       MH.newPromise<FXCalibration>((r) => (resolve = r));
 
-    const calibrator: FXControllerCalibrator = async function* () {
+    const calibrator: FXCalibrator = async function* () {
       while (true) {
         yield await nextPromise();
       }
@@ -308,10 +303,8 @@ export class FXController {
       negate: defaultNegate,
       calibrator: userCalibrator = MC.S_SCROLL,
     } = config ?? {};
-    const scrollable = config?.scrollable ?? parent?.getConfig().scrollable;
 
     const effectiveConfig: FXControllerEffectiveConfig = {
-      scrollable,
       parent,
       negate: defaultNegate,
       disabled: config?.disabled ?? false,
@@ -327,7 +320,7 @@ export class FXController {
 
     let scrollWatcher: ScrollWatcher | null = null;
     const viewWatcher = ViewWatcher.reuse();
-    let calibrator: FXControllerCalibrator;
+    let calibrator: FXCalibrator;
 
     const effectsMap: EffectsMap = new Map();
     const compositionsMap: CompositionMap = new Map();
@@ -355,7 +348,7 @@ export class FXController {
       [FXControllerHandler, Set<Element>]
     >();
 
-    const currentFrameState = newDefaultState();
+    const currentFXState = newDefaultState();
     let isFirstTimeAfterEnable = true;
 
     // ----------
@@ -367,7 +360,7 @@ export class FXController {
     const disable = () => {
       if (!isDisabled()) {
         effectiveConfig.disabled = true;
-        callCallbacks(toggleCallbacks);
+        invokeCallbacks(toggleCallbacks);
       }
     };
 
@@ -378,7 +371,7 @@ export class FXController {
         isFirstTimeAfterEnable = true;
         effectiveConfig.disabled = false;
 
-        callCallbacks(toggleCallbacks);
+        invokeCallbacks(toggleCallbacks);
         pollCalibrator();
       }
     };
@@ -396,7 +389,7 @@ export class FXController {
     const reset = () => {
       if (MH.sizeOf(effectsMap) > 0) {
         effectsMap.clear();
-        callCallbacks(resetCallbacks);
+        invokeCallbacks(resetCallbacks);
       }
     };
 
@@ -476,60 +469,55 @@ export class FXController {
 
     // ----------
 
-    const setLag = (
+    const updateStateConf = <P extends "lag" | "depth">(
       input: RawOrRelativeNumber | Partial<FXControllerConfig> | undefined,
+      prop: P,
+      defaultValue: number,
     ) => {
-      const defaultLag = settings.effectLag;
-      let lag, lagX, lagY, lagZ;
+      const parentConfig: Partial<FXControllerEffectiveConfig> =
+        parent?.getConfig() ?? {};
 
+      let values: Partial<FXControllerConfig>;
       if (MH.isNonPrimitive(input)) {
-        ({ lag, lagX, lagY, lagZ } = input);
+        values = input;
       } else {
-        lag = input;
+        values = { [prop]: input };
       }
 
-      const parentConfig = parent?.getConfig();
-      const parentLagX = parentConfig?.lagX ?? defaultLag;
-      const parentLagY = parentConfig?.lagY ?? defaultLag;
-      const parentLagZ = parentConfig?.lagZ ?? defaultLag;
+      let updated = false;
+      for (const [a, A] of [
+        ["x", "X"],
+        ["y", "Y"],
+        ["z", "Z"],
+      ] as const) {
+        const parentVal = parentConfig[`${prop}${A}`] ?? defaultValue;
+        const newVal = toRawNum(
+          values[`${prop}${A}`] ?? values[prop],
+          parentVal,
+          parentVal,
+        );
 
-      effectiveConfig.lagX = toRawNum(lagX ?? lag, parentLagX, parentLagX);
-      effectiveConfig.lagY = toRawNum(lagY ?? lag, parentLagY, parentLagY);
-      effectiveConfig.lagZ = toRawNum(lagZ ?? lag, parentLagZ, parentLagZ);
+        updated ||= effectiveConfig[`${prop}${A}`] !== newVal;
+
+        effectiveConfig[`${prop}${A}`] = newVal;
+        currentFXState[a][prop] = newVal;
+      }
+
+      return updated;
     };
 
     // ----------
 
+    const setLag = (
+      input: RawOrRelativeNumber | Partial<FXControllerConfig> | undefined,
+    ) => updateStateConf(input, "lag", settings.effectLag);
+
     const setDepth = (
       input: RawOrRelativeNumber | Partial<FXControllerConfig> | undefined,
     ) => {
-      let depth, depthX, depthY, depthZ;
-
-      if (MH.isNonPrimitive(input)) {
-        ({ depth, depthX, depthY, depthZ } = input);
-      } else {
-        depth = input;
-      }
-
-      const parentConfig = parent?.getConfig();
-      const parentDepthX = parentConfig?.depthX ?? 1;
-      const parentDepthY = parentConfig?.depthY ?? 1;
-      const parentDepthZ = parentConfig?.depthZ ?? 1;
-
-      const newDepthX = toRawNum(depthX ?? depth, parentDepthX, parentDepthX);
-      const newDepthY = toRawNum(depthY ?? depth, parentDepthY, parentDepthY);
-      const newDepthZ = toRawNum(depthZ ?? depth, parentDepthZ, parentDepthZ);
-
-      if (
-        newDepthX !== effectiveConfig.depthX ||
-        newDepthY !== effectiveConfig.depthY ||
-        newDepthZ !== effectiveConfig.depthZ
-      ) {
-        effectiveConfig.depthX = newDepthX;
-        effectiveConfig.depthY = newDepthY;
-        effectiveConfig.depthZ = newDepthZ;
-
-        interpolate(); // re-apply effects and call callbacks
+      const updated = updateStateConf(input, "depth", 1);
+      if (updated) {
+        tween(); // re-apply effects and call callbacks
       }
     };
 
@@ -565,11 +553,11 @@ export class FXController {
 
     // ----------
 
-    const callCallbacks = (
+    const invokeCallbacks = (
       callbacks: Map<FXControllerHandler, FXControllerCallback>,
     ) => {
       for (const cbk of callbacks.values()) {
-        cbk.invoke(deepCopy(currentFrameState), this);
+        cbk.invoke(deepCopy(currentFXState), this);
       }
     };
 
@@ -594,13 +582,13 @@ export class FXController {
 
     // ----------
 
-    let isAnimating = false;
-    const interpolate = async () => {
-      if (isAnimating) {
+    let isTweening = false;
+    const tween = async () => {
+      if (isTweening) {
         return;
       }
 
-      isAnimating = true;
+      isTweening = true;
 
       const iterators: {
         x?: ReturnType<typeof newCriticallyDampedIterator>;
@@ -614,14 +602,18 @@ export class FXController {
 
         for (const axis of ["x", "y", "z"] as const) {
           const lag = lags[axis];
-          const { target, current } = currentFrameState[axis];
+          const { target, current } = currentFXState[axis];
           let done = current === target;
 
-          currentFrameState[axis].previous = current;
+          if (MH.isNullish(iterators[axis])) {
+            currentFXState[axis].initial = current;
+          }
+
+          currentFXState[axis].previous = current;
 
           if (isFirstTimeAfterEnable) {
             isFirstTimeAfterEnable = false;
-            currentFrameState[axis].current = target;
+            currentFXState[axis].current = target;
             done = true;
           }
 
@@ -636,7 +628,7 @@ export class FXController {
             iterators[axis] ??= newCriticallyDampedIterator(springState);
 
             const result = iterators[axis].next(springState);
-            currentFrameState[axis].current = result.value.l;
+            currentFXState[axis].current = result.value.l;
             done = !!result.done;
           }
 
@@ -647,10 +639,10 @@ export class FXController {
         }
 
         applyEffects();
-        callCallbacks(tweenCallbacks);
+        invokeCallbacks(tweenCallbacks);
 
         if (!iterators.x && !iterators.y && !iterators.z) {
-          isAnimating = false;
+          isTweening = false;
           break;
         }
       }
@@ -666,7 +658,7 @@ export class FXController {
           if (entry._data._activeSince !== null) {
             const effect = entry._effect;
             toCompose.push(
-              effect.apply(deepCopy(currentFrameState), this) as Effect<
+              effect.apply(deepCopy(currentFXState), this) as Effect<
                 typeof type
               >,
             );
@@ -720,7 +712,7 @@ export class FXController {
         { views, target }: ViewReference,
       ) => {
         const viewHandler: OnViewHandler = async () => {
-          data._activeSince = activate ? currentFrameState : null;
+          data._activeSince = activate ? currentFXState : null;
         };
 
         const addOrRemoveWatcher = wrapCallback(() =>
@@ -776,9 +768,9 @@ export class FXController {
     // ----------
 
     const recalibrate = (data: FXCalibration) => {
-      MH.assign(currentFrameState, recalibrateState(currentFrameState, data));
-      interpolate();
-      callCallbacks(recalibrateCallbacks);
+      MH.assign(currentFXState, recalibrateState(currentFXState, this, data));
+      tween();
+      invokeCallbacks(recalibrateCallbacks);
     };
 
     // --------------------
@@ -818,7 +810,7 @@ export class FXController {
 
     this.toCss = toCss;
     this.getComposition = (type) => compositionsMap.get(type);
-    this.getState = () => deepCopy(currentFrameState);
+    this.getState = () => deepCopy(currentFXState);
     this.getConfig = () => deepCopy(effectiveConfig);
     this.setLag = setLag;
     this.setDepth = setDepth;
@@ -830,6 +822,7 @@ export class FXController {
       let sendCalibration;
       ({ calibrator, sendCalibration } = FXController.createCalibrator());
 
+      const scrollable = undefined; // XXX
       const scrollHandler: OnScrollHandler = (e, scrollData) =>
         sendCalibration({
           x: {
@@ -875,18 +868,6 @@ export class FXController {
 
 export type FXControllerConfig = {
   /**
-   * XXX remove; part of ScrollCondition
-   *
-   * The parent scrollable element. Used for scroll-based
-   * {@link StateReference | effect conditions} as well as scroll tracking if
-   * the default scroll-based calibrator is used.
-   *
-   * @defaultValue The parent's scrollable or if no parent, then
-   * {@link ScrollWatcher} default
-   */
-  scrollable?: ScrollTarget | undefined;
-
-  /**
    * The parent controller. Used for resolving relative values of lag or depth.
    *
    * @defaultValue undefined
@@ -912,6 +893,8 @@ export type FXControllerConfig = {
   disabled?: boolean;
 
   /**
+   * XXX update
+   *
    * The "calibrator" to use to get new minimum, maximum and target values for
    * the {@link FXAxisState}s.
    *
@@ -936,12 +919,11 @@ export type FXControllerConfig = {
    * a function when there's new data, you can use
    * {@link FXController.createCalibrator}.
    *
-   * @defaultValue "scroll" XXX don't accept a string, but createCalibrator can
-   * accept "scroll" + scrollable
+   * @defaultValue undefined // A default XXX instance
    */
-  calibrator?: "scroll" | FXControllerCalibrator;
+  calibrator?: FXCalibrator;
 
-  // XXX custom interpolator or "criticallyDamped", "quadratic", etc
+  // XXX custom tweener or "criticallyDamped", "quadratic", etc
 
   /**
    * The time in milliseconds it takes for effect states to catch up to the
@@ -1012,7 +994,6 @@ export type FXControllerConfig = {
 };
 
 export type FXControllerEffectiveConfig = {
-  scrollable: ScrollTarget | undefined;
   parent: FXController | undefined;
   negate: FXController | undefined;
   disabled: boolean;
@@ -1036,17 +1017,23 @@ export type FXControllerHandler =
   | FXControllerCallback
   | CallbackHandler<FXControllerCallbackArgs>;
 
-export type FXControllerCalibrator = () => AsyncGenerator<
+// XXX Make it a class:
+// - various triggers (separate class):
+//   - scroll based
+//   - controller based (with same or custom state); support trigger on
+//     percentage done of tweening
+// - delay
+export type FXCalibrator = () => AsyncGenerator<
   FXCalibration,
   never,
   undefined
 >;
 
-export type FXControllerCalibrationPair = {
+export type FXCalibrationPair = {
   /**
    * This is what you pass to {@link FXControllerConfig.calibrator}.
    */
-  calibrator: FXControllerCalibrator;
+  calibrator: FXCalibrator;
 
   /**
    * This is what you call with your latest {@link FXCalibration} data to have
@@ -1116,10 +1103,14 @@ const newDefaultState = (): FXState => {
   const axisState: FXAxisState = {
     min: 0,
     max: 0,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 0,
+    lag: 0,
+    depth: 1,
   };
+
   return deepCopy({ x: axisState, y: axisState, z: axisState });
 };
 

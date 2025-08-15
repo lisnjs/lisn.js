@@ -22,7 +22,7 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
   /**
    * Returns true if the effect is absolute. If true, the
    * {@link FXHandler | handlers} receive absolute
-   * {@link FXTweenState | parameters} and each call to {@link apply} will
+   * {@link FXParams | parameters} and each call to {@link apply} will
    * reset the effect back to the default/blank state.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
@@ -76,7 +76,7 @@ export type EffectsList<TL extends readonly (keyof EffectRegistry)[]> = [
 ];
 
 export type FXHandler<R> = (
-  parameters: FXTweenState,
+  parameters: FXParams,
   state: FXState,
   controller: FXController,
 ) => R;
@@ -85,7 +85,7 @@ export type FXHandler<R> = (
  * The parameters for the current animation frame that {@link FXHandler}s should
  * use.
  */
-export type FXTweenState = {
+export type FXParams = {
   /**
    * If the effect is {@link Effect.isAbsolute | absolute}, it is the current
    * value for the X-axis. Otherwise it is the change in that value since the
@@ -171,9 +171,10 @@ export type FXAxisState = {
   max: number;
 
   /**
-   * The target value which we're interpolating towards.
+   * The initial value at which the controller started interpolating (since the
+   * last recalibration).
    */
-  target: number;
+  initial: number;
 
   /**
    * The value at the last animation frame.
@@ -184,8 +185,26 @@ export type FXAxisState = {
    * The current value.
    */
   current: number;
+
+  /**
+   * The target value which the controller is interpolating towards.
+   */
+  target: number;
+
+  /**
+   * The controller's {@link FXControllerConfig.lag | lag} for this axis.
+   */
+  lag: number;
+
+  /**
+   * The controller's {@link FXControllerConfig.depth | depth} for this axis.
+   */
+  depth: number;
 };
 
+/**
+ * Describes the whole state of the controller's parameters.
+ */
 export type FXState = {
   x: FXAxisState;
   y: FXAxisState;
@@ -228,7 +247,7 @@ export type ParallaxScalerFn = (
 ) => number;
 
 /**
- * Returns the {@link FXTweenState | parameters} for the given state.
+ * Returns the {@link FXParams | parameters} for the given state.
  *
  * @param [options.isAbsolute] If false (default), the parameters will equal the
  *                             change in values since the last animation frame.
@@ -242,8 +261,8 @@ export const toParameters = (
   state: FXState,
   controller: FXController,
   options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
-) => {
-  state = recalibrateState(state, state); // validate
+): FXParams => {
+  state = recalibrateState(state, controller); // validate
   const { isAbsolute, scalerFn } = options ?? {};
 
   const getAxisParam = (axisState: FXAxisState, normalized = false) => {
@@ -277,7 +296,7 @@ export const toParameters = (
     return result;
   };
 
-  const parameters: FXTweenState = {
+  const parameters: FXParams = {
     x: getAxisParam(state.x),
     nx: getAxisParam(state.x, true),
     y: getAxisParam(state.y),
@@ -296,10 +315,10 @@ export const toParameters = (
  * controller's parallax depths.
  */
 export const scaleParameters = (
-  parameters: FXTweenState,
+  parameters: FXParams,
   controller: FXController,
   scalerFn: ParallaxScalerFn,
-) => {
+): FXParams => {
   const { depthX, depthY, depthZ } = controller.getConfig();
 
   return {
@@ -316,53 +335,71 @@ export const scaleParameters = (
  * Returns a new updated state as per the calibration data if any while
  * enforcing valid values for all properties.
  *
- * @ignore
- * @internal
+ * Lag and depth are set from the controller's configuration.
  */
 export const recalibrateState = (
-  state: FXState | undefined,
-  data?: FXCalibration,
-) => {
-  const validateAxis = (axisState: FXAxisState | undefined) => {
-    let min = toNum(axisState?.min, 0);
-    let max = toNum(axisState?.max, min > 0 ? min : 0);
+  state: Partial<FXState> | undefined,
+  controller: FXController,
+  calibration?: FXCalibration,
+): FXState => {
+  state ??= {};
+  calibration ??= {};
+
+  const controllerConfig = controller.getConfig();
+
+  const validateAxis = (
+    axisState: Partial<FXAxisState> | undefined,
+    axis: "x" | "y" | "z",
+  ) => {
+    const axisC = axis === "x" ? "X" : axis === "y" ? "Y" : "Z";
+
+    axisState ??= {};
+    let { min, max } = axisState;
+    min = toNum(min, 0);
+    max = toNum(max, min > 0 ? min : 0);
     if (min > max) {
-      [min, max] = [max, min];
+      [min, max] = [max, min]; // swap
     }
 
-    const target = toNumWithBounds(axisState?.target, {
+    const lag = controllerConfig[`lag${axisC}`];
+    const depth = controllerConfig[`depth${axisC}`];
+    const filteredState: FXAxisState = {
+      // known properties only
       min,
       max,
-    });
-    const previous = toNumWithBounds(axisState?.previous, {
-      min,
-      max,
-    });
-    const current = toNumWithBounds(axisState?.current, {
-      min,
-      max,
-    });
+      lag,
+      depth,
+      // updated below
+      initial: 0,
+      previous: 0,
+      current: 0,
+      target: 0,
+    };
 
-    return { min, max, previous, current, target };
+    for (const prop of ["initial", "previous", "current", "target"] as const) {
+      filteredState[prop] = toNumWithBounds(axisState[prop], {
+        min,
+        max,
+      });
+    }
+
+    return filteredState;
   };
 
-  const calibrateAxis = (
-    axisState: FXAxisState | undefined,
-    axisCalibration: FXAxisCalibration | undefined,
-  ) => {
-    axisState = validateAxis(axisState);
-    axisCalibration ??= {};
+  const calibrateAxis = (axis: "x" | "y" | "z") => {
+    const axisState = validateAxis(state[axis], axis); // validate input state
+    const axisCalibration = calibration[axis] ?? {};
 
     for (const prop of ["min", "max", "target"] as const) {
       axisState[prop] = toNum(axisCalibration[prop], axisState[prop]);
     }
 
-    return validateAxis(axisState);
+    return validateAxis(axisState, axis); // validate final state
   };
 
   return {
-    x: calibrateAxis(state?.x, data?.x),
-    y: calibrateAxis(state?.y, data?.y),
-    z: calibrateAxis(state?.z, data?.z),
+    x: calibrateAxis("x"),
+    y: calibrateAxis("y"),
+    z: calibrateAxis("z"),
   };
 };

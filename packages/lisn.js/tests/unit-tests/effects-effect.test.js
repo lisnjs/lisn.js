@@ -4,6 +4,8 @@ const { deepCopy, copyExistingKeys } = window.LISN.utils;
 const { toParameters, scaleParameters, recalibrateState, FXController } =
   window.LISN.effects;
 
+window.LISN.settings.effectLag = 0;
+
 const DEFAULT_SCALER_FN = (v, d) => v / d;
 
 const DEFAULT_CONTROLLER = new FXController();
@@ -12,23 +14,32 @@ const DEFAULT_STATE = {
   x: {
     min: 0,
     max: 0,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 0,
+    lag: 0,
+    depth: 1,
   },
   y: {
     min: 0,
     max: 0,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 0,
+    lag: 0,
+    depth: 1,
   },
   z: {
     min: 0,
     max: 0,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 0,
+    lag: 0,
+    depth: 1,
   },
 };
 
@@ -36,23 +47,32 @@ const DUMMY_STATE = {
   x: {
     min: -1000,
     max: 1000,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 500,
+    lag: 0,
+    depth: 1,
   },
   y: {
     min: -100,
     max: 100,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 50,
+    lag: 0,
+    depth: 1,
   },
   z: {
     min: -10,
     max: 10,
+    initial: 0,
     previous: 0,
     current: 0,
     target: 5,
+    lag: 0,
+    depth: 1,
   },
 };
 
@@ -74,35 +94,35 @@ const DUMMY_CALIBRATION = {
   },
 };
 
+const newState = (partial, source = DEFAULT_STATE) => {
+  const result = deepCopy(source);
+  copyExistingKeys(partial, result);
+  return result;
+};
+
 describe("toParameters", () => {
   test("basic", () => {
     const x = 1000,
       y = 100,
       z = 10;
 
-    const state = {
+    const state = newState({
       x: {
-        min: 0,
         max: x * 2,
-        previous: 0,
         current: x,
         target: x,
       },
       y: {
-        min: 0,
         max: y * 2,
-        previous: 0,
         current: y,
         target: y,
       },
       z: {
-        min: 0,
         max: z * 2,
-        previous: 0,
         current: z,
         target: z,
       },
-    };
+    });
 
     const parameters = toParameters(state, DEFAULT_CONTROLLER);
     expect(parameters).toEqual({
@@ -125,10 +145,11 @@ describe("toParameters", () => {
       y = 100,
       z = 10;
 
-    const state = {
+    const state = newState({
       x: {
         min: x / 4,
         max: x * 2,
+        initial: x / 4,
         previous: x / 4, // must be at least min
         current: x,
         target: x,
@@ -136,6 +157,7 @@ describe("toParameters", () => {
       y: {
         min: y / 4,
         max: y * 2,
+        initial: y / 4,
         previous: y / 4, // must be at least min
         current: y,
         target: y,
@@ -143,11 +165,12 @@ describe("toParameters", () => {
       z: {
         min: z / 4,
         max: z * 2,
+        initial: z / 4,
         previous: z / 4, // must be at least min
         current: z,
         target: z,
       },
-    };
+    });
 
     // incremental
     expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
@@ -176,29 +199,26 @@ describe("toParameters", () => {
       y = 100,
       z = 10;
 
-    const state = {
+    const state = newState({
       x: {
         min: -x * 2,
         max: x * 2,
-        previous: 0,
         current: x,
         target: x,
       },
       y: {
         min: -y * 2,
         max: y * 2,
-        previous: 0,
         current: y,
         target: y,
       },
       z: {
         min: -z * 2,
         max: z * 2,
-        previous: 0,
         current: z,
         target: z,
       },
-    };
+    });
 
     // incremental
     expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
@@ -227,29 +247,26 @@ describe("toParameters", () => {
       y = 100,
       z = 10;
 
-    const state = {
+    const state = newState({
       x: {
         min: -x * 2,
         max: x * 2,
-        previous: 0,
         current: -x,
         target: x,
       },
       y: {
         min: -y * 2,
         max: y * 2,
-        previous: 0,
         current: -y,
         target: y,
       },
       z: {
         min: -z * 2,
         max: z * 2,
-        previous: 0,
         current: -z,
         target: z,
       },
-    };
+    });
 
     // incremental
     expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
@@ -278,29 +295,26 @@ describe("toParameters", () => {
       y = 100,
       z = 10;
 
-    const state = {
+    const state = newState({
       x: {
-        min: 0,
         max: x * 2,
         previous: x / 4,
         current: x,
         target: x,
       },
       y: {
-        min: 0,
         max: y * 2,
         previous: y / 4,
         current: y,
         target: y,
       },
       z: {
-        min: 0,
         max: z * 2,
         previous: z / 4,
         current: z,
         target: z,
       },
-    };
+    });
 
     // incremental
     expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
@@ -332,6 +346,7 @@ describe("toParameters", () => {
     // validation is fully tested by recalibrateState, so only test here that
     // it's being passed through validation
     const state = {
+      // incomplete
       x: {
         min: x,
         max: x * 2,
@@ -383,26 +398,20 @@ describe("toParameters", () => {
       z = 30,
       max = 1000;
 
-    const state = {
+    const state = newState({
       x: {
-        min: 0,
         max,
-        previous: 0,
         current: x,
       },
       y: {
-        min: 0,
         max,
-        previous: 0,
         current: y,
       },
       z: {
-        min: 0,
         max,
-        previous: 0,
         current: z,
       },
-    };
+    });
 
     expect(
       toParameters(state, controller, {
@@ -565,145 +574,173 @@ describe("scaleParameters", () => {
 });
 
 describe("recalibrateState: validate current", () => {
+  const depthX = 2,
+    depthY = 3,
+    depthZ = 4;
+  const controller = new FXController({ depthX, depthY, depthZ });
+  const dummyState = newState(
+    { x: { depth: depthX }, y: { depth: depthY }, z: { depth: depthZ } },
+    DUMMY_STATE,
+  );
+
   test("missing", () => {
-    expect(recalibrateState({})).toEqual(DEFAULT_STATE);
+    const thisDefaultState = newState(
+      { x: { depth: depthX }, y: { depth: depthY }, z: { depth: depthZ } },
+      DEFAULT_STATE,
+    );
+    expect(recalibrateState({}, controller)).toEqual(thisDefaultState);
+    expect(recalibrateState({}, DEFAULT_CONTROLLER)).toEqual(DEFAULT_STATE);
   });
 
   for (const axis of ["x", "y", "z"]) {
+    for (const prop of ["lag", "depth"]) {
+      test(`${axis}: out of date ${prop}`, () => {
+        const state = deepCopy(dummyState);
+        const expected = deepCopy(state);
+
+        state[axis][prop] = 1000;
+        expect(recalibrateState(state, controller)).toEqual(expected);
+      });
+    }
+
     test(`${axis}: min > max`, () => {
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       const expected = deepCopy(state);
 
       [state[axis].min, state[axis].max] = [state[axis].max, state[axis].min];
-
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: missing min`, () => {
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       const expected = deepCopy(state);
       expected[axis].min = 0;
 
       delete state[axis].min;
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: invalid min`, () => {
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       const expected = deepCopy(state);
       expected[axis].min = 0;
 
       state[axis].min = NaN;
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: missing max (min < 0)`, () => {
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       state[axis].min = -100;
 
       const expected = deepCopy(state);
       expected[axis].max =
+        expected[axis].initial =
         expected[axis].previous =
         expected[axis].current =
         expected[axis].target =
           0;
 
       delete state[axis].max;
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: invalid max (min < 0)`, () => {
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       state[axis].min = -100;
 
       const expected = deepCopy(state);
       expected[axis].max =
+        expected[axis].initial =
         expected[axis].previous =
         expected[axis].current =
         expected[axis].target =
           0;
 
       state[axis].max = NaN;
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: missing max (min > 0)`, () => {
       const min = 10000;
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       state[axis].min = min;
 
       const expected = deepCopy(state);
       expected[axis].max =
+        expected[axis].initial =
         expected[axis].previous =
         expected[axis].current =
         expected[axis].target =
           min;
 
       delete state[axis].max;
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: invalid max (min > 0)`, () => {
       const min = 10000;
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       state[axis].min = min;
 
       const expected = deepCopy(state);
       expected[axis].max =
+        expected[axis].initial =
         expected[axis].previous =
         expected[axis].current =
         expected[axis].target =
           min;
 
       state[axis].max = NaN;
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
 
-    for (const prop of ["previous", "current", "target"]) {
+    for (const prop of ["initial", "previous", "current", "target"]) {
       test(`${axis}: ${prop} < min`, () => {
-        const state = deepCopy(DUMMY_STATE);
+        const state = deepCopy(dummyState);
         const expected = deepCopy(state);
         expected[axis][prop] = expected[axis].min;
 
         state[axis][prop] = state[axis].min - 10;
-        expect(recalibrateState(state)).toEqual(expected);
+        expect(recalibrateState(state, controller)).toEqual(expected);
       });
 
       test(`${axis}: ${prop} > max`, () => {
-        const state = deepCopy(DUMMY_STATE);
+        const state = deepCopy(dummyState);
         const expected = deepCopy(state);
         expected[axis][prop] = expected[axis].max;
 
         state[axis][prop] = state[axis].max + 10;
-        expect(recalibrateState(state)).toEqual(expected);
+        expect(recalibrateState(state, controller)).toEqual(expected);
       });
 
       test(`${axis}: missing ${prop}`, () => {
-        const state = deepCopy(DUMMY_STATE);
+        const state = deepCopy(dummyState);
         const expected = deepCopy(state);
         expected[axis][prop] = expected[axis].min;
 
         delete state[axis][prop];
-        expect(recalibrateState(state)).toEqual(expected);
+        expect(recalibrateState(state, controller)).toEqual(expected);
       });
 
       test(`${axis}: invalid ${prop}`, () => {
-        const state = deepCopy(DUMMY_STATE);
+        const state = deepCopy(dummyState);
         const expected = deepCopy(state);
         expected[axis][prop] = expected[axis].min;
 
         state[axis][prop] = NaN;
-        expect(recalibrateState(state)).toEqual(expected);
+        expect(recalibrateState(state, controller)).toEqual(expected);
       });
     }
 
     test(`${axis}: multiple invalid v1`, () => {
       const min = 100;
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       state[axis].min = min;
 
       const expected = deepCopy(state);
       expected[axis].max = min;
+      expected[axis].initial = min;
       expected[axis].previous = min;
       expected[axis].current = min;
       expected[axis].target = min;
@@ -712,16 +749,17 @@ describe("recalibrateState: validate current", () => {
       delete state[axis].previous;
       state[axis].current = 0; // < min
       state[axis].target = min * 2; // > new max
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: multiple invalid v2`, () => {
       const max = 100;
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       state[axis].max = max;
 
       const expected = deepCopy(state);
       expected[axis].min = 0;
+      expected[axis].initial = 0;
       expected[axis].previous = 0;
       expected[axis].current = 0;
       expected[axis].target = max;
@@ -730,38 +768,47 @@ describe("recalibrateState: validate current", () => {
       delete state[axis].previous;
       state[axis].current = -100; // < new min
       state[axis].target = max * 2; // > max
-      expect(recalibrateState(state)).toEqual(expected);
+      expect(recalibrateState(state, controller)).toEqual(expected);
     });
   }
 });
 
 describe("recalibrateState: with calibration", () => {
+  const depthX = 2,
+    depthY = 3,
+    depthZ = 4;
+  const controller = new FXController({ depthX, depthY, depthZ });
+  const dummyState = newState(
+    { x: { depth: depthX }, y: { depth: depthY }, z: { depth: depthZ } },
+    DUMMY_STATE,
+  );
+
   test("missing", () => {
-    expect(recalibrateState(DUMMY_STATE)).toEqual(DUMMY_STATE);
+    expect(recalibrateState(dummyState, controller)).toEqual(dummyState);
   });
 
   test("basic", () => {
-    const state = deepCopy(DUMMY_STATE);
+    const state = deepCopy(dummyState);
     const calibration = deepCopy(DUMMY_CALIBRATION);
     const expected = deepCopy(state);
     copyExistingKeys(calibration, expected);
 
-    expect(recalibrateState(state, calibration)).toEqual(expected);
+    expect(recalibrateState(state, controller, calibration)).toEqual(expected);
   });
 
   test("not modifying input state", () => {
-    const state = deepCopy(DUMMY_STATE);
-    const copy = deepCopy(DUMMY_STATE);
+    const state = deepCopy(dummyState);
+    const copy = deepCopy(dummyState);
     const calibration = deepCopy(DUMMY_CALIBRATION);
     const expected = deepCopy(state);
     copyExistingKeys(calibration, expected);
 
-    expect(recalibrateState(state, calibration)).toEqual(expected);
+    expect(recalibrateState(state, controller, calibration)).toEqual(expected);
     expect(state).toEqual(copy);
   });
 
   test("not modifying input calibration", () => {
-    const state = deepCopy(DUMMY_STATE);
+    const state = deepCopy(dummyState);
     const calibration = deepCopy(DUMMY_CALIBRATION);
 
     [calibration.x.min, calibration.x.max] = [
@@ -774,13 +821,13 @@ describe("recalibrateState: with calibration", () => {
     delete calibration.z.target;
 
     const copy = deepCopy(calibration);
-    recalibrateState(state, calibration);
+    recalibrateState(state, controller, calibration);
     expect(calibration).toEqual(copy);
   });
 
   for (const axis of ["x", "y", "z"]) {
     test(`${axis}: min > max`, () => {
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
       const calibration = deepCopy(DUMMY_CALIBRATION);
       const expected = deepCopy(state);
       copyExistingKeys(calibration, expected);
@@ -789,12 +836,14 @@ describe("recalibrateState: with calibration", () => {
         calibration[axis].max,
         calibration[axis].min,
       ];
-      expect(recalibrateState(state, calibration)).toEqual(expected);
+      expect(recalibrateState(state, controller, calibration)).toEqual(
+        expected,
+      );
     });
 
     for (const prop of ["min", "max", "target"]) {
       test(`${axis}: missing ${prop}`, () => {
-        const state = deepCopy(DUMMY_STATE);
+        const state = deepCopy(dummyState);
 
         const calibration = deepCopy(DUMMY_CALIBRATION);
         const expected = deepCopy(state);
@@ -802,11 +851,13 @@ describe("recalibrateState: with calibration", () => {
         expected[axis][prop] = state[axis][prop]; // preserved
 
         delete calibration[axis][prop];
-        expect(recalibrateState(state, calibration)).toEqual(expected);
+        expect(recalibrateState(state, controller, calibration)).toEqual(
+          expected,
+        );
       });
 
       test(`${axis}: invalid ${prop}`, () => {
-        const state = deepCopy(DUMMY_STATE);
+        const state = deepCopy(dummyState);
 
         const calibration = deepCopy(DUMMY_CALIBRATION);
         const expected = deepCopy(state);
@@ -814,12 +865,14 @@ describe("recalibrateState: with calibration", () => {
         expected[axis][prop] = state[axis][prop]; // preserved
 
         calibration[axis][prop] = NaN;
-        expect(recalibrateState(state, calibration)).toEqual(expected);
+        expect(recalibrateState(state, controller, calibration)).toEqual(
+          expected,
+        );
       });
     }
 
     test(`${axis}: target < min`, () => {
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
 
       const calibration = deepCopy(DUMMY_CALIBRATION);
       const expected = deepCopy(state);
@@ -827,11 +880,13 @@ describe("recalibrateState: with calibration", () => {
       expected[axis].target = expected[axis].min;
 
       calibration[axis].target = calibration[axis].min - 10;
-      expect(recalibrateState(state, calibration)).toEqual(expected);
+      expect(recalibrateState(state, controller, calibration)).toEqual(
+        expected,
+      );
     });
 
     test(`${axis}: target > max`, () => {
-      const state = deepCopy(DUMMY_STATE);
+      const state = deepCopy(dummyState);
 
       const calibration = deepCopy(DUMMY_CALIBRATION);
       const expected = deepCopy(state);
@@ -839,18 +894,28 @@ describe("recalibrateState: with calibration", () => {
       expected[axis].target = expected[axis].max;
 
       calibration[axis].target = calibration[axis].max + 10;
-      expect(recalibrateState(state, calibration)).toEqual(expected);
+      expect(recalibrateState(state, controller, calibration)).toEqual(
+        expected,
+      );
     });
 
-    test(`${axis}: with previous and current => ignored`, () => {
-      const state = deepCopy(DUMMY_STATE);
+    test(`${axis}: with other props => ignored`, () => {
+      const state = deepCopy(dummyState);
 
       const calibration = deepCopy(DUMMY_CALIBRATION);
       const expected = deepCopy(state);
       copyExistingKeys(calibration, expected);
 
-      calibration[axis].previous = calibration[axis].current = state[axis].max;
-      expect(recalibrateState(state, calibration)).toEqual(expected);
+      calibration[axis].initial =
+        calibration[axis].previous =
+        calibration[axis].current =
+          state[axis].max;
+
+      calibration[axis].lag = 1000;
+      calibration[axis].depth = 10;
+      expect(recalibrateState(state, controller, calibration)).toEqual(
+        expected,
+      );
     });
   }
 });

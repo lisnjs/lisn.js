@@ -3,8 +3,6 @@ const { jest, describe, test, expect } = require("@jest/globals");
 const { deepCopy, copyExistingKeys } = window.LISN.utils;
 const { Transform, FXController, toParameters } = window.LISN.effects;
 
-// XXX modifying parameters and state inside handler
-
 const DEFAULT_CONTROLLER = new FXController();
 
 const IDENTITY = new DOMMatrixReadOnly([
@@ -61,7 +59,7 @@ const newTestMatrix = (toValue = (i) => i + 1) => {
   return new DOMMatrix(init);
 };
 
-const newState = (partial) => {
+const newState = (partial = {}) => {
   const res = deepCopy(DUMMY_STATE);
   copyExistingKeys(partial, res);
   return res;
@@ -2553,4 +2551,36 @@ describe("parallax depth", () => {
     expect(cbkSkew).toHaveBeenCalledTimes(1);
     expect(cbkSkew).toHaveBeenNthCalledWith(1, params, state, controller);
   });
+});
+
+test("modifying params and state inside handler", () => {
+  const t = newTransform();
+  const cbkA = jest.fn((d) => {
+    params.x *= 2;
+    state.x.current *= 2;
+
+    return { x: d.x, y: d.y, z: d.z };
+  });
+
+  const cbkB = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
+
+  const state = newState();
+  const params = toParameters(state, DEFAULT_CONTROLLER);
+
+  const stateCopy = deepCopy(state);
+  const paramsCopy = deepCopy(params);
+
+  t.translate(cbkA);
+  t.translate(cbkB);
+
+  t.apply(state, DEFAULT_CONTROLLER);
+
+  expect(cbkA).toHaveBeenCalledTimes(1);
+  expect(cbkA).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_CONTROLLER);
+
+  expect(cbkB).toHaveBeenCalledTimes(1);
+  expect(cbkB).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_CONTROLLER);
+
+  expect(state).toEqual(stateCopy);
+  expect(params).toEqual(paramsCopy);
 });

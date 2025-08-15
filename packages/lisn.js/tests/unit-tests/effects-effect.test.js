@@ -4,6 +4,8 @@ const { deepCopy, copyExistingKeys } = window.LISN.utils;
 const { toParameters, scaleParameters, recalibrateState, FXController } =
   window.LISN.effects;
 
+const DEFAULT_SCALER_FN = (v, d) => v / d;
+
 const DEFAULT_CONTROLLER = new FXController();
 
 const DEFAULT_STATE = {
@@ -370,11 +372,195 @@ describe("toParameters", () => {
       nz: 0,
     });
   });
+
+  test("scalerFn", () => {
+    const depthX = 2,
+      depthY = 3,
+      depthZ = 4;
+    const controller = new FXController({ depthX, depthY, depthZ });
+    const x = 10,
+      y = 20,
+      z = 30,
+      max = 1000;
+
+    const state = {
+      x: {
+        min: 0,
+        max,
+        previous: 0,
+        current: x,
+      },
+      y: {
+        min: 0,
+        max,
+        previous: 0,
+        current: y,
+      },
+      z: {
+        min: 0,
+        max,
+        previous: 0,
+        current: z,
+      },
+    };
+
+    expect(
+      toParameters(state, controller, {
+        isAbsolute: true,
+        scalerFn: DEFAULT_SCALER_FN,
+      }),
+    ).toEqual({
+      x: x / depthX,
+      nx: x / max,
+      y: y / depthY,
+      ny: y / max,
+      z: z / depthZ,
+      nz: z / max,
+    });
+  });
 });
 
 describe("scaleParameters", () => {
-  test("XXX TODO", () => {
-    //
+  test("depth 1", () => {
+    const x = 10,
+      y = 20,
+      z = 30;
+    const nx = 0.5,
+      ny = 1,
+      nz = 2;
+    const params = {
+      x,
+      nx,
+      y,
+      ny,
+      z,
+      nz,
+    };
+
+    expect(
+      scaleParameters(params, DEFAULT_CONTROLLER, DEFAULT_SCALER_FN),
+    ).toEqual(params);
+  });
+
+  test("depth (single)", () => {
+    const depth = 3;
+    const controller = new FXController({ depth });
+    const x = 10,
+      y = 20,
+      z = 30;
+    const nx = 0.5,
+      ny = 1,
+      nz = 2;
+    const params = {
+      x,
+      nx,
+      y,
+      ny,
+      z,
+      nz,
+    };
+
+    expect(scaleParameters(params, controller, DEFAULT_SCALER_FN)).toEqual({
+      x: x / depth,
+      nx,
+      y: y / depth,
+      ny,
+      z: z / depth,
+      nz,
+    });
+  });
+
+  test("depth XYZ", () => {
+    const depthX = 2,
+      depthY = 3,
+      depthZ = 4;
+    const controller = new FXController({ depthX, depthY, depthZ });
+    const x = 10,
+      y = 20,
+      z = 30;
+    const nx = 0.5,
+      ny = 1,
+      nz = 2;
+    const params = {
+      x,
+      nx,
+      y,
+      ny,
+      z,
+      nz,
+    };
+
+    expect(scaleParameters(params, controller, DEFAULT_SCALER_FN)).toEqual({
+      x: x / depthX,
+      nx,
+      y: y / depthY,
+      ny,
+      z: z / depthZ,
+      nz,
+    });
+  });
+
+  test("not modifying input params", () => {
+    const depth = 3;
+    const controller = new FXController({ depth });
+    const x = 10,
+      y = 20,
+      z = 30;
+    const nx = 0.5,
+      ny = 1,
+      nz = 2;
+    const params = {
+      x,
+      nx,
+      y,
+      ny,
+      z,
+      nz,
+    };
+    const copy = deepCopy(params);
+
+    scaleParameters(params, controller, DEFAULT_SCALER_FN);
+    expect(params).toEqual(copy);
+  });
+
+  test("scalerFn input", () => {
+    const scalerFn = jest.fn((v, d, a) =>
+      a === "x" ? v / d : a === "y" ? v * d : v,
+    );
+
+    const depthX = 2,
+      depthY = 3,
+      depthZ = 4;
+    const controller = new FXController({ depthX, depthY, depthZ });
+    const x = 10,
+      y = 20,
+      z = 30;
+    const nx = 0.5,
+      ny = 1,
+      nz = 2;
+    const params = {
+      x,
+      nx,
+      y,
+      ny,
+      z,
+      nz,
+    };
+
+    const result = scaleParameters(params, controller, scalerFn);
+    expect(scalerFn).toHaveBeenCalledTimes(3);
+    expect(scalerFn).toHaveBeenCalledWith(x, depthX, "x");
+    expect(scalerFn).toHaveBeenCalledWith(y, depthY, "y");
+    expect(scalerFn).toHaveBeenCalledWith(z, depthZ, "z");
+
+    expect(result).toEqual({
+      x: x / depthX,
+      nx,
+      y: y * depthY,
+      ny,
+      z: z,
+      nz,
+    });
   });
 });
 

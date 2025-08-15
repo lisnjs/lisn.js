@@ -94,7 +94,7 @@ const DUMMY_CALIBRATION = {
   },
 };
 
-const newState = (partial, source = DEFAULT_STATE) => {
+const newState = (partial = {}, source = DEFAULT_STATE) => {
   const result = deepCopy(source);
   copyExistingKeys(partial, result);
   return result;

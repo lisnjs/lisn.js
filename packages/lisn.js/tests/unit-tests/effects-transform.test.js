@@ -3,9 +3,6 @@ const { jest, describe, test, expect } = require("@jest/globals");
 const { deepCopy, copyExistingKeys } = window.LISN.utils;
 const { Transform, FXController, getParameters } = window.LISN.effects;
 
-// XXX TODO
-// - params passed for absolute and incremental
-
 const DEFAULT_CONTROLLER = new FXController();
 
 const IDENTITY = new DOMMatrixReadOnly([
@@ -110,7 +107,7 @@ describe("basic", () => {
     expect(t.toString()).toBe(IDENTITY.toString());
   });
 
-  test("absolute with init", () => {
+  test("absolute: with init", () => {
     const init = newTestMatrix();
     const p = 200;
     const t = newAbsoluteTransform(init, p);
@@ -227,6 +224,34 @@ describe("apply", () => {
     // overrides state, starts from identity again
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p * 4);
+  });
+
+  test("init but no handlers", () => {
+    const init = newTestMatrix();
+    const p = 200;
+    const t = newTransform(init, p);
+    expect(t.isAbsolute()).toBe(false);
+    expect(t).toBeCloseToArray(init);
+    expect(t.toPerspective()).toBe(p);
+
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    // unchanged
+    expect(t).toBeCloseToArray(init);
+    expect(t.toPerspective()).toBe(p);
+  });
+
+  test("absolute: init but no handlers", () => {
+    const init = newTestMatrix();
+    const p = 200;
+    const t = newAbsoluteTransform(init, p);
+    expect(t.isAbsolute()).toBe(true);
+    expect(t).toBeCloseToArray(init);
+    expect(t.toPerspective()).toBe(p);
+
+    t.apply(DEFAULT_STATE, DEFAULT_CONTROLLER);
+    // reset
+    expect(t).toBeCloseToArray(IDENTITY);
+    expect(t.toPerspective()).toBeUndefined();
   });
 
   test("with init", () => {
@@ -400,6 +425,96 @@ describe("apply", () => {
     // overrides state, starts from identity again
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p);
+  });
+});
+
+describe("apply parameters", () => {
+  const state = {
+    x: {
+      min: -1000,
+      max: 1000,
+      previous: 0,
+      current: 100,
+      target: 500,
+    },
+    y: {
+      min: -100,
+      max: 100,
+      previous: 0,
+      current: 10,
+      target: 50,
+    },
+    z: {
+      min: -10,
+      max: 10,
+      previous: 0,
+      current: 1,
+      target: 5,
+    },
+  };
+
+  const state2 = {
+    x: {
+      min: -2000,
+      max: 2000,
+      previous: 100,
+      current: 150,
+      target: 500,
+    },
+    y: {
+      min: -100,
+      max: 100,
+      previous: 10,
+      current: 15,
+      target: 50,
+    },
+    z: {
+      min: -10,
+      max: 10,
+      previous: 1,
+      current: 2,
+      target: 5,
+    },
+  };
+
+  test("incremental", () => {
+    const t = newTransform();
+    const cbk = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
+    t.translate(cbk);
+
+    const params = getParameters(state, DEFAULT_CONTROLLER);
+    t.apply(state, DEFAULT_CONTROLLER);
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_CONTROLLER);
+
+    t.apply(state2, DEFAULT_CONTROLLER);
+    const params2 = getParameters(state2, DEFAULT_CONTROLLER);
+
+    expect(cbk).toHaveBeenCalledTimes(2);
+    expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_CONTROLLER);
+  });
+
+  test("absolute", () => {
+    const t = newAbsoluteTransform();
+    const cbk = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
+    t.translate(cbk);
+
+    const params = getParameters(state, DEFAULT_CONTROLLER, {
+      isAbsolute: true,
+    });
+    t.apply(state, DEFAULT_CONTROLLER);
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_CONTROLLER);
+
+    t.apply(state2, DEFAULT_CONTROLLER);
+    const params2 = getParameters(state2, DEFAULT_CONTROLLER, {
+      isAbsolute: true,
+    });
+
+    expect(cbk).toHaveBeenCalledTimes(2);
+    expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_CONTROLLER);
   });
 });
 
@@ -2226,11 +2341,11 @@ describe("parallax depth", () => {
     expect(cbk).toHaveBeenNthCalledWith(
       1,
       {
-        x: dx / depthX,
+        x: params.x / depthX,
         nx: params.nx,
-        y: dy / depthY,
+        y: params.y / depthY,
         ny: params.ny,
-        z: dz / depthZ,
+        z: params.z / depthZ,
         nz: params.nz,
       },
       state,
@@ -2276,14 +2391,7 @@ describe("parallax depth", () => {
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenNthCalledWith(
       1,
-      {
-        x: sx, // raw
-        nx: params.nx,
-        y: sy, // raw
-        ny: params.ny,
-        z: sz, // raw
-        nz: params.nz,
-      },
+      params, // raw, unscaled
       state,
       controller,
     );
@@ -2328,14 +2436,7 @@ describe("parallax depth", () => {
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenNthCalledWith(
       1,
-      {
-        x: deg, // raw
-        nx: params.nx,
-        y: deg2, // raw
-        ny: params.ny,
-        z: deg + deg2, // raw
-        nz: params.nz,
-      },
+      params, // raw, unscaled
       state,
       controller,
     );
@@ -2367,11 +2468,11 @@ describe("parallax depth", () => {
     expect(cbk).toHaveBeenNthCalledWith(
       1,
       {
-        x: deg * depthX,
+        x: params.x * depthX,
         nx: params.nx,
-        y: deg * depthY,
+        y: params.y * depthY,
         ny: params.ny,
-        z: deg * depthZ,
+        z: params.z * depthZ,
         nz: params.nz,
       },
       state,
@@ -2391,6 +2492,63 @@ describe("parallax depth", () => {
   });
 
   test("multiple effects", () => {
-    // XXX TODO
+    const x = 10,
+      y = 20,
+      z = 30;
+
+    const t = newTransform();
+    const cbkTranslate = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
+    const cbkScale = jest.fn((d) => ({ sx: d.x, sy: d.y, sz: d.z }));
+    const cbkSkew = jest.fn((d) => ({ degX: d.x, degY: d.y }));
+    const cbkRotate = jest.fn((d) => ({ deg: d.y }));
+    t.translate(cbkTranslate);
+    t.scale(cbkScale);
+    t.rotate(cbkRotate);
+    t.skew(cbkSkew);
+
+    const state = newState({
+      x: { current: x },
+      y: { current: y },
+      z: { current: z },
+    });
+    const params = getParameters(state, controller);
+
+    t.apply(state, controller);
+
+    expect(cbkTranslate).toHaveBeenCalledTimes(1);
+    expect(cbkTranslate).toHaveBeenNthCalledWith(
+      1,
+      {
+        x: params.x / depthX,
+        nx: params.nx,
+        y: params.y / depthY,
+        ny: params.ny,
+        z: params.z / depthZ,
+        nz: params.nz,
+      },
+      state,
+      controller,
+    );
+
+    expect(cbkScale).toHaveBeenCalledTimes(1);
+    expect(cbkScale).toHaveBeenNthCalledWith(1, params, state, controller);
+
+    expect(cbkRotate).toHaveBeenCalledTimes(1);
+    expect(cbkRotate).toHaveBeenNthCalledWith(
+      1,
+      {
+        x: params.x * depthX,
+        nx: params.nx,
+        y: params.y * depthY,
+        ny: params.ny,
+        z: params.z * depthZ,
+        nz: params.nz,
+      },
+      state,
+      controller,
+    );
+
+    expect(cbkSkew).toHaveBeenCalledTimes(1);
+    expect(cbkSkew).toHaveBeenNthCalledWith(1, params, state, controller);
   });
 });

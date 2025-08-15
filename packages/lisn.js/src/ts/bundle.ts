@@ -11,6 +11,7 @@ import * as triggers from "@lisn/triggers/index";
 import * as widgets from "@lisn/widgets/index";
 
 export * from "@lisn/bundle-essentials";
+export * as effects from "@lisn/effects/index";
 export * as actions from "@lisn/actions/index";
 export * as triggers from "@lisn/triggers/index";
 export * as widgets from "@lisn/widgets/index";

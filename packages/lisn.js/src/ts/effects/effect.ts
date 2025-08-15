@@ -131,9 +131,9 @@ export type FXParams = {
 };
 
 /**
- * The "calibration" of an axis (minimum, maximum and target) values.
+ * The update for an axis (minimum, maximum and target) values.
  */
-export type FXAxisCalibration = {
+export type FXAxisStateUpdate = {
   /**
    * The minimum value.
    */
@@ -150,10 +150,10 @@ export type FXAxisCalibration = {
   target?: number;
 };
 
-export type FXCalibration = {
-  x?: FXAxisCalibration;
-  y?: FXAxisCalibration;
-  z?: FXAxisCalibration;
+export type FXStateUpdate = {
+  x?: FXAxisStateUpdate;
+  y?: FXAxisStateUpdate;
+  z?: FXAxisStateUpdate;
 };
 
 /**
@@ -172,7 +172,7 @@ export type FXAxisState = {
 
   /**
    * The initial value at which the controller started interpolating (since the
-   * last recalibration).
+   * last trigger).
    */
   initial: number;
 
@@ -262,7 +262,7 @@ export const toParameters = (
   controller: FXController,
   options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
 ): FXParams => {
-  state = recalibrateState(state, controller); // validate
+  state = updateState(state, controller); // validate
   const { isAbsolute, scalerFn } = options ?? {};
 
   const getAxisParam = (axisState: FXAxisState, normalized = false) => {
@@ -287,7 +287,7 @@ export const toParameters = (
     }
 
     if (!isValidNum(result) || result < minResult || result > maxResult) {
-      // recalibrateState should have ensured values are in range.
+      // updateState should have ensured values are in range.
       throw MH.bugError(
         "FX: Calculated invalid value for normalized axis parameter",
       );
@@ -332,18 +332,18 @@ export const scaleParameters = (
 };
 
 /**
- * Returns a new updated state as per the calibration data if any while
- * enforcing valid values for all properties.
+ * Returns a new updated state as per the update data if any while enforcing
+ * valid values for all properties.
  *
  * Lag and depth are set from the controller's configuration.
  */
-export const recalibrateState = (
+export const updateState = (
   state: Partial<FXState> | undefined,
   controller: FXController,
-  calibration?: FXCalibration,
+  update?: FXStateUpdate,
 ): FXState => {
   state ??= {};
-  calibration ??= {};
+  update ??= {};
 
   const controllerConfig = controller.getConfig();
 
@@ -386,20 +386,20 @@ export const recalibrateState = (
     return filteredState;
   };
 
-  const calibrateAxis = (axis: "x" | "y" | "z") => {
+  const updateAxis = (axis: "x" | "y" | "z") => {
     const axisState = validateAxis(state[axis], axis); // validate input state
-    const axisCalibration = calibration[axis] ?? {};
+    const axisUpdate = update[axis] ?? {};
 
     for (const prop of ["min", "max", "target"] as const) {
-      axisState[prop] = toNum(axisCalibration[prop], axisState[prop]);
+      axisState[prop] = toNum(axisUpdate[prop], axisState[prop]);
     }
 
     return validateAxis(axisState, axis); // validate final state
   };
 
   return {
-    x: calibrateAxis("x"),
-    y: calibrateAxis("y"),
-    z: calibrateAxis("z"),
+    x: updateAxis("x"),
+    y: updateAxis("y"),
+    z: updateAxis("z"),
   };
 };

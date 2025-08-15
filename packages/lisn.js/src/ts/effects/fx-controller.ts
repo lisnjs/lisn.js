@@ -40,10 +40,10 @@ import {
   Effect,
   EffectsList,
   EffectRegistry,
-  FXCalibration,
+  FXStateUpdate,
   FXAxisState,
   FXState,
-  recalibrateState,
+  updateState,
 } from "@lisn/effects/effect";
 
 import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
@@ -93,8 +93,8 @@ export class FXController {
 
   /**
    * Temporarily disables the controller. Scroll and view tracking, if any, is
-   * disabled, effects are not being updated, the calibrator is not polled and
-   * no {@link onTween} callbacks are called.
+   * disabled, effects are not being updated, the trigger is not polled and no
+   * {@link onTween} callbacks are called.
    */
   readonly disable: () => void;
 
@@ -148,17 +148,16 @@ export class FXController {
   readonly offReset: (handler: FXControllerHandler) => void;
 
   /**
-   * Calls the given handler whenever the controller updates the minimum,
-   * maximum or target on the {@link FXState | state}.
+   * Calls the given handler whenever the controller is triggered.
    *
    * The handler is called after updating the state.
    */
-  readonly onRecalibrate: (handler: FXControllerHandler) => void;
+  readonly onTrigger: (handler: FXControllerHandler) => void;
 
   /**
-   * Removes a previously added {@link onRecalibrate} handler.
+   * Removes a previously added {@link onTrigger} handler.
    */
-  readonly offRecalibrate: (handler: FXControllerHandler) => void;
+  readonly offTrigger: (handler: FXControllerHandler) => void;
 
   /**
    * Calls the given handler whenever the controller tweens (i.e. interpolates)
@@ -277,31 +276,31 @@ export class FXController {
   ) => void;
 
   /**
-   * This creates a new async generator that will yield calibration data
+   * This creates a new async generator that will yield update data
    * whenever the returned helper callback is called.
    */
-  static createCalibrator(): FXCalibrationPair {
-    let resolve: (data: FXCalibration) => void;
+  static createTrigger(): FXTriggerPair {
+    let resolve: (data: FXStateUpdate) => void;
 
     const nextPromise = () =>
-      MH.newPromise<FXCalibration>((r) => (resolve = r));
+      MH.newPromise<FXStateUpdate>((r) => (resolve = r));
 
-    const calibrator: FXCalibrator = async function* () {
+    const trigger: FXTrigger = async function* () {
       while (true) {
         yield await nextPromise();
       }
     };
 
-    const sendCalibration = (data: FXCalibration) => resolve(data);
+    const sendUpdate = (data: FXStateUpdate) => resolve(data);
 
-    return { calibrator, sendCalibration };
+    return { trigger, sendUpdate };
   }
 
   constructor(config?: FXControllerConfig) {
     const {
       parent,
       negate: defaultNegate,
-      calibrator: userCalibrator = MC.S_SCROLL,
+      trigger: userTrigger = MC.S_SCROLL,
     } = config ?? {};
 
     const effectiveConfig: FXControllerEffectiveConfig = {
@@ -320,7 +319,7 @@ export class FXController {
 
     let scrollWatcher: ScrollWatcher | null = null;
     const viewWatcher = ViewWatcher.reuse();
-    let calibrator: FXCalibrator;
+    let trigger: FXTrigger;
 
     const effectsMap: EffectsMap = new Map();
     const compositionsMap: CompositionMap = new Map();
@@ -334,7 +333,7 @@ export class FXController {
       FXControllerCallback
     >();
 
-    const recalibrateCallbacks = MH.newMap<
+    const triggerCallbacks = MH.newMap<
       FXControllerHandler,
       FXControllerCallback
     >();
@@ -372,7 +371,7 @@ export class FXController {
         effectiveConfig.disabled = false;
 
         invokeCallbacks(toggleCallbacks);
-        pollCalibrator();
+        pollTrigger();
       }
     };
 
@@ -537,11 +536,11 @@ export class FXController {
 
     // ----------
 
-    const onRecalibrate = (handler: FXControllerHandler) =>
-      addNewCallbackToMap(handler, recalibrateCallbacks);
+    const onTrigger = (handler: FXControllerHandler) =>
+      addNewCallbackToMap(handler, triggerCallbacks);
 
-    const offRecalibrate = (handler: FXControllerHandler) =>
-      MH.remove(recalibrateCallbacks.get(handler));
+    const offTrigger = (handler: FXControllerHandler) =>
+      MH.remove(triggerCallbacks.get(handler));
 
     // ----------
 
@@ -703,7 +702,7 @@ export class FXController {
           data._activeSince = isActive ? state : null;
         });
 
-        onRecalibrate(callback);
+        onTrigger(callback);
         onReset(callback.remove);
       };
 
@@ -755,25 +754,20 @@ export class FXController {
 
     // ----------
 
-    const pollCalibrator = async () => {
-      for await (const data of calibrator()) {
+    const pollTrigger = async () => {
+      for await (const data of trigger()) {
         if (isDisabled()) {
           return;
         }
 
-        recalibrate(data);
+        // XXX check if it has changed
+        MH.assign(currentFXState, updateState(currentFXState, this, data));
+        tween();
+        invokeCallbacks(triggerCallbacks);
       }
     };
 
     // ----------
-
-    const recalibrate = (data: FXCalibration) => {
-      MH.assign(currentFXState, recalibrateState(currentFXState, this, data));
-      tween();
-      invokeCallbacks(recalibrateCallbacks);
-    };
-
-    // --------------------
 
     this.add = (effects, range) => {
       const effectData = newEffectData(range);
@@ -797,8 +791,8 @@ export class FXController {
     this.onReset = onReset;
     this.offReset = offReset;
 
-    this.onRecalibrate = onRecalibrate;
-    this.offRecalibrate = offRecalibrate;
+    this.onTrigger = onTrigger;
+    this.offTrigger = offTrigger;
 
     this.onTween = onTween;
     this.offTween = offTween;
@@ -817,14 +811,14 @@ export class FXController {
 
     // --------------------
 
-    if (userCalibrator === MC.S_SCROLL) {
+    if (userTrigger === MC.S_SCROLL) {
       scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
-      let sendCalibration;
-      ({ calibrator, sendCalibration } = FXController.createCalibrator());
+      let sendUpdate;
+      ({ trigger, sendUpdate } = FXController.createTrigger());
 
       const scrollable = undefined; // XXX
       const scrollHandler: OnScrollHandler = (e, scrollData) =>
-        sendCalibration({
+        sendUpdate({
           x: {
             min: 0,
             max: scrollData[MC.S_SCROLL_WIDTH],
@@ -849,11 +843,11 @@ export class FXController {
 
       addOrRemoveWatcher();
       onToggle(addOrRemoveWatcher);
-    } else if (MH.isFunction(userCalibrator)) {
-      calibrator = userCalibrator;
+    } else if (MH.isFunction(userTrigger)) {
+      trigger = userTrigger;
     } else {
       throw MH.usageError(
-        "FXController calibrator must be an async generator or 'scroll'",
+        "FXController trigger must be an async generator or 'scroll'",
       );
     }
 
@@ -861,7 +855,7 @@ export class FXController {
     setDepth(config);
 
     if (!isDisabled()) {
-      pollCalibrator();
+      pollTrigger();
     }
   }
 }
@@ -895,10 +889,10 @@ export type FXControllerConfig = {
   /**
    * XXX update
    *
-   * The "calibrator" to use to get new minimum, maximum and target values for
-   * the {@link FXAxisState}s.
+   * The trigger to use to get new minimum, maximum and target values for the
+   * {@link FXAxisState}s.
    *
-   * By default, an internal scroll-based calibrator is used which listens for
+   * By default, an internal scroll-based trigger is used which listens for
    * scrolling and updates the state as follows:
    * - x.min: 0
    * - y.min: 0
@@ -912,16 +906,16 @@ export type FXControllerConfig = {
    * - y.target: {@link scrollable}'s scroll top offset
    * - z.target: 0
    *
-   * If you want to use a custom calibrator it should be an infinite async
-   * generator that yields new {@link FXCalibration | calibration data}.
+   * If you want to use a custom trigger it should be an infinite async
+   * generator that yields new {@link FXStateUpdate | update data}.
    *
    * If the data is coming from event-based triggers and you want to simply call
    * a function when there's new data, you can use
-   * {@link FXController.createCalibrator}.
+   * {@link FXController.createTrigger}.
    *
    * @defaultValue undefined // A default XXX instance
    */
-  calibrator?: FXCalibrator;
+  trigger?: FXTrigger;
 
   // XXX custom tweener or "criticallyDamped", "quadratic", etc
 
@@ -1023,23 +1017,23 @@ export type FXControllerHandler =
 //   - controller based (with same or custom state); support trigger on
 //     percentage done of tweening
 // - delay
-export type FXCalibrator = () => AsyncGenerator<
-  FXCalibration,
-  never,
-  undefined
->;
+// Also a factory function for creating:
+// - event-based trigger
+// - poll-based trigger
+// XXX Rename to FXTrigger
+export type FXTrigger = () => AsyncGenerator<FXStateUpdate, never, undefined>;
 
-export type FXCalibrationPair = {
+export type FXTriggerPair = {
   /**
-   * This is what you pass to {@link FXControllerConfig.calibrator}.
+   * This is what you pass to {@link FXControllerConfig.trigger}.
    */
-  calibrator: FXCalibrator;
+  trigger: FXTrigger;
 
   /**
-   * This is what you call with your latest {@link FXCalibration} data to have
-   * it trigger the controller's recalibration.
+   * This is what you call with your latest {@link FXStateUpdate} data to have
+   * it trigger the controller.
    */
-  sendCalibration: (data: FXCalibration) => void;
+  sendUpdate: (data: FXStateUpdate) => void;
 };
 
 // ------------------------------

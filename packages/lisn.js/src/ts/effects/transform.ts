@@ -115,7 +115,7 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Returns a `perspective(...) matrix3d(...)` string for use as a CSS property.
    *
-   * If no perspective has been set, it's omitted from the string.
+   * If no perspective has been set or it's `null`, it's omitted from the string.
    *
    * @param negate See {@link export}
    */
@@ -124,10 +124,10 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Returns the current perspective (since the last call to {@link apply}).
    *
-   * @returns A non-empty CSS string for perspective or `null` if no perspective
-   * handler has been set.
+   * @returns The last applied perspective, or `undefined` if no perspective has
+   * been applied.
    */
-  readonly toPerspective: () => string | null;
+  readonly toPerspective: () => number | null | undefined;
 
   /**
    * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrixReadOnly | DOMMatrixReadOnly} representing the transform.
@@ -208,11 +208,15 @@ export class Transform implements EffectInterface<"transform"> {
   readonly rotate: (handler: FXHandler<RotateHandlerReturn>) => Transform;
 
   constructor(config?: TransformConfig) {
-    const { isAbsolute = false, init } = config ?? {};
+    const {
+      isAbsolute = false,
+      init,
+      perspective: initPerspective,
+    } = config ?? {};
     const transformers: FXHandler<void>[] = []; // not including perspective
     let perspectiveFn: FXHandler<void> | null = null;
 
-    let currentPerspective: number | null = null;
+    let currentPerspective: number | null | undefined = initPerspective;
     const stateMatrix = newMatrix(false, init);
 
     // ----------
@@ -240,7 +244,7 @@ export class Transform implements EffectInterface<"transform"> {
     // ----------
 
     const reset = () => {
-      currentPerspective = null;
+      currentPerspective = undefined;
 
       stateMatrix.m12 =
         stateMatrix.m13 =
@@ -281,7 +285,12 @@ export class Transform implements EffectInterface<"transform"> {
       return this;
     };
 
-    this.export = (negate) => new Transform({ init: toMatrix(negate) });
+    this.export = (negate) =>
+      new Transform({
+        isAbsolute: isAbsolute,
+        init: toMatrix(negate),
+        perspective: currentPerspective,
+      });
 
     this.toComposition = (...others) => {
       let toCombine: Transform[] = [];
@@ -298,7 +307,13 @@ export class Transform implements EffectInterface<"transform"> {
 
       const resultInit = new DOMMatrix();
       const resultHandlers: HandlerTuple[] = [];
+      let resultPerspective: number | null | undefined = undefined;
       for (const t of toCombine) {
+        const thisPerspective = t.toPerspective();
+        if (thisPerspective !== undefined) {
+          resultPerspective = thisPerspective;
+        }
+
         resultInit.multiplySelf(t.toMatrix());
         resultHandlers.push(...getHandlersFor(t));
       }
@@ -306,6 +321,7 @@ export class Transform implements EffectInterface<"transform"> {
       const composed = new Transform({
         isAbsolute: resultIsAbsolute,
         init: resultInit,
+        perspective: resultPerspective,
       });
 
       for (const h of resultHandlers) {
@@ -323,8 +339,7 @@ export class Transform implements EffectInterface<"transform"> {
         : `perspective(${currentPerspective}px) `) +
       toMatrix(negate).toString();
 
-    this.toPerspective = () =>
-      MH.isNullish(currentPerspective) ? null : `${currentPerspective}px`;
+    this.toPerspective = () => currentPerspective;
 
     this.toMatrix = toMatrix;
     this.toFloat32Array = (negate) => toMatrix(negate).toFloat32Array();
@@ -565,6 +580,14 @@ export type TransformConfig = {
    * @defaultValue undefined // identity matrix
    */
   init?: TransformLike;
+
+  /**
+   * Initial transform to begin with. Note that if {@link isAbsolute} is `true`,
+   * it will be discarded on {@link Transform.apply | apply}.
+   *
+   * @defaultValue undefined
+   */
+  perspective?: number | null;
 };
 
 // ----------------------------------------

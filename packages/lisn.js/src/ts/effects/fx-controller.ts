@@ -314,7 +314,6 @@ export class FXController {
       parent,
       negate: defaultNegate,
       disabled: config?.disabled ?? false,
-      calibrator: userCalibrator,
       // updated below in setLag
       lagX: 0,
       lagY: 0,
@@ -944,7 +943,8 @@ export type FXControllerConfig = {
    * a function when there's new data, you can use
    * {@link FXController.createCalibrator}.
    *
-   * @defaultValue "scroll"
+   * @defaultValue "scroll" XXX don't accept a string, but createCalibrator can
+   * accept "scroll" + scrollable
    */
   calibrator?: "scroll" | FXControllerCalibrator;
 
@@ -1023,8 +1023,6 @@ export type FXControllerEffectiveConfig = {
   parent: FXController | undefined;
   negate: FXController | undefined;
   disabled: boolean;
-  calibrator: "scroll" | FXControllerCalibrator;
-  // XXX interpolator
   lagX: number;
   lagY: number;
   lagZ: number;

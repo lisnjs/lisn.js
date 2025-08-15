@@ -180,9 +180,14 @@ export type FXState = {
  * @example
  *
  * ```typescript
- * declare module "@lisn/effects/effect" {
+ * export class FancyEffect implements EffectInterface<"fancy"> {
+ *   readonly type = "fancy";
+ *   // ... implement remaining methods from EffectInterface
+ * }
+ *
+ * declare module "lisn.js/effects" {
  *   interface EffectRegistry {
- *     transform: Transform;
+ *     fancy: FancyEffect;
  *   }
  * }
  */
@@ -230,6 +235,7 @@ export const getParameters = (
         result -= min;
       }
 
+      // XXX what if max === min or result > 1 or < 0
       result /= max - min;
     }
 

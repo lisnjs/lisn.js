@@ -64,7 +64,14 @@ export const omitKeys = <
 
 // Returns true if the two objects are equal. If values are numeric, it will
 // round to the given number of decimal places.
-export const compareValuesIn = <T extends object>(
+type NestedRecord<T = string | number | undefined | null> = {
+  [key: string]: T | NestedRecord<T>;
+};
+
+export const compareValuesIn = <
+  T extends NestedRecord<V>,
+  V extends string | number | undefined | null,
+>(
   objA: T,
   objB: T,
   roundTo = 3,
@@ -89,6 +96,7 @@ export const compareValuesIn = <T extends object>(
       return false;
     }
   }
+
   return true;
 };
 

@@ -90,49 +90,83 @@ test("omitKeys", () => {
   });
 });
 
-test("compareValuesIn", () => {
-  const objA = {
-    a: 1,
-    b: 2,
-    c: {
-      a: 1,
+describe("compareValuesIn", () => {
+  test("basic", () => {
+    const objA = {
+      a: 1.1112,
       b: 2,
       c: {
-        a: "a",
-        b: "b",
+        a: 1,
+        b: 2,
+        c: {
+          a: "a",
+          b: "b",
+        },
       },
-    },
-  };
+    };
 
-  const objB = {
-    // same
-    a: 1,
-    b: 2,
-    c: {
-      a: 1,
+    const objB = {
+      // same to precision 3
+      a: 1.1111,
       b: 2,
       c: {
-        a: "a",
-        b: "b",
+        a: 1,
+        b: 2,
+        c: {
+          a: "a",
+          b: "b",
+        },
       },
-    },
-  };
+    };
 
-  const objC = {
-    a: 1,
-    b: 2,
-    c: {
-      a: 1,
+    const objC = {
+      a: 1.1111,
       b: 2,
       c: {
-        a: "aa", // diff
-        b: "b",
+        a: 1,
+        b: 2,
+        c: {
+          a: "aa", // diff
+          b: "b",
+        },
       },
-    },
-  };
+    };
 
-  expect(utils.compareValuesIn(objA, objB)).toBe(true);
-  expect(utils.compareValuesIn(objA, objC)).toBe(false);
+    expect(utils.compareValuesIn(objA, objB)).toBe(true);
+    expect(utils.compareValuesIn(objA, objC)).toBe(false);
+  });
+
+  test("custom precision", () => {
+    const objA = {
+      a: 1.1112,
+      b: 2,
+      c: {
+        a: 1,
+        b: 2,
+        c: {
+          a: "a",
+          b: "b",
+        },
+      },
+    };
+
+    const objB = {
+      // same to precision 3 but not to 4
+      a: 1.1111,
+      b: 2,
+      c: {
+        a: 1,
+        b: 2,
+        c: {
+          a: "a",
+          b: "b",
+        },
+      },
+    };
+
+    expect(utils.compareValuesIn(objA, objB)).toBe(true);
+    expect(utils.compareValuesIn(objA, objB, 4)).toBe(false);
+  });
 });
 
 test("toArrayIfSingle", () => {

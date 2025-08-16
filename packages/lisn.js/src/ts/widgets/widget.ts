@@ -68,12 +68,16 @@ export abstract class Widget {
   /**
    * Disables the functionality of the widget. What this means is specific to
    * each widget.
+   *
+   * If it's already disabled, it does nothing.
    */
   readonly disable: () => Promise<void>;
 
   /**
    * Re-enables the functionality of the widget. What this means is specific to
    * each widget.
+   *
+   * If it's already enabled, it does nothing.
    */
   readonly enable: () => Promise<void>;
 
@@ -227,11 +231,22 @@ export abstract class Widget {
   }
 }
 
-export type WidgetCallbackArgs = [Widget];
-export type WidgetCallback = Callback<WidgetCallbackArgs>;
-export type WidgetHandler =
-  | WidgetCallback
-  | CallbackHandler<WidgetCallbackArgs>;
+/**
+ * The handler is invoked with one argument:
+ *
+ * - The {@link Widget} instance.
+ */
+export type WidgetHandlerArgs = [Widget];
+export type WidgetCallback = Callback<WidgetHandlerArgs>;
+export type WidgetHandler = WidgetCallback | CallbackHandler<WidgetHandlerArgs>;
+
+/**
+ * @ignore
+ * @deprecated
+ *
+ * Deprecated alias for {@link WidgetHandlerArgs}
+ */
+export type WidgetCallbackArgs = WidgetHandlerArgs;
 
 /**
  * **NOTE:** If the function returns a widget or a list of widgets created for

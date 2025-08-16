@@ -214,7 +214,7 @@ export abstract class Openable extends Widget {
     return instances.get(element) ?? null;
   }
 
-  constructor(element: HTMLElement, config: OpenableConfig) {
+  protected constructor(element: HTMLElement, config: OpenableConfig) {
     super(element);
 
     const { isModal, isOffcanvas } = config;

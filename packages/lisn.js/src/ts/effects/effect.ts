@@ -1,5 +1,5 @@
 /**
- * @module Effects/Effect
+ * @module Effects
  *
  * @since v1.3.0
  */

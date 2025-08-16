@@ -10,9 +10,9 @@ import { settings } from "@lisn/globals/settings";
 
 import { AtLeastOne, RawOrRelativeNumber } from "@lisn/globals/types";
 
-import { newAnimationFrameIterator } from "@lisn/utils/animations";
+import { animationFrameGenerator } from "@lisn/utils/animations";
 import { setStyleProp, delStyleProp } from "@lisn/utils/css-alter";
-import { newCriticallyDampedIterator, toRawNum } from "@lisn/utils/math";
+import { toRawNum } from "@lisn/utils/math";
 import { deepCopy, compareValuesIn } from "@lisn/utils/misc";
 
 import {
@@ -29,8 +29,8 @@ import {
 } from "@lisn/effects/effect";
 
 import { FXComposition } from "@lisn/effects/fx-composition";
-
 import { FXTrigger } from "@lisn/effects/triggers/fx-trigger";
+import { FXTweener, FX_TWEENERS } from "@lisn/effects/fx-tweener";
 
 /**
  * {@link FXComposer} XXX TODO
@@ -219,11 +219,17 @@ export class FXComposer {
    * whenever the returned helper callback is called.
    */
   constructor(config: FXComposerConfig) {
-    const { parent, negate: defaultNegate, trigger } = config ?? {};
+    const {
+      parent,
+      negate: defaultNegate,
+      trigger,
+      tweener = FX_TWEENERS.spring,
+    } = config ?? {};
 
     const effectiveConfig: FXComposerEffectiveConfig = {
       parent,
       negate: defaultNegate,
+      tweener,
       // updated below in setLag
       lagX: 0,
       lagY: 0,
@@ -454,66 +460,68 @@ export class FXComposer {
 
     // ----------
 
-    let isTweening = false;
+    const axisMotion: {
+      [k in "x" | "y" | "z"]: {
+        _done: boolean;
+        _totalTime: number;
+        _velocity: number;
+      };
+    } = {
+      x: { _done: true, _totalTime: 0, _velocity: 0 },
+      y: { _done: true, _totalTime: 0, _velocity: 0 },
+      z: { _done: true, _totalTime: 0, _velocity: 0 },
+    };
+
+    const isTweening = () =>
+      !axisMotion.x._done || !axisMotion.y._done || !axisMotion.z._done;
+
     const tween = async (snap = false) => {
-      if (isTweening) {
+      if (isTweening()) {
         return;
       }
 
-      isTweening = true;
+      for await (const { sinceLast: deltaTime } of animationFrameGenerator()) {
+        for (const a of ["x", "y", "z"] as const) {
+          const fxParams = currentFXState[a];
+          const motion = axisMotion[a];
 
-      const iterators: {
-        x?: ReturnType<typeof newCriticallyDampedIterator>;
-        y?: ReturnType<typeof newCriticallyDampedIterator>;
-        z?: ReturnType<typeof newCriticallyDampedIterator>;
-      } = {};
-
-      for await (const { sinceLast: dt } of newAnimationFrameIterator()) {
-        const { lagX, lagY, lagZ } = effectiveConfig;
-        const lags = { x: lagX, y: lagY, z: lagZ };
-
-        for (const axis of ["x", "y", "z"] as const) {
-          const lag = lags[axis];
-          const { target, current } = currentFXState[axis];
-          let done = current === target;
-
-          if (MH.isNullish(iterators[axis])) {
+          if (motion._done) {
             // Starting a new tween now
-            currentFXState[axis].initial = current;
+            fxParams.initial = fxParams.current;
+            motion._done = false;
+            motion._totalTime = 0;
           }
 
-          currentFXState[axis].previous = current;
+          motion._totalTime += deltaTime;
+
+          fxParams.previous = fxParams.current;
 
           if (snap) {
-            currentFXState[axis].current = target;
-            done = true;
+            fxParams.current = fxParams.target;
           }
 
-          if (!done) {
-            const springState = {
-              l: current,
-              lTarget: target,
+          const { current, target, lag } = fxParams;
+          motion._done = current === target;
+
+          if (!motion._done) {
+            const result = tweener({
+              current,
+              target,
               lag,
-              dt,
-            };
+              velocity: motion._velocity,
+              deltaTime,
+              totalTime: motion._totalTime,
+            });
 
-            iterators[axis] ??= newCriticallyDampedIterator(springState);
-
-            const result = iterators[axis].next(springState);
-            currentFXState[axis].current = result.value.l;
-            done = !!result.done;
-          }
-
-          if (done) {
-            delete iterators[axis];
+            fxParams.current = result.current;
+            motion._velocity = result.velocity;
           }
         }
 
         recompose();
         invokeCallbacks(tweenCallbacks);
 
-        if (!iterators.x && !iterators.y && !iterators.z) {
-          isTweening = false;
+        if (!isTweening()) {
           break;
         }
       }
@@ -637,7 +645,12 @@ export type FXComposerConfig = {
    */
   negate?: FXComposer;
 
-  // XXX custom tweener or "criticallyDamped", "quadratic", etc
+  /**
+   * A custom tweener to calculate the interpolation from current to target.
+   *
+   * @defaultValue {@link FX_TWEENERS.spring}
+   */
+  tweener?: FXTweener;
 
   /**
    * The time in milliseconds it takes for effect states to catch up to the
@@ -710,6 +723,7 @@ export type FXComposerConfig = {
 export type FXComposerEffectiveConfig = {
   parent: FXComposer | undefined;
   negate: FXComposer | undefined;
+  tweener: FXTweener;
   lagX: number;
   lagY: number;
   lagZ: number;

@@ -9,7 +9,7 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
-import { isValidNum, sum } from "@lisn/utils/math";
+import { sum } from "@lisn/utils/math";
 
 import { newXWeakMap } from "@lisn/modules/x-map";
 
@@ -19,6 +19,7 @@ import {
   FXState,
   toParameters,
   scaleParameters,
+  validateOutputParameters,
 } from "@lisn/effects/effect";
 
 import { FXComposer } from "@lisn/effects/fx-composer";
@@ -335,7 +336,7 @@ export class Transform implements EffectInterface<"transform"> {
       addOwnHandler([PERSPECTIVE, handler], (parameters, state, composer) => {
         const perspective = handler(parameters, state, composer);
         if (perspective !== undefined) {
-          validateInputs("Perspective", [perspective ?? 0]);
+          validateOutputParameters("Perspective", [perspective ?? 0]);
 
           if (MH.isNullish(currentPerspective) || MH.isNullish(perspective)) {
             currentPerspective = perspective;
@@ -359,7 +360,7 @@ export class Transform implements EffectInterface<"transform"> {
         if (!MH.isNullish(result)) {
           const { x = 0, y = 0, z = 0 } = result;
 
-          validateInputs("Translate distance", [x, y, z]);
+          validateOutputParameters("Translate distance", [x, y, z]);
           stateMatrix.translateSelf(x, y, z);
         }
       });
@@ -375,8 +376,8 @@ export class Transform implements EffectInterface<"transform"> {
         if (!MH.isNullish(result)) {
           const { s = 1, sx = s, sy = s, sz = s, origin = [0, 0, 0] } = result;
 
-          validateInputs("Scale factor", [sx, sy, sz], true);
-          validateInputs("Origin", origin);
+          validateOutputParameters("Scale factor", [sx, sy, sz], true);
+          validateOutputParameters("Origin", origin);
           stateMatrix.scaleSelf(sx, sy, sz, ...origin);
         }
       });
@@ -392,7 +393,7 @@ export class Transform implements EffectInterface<"transform"> {
         if (!MH.isNullish(result)) {
           const { deg = 0, degX = deg, degY = deg } = result;
 
-          validateInputs("Skew angle", [degX, degY]);
+          validateOutputParameters("Skew angle", [degX, degY]);
           stateMatrix.skewXSelf(degX).skewYSelf(degY);
         }
       });
@@ -409,8 +410,8 @@ export class Transform implements EffectInterface<"transform"> {
         if (!MH.isNullish(result)) {
           const { deg = 0, axis = [0, 0, 1] } = result;
 
-          validateInputs("Rotation angle", [deg]);
-          validateInputs("Rotation axis", [sum(...axis)], true);
+          validateOutputParameters("Rotation angle", [deg]);
+          validateOutputParameters("Rotation axis", [sum(...axis)], true);
           stateMatrix.rotateAxisAngleSelf(
             axis[0],
             axis[1] ?? 0,
@@ -605,6 +606,14 @@ export type TransformConfig = {
 
 // ----------------------------------------
 
+declare module "@lisn/effects/effect" {
+  interface EffectRegistry {
+    transform: Transform;
+  }
+}
+
+// ----------------------------------------
+
 const PERSPECTIVE: unique symbol = MC.SYMBOL() as typeof PERSPECTIVE;
 const TRANSLATE: unique symbol = MC.SYMBOL() as typeof TRANSLATE;
 const SCALE: unique symbol = MC.SYMBOL() as typeof SCALE;
@@ -675,24 +684,4 @@ function newMatrix(readonly: boolean, init?: TransformLike) {
             : initM,
         ),
   );
-}
-
-const validateInputs = (
-  name: string,
-  inputs: number[],
-  requireNonZero = false,
-) => {
-  for (const i of inputs) {
-    if (!isValidNum(i) || (requireNonZero && MH.abs(i) < 1e-10)) {
-      throw MH.usageError(
-        `${name} must be finite${requireNonZero ? " and non-zero" : ""}`,
-      );
-    }
-  }
-};
-
-declare module "@lisn/effects/effect" {
-  interface EffectRegistry {
-    transform: Transform;
-  }
 }

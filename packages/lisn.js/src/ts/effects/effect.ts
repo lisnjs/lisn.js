@@ -403,3 +403,22 @@ export const getUpdatedState = (
     z: updateAxis("z"),
   };
 };
+
+/**
+ * @ignore
+ * @internal
+ */
+
+export const validateOutputParameters = (
+  name: string,
+  outputs: number[],
+  requireNonZero = false,
+) => {
+  for (const p of outputs) {
+    if (!isValidNum(p) || (requireNonZero && MH.abs(p) < 1e-10)) {
+      throw MH.usageError(
+        `${name} must be finite${requireNonZero ? " and non-zero" : ""}`,
+      );
+    }
+  }
+};

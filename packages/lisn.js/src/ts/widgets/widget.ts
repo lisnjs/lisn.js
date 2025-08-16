@@ -64,7 +64,7 @@ import { DOMWatcher } from "@lisn/watchers/dom-watcher";
 
 import debug from "@lisn/debug/debug";
 
-export class Widget {
+export abstract class Widget {
   /**
    * Disables the functionality of the widget. What this means is specific to
    * each widget.
@@ -142,7 +142,7 @@ export class Widget {
    * **IMPORTANT:** If ID is given and there's already a widget with this ID on
    * this element, it will be destroyed!
    */
-  constructor(element: Element, config?: { id?: string }) {
+  protected constructor(element: Element, config?: { id?: string }) {
     const logger = debug
       ? new debug.Logger({
           name: `${this.constructor.name}-${formatAsString(element)}`,

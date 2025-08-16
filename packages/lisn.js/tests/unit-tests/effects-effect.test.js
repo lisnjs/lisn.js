@@ -1,8 +1,14 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { deepCopy, copyExistingKeys } = window.LISN.utils;
-const { toParameters, scaleParameters, getUpdatedState, FXComposer } =
-  window.LISN.effects;
+const {
+  toParameters,
+  scaleParameters,
+  getUpdatedState,
+  exportEffectsMap,
+  FXComposer,
+  Transform,
+} = window.LISN.effects;
 
 window.LISN.settings.effectLag = 0;
 
@@ -135,9 +141,9 @@ describe("toParameters", () => {
     });
 
     // previous is 0 and min is 0, so the absolute parameters are the same
-    expect(
-      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
-    ).toEqual(parameters);
+    expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
+      parameters,
+    );
   });
 
   test("with positive min", () => {
@@ -182,16 +188,16 @@ describe("toParameters", () => {
       nz: 3 / 7,
     });
 
-    expect(
-      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
-    ).toEqual({
-      x: x,
-      nx: 3 / 7, // (curr - min) / (max - min)
-      y: y,
-      ny: 3 / 7,
-      z: z,
-      nz: 3 / 7,
-    });
+    expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
+      {
+        x: x,
+        nx: 3 / 7, // (curr - min) / (max - min)
+        y: y,
+        ny: 3 / 7,
+        z: z,
+        nz: 3 / 7,
+      },
+    );
   });
 
   test("with negative min", () => {
@@ -230,16 +236,16 @@ describe("toParameters", () => {
       nz: 0.25,
     });
 
-    expect(
-      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
-    ).toEqual({
-      x,
-      nx: 0.75,
-      y,
-      ny: 0.75,
-      z,
-      nz: 0.75,
-    });
+    expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
+      {
+        x,
+        nx: 0.75,
+        y,
+        ny: 0.75,
+        z,
+        nz: 0.75,
+      },
+    );
   });
 
   test("with negative current", () => {
@@ -278,16 +284,16 @@ describe("toParameters", () => {
       nz: -0.25,
     });
 
-    expect(
-      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
-    ).toEqual({
-      x: -x,
-      nx: 0.25,
-      y: -y,
-      ny: 0.25,
-      z: -z,
-      nz: 0.25,
-    });
+    expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
+      {
+        x: -x,
+        nx: 0.25,
+        y: -y,
+        ny: 0.25,
+        z: -z,
+        nz: 0.25,
+      },
+    );
   });
 
   test("with previous", () => {
@@ -326,16 +332,16 @@ describe("toParameters", () => {
       nz: 0.5 - 1 / 8,
     });
 
-    expect(
-      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
-    ).toEqual({
-      x,
-      nx: 0.5,
-      y,
-      ny: 0.5,
-      z,
-      nz: 0.5,
-    });
+    expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
+      {
+        x,
+        nx: 0.5,
+        y,
+        ny: 0.5,
+        z,
+        nz: 0.5,
+      },
+    );
   });
 
   test("invalid state", () => {
@@ -376,16 +382,16 @@ describe("toParameters", () => {
       nz: 0,
     });
 
-    expect(
-      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
-    ).toEqual({
-      x,
-      nx: 0,
-      y: y / 2,
-      ny: 1,
-      z: z / 2,
-      nz: 0,
-    });
+    expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
+      {
+        x,
+        nx: 0,
+        y: y / 2,
+        ny: 1,
+        z: z / 2,
+        nz: 0,
+      },
+    );
   });
 
   test("scalerFn", () => {
@@ -903,4 +909,22 @@ describe("getUpdatedState: with update data", () => {
       expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
   }
+});
+
+test("exportEffectsMap", () => {
+  const map = new Map();
+  const EffectA = class extends Transform {
+    type = "effectA";
+  };
+
+  const EffectB = class extends Transform {
+    type = "effectB";
+  };
+
+  const effectA = new EffectA();
+  const effectB = new EffectA();
+  map.set(effectA.type, effectA);
+  map.set(effectB.type, effectB);
+
+  // XXX
 });

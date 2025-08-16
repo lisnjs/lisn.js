@@ -34,7 +34,7 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
   /**
    * Updates the effect as per the given state.
    */
-  update: (state: FXState, composer: FXComposer) => Effect<T>;
+  update: (state: FXState, composer: FXComposer) => this;
 
   /**
    * Returns a **static copy** of the effect that has the current state/value of
@@ -66,14 +66,8 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
   toCss: (negate?: Effect<T>) => Record<string, string>;
 }
 
-export type Effect<T extends keyof EffectRegistry> = EffectRegistry[T] &
-  EffectInterface<T>;
-
-export type EffectsList<TL extends readonly (keyof EffectRegistry)[]> = [
-  ...{
-    [T in keyof TL]: Effect<TL[T]>;
-  },
-];
+export type Effect<T extends keyof EffectRegistry = keyof EffectRegistry> =
+  EffectRegistry[T] & EffectInterface<T>;
 
 export type FXHandler<R> = (
   parameters: FXParams,

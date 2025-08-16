@@ -70,10 +70,8 @@ export class Transform implements EffectInterface<"transform"> {
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If any of the values returned by the {@link FXHandler}
    *                s is invalid.
-   *
-   * @returns The same {@link Transform} instance.
    */
-  readonly update: (state: FXState, composer: FXComposer) => Transform;
+  readonly update: (state: FXState, composer: FXComposer) => this;
 
   /**
    * Returns a **static copy** of the transform that has the current state/value
@@ -153,12 +151,10 @@ export class Transform implements EffectInterface<"transform"> {
    * The handler receives the unscaled original
    * {@link Effects/Effect.FXParams | parameters}, regardless of the
    * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
-   *
-   * @returns The same {@link Transform} instance.
    */
   readonly setPerspective: (
     handler: FXHandler<PerspectiveHandlerReturn>,
-  ) => Transform;
+  ) => this;
 
   /**
    * Adds a translation handler.
@@ -166,10 +162,8 @@ export class Transform implements EffectInterface<"transform"> {
    * The handler receives scaled
    * {@link Effects/Effect.FXParams | parameters}, divided by the parallax
    * depth along the respective axis.
-   *
-   * @returns The same {@link Transform} instance.
    */
-  readonly translate: (handler: FXHandler<TranslateHandlerReturn>) => Transform;
+  readonly translate: (handler: FXHandler<TranslateHandlerReturn>) => this;
 
   /**
    * Adds a scaling handler.
@@ -177,10 +171,8 @@ export class Transform implements EffectInterface<"transform"> {
    * The handler receives the unscaled original
    * {@link Effects/Effect.FXParams | parameters}, regardless of the
    * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
-   *
-   * @returns The same {@link Transform} instance.
    */
-  readonly scale: (handler: FXHandler<ScaleHandlerReturn>) => Transform;
+  readonly scale: (handler: FXHandler<ScaleHandlerReturn>) => this;
 
   /**
    * Adds a skewing handler.
@@ -191,10 +183,8 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
    * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
-   *
-   * @returns The same {@link Transform} instance.
    */
-  readonly skew: (handler: FXHandler<SkewHandlerReturn>) => Transform;
+  readonly skew: (handler: FXHandler<SkewHandlerReturn>) => this;
 
   /**
    * Adds a rotation handler.
@@ -202,10 +192,8 @@ export class Transform implements EffectInterface<"transform"> {
    * The handler receives scaled
    * {@link Effects/Effect.FXParams | parameters}, multiplied by the
    * parallax depth along the respective axis.
-   *
-   * @returns The same {@link Transform} instance.
    */
-  readonly rotate: (handler: FXHandler<RotateHandlerReturn>) => Transform;
+  readonly rotate: (handler: FXHandler<RotateHandlerReturn>) => this;
 
   constructor(config?: TransformConfig) {
     const {

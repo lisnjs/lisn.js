@@ -1,7 +1,7 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { deepCopy, copyExistingKeys } = window.LISN.utils;
-const { toParameters, scaleParameters, updateState, FXController } =
+const { toParameters, scaleParameters, getUpdatedState, FXController } =
   window.LISN.effects;
 
 window.LISN.settings.effectLag = 0;
@@ -343,7 +343,7 @@ describe("toParameters", () => {
       y = 100,
       z = 10;
 
-    // validation is fully tested by updateState, so only test here that
+    // validation is fully tested by getUpdatedState, so only test here that
     // it's being passed through validation
     const state = {
       // incomplete
@@ -573,7 +573,7 @@ describe("scaleParameters", () => {
   });
 });
 
-describe("updateState: validate current", () => {
+describe("getUpdatedState: validate current", () => {
   const depthX = 2,
     depthY = 3,
     depthZ = 4;
@@ -588,8 +588,8 @@ describe("updateState: validate current", () => {
       { x: { depth: depthX }, y: { depth: depthY }, z: { depth: depthZ } },
       DEFAULT_STATE,
     );
-    expect(updateState({}, controller)).toEqual(thisDefaultState);
-    expect(updateState({}, DEFAULT_CONTROLLER)).toEqual(DEFAULT_STATE);
+    expect(getUpdatedState({}, controller)).toEqual(thisDefaultState);
+    expect(getUpdatedState({}, DEFAULT_CONTROLLER)).toEqual(DEFAULT_STATE);
   });
 
   for (const axis of ["x", "y", "z"]) {
@@ -599,7 +599,7 @@ describe("updateState: validate current", () => {
         const expected = deepCopy(state);
 
         state[axis][prop] = 1000;
-        expect(updateState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, controller)).toEqual(expected);
       });
     }
 
@@ -608,7 +608,7 @@ describe("updateState: validate current", () => {
       const expected = deepCopy(state);
 
       [state[axis].min, state[axis].max] = [state[axis].max, state[axis].min];
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: missing min`, () => {
@@ -617,7 +617,7 @@ describe("updateState: validate current", () => {
       expected[axis].min = 0;
 
       delete state[axis].min;
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: invalid min`, () => {
@@ -626,7 +626,7 @@ describe("updateState: validate current", () => {
       expected[axis].min = 0;
 
       state[axis].min = NaN;
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: missing max (min < 0)`, () => {
@@ -642,7 +642,7 @@ describe("updateState: validate current", () => {
           0;
 
       delete state[axis].max;
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: invalid max (min < 0)`, () => {
@@ -658,7 +658,7 @@ describe("updateState: validate current", () => {
           0;
 
       state[axis].max = NaN;
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: missing max (min > 0)`, () => {
@@ -675,7 +675,7 @@ describe("updateState: validate current", () => {
           min;
 
       delete state[axis].max;
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: invalid max (min > 0)`, () => {
@@ -692,7 +692,7 @@ describe("updateState: validate current", () => {
           min;
 
       state[axis].max = NaN;
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
 
     for (const prop of ["initial", "previous", "current", "target"]) {
@@ -702,7 +702,7 @@ describe("updateState: validate current", () => {
         expected[axis][prop] = expected[axis].min;
 
         state[axis][prop] = state[axis].min - 10;
-        expect(updateState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, controller)).toEqual(expected);
       });
 
       test(`${axis}: ${prop} > max`, () => {
@@ -711,7 +711,7 @@ describe("updateState: validate current", () => {
         expected[axis][prop] = expected[axis].max;
 
         state[axis][prop] = state[axis].max + 10;
-        expect(updateState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, controller)).toEqual(expected);
       });
 
       test(`${axis}: missing ${prop}`, () => {
@@ -720,7 +720,7 @@ describe("updateState: validate current", () => {
         expected[axis][prop] = expected[axis].min;
 
         delete state[axis][prop];
-        expect(updateState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, controller)).toEqual(expected);
       });
 
       test(`${axis}: invalid ${prop}`, () => {
@@ -729,7 +729,7 @@ describe("updateState: validate current", () => {
         expected[axis][prop] = expected[axis].min;
 
         state[axis][prop] = NaN;
-        expect(updateState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, controller)).toEqual(expected);
       });
     }
 
@@ -749,7 +749,7 @@ describe("updateState: validate current", () => {
       delete state[axis].previous;
       state[axis].current = 0; // < min
       state[axis].target = min * 2; // > new max
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
 
     test(`${axis}: multiple invalid v2`, () => {
@@ -768,12 +768,12 @@ describe("updateState: validate current", () => {
       delete state[axis].previous;
       state[axis].current = -100; // < new min
       state[axis].target = max * 2; // > max
-      expect(updateState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, controller)).toEqual(expected);
     });
   }
 });
 
-describe("updateState: with update data", () => {
+describe("getUpdatedState: with update data", () => {
   const depthX = 2,
     depthY = 3,
     depthZ = 4;
@@ -784,7 +784,7 @@ describe("updateState: with update data", () => {
   );
 
   test("missing", () => {
-    expect(updateState(dummyState, controller)).toEqual(dummyState);
+    expect(getUpdatedState(dummyState, controller)).toEqual(dummyState);
   });
 
   test("basic", () => {
@@ -793,7 +793,7 @@ describe("updateState: with update data", () => {
     const expected = deepCopy(state);
     copyExistingKeys(update, expected);
 
-    expect(updateState(state, controller, update)).toEqual(expected);
+    expect(getUpdatedState(state, controller, update)).toEqual(expected);
   });
 
   test("not modifying input state", () => {
@@ -803,7 +803,7 @@ describe("updateState: with update data", () => {
     const expected = deepCopy(state);
     copyExistingKeys(update, expected);
 
-    expect(updateState(state, controller, update)).toEqual(expected);
+    expect(getUpdatedState(state, controller, update)).toEqual(expected);
     expect(state).toEqual(copy);
   });
 
@@ -818,7 +818,7 @@ describe("updateState: with update data", () => {
     delete update.z.target;
 
     const copy = deepCopy(update);
-    updateState(state, controller, update);
+    getUpdatedState(state, controller, update);
     expect(update).toEqual(copy);
   });
 
@@ -833,7 +833,7 @@ describe("updateState: with update data", () => {
         update[axis].max,
         update[axis].min,
       ];
-      expect(updateState(state, controller, update)).toEqual(expected);
+      expect(getUpdatedState(state, controller, update)).toEqual(expected);
     });
 
     for (const prop of ["min", "max", "target"]) {
@@ -846,7 +846,7 @@ describe("updateState: with update data", () => {
         expected[axis][prop] = state[axis][prop]; // preserved
 
         delete update[axis][prop];
-        expect(updateState(state, controller, update)).toEqual(expected);
+        expect(getUpdatedState(state, controller, update)).toEqual(expected);
       });
 
       test(`${axis}: invalid ${prop}`, () => {
@@ -858,7 +858,7 @@ describe("updateState: with update data", () => {
         expected[axis][prop] = state[axis][prop]; // preserved
 
         update[axis][prop] = NaN;
-        expect(updateState(state, controller, update)).toEqual(expected);
+        expect(getUpdatedState(state, controller, update)).toEqual(expected);
       });
     }
 
@@ -871,7 +871,7 @@ describe("updateState: with update data", () => {
       expected[axis].target = expected[axis].min;
 
       update[axis].target = update[axis].min - 10;
-      expect(updateState(state, controller, update)).toEqual(expected);
+      expect(getUpdatedState(state, controller, update)).toEqual(expected);
     });
 
     test(`${axis}: target > max`, () => {
@@ -883,7 +883,7 @@ describe("updateState: with update data", () => {
       expected[axis].target = expected[axis].max;
 
       update[axis].target = update[axis].max + 10;
-      expect(updateState(state, controller, update)).toEqual(expected);
+      expect(getUpdatedState(state, controller, update)).toEqual(expected);
     });
 
     test(`${axis}: with other props => ignored`, () => {
@@ -900,7 +900,7 @@ describe("updateState: with update data", () => {
 
       update[axis].lag = 1000;
       update[axis].depth = 10;
-      expect(updateState(state, controller, update)).toEqual(expected);
+      expect(getUpdatedState(state, controller, update)).toEqual(expected);
     });
   }
 });

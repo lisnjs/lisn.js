@@ -262,7 +262,7 @@ export const toParameters = (
   controller: FXController,
   options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
 ): FXParams => {
-  state = updateState(state, controller); // validate
+  state = getUpdatedState(state, controller); // validate
   const { isAbsolute, scalerFn } = options ?? {};
 
   const getAxisParam = (axisState: FXAxisState, normalized = false) => {
@@ -287,7 +287,7 @@ export const toParameters = (
     }
 
     if (!isValidNum(result) || result < minResult || result > maxResult) {
-      // updateState should have ensured values are in range.
+      // getUpdatedState should have ensured values are in range.
       throw MH.bugError(
         "FX: Calculated invalid value for normalized axis parameter",
       );
@@ -337,7 +337,7 @@ export const scaleParameters = (
  *
  * Lag and depth are set from the controller's configuration.
  */
-export const updateState = (
+export const getUpdatedState = (
   state: Partial<FXState> | undefined,
   controller: FXController,
   update?: FXStateUpdate,

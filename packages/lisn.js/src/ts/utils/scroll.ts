@@ -18,10 +18,7 @@ import {
   Anchor,
 } from "@lisn/globals/types";
 
-import {
-  newAnimationFrameIterator,
-  ElapsedTimes,
-} from "@lisn/utils/animations";
+import { animationFrameGenerator, ElapsedTimes } from "@lisn/utils/animations";
 import { getComputedStylePropNow } from "@lisn/utils/css-alter";
 import { SCROLL_DIRECTIONS } from "@lisn/utils/directions";
 import {
@@ -711,7 +708,7 @@ const initiateScroll = async (
       })
     : null;
 
-  for await (elapsed of newAnimationFrameIterator(elapsed)) {
+  for await (elapsed of animationFrameGenerator(elapsed)) {
     const deltaTime = elapsed.sinceLast;
     if (deltaTime === 0) {
       // First time

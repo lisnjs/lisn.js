@@ -76,7 +76,7 @@ export const onEveryAnimationFrame = async (
   callback: AnimationCallback,
   elapsed?: ElapsedTimes,
 ) => {
-  for await (elapsed of newAnimationFrameIterator(elapsed)) {
+  for await (elapsed of animationFrameGenerator(elapsed)) {
     const shouldRepeat = callback(elapsed);
     if (!shouldRepeat) {
       break;
@@ -92,7 +92,7 @@ export const onEveryAnimationFrame = async (
  *
  * @example
  * ```javascript
- * for await (const elapsed of newAnimationFrameIterator()) {
+ * for await (const elapsed of animationFrameGenerator()) {
  *   // ... do something
  *   if (done) break;
  * }
@@ -102,7 +102,7 @@ export const onEveryAnimationFrame = async (
  *
  * @category Animations
  */
-export async function* newAnimationFrameIterator(
+export async function* animationFrameGenerator(
   elapsed?: ElapsedTimes,
 ): AsyncGenerator<ElapsedTimes, never, undefined> {
   let startTime: number, previousTimeStamp: number;
@@ -129,6 +129,14 @@ export async function* newAnimationFrameIterator(
 }
 
 /**
+ * @ignore
+ * @internal
+ *
+ * Deprecated alias for {@link animationFrameGenerator}
+ */
+export const newAnimationFrameIterator = animationFrameGenerator;
+
+/**
  * Returns an animation iterator based on {@link criticallyDamped} that starts
  * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
  * the new position and velocity, total time and fractional change in position
@@ -151,7 +159,7 @@ export async function* newAnimationFrameIterator(
  * If you never need to update the target you can use a for await loop:
  *
  * ```javascript
- * const iterator = newCriticallyDampedAnimationIterator({
+ * const iterator = criticallyDampedAnimationGenerator({
  *   l: 10,
  *   lTarget: 100,
  *   lag: 1500
@@ -166,7 +174,7 @@ export async function* newAnimationFrameIterator(
  * If you do need to update the target, then call `next` explicitly:
  *
  * ```javascript
- * const iterator = newCriticallyDampedAnimationIterator({
+ * const iterator = criticallyDampedAnimationGenerator({
  *   l: 10,
  *   lTarget: 100,
  *   lag: 1500
@@ -182,7 +190,7 @@ export async function* newAnimationFrameIterator(
  *
  * @category Animations
  */
-export async function* newCriticallyDampedAnimationIterator(settings: {
+export async function* criticallyDampedAnimationGenerator(settings: {
   lTarget: number;
   lag: number;
   l?: number;
@@ -211,7 +219,7 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
     return { l, v, t, dlFr };
   };
 
-  for await ({ total: t, sinceLast: dt } of newAnimationFrameIterator()) {
+  for await ({ total: t, sinceLast: dt } of animationFrameGenerator()) {
     if (dt === 0) {
       continue;
     }
@@ -225,6 +233,15 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
 
   throw null; // tell TypeScript it never reaches here
 }
+
+/**
+ * @ignore
+ * @internal
+ *
+ * Deprecated alias for {@link criticallyDampedAnimationGenerator}
+ */
+export const newCriticallyDampedAnimationIterator =
+  criticallyDampedAnimationGenerator;
 
 /**
  * @param webAnimationCallback This function is called for each

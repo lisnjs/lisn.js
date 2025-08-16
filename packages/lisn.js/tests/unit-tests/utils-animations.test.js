@@ -31,7 +31,7 @@ test("onEveryAnimationFrame", async () => {
   expect(callback.mock.calls[3][0].sinceLast).toBeGreaterThan(0);
 });
 
-describe("newCriticallyDampedAnimationIterator", () => {
+describe("criticallyDampedAnimationGenerator", () => {
   test("for loop", async () => {
     const lTarget = 200;
     const lag = 100;
@@ -41,7 +41,7 @@ describe("newCriticallyDampedAnimationIterator", () => {
       dlFr = 0,
       i = 0;
 
-    const iterator = utils.newCriticallyDampedAnimationIterator({
+    const iterator = utils.criticallyDampedAnimationGenerator({
       l,
       lTarget,
       lag,
@@ -73,7 +73,7 @@ describe("newCriticallyDampedAnimationIterator", () => {
       dlFr = 0,
       i = 0;
 
-    const iterator = utils.newCriticallyDampedAnimationIterator({
+    const iterator = utils.criticallyDampedAnimationGenerator({
       l,
       lTarget: lTarget / 2,
       lag,

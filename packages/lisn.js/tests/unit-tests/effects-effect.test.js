@@ -1,14 +1,8 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { deepCopy, copyExistingKeys } = window.LISN.utils;
-const {
-  toParameters,
-  scaleParameters,
-  getUpdatedState,
-  exportEffectsMap,
-  FXComposer,
-  Transform,
-} = window.LISN.effects;
+const { toParameters, scaleParameters, getUpdatedState, FXComposer } =
+  window.LISN.effects;
 
 window.LISN.settings.effectLag = 0;
 
@@ -909,22 +903,4 @@ describe("getUpdatedState: with update data", () => {
       expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
   }
-});
-
-test("exportEffectsMap", () => {
-  const map = new Map();
-  const EffectA = class extends Transform {
-    type = "effectA";
-  };
-
-  const EffectB = class extends Transform {
-    type = "effectB";
-  };
-
-  const effectA = new EffectA();
-  const effectB = new EffectA();
-  map.set(effectA.type, effectA);
-  map.set(effectB.type, effectB);
-
-  // XXX
 });

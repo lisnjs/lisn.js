@@ -334,18 +334,16 @@ export class Transform implements EffectInterface<"transform"> {
     this.setPerspective = (handler) => {
       addOwnHandler([PERSPECTIVE, handler], (parameters, state, composer) => {
         const perspective = handler(parameters, state, composer);
-        if (perspective === undefined) {
-          return;
-        }
+        if (perspective !== undefined) {
+          validateInputs("Perspective", [perspective ?? 0]);
 
-        validateInputs("Perspective", [perspective ?? 0]);
-
-        if (MH.isNullish(currentPerspective) || MH.isNullish(perspective)) {
-          currentPerspective = perspective;
-        } else {
-          // If transform is absolute, perspective would have been reset to null,
-          // so this won't apply anyway.
-          currentPerspective += perspective;
+          if (MH.isNullish(currentPerspective) || MH.isNullish(perspective)) {
+            currentPerspective = perspective;
+          } else {
+            // If transform is absolute, perspective would have been reset to null,
+            // so this won't apply anyway.
+            currentPerspective += perspective;
+          }
         }
       });
 
@@ -355,15 +353,15 @@ export class Transform implements EffectInterface<"transform"> {
     this.translate = (handler) => {
       addOwnHandler([TRANSLATE, handler], (parameters, state, composer) => {
         parameters = scaleParameters(parameters, composer, (v, d) => v / d);
+        const result: Partial<TranslateHandlerReturn> =
+          handler(parameters, state, composer) ?? {};
 
-        const {
-          x = 0,
-          y = 0,
-          z = 0,
-        } = handler(parameters, state, composer) ?? {};
+        if (!MH.isNullish(result)) {
+          const { x = 0, y = 0, z = 0 } = result;
 
-        validateInputs("Translate distance", [x, y, z]);
-        stateMatrix.translateSelf(x, y, z);
+          validateInputs("Translate distance", [x, y, z]);
+          stateMatrix.translateSelf(x, y, z);
+        }
       });
 
       return this;
@@ -371,17 +369,16 @@ export class Transform implements EffectInterface<"transform"> {
 
     this.scale = (handler) => {
       addOwnHandler([SCALE, handler], (parameters, state, composer) => {
-        const {
-          s = 1,
-          sx = s,
-          sy = s,
-          sz = s,
-          origin = [0, 0, 0],
-        } = handler(parameters, state, composer) ?? {};
+        const result: Partial<ScaleHandlerReturn> =
+          handler(parameters, state, composer) ?? {};
 
-        validateInputs("Scale factor", [sx, sy, sz], true);
-        validateInputs("Origin", origin);
-        stateMatrix.scaleSelf(sx, sy, sz, ...origin);
+        if (!MH.isNullish(result)) {
+          const { s = 1, sx = s, sy = s, sz = s, origin = [0, 0, 0] } = result;
+
+          validateInputs("Scale factor", [sx, sy, sz], true);
+          validateInputs("Origin", origin);
+          stateMatrix.scaleSelf(sx, sy, sz, ...origin);
+        }
       });
 
       return this;
@@ -389,14 +386,15 @@ export class Transform implements EffectInterface<"transform"> {
 
     this.skew = (handler) => {
       addOwnHandler([SKEW, handler], (parameters, state, composer) => {
-        const {
-          deg = 0,
-          degX = deg,
-          degY = deg,
-        } = handler(parameters, state, composer) ?? {};
+        const result: Partial<SkewHandlerReturn> =
+          handler(parameters, state, composer) ?? {};
 
-        validateInputs("Skew angle", [degX, degY]);
-        stateMatrix.skewXSelf(degX).skewYSelf(degY);
+        if (!MH.isNullish(result)) {
+          const { deg = 0, degX = deg, degY = deg } = result;
+
+          validateInputs("Skew angle", [degX, degY]);
+          stateMatrix.skewXSelf(degX).skewYSelf(degY);
+        }
       });
 
       return this;
@@ -405,17 +403,21 @@ export class Transform implements EffectInterface<"transform"> {
     this.rotate = (handler) => {
       addOwnHandler([ROTATE, handler], (parameters, state, composer) => {
         parameters = scaleParameters(parameters, composer, (v, d) => v * d);
-        const { deg = 0, axis = [0, 0, 1] } =
+        const result: Partial<RotateHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
-        validateInputs("Rotation angle", [deg]);
-        validateInputs("Rotation axis", [sum(...axis)], true);
-        stateMatrix.rotateAxisAngleSelf(
-          axis[0],
-          axis[1] ?? 0,
-          axis[2] ?? 0,
-          deg,
-        );
+        if (!MH.isNullish(result)) {
+          const { deg = 0, axis = [0, 0, 1] } = result;
+
+          validateInputs("Rotation angle", [deg]);
+          validateInputs("Rotation axis", [sum(...axis)], true);
+          stateMatrix.rotateAxisAngleSelf(
+            axis[0],
+            axis[1] ?? 0,
+            axis[2] ?? 0,
+            deg,
+          );
+        }
       });
 
       return this;
@@ -437,122 +439,138 @@ export class Transform implements EffectInterface<"transform"> {
  *
  * @defaultValue undefined
  */
-export type PerspectiveHandlerReturn = number | null;
+export type PerspectiveHandlerReturn = number | null | undefined;
 
 /**
  * Should return the translation distances along one or more axes.
+ *
+ * Returning `undefined` does nothing (leaves the transform unchanged).
  */
-export type TranslateHandlerReturn = AtLeastOne<{
-  /**
-   * The translation distance in pixels along the X-axis.
-   *
-   * @defaultValue 0
-   */
-  x: number;
+export type TranslateHandlerReturn =
+  | AtLeastOne<{
+      /**
+       * The translation distance in pixels along the X-axis.
+       *
+       * @defaultValue 0
+       */
+      x: number;
 
-  /**
-   * The translation distance in pixels along the Y-axis.
-   *
-   * @defaultValue 0
-   */
-  y: number;
+      /**
+       * The translation distance in pixels along the Y-axis.
+       *
+       * @defaultValue 0
+       */
+      y: number;
 
-  /**
-   * The translation distance in pixels along the Z-axis.
-   *
-   * @defaultValue 0
-   */
-  z: number;
-}>;
+      /**
+       * The translation distance in pixels along the Z-axis.
+       *
+       * @defaultValue 0
+       */
+      z: number;
+    }>
+  | undefined;
 
 /**
  * Should return the scaling factor along one or more axes.
+ *
+ * Returning `undefined` does nothing (leaves the transform unchanged).
  */
-export type ScaleHandlerReturn = AtLeastOne<{
-  /**
-   * The default scaling factor for any axis if not overridden by {@link sx},
-   * {@link sy} or {@link sz}. This would result in all three axes being
-   * scaled.
-   *
-   * @defaultValue 1
-   */
-  s: number;
+export type ScaleHandlerReturn =
+  | (AtLeastOne<{
+      /**
+       * The default scaling factor for any axis if not overridden by {@link sx},
+       * {@link sy} or {@link sz}. This would result in all three axes being
+       * scaled.
+       *
+       * @defaultValue 1
+       */
+      s: number;
 
-  /**
-   * The translation distance in pixels along the X-axis.
-   *
-   * @defaultValue {@link s}
-   */
-  sx: number;
+      /**
+       * The translation distance in pixels along the X-axis.
+       *
+       * @defaultValue {@link s}
+       */
+      sx: number;
 
-  /**
-   * The translation distance in pixels along the Y-axis.
-   *
-   * @defaultValue {@link s}
-   */
-  sy: number;
+      /**
+       * The translation distance in pixels along the Y-axis.
+       *
+       * @defaultValue {@link s}
+       */
+      sy: number;
 
-  /**
-   * The translation distance in pixels along the Z-axis.
-   *
-   * @defaultValue {@link s}
-   */
-  sz: number;
-}> & {
-  /**
-   * The transform origin.
-   *
-   * @defaultValue [0,0,0]
-   */
-  origin?: Origin;
-};
+      /**
+       * The translation distance in pixels along the Z-axis.
+       *
+       * @defaultValue {@link s}
+       */
+      sz: number;
+    }> & {
+      /**
+       * The transform origin.
+       *
+       * @defaultValue [0,0,0]
+       */
+      origin?: Origin;
+    })
+  | undefined;
 
 /**
  * Should return the skewing angle along one or more axes.
  *
  * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
  * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
+ *
+ * Returning `undefined` does nothing (leaves the transform unchanged).
  */
-export type SkewHandlerReturn = AtLeastOne<{
-  /**
-   * The skewing angle in degrees for either axis if not overridden by
-   * {@link degX} or {@link degY}. This would result in both axes being skewed.
-   *
-   * @defaultValue 0
-   */
-  deg: number;
+export type SkewHandlerReturn =
+  | AtLeastOne<{
+      /**
+       * The skewing angle in degrees for either axis if not overridden by
+       * {@link degX} or {@link degY}. This would result in both axes being skewed.
+       *
+       * @defaultValue 0
+       */
+      deg: number;
 
-  /**
-   * The skewing angle in degrees along the X-axis.
-   *
-   * @defaultValue {@link deg}
-   */
-  degX: number;
+      /**
+       * The skewing angle in degrees along the X-axis.
+       *
+       * @defaultValue {@link deg}
+       */
+      degX: number;
 
-  /**
-   * The skewing angle in degrees along the Y-axis.
-   *
-   * @defaultValue {@link deg}
-   */
-  degY: number;
-}>;
+      /**
+       * The skewing angle in degrees along the Y-axis.
+       *
+       * @defaultValue {@link deg}
+       */
+      degY: number;
+    }>
+  | undefined;
 
 /**
  * Should return the rotation angle and axis of rotation.
+ *
+ * Returning `undefined` does nothing (leaves the transform unchanged).
  */
-export type RotateHandlerReturn = {
-  /**
-   * The angle in degrees to rotate.
-   */
-  deg: number;
+export type RotateHandlerReturn =
+  | {
+      /**
+       * The angle in degrees to rotate.
+       */
+      deg: number;
 
-  /**
-   * The axis of rotation.
-   *
-   * @defaultValue [0,0,1] // The Z-axis
-   */
-  axis?: Axis;
-};
+      /**
+       * The axis of rotation.
+       *
+       * @defaultValue [0,0,1] // The Z-axis
+       */
+      axis?: Axis;
+    }
+  | undefined;
 
 export type TransformConfig = {
   /**

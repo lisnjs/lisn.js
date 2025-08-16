@@ -16,10 +16,6 @@ import { Effect, EffectRegistry } from "@lisn/effects/effect";
 export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
   readonly size!: number;
 
-  readonly get: <T extends keyof EffectRegistry>(
-    key: T,
-  ) => Effect<T> | undefined;
-
   /**
    * Adds a new effect to the composition. Will use the current effect for the
    * relevant type, if any, and compose it with the given.
@@ -38,6 +34,10 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
    */
   readonly export: () => FXComposition;
 
+  readonly get: <T extends keyof EffectRegistry>(
+    key: T,
+  ) => Effect<T> | undefined;
+
   readonly delete: <T extends keyof EffectRegistry>(key: T) => boolean;
   readonly clear: () => void;
 
@@ -46,11 +46,6 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
   readonly entries: <T extends keyof EffectRegistry>() => IterableIterator<
     [T, Effect<T>]
   >;
-  readonly forEach: <T extends keyof EffectRegistry>(
-    callbackFn: (value: Effect<T>[], key: T, map: EffectsMap) => void,
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    thisArg?: any,
-  ) => void;
   readonly [Symbol.iterator]!: <
     T extends keyof EffectRegistry,
   >() => IterableIterator<[T, Effect<T>]>;
@@ -60,7 +55,6 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
 
     MH.defineProperty(this, "size", { get: () => map.size });
 
-    this.get = (key) => map.get(key);
     this.add = (effect) => {
       map.set(
         effect.type,
@@ -88,13 +82,13 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
       return copy;
     };
 
+    this.get = (key) => map.get(key);
     this.delete = (key) => map.delete(key);
     this.clear = () => map.clear();
 
     this.keys = () => map.keys();
     this.values = () => map.values();
     this.entries = () => map.entries();
-    this.forEach = (callbackFn, thisArg) => map.forEach(callbackFn, thisArg);
     this[MC.SYMBOL.iterator] = () => map[MC.SYMBOL.iterator]();
   }
 }
@@ -111,11 +105,6 @@ interface EffectsMap {
   keys(): IterableIterator<keyof EffectRegistry>;
   values(): IterableIterator<Effect<keyof EffectRegistry>>;
   entries<T extends keyof EffectRegistry>(): IterableIterator<[T, Effect<T>]>;
-  forEach<T extends keyof EffectRegistry>(
-    callbackFn: (value: Effect<T>[], key: T, map: EffectsMap) => void,
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    thisArg?: any,
-  ): void;
   [Symbol.iterator]<T extends keyof EffectRegistry>(): IterableIterator<
     [T, Effect<T>]
   >;

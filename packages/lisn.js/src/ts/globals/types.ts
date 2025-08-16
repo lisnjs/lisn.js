@@ -440,7 +440,7 @@ export type InstanceType<C> = C extends Constructor<infer T> ? T : never;
 export type MapBase<K, V> = {
   get: (key: K) => V | undefined;
   set: (key: K, value: V) => void;
-  delete: (key: K) => void;
+  delete: (key: K) => boolean;
   has: (key: K) => boolean;
 };
 
@@ -449,7 +449,7 @@ export type MapBase<K, V> = {
  */
 export type SetBase<V> = {
   add: (value: V) => SetBase<V>;
-  delete: (value: V) => void;
+  delete: (value: V) => boolean;
   has: (value: V) => boolean;
 };
 

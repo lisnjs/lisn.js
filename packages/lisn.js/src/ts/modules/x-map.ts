@@ -76,7 +76,7 @@ export abstract class XMapBase<K, V> {
   /**
    * Deletes a value at the given key in the {@link XMap} or {@link XWeakMap}.
    */
-  readonly delete: (key: K) => void;
+  readonly delete: (key: K) => boolean;
 
   /**
    * Deletes empty keys in the {@link XMap} or {@link XWeakMap} starting at the
@@ -98,7 +98,7 @@ export abstract class XMapBase<K, V> {
   ) {
     this.get = (key) => root.get(key);
     this.set = (key, value) => root.set(key, value);
-    this.delete = (key) => MH.deleteKey(root, key);
+    this.delete = (key) => root.delete(key);
     this.has = (key) => root.has(key);
 
     this.sGet = (key) => {

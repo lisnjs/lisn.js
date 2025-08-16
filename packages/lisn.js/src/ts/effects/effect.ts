@@ -8,7 +8,7 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { toNum, toNumWithBounds, isValidNum } from "@lisn/utils/math";
 
-import { FXController } from "@lisn/effects/fx-controller";
+import { FXComposer } from "@lisn/effects/fx-composer";
 
 /**
  * @interface
@@ -22,19 +22,19 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
   /**
    * Returns true if the effect is absolute. If true, the
    * {@link FXHandler | handlers} receive absolute
-   * {@link FXParams | parameters} and each call to {@link apply} will
-   * reset the effect back to the default/blank state.
+   * {@link FXParams | parameters} and each call to {@link update} will reset
+   * the effect back to the default/blank state.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the effect's state is
-   * preserved between calls to {@link apply}.
+   * preserved between calls to {@link update}.
    */
   isAbsolute: () => boolean;
 
   /**
-   * Applies all added effects for the given state.
+   * Updates the effect as per the given state.
    */
-  apply: (state: FXState, controller: FXController) => Effect<T>;
+  update: (state: FXState, composer: FXComposer) => Effect<T>;
 
   /**
    * Returns a **static copy** of the effect that has the current state/value of
@@ -78,7 +78,7 @@ export type EffectsList<TL extends readonly (keyof EffectRegistry)[]> = [
 export type FXHandler<R> = (
   parameters: FXParams,
   state: FXState,
-  controller: FXController,
+  composer: FXComposer,
 ) => R;
 
 /**
@@ -92,7 +92,7 @@ export type FXParams = {
    * last animation frame.
    *
    * Depending on each effect and effect category, it may also be scaled by the
-   * parallax depth of the {@link Effects/FXController.FXController}.
+   * parallax depth of the {@link Effects/FXComposer.FXComposer}.
    */
   x: number;
 
@@ -154,6 +154,12 @@ export type FXStateUpdate = {
   x?: FXAxisStateUpdate;
   y?: FXAxisStateUpdate;
   z?: FXAxisStateUpdate;
+
+  /**
+   * If set to true, it tells the composer not to tween, but instead jump
+   * straight to the target values.
+   */
+  snap?: boolean;
 };
 
 /**
@@ -171,7 +177,7 @@ export type FXAxisState = {
   max: number;
 
   /**
-   * The initial value at which the controller started interpolating (since the
+   * The initial value at which the composer started interpolating (since the
    * last trigger).
    */
   initial: number;
@@ -187,23 +193,23 @@ export type FXAxisState = {
   current: number;
 
   /**
-   * The target value which the controller is interpolating towards.
+   * The target value which the composer is interpolating towards.
    */
   target: number;
 
   /**
-   * The controller's {@link FXControllerConfig.lag | lag} for this axis.
+   * The composer's {@link FXComposerConfig.lag | lag} for this axis.
    */
   lag: number;
 
   /**
-   * The controller's {@link FXControllerConfig.depth | depth} for this axis.
+   * The composer's {@link FXComposerConfig.depth | depth} for this axis.
    */
   depth: number;
 };
 
 /**
- * Describes the whole state of the controller's parameters.
+ * Describes the whole state of the composer's parameters.
  */
 export type FXState = {
   x: FXAxisState;
@@ -237,7 +243,7 @@ export interface EffectRegistry {}
  * depth.
  *
  * The function will receive the pre-scaled parameter value (which could be
- * absolute or delta) for this axis and the controller's depth along this axis
+ * absolute or delta) for this axis and the composer's depth along this axis
  * and should return the final parameter value to use.
  */
 export type ParallaxScalerFn = (
@@ -254,15 +260,15 @@ export type ParallaxScalerFn = (
  *                             If true, they will equal the current values for
  *                             the axes.
  * @param [options.scalerFn]   If given, the parameters along each axis will be
- *                             scaled by the controller's parallax depth for
- *                             this axis.
+ *                             scaled by the composer's parallax depth for this
+ *                             axis.
  */
 export const toParameters = (
   state: FXState,
-  controller: FXController,
+  composer: FXComposer,
   options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
 ): FXParams => {
-  state = getUpdatedState(state, controller); // validate
+  state = getUpdatedState(state, composer); // validate
   const { isAbsolute, scalerFn } = options ?? {};
 
   const getAxisParam = (axisState: FXAxisState, normalized = false) => {
@@ -306,20 +312,20 @@ export const toParameters = (
   };
 
   return scalerFn
-    ? scaleParameters(parameters, controller, scalerFn)
+    ? scaleParameters(parameters, composer, scalerFn)
     : parameters;
 };
 
 /**
  * Returns the parameters scaled by the given scaling function using the
- * controller's parallax depths.
+ * composer's parallax depths.
  */
 export const scaleParameters = (
   parameters: FXParams,
-  controller: FXController,
+  composer: FXComposer,
   scalerFn: ParallaxScalerFn,
 ): FXParams => {
-  const { depthX, depthY, depthZ } = controller.getConfig();
+  const { depthX, depthY, depthZ } = composer.getConfig();
 
   return {
     x: scalerFn(parameters.x, depthX, "x"),
@@ -335,17 +341,17 @@ export const scaleParameters = (
  * Returns a new updated state as per the update data if any while enforcing
  * valid values for all properties.
  *
- * Lag and depth are set from the controller's configuration.
+ * Lag and depth are set from the composer's configuration.
  */
 export const getUpdatedState = (
   state: Partial<FXState> | undefined,
-  controller: FXController,
+  composer: FXComposer,
   update?: FXStateUpdate,
 ): FXState => {
   state ??= {};
   update ??= {};
 
-  const controllerConfig = controller.getConfig();
+  const composerConfig = composer.getConfig();
 
   const validateAxis = (
     axisState: Partial<FXAxisState> | undefined,
@@ -361,8 +367,8 @@ export const getUpdatedState = (
       [min, max] = [max, min]; // swap
     }
 
-    const lag = controllerConfig[`lag${axisC}`];
-    const depth = controllerConfig[`depth${axisC}`];
+    const lag = composerConfig[`lag${axisC}`];
+    const depth = composerConfig[`depth${axisC}`];
     const filteredState: FXAxisState = {
       // known properties only
       min,

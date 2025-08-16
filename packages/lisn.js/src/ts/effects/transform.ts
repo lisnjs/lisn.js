@@ -22,7 +22,7 @@ import {
   scaleParameters,
 } from "@lisn/effects/effect";
 
-import { FXController } from "@lisn/effects/fx-controller";
+import { FXComposer } from "@lisn/effects/fx-composer";
 
 export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
 
@@ -56,16 +56,16 @@ export class Transform implements EffectInterface<"transform"> {
    * Returns true if the transform is absolute. If true, the
    * {@link FXHandler | handlers} receive absolute
    * {@link Effects/Effect.FXParams | parameters} and each call to
-   * {@link apply} will reset the transform back to the identity one.
+   * {@link update} will reset the transform back to the identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the transform's state is
-   * preserved between calls to {@link apply}.
+   * preserved between calls to {@link update}.
    */
   readonly isAbsolute: () => boolean;
 
   /**
-   * Applies all transforms for the given state.
+   * Updates the transform as per the given state.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If any of the values returned by the {@link FXHandler}
@@ -73,7 +73,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * @returns The same {@link Transform} instance.
    */
-  readonly apply: (state: FXState, controller: FXController) => Transform;
+  readonly update: (state: FXState, composer: FXComposer) => Transform;
 
   /**
    * Returns a **static copy** of the transform that has the current state/value
@@ -122,7 +122,7 @@ export class Transform implements EffectInterface<"transform"> {
   readonly toString: (negate?: TransformLike) => string;
 
   /**
-   * Returns the current perspective (since the last call to {@link apply}).
+   * Returns the current perspective (since the last call to {@link update}).
    *
    * @returns The last applied perspective, or `undefined` if no perspective has
    * been applied.
@@ -152,7 +152,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * The handler receives the unscaled original
    * {@link Effects/Effect.FXParams | parameters}, regardless of the
-   * {@link Effects/FXController.FXController | controller}'s parallax depth.
+   * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
    *
    * @returns The same {@link Transform} instance.
    */
@@ -176,7 +176,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * The handler receives the unscaled original
    * {@link Effects/Effect.FXParams | parameters}, regardless of the
-   * {@link Effects/FXController.FXController | controller}'s parallax depth.
+   * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
    *
    * @returns The same {@link Transform} instance.
    */
@@ -187,7 +187,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * The handler receives the unscaled original
    * {@link Effects/Effect.FXParams | parameters}, regardless of the
-   * {@link Effects/FXController.FXController | controller}'s parallax depth.
+   * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
    *
    * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
    * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
@@ -268,18 +268,18 @@ export class Transform implements EffectInterface<"transform"> {
 
     this.isAbsolute = () => isAbsolute;
 
-    this.apply = (state, controller) => {
+    this.update = (state, composer) => {
       if (isAbsolute) {
         reset();
       }
 
-      const parameters = toParameters(state, controller, { isAbsolute });
+      const parameters = toParameters(state, composer, { isAbsolute });
 
       for (const fn of [
         ...(perspectiveFn ? [perspectiveFn] : []),
         ...transformers,
       ]) {
-        fn(parameters, state, controller);
+        fn(parameters, state, composer);
       }
 
       return this;
@@ -345,8 +345,8 @@ export class Transform implements EffectInterface<"transform"> {
     this.toFloat32Array = (negate) => toMatrix(negate).toFloat32Array();
 
     this.setPerspective = (handler) => {
-      addOwnHandler([PERSPECTIVE, handler], (parameters, state, controller) => {
-        const result = handler(parameters, state, controller);
+      addOwnHandler([PERSPECTIVE, handler], (parameters, state, composer) => {
+        const result = handler(parameters, state, composer);
         if (MH.isNullish(currentPerspective) || MH.isNullish(result)) {
           currentPerspective = result;
         } else {
@@ -360,14 +360,14 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.translate = (handler) => {
-      addOwnHandler([TRANSLATE, handler], (parameters, state, controller) => {
-        parameters = scaleParameters(parameters, controller, (v, d) => v / d);
+      addOwnHandler([TRANSLATE, handler], (parameters, state, composer) => {
+        parameters = scaleParameters(parameters, composer, (v, d) => v / d);
 
         const {
           x = 0,
           y = 0,
           z = 0,
-        } = handler(parameters, state, controller) ?? {};
+        } = handler(parameters, state, composer) ?? {};
 
         validateInputs("Translate distance", [x, y, z]);
         stateMatrix.translateSelf(x, y, z);
@@ -377,14 +377,14 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.scale = (handler) => {
-      addOwnHandler([SCALE, handler], (parameters, state, controller) => {
+      addOwnHandler([SCALE, handler], (parameters, state, composer) => {
         const {
           s = 1,
           sx = s,
           sy = s,
           sz = s,
           origin = [0, 0, 0],
-        } = handler(parameters, state, controller) ?? {};
+        } = handler(parameters, state, composer) ?? {};
 
         validateInputs("Scale factor", [sx, sy, sz], true);
         validateInputs("Origin", origin);
@@ -395,12 +395,12 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.skew = (handler) => {
-      addOwnHandler([SKEW, handler], (parameters, state, controller) => {
+      addOwnHandler([SKEW, handler], (parameters, state, composer) => {
         const {
           deg = 0,
           degX = deg,
           degY = deg,
-        } = handler(parameters, state, controller) ?? {};
+        } = handler(parameters, state, composer) ?? {};
 
         validateInputs("Skew angle", [degX, degY]);
         stateMatrix.skewXSelf(degX).skewYSelf(degY);
@@ -410,10 +410,10 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.rotate = (handler) => {
-      addOwnHandler([ROTATE, handler], (parameters, state, controller) => {
-        parameters = scaleParameters(parameters, controller, (v, d) => v * d);
+      addOwnHandler([ROTATE, handler], (parameters, state, composer) => {
+        parameters = scaleParameters(parameters, composer, (v, d) => v * d);
         const { deg = 0, axis = [0, 0, 1] } =
-          handler(parameters, state, controller) ?? {};
+          handler(parameters, state, composer) ?? {};
 
         validateInputs("Rotation angle", [deg]);
         validateInputs("Rotation axis", [sum(...axis)], true);
@@ -563,11 +563,11 @@ export type TransformConfig = {
   /**
    * If true, the {@link FXHandler | handlers} receive absolute
    * {@link Effects/Effect.FXParams | parameters} and each call to
-   * {@link apply} will reset the transform back to the identity one.
+   * {@link update} will reset the transform back to the identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the transform's state is
-   * preserved between calls to {@link apply}.
+   * preserved between calls to {@link update}.
    *
    * @defaultValue false
    */
@@ -575,7 +575,7 @@ export type TransformConfig = {
 
   /**
    * Initial transform to begin with. Note that if {@link isAbsolute} is `true`,
-   * it will be discarded on {@link Transform.apply | apply}.
+   * it will be discarded on {@link Transform.update | update}.
    *
    * @defaultValue undefined // identity matrix
    */
@@ -583,7 +583,7 @@ export type TransformConfig = {
 
   /**
    * Initial transform to begin with. Note that if {@link isAbsolute} is `true`,
-   * it will be discarded on {@link Transform.apply | apply}.
+   * it will be discarded on {@link Transform.update | update}.
    *
    * @defaultValue undefined
    */

@@ -1,11 +1,11 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { deepCopy, copyExistingKeys } = window.LISN.utils;
-const { Transform, FXController, toParameters } = window.LISN.effects;
+const { Transform, FXComposer, toParameters } = window.LISN.effects;
 
 window.LISN.settings.effectLag = 0;
 
-const DEFAULT_CONTROLLER = new FXController();
+const DEFAULT_COMPOSER = new FXComposer();
 
 const IDENTITY = new DOMMatrixReadOnly([
   ...[1, 0, 0, 0],
@@ -186,11 +186,11 @@ describe("apply", () => {
     expect(t).toBeCloseToArray(IDENTITY);
     expect(t.toPerspective()).toBeUndefined();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // 1st call: dA + dB; perspective p
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // 1st call: dA + dB; perspective p
     expect(t).toBeCloseToArray(expected);
     expect(t.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // increments by the same quantity
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // increments by the same quantity
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p * 2);
   });
@@ -226,12 +226,12 @@ describe("apply", () => {
     expect(t.toPerspective()).toBeUndefined();
 
     nCalls++;
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // 1st call: dA + dB; perspective p
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // 1st call: dA + dB; perspective p
     expect(t).toBeCloseToArray(expected);
     expect(t.toPerspective()).toBe(p);
 
     nCalls++;
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // 2nd call: dA + dB * 4; perspective p * 4
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // 2nd call: dA + dB * 4; perspective p * 4
     // overrides state, starts from identity again
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p * 4);
@@ -245,7 +245,7 @@ describe("apply", () => {
     expect(t).toBeCloseToArray(init);
     expect(t.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     // unchanged
     expect(t).toBeCloseToArray(init);
     expect(t.toPerspective()).toBe(p);
@@ -259,7 +259,7 @@ describe("apply", () => {
     expect(t).toBeCloseToArray(init);
     expect(t.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     // reset
     expect(t).toBeCloseToArray(IDENTITY);
     expect(t.toPerspective()).toBeUndefined();
@@ -301,11 +301,11 @@ describe("apply", () => {
     expect(t).toBeCloseToArray(init);
     expect(t.toPerspective()).toBe(pI);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // increments: dA + dB; perspective p
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // increments: dA + dB; perspective p
     expect(t).toBeCloseToArray(expected);
     expect(t.toPerspective()).toBe(pI + p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // increments by the same quantity
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // increments by the same quantity
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(pI + p * 2);
   });
@@ -350,12 +350,12 @@ describe("apply", () => {
     expect(t.toPerspective()).toBe(pI);
 
     nCalls++;
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // overrides: 1st call: dA + dB; perspective p
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // overrides: 1st call: dA + dB; perspective p
     expect(t).toBeCloseToArray(expected);
     expect(t.toPerspective()).toBe(p);
 
     nCalls++;
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // overrides: 2nd call: dA + dB * 4; perspective p * 4
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // overrides: 2nd call: dA + dB * 4; perspective p * 4
     // overrides state, starts from identity again
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p * 4);
@@ -386,7 +386,7 @@ describe("apply", () => {
     expect(t).toBeCloseToArray(IDENTITY);
     expect(t.toPerspective()).toBeUndefined();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // dA; perspective p * 10
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // dA; perspective p * 10
     expect(t).toBeCloseToArray(expected);
     expect(t.toPerspective()).toBe(p * 10);
 
@@ -394,7 +394,7 @@ describe("apply", () => {
     t.translate(() => ({ x: dB }));
     t.setPerspective(() => p); // discards previous handler
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // increments by dA + dB; + perspective p
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // increments by dA + dB; + perspective p
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p * 11);
   });
@@ -424,7 +424,7 @@ describe("apply", () => {
     expect(t).toBeCloseToArray(IDENTITY);
     expect(t.toPerspective()).toBeUndefined();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
     expect(t.toPerspective()).toBe(p * 10);
 
@@ -432,7 +432,7 @@ describe("apply", () => {
     t.translate(() => ({ x: dB }));
     t.setPerspective(() => p); // discards previous handler
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER); // overrides: dA + dB; perspective p
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER); // overrides: dA + dB; perspective p
     // overrides state, starts from identity again
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p);
@@ -511,17 +511,17 @@ describe("apply parameters", () => {
     const cbk = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
     t.translate(cbk);
 
-    const params = toParameters(state, DEFAULT_CONTROLLER);
-    t.apply(state, DEFAULT_CONTROLLER);
+    const params = toParameters(state, DEFAULT_COMPOSER);
+    t.update(state, DEFAULT_COMPOSER);
 
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_CONTROLLER);
+    expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_COMPOSER);
 
-    t.apply(state2, DEFAULT_CONTROLLER);
-    const params2 = toParameters(state2, DEFAULT_CONTROLLER);
+    t.update(state2, DEFAULT_COMPOSER);
+    const params2 = toParameters(state2, DEFAULT_COMPOSER);
 
     expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_CONTROLLER);
+    expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_COMPOSER);
   });
 
   test("absolute", () => {
@@ -529,21 +529,21 @@ describe("apply parameters", () => {
     const cbk = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
     t.translate(cbk);
 
-    const params = toParameters(state, DEFAULT_CONTROLLER, {
+    const params = toParameters(state, DEFAULT_COMPOSER, {
       isAbsolute: true,
     });
-    t.apply(state, DEFAULT_CONTROLLER);
+    t.update(state, DEFAULT_COMPOSER);
 
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_CONTROLLER);
+    expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_COMPOSER);
 
-    t.apply(state2, DEFAULT_CONTROLLER);
-    const params2 = toParameters(state2, DEFAULT_CONTROLLER, {
+    t.update(state2, DEFAULT_COMPOSER);
+    const params2 = toParameters(state2, DEFAULT_COMPOSER, {
       isAbsolute: true,
     });
 
     expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_CONTROLLER);
+    expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_COMPOSER);
   });
 });
 
@@ -569,12 +569,12 @@ describe("export", () => {
     expect(exported.toPerspective()).toBeUndefined();
     expect(exported.isAbsolute()).toBe(false);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     // unchanged
     expect(exported).toBeCloseToArray(IDENTITY);
     expect(exported.toPerspective()).toBeUndefined();
 
-    exported.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // original unchanged
     expect(t).toBeCloseToArray(expectedO);
@@ -604,12 +604,12 @@ describe("export", () => {
     expect(exported.toPerspective()).toBeUndefined();
     expect(exported.isAbsolute()).toBe(true);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     // unchanged
     expect(exported).toBeCloseToArray(IDENTITY);
     expect(exported.toPerspective()).toBeUndefined();
 
-    exported.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // exported is static and detached from t's state and handlers
     expect(exported).toBeCloseToArray(IDENTITY);
@@ -635,12 +635,12 @@ describe("export", () => {
     expect(exported).toBeCloseToArray(init);
     expect(exported.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     // unchanged
     expect(exported).toBeCloseToArray(init);
     expect(exported.toPerspective()).toBe(p);
 
-    exported.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // static and detached from t's state and handlers
     expect(exported).toBeCloseToArray(init);
@@ -666,12 +666,12 @@ describe("export", () => {
     expect(exported).toBeCloseToArray(init);
     expect(exported.toPerspective()).toBeUndefined();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     // unchanged
     expect(exported).toBeCloseToArray(init);
     expect(exported.toPerspective()).toBeUndefined();
 
-    exported.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // static and detached from t's state and handlers
     expect(exported).toBeCloseToArray(init);
@@ -698,12 +698,12 @@ describe("export", () => {
     expect(exported.toPerspective()).toBe(p);
     expect(exported.isAbsolute()).toBe(true);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     // unchanged
     expect(exported).toBeCloseToArray(init);
     expect(exported.toPerspective()).toBe(p);
 
-    exported.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // static and detached from t's state and handlers
     // and resets itself on apply
@@ -725,7 +725,7 @@ describe("export", () => {
     t.scale(() => ({ sx, sy, sz }));
     t.setPerspective(() => p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     const expected = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
 
@@ -735,7 +735,7 @@ describe("export", () => {
     expect(exported).toBeCloseToArray(expected);
     expect(exported.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     const expected2 = expected.translate(dx, dy, dz).scale(sx, sy, sz);
 
@@ -746,7 +746,7 @@ describe("export", () => {
     expect(exported).toBeCloseToArray(expected);
     expect(exported.toPerspective()).toBe(p);
 
-    exported.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // original unchanged
     expect(t).toBeCloseToArray(expected2);
@@ -781,7 +781,7 @@ describe("export", () => {
     t.setPerspective(() => p * nCalls);
 
     nCalls++;
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     const expected = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
 
@@ -792,7 +792,7 @@ describe("export", () => {
     expect(exported.toPerspective()).toBe(p);
 
     nCalls++;
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     const expected2 = IDENTITY.translate(dx * 2, dy * 2, dz * 2).scale(
       sx * 2,
@@ -807,7 +807,7 @@ describe("export", () => {
     expect(exported).toBeCloseToArray(expected);
     expect(exported.toPerspective()).toBe(p);
 
-    exported.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // static and detached from t's state and handlers
     // and resets itself on apply
@@ -868,7 +868,7 @@ describe("export", () => {
     const t = newTransform();
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.setPerspective(() => p);
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     const expected = IDENTITY.translate(dx, dy, dz);
     expect(t).toBeCloseToArray(expected);
@@ -903,7 +903,7 @@ describe("toComposition: single (clone)", () => {
     expect(composed).toBeCloseToArray(IDENTITY);
     expect(composed.toPerspective()).toBeUndefined();
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed).toBeCloseToArray(expected); // preserved handlers
     expect(composed.toPerspective()).toBe(p);
 
@@ -932,7 +932,7 @@ describe("toComposition: single (clone)", () => {
     expect(composed).toBeCloseToArray(IDENTITY);
     expect(composed.toPerspective()).toBeUndefined();
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed).toBeCloseToArray(expected); // preserved handlers
     expect(composed.toPerspective()).toBe(p);
 
@@ -962,7 +962,7 @@ describe("toComposition: single (clone)", () => {
     expect(composed).toBeCloseToArray(init);
     expect(composed.toPerspective()).toBe(p);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed).toBeCloseToArray(expected); // preserved handlers
     expect(composed.toPerspective()).toBe(p * 3);
 
@@ -992,7 +992,7 @@ describe("toComposition: single (clone)", () => {
     expect(composed).toBeCloseToArray(init);
     expect(composed.toPerspective()).toBe(p);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed).toBeCloseToArray(expected); // preserved handlers
     expect(composed.toPerspective()).toBe(p * 2);
 
@@ -1013,7 +1013,7 @@ describe("toComposition: single (clone)", () => {
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
     t.setPerspective(() => p);
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     const expected = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
     const expectedFinal = expected.translate(dx, dy, dz).scale(sx, sy, sz);
@@ -1024,7 +1024,7 @@ describe("toComposition: single (clone)", () => {
     expect(composed).toBeCloseToArray(expected);
     expect(composed.toPerspective()).toBe(p);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed).toBeCloseToArray(expectedFinal); // preserved handlers
     expect(composed.toPerspective()).toBe(p * 2);
 
@@ -1032,7 +1032,7 @@ describe("toComposition: single (clone)", () => {
     expect(t.toPerspective()).toBe(p);
 
     // apply original
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p * 2);
 
@@ -1066,8 +1066,8 @@ describe("toComposition: single (clone)", () => {
     expect(composed).toBeCloseToArray(IDENTITY);
     expect(composed.toPerspective()).toBeUndefined();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     expect(composed).toBeCloseToArray(expectedC);
     expect(composed.toPerspective()).toBe(p);
@@ -1118,7 +1118,7 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(false);
     expect(composed).toBeCloseToArray(expectedInit);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed).toBeCloseToArray(expectedFinal);
 
     expect(tA).toBeCloseToArray(initA); // unchanged
@@ -1165,7 +1165,7 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(true);
     expect(composed).toBeCloseToArray(expectedInit);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed).toBeCloseToArray(expectedFinal);
 
     expect(tA).toBeCloseToArray(initA); // unchanged
@@ -1184,7 +1184,7 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB);
     expect(composed.toPerspective()).toBe(p);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(p); // no handler to update
   });
 
@@ -1196,10 +1196,10 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB);
     expect(composed.toPerspective()).toBeUndefined();
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(p);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(p * 2);
   });
 
@@ -1212,10 +1212,10 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB);
     expect(composed.toPerspective()).toBe(pB);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pA + pB);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pA * 2 + pB);
   });
 
@@ -1229,7 +1229,7 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB, tC);
     expect(composed.toPerspective()).toBe(pC);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pC);
   });
 
@@ -1244,7 +1244,7 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB, tC, tD);
     expect(composed.toPerspective()).toBe(pC);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pC);
   });
 
@@ -1256,7 +1256,7 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB);
     expect(composed.toPerspective()).toBe(p);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(p);
   });
 
@@ -1268,7 +1268,7 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB);
     expect(composed.toPerspective()).toBeNull();
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBeNull();
   });
 
@@ -1282,10 +1282,10 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB, tC);
     expect(composed.toPerspective()).toBeUndefined();
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pC);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pC * 2);
   });
 
@@ -1300,10 +1300,10 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB, tC, tD);
     expect(composed.toPerspective()).toBeUndefined();
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pC);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pC * 2);
   });
 
@@ -1315,7 +1315,7 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB);
     expect(composed.toPerspective()).toBe(p);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBeNull();
   });
 
@@ -1330,7 +1330,7 @@ describe("toComposition: multiple with perspective", () => {
     const composed = tA.toComposition(tB, tC);
     expect(composed.toPerspective()).toBe(pC);
 
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBe(pB + pC);
   });
 
@@ -1340,7 +1340,7 @@ describe("toComposition: multiple with perspective", () => {
     const tB = newAbsoluteTransform(); // discards both init and handler
 
     const composed = tA.toComposition(tB);
-    composed.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(composed.toPerspective()).toBeUndefined();
   });
 });
@@ -1505,7 +1505,7 @@ describe("perspective", () => {
     const t = newTransform(undefined, 200);
     expect(t.toPerspective()).toBe(200);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(200);
   });
 
@@ -1513,7 +1513,7 @@ describe("perspective", () => {
     const t = newAbsoluteTransform(undefined, 200);
     expect(t.toPerspective()).toBe(200);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeUndefined();
   });
 
@@ -1531,7 +1531,7 @@ describe("perspective", () => {
     const t = newTransform().setPerspective(() => null);
     expect(t.toPerspective()).toBeUndefined();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
   });
 
@@ -1539,7 +1539,7 @@ describe("perspective", () => {
     const t = newTransform().setPerspective(() => 200);
     expect(t.toPerspective()).toBeUndefined();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(200);
   });
 
@@ -1547,10 +1547,10 @@ describe("perspective", () => {
     const t = newTransform(undefined, null).setPerspective(() => null);
     expect(t.toPerspective()).toBeNull();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
   });
 
@@ -1559,10 +1559,10 @@ describe("perspective", () => {
     const t = newTransform(undefined, p).setPerspective(() => null);
     expect(t.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
   });
 
@@ -1571,10 +1571,10 @@ describe("perspective", () => {
     const t = newTransform(undefined, null).setPerspective(() => p);
     expect(t.toPerspective()).toBeNull();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(p * 2);
   });
 
@@ -1584,10 +1584,10 @@ describe("perspective", () => {
     const t = newTransform(undefined, pI).setPerspective(() => p);
     expect(t.toPerspective()).toBe(pI);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pI + p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pI + p * 2);
   });
 
@@ -1595,10 +1595,10 @@ describe("perspective", () => {
     const t = newAbsoluteTransform(undefined, null).setPerspective(() => null);
     expect(t.toPerspective()).toBeNull();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
   });
 
@@ -1607,10 +1607,10 @@ describe("perspective", () => {
     const t = newAbsoluteTransform(undefined, p).setPerspective(() => null);
     expect(t.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
   });
 
@@ -1619,10 +1619,10 @@ describe("perspective", () => {
     const t = newAbsoluteTransform(undefined, null).setPerspective(() => p);
     expect(t.toPerspective()).toBeNull();
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(p);
   });
 
@@ -1632,10 +1632,10 @@ describe("perspective", () => {
     const t = newAbsoluteTransform(undefined, pI).setPerspective(() => p);
     expect(t.toPerspective()).toBe(pI);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(p);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(p);
   });
 
@@ -1646,10 +1646,10 @@ describe("perspective", () => {
     t.setPerspective(() => pA);
     t.setPerspective(() => pB);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pB);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pB * 2);
   });
 
@@ -1660,10 +1660,10 @@ describe("perspective", () => {
     t.setPerspective(() => pA);
     t.setPerspective(() => pB);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pB);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pB);
   });
 
@@ -1673,14 +1673,14 @@ describe("perspective", () => {
     const t = newTransform();
     t.setPerspective(() => pA);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pA);
 
     t.setPerspective(() => pB);
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pA + pB);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pA + pB * 2);
   });
 });
@@ -1692,12 +1692,12 @@ describe("translate", () => {
     t.translate(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenCalledWith(
       DEFAULT_TWEEN_STATE,
       DUMMY_STATE,
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
   });
 
@@ -1714,14 +1714,14 @@ describe("translate", () => {
     t.translate((d) => ({ x: d.x }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ x: { current: d } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: d } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ x: { current: -d } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: -d } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ x: { current: d / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ x: { current: d / 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: d / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ x: { current: d / 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -1738,14 +1738,14 @@ describe("translate", () => {
     t.translate((d) => ({ y: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: d } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: d } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ y: { current: -d } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: -d } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: d / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ y: { current: d / 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: d / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ y: { current: d / 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -1762,14 +1762,14 @@ describe("translate", () => {
     t.translate((d) => ({ z: d.z }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ z: { current: d } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: d } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ z: { current: -d } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: -d } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ z: { current: d / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ z: { current: d / 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: d / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ z: { current: d / 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -1788,37 +1788,37 @@ describe("translate", () => {
     t.translate((d) => ({ x: d.x, y: d.y, z: d.z }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(
+    t.update(
       newState({ x: { current: dx }, y: { current: dy }, z: { current: dz } }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: -dx },
         y: { current: -dy },
         z: { current: -dz },
       }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: dx / 2 },
         y: { current: dy / 2 },
         z: { current: dz / 2 },
       }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
-    t.apply(
+    t.update(
       newState({
         x: { current: dx / 2 },
         y: { current: dy / 2 },
         z: { current: dz / 2 },
       }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(expected);
   });
@@ -1831,12 +1831,12 @@ describe("scale", () => {
     t.scale(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenCalledWith(
       DEFAULT_TWEEN_STATE,
       DUMMY_STATE,
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
   });
 
@@ -1853,14 +1853,14 @@ describe("scale", () => {
     t.scale((d) => ({ sx: d.x }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ x: { current: s } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: s } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ x: { current: 1 / s } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: 1 / s } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ x: { current: s / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ x: { current: 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: s / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ x: { current: 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -1877,14 +1877,14 @@ describe("scale", () => {
     t.scale((d) => ({ sy: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: s } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: s } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ y: { current: 1 / s } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: 1 / s } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: s / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ y: { current: 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: s / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ y: { current: 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -1901,14 +1901,14 @@ describe("scale", () => {
     t.scale((d) => ({ sz: d.z }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ z: { current: s } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: s } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ z: { current: 1 / s } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: 1 / s } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ z: { current: s / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ z: { current: 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: s / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ z: { current: 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -1932,33 +1932,33 @@ describe("scale", () => {
     }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(
+    t.update(
       newState({ x: { current: sx }, y: { current: sy }, z: { current: sz } }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: 1 / sx },
         y: { current: 1 / sy },
         z: { current: 1 / sz },
       }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: sx / 2 },
         y: { current: sy / 2 },
         z: { current: sz / 4 },
       }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
-    t.apply(
+    t.update(
       newState({ x: { current: 2 }, y: { current: 2 }, z: { current: 4 } }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(expected);
   });
@@ -1976,14 +1976,14 @@ describe("scale", () => {
     t.scale((d) => ({ s: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: s } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: s } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ y: { current: 1 / s } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: 1 / s } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: s / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ y: { current: 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: s / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ y: { current: 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -2010,33 +2010,33 @@ describe("scale", () => {
     }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(
+    t.update(
       newState({ x: { current: sx }, y: { current: sy }, z: { current: sz } }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: 1 / sx },
         y: { current: 1 / sy },
         z: { current: 1 / sz },
       }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: sx / 2 },
         y: { current: sy / 2 },
         z: { current: sz / 4 },
       }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
-    t.apply(
+    t.update(
       newState({ x: { current: 2 }, y: { current: 2 }, z: { current: 4 } }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(expected);
   });
@@ -2055,12 +2055,12 @@ describe("skew", () => {
     t.skew(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenCalledWith(
       DEFAULT_TWEEN_STATE,
       DUMMY_STATE,
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
   });
 
@@ -2076,10 +2076,10 @@ describe("skew", () => {
     t.skew((d) => ({ degX: d.x }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ x: { current: deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ x: { current: -deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: -deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
   });
 
@@ -2095,10 +2095,10 @@ describe("skew", () => {
     t.skew((d) => ({ degY: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ y: { current: -deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: -deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
   });
 
@@ -2114,14 +2114,14 @@ describe("skew", () => {
     t.skew((d) => ({ deg: d.x + d.y /* ignored */, degX: d.x, degY: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(
+    t.update(
       newState({ x: { current: deg }, y: { current: deg2 } }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ y: { current: -deg2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ x: { current: -deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: -deg2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ x: { current: -deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
   });
 
@@ -2137,7 +2137,7 @@ describe("skew", () => {
     t.skew((d) => ({ deg: d.y }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 });
@@ -2153,12 +2153,12 @@ describe("rotate", () => {
     t.rotate(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenCalledWith(
       DEFAULT_TWEEN_STATE,
       DUMMY_STATE,
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
   });
 
@@ -2174,14 +2174,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.x, axis: [1, 0, 0] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ x: { current: deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ x: { current: -deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: -deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ x: { current: deg / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ x: { current: deg / 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ x: { current: deg / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ x: { current: deg / 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -2197,14 +2197,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.y, axis: [0, 1, 0] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ y: { current: -deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: -deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: deg / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ y: { current: deg / 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: deg / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ y: { current: deg / 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -2220,14 +2220,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.z, axis: [0, 0, 1] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ z: { current: deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ z: { current: -deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: -deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ z: { current: deg / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ z: { current: deg / 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ z: { current: deg / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ z: { current: deg / 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -2252,13 +2252,13 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.z, axis: [0, 0, 1] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: degX },
         y: { current: degY },
         z: { current: degZ },
       }),
-      DEFAULT_CONTROLLER,
+      DEFAULT_COMPOSER,
     );
     expect(t).toBeCloseToArray(expected);
     expect(t).toBeCloseToArray(expected2);
@@ -2277,14 +2277,14 @@ describe("rotate", () => {
     t.rotate((d) => ({ deg: d.y, axis: [1, 2, 3] }));
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ y: { current: -deg } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: -deg } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(IDENTITY);
 
-    t.apply(newState({ y: { current: deg / 2 } }), DEFAULT_CONTROLLER);
-    t.apply(newState({ y: { current: deg / 2 } }), DEFAULT_CONTROLLER);
+    t.update(newState({ y: { current: deg / 2 } }), DEFAULT_COMPOSER);
+    t.update(newState({ y: { current: deg / 2 } }), DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
     expect(t).toBeCloseToArray(expected2);
   });
@@ -2311,7 +2311,7 @@ describe("multiple effects", () => {
     t.scale(() => ({ sx, sy, sz }));
     t.rotate(() => ({ deg: r, axis: ra }));
     t.skew(() => ({ degY: sk }));
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 
@@ -2335,7 +2335,7 @@ describe("multiple effects", () => {
     t.rotate(() => ({ deg: r, axis: ra }));
     t.scale(() => ({ sx, sy, sz }));
     t.translate(() => ({ x: dx, y: dy, z: dz }));
-    t.apply(DUMMY_STATE, DEFAULT_CONTROLLER);
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expected);
   });
 });
@@ -2344,7 +2344,7 @@ describe("parallax depth", () => {
   const depthX = 4,
     depthY = 3,
     depthZ = 2;
-  const controller = new FXController({ depthX, depthY, depthZ });
+  const composer = new FXComposer({ depthX, depthY, depthZ });
 
   test("translate", () => {
     const dx = 10,
@@ -2366,9 +2366,9 @@ describe("parallax depth", () => {
       y: { current: dy },
       z: { current: dz },
     });
-    const params = toParameters(state, controller);
+    const params = toParameters(state, composer);
 
-    t.apply(state, controller);
+    t.update(state, composer);
 
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenNthCalledWith(
@@ -2382,17 +2382,17 @@ describe("parallax depth", () => {
         nz: params.nz,
       },
       state,
-      controller,
+      composer,
     );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: -dx },
         y: { current: -dy },
         z: { current: -dz },
       }),
-      controller,
+      composer,
     );
     expect(t).toBeCloseToArray(IDENTITY);
   });
@@ -2417,26 +2417,26 @@ describe("parallax depth", () => {
       y: { current: sy },
       z: { current: sz },
     });
-    const params = toParameters(state, controller);
+    const params = toParameters(state, composer);
 
-    t.apply(state, controller);
+    t.update(state, composer);
 
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenNthCalledWith(
       1,
       params, // raw, unscaled
       state,
-      controller,
+      composer,
     );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: 1 / sx },
         y: { current: 1 / sy },
         z: { current: 1 / sz },
       }),
-      controller,
+      composer,
     );
     expect(t).toBeCloseToArray(IDENTITY);
   });
@@ -2462,21 +2462,21 @@ describe("parallax depth", () => {
       y: { current: deg2 },
       z: { current: deg + deg2 },
     });
-    const params = toParameters(state, controller);
+    const params = toParameters(state, composer);
 
-    t.apply(state, controller);
+    t.update(state, composer);
 
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenNthCalledWith(
       1,
       params, // raw, unscaled
       state,
-      controller,
+      composer,
     );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(newState({ y: { current: -deg2 } }), controller);
-    t.apply(newState({ x: { current: -deg } }), controller);
+    t.update(newState({ y: { current: -deg2 } }), composer);
+    t.update(newState({ x: { current: -deg } }), composer);
     expect(t).toBeCloseToArray(IDENTITY);
   });
 
@@ -2493,9 +2493,9 @@ describe("parallax depth", () => {
       y: { current: deg },
       z: { current: deg },
     });
-    const params = toParameters(state, controller);
+    const params = toParameters(state, composer);
 
-    t.apply(state, controller);
+    t.update(state, composer);
 
     expect(cbk).toHaveBeenCalledTimes(1);
     expect(cbk).toHaveBeenNthCalledWith(
@@ -2509,17 +2509,17 @@ describe("parallax depth", () => {
         nz: params.nz,
       },
       state,
-      controller,
+      composer,
     );
     expect(t).toBeCloseToArray(expected);
 
-    t.apply(
+    t.update(
       newState({
         x: { current: -deg },
         y: { current: -deg },
         z: { current: -deg },
       }),
-      controller,
+      composer,
     );
     expect(t).toBeCloseToArray(IDENTITY);
   });
@@ -2544,9 +2544,9 @@ describe("parallax depth", () => {
       y: { current: y },
       z: { current: z },
     });
-    const params = toParameters(state, controller);
+    const params = toParameters(state, composer);
 
-    t.apply(state, controller);
+    t.update(state, composer);
 
     expect(cbkTranslate).toHaveBeenCalledTimes(1);
     expect(cbkTranslate).toHaveBeenNthCalledWith(
@@ -2560,11 +2560,11 @@ describe("parallax depth", () => {
         nz: params.nz,
       },
       state,
-      controller,
+      composer,
     );
 
     expect(cbkScale).toHaveBeenCalledTimes(1);
-    expect(cbkScale).toHaveBeenNthCalledWith(1, params, state, controller);
+    expect(cbkScale).toHaveBeenNthCalledWith(1, params, state, composer);
 
     expect(cbkRotate).toHaveBeenCalledTimes(1);
     expect(cbkRotate).toHaveBeenNthCalledWith(
@@ -2578,11 +2578,11 @@ describe("parallax depth", () => {
         nz: params.nz,
       },
       state,
-      controller,
+      composer,
     );
 
     expect(cbkSkew).toHaveBeenCalledTimes(1);
-    expect(cbkSkew).toHaveBeenNthCalledWith(1, params, state, controller);
+    expect(cbkSkew).toHaveBeenNthCalledWith(1, params, state, composer);
   });
 });
 
@@ -2598,7 +2598,7 @@ test("modifying params and state inside handler", () => {
   const cbkB = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
 
   const state = newState();
-  const params = toParameters(state, DEFAULT_CONTROLLER);
+  const params = toParameters(state, DEFAULT_COMPOSER);
 
   const stateCopy = deepCopy(state);
   const paramsCopy = deepCopy(params);
@@ -2606,13 +2606,13 @@ test("modifying params and state inside handler", () => {
   t.translate(cbkA);
   t.translate(cbkB);
 
-  t.apply(state, DEFAULT_CONTROLLER);
+  t.update(state, DEFAULT_COMPOSER);
 
   expect(cbkA).toHaveBeenCalledTimes(1);
-  expect(cbkA).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_CONTROLLER);
+  expect(cbkA).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_COMPOSER);
 
   expect(cbkB).toHaveBeenCalledTimes(1);
-  expect(cbkB).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_CONTROLLER);
+  expect(cbkB).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_COMPOSER);
 
   expect(state).toEqual(stateCopy);
   expect(params).toEqual(paramsCopy);

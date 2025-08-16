@@ -44,7 +44,7 @@ import {
   validateRawOrRelativeNumber,
 } from "@lisn/utils/validation";
 
-import { FXController } from "@lisn/effects/fx-controller";
+import { FXComposer } from "@lisn/effects/fx-composer";
 import { Transform } from "@lisn/effects/transform";
 
 import { ScrollWatcher, ScrollData } from "@lisn/watchers/scroll-watcher";
@@ -183,10 +183,10 @@ import debug from "@lisn/debug/debug";
  */
 export class SmoothScroll extends Widget {
   /**
-   * Returns the {@link FXController} used for the root or the given layer. You
+   * Returns the {@link FXComposer} used for the root or the given layer. You
    * can add custom effects to it.
    */
-  readonly getController: (layer?: Element) => FXController | undefined;
+  readonly getComposer: (layer?: Element) => FXComposer | undefined;
 
   /**
    * If element is omitted, returns the instance created by {@link enableMain}
@@ -267,8 +267,7 @@ export class SmoothScroll extends Widget {
       : null;
 
     let layers: Map<Element, SmoothScrollLayerState> | null = null;
-    this.getController = (layer) =>
-      layers?.get(layer ?? scrollable)?._controller;
+    this.getComposer = (layer) => layers?.get(layer ?? scrollable)?._composer;
 
     // TODO Fallback to using scroll gestures:
     // Position the outerWrapper as fixed, listen for gestures and initiate
@@ -298,21 +297,22 @@ export class SmoothScroll extends Widget {
  */
 export type SmoothScrollConfig = {
   /**
-   * The lag for the {@link SmoothScroll.getController | root controller}.
+   * The lag for the {@link SmoothScroll.getComposer | root composer}.
    *
    * @defaultValue {@link settings.effectLag}
    */
   lag?: number;
 
   /**
-   * The horizontal lag for the {@link SmoothScroll.getController | root controller}.
+   * The horizontal lag for the
+   * {@link SmoothScroll.getComposer | root composer}.
    *
    * @defaultValue {@link lag}
    */
   lagX?: number;
 
   /**
-   * The vertical lag for the {@link SmoothScroll.getController | root controller}.
+   * The vertical lag for the {@link SmoothScroll.getComposer | root composer}.
    *
    * @defaultValue {@link lag}
    */
@@ -339,7 +339,7 @@ export type SmoothScrollConfig = {
   /**
    * Set this to false to prevent adding the default
    * {@link Transform | translation effect} to the
-   * {@link SmoothScroll.getController | root controller}.
+   * {@link SmoothScroll.getComposer | root composer}.
    *
    * @defaultValue true
    */
@@ -365,7 +365,7 @@ export type SmoothScrollConfig = {
  */
 export type SmoothScrollLayerConfig = {
   /**
-   * The lag for {@link SmoothScroll.getController | this layer's controller}.
+   * The lag for {@link SmoothScroll.getComposer | this layer's composer}.
    *
    * @defaultValue undefined // parent lag
    */
@@ -373,7 +373,7 @@ export type SmoothScrollLayerConfig = {
 
   /**
    * The horizontal lag for
-   * {@link SmoothScroll.getController | this layer's controller}.
+   * {@link SmoothScroll.getComposer | this layer's composer}.
    *
    * @defaultValue undefined // parent lagX
    */
@@ -381,7 +381,7 @@ export type SmoothScrollLayerConfig = {
 
   /**
    * The vertical lag for
-   * {@link SmoothScroll.getController | this layer's controller}.
+   * {@link SmoothScroll.getComposer | this layer's composer}.
    *
    * @defaultValue undefined // parent lagY
    */
@@ -389,7 +389,7 @@ export type SmoothScrollLayerConfig = {
 
   /**
    * The parallax depth for
-   * {@link SmoothScroll.getController | this layer's controller}.
+   * {@link SmoothScroll.getComposer | this layer's composer}.
    *
    * The special value "auto" is supported here and will result in vertical
    * (or horizontal) depth equal to the scrollable's scroll height (or width)
@@ -405,7 +405,7 @@ export type SmoothScrollLayerConfig = {
 
   /**
    * The horizontal parallax depth for
-   * {@link SmoothScroll.getController | this layer's controller}.
+   * {@link SmoothScroll.getComposer | this layer's composer}.
    *
    * @defaultValue {@link depth}
    */
@@ -413,7 +413,7 @@ export type SmoothScrollLayerConfig = {
 
   /**
    * The vertical parallax depth for
-   * {@link SmoothScroll.getController | this layer's controller}.
+   * {@link SmoothScroll.getComposer | this layer's composer}.
    *
    * @defaultValue {@link depth}
    */
@@ -422,7 +422,7 @@ export type SmoothScrollLayerConfig = {
   /**
    * Set this to false to prevent adding the default
    * {@link Transform | translation effect} to
-   * {@link SmoothScroll.getController | this layer's controller}.
+   * {@link SmoothScroll.getComposer | this layer's composer}.
    *
    * @defaultValue true
    */
@@ -453,7 +453,7 @@ type SmoothScrollLayerState = {
   _lagY: number;
   _depthX: number | "auto";
   _depthY: number | "auto";
-  _controller: FXController;
+  _composer: FXComposer;
   _children: Set<Element>;
   _parentState: SmoothScrollLayerState | null;
   _scrollData?: ScrollData;
@@ -521,21 +521,20 @@ const getLayersFrom = (
   const defaultLagX = rootConfig?.lagX ?? defaultLag;
   const defaultLagY = rootConfig?.lagY ?? defaultLag;
 
-  const newController = (
+  const newComposer = (
     useDefaultEffects: boolean,
     config: {
       lagX: number;
       lagY: number;
       depthX: number;
       depthY: number;
-      parent?: FXController;
+      parent?: FXComposer;
     },
   ) => {
-    const controller = new FXController(
-      MH.merge(config, { scrollable, disabled: true }),
-    );
+    const trigger = "XXX TODO";
+    const composer = new FXComposer(MH.merge(config, { trigger }));
     if (useDefaultEffects) {
-      controller.add([
+      composer.add([
         new Transform({ isAbsolute: true }).translate((data) => ({
           x: data.x,
           y: data.y,
@@ -543,7 +542,7 @@ const getLayersFrom = (
       ]);
     }
 
-    return controller;
+    return composer;
   };
 
   const getLayerConfig = (layer: Element) => {
@@ -604,12 +603,12 @@ const getLayersFrom = (
         _lagY: lagY,
         _depthX: depthX,
         _depthY: depthY,
-        _controller: newController(useDefaultEffects, {
+        _composer: newComposer(useDefaultEffects, {
           lagX,
           lagY,
           depthX: depthX === MC.S_AUTO ? 1 : depthX,
           depthY: depthY === MC.S_AUTO ? 1 : depthY,
-          parent: parentState?._controller,
+          parent: parentState?._composer,
         }),
         _children: MH.newSet(),
         _parentState: parentState,
@@ -753,7 +752,7 @@ const init = async (
 
   // ----------
 
-  const addWatchersAndControllers = () => {
+  const addWatchersAndComposers = () => {
     scrollWatcher?.trackScroll(updateScrollData, { scrollable });
     sizeWatcher?.onResize(updatePropsOnResize, {
       target: innerWrapper,
@@ -766,11 +765,11 @@ const init = async (
       }
     }
 
-    setControllersState("enable");
-    // XXX TODO add CSS from controller
+    // setXXXState("enable");
+    // XXX TODO add CSS from composer
   };
 
-  const removeWatchersAndControllers = () => {
+  const removeWatchersAndComposers = () => {
     scrollWatcher?.noTrackScroll(updateScrollData, scrollable);
     sizeWatcher?.offResize(updatePropsOnResize, innerWrapper);
 
@@ -780,15 +779,15 @@ const init = async (
       }
     }
 
-    setControllersState("disable");
-    // XXX TODO clear CSS from controller
+    // setXXXState("disable");
+    // XXX TODO clear CSS from composer
   };
 
-  const setControllersState = (method: "enable" | "disable" | "clear") => {
-    for (const state of layers.values()) {
-      state._controller[method]();
-    }
-  };
+  // const setXXXState = (method: "enable" | "disable" | "clear") => {
+  //   for (const state of layers.values()) {
+  //     state._composer[method]();
+  //   }
+  // };
 
   const resetAutoDepth = (state?: SmoothScrollLayerState) => {
     if (!state) {
@@ -806,7 +805,7 @@ const init = async (
 
     const depthX = rootScrollData[MC.S_SCROLL_WIDTH] / layerSize[MC.S_WIDTH];
     const depthY = rootScrollData[MC.S_SCROLL_HEIGHT] / layerSize[MC.S_HEIGHT];
-    state._controller.setDepth(depthX, depthY);
+    state._composer.setDepth({ depthX, depthY });
   };
 
   // SETUP ------------------------------
@@ -859,20 +858,20 @@ const init = async (
 
   addClassesNow(root, PREFIX_ROOT);
 
-  addWatchersAndControllers();
+  addWatchersAndComposers();
 
   widget.onDisable(() => {
-    removeWatchersAndControllers();
+    removeWatchersAndComposers();
     removeClasses(root, PREFIX_ROOT);
   });
 
   widget.onEnable(() => {
-    addWatchersAndControllers();
+    addWatchersAndComposers();
     addClasses(root, PREFIX_ROOT);
   });
 
   widget.onDestroy(async () => {
-    setControllersState("clear");
+    // setXXXState("clear");
 
     await waitForMutateTime();
 

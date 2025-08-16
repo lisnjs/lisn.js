@@ -4,7 +4,7 @@
  * @internal
  */
 
-export * from "@lisn/effects/fx-controller";
+export * from "@lisn/effects/fx-composer";
 
 export * from "@lisn/effects/effect";
 

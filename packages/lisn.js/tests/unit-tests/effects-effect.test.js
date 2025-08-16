@@ -1,14 +1,14 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { deepCopy, copyExistingKeys } = window.LISN.utils;
-const { toParameters, scaleParameters, getUpdatedState, FXController } =
+const { toParameters, scaleParameters, getUpdatedState, FXComposer } =
   window.LISN.effects;
 
 window.LISN.settings.effectLag = 0;
 
 const DEFAULT_SCALER_FN = (v, d) => v / d;
 
-const DEFAULT_CONTROLLER = new FXController();
+const DEFAULT_COMPOSER = new FXComposer();
 
 const DEFAULT_STATE = {
   x: {
@@ -124,7 +124,7 @@ describe("toParameters", () => {
       },
     });
 
-    const parameters = toParameters(state, DEFAULT_CONTROLLER);
+    const parameters = toParameters(state, DEFAULT_COMPOSER);
     expect(parameters).toEqual({
       x,
       nx: 0.5,
@@ -136,7 +136,7 @@ describe("toParameters", () => {
 
     // previous is 0 and min is 0, so the absolute parameters are the same
     expect(
-      toParameters(state, DEFAULT_CONTROLLER, { isAbsolute: true }),
+      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
     ).toEqual(parameters);
   });
 
@@ -173,7 +173,7 @@ describe("toParameters", () => {
     });
 
     // incremental
-    expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
+    expect(toParameters(state, DEFAULT_COMPOSER)).toEqual({
       x: 0.75 * x,
       nx: 3 / 7, // curr nx - prev nx (which is 0)
       y: 0.75 * y,
@@ -183,7 +183,7 @@ describe("toParameters", () => {
     });
 
     expect(
-      toParameters(state, DEFAULT_CONTROLLER, { isAbsolute: true }),
+      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
     ).toEqual({
       x: x,
       nx: 3 / 7, // (curr - min) / (max - min)
@@ -221,7 +221,7 @@ describe("toParameters", () => {
     });
 
     // incremental
-    expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
+    expect(toParameters(state, DEFAULT_COMPOSER)).toEqual({
       x,
       nx: 0.25, // curr abs nx (which is 3 / 4) - prev abs nx (which is 1 / 2)
       y,
@@ -231,7 +231,7 @@ describe("toParameters", () => {
     });
 
     expect(
-      toParameters(state, DEFAULT_CONTROLLER, { isAbsolute: true }),
+      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
     ).toEqual({
       x,
       nx: 0.75,
@@ -269,7 +269,7 @@ describe("toParameters", () => {
     });
 
     // incremental
-    expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
+    expect(toParameters(state, DEFAULT_COMPOSER)).toEqual({
       x: -x,
       nx: -0.25, // curr abs nx (which is 1 / 4) - prev abs nx (which is 1 / 2)
       y: -y,
@@ -279,7 +279,7 @@ describe("toParameters", () => {
     });
 
     expect(
-      toParameters(state, DEFAULT_CONTROLLER, { isAbsolute: true }),
+      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
     ).toEqual({
       x: -x,
       nx: 0.25,
@@ -317,7 +317,7 @@ describe("toParameters", () => {
     });
 
     // incremental
-    expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
+    expect(toParameters(state, DEFAULT_COMPOSER)).toEqual({
       x: 0.75 * x,
       nx: 0.5 - 1 / 8, // curr abs nx (which is 1 / 2) - prev abs nx (which is 1 / 8)
       y: 0.75 * y,
@@ -327,7 +327,7 @@ describe("toParameters", () => {
     });
 
     expect(
-      toParameters(state, DEFAULT_CONTROLLER, { isAbsolute: true }),
+      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
     ).toEqual({
       x,
       nx: 0.5,
@@ -367,7 +367,7 @@ describe("toParameters", () => {
     };
 
     // incremental
-    expect(toParameters(state, DEFAULT_CONTROLLER)).toEqual({
+    expect(toParameters(state, DEFAULT_COMPOSER)).toEqual({
       x: -x, // x - x * 2
       nx: -1, // curr abs nx (which is 0) - prev abs nx (which is 1)
       y: y / 2, // y / 2 - 0
@@ -377,7 +377,7 @@ describe("toParameters", () => {
     });
 
     expect(
-      toParameters(state, DEFAULT_CONTROLLER, { isAbsolute: true }),
+      toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true }),
     ).toEqual({
       x,
       nx: 0,
@@ -392,7 +392,7 @@ describe("toParameters", () => {
     const depthX = 2,
       depthY = 3,
       depthZ = 4;
-    const controller = new FXController({ depthX, depthY, depthZ });
+    const composer = new FXComposer({ depthX, depthY, depthZ });
     const x = 10,
       y = 20,
       z = 30,
@@ -414,7 +414,7 @@ describe("toParameters", () => {
     });
 
     expect(
-      toParameters(state, controller, {
+      toParameters(state, composer, {
         isAbsolute: true,
         scalerFn: DEFAULT_SCALER_FN,
       }),
@@ -447,13 +447,13 @@ describe("scaleParameters", () => {
     };
 
     expect(
-      scaleParameters(params, DEFAULT_CONTROLLER, DEFAULT_SCALER_FN),
+      scaleParameters(params, DEFAULT_COMPOSER, DEFAULT_SCALER_FN),
     ).toEqual(params);
   });
 
   test("depth (single)", () => {
     const depth = 3;
-    const controller = new FXController({ depth });
+    const composer = new FXComposer({ depth });
     const x = 10,
       y = 20,
       z = 30;
@@ -469,7 +469,7 @@ describe("scaleParameters", () => {
       nz,
     };
 
-    expect(scaleParameters(params, controller, DEFAULT_SCALER_FN)).toEqual({
+    expect(scaleParameters(params, composer, DEFAULT_SCALER_FN)).toEqual({
       x: x / depth,
       nx,
       y: y / depth,
@@ -483,7 +483,7 @@ describe("scaleParameters", () => {
     const depthX = 2,
       depthY = 3,
       depthZ = 4;
-    const controller = new FXController({ depthX, depthY, depthZ });
+    const composer = new FXComposer({ depthX, depthY, depthZ });
     const x = 10,
       y = 20,
       z = 30;
@@ -499,7 +499,7 @@ describe("scaleParameters", () => {
       nz,
     };
 
-    expect(scaleParameters(params, controller, DEFAULT_SCALER_FN)).toEqual({
+    expect(scaleParameters(params, composer, DEFAULT_SCALER_FN)).toEqual({
       x: x / depthX,
       nx,
       y: y / depthY,
@@ -511,7 +511,7 @@ describe("scaleParameters", () => {
 
   test("not modifying input params", () => {
     const depth = 3;
-    const controller = new FXController({ depth });
+    const composer = new FXComposer({ depth });
     const x = 10,
       y = 20,
       z = 30;
@@ -528,7 +528,7 @@ describe("scaleParameters", () => {
     };
     const copy = deepCopy(params);
 
-    scaleParameters(params, controller, DEFAULT_SCALER_FN);
+    scaleParameters(params, composer, DEFAULT_SCALER_FN);
     expect(params).toEqual(copy);
   });
 
@@ -540,7 +540,7 @@ describe("scaleParameters", () => {
     const depthX = 2,
       depthY = 3,
       depthZ = 4;
-    const controller = new FXController({ depthX, depthY, depthZ });
+    const composer = new FXComposer({ depthX, depthY, depthZ });
     const x = 10,
       y = 20,
       z = 30;
@@ -556,7 +556,7 @@ describe("scaleParameters", () => {
       nz,
     };
 
-    const result = scaleParameters(params, controller, scalerFn);
+    const result = scaleParameters(params, composer, scalerFn);
     expect(scalerFn).toHaveBeenCalledTimes(3);
     expect(scalerFn).toHaveBeenCalledWith(x, depthX, "x");
     expect(scalerFn).toHaveBeenCalledWith(y, depthY, "y");
@@ -577,7 +577,7 @@ describe("getUpdatedState: validate current", () => {
   const depthX = 2,
     depthY = 3,
     depthZ = 4;
-  const controller = new FXController({ depthX, depthY, depthZ });
+  const composer = new FXComposer({ depthX, depthY, depthZ });
   const dummyState = newState(
     { x: { depth: depthX }, y: { depth: depthY }, z: { depth: depthZ } },
     DUMMY_STATE,
@@ -588,8 +588,8 @@ describe("getUpdatedState: validate current", () => {
       { x: { depth: depthX }, y: { depth: depthY }, z: { depth: depthZ } },
       DEFAULT_STATE,
     );
-    expect(getUpdatedState({}, controller)).toEqual(thisDefaultState);
-    expect(getUpdatedState({}, DEFAULT_CONTROLLER)).toEqual(DEFAULT_STATE);
+    expect(getUpdatedState({}, composer)).toEqual(thisDefaultState);
+    expect(getUpdatedState({}, DEFAULT_COMPOSER)).toEqual(DEFAULT_STATE);
   });
 
   for (const axis of ["x", "y", "z"]) {
@@ -599,7 +599,7 @@ describe("getUpdatedState: validate current", () => {
         const expected = deepCopy(state);
 
         state[axis][prop] = 1000;
-        expect(getUpdatedState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, composer)).toEqual(expected);
       });
     }
 
@@ -608,7 +608,7 @@ describe("getUpdatedState: validate current", () => {
       const expected = deepCopy(state);
 
       [state[axis].min, state[axis].max] = [state[axis].max, state[axis].min];
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
     test(`${axis}: missing min`, () => {
@@ -617,7 +617,7 @@ describe("getUpdatedState: validate current", () => {
       expected[axis].min = 0;
 
       delete state[axis].min;
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
     test(`${axis}: invalid min`, () => {
@@ -626,7 +626,7 @@ describe("getUpdatedState: validate current", () => {
       expected[axis].min = 0;
 
       state[axis].min = NaN;
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
     test(`${axis}: missing max (min < 0)`, () => {
@@ -642,7 +642,7 @@ describe("getUpdatedState: validate current", () => {
           0;
 
       delete state[axis].max;
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
     test(`${axis}: invalid max (min < 0)`, () => {
@@ -658,7 +658,7 @@ describe("getUpdatedState: validate current", () => {
           0;
 
       state[axis].max = NaN;
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
     test(`${axis}: missing max (min > 0)`, () => {
@@ -675,7 +675,7 @@ describe("getUpdatedState: validate current", () => {
           min;
 
       delete state[axis].max;
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
     test(`${axis}: invalid max (min > 0)`, () => {
@@ -692,7 +692,7 @@ describe("getUpdatedState: validate current", () => {
           min;
 
       state[axis].max = NaN;
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
     for (const prop of ["initial", "previous", "current", "target"]) {
@@ -702,7 +702,7 @@ describe("getUpdatedState: validate current", () => {
         expected[axis][prop] = expected[axis].min;
 
         state[axis][prop] = state[axis].min - 10;
-        expect(getUpdatedState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, composer)).toEqual(expected);
       });
 
       test(`${axis}: ${prop} > max`, () => {
@@ -711,7 +711,7 @@ describe("getUpdatedState: validate current", () => {
         expected[axis][prop] = expected[axis].max;
 
         state[axis][prop] = state[axis].max + 10;
-        expect(getUpdatedState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, composer)).toEqual(expected);
       });
 
       test(`${axis}: missing ${prop}`, () => {
@@ -720,7 +720,7 @@ describe("getUpdatedState: validate current", () => {
         expected[axis][prop] = expected[axis].min;
 
         delete state[axis][prop];
-        expect(getUpdatedState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, composer)).toEqual(expected);
       });
 
       test(`${axis}: invalid ${prop}`, () => {
@@ -729,7 +729,7 @@ describe("getUpdatedState: validate current", () => {
         expected[axis][prop] = expected[axis].min;
 
         state[axis][prop] = NaN;
-        expect(getUpdatedState(state, controller)).toEqual(expected);
+        expect(getUpdatedState(state, composer)).toEqual(expected);
       });
     }
 
@@ -749,7 +749,7 @@ describe("getUpdatedState: validate current", () => {
       delete state[axis].previous;
       state[axis].current = 0; // < min
       state[axis].target = min * 2; // > new max
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
     test(`${axis}: multiple invalid v2`, () => {
@@ -768,7 +768,7 @@ describe("getUpdatedState: validate current", () => {
       delete state[axis].previous;
       state[axis].current = -100; // < new min
       state[axis].target = max * 2; // > max
-      expect(getUpdatedState(state, controller)).toEqual(expected);
+      expect(getUpdatedState(state, composer)).toEqual(expected);
     });
   }
 });
@@ -777,14 +777,14 @@ describe("getUpdatedState: with update data", () => {
   const depthX = 2,
     depthY = 3,
     depthZ = 4;
-  const controller = new FXController({ depthX, depthY, depthZ });
+  const composer = new FXComposer({ depthX, depthY, depthZ });
   const dummyState = newState(
     { x: { depth: depthX }, y: { depth: depthY }, z: { depth: depthZ } },
     DUMMY_STATE,
   );
 
   test("missing", () => {
-    expect(getUpdatedState(dummyState, controller)).toEqual(dummyState);
+    expect(getUpdatedState(dummyState, composer)).toEqual(dummyState);
   });
 
   test("basic", () => {
@@ -793,7 +793,7 @@ describe("getUpdatedState: with update data", () => {
     const expected = deepCopy(state);
     copyExistingKeys(update, expected);
 
-    expect(getUpdatedState(state, controller, update)).toEqual(expected);
+    expect(getUpdatedState(state, composer, update)).toEqual(expected);
   });
 
   test("not modifying input state", () => {
@@ -803,7 +803,7 @@ describe("getUpdatedState: with update data", () => {
     const expected = deepCopy(state);
     copyExistingKeys(update, expected);
 
-    expect(getUpdatedState(state, controller, update)).toEqual(expected);
+    expect(getUpdatedState(state, composer, update)).toEqual(expected);
     expect(state).toEqual(copy);
   });
 
@@ -818,7 +818,7 @@ describe("getUpdatedState: with update data", () => {
     delete update.z.target;
 
     const copy = deepCopy(update);
-    getUpdatedState(state, controller, update);
+    getUpdatedState(state, composer, update);
     expect(update).toEqual(copy);
   });
 
@@ -833,7 +833,7 @@ describe("getUpdatedState: with update data", () => {
         update[axis].max,
         update[axis].min,
       ];
-      expect(getUpdatedState(state, controller, update)).toEqual(expected);
+      expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
 
     for (const prop of ["min", "max", "target"]) {
@@ -846,7 +846,7 @@ describe("getUpdatedState: with update data", () => {
         expected[axis][prop] = state[axis][prop]; // preserved
 
         delete update[axis][prop];
-        expect(getUpdatedState(state, controller, update)).toEqual(expected);
+        expect(getUpdatedState(state, composer, update)).toEqual(expected);
       });
 
       test(`${axis}: invalid ${prop}`, () => {
@@ -858,7 +858,7 @@ describe("getUpdatedState: with update data", () => {
         expected[axis][prop] = state[axis][prop]; // preserved
 
         update[axis][prop] = NaN;
-        expect(getUpdatedState(state, controller, update)).toEqual(expected);
+        expect(getUpdatedState(state, composer, update)).toEqual(expected);
       });
     }
 
@@ -871,7 +871,7 @@ describe("getUpdatedState: with update data", () => {
       expected[axis].target = expected[axis].min;
 
       update[axis].target = update[axis].min - 10;
-      expect(getUpdatedState(state, controller, update)).toEqual(expected);
+      expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
 
     test(`${axis}: target > max`, () => {
@@ -883,7 +883,7 @@ describe("getUpdatedState: with update data", () => {
       expected[axis].target = expected[axis].max;
 
       update[axis].target = update[axis].max + 10;
-      expect(getUpdatedState(state, controller, update)).toEqual(expected);
+      expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
 
     test(`${axis}: with other props => ignored`, () => {
@@ -900,7 +900,7 @@ describe("getUpdatedState: with update data", () => {
 
       update[axis].lag = 1000;
       update[axis].depth = 10;
-      expect(getUpdatedState(state, controller, update)).toEqual(expected);
+      expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
   }
 });

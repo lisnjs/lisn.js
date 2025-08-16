@@ -9,7 +9,6 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
-import { logError } from "@lisn/utils/log";
 import { isValidNum, sum } from "@lisn/utils/math";
 
 import { newXWeakMap } from "@lisn/modules/x-map";
@@ -334,13 +333,19 @@ export class Transform implements EffectInterface<"transform"> {
 
     this.setPerspective = (handler) => {
       addOwnHandler([PERSPECTIVE, handler], (parameters, state, composer) => {
-        const result = handler(parameters, state, composer);
-        if (MH.isNullish(currentPerspective) || MH.isNullish(result)) {
-          currentPerspective = result;
+        const perspective = handler(parameters, state, composer);
+        if (perspective === undefined) {
+          return;
+        }
+
+        validateInputs("Perspective", [perspective ?? 0]);
+
+        if (MH.isNullish(currentPerspective) || MH.isNullish(perspective)) {
+          currentPerspective = perspective;
         } else {
           // If transform is absolute, perspective would have been reset to null,
           // so this won't apply anyway.
-          currentPerspective += result;
+          currentPerspective += perspective;
         }
       });
 
@@ -425,8 +430,10 @@ export class Transform implements EffectInterface<"transform"> {
  * is taken as a change in the current perspective. Otherwise the return value
  * overrides the perspective.
  *
- * Note however that returning `null` clears the perspective completely even if
- * the transform is not absolute.
+ * Returning `null` clears the perspective completely even if the transform is
+ * not absolute.
+ *
+ * Returning `undefined` does nothing (leaves the perspective unchanged).
  *
  * @defaultValue undefined
  */
@@ -659,10 +666,8 @@ const validateInputs = (
 ) => {
   for (const i of inputs) {
     if (!isValidNum(i) || (requireNonZero && MH.abs(i) < 1e-10)) {
-      logError(
-        MH.usageError(
-          `${name} must be finite${requireNonZero ? " and non-zero" : ""}`,
-        ),
+      throw MH.usageError(
+        `${name} must be finite${requireNonZero ? " and non-zero" : ""}`,
       );
     }
   }

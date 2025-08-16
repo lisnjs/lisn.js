@@ -1496,6 +1496,58 @@ describe("toFloat32Array", () => {
 });
 
 describe("perspective", () => {
+  test("apply", () => {
+    const cbk = jest.fn(() => 2);
+    const t = newTransform();
+    t.setPerspective(cbk);
+    expect(cbk).toHaveBeenCalledTimes(0);
+
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenCalledWith(
+      DEFAULT_TWEEN_STATE,
+      DUMMY_STATE,
+      DEFAULT_COMPOSER,
+    );
+  });
+
+  test("missing return", () => {
+    const init = newTestMatrix();
+    const p = 200;
+    const t = newTransform(init, p);
+    t.setPerspective(() => {});
+
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(t).toBeCloseToArray(init);
+    expect(t.toPerspective()).toBe(p);
+  });
+
+  test("invalid return v1", () => {
+    const init = newTestMatrix();
+    const p = 200;
+    const t = newTransform(init, p);
+    t.setPerspective(() => NaN);
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Perspective must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
+    expect(t.toPerspective()).toBe(p);
+  });
+
+  test("invalid return v1", () => {
+    const init = newTestMatrix();
+    const p = 200;
+    const t = newTransform(init, p);
+    t.setPerspective(() => -Infinity);
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Perspective must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
+    expect(t.toPerspective()).toBe(p);
+  });
+
   test("basic", () => {
     const t = newTransform();
     expect(t.toPerspective()).toBeUndefined();
@@ -1527,9 +1579,19 @@ describe("perspective", () => {
     expect(t.toPerspective()).toBe(200);
   });
 
+  test("handler => undefined", () => {
+    const p = 200;
+    const t = newTransform(undefined, p).setPerspective(() => {});
+    expect(t.toPerspective()).toBe(p);
+
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(t.toPerspective()).toBe(p); // unchanged
+  });
+
   test("handler => null", () => {
-    const t = newTransform().setPerspective(() => null);
-    expect(t.toPerspective()).toBeUndefined();
+    const p = 200;
+    const t = newTransform(undefined, p).setPerspective(() => null);
+    expect(t.toPerspective()).toBe(p);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBeNull();
@@ -1687,7 +1749,7 @@ describe("perspective", () => {
 
 describe("translate", () => {
   test("apply", () => {
-    const cbk = jest.fn(() => null);
+    const cbk = jest.fn(() => ({ x: 10 }));
     const t = newTransform();
     t.translate(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
@@ -1699,6 +1761,37 @@ describe("translate", () => {
       DUMMY_STATE,
       DEFAULT_COMPOSER,
     );
+  });
+
+  test("missing return", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.translate(() => {});
+
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid distance v1", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.translate(() => ({ x: NaN }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Translate distance must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid distance v2", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.translate(() => ({ x: -Infinity }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Translate distance must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
   });
 
   test("X", () => {
@@ -1826,7 +1919,7 @@ describe("translate", () => {
 
 describe("scale", () => {
   test("apply", () => {
-    const cbk = jest.fn(() => null);
+    const cbk = jest.fn(() => ({ s: 2 }));
     const t = newTransform();
     t.scale(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
@@ -1838,6 +1931,70 @@ describe("scale", () => {
       DUMMY_STATE,
       DEFAULT_COMPOSER,
     );
+  });
+
+  test("missing return", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.scale(() => {});
+
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid factor v1", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.scale(() => ({ sx: NaN }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Scale factor must be finite and non-zero/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid factor v2", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.scale(() => ({ sx: -Infinity }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Scale factor must be finite and non-zero/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid factor v3", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.scale(() => ({ sx: 0 }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Scale factor must be finite and non-zero/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid origin v1", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.scale(() => ({ origin: [NaN, 0, 0] }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Origin must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid origin v2", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.scale(() => ({ origin: [-Infinity, 0, 0] }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Origin must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
   });
 
   test("X", () => {
@@ -2050,7 +2207,7 @@ describe("skew", () => {
   const tan2 = Math.tan((deg2 * Math.PI) / 180);
 
   test("apply", () => {
-    const cbk = jest.fn(() => null);
+    const cbk = jest.fn(() => ({ deg: 10 }));
     const t = newTransform();
     t.skew(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
@@ -2062,6 +2219,37 @@ describe("skew", () => {
       DUMMY_STATE,
       DEFAULT_COMPOSER,
     );
+  });
+
+  test("missing return", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.skew(() => {});
+
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid angle v1", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.skew(() => ({ deg: NaN }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Skew angle must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid angle v2", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.skew(() => ({ deg: -Infinity }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Skew angle must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
   });
 
   test("X", () => {
@@ -2148,7 +2336,7 @@ describe("rotate", () => {
   const sin = Math.sin((deg * Math.PI) / 180);
 
   test("apply", () => {
-    const cbk = jest.fn(() => null);
+    const cbk = jest.fn(() => ({ deg: 10 }));
     const t = newTransform();
     t.rotate(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
@@ -2160,6 +2348,70 @@ describe("rotate", () => {
       DUMMY_STATE,
       DEFAULT_COMPOSER,
     );
+  });
+
+  test("missing return", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.rotate(() => {});
+
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid angle v1", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.rotate(() => ({ deg: NaN }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Rotation angle must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid angle v2", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.rotate(() => ({ deg: -Infinity }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Rotation angle must be finite/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid axis v1", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.rotate(() => ({ axis: [NaN, 0, 0] }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Rotation axis must be finite and non-zero/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid axis v2", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.rotate(() => ({ axis: [-Infinity, 0, 0] }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Rotation axis must be finite and non-zero/,
+    );
+    expect(t).toBeCloseToArray(init);
+  });
+
+  test("invalid axis v3", () => {
+    const init = newTestMatrix();
+    const t = newTransform(init);
+    t.rotate(() => ({ axis: [0, 0, 0] }));
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /Rotation axis must be finite and non-zero/,
+    );
+    expect(t).toBeCloseToArray(init);
   });
 
   test("X", () => {

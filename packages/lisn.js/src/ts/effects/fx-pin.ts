@@ -12,17 +12,55 @@ import {
   addNewCallbackToMap,
   invokeHandlers,
 } from "@lisn/modules/callback";
+import { newXMap } from "@lisn/modules/x-map";
 
 /**
  * {@link FXPin} can be associated with an {@link Effects.Effect | Effects} (for
  * each {@link Effects.FXComposer}) in order to "pin" or freeze them and stop
  * them from being updated.
+ *
+ * It is activated or deactivated when one or more {@link FXPinMatcher}s match.
+ *
+ * There are built-in matchers in {@link PIN_MATCHERS}, or you can create your
+ * own (see {@link createFXPinMatcherType}).
  */
-export abstract class FXPin {
+export class FXPin {
   /**
    * Returns true if the pin is active.
    */
-  readonly isPinned: () => boolean;
+  readonly isActive: () => boolean;
+
+  /**
+   * Activates the pin when **all** the given matchers match. If you want to pin
+   * when any one of a list of matchers match, call {@link} when multiple times,
+   * passing it one matcher at a time.
+   *
+   * You can call {@link when} multiple times: each one adds an independent
+   * set of matchers to watch and when all matchers in a set match, the pin is
+   * activated.
+   */
+  readonly when: (...matchers: FXPinMatcher[]) => this;
+
+  /**
+   * Like {@link when} but it deactivates the pin when **all** the given
+   * matchers match.
+   */
+  readonly until: (...matchers: FXPinMatcher[]) => this;
+
+  /**
+   * Activates the pin when **all** the given matchers match and deactivates it
+   * when **none** of them match.
+   *
+   * ```javascript
+   * pin.while(matcherA, matcherB, matcherC);
+   *
+   * // This is equivalent to:
+   *
+   * pin.when(matcherA, matcherB, matcherC);
+   * pin.until(...[matcherA, matcherB, matcherC].map(m => PIN_MATCHERS.negate(m)));
+   * ```
+   */
+  readonly while: (...matchers: FXPinMatcher[]) => this;
 
   /**
    * Calls the given handler whenever the pin's state changes.
@@ -34,12 +72,49 @@ export abstract class FXPin {
    */
   readonly offChange: (handler: FXPinHandler) => void;
 
-  protected constructor() {
-    let isPinned = true;
+  constructor() {
+    let isActive = true;
+
     const changeCallbacks = MH.newMap<FXPinHandler, FXPinCallback>();
 
-    const invokeCallbacks = () =>
-      invokeHandlers(changeCallbacks.values(), isPinned, this);
+    const matcherGroups = newXMap<
+      FXPinMatcher,
+      Array<{
+        _activate: boolean;
+        _group: FXPinMatcher[];
+      }>
+    >(() => []);
+
+    const setState = (activate: boolean) => {
+      if (isActive !== activate) {
+        isActive = activate;
+        invokeHandlers(changeCallbacks.values(), isActive, this);
+      }
+    };
+
+    const addMatcherGroup = (activate: boolean, matchers: FXPinMatcher[]) => {
+      const entry = {
+        _activate: activate,
+        _group: matchers,
+      };
+
+      for (const m of matchers) {
+        const entries = matcherGroups.sGet(m);
+        entries.push(entry);
+        m.onChange(onMatcherChange);
+      }
+    };
+
+    const onMatcherChange = (matches: boolean, matcher: FXPinMatcher) => {
+      const sets = matcherGroups.get(matcher) ?? [];
+      for (const s of sets) {
+        if (s._group.every((m) => m.matches())) {
+          setState(s._activate);
+        }
+      }
+    };
+
+    // --------------------
 
     this.onChange = (handler) => {
       addNewCallbackToMap(changeCallbacks, handler);
@@ -49,7 +124,22 @@ export abstract class FXPin {
       MH.remove(changeCallbacks.get(handler));
     };
 
-    this.isPinned = () => isPinned;
+    this.isActive = () => isActive;
+
+    this.when = (...matchers) => {
+      addMatcherGroup(true, matchers);
+      return this;
+    };
+
+    this.until = (...matchers) => {
+      addMatcherGroup(false, matchers);
+      return this;
+    };
+
+    this.while = (...matchers) =>
+      this.when(...matchers).until(
+        ...matchers.map((m) => PIN_MATCHERS.negate(m)),
+      );
   }
 }
 
@@ -111,20 +201,20 @@ export type FXPinMatcherHandler<T extends FXPinMatcher = FXPinMatcher> =
   | FXPinMatcherCallback<T>
   | CallbackHandler<FXPinMatcherHandlerArgs<T>>;
 
-export type FXPinMatcherConstructor<Args extends readonly unknown[]> = {
-  new (...args: Args): FXPinMatcher;
+export type FXPinMatcherFactory<Args extends readonly unknown[]> = {
+  (...args: Args): FXPinMatcher;
 };
 
 export type FXPinMatcherStore<D = unknown> = {
   /**
-   * Returns the current state, last set using {@link setMatches}.
+   * Returns the current state, last set using {@link setState}.
    */
-  getMatches: () => boolean;
+  getState: () => boolean;
 
   /**
    * Updates the current state.
    */
-  setMatches: (matcher: boolean) => void;
+  setState: (matcher: boolean) => void;
 
   /**
    * Returns the current data, last set using {@link setData}.
@@ -146,60 +236,69 @@ export type FXPinMatcherStore<D = unknown> = {
 /**
  * Creates a new matcher class.
  *
- * @param constructor A function which accepts a {@link FXPinMatcherStore} as
- *                    well as the user-supplied arguments that are passed to the
- *                    constructor. The constructor is responsible for calling
- *                    {@link setMatches} and {@link setData} whenever it's state
- *                    or data change. It will be called inside the class
- *                    constructor with `this` set to the instance.
- * @param init        The initial data for the matcher.
+ * @param executor A function which accepts a {@link FXPinMatcherStore} as well
+ *                 as the user-supplied arguments that are passed to the
+ *                 executor. The executor is responsible for calling {@link
+ *                 setState} and {@link setData} whenever it's state or data
+ *                 change. It will be called inside the class executor with
+ *                 `this` set to the newly created matcher, in case it needs
+ *                 access to it.
+ * @param init     The initial data for the matcher.
  */
-export const FXPinMatcherFactory = <Args extends readonly unknown[], D>(
-  constructor: (store: FXPinMatcherStore<D>, ...args: Args) => void,
+export const createFXPinMatcherType = <Args extends readonly unknown[], D>(
+  executor: (store: FXPinMatcherStore<D>, ...args: Args) => void,
   init: D,
-): FXPinMatcherConstructor<Args> => {
-  return class implements FXPinMatcher {
-    readonly matches: () => boolean;
-    readonly onChange: (handler: FXPinMatcherHandler) => void;
-    readonly offChange: (handler: FXPinMatcherHandler) => void;
-    readonly restart: () => void;
+): FXPinMatcherFactory<Args> => {
+  return function (...args: Args): FXPinMatcher {
+    const storeData = { matches: false, data: init, refData: init };
 
-    constructor(...args: Args) {
-      const storeData = { matches: false, data: init, refData: init };
-
-      const store: FXPinMatcherStore<D> = {
-        getMatches: () => storeData.matches,
-        setMatches: (m) => {
+    const store: FXPinMatcherStore<D> = {
+      getState: () => storeData.matches,
+      setState: (m) => {
+        if (storeData.matches !== m) {
           storeData.matches = m;
-          invokeHandlers(changeCallbacks.values(), storeData.matches, this);
-        },
-        getData: () => storeData.data,
-        setData: (data) => {
-          storeData.data = data;
-        },
-        getReferenceData: () => storeData.refData,
-      };
+          invokeHandlers(changeCallbacks.values(), storeData.matches, self);
+        }
+      },
+      getData: () => storeData.data,
+      setData: (data) => {
+        storeData.data = data;
+      },
+      getReferenceData: () => storeData.refData,
+    };
 
-      const changeCallbacks = MH.newMap<
-        FXPinMatcherHandler,
-        FXPinMatcherCallback
-      >();
+    const changeCallbacks = MH.newMap<
+      FXPinMatcherHandler,
+      FXPinMatcherCallback
+    >();
 
-      this.matches = () => storeData.matches;
+    const self: FXPinMatcher = {
+      matches: () => storeData.matches,
 
-      this.onChange = (handler: FXPinMatcherHandler) => {
+      onChange: (handler: FXPinMatcherHandler) => {
         addNewCallbackToMap(changeCallbacks, handler);
-      };
+      },
 
-      this.offChange = (handler: FXPinMatcherHandler) => {
+      offChange: (handler: FXPinMatcherHandler) => {
         MH.remove(changeCallbacks.get(handler));
-      };
+      },
 
-      this.restart = () => {
+      restart: () => {
         storeData.refData = storeData.data;
-      };
+      },
+    };
 
-      constructor.call(this, store, ...args);
-    }
+    executor.call(self, store, ...args);
+
+    return self;
   };
 };
+
+// ----------
+
+export const PIN_MATCHERS = {
+  negate: createFXPinMatcherType((store, matcher: FXPinMatcher) => {
+    store.setState(!matcher.matches());
+    matcher.onChange((state) => store.setState(!state));
+  }, null),
+} as const;

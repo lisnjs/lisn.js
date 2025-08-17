@@ -7,8 +7,6 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { Point, Vector, AtLeastOne } from "@lisn/globals/types";
 
-import { springTweener } from "@lisn/utils/tween";
-
 /**
  * Round a number to the given decimal precision.
  *
@@ -497,37 +495,3 @@ export const getBitmask = (start: number, end: number): number =>
   start > end
     ? getBitmask(end, start)
     : (~0 >>> (32 - end - 1 + start)) << start;
-
-/**
- * @ignore
- * @deprecated
- *
- * Use {@link springTweener} instead.
- *
- * @since v1.2.0
- *
- * @category Math
- */
-export const criticallyDamped = (settings: {
-  lTarget: number;
-  dt: number;
-  lag: number;
-  l?: number;
-  v?: number;
-  precision?: number;
-}): {
-  l: number;
-  v: number;
-} => {
-  const { lTarget, dt, lag, l = 0, v = 0, precision } = settings;
-  const result = springTweener({
-    current: l,
-    target: lTarget,
-    velocity: v,
-    lag,
-    deltaTime: dt,
-    precision,
-  });
-
-  return { l: result.current, v: result.velocity };
-};

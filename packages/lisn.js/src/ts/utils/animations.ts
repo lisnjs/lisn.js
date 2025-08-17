@@ -14,7 +14,6 @@ import {
   waitForMeasureTime,
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
-import { criticallyDamped, isValidNum } from "@lisn/utils/math";
 
 /**
  * @since v1.2.0
@@ -135,61 +134,6 @@ export async function* animationFrameGenerator(
  * Deprecated alias for {@link animationFrameGenerator}
  */
 export const newAnimationFrameIterator = animationFrameGenerator;
-
-/**
- * @ignore
- * @deprecated
- *
- * Use
- * {@link tween3DAnimationGenerator | `tween3DAnimationGenerator("spring", ...)`}
- * instead.
- *
- * @since v1.2.0
- *
- * @category Animations
- */
-export async function* newCriticallyDampedAnimationIterator(settings: {
-  lTarget: number;
-  lag: number;
-  l?: number;
-  precision?: number;
-}): AsyncGenerator<
-  { l: number; v: number; t: number },
-  { l: number; v: number; t: number },
-  number
-> {
-  let { l, lTarget } = settings;
-  const { lag, precision } = settings;
-  let v = 0,
-    t = 0,
-    dt = 0;
-
-  const next = () => {
-    ({ l, v } = criticallyDamped({
-      lTarget,
-      lag,
-      l,
-      dt,
-      v,
-      precision,
-    }));
-    return { l, v, t };
-  };
-
-  for await ({ total: t, sinceLast: dt } of animationFrameGenerator()) {
-    if (dt === 0) {
-      continue;
-    }
-
-    const result = next();
-    lTarget = (yield result) ?? lTarget;
-    if (l === lTarget || !isValidNum(l)) {
-      return result;
-    }
-  }
-
-  throw null; // tell TypeScript it never reaches here
-}
 
 /**
  * @param webAnimationCallback This function is called for each

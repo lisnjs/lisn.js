@@ -52,101 +52,91 @@
       <div id="content">
         <div class="section">
           <button
-            onclick="watcher.scroll('right', {amount: 100, asFractionOf: 'visible'}).then(logScroll)"
+            onclick="watcherScroll('right', {amount: 100, asFractionOf: 'visible'})"
           >
             Scroll right 1 screen
           </button>
           <button
             class="align-right"
-            onclick="watcher.scroll('left', {amount: 100, asFractionOf: 'visible'}).then(logScroll)"
+            onclick="watcherScroll('left', {amount: 100, asFractionOf: 'visible'})"
           >
             Scroll left 1 screen
           </button>
-          <button
-            onclick="watcher.scroll('right', {amount: 100}).then(logScroll)"
-          >
+          <button onclick="watcherScroll('right', {amount: 100})">
             Scroll right 100px
           </button>
-          <button
-            onclick="watcher.scroll('left', {amount: 100}).then(logScroll)"
-          >
+          <button onclick="watcherScroll('left', {amount: 100})">
             Scroll left 100px
           </button>
           <button
-            onclick="watcher.scroll('down', {amount: 100, asFractionOf: 'visible'}).then(logScroll)"
+            onclick="watcherScroll('down', {amount: 100, asFractionOf: 'visible'})"
           >
             Scroll down 1 screen
           </button>
           <button
-            onclick="setTimeout(() => watcher.scrollTo({top: 0, left: 0}, {userCanInterrupt: true}).then(logScroll), 1000)"
+            onclick="setTimeout(() => watcherScrollTo({top: 0, left: 0}, {userCanInterrupt: true}), 1000)"
           >
             Scroll to top after 1s (user-interruptible)
           </button>
         </div>
 
         <div id="foo" class="section">
-          <button onclick="watcher.scrollTo('#bar').then(logScroll)">
+          <button onclick="watcherScrollTo('#bar')">
             Scroll to third section using selector
           </button>
-          <button
-            onclick="watcher.scrollTo(document.getElementById('bar')).then(logScroll)"
-          >
+          <button onclick="watcherScrollTo(document.getElementById('bar'))">
             Scroll to third section using element
           </button>
           <button
-            onclick="watcher.scroll('up', {amount: 100, asFractionOf: 'visible'}).then(logScroll)"
+            onclick="watcherScroll('up', {amount: 100, asFractionOf: 'visible'})"
           >
             Scroll up 1 screen
           </button>
           <button
-            onclick="watcher.scroll('down', {amount: 10, asFractionOf: 'content'}).then(logScroll)"
+            onclick="watcherScroll('down', {amount: 10, asFractionOf: 'content'})"
           >
             Scroll down 10% of content
           </button>
           <button
-            onclick="watcher.scroll('up', {amount: 10, asFractionOf: 'visible'}).then(logScroll)"
+            onclick="watcherScroll('up', {amount: 10, asFractionOf: 'visible'})"
           >
             Scroll up 10% of viewport
           </button>
           <button
-            onclick="watcher.scroll('down', {amount: 10, asFractionOf: 'content', duration: 4000}).then(logScroll)"
+            onclick="watcherScroll('down', {amount: 10, asFractionOf: 'content', duration: 4000})"
           >
             Scroll down 10% of content slowly
           </button>
           <button
-            onclick="watcher.scroll('down', {amount: 10, asFractionOf: 'content', duration: 4000, weCanInterrupt: true}).then(logScroll)"
+            onclick="watcherScroll('down', {amount: 10, asFractionOf: 'content', duration: 4000, weCanInterrupt: true})"
           >
             Scroll down 10% of content slowly (interruptible)
           </button>
           <button
-            onclick="watcher.scroll('down', {amount: 10, asFractionOf: 'content', duration: 4000, userCanInterrupt: true}).then(logScroll)"
+            onclick="watcherScroll('down', {amount: 10, asFractionOf: 'content', duration: 4000, userCanInterrupt: true})"
           >
             Scroll down 10% of content slowly (user-interruptible)
           </button>
         </div>
 
         <div id="bar" class="section">
-          <button onclick="watcher.scrollTo('#foo').then(logScroll)">
+          <button onclick="watcherScrollTo('#foo')">
             Scroll to second section using selector
           </button>
-          <button
-            onclick="watcher.scrollTo(document.getElementById('foo')).then(logScroll)"
-          >
+          <button onclick="watcherScrollTo(document.getElementById('foo'))">
             Scroll to second section using element
           </button>
           <button
-            onclick="watcher.scroll('down', {weCanInterrupt: true, amount: 100, asFractionOf: 'visible'}).then(logScroll); setTimeout(() => watcher.scrollTo('#foo').then(logScroll), 100)"
+            onclick="watcherScroll('down', {weCanInterrupt: true, amount: 100, asFractionOf: 'visible'}); setTimeout(() => watcherScrollTo('#foo'), 100)"
           >
             Scroll down (interruptible), then to second section
           </button>
           <button
-            onclick="watcher.scroll('down', {amount: 100, asFractionOf: 'visible'}).then(logScroll); setTimeout(() => watcher.scrollTo('#foo').then(logScroll), 100)"
+            onclick="watcherScroll('down', {amount: 100, asFractionOf: 'visible'}); setTimeout(() => watcherScrollTo('#foo'), 100)"
           >
             Scroll down, then fail to scroll to second section
           </button>
-          <button
-            onclick="watcher.scrollTo({left: 100, top: 200}).then(logScroll)"
-          >
+          <button onclick="watcherScrollTo({left: 100, top: 200})">
             Scroll to 100,200
           </button>
         </div>
@@ -159,16 +149,30 @@
     <script charset="utf-8">
       const logger = new LISN.debug.Logger({ name: "test" });
       const watcher = LISN.watchers.ScrollWatcher.reuse();
-      async function logScroll(action) {
+
+      function watcherScrollTo(...args) {
+        const start = Date.now();
+        watcher.scrollTo(...args).then((a) => logScroll(start, a));
+      }
+
+      function watcherScroll(...args) {
+        const start = Date.now();
+        watcher.scroll(...args).then((a) => logScroll(start, a));
+      }
+
+      function logScroll(start, action) {
+        const result = (coords) =>
+          JSON.stringify({ time: (Date.now() - start) / 1000, ...coords });
+
         if (!action) {
-          logger.log("scroll not initiated");
+          logger.log("watcherScroll not initiated");
           return;
         }
 
         action
           .waitFor()
-          .then((x) => logger.log(x))
-          .catch((x) => logger.error(x));
+          .then((x) => logger.log(result(x)))
+          .catch((x) => logger.error(result(x)));
       }
     </script>
   </body>

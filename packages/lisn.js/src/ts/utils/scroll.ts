@@ -260,11 +260,8 @@ export const getCurrentScrollAction = (
   scrollable?: Element,
 ): ScrollAction | null => {
   scrollable = toScrollableOrDefault(scrollable);
-  const info = currentScrollInfos.get(scrollable);
-  if (info) {
-    return MH.copyObject(info._action);
-  }
-  return null;
+  const action = currentScrollInfos.get(scrollable)?._action;
+  return action ? MH.copyObject(action) : null;
 };
 
 /**
@@ -295,9 +292,9 @@ export const scrollTo = (
   const scrollable = options._scrollable;
 
   // cancel current scroll action if any
-  const existingScrollInfo = currentScrollInfos.get(scrollable);
-  if (existingScrollInfo) {
-    if (!existingScrollInfo._action.cancel()) {
+  const existingScrollAction = currentScrollInfos.get(scrollable)?._action;
+  if (existingScrollAction) {
+    if (!existingScrollAction.cancel()) {
       // current scroll action is not cancellable by us
       return null;
     }
@@ -332,7 +329,7 @@ export const scrollTo = (
     }
   }
 
-  const thisInfo: ScrollInfo = {
+  const thisInfo = {
     _action: {
       waitFor: () => scrollActionPromise,
       cancel: cancelFn,
@@ -341,7 +338,8 @@ export const scrollTo = (
 
   const cleanup = () => {
     if (currentScrollInfos.get(scrollable)?._action === thisInfo._action) {
-      // Our action completed
+      // It means our action completed; otherwise, if we were cancelled by
+      // another action, _action would have been overridden by the next one.
       MH.deleteKey(currentScrollInfos, scrollable);
     }
 
@@ -493,24 +491,11 @@ type ScrollToOptionsInternal = {
 };
 
 type ScrollInfo = {
-  _action: ScrollAction;
+  _action?: ScrollAction;
   // _generator is the current ongoing tween3DAnimationGenerator
   // If a scroll action is cancelled by another scroll action, it will re-use
   // the same generator to avoid interruption in the scroll animation
-  _generator?: AsyncGenerator<ScrollTweenState>;
-};
-
-type ScrollTweenState = {
-  x: {
-    current: number;
-    target: number;
-    lag: number;
-  };
-  y: {
-    current: number;
-    target: number;
-    lag: number;
-  };
+  _generator?: ReturnType<typeof tween3DAnimationGenerator<"x" | "y">>;
 };
 
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
@@ -518,9 +503,9 @@ const isScrollableCache = newXMap<Element, Map<"x" | "y", boolean>>(() =>
   MH.newMap(),
 );
 
-const mappedScrollables = MH.newMap<Element, Element>();
+const mappedScrollables = MH.newWeakMap<Element, Element>();
 
-const currentScrollInfos = MH.newMap<Element, ScrollInfo>();
+const currentScrollInfos = MH.newWeakMap<Element, ScrollInfo>();
 
 const DIFF_THRESHOLD = 5;
 const arePositionsDifferent = (
@@ -582,13 +567,7 @@ const updateCurrentScrollInfo = (
   newInfo: Partial<ScrollInfo>,
 ) => {
   const existingScrollInfo = currentScrollInfos.get(scrollable);
-  const _action = newInfo._action ?? existingScrollInfo?._action;
-  if (_action) {
-    currentScrollInfos.set(
-      scrollable,
-      MH.merge(existingScrollInfo, newInfo, { _action }),
-    );
-  }
+  currentScrollInfos.set(scrollable, MH.merge(existingScrollInfo, newInfo));
 };
 
 const getTargetCoordinates = (
@@ -719,6 +698,12 @@ const initiateScroll = async (
 
   const currentPosition = MH.copyObject(position._start);
 
+  if (isCancelled()) {
+    // Reject the promise
+    logger?.debug8("Cancelled");
+    throw currentPosition;
+  }
+
   // If we cancelled another action, pick up from where it had left
   let generator = currentScrollInfos.get(scrollable)?._generator;
   if (!generator) {
@@ -727,11 +712,13 @@ const initiateScroll = async (
         current: position._start.left,
         target: position._end.left,
         lag: duration,
+        snap: false,
       },
       y: {
         current: position._start.top,
         target: position._end.top,
         lag: duration,
+        snap: false,
       },
     });
 
@@ -741,8 +728,9 @@ const initiateScroll = async (
   }
 
   for await (const state of generator) {
-    currentPosition.left = state.x.current;
-    currentPosition.top = state.y.current;
+    currentPosition.left = state.x.previous;
+    currentPosition.top = state.y.previous;
+    logger?.debug10("Got", state);
 
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
@@ -753,6 +741,9 @@ const initiateScroll = async (
       logger?.debug8("Cancelled");
       throw currentPosition;
     }
+
+    currentPosition.left = state.x.current;
+    currentPosition.top = state.y.current;
 
     MH.elScrollTo(scrollable, currentPosition);
   }

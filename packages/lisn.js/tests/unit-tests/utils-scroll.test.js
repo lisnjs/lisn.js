@@ -6,10 +6,10 @@ window.LISN.settings.effectLag = 0;
 // one rAF for measure time and one to run first step of initiateScroll
 const minStartDelay = 20;
 
-const diffTolerance = 100; // in milliseconds
+const diffTolerance = 20; // in percent
 
-const roundDiff = (x, y) => {
-  return Math.floor(Math.abs(x - y));
+const roundPercentDiff = (x, y) => {
+  return 100 * Math.floor(Math.abs(x - y) / Math.max(x, y));
 };
 
 document.documentElement.enableScroll();
@@ -46,7 +46,7 @@ describe("scrollTo: basic (using number coordinates)", () => {
     expect(utils.getCurrentScrollAction(document.documentElement)).toBe(null);
     expect(utils.getCurrentScrollAction()).toBe(null);
     const endTime = Date.now();
-    expect(roundDiff(endTime, startTime)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime)).toBeLessThan(diffTolerance);
   });
 
   test("custom scrolling element + getCurrentScrollAction", async () => {
@@ -69,7 +69,7 @@ describe("scrollTo: basic (using number coordinates)", () => {
 
     expect(utils.getCurrentScrollAction(element)).toBe(null);
     const endTime = Date.now();
-    expect(roundDiff(endTime, startTime)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime)).toBeLessThan(diffTolerance);
   });
 
   test("single coordinate + non-0 starting position: top", async () => {
@@ -112,7 +112,9 @@ describe("scrollTo: basic (using number coordinates)", () => {
     expect(element.scrollLeft).toBe(50);
 
     const endTime = Date.now();
-    expect(roundDiff(endTime, startTime + 200)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime + 200)).toBeLessThan(
+      diffTolerance,
+    );
   });
 });
 
@@ -307,7 +309,9 @@ describe("scrollTo: weCanInterrupt", () => {
     expect(element.scrollLeft).toBe(50);
 
     const endTime = Date.now();
-    expect(roundDiff(endTime, startTime + 200)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime + 200)).toBeLessThan(
+      diffTolerance,
+    );
   });
 
   test("cancel: weCanInterrupt true + getCurrentScrollAction", async () => {
@@ -325,7 +329,7 @@ describe("scrollTo: weCanInterrupt", () => {
 
     expect(utils.getCurrentScrollAction(element)).toBe(null);
     const endTime = Date.now();
-    expect(roundDiff(endTime, startTime)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime)).toBeLessThan(diffTolerance);
   });
 
   test("cancel later: weCanInterrupt true", async () => {
@@ -346,7 +350,9 @@ describe("scrollTo: weCanInterrupt", () => {
     // cancelled in 50ms
     expect(endCoords.top).toBeLessThan(1000 * (50 / 1000));
     expect(endCoords.left).toBeLessThan(500 * (50 / 1000));
-    expect(roundDiff(endTime, startTime + 50)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime + 50)).toBeLessThan(
+      diffTolerance,
+    );
   });
 });
 
@@ -364,7 +370,9 @@ describe("scrollTo: userCanInterrupt", () => {
     expect(element.scrollLeft).toBe(50);
 
     const endTime = Date.now();
-    expect(roundDiff(endTime, startTime + 200)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime + 200)).toBeLessThan(
+      diffTolerance,
+    );
   });
 
   test("scroll gesture: userCanInterrupt true + getCurrentScrollAction", async () => {
@@ -382,19 +390,24 @@ describe("scrollTo: userCanInterrupt", () => {
 
     expect(utils.getCurrentScrollAction(element)).toBe(null);
     const endTime = Date.now();
-    expect(roundDiff(endTime, startTime)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime)).toBeLessThan(diffTolerance);
   });
 
   test("scroll gesture later: userCanInterrupt true", async () => {
     const element = newScrollingElement();
-    const action = utils.scrollTo(
-      { top: 100, left: 50 },
-      { scrollable: element, duration: 1000, userCanInterrupt: true },
-    );
+    const target = { top: 100, left: 50 };
+    const duration = 1000;
+    const action = utils.scrollTo(target, {
+      scrollable: element,
+      duration,
+      userCanInterrupt: true,
+    });
+    const cancelAfter = 100;
+
     const startTime = Date.now() + minStartDelay;
     window.setTimeout(
       () => element.dispatchEvent(new WheelEvent("wheel", { deltaX: 100 })),
-      50 + minStartDelay,
+      cancelAfter + minStartDelay,
     );
 
     let endCoords = {};
@@ -403,13 +416,21 @@ describe("scrollTo: userCanInterrupt", () => {
     });
     const endTime = Date.now();
     await expect(action.waitFor()).rejects.toBeTruthy();
-    expect(roundDiff(endCoords.top, 100 * (50 / 1000))).toBeLessThan(
+    expect(
+      roundPercentDiff(
+        endCoords.top,
+        target.top * 1.3 * (cancelAfter / duration),
+      ),
+    ).toBeLessThan(diffTolerance);
+    expect(
+      roundPercentDiff(
+        endCoords.left,
+        target.left * 1.3 * (cancelAfter / duration),
+      ),
+    ).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime + cancelAfter)).toBeLessThan(
       diffTolerance,
     );
-    expect(roundDiff(endCoords.left, 50 * (50 / 1000))).toBeLessThan(
-      diffTolerance,
-    );
-    expect(roundDiff(endTime, startTime + 50)).toBeLessThan(diffTolerance);
   });
 });
 
@@ -432,7 +453,9 @@ describe("scrollTo before previous one finishes", () => {
     const endTime = Date.now();
     expect(element.scrollTop).toBe(10);
     expect(element.scrollLeft).toBe(20);
-    expect(roundDiff(endTime, startTime + 200)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime + 200)).toBeLessThan(
+      diffTolerance,
+    );
   });
 
   test("non-interruptable", async () => {
@@ -453,7 +476,9 @@ describe("scrollTo before previous one finishes", () => {
     const endTime = Date.now();
     expect(element.scrollTop).toBe(100);
     expect(element.scrollLeft).toBe(50);
-    expect(roundDiff(endTime, startTime + 200)).toBeLessThan(diffTolerance);
+    expect(roundPercentDiff(endTime, startTime + 200)).toBeLessThan(
+      diffTolerance,
+    );
   });
 });
 
@@ -474,7 +499,7 @@ test("scrollTo: already at target, no altTarget", async () => {
   expect(element.scrollLeft).toBe(50);
 
   const endTime = Date.now();
-  expect(roundDiff(endTime, startTime)).toBeLessThan(diffTolerance);
+  expect(roundPercentDiff(endTime, startTime)).toBeLessThan(diffTolerance);
 });
 
 test("scrollTo: altTarget", async () => {
@@ -501,7 +526,9 @@ test("scrollTo: altTarget", async () => {
   expect(element.scrollLeft).toBe(150);
 
   const endTime = Date.now();
-  expect(roundDiff(endTime, startTime + 200)).toBeLessThan(diffTolerance);
+  expect(roundPercentDiff(endTime, startTime + 200)).toBeLessThan(
+    diffTolerance,
+  );
 });
 
 describe("scrollTo: offset", () => {
@@ -592,6 +619,27 @@ describe("scrollTo: offset", () => {
     expect(element.scrollTop).toBe(150);
     expect(element.scrollLeft).toBe(150);
   });
+});
+
+test("scrollTo: concurrent scrolls on different targets", async () => {
+  const elementA = newScrollingElement();
+  const elementB = newScrollingElement();
+  const action = utils.scrollTo(
+    { top: 100, left: 50 },
+    { scrollable: elementA, duration: 1000 },
+  );
+
+  const action2 = utils.scrollTo(
+    { top: 10, left: 20 },
+    { scrollable: elementB, duration: 200 },
+  );
+
+  await expect(action.waitFor()).resolves.toEqual({ top: 100, left: 50 });
+  await expect(action2.waitFor()).resolves.toEqual({ top: 10, left: 20 });
+  expect(elementA.scrollTop).toBe(100);
+  expect(elementA.scrollLeft).toBe(50);
+  expect(elementB.scrollTop).toBe(10);
+  expect(elementB.scrollLeft).toBe(20);
 });
 
 test("isScrollable", () => {

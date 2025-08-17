@@ -534,12 +534,12 @@ const getLayersFrom = (
     const trigger = "XXX TODO";
     const composer = new FXComposer(MH.merge(config, { trigger }));
     if (useDefaultEffects) {
-      composer.add([
+      composer.add(
         new Transform({ isAbsolute: true }).translate((data) => ({
           x: data.x,
           y: data.y,
         })),
-      ]);
+      );
     }
 
     return composer;

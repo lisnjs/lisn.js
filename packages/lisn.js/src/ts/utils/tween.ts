@@ -10,7 +10,7 @@
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { animationFrameGenerator } from "@lisn/utils/animations";
-import { roundNumTo, toNumWithBounds } from "@lisn/utils/math";
+import { isValidNum, roundNumTo, toNumWithBounds } from "@lisn/utils/math";
 import { deepCopy, compareValuesIn } from "@lisn/utils/misc";
 
 /**
@@ -120,8 +120,8 @@ export type SpringTweenerInput = {
  *
  * @since v1.3.0
  */
-export const springTweener: TweenerFn<SpringTweenerInput> = (
-  { current, target, lag, velocity, deltaTime },
+export const springTweener = (
+  { current, target, lag, velocity, deltaTime }: SpringTweenerInput,
   conf?: { precision?: number },
 ) => {
   const { precision = 1 } = conf ?? {};
@@ -130,7 +130,7 @@ export const springTweener: TweenerFn<SpringTweenerInput> = (
   // Since the position only approaches asymptotically the target it never truly
   // reaches it exactly we need an approximation to calculate w0. N determines
   // how far away from the target position we are after `lag` milliseconds.
-  const N = 7;
+  const N = 9.5; // XXX should this depend on target - initial diff?
   const w0 = N / lag;
 
   deltaTime /= 1000; // to seconds
@@ -317,7 +317,6 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
     if (deltaTime === 0) {
       continue;
     }
-    console.warn("XXX", { deltaTime, totalTime });
 
     let a: Axes;
     for (a in init) {
@@ -370,6 +369,99 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
   }
 
   return;
+}
+
+/**
+ * @ignore
+ * @deprecated
+ *
+ * Use {@link springTweener} instead.
+ *
+ * @since v1.2.0
+ *
+ * @category Math
+ */
+export const criticallyDamped = (settings: {
+  lTarget: number;
+  dt: number;
+  lag: number;
+  l?: number;
+  v?: number;
+  precision?: number;
+}): {
+  l: number;
+  v: number;
+} => {
+  const { lTarget, dt, lag, l = 0, v = 0, precision } = settings;
+  const result = springTweener(
+    {
+      current: l,
+      target: lTarget,
+      velocity: v,
+      lag,
+      deltaTime: dt,
+    },
+    {
+      precision,
+    },
+  );
+
+  return { l: result.current, v: result.velocity };
+};
+
+/**
+ * @ignore
+ * @deprecated
+ *
+ * Use
+ * {@link tween3DAnimationGenerator | `tween3DAnimationGenerator("spring", ...)`}
+ * instead.
+ *
+ * @since v1.2.0
+ *
+ * @category Animations
+ */
+export async function* newCriticallyDampedAnimationIterator(settings: {
+  lTarget: number;
+  lag: number;
+  l?: number;
+  precision?: number;
+}): AsyncGenerator<
+  { l: number; v: number; t: number },
+  { l: number; v: number; t: number },
+  number
+> {
+  let { l, lTarget } = settings;
+  const { lag, precision } = settings;
+  let v = 0,
+    t = 0,
+    dt = 0;
+
+  const next = () => {
+    ({ l, v } = criticallyDamped({
+      lTarget,
+      lag,
+      l,
+      dt,
+      v,
+      precision,
+    }));
+    return { l, v, t };
+  };
+
+  for await ({ total: t, sinceLast: dt } of animationFrameGenerator()) {
+    if (dt === 0) {
+      continue;
+    }
+
+    const result = next();
+    lTarget = (yield result) ?? lTarget;
+    if (l === lTarget || !isValidNum(l)) {
+      return result;
+    }
+  }
+
+  throw null; // tell TypeScript it never reaches here
 }
 
 // ------------------------------

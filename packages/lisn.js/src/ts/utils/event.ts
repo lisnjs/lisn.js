@@ -5,6 +5,8 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
+import { NestedRecord } from "@lisn/globals/types";
+
 import { addClasses, removeClasses } from "@lisn/utils/css-alter";
 import { copyExistingKeysTo } from "@lisn/utils/misc";
 
@@ -232,7 +234,7 @@ type BrowserEventSupport = {
 const getEventOptionsStr = (
   options: boolean | AddEventListenerOptions,
 ): string => {
-  const finalOptions: AddEventListenerOptions = {
+  const finalOptions = {
     capture: false,
     passive: false,
     once: false,
@@ -241,7 +243,10 @@ const getEventOptionsStr = (
   if (options === false || options === true) {
     finalOptions.capture = options;
   } else if (MH.isObject(options)) {
-    copyExistingKeysTo(options, finalOptions);
+    let p: keyof typeof finalOptions;
+    for (p in finalOptions) {
+      finalOptions[p] = options[p] ?? false;
+    }
   }
 
   return MH.stringify(finalOptions);

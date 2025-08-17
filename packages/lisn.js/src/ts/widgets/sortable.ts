@@ -27,7 +27,7 @@ import {
 import { toInt } from "@lisn/utils/math";
 import { validateString } from "@lisn/utils/validation";
 
-import { addNewCallbackToMap, invokeCallbackSet } from "@lisn/modules/callback";
+import { addNewCallbackToMap, invokeHandlers } from "@lisn/modules/callback";
 
 import {
   Widget,
@@ -547,7 +547,7 @@ const getMethods = (
       });
     }
 
-    await invokeCallbackSet(callbacks.values(), widget);
+    await invokeHandlers(callbacks.values(), widget);
   };
 
   return {

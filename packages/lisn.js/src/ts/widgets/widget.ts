@@ -56,7 +56,7 @@ import {
   CallbackHandler,
   Callback,
   addNewCallbackToMap,
-  invokeCallbackSet,
+  invokeHandlers,
 } from "@lisn/modules/callback";
 import { newXWeakMap } from "@lisn/modules/x-map";
 
@@ -187,7 +187,7 @@ export abstract class Widget {
       if (!isDisabled) {
         debug: logger?.debug8("Disabling");
         isDisabled = true;
-        await invokeCallbackSet(disableCallbacks.values(), this);
+        await invokeHandlers(disableCallbacks.values(), this);
       }
     };
 
@@ -195,7 +195,7 @@ export abstract class Widget {
       if (!isDestroyed && isDisabled) {
         debug: logger?.debug8("Enabling");
         isDisabled = false;
-        await invokeCallbackSet(enableCallbacks.values(), this);
+        await invokeHandlers(enableCallbacks.values(), this);
       }
     };
 
@@ -230,7 +230,7 @@ export abstract class Widget {
           isDestroyed = true;
           await this.disable();
 
-          await invokeCallbackSet(destroyCallbacks.values(), this);
+          await invokeHandlers(destroyCallbacks.values(), this);
 
           enableCallbacks.clear();
           disableCallbacks.clear();

@@ -62,7 +62,7 @@ import {
   validateString,
 } from "@lisn/utils/validation";
 
-import { addNewCallbackToMap, invokeCallbackSet } from "@lisn/modules/callback";
+import { addNewCallbackToMap, invokeHandlers } from "@lisn/modules/callback";
 
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 import { ViewWatcher, ViewData } from "@lisn/watchers/view-watcher";
@@ -242,7 +242,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = true;
-      await invokeCallbackSet(openCallbacks.values(), this);
+      await invokeHandlers(openCallbacks.values(), this);
 
       if (isModal) {
         setHasModal();
@@ -259,7 +259,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = false;
-      await invokeCallbackSet(closeCallbacks.values(), this);
+      await invokeHandlers(closeCallbacks.values(), this);
 
       if (isModal) {
         delHasModal();

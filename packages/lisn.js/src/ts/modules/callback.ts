@@ -196,14 +196,7 @@ export class Callback<Args extends readonly unknown[] = []> {
         debug: logger?.debug8("Removing");
         isRemoved = true;
 
-        for (const handler of removeHandlers) {
-          if (MH.isInstanceOf(handler, Callback)) {
-            handler.invoke(this);
-          } else if (MH.isFunction(handler)) {
-            // TypeScript can't figure it out that it's a function otherwise
-            handler(this);
-          }
-        }
+        invokeHandlers(removeHandlers, this);
 
         removeHandlers.clear();
         CallbackScheduler._clear(id);
@@ -258,23 +251,52 @@ export class Callback<Args extends readonly unknown[] = []> {
 }
 
 /**
- * Wraps the given handler as a new callback and adds it to the given set.
- * Setups up an onRemove handler on the newly wrapped callback that removes it
- * from the set when it (or the original callback that was wrapped) is removed.
+ * Invokes the given callbacks or handlers with the given args.
  *
  * @ignore
  * @internal
  */
-export const addNewCallbackToSet = <Args extends readonly unknown[]>(
-  handler: CallbackHandler<Args> | Callback<Args>,
-  set: Set<Callback<Args>>,
+export const invokeHandlers = async <
+  T extends CallbackHandler<Args> | Callback<Args>,
+  Args extends readonly unknown[],
+>(
+  set: Iterable<T>,
+  ...args: Args
 ) => {
-  const callback = wrapCallback(handler);
-  set.add(callback);
-  callback.onRemove(() => {
-    MH.deleteKey(set, callback);
-  });
-  return callback;
+  for (const handler of set) {
+    if (MH.isInstanceOf(handler, Callback)) {
+      handler.invoke(...args);
+    } else if (MH.isFunction(handler)) {
+      // TypeScript can't figure it out that it's a function otherwise
+      await handler(...args);
+    }
+  }
+};
+
+/**
+ * Adds the given handler to the given set.
+ *
+ * If the handler is a callback, it setups up an onRemove handler on it
+ * that removes it from the set when the callback is removed.
+ *
+ * It does not wrap it if it's not a callback.
+ *
+ * @ignore
+ * @internal
+ */
+export const saveCallbackToSet = <
+  T extends CallbackHandler<Args> | Callback<Args>,
+  Args extends readonly unknown[],
+>(
+  handler: T,
+  set: Set<T>,
+) => {
+  set.add(handler);
+  if (MH.isInstanceOf(handler, Callback)) {
+    handler.onRemove(() => {
+      MH.deleteKey(set, handler);
+    });
+  }
 };
 
 export function addNewCallbackToMap<
@@ -321,7 +343,7 @@ export function addNewCallbackToMap<
 ): Callback<Args>;
 
 /**
- * Like {@link addNewCallbackToSet} but works for a map.
+ * **Wraps** the given handler as a new callback and adds it to the given map.
  *
  * If `keyedByCallback` is true, the key will be newly wrapped callback and the
  * value set will be the given data if any (or the original handler).
@@ -362,19 +384,6 @@ export function addNewCallbackToMap(
   });
   return callback;
 }
-
-/**
- * @ignore
- * @internal
- */
-export const invokeCallbackSet = async <Args extends readonly unknown[]>(
-  set: Iterable<Callback<Args>>,
-  ...args: Args
-) => {
-  for (const callback of set) {
-    await callback.invoke(...args);
-  }
-};
 
 // ----------------------------------------
 

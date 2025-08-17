@@ -1,5 +1,5 @@
 /**
- * @module Effects/FXComposer
+ * @module Effects
  *
  * @since v1.3.0
  */
@@ -624,8 +624,8 @@ export class FXComposer {
 
 export type FXComposerConfig = {
   /**
-   * The trigger to use to get {@link Effects/Effect.FXStateUpdate | updates} to
-   * the {@link FXAxisState}s.
+   * The trigger to use to get {@link Effects.FXStateUpdate | updates} to the
+   * {@link FXAxisState}s.
    *
    * It is required.
    */

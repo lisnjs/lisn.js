@@ -55,8 +55,8 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Returns true if the transform is absolute. If true, the
    * {@link FXHandler | handlers} receive absolute
-   * {@link Effects/Effect.FXParams | parameters} and each call to
-   * {@link update} will reset the transform back to the identity one.
+   * {@link Effects.FXParams | parameters} and each call to {@link update} will
+   * reset the transform back to the identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the transform's state is
@@ -149,17 +149,16 @@ export class Transform implements EffectInterface<"transform"> {
    * always override previous perspective handlers.
    *
    * The handler receives the unscaled original
-   * {@link Effects/Effect.FXParams | parameters}, regardless of the
-   * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
+   * {@link Effects.FXParams | parameters}, regardless of the
+   * {@link Effects.FXComposer | composer}'s parallax depth.
    */
   readonly perspective: (handler: FXHandler<PerspectiveHandlerReturn>) => this;
 
   /**
    * Adds a translation handler.
    *
-   * The handler receives scaled
-   * {@link Effects/Effect.FXParams | parameters}, divided by the parallax
-   * depth along the respective axis.
+   * The handler receives scaled {@link Effects.FXParams | parameters}, divided
+   * by the parallax depth along the respective axis.
    */
   readonly translate: (handler: FXHandler<TranslateHandlerReturn>) => this;
 
@@ -167,8 +166,8 @@ export class Transform implements EffectInterface<"transform"> {
    * Adds a scaling handler.
    *
    * The handler receives the unscaled original
-   * {@link Effects/Effect.FXParams | parameters}, regardless of the
-   * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
+   * {@link Effects.FXParams | parameters}, regardless of the
+   * {@link Effects.FXComposer | composer}'s parallax depth.
    */
   readonly scale: (handler: FXHandler<ScaleHandlerReturn>) => this;
 
@@ -176,8 +175,8 @@ export class Transform implements EffectInterface<"transform"> {
    * Adds a skewing handler.
    *
    * The handler receives the unscaled original
-   * {@link Effects/Effect.FXParams | parameters}, regardless of the
-   * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
+   * {@link Effects.FXParams | parameters}, regardless of the
+   * {@link Effects.FXComposer | composer}'s parallax depth.
    *
    * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
    * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
@@ -187,9 +186,8 @@ export class Transform implements EffectInterface<"transform"> {
   /**
    * Adds a rotation handler.
    *
-   * The handler receives scaled
-   * {@link Effects/Effect.FXParams | parameters}, multiplied by the
-   * parallax depth along the respective axis.
+   * The handler receives scaled {@link Effects.FXParams | parameters},
+   * multiplied by the parallax depth along the respective axis.
    */
   readonly rotate: (handler: FXHandler<RotateHandlerReturn>) => this;
 
@@ -574,8 +572,8 @@ export type RotateHandlerReturn =
 export type TransformConfig = {
   /**
    * If true, the {@link FXHandler | handlers} receive absolute
-   * {@link Effects/Effect.FXParams | parameters} and each call to
-   * {@link update} will reset the transform back to the identity one.
+   * {@link Effects.FXParams | parameters} and each call to {@link update} will
+   * reset the transform back to the identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the transform's state is

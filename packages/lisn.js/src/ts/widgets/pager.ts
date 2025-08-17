@@ -41,7 +41,7 @@ import {
   validateBoolean,
 } from "@lisn/utils/validation";
 
-import { addNewCallbackToMap, invokeCallbackSet } from "@lisn/modules/callback";
+import { addNewCallbackToMap, invokeHandlers } from "@lisn/modules/callback";
 
 import {
   GestureWatcher,
@@ -1244,7 +1244,7 @@ const getMethods = (
     lastPageNum = currPageNum > 0 ? currPageNum : pageNum;
     currPageNum = pageNum;
 
-    await invokeCallbackSet(callbacks.values(), widget);
+    await invokeHandlers(callbacks.values(), widget);
 
     MH.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
     for (

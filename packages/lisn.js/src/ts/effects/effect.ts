@@ -86,7 +86,7 @@ export type FXParams = {
    * last animation frame.
    *
    * Depending on each effect and effect category, it may also be scaled by the
-   * parallax depth of the {@link Effects/FXComposer.FXComposer}.
+   * parallax depth of the {@link Effects.FXComposer}.
    */
   x: number;
 

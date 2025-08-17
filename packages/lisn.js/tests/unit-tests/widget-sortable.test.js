@@ -209,12 +209,31 @@ describe("moving", () => {
     await window.waitForAF();
 
     expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith(sortable);
     expect(currItems).toBeTruthy();
 
     const expectedOrder = [0, 2, 3, 1];
     for (let i = 0; i < items.length; i++) {
       expect(currItems[i]).toBe(items[expectedOrder[i]]);
     }
+  });
+
+  test("offMove", async () => {
+    const { sortable, items } = await newSortable(4);
+
+    const callback = jest.fn();
+
+    sortable.onMove(callback);
+    sortable.offMove(callback);
+
+    // move item #2 to after item #4
+    items[1].dispatchEvent(new MouseEvent("mousedown"));
+    items[3].dispatchEvent(new Event("dragenter"));
+    items[1].dispatchEvent(new Event("dragend"));
+
+    await window.waitForAF();
+
+    expect(callback).toHaveBeenCalledTimes(0);
   });
 });
 

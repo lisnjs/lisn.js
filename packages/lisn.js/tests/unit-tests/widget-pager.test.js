@@ -523,6 +523,7 @@ describe("transitioning pages", () => {
     await pager.goToPage(3);
 
     expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith(pager);
     expect(oldPage).toBe(1);
     expect(currPage).toBe(3);
 
@@ -531,6 +532,19 @@ describe("transitioning pages", () => {
     expect(callback).toHaveBeenCalledTimes(2);
     expect(oldPage).toBe(3);
     expect(currPage).toBe(2);
+  });
+
+  test("offTransition", async () => {
+    const { pager } = await newPager(3);
+
+    const callback = jest.fn();
+
+    pager.onTransition(callback);
+    pager.offTransition(callback);
+
+    await pager.goToPage(3);
+
+    expect(callback).toHaveBeenCalledTimes(0);
   });
 });
 

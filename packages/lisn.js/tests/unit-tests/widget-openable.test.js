@@ -208,11 +208,6 @@ describe("generic Openable", () => {
     const root = widget.getRoot();
     const containerFound = widget.getContainer();
 
-    const openFn = jest.fn();
-    const closeFn = jest.fn();
-    widget.onOpen(openFn);
-    widget.onClose(closeFn);
-
     await window.waitForAF();
 
     // ------- Disable when closed (initial)
@@ -224,10 +219,8 @@ describe("generic Openable", () => {
 
     await widget.open();
     expect(widget.isOpen()).toBe(false);
-    expect(openFn).toHaveBeenCalledTimes(0);
 
     await widget.close();
-    expect(closeFn).toHaveBeenCalledTimes(0);
 
     // ------- Enable when closed
     widget.enable();
@@ -235,61 +228,103 @@ describe("generic Openable", () => {
 
     await widget.open();
     expect(widget.isOpen()).toBe(true);
-    expect(openFn).toHaveBeenCalledTimes(1);
-    expect(closeFn).toHaveBeenCalledTimes(0);
 
     await widget.close();
     expect(widget.isOpen()).toBe(false);
-    expect(openFn).toHaveBeenCalledTimes(1);
-    expect(closeFn).toHaveBeenCalledTimes(1);
 
     await widget.open();
     expect(widget.isOpen()).toBe(true);
-    expect(openFn).toHaveBeenCalledTimes(2);
-    expect(closeFn).toHaveBeenCalledTimes(1);
 
     // ------- Disable when open
     widget.disable();
     expect(widget.isOpen()).toBe(true);
     await widget.close();
     expect(widget.isOpen()).toBe(true);
-    expect(openFn).toHaveBeenCalledTimes(2);
-    expect(closeFn).toHaveBeenCalledTimes(1); // no new calls
   });
 
   test("toggle", async () => {
     const { content } = newElements();
 
     const widget = new Openable(content, { name: "openable" });
-    const openFn = jest.fn();
-    const closeFn = jest.fn();
-    widget.onOpen(openFn);
-    widget.onClose(closeFn);
-
     await window.waitForAF();
 
     // Toggle on and off
     await widget.toggle();
     expect(widget.isOpen()).toBe(true);
-    expect(openFn).toHaveBeenCalledTimes(1);
-    expect(closeFn).toHaveBeenCalledTimes(0);
 
     await widget.toggle();
     expect(widget.isOpen()).toBe(false);
-    expect(openFn).toHaveBeenCalledTimes(1);
-    expect(closeFn).toHaveBeenCalledTimes(1);
 
     // Open
     await widget.open();
     expect(widget.isOpen()).toBe(true);
-    expect(openFn).toHaveBeenCalledTimes(2);
-    expect(closeFn).toHaveBeenCalledTimes(1);
 
     // Toggle -> off
     await widget.toggle();
     expect(widget.isOpen()).toBe(false);
+  });
+
+  test("onOpen/onClose", async () => {
+    const { content } = newElements();
+
+    const widget = new Openable(content, { name: "openable" });
+    await window.waitForAF();
+
+    const openFn = jest.fn();
+    widget.onOpen(openFn);
+
+    const closeFn = jest.fn();
+    widget.onClose(closeFn);
+
+    await widget.close(); // no-op as it's closed
+    expect(openFn).toHaveBeenCalledTimes(0);
+    expect(closeFn).toHaveBeenCalledTimes(0);
+
+    await widget.open();
+    expect(openFn).toHaveBeenCalledTimes(1);
+    expect(openFn).toHaveBeenCalledWith(widget);
+    expect(closeFn).toHaveBeenCalledTimes(0);
+
+    await widget.open(); // no-op as it's open
+    expect(openFn).toHaveBeenCalledTimes(1);
+    expect(closeFn).toHaveBeenCalledTimes(0);
+
+    await widget.close();
+    expect(openFn).toHaveBeenCalledTimes(1); // no new calls
+    expect(closeFn).toHaveBeenCalledTimes(1);
+    expect(closeFn).toHaveBeenCalledWith(widget);
+
+    await widget.toggle();
+    expect(openFn).toHaveBeenCalledTimes(2);
+    expect(openFn).toHaveBeenNthCalledWith(2, widget);
+    expect(closeFn).toHaveBeenCalledTimes(1);
+
+    await widget.toggle();
     expect(openFn).toHaveBeenCalledTimes(2);
     expect(closeFn).toHaveBeenCalledTimes(2);
+    expect(closeFn).toHaveBeenNthCalledWith(2, widget);
+  });
+
+  test("offOpen/offClose", async () => {
+    const { content } = newElements();
+
+    const widget = new Openable(content, { name: "openable" });
+    await window.waitForAF();
+
+    const openFn = jest.fn();
+    widget.onOpen(openFn);
+    widget.offOpen(openFn);
+
+    const closeFn = jest.fn();
+    widget.onClose(closeFn);
+    widget.offClose(closeFn);
+
+    await widget.open();
+    await widget.close();
+    await widget.toggle();
+
+    expect(openFn).toHaveBeenCalledTimes(0);
+    expect(closeFn).toHaveBeenCalledTimes(0);
   });
 
   test("destroy not offcanvas", async () => {

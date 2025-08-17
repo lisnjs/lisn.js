@@ -41,7 +41,7 @@ import {
   validateBoolean,
 } from "@lisn/utils/validation";
 
-import { addNewCallbackToSet, invokeCallbackSet } from "@lisn/modules/callback";
+import { addNewCallbackToMap, invokeCallbackSet } from "@lisn/modules/callback";
 
 import {
   GestureWatcher,
@@ -315,6 +315,11 @@ export class Pager extends Widget {
   readonly onTransition: (handler: WidgetHandler) => void;
 
   /**
+   * Removes a previously added {@link onTransition} handler.
+   */
+  readonly offTransition: (handler: WidgetHandler) => void;
+
+  /**
    * Returns the page elements.
    */
   readonly getPages: () => Element[];
@@ -445,6 +450,7 @@ export class Pager extends Widget {
     this.getCurrentPageNum = methods._getCurrentPageNum;
     this.getPreviousPageNum = methods._getPreviousPageNum;
     this.onTransition = methods._onTransition;
+    this.offTransition = methods._offTransition;
 
     this.getPages = () => [...pages];
     this.getSwitches = () => [...switches];
@@ -1170,7 +1176,7 @@ const getMethods = (
   const scrollWatcher = ScrollWatcher.reuse();
   const isFullscreen = config?.fullscreen;
   const disabledPages: Record<number, boolean> = {};
-  const callbacks = MH.newSet<WidgetCallback>();
+  const callbacks = MH.newMap<WidgetHandler, WidgetCallback>();
 
   const fetchScrollOptions = async (): Promise<ScrollOptions> => ({
     scrollable: await fetchClosestScrollable(element),
@@ -1238,7 +1244,7 @@ const getMethods = (
     lastPageNum = currPageNum > 0 ? currPageNum : pageNum;
     currPageNum = pageNum;
 
-    await invokeCallbackSet(callbacks, widget);
+    await invokeCallbackSet(callbacks.values(), widget);
 
     MH.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
     for (
@@ -1341,7 +1347,11 @@ const getMethods = (
     isPageDisabled(pageNum) ? enablePage(pageNum) : disablePage(pageNum);
 
   const onTransition = (handler: WidgetHandler) => {
-    addNewCallbackToSet(handler, callbacks);
+    addNewCallbackToMap(handler, callbacks);
+  };
+
+  const offTransition = (handler: WidgetHandler) => {
+    MH.remove(callbacks.get(handler));
   };
 
   return {
@@ -1357,5 +1367,6 @@ const getMethods = (
     _getCurrentPageNum: () => (MH.lengthOf(pages) > 0 ? currPageNum : 0),
     _getPreviousPageNum: () => (MH.lengthOf(pages) > 0 ? lastPageNum : 0),
     _onTransition: onTransition,
+    _offTransition: offTransition,
   };
 };

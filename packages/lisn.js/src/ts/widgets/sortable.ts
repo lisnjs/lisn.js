@@ -27,7 +27,7 @@ import {
 import { toInt } from "@lisn/utils/math";
 import { validateString } from "@lisn/utils/validation";
 
-import { addNewCallbackToSet, invokeCallbackSet } from "@lisn/modules/callback";
+import { addNewCallbackToMap, invokeCallbackSet } from "@lisn/modules/callback";
 
 import {
   Widget,
@@ -149,6 +149,11 @@ export class Sortable extends Widget {
   readonly onMove: (handler: WidgetHandler) => void;
 
   /**
+   * Removes a previously added {@link onMove} handler.
+   */
+  readonly offMove: (handler: WidgetHandler) => void;
+
+  /**
    * Returns the item elements.
    *
    * @param currentOrder If false (default), returns the items in the
@@ -223,6 +228,7 @@ export class Sortable extends Widget {
     this.toggleItem = methods._toggleItem;
     this.isItemDisabled = methods._isItemDisabled;
     this.onMove = methods._onMove;
+    this.offMove = methods._offMove;
 
     this.getItems = (currentOrder = false) =>
       currentOrder ? methods._getSortedItems() : [...items];
@@ -483,7 +489,7 @@ const getMethods = (
   const doSwap = config?.mode === "swap";
 
   const disabledItems: Record<number, boolean> = {};
-  const callbacks = MH.newSet<WidgetCallback>();
+  const callbacks = MH.newMap<WidgetHandler, WidgetCallback>();
 
   const getSortedItems = () =>
     [...items].sort((a, b) => (MH.isNodeBAfterA(a, b) ? -1 : 1));
@@ -522,7 +528,11 @@ const getMethods = (
       : disableItem(itemNum, currentOrder);
 
   const onMove = (handler: WidgetHandler) => {
-    addNewCallbackToSet(handler, callbacks);
+    addNewCallbackToMap(handler, callbacks);
+  };
+
+  const offMove = (handler: WidgetHandler) => {
+    MH.remove(callbacks.get(handler));
   };
 
   // This is internal only for now...
@@ -537,7 +547,7 @@ const getMethods = (
       });
     }
 
-    await invokeCallbackSet(callbacks, widget);
+    await invokeCallbackSet(callbacks.values(), widget);
   };
 
   return {
@@ -547,6 +557,7 @@ const getMethods = (
     _toggleItem: toggleItem,
     _isItemDisabled: isItemDisabled,
     _onMove: onMove,
+    _offMove: offMove,
     _dragItemOnto: dragItemOnto,
   };
 };

@@ -62,7 +62,7 @@ import {
   validateString,
 } from "@lisn/utils/validation";
 
-import { addNewCallbackToSet, invokeCallbackSet } from "@lisn/modules/callback";
+import { addNewCallbackToMap, invokeCallbackSet } from "@lisn/modules/callback";
 
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 import { ViewWatcher, ViewData } from "@lisn/watchers/view-watcher";
@@ -161,11 +161,21 @@ export abstract class Openable extends Widget {
   readonly onOpen: (handler: WidgetHandler) => void;
 
   /**
+   * Removes a previously added {@link onOpen} handler.
+   */
+  readonly offOpen: (handler: WidgetHandler) => void;
+
+  /**
    * Calls the given handler when the widget is closed.
    *
    * If it returns a promise, it will be awaited upon.
    */
   readonly onClose: (handler: WidgetHandler) => void;
+
+  /**
+   * Removes a previously added {@link onClose} handler.
+   */
+  readonly offClose: (handler: WidgetHandler) => void;
 
   /**
    * Returns true if the widget is currently open.
@@ -219,8 +229,8 @@ export abstract class Openable extends Widget {
 
     const { isModal, isOffcanvas } = config;
 
-    const openCallbacks = MH.newSet<WidgetCallback>();
-    const closeCallbacks = MH.newSet<WidgetCallback>();
+    const openCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
+    const closeCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
 
     let isOpen = false;
 
@@ -232,7 +242,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = true;
-      await invokeCallbackSet(openCallbacks, this);
+      await invokeCallbackSet(openCallbacks.values(), this);
 
       if (isModal) {
         setHasModal();
@@ -249,7 +259,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = false;
-      await invokeCallbackSet(closeCallbacks, this);
+      await invokeCallbackSet(closeCallbacks.values(), this);
 
       if (isModal) {
         delHasModal();
@@ -280,8 +290,23 @@ export abstract class Openable extends Widget {
     this.open = open;
     this.close = close;
     this[MC.S_TOGGLE] = () => (isOpen ? close() : open());
-    this.onOpen = (handler) => addNewCallbackToSet(handler, openCallbacks);
-    this.onClose = (handler) => addNewCallbackToSet(handler, closeCallbacks);
+
+    this.onOpen = (handler) => {
+      addNewCallbackToMap(handler, openCallbacks);
+    };
+
+    this.offOpen = (handler) => {
+      MH.remove(openCallbacks.get(handler));
+    };
+
+    this.onClose = (handler) => {
+      addNewCallbackToMap(handler, closeCallbacks);
+    };
+
+    this.offClose = (handler) => {
+      MH.remove(closeCallbacks.get(handler));
+    };
+
     this.isOpen = () => isOpen;
     this.getRoot = () => root;
     this.getContainer = () => container;

@@ -55,7 +55,7 @@ import { formatAsString, kebabToCamelCase, splitOn } from "@lisn/utils/text";
 import {
   CallbackHandler,
   Callback,
-  addNewCallbackToSet,
+  addNewCallbackToMap,
   invokeCallbackSet,
 } from "@lisn/modules/callback";
 import { newXWeakMap } from "@lisn/modules/x-map";
@@ -96,6 +96,11 @@ export abstract class Widget {
   readonly onDisable: (handler: WidgetHandler) => void;
 
   /**
+   * Removes a previously added {@link onDisable} handler.
+   */
+  readonly offDisable: (handler: WidgetHandler) => void;
+
+  /**
    * Calls the given handler when the widget is enabled. If the widget is
    * already enabled, the handlers are not called.
    *
@@ -103,6 +108,11 @@ export abstract class Widget {
    * calling {@link isDisabled} from the handler will return `false`.
    */
   readonly onEnable: (handler: WidgetHandler) => void;
+
+  /**
+   * Removes a previously added {@link onEnable} handler.
+   */
+  readonly offEnable: (handler: WidgetHandler) => void;
 
   /**
    * Returns true if the widget is currently disabled.
@@ -124,6 +134,11 @@ export abstract class Widget {
    * {@link isDestroyed} from the handler will return `true`.
    */
   readonly onDestroy: (handler: WidgetHandler) => void;
+
+  /**
+   * Removes a previously added {@link onDestroy} handler.
+   */
+  readonly offDestroy: (handler: WidgetHandler) => void;
 
   /**
    * Returns true if the widget is destroyed.
@@ -164,15 +179,15 @@ export abstract class Widget {
     let isDestroyed = false;
     let destroyPromise: Promise<void>;
 
-    const enableCallbacks = MH.newSet<WidgetCallback>();
-    const disableCallbacks = MH.newSet<WidgetCallback>();
-    const destroyCallbacks = MH.newSet<WidgetCallback>();
+    const enableCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
+    const disableCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
+    const destroyCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
 
     this.disable = async () => {
       if (!isDisabled) {
         debug: logger?.debug8("Disabling");
         isDisabled = true;
-        await invokeCallbackSet(disableCallbacks, this);
+        await invokeCallbackSet(disableCallbacks.values(), this);
       }
     };
 
@@ -180,7 +195,7 @@ export abstract class Widget {
       if (!isDestroyed && isDisabled) {
         debug: logger?.debug8("Enabling");
         isDisabled = false;
-        await invokeCallbackSet(enableCallbacks, this);
+        await invokeCallbackSet(enableCallbacks.values(), this);
       }
     };
 
@@ -191,11 +206,19 @@ export abstract class Widget {
     };
 
     this.onDisable = (handler) => {
-      addNewCallbackToSet(handler, disableCallbacks);
+      addNewCallbackToMap(handler, disableCallbacks);
+    };
+
+    this.offDisable = (handler) => {
+      MH.remove(disableCallbacks.get(handler));
     };
 
     this.onEnable = (handler) => {
-      addNewCallbackToSet(handler, enableCallbacks);
+      addNewCallbackToMap(handler, enableCallbacks);
+    };
+
+    this.offEnable = (handler) => {
+      MH.remove(enableCallbacks.get(handler));
     };
 
     this.isDisabled = () => isDisabled;
@@ -207,7 +230,7 @@ export abstract class Widget {
           isDestroyed = true;
           await this.disable();
 
-          await invokeCallbackSet(destroyCallbacks, this);
+          await invokeCallbackSet(destroyCallbacks.values(), this);
 
           enableCallbacks.clear();
           disableCallbacks.clear();
@@ -227,7 +250,11 @@ export abstract class Widget {
     };
 
     this.onDestroy = (handler) => {
-      addNewCallbackToSet(handler, destroyCallbacks);
+      addNewCallbackToMap(handler, destroyCallbacks);
+    };
+
+    this.offDestroy = (handler) => {
+      MH.remove(destroyCallbacks.get(handler));
     };
 
     this.isDestroyed = () => isDestroyed;

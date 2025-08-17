@@ -5,49 +5,39 @@ const { Widget, registerWidget, getWidgetConfig } = window.LISN.widgets;
 const { randId, validateNumber, validateBoolean } = window.LISN.utils;
 
 describe("Widget", () => {
-  test("enable/disable", async () => {
-    const onEnable = jest.fn();
-    const onDisable = jest.fn();
-
+  test("enable/disable/destroy", async () => {
     const widget = new Widget(document.body);
-    widget.onEnable(onEnable);
-    widget.onDisable(onDisable);
-    await window.waitFor(0); // callbacks is async
-
     expect(widget.isDisabled()).toBe(false);
-    expect(onEnable).toHaveBeenCalledTimes(0);
-    expect(onDisable).toHaveBeenCalledTimes(0);
+    expect(widget.isDestroyed()).toBe(false);
 
-    widget.enable(); // no-op
-    await window.waitFor(0); // callbacks is async
-
+    await widget.enable(); // no-op
     expect(widget.isDisabled()).toBe(false);
-    expect(onEnable).toHaveBeenCalledTimes(0);
-    expect(onDisable).toHaveBeenCalledTimes(0);
+    expect(widget.isDestroyed()).toBe(false);
 
-    widget.disable();
-    await window.waitFor(0); // callbacks is async
-
+    await widget.disable();
     expect(widget.isDisabled()).toBe(true);
-    expect(onEnable).toHaveBeenCalledTimes(0);
-    expect(onDisable).toHaveBeenCalledTimes(1);
+    expect(widget.isDestroyed()).toBe(false);
 
-    widget.disable(); // no-op
-    await window.waitFor(0); // callbacks is async
-
+    await widget.disable(); // no-op
     expect(widget.isDisabled()).toBe(true);
-    expect(onEnable).toHaveBeenCalledTimes(0);
-    expect(onDisable).toHaveBeenCalledTimes(1);
+    expect(widget.isDestroyed()).toBe(false);
 
-    widget.enable();
-    await window.waitFor(0); // callbacks is async
-
+    await widget.enable();
     expect(widget.isDisabled()).toBe(false);
-    expect(onEnable).toHaveBeenCalledTimes(1);
-    expect(onDisable).toHaveBeenCalledTimes(1);
+    expect(widget.isDestroyed()).toBe(false);
+
+    await widget.destroy();
+    expect(widget.isDisabled()).toBe(true);
+    expect(widget.isDestroyed()).toBe(true);
+
+    await widget.disable(); // no-op
+    await widget.enable(); // no-op
+    await widget.destroy(); // no-op
+    expect(widget.isDisabled()).toBe(true);
+    expect(widget.isDestroyed()).toBe(true);
   });
 
-  test("destroy", async () => {
+  test("onEnable/onDisable/onDestroy", async () => {
     const onEnable = jest.fn();
     const onDisable = jest.fn();
     const onDestroy = jest.fn();
@@ -58,33 +48,79 @@ describe("Widget", () => {
     widget.onDestroy(onDestroy);
     await window.waitFor(0); // callbacks is async
 
-    expect(widget.isDisabled()).toBe(false);
-    expect(widget.isDestroyed()).toBe(false);
     expect(onEnable).toHaveBeenCalledTimes(0);
     expect(onDisable).toHaveBeenCalledTimes(0);
     expect(onDestroy).toHaveBeenCalledTimes(0);
 
-    widget.destroy();
-    await window.waitFor(0); // callbacks is async
+    await widget.enable(); // no-op as it's enabled
 
-    expect(widget.isDisabled()).toBe(true);
-    expect(widget.isDestroyed()).toBe(true);
+    expect(onEnable).toHaveBeenCalledTimes(0);
+    expect(onDisable).toHaveBeenCalledTimes(0);
+    expect(onDestroy).toHaveBeenCalledTimes(0);
+
+    await widget.disable();
+
     expect(onEnable).toHaveBeenCalledTimes(0);
     expect(onDisable).toHaveBeenCalledTimes(1);
-    expect(onDestroy).toHaveBeenCalledTimes(1);
+    expect(onDisable).toHaveBeenCalledWith(widget);
+    expect(onDestroy).toHaveBeenCalledTimes(0);
 
-    widget.destroy(); // no-op
-    await window.waitFor(0); // callbacks is async
-    widget.disable(); // no-op
-    await window.waitFor(0); // callbacks is async
-    widget.enable(); // no-op
-    await window.waitFor(0); // callbacks is async
+    await widget.disable(); // no-op
 
-    expect(widget.isDisabled()).toBe(true);
-    expect(widget.isDestroyed()).toBe(true);
     expect(onEnable).toHaveBeenCalledTimes(0);
     expect(onDisable).toHaveBeenCalledTimes(1);
+    expect(onDestroy).toHaveBeenCalledTimes(0);
+
+    await widget.enable();
+
+    expect(onEnable).toHaveBeenCalledTimes(1);
+    expect(onEnable).toHaveBeenCalledWith(widget);
+    expect(onDisable).toHaveBeenCalledTimes(1);
+    expect(onDestroy).toHaveBeenCalledTimes(0);
+
+    await widget.destroy();
+
+    expect(onEnable).toHaveBeenCalledTimes(1);
+    expect(onDisable).toHaveBeenCalledTimes(2); // destroy disables it beforehand
     expect(onDestroy).toHaveBeenCalledTimes(1);
+    expect(onDestroy).toHaveBeenCalledWith(widget);
+
+    await widget.disable(); // no-op
+    await widget.enable(); // no-op
+    await widget.destroy(); // no-op
+
+    // no new calls
+    expect(onEnable).toHaveBeenCalledTimes(1);
+    expect(onDisable).toHaveBeenCalledTimes(2);
+    expect(onDestroy).toHaveBeenCalledTimes(1);
+  });
+
+  test("offEnable/offDisable/offDestroy", async () => {
+    const onEnable = jest.fn();
+    const onDisable = jest.fn();
+    const onDestroy = jest.fn();
+
+    const widget = new Widget(document.body);
+    widget.onEnable(onEnable);
+    widget.onDisable(onDisable);
+    widget.onDestroy(onDestroy);
+    await window.waitFor(0); // callbacks is async
+
+    widget.offEnable(onEnable);
+    widget.offDisable(onDisable);
+    widget.offDestroy(onDestroy);
+
+    expect(onEnable).toHaveBeenCalledTimes(0);
+    expect(onDisable).toHaveBeenCalledTimes(0);
+    expect(onDestroy).toHaveBeenCalledTimes(0);
+
+    await widget.enable(); // no-op as it's enabled
+    await widget.disable();
+    await widget.destroy();
+
+    expect(onEnable).toHaveBeenCalledTimes(0);
+    expect(onDisable).toHaveBeenCalledTimes(0);
+    expect(onDestroy).toHaveBeenCalledTimes(0);
   });
 });
 

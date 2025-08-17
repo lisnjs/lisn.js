@@ -303,8 +303,12 @@ export function addNewCallbackToMap<
 /**
  * **Wraps** the given handler as a new callback and adds it to the given map.
  *
- * It also sets up an `onRemove` handler on the wrapper so that whenever it, or
- * the original handler, are removed, the entry is deleted from the map.
+ * It also sets up an {@link Callback.onRemove | `onRemove`} handler on the
+ * wrapper so that whenever it, or the original handler, are removed, the entry
+ * is deleted from the map. Therefore, to remove the callback from the map you
+ * can either just delete the key (handler), or call
+ * {@link Callback.remove | `remove`} on the wrapper (which will not affect the
+ * original handler, if it was a callback.
  *
  * The key in the map will be the original handler and the value:
  * - if `data` is `null` or `undefined`, the value set will be the newly wrapped

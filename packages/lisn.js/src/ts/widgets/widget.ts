@@ -190,9 +190,13 @@ export abstract class Widget {
       }
     };
 
-    this.onDisable = (handler) =>
+    this.onDisable = (handler) => {
       addNewCallbackToSet(handler, disableCallbacks);
-    this.onEnable = (handler) => addNewCallbackToSet(handler, enableCallbacks);
+    };
+
+    this.onEnable = (handler) => {
+      addNewCallbackToSet(handler, enableCallbacks);
+    };
 
     this.isDisabled = () => isDisabled;
 
@@ -222,8 +226,9 @@ export abstract class Widget {
       return destroyPromise;
     };
 
-    this.onDestroy = (handler) =>
+    this.onDestroy = (handler) => {
       addNewCallbackToSet(handler, destroyCallbacks);
+    };
 
     this.isDestroyed = () => isDestroyed;
 

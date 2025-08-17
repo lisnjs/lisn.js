@@ -1340,8 +1340,9 @@ const getMethods = (
   const togglePage = (pageNum: number) =>
     isPageDisabled(pageNum) ? enablePage(pageNum) : disablePage(pageNum);
 
-  const onTransition = (handler: WidgetHandler) =>
+  const onTransition = (handler: WidgetHandler) => {
     addNewCallbackToSet(handler, callbacks);
+  };
 
   return {
     _nextPage: nextPage,

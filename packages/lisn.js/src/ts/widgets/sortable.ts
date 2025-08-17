@@ -521,8 +521,9 @@ const getMethods = (
       ? enableItem(itemNum, currentOrder)
       : disableItem(itemNum, currentOrder);
 
-  const onMove = (handler: WidgetHandler) =>
+  const onMove = (handler: WidgetHandler) => {
     addNewCallbackToSet(handler, callbacks);
+  };
 
   // This is internal only for now...
   const dragItemOnto = async (dragged: Element, draggedOver: Element) => {

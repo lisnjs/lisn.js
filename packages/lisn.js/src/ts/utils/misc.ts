@@ -6,23 +6,40 @@
 
 import * as MH from "@lisn/globals/minification-helpers";
 
+import { NestedRecord } from "@lisn/globals/types";
+
 import { roundNumTo } from "@lisn/utils/math";
 
 /**
+ * Copies object deeply including nested properties. Plain objects are recursed
+ * into, but other values are copied as is.
+ *
  * @since v1.3.0
  */
-export const deepCopy = <T extends object>(obj: T): T => {
-  const clone = MH.copyObject(obj);
+export const deepCopy = <T extends NestedRecord<V>, V>(obj: T): T => {
+  const clone = MH.copyObject(obj); // shallow copy
+
   for (const key in clone) {
-    if (MH.isNonPrimitive(obj[key])) {
-      obj[key] = deepCopy(obj[key]);
+    if (MH.isPlainObject(obj[key])) {
+      clone[key] = deepCopy(obj[key]) as T[typeof key];
     }
   }
 
   return clone;
 };
 
-export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
+/**
+ * For all keys present in `toObj`, if the key is also in `fromObj`, it copies
+ * the value recursively from `fromObj` into `toObj` in place.
+ *
+ * Plain objects are recursed into, but other values are copied as is.
+ *
+ * @since v1.3.0 Was previously called copyExistingKeys
+ */
+export const copyExistingKeysTo = <T extends NestedRecord<V>, V>(
+  fromObj: T,
+  toObj: T,
+) => {
   for (const key in toObj) {
     if (!MH.hasOwnProp(toObj, key)) {
       continue;
@@ -31,8 +48,8 @@ export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
     if (key in fromObj) {
       const current = toObj[key];
       const updated = fromObj[key];
-      if (MH.isNonPrimitive(updated) && MH.isNonPrimitive(current)) {
-        copyExistingKeys(updated, current);
+      if (MH.isPlainObject(updated) && MH.isPlainObject(current)) {
+        copyExistingKeysTo(updated, current);
       } else if (updated !== undefined) {
         toObj[key] = updated;
       }
@@ -40,38 +57,56 @@ export const copyExistingKeys = <T extends object>(fromObj: T, toObj: T) => {
   }
 };
 
-// Omits the keys in object keysToRm from obj. This is to avoid hardcording the
-// key names as a string so as to allow minifier to mangle them, and to avoid
-// using object spread.
+/**
+ * Omits the keys in object `keysToRm` from `obj`. This is to avoid hardcording
+ * the key names as a string so as to allow minifier to mangle them, and to
+ * avoid using object spread.
+ */
 export const omitKeys = <
-  O extends object,
-  R extends { [K in keyof O]?: unknown },
+  T extends object,
+  R extends { [K in keyof T]?: unknown },
 >(
-  obj: O,
+  obj: T,
   keysToRm: R,
-): Omit<O, keyof R> => {
-  const res: Partial<O> = {};
-  let key: keyof O;
+): Omit<T, keyof R> => {
+  const res: Partial<T> = {};
 
-  for (key in obj) {
+  for (const key in obj) {
     if (!(key in keysToRm)) {
       res[key] = obj[key];
     }
   }
 
-  return res as Omit<O, keyof R>;
+  return res as Omit<T, keyof R>;
 };
 
-// Returns true if the two objects are equal. If values are numeric, it will
-// round to the given number of decimal places.
-type NestedRecord<T = string | number | undefined | null> = {
-  [key: string]: T | NestedRecord<T>;
-};
-
-export const compareValuesIn = <
-  T extends NestedRecord<V>,
-  V extends string | number | undefined | null,
+/**
+ * For all keys present in `keysToSelect`, if the key is also in `fromObj`, it
+ * copies the value **non-recursively**, as is, from `fromObj` into `toObj` in
+ * place.
+ *
+ * @since v1.3.0
+ */
+export const copySelectKeysTo = <
+  T extends object,
+  R extends { [K in keyof T]?: unknown },
 >(
+  fromObj: T,
+  toObj: T,
+  keysToSelect: R,
+) => {
+  for (const key in fromObj) {
+    if (key in keysToSelect) {
+      toObj[key] = fromObj[key];
+    }
+  }
+};
+
+/**
+ * Returns true if the two objects are equal. If values are numeric, it will
+ * round to the given number of decimal places.
+ */
+export const compareValuesIn = <T extends NestedRecord<V>, V>(
   objA: T,
   objB: T,
   roundTo = 3,
@@ -84,7 +119,7 @@ export const compareValuesIn = <
     const valA = objA[key];
     const valB = objB[key];
 
-    if (MH.isNonPrimitive(valA) && MH.isNonPrimitive(valB)) {
+    if (MH.isPlainObject(valA) && MH.isPlainObject(valB)) {
       if (!compareValuesIn(valA, valB)) {
         return false;
       }

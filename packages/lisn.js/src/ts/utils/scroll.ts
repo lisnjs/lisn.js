@@ -2,8 +2,6 @@
  * @module Utils
  */
 
-// TODO support critically damped or plain quadratic or custom interpolation function
-
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
@@ -18,7 +16,6 @@ import {
   Anchor,
 } from "@lisn/globals/types";
 
-import { animationFrameGenerator, ElapsedTimes } from "@lisn/utils/animations";
 import { getComputedStylePropNow } from "@lisn/utils/css-alter";
 import { SCROLL_DIRECTIONS } from "@lisn/utils/directions";
 import {
@@ -28,8 +25,9 @@ import {
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
-import { maxAbs, criticallyDamped } from "@lisn/utils/math";
+import { maxAbs } from "@lisn/utils/math";
 import { randId, formatAsString } from "@lisn/utils/text";
+import { tween3DAnimationGenerator, Tweener } from "@lisn/utils/tween";
 import { isValidStrList } from "@lisn/utils/validation";
 
 import { newXMap } from "@lisn/modules/x-map";
@@ -113,6 +111,14 @@ export type ScrollToOptions = {
    * @defaultValue undefined
    */
   altOffset?: CoordinateOffset;
+
+  /**
+   * A built-in or custom tweener function to calculate the interpolation from
+   * current to target.
+   *
+   * @defaultValue "spring"
+   */
+  tweener?: Tweener;
 };
 
 // ----------
@@ -289,9 +295,9 @@ export const scrollTo = (
   const scrollable = options._scrollable;
 
   // cancel current scroll action if any
-  const info = currentScrollInfos.get(scrollable);
-  if (info) {
-    if (!info._action.cancel()) {
+  const existingScrollInfo = currentScrollInfos.get(scrollable);
+  if (existingScrollInfo) {
+    if (!existingScrollInfo._action.cancel()) {
       // current scroll action is not cancellable by us
       return null;
     }
@@ -335,6 +341,7 @@ export const scrollTo = (
 
   const cleanup = () => {
     if (currentScrollInfos.get(scrollable)?._action === thisInfo._action) {
+      // Our action completed
       MH.deleteKey(currentScrollInfos, scrollable);
     }
 
@@ -482,19 +489,31 @@ type ScrollToOptionsInternal = {
   _duration: number;
   _weCanInterrupt: boolean;
   _userCanInterrupt: boolean;
+  _tweener: Tweener;
 };
-
-type Velocity = { top: number; left: number };
 
 type ScrollInfo = {
   _action: ScrollAction;
-  _position?: ScrollPosition;
-  _velocity?: Velocity;
-  _elapsed?: ElapsedTimes;
+  // _generator is the current ongoing tween3DAnimationGenerator
+  // If a scroll action is cancelled by another scroll action, it will re-use
+  // the same generator to avoid interruption in the scroll animation
+  _generator?: AsyncGenerator<ScrollTweenState>;
+};
+
+type ScrollTweenState = {
+  x: {
+    current: number;
+    target: number;
+    lag: number;
+  };
+  y: {
+    current: number;
+    target: number;
+    lag: number;
+  };
 };
 
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
-
 const isScrollableCache = newXMap<Element, Map<"x" | "y", boolean>>(() =>
   MH.newMap(),
 );
@@ -554,6 +573,7 @@ const getOptions = (
     _duration: options?.duration ?? settings.effectLag,
     _weCanInterrupt: options?.weCanInterrupt ?? false,
     _userCanInterrupt: options?.userCanInterrupt ?? false,
+    _tweener: options?.tweener ?? "spring",
   };
 };
 
@@ -686,14 +706,6 @@ const initiateScroll = async (
   const position = await getStartEndPosition(options);
   const duration = options._duration;
   const scrollable = options._scrollable;
-  const existingScrollInfo = currentScrollInfos.get(scrollable);
-
-  const currentPosition = existingScrollInfo?._position ?? position._start;
-  const currentVelocity = existingScrollInfo?._velocity ?? {
-    [MC.S_TOP]: 0,
-    [MC.S_LEFT]: 0,
-  };
-  let elapsed = existingScrollInfo?._elapsed;
 
   const logger = debug
     ? new debug.Logger({
@@ -701,19 +713,36 @@ const initiateScroll = async (
         logAtCreation: {
           options,
           position,
-          elapsed,
-          currentPosition: MH.copyObject(currentPosition),
-          currentVelocity: MH.copyObject(currentVelocity),
         },
       })
     : null;
 
-  for await (elapsed of animationFrameGenerator(elapsed)) {
-    const deltaTime = elapsed.sinceLast;
-    if (deltaTime === 0) {
-      // First time
-      continue;
-    }
+  const currentPosition = MH.copyObject(position._start);
+
+  // If we cancelled another action, pick up from where it had left
+  let generator = currentScrollInfos.get(scrollable)?._generator;
+  if (!generator) {
+    generator = tween3DAnimationGenerator(options._tweener, {
+      x: {
+        current: position._start.left,
+        target: position._end.left,
+        lag: duration,
+      },
+      y: {
+        current: position._start.top,
+        target: position._end.top,
+        lag: duration,
+      },
+    });
+
+    updateCurrentScrollInfo(scrollable, {
+      _generator: generator,
+    });
+  }
+
+  for await (const state of generator) {
+    currentPosition.left = state.x.current;
+    currentPosition.top = state.y.current;
 
     // Element.scrollTo equates to a measurement and needs to run after
     // painting to avoid forced layout.
@@ -725,38 +754,10 @@ const initiateScroll = async (
       throw currentPosition;
     }
 
-    for (const s of [MC.S_LEFT, MC.S_TOP] as const) {
-      const { l, v } = criticallyDamped({
-        l: currentPosition[s],
-        v: currentVelocity[s],
-        lTarget: position._end[s],
-        dt: deltaTime,
-        lag: duration,
-      });
-
-      currentPosition[s] = l;
-      currentVelocity[s] = v;
-    }
-
-    updateCurrentScrollInfo(scrollable, {
-      _position: currentPosition,
-      _velocity: currentVelocity,
-      _elapsed: elapsed,
-    });
-
-    const isDone = !arePositionsDifferent(currentPosition, position._end, 0.5);
-    if (isDone) {
-      MH.assign(currentPosition, position._end); // use exact final coordinates
-    }
-
     MH.elScrollTo(scrollable, currentPosition);
-
-    if (isDone) {
-      logger?.debug8("Done");
-      break;
-    }
   }
 
+  logger?.debug8("Done");
   return currentPosition;
 };
 

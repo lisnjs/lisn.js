@@ -1,6 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
-const { deepCopy, copyExistingKeys } = window.LISN.utils;
+const { deepCopy, copyExistingKeysTo } = window.LISN.utils;
 const { toParameters, scaleParameters, getUpdatedState, FXComposer } =
   window.LISN.effects;
 
@@ -20,6 +20,7 @@ const DEFAULT_STATE = {
     target: 0,
     lag: 0,
     depth: 1,
+    snap: false,
   },
   y: {
     min: 0,
@@ -30,6 +31,7 @@ const DEFAULT_STATE = {
     target: 0,
     lag: 0,
     depth: 1,
+    snap: false,
   },
   z: {
     min: 0,
@@ -40,6 +42,7 @@ const DEFAULT_STATE = {
     target: 0,
     lag: 0,
     depth: 1,
+    snap: false,
   },
 };
 
@@ -53,6 +56,7 @@ const DUMMY_STATE = {
     target: 500,
     lag: 0,
     depth: 1,
+    snap: false,
   },
   y: {
     min: -100,
@@ -63,6 +67,7 @@ const DUMMY_STATE = {
     target: 50,
     lag: 0,
     depth: 1,
+    snap: false,
   },
   z: {
     min: -10,
@@ -73,6 +78,7 @@ const DUMMY_STATE = {
     target: 5,
     lag: 0,
     depth: 1,
+    snap: true,
   },
 };
 
@@ -81,6 +87,7 @@ const DUMMY_UPDATE = {
     min: -2000,
     max: 2000,
     target: 700,
+    snap: true,
   },
   y: {
     min: -200,
@@ -91,12 +98,13 @@ const DUMMY_UPDATE = {
     min: -20,
     max: 20,
     target: 5,
+    snap: false,
   },
 };
 
 const newState = (partial = {}, source = DEFAULT_STATE) => {
   const result = deepCopy(source);
-  copyExistingKeys(partial, result);
+  copyExistingKeysTo(partial, result);
   return result;
 };
 
@@ -588,8 +596,8 @@ describe("getUpdatedState: validate current", () => {
       { x: { depth: depthX }, y: { depth: depthY }, z: { depth: depthZ } },
       DEFAULT_STATE,
     );
-    expect(getUpdatedState({}, composer)).toEqual(thisDefaultState);
-    expect(getUpdatedState({}, DEFAULT_COMPOSER)).toEqual(DEFAULT_STATE);
+    expect(getUpdatedState(null, composer)).toEqual(thisDefaultState);
+    expect(getUpdatedState(null, DEFAULT_COMPOSER)).toEqual(DEFAULT_STATE);
   });
 
   for (const axis of ["x", "y", "z"]) {
@@ -733,6 +741,24 @@ describe("getUpdatedState: validate current", () => {
       });
     }
 
+    test(`${axis}: missing snap`, () => {
+      const state = deepCopy(dummyState);
+      const expected = deepCopy(state);
+      expected[axis].snap = false;
+
+      delete state[axis].snap;
+      expect(getUpdatedState(state, composer)).toEqual(expected);
+    });
+
+    test(`${axis}: invalid snap`, () => {
+      const state = deepCopy(dummyState);
+      const expected = deepCopy(state);
+      expected[axis].snap = false;
+
+      state[axis].snap = 1;
+      expect(getUpdatedState(state, composer)).toEqual(expected);
+    });
+
     test(`${axis}: multiple invalid v1`, () => {
       const min = 100;
       const state = deepCopy(dummyState);
@@ -744,11 +770,13 @@ describe("getUpdatedState: validate current", () => {
       expected[axis].previous = min;
       expected[axis].current = min;
       expected[axis].target = min;
+      expected[axis].snap = false;
 
       state[axis].max = NaN;
       delete state[axis].previous;
       state[axis].current = 0; // < min
       state[axis].target = min * 2; // > new max
+      state[axis].snap = 1;
       expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
@@ -763,11 +791,13 @@ describe("getUpdatedState: validate current", () => {
       expected[axis].previous = 0;
       expected[axis].current = 0;
       expected[axis].target = max;
+      expected[axis].snap = false;
 
       state[axis].min = NaN;
       delete state[axis].previous;
       state[axis].current = -100; // < new min
       state[axis].target = max * 2; // > max
+      state[axis].snap = null;
       expect(getUpdatedState(state, composer)).toEqual(expected);
     });
   }
@@ -791,7 +821,7 @@ describe("getUpdatedState: with update data", () => {
     const state = deepCopy(dummyState);
     const update = deepCopy(DUMMY_UPDATE);
     const expected = deepCopy(state);
-    copyExistingKeys(update, expected);
+    copyExistingKeysTo(update, expected);
 
     expect(getUpdatedState(state, composer, update)).toEqual(expected);
   });
@@ -801,7 +831,7 @@ describe("getUpdatedState: with update data", () => {
     const copy = deepCopy(dummyState);
     const update = deepCopy(DUMMY_UPDATE);
     const expected = deepCopy(state);
-    copyExistingKeys(update, expected);
+    copyExistingKeysTo(update, expected);
 
     expect(getUpdatedState(state, composer, update)).toEqual(expected);
     expect(state).toEqual(copy);
@@ -827,7 +857,7 @@ describe("getUpdatedState: with update data", () => {
       const state = deepCopy(dummyState);
       const update = deepCopy(DUMMY_UPDATE);
       const expected = deepCopy(state);
-      copyExistingKeys(update, expected);
+      copyExistingKeysTo(update, expected);
 
       [update[axis].min, update[axis].max] = [
         update[axis].max,
@@ -836,13 +866,13 @@ describe("getUpdatedState: with update data", () => {
       expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
 
-    for (const prop of ["min", "max", "target"]) {
+    for (const prop of ["min", "max", "target", "snap"]) {
       test(`${axis}: missing ${prop}`, () => {
         const state = deepCopy(dummyState);
 
         const update = deepCopy(DUMMY_UPDATE);
         const expected = deepCopy(state);
-        copyExistingKeys(update, expected);
+        copyExistingKeysTo(update, expected);
         expected[axis][prop] = state[axis][prop]; // preserved
 
         delete update[axis][prop];
@@ -854,10 +884,10 @@ describe("getUpdatedState: with update data", () => {
 
         const update = deepCopy(DUMMY_UPDATE);
         const expected = deepCopy(state);
-        copyExistingKeys(update, expected);
+        copyExistingKeysTo(update, expected);
         expected[axis][prop] = state[axis][prop]; // preserved
 
-        update[axis][prop] = NaN;
+        update[axis][prop] = prop === "snap" ? 0 : NaN;
         expect(getUpdatedState(state, composer, update)).toEqual(expected);
       });
     }
@@ -867,7 +897,7 @@ describe("getUpdatedState: with update data", () => {
 
       const update = deepCopy(DUMMY_UPDATE);
       const expected = deepCopy(state);
-      copyExistingKeys(update, expected);
+      copyExistingKeysTo(update, expected);
       expected[axis].target = expected[axis].min;
 
       update[axis].target = update[axis].min - 10;
@@ -879,7 +909,7 @@ describe("getUpdatedState: with update data", () => {
 
       const update = deepCopy(DUMMY_UPDATE);
       const expected = deepCopy(state);
-      copyExistingKeys(update, expected);
+      copyExistingKeysTo(update, expected);
       expected[axis].target = expected[axis].max;
 
       update[axis].target = update[axis].max + 10;
@@ -891,7 +921,7 @@ describe("getUpdatedState: with update data", () => {
 
       const update = deepCopy(DUMMY_UPDATE);
       const expected = deepCopy(state);
-      copyExistingKeys(update, expected);
+      copyExistingKeysTo(update, expected);
 
       update[axis].initial =
         update[axis].previous =

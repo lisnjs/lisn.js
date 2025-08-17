@@ -65,8 +65,8 @@ export const waitForAnimationFrame = async () =>
  * @param callback  See {@link AnimationCallback}.
  * @param elapsed   Seed values to use as the total elapsed and elapsed since
  *                  last. Otherwise it will use the timestamp of the first frame
- *                  as the start, which will result in those values being 0 the
- *                  first time.
+ *                  as the start, which will result in the elapsed values being
+ *                  0 the first time.
  *
  * @since v1.2.0
  *
@@ -116,11 +116,11 @@ export async function* animationFrameGenerator(
       previousTimeStamp = timeStamp - sinceLastSeed;
     }
 
-    const totalElapsed = timeStamp - startTime;
-    const elapsedSinceLast = timeStamp - previousTimeStamp;
+    const total = timeStamp - startTime;
+    const sinceLast = timeStamp - previousTimeStamp;
     previousTimeStamp = timeStamp;
 
-    return { total: totalElapsed, sinceLast: elapsedSinceLast };
+    return { total, sinceLast };
   };
 
   while (true) {
@@ -130,85 +130,42 @@ export async function* animationFrameGenerator(
 
 /**
  * @ignore
- * @internal
+ * @deprecated
  *
  * Deprecated alias for {@link animationFrameGenerator}
  */
 export const newAnimationFrameIterator = animationFrameGenerator;
 
 /**
- * Returns an animation iterator based on {@link criticallyDamped} that starts
- * at the given position `l`, with velocity `v = 0` and time `t = 0` and yields
- * the new position and velocity, total time and fractional change in position
- * at every animation frame.
+ * @ignore
+ * @deprecated
  *
- * @param [settings.lTarget]   The initial target position. Can be updated when
- *                             calling next().
- * @param [settings.lag]       See {@link criticallyDamped}.
- * @param [settings.l = 0]     The initial starting position.
- * @param [settings.precision] See {@link criticallyDamped}.
+ * Use
+ * {@link tween3DAnimationGenerator | `tween3DAnimationGenerator("spring", ...)`}
+ * instead.
  *
- * @returns An iterator whose `next` method accepts an optional new `lTarget`.
- * The iterator yields an object containing successive values for:
- * - `l`: position
- * - `v`: velocity
- * - `t`: total time elapsed
- * - `dlFr`: fractional (from 0 to 1) change in position since the last frame
- *
- * @example
- * If you never need to update the target you can use a for await loop:
- *
- * ```javascript
- * const iterator = criticallyDampedAnimationGenerator({
- *   l: 10,
- *   lTarget: 100,
- *   lag: 1500
- * });
- *
- * for await (const { l, v, t, dlFr } of iterator) {
- *   console.log({ l, v, t, dlFr });
- * }
- * ```
- *
- * @example
- * If you do need to update the target, then call `next` explicitly:
- *
- * ```javascript
- * const iterator = criticallyDampedAnimationGenerator({
- *   l: 10,
- *   lTarget: 100,
- *   lag: 1500
- * });
- *
- * let { value: { l, v, t, dlFr } } = await iterator.next();
- * ({ value: { l, v, t, dlFr } } = await iterator.next()); // updated
- * ({ value: { l, v, t, dlFr } } = await iterator.next(200)); // updated towards a new target
- * ```
- *
- * @since v1.2.0 (Fractional change in position in return value was added in
- * v1.3.0)
+ * @since v1.2.0
  *
  * @category Animations
  */
-export async function* criticallyDampedAnimationGenerator(settings: {
+export async function* newCriticallyDampedAnimationIterator(settings: {
   lTarget: number;
   lag: number;
   l?: number;
   precision?: number;
 }): AsyncGenerator<
-  { l: number; v: number; t: number; dlFr: number },
-  { l: number; v: number; t: number; dlFr: number },
+  { l: number; v: number; t: number },
+  { l: number; v: number; t: number },
   number
 > {
   let { l, lTarget } = settings;
   const { lag, precision } = settings;
   let v = 0,
     t = 0,
-    dt = 0,
-    dlFr = 0;
+    dt = 0;
 
   const next = () => {
-    ({ l, v, dlFr } = criticallyDamped({
+    ({ l, v } = criticallyDamped({
       lTarget,
       lag,
       l,
@@ -216,7 +173,7 @@ export async function* criticallyDampedAnimationGenerator(settings: {
       v,
       precision,
     }));
-    return { l, v, t, dlFr };
+    return { l, v, t };
   };
 
   for await ({ total: t, sinceLast: dt } of animationFrameGenerator()) {
@@ -233,15 +190,6 @@ export async function* criticallyDampedAnimationGenerator(settings: {
 
   throw null; // tell TypeScript it never reaches here
 }
-
-/**
- * @ignore
- * @internal
- *
- * Deprecated alias for {@link criticallyDampedAnimationGenerator}
- */
-export const newCriticallyDampedAnimationIterator =
-  criticallyDampedAnimationGenerator;
 
 /**
  * @param webAnimationCallback This function is called for each

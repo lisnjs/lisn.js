@@ -1,6 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
-const { deepCopy, copyExistingKeys } = window.LISN.utils;
+const { deepCopy, copyExistingKeysTo } = window.LISN.utils;
 const { Transform, FXComposer, toParameters } = window.LISN.effects;
 
 window.LISN.settings.effectLag = 0;
@@ -33,6 +33,7 @@ const DUMMY_STATE = {
     target: 500,
     lag: 0,
     depth: 1,
+    snap: false,
   },
   y: {
     min: -Number.MAX_SAFE_INTEGER,
@@ -43,6 +44,7 @@ const DUMMY_STATE = {
     target: 50,
     lag: 0,
     depth: 1,
+    snap: false,
   },
   z: {
     min: -Number.MAX_SAFE_INTEGER,
@@ -53,6 +55,7 @@ const DUMMY_STATE = {
     target: 5,
     lag: 0,
     depth: 1,
+    snap: true,
   },
 };
 
@@ -72,7 +75,7 @@ const newTestMatrix = (toValue = (i) => i + 1) => {
 
 const newState = (partial = {}) => {
   const res = deepCopy(DUMMY_STATE);
-  copyExistingKeys(partial, res);
+  copyExistingKeysTo(partial, res);
   return res;
 };
 

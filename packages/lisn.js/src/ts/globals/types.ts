@@ -338,7 +338,7 @@ export type BoundingRect = {
 export type LogFunction = (...args: unknown[]) => void;
 
 /**
- * @category Utility
+ * @category Misc
  */
 export type DOMElement = HTMLElement | SVGElement | MathMLElement;
 
@@ -346,6 +346,22 @@ export type DOMElement = HTMLElement | SVGElement | MathMLElement;
  * @category Utility
  */
 export type IterableObject<T> = Iterable<T> & object;
+
+/**
+ * @since v1.3.0
+ *
+ * @category Utility
+ */
+export type Primitive = string | symbol | number | boolean | undefined | null;
+
+/**
+ * @since v1.3.0
+ *
+ * @category Utility
+ */
+export type NestedRecord<T = unknown> = {
+  [key: string]: T | NestedRecord<T>;
+};
 
 /**
  * @category Utility
@@ -376,9 +392,29 @@ export type AtLeastOne<T, U = { [K in keyof T]: Pick<T, K> }> = Partial<T> &
   U[keyof U];
 
 /**
+ * @since v1.3.0
+ *
+ * @category Utility
+ */
+export type ExceptKeysOf<T extends object> = Record<string, unknown> & {
+  [K in keyof T]?: never;
+};
+
+/**
  * @category Utility
  */
 export type NonEmptyArray<T> = [T, ...T[]];
+
+/**
+ * @since v1.3.0
+ *
+ * @category Utility
+ */
+export type DeepPartial<T> = T extends object
+  ? {
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
+  : T;
 
 /**
  * @category Utility
@@ -391,9 +427,9 @@ export type NonNullableReturnType<F extends (...args: unknown[]) => unknown> =
  */
 export type StrRecord =
   | {
-      [key: string]: string | number | boolean | null | StrRecord;
+      [key: string]: Primitive | StrRecord;
     }
-  | Array<string | number | boolean>;
+  | Array<Primitive>;
 
 /**
  * @category Utility

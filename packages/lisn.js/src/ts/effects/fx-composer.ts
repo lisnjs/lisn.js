@@ -8,12 +8,20 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { settings } from "@lisn/globals/settings";
 
-import { AtLeastOne, RawOrRelativeNumber } from "@lisn/globals/types";
+import {
+  AtLeastOne,
+  RawOrRelativeNumber,
+  DeepPartial,
+} from "@lisn/globals/types";
 
-import { animationFrameGenerator } from "@lisn/utils/animations";
 import { setStyleProp, delStyleProp } from "@lisn/utils/css-alter";
 import { toRawNum } from "@lisn/utils/math";
 import { deepCopy, compareValuesIn } from "@lisn/utils/misc";
+import {
+  tween3DAnimationGenerator,
+  Tweener,
+  Tween3DUpdate,
+} from "@lisn/utils/tween";
 
 import {
   CallbackHandler,
@@ -25,12 +33,12 @@ import {
   Effect,
   FXAxisState,
   FXState,
+  FXStateUpdate,
   getUpdatedState,
 } from "@lisn/effects/effect";
 
 import { FXComposition } from "@lisn/effects/fx-composition";
 import { FXTrigger } from "@lisn/effects/triggers/fx-trigger";
-import { FXTweener, FX_TWEENERS } from "@lisn/effects/fx-tweener";
 
 /**
  * {@link FXComposer} XXX TODO
@@ -127,15 +135,21 @@ export class FXComposer {
    * composers, {@link add} each relevant composer to the "master" composer and
    * call {@link animate} on it only.
    *
+   * It will {@link Utils.waitForMutateTime | waitForMutateTime} before
+   * modifying the style.
+   *
    * @param negate See {@link toCss}.
    */
-  readonly animate: (elements: Element[], negate?: FXComposer) => this;
+  readonly animate: (elements: Element[], negate?: FXComposer) => Promise<this>;
 
   /**
    * Will clear the relevant {@link toCss | CSS} properties from the given
    * elements.
+   *
+   * It will {@link Utils.waitForMutateTime | waitForMutateTime} before
+   * modifying the style.
    */
-  readonly deanimate: (elements: Element[]) => this;
+  readonly deanimate: (elements: Element[]) => Promise<this>;
 
   /**
    * Will continually apply the latest {@link toCss | CSS} to the given
@@ -223,7 +237,7 @@ export class FXComposer {
       parent,
       negate: defaultNegate,
       trigger,
-      tweener = FX_TWEENERS.spring,
+      tweener = "spring",
     } = config ?? {};
 
     const effectiveConfig: FXComposerEffectiveConfig = {
@@ -321,13 +335,13 @@ export class FXComposer {
 
     // ----------
 
-    const animate = (elements: Element[], negate?: FXComposer) => {
-      applyCss(elements, false, negate);
+    const animate = async (elements: Element[], negate?: FXComposer) => {
+      await applyCss(elements, false, negate);
       return this;
     };
 
-    const deanimate = (elements: Element[]) => {
-      applyCss(elements, true);
+    const deanimate = async (elements: Element[]) => {
+      await applyCss(elements, true);
       return this;
     };
 
@@ -338,7 +352,9 @@ export class FXComposer {
       // Clean it up when all have been called with stopAnimate.
       const relatedElements = MH.newSet(elements);
 
-      const handler = () => applyCss(relatedElements, false, negate);
+      const handler = () => {
+        applyCss(relatedElements, false, negate);
+      };
 
       const data: [FXComposerHandler, Set<Element>] = [
         handler,
@@ -359,7 +375,7 @@ export class FXComposer {
 
     const stopAnimate = (elements: Element[], clear?: boolean) => {
       if (clear) {
-        applyCss(elements, true);
+        applyCss(elements, true); // no need to await
       }
 
       for (const element of elements) {
@@ -394,14 +410,14 @@ export class FXComposer {
     const setLag = (
       input: RawOrRelativeNumber | Partial<FXComposerConfig> | undefined,
     ) => {
-      updateStateConf(input, "lag", settings.effectLag);
+      updateConf(input, "lag", settings.effectLag);
       return this;
     };
 
     const setDepth = (
       input: RawOrRelativeNumber | Partial<FXComposerConfig> | undefined,
     ) => {
-      const didUpdate = updateStateConf(input, "depth", 1);
+      const didUpdate = updateConf(input, "depth", 1);
       if (didUpdate) {
         tween(); // update the effects and call callbacks
       }
@@ -411,7 +427,7 @@ export class FXComposer {
 
     // ----------
 
-    const updateStateConf = <P extends "lag" | "depth">(
+    const updateConf = <P extends "lag" | "depth">(
       input: RawOrRelativeNumber | Partial<FXComposerConfig> | undefined,
       prop: P,
       defaultValue: number,
@@ -420,7 +436,7 @@ export class FXComposer {
         parent?.getConfig() ?? {};
 
       let values: Partial<FXComposerConfig>;
-      if (MH.isNonPrimitive(input)) {
+      if (MH.isObject(input)) {
         values = input;
       } else {
         values = { [prop]: input };
@@ -450,6 +466,29 @@ export class FXComposer {
 
     // ----------
 
+    const updateState = <T extends boolean | undefined>(
+      newState: DeepPartial<FXState> | null,
+      updateData?: FXStateUpdate,
+      checkIfChanged?: T,
+    ) => {
+      newState = getUpdatedState(
+        MH.merge(currentFXState, newState),
+        this,
+        updateData,
+      );
+
+      let didUpdate: boolean | undefined = undefined;
+      if (checkIfChanged) {
+        didUpdate = !compareValuesIn(currentFXState, newState, 5);
+      }
+
+      MH.assign(currentFXState, newState); // override current state object
+
+      return didUpdate as T extends boolean ? boolean : void;
+    };
+
+    // ----------
+
     const invokeCallbacks = (
       callbacks: Map<FXComposerHandler, FXComposerCallback>,
     ) => {
@@ -460,70 +499,35 @@ export class FXComposer {
 
     // ----------
 
-    const axisMotion: {
-      [k in "x" | "y" | "z"]: {
-        _done: boolean;
-        _totalTime: number;
-        _velocity: number;
-      };
-    } = {
-      x: { _done: true, _totalTime: 0, _velocity: 0 },
-      y: { _done: true, _totalTime: 0, _velocity: 0 },
-      z: { _done: true, _totalTime: 0, _velocity: 0 },
-    };
-
-    const isTweening = () =>
-      !axisMotion.x._done || !axisMotion.y._done || !axisMotion.z._done;
-
-    const tween = async (snap = false) => {
-      if (isTweening()) {
+    let isTweening = false;
+    const tween = async () => {
+      if (isTweening) {
         return;
       }
 
-      for await (const { sinceLast: deltaTime } of animationFrameGenerator()) {
+      isTweening = true;
+
+      const tweenGenerator = tween3DAnimationGenerator(tweener, currentFXState);
+      while (true) {
+        const tweenUpdate: Tween3DUpdate<keyof FXState> = {};
         for (const a of ["x", "y", "z"] as const) {
-          const fxParams = currentFXState[a];
-          const motion = axisMotion[a];
-
-          if (motion._done) {
-            // Starting a new tween now
-            fxParams.initial = fxParams.current;
-            motion._done = false;
-            motion._totalTime = 0;
-          }
-
-          motion._totalTime += deltaTime;
-
-          fxParams.previous = fxParams.current;
-
-          if (snap) {
-            fxParams.current = fxParams.target;
-          }
-
-          const { current, target, lag } = fxParams;
-          motion._done = current === target;
-
-          if (!motion._done) {
-            const result = tweener({
-              current,
-              target,
-              lag,
-              velocity: motion._velocity,
-              deltaTime,
-              totalTime: motion._totalTime,
-            });
-
-            fxParams.current = result.current;
-            motion._velocity = result.velocity;
+          tweenUpdate[a] = { snap: currentFXState[a].snap };
+          for (const p of ["target", "lag"] as const) {
+            tweenUpdate[a][p] = currentFXState[a][p];
           }
         }
 
-        recompose();
-        invokeCallbacks(tweenCallbacks);
+        const { value: newState, done } =
+          await tweenGenerator.next(tweenUpdate);
 
-        if (!isTweening()) {
+        if (done) {
+          isTweening = false;
           break;
         }
+
+        updateState(newState);
+        recompose();
+        invokeCallbacks(tweenCallbacks);
       }
     };
 
@@ -548,12 +552,11 @@ export class FXComposer {
     // ----------
 
     const pollTrigger = async () => {
-      for await (const data of trigger()) {
-        const newState = getUpdatedState(currentFXState, this, data);
+      for await (const updateData of trigger()) {
+        const didUpdate = updateState(null, updateData, true);
 
-        if (!compareValuesIn(currentFXState, newState, 5)) {
-          MH.assign(currentFXState, newState);
-          tween(data?.snap);
+        if (didUpdate) {
+          tween();
           invokeCallbacks(triggerCallbacks);
         }
       }
@@ -561,7 +564,7 @@ export class FXComposer {
 
     // ----------
 
-    const applyCss = (
+    const applyCss = async (
       elements: Element[] | Set<Element>,
       clear: boolean,
       negate?: FXComposer,
@@ -570,9 +573,9 @@ export class FXComposer {
       for (const prop in css) {
         for (const element of elements) {
           if (clear) {
-            setStyleProp(element, prop, css[prop]);
+            await setStyleProp(element, prop, css[prop]);
           } else {
-            delStyleProp(element, prop);
+            await delStyleProp(element, prop);
           }
         }
       }
@@ -646,11 +649,12 @@ export type FXComposerConfig = {
   negate?: FXComposer;
 
   /**
-   * A custom tweener to calculate the interpolation from current to target.
+   * A built-in or custom tweener function to calculate the interpolation from
+   * current to target.
    *
-   * @defaultValue {@link FX_TWEENERS.spring}
+   * @defaultValue "spring"
    */
-  tweener?: FXTweener;
+  tweener?: Tweener | { [K in "x" | "y" | "z"]: Tweener };
 
   /**
    * The time in milliseconds it takes for effect states to catch up to the
@@ -723,7 +727,7 @@ export type FXComposerConfig = {
 export type FXComposerEffectiveConfig = {
   parent: FXComposer | undefined;
   negate: FXComposer | undefined;
-  tweener: FXTweener;
+  tweener: Tweener | { [K in "x" | "y" | "z"]: Tweener };
   lagX: number;
   lagY: number;
   lagZ: number;
@@ -756,6 +760,7 @@ const newDefaultState = (): FXState => {
     target: 0,
     lag: 0,
     depth: 1,
+    snap: false,
   };
 
   return deepCopy({ x: axisState, y: axisState, z: axisState });

@@ -74,7 +74,7 @@ import {
   ORDERED_ASPECTR,
 } from "@lisn/utils/layout";
 import { logError, logWarn } from "@lisn/utils/log";
-import { omitKeys, copyExistingKeys } from "@lisn/utils/misc";
+import { omitKeys, copyExistingKeysTo } from "@lisn/utils/misc";
 import { createOverlay } from "@lisn/utils/overlays";
 import { objToStrKey } from "@lisn/utils/text";
 
@@ -504,13 +504,13 @@ const getConfig = (
 ): LayoutWatcherConfigInternal => {
   const deviceBreakpoints = MH.copyObject(settings.deviceBreakpoints);
   if (config?.deviceBreakpoints) {
-    copyExistingKeys(config.deviceBreakpoints, deviceBreakpoints);
+    copyExistingKeysTo(config.deviceBreakpoints, deviceBreakpoints);
   }
 
   const aspectRatioBreakpoints = MH.copyObject(settings.aspectRatioBreakpoints);
 
   if (config?.aspectRatioBreakpoints) {
-    copyExistingKeys(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
+    copyExistingKeysTo(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
   }
 
   return {

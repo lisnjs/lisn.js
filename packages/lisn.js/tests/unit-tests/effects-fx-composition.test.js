@@ -41,6 +41,7 @@ const DUMMY_STATE = {
     target: 500,
     lag: 0,
     depth: 1,
+    snap: false,
   },
   y: {
     min: -Number.MAX_SAFE_INTEGER,
@@ -51,6 +52,7 @@ const DUMMY_STATE = {
     target: 50,
     lag: 0,
     depth: 1,
+    snap: false,
   },
   z: {
     min: -Number.MAX_SAFE_INTEGER,
@@ -61,6 +63,7 @@ const DUMMY_STATE = {
     target: 5,
     lag: 0,
     depth: 1,
+    snap: true,
   },
 };
 

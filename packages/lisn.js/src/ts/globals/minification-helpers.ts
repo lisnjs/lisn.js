@@ -106,7 +106,13 @@ export const isIterableObject = (v: unknown): v is IterableObject<unknown> =>
 
 export const isArray = (v: unknown) => isInstanceOf(v, MC.ARRAY);
 
-export const isObject = (v: unknown) => isInstanceOf(v, MC.OBJECT);
+export const isPlainObject = (
+  v: unknown,
+): v is Record<string | symbol, unknown> =>
+  isObject(v) && constructorOf(v) === MC.OBJECT;
+
+export const isObject = (v: unknown) =>
+  isNonPrimitive(v) && isInstanceOf(v, MC.OBJECT);
 
 export const isNonPrimitive = (v: unknown): v is object =>
   v !== null && typeOf(v) === "object";

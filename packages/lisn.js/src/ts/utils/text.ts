@@ -215,10 +215,7 @@ const flattenForSorting = (obj: StrRecord): unknown[] => {
         .map((k) => obj[k]);
 
   return array.map((value) => {
-    if (
-      MH.isArray(value) ||
-      (MH.isNonPrimitive(value) && MH.constructorOf(value) === MC.OBJECT)
-    ) {
+    if (MH.isArray(value) || MH.isPlainObject(value)) {
       return flattenForSorting(value);
     }
     return value;

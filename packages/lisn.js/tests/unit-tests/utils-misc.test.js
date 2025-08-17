@@ -20,15 +20,32 @@ test("deepCopy", () => {
     },
   };
 
+  const guard = {
+    a: obj.a,
+    o: obj.o,
+    oa: obj.o.a,
+    oo: obj.o.o,
+    ooa: obj.o.o.a,
+    ooo: obj.o.o.o,
+  };
+
   const clone = utils.deepCopy(obj);
   expect(clone).toEqual(obj);
   expect(clone).not.toBe(obj);
   expect(clone.o).not.toBe(obj.o);
   expect(clone.o.o).not.toBe(obj.o.o);
   expect(clone.o.o.o).not.toBe(obj.o.o.o);
+
+  // input not modified
+  expect(obj.a).toBe(guard.a);
+  expect(obj.o).toBe(guard.o);
+  expect(obj.o.a).toBe(guard.oa);
+  expect(obj.o.o).toBe(guard.oo);
+  expect(obj.o.o.a).toBe(guard.ooa);
+  expect(obj.o.o.o).toBe(guard.ooo);
 });
 
-test("copyExistingKeys", () => {
+test("copyExistingKeysTo", () => {
   const objA = {
     a: 1,
     b: 2,
@@ -55,7 +72,7 @@ test("copyExistingKeys", () => {
     },
   };
 
-  utils.copyExistingKeys(objB, objA);
+  utils.copyExistingKeysTo(objB, objA);
   expect(objA).toEqual({
     a: 5,
     b: 2,
@@ -87,6 +104,34 @@ test("omitKeys", () => {
   expect(res).toEqual({
     b: 2,
     d: obj.d,
+  });
+});
+
+test("copySelectKeysTo", () => {
+  const objA = {
+    a: 1,
+    b: 2,
+    c: 3,
+  };
+
+  const objB = {
+    a: 2,
+    b: 3,
+    c: 4,
+    z: 10,
+  };
+
+  const keysToSelect = {
+    c: null,
+    a: 0,
+  };
+
+  utils.copySelectKeysTo(objB, objA, keysToSelect);
+  expect(objA).toEqual({
+    a: 2,
+    b: 2, // unchanged
+    c: 4,
+    // no z
   });
 });
 

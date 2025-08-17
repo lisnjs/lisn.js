@@ -142,18 +142,18 @@ export type FXAxisStateUpdate = {
    * The target value which we're interpolating towards.
    */
   target?: number;
+
+  /**
+   * If set to true, it tells the composer not to tween, but instead jump
+   * straight to the target value.
+   */
+  snap?: boolean;
 };
 
 export type FXStateUpdate = {
   x?: FXAxisStateUpdate;
   y?: FXAxisStateUpdate;
   z?: FXAxisStateUpdate;
-
-  /**
-   * If set to true, it tells the composer not to tween, but instead jump
-   * straight to the target values.
-   */
-  snap?: boolean;
 };
 
 /**
@@ -200,6 +200,12 @@ export type FXAxisState = {
    * The composer's {@link FXComposerConfig.depth | depth} for this axis.
    */
   depth: number;
+
+  /**
+   * If true, it means the composer was told to
+   * {@link FXAxisStateUpdate.snap | snap} straight to the target value.
+   */
+  snap: boolean;
 };
 
 /**
@@ -347,6 +353,9 @@ export const getUpdatedState = (
 
   const composerConfig = composer.getConfig();
 
+  const toBool = (input: unknown, defaultValue: boolean) =>
+    MH.isBoolean(input) ? input : defaultValue;
+
   const validateAxis = (
     axisState: Partial<FXAxisState> | undefined,
     axis: "x" | "y" | "z",
@@ -369,6 +378,7 @@ export const getUpdatedState = (
       max,
       lag,
       depth,
+      snap: toBool(axisState.snap, false),
       // updated below
       initial: 0,
       previous: 0,
@@ -388,11 +398,12 @@ export const getUpdatedState = (
 
   const updateAxis = (axis: "x" | "y" | "z") => {
     const axisState = validateAxis(state[axis], axis); // validate input state
-    const axisUpdate = update[axis] ?? {};
 
+    const axisUpdate = update[axis] ?? {};
     for (const prop of ["min", "max", "target"] as const) {
       axisState[prop] = toNum(axisUpdate[prop], axisState[prop]);
     }
+    axisState.snap = toBool(axisUpdate.snap, axisState.snap);
 
     return validateAxis(axisState, axis); // validate final state
   };

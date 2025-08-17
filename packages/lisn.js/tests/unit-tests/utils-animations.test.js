@@ -1,108 +1,49 @@
-const { describe, jest, test, expect } = require("@jest/globals");
+const { jest, test, expect } = require("@jest/globals");
 
-const utils = window.LISN.utils;
+const { onEveryAnimationFrame, animationFrameGenerator, sum } =
+  window.LISN.utils;
 
 test("onEveryAnimationFrame", async () => {
-  const callback = jest.fn(() => callback.mock.calls.length < 4);
-  utils.onEveryAnimationFrame(callback);
+  let nCalls = 0;
+  const maxCalls = 5;
+  const callback = jest.fn(() => ++nCalls < maxCalls);
+  onEveryAnimationFrame(callback);
   expect(callback).toHaveBeenCalledTimes(0);
 
   await window.waitFor(500);
-  expect(callback).toHaveBeenCalledTimes(4);
-
-  // 1st time
-  expect(callback.mock.calls[0][0].total).toBe(0);
-  expect(callback.mock.calls[0][0].sinceLast).toBe(0);
-
-  // 2nd time
-  expect(callback.mock.calls[1][0].total).toBeGreaterThan(0);
-  expect(callback.mock.calls[1][0].sinceLast).toBeGreaterThan(0);
-
-  // 3rd time
-  expect(callback.mock.calls[2][0].total).toBeGreaterThan(
-    callback.mock.calls[1][0].total,
-  );
-  expect(callback.mock.calls[2][0].sinceLast).toBeGreaterThan(0);
-
-  // 4th time
-  expect(callback.mock.calls[3][0].total).toBeGreaterThan(
-    callback.mock.calls[2][0].total,
-  );
-  expect(callback.mock.calls[3][0].sinceLast).toBeGreaterThan(0);
+  expect(callback).toHaveBeenCalledTimes(maxCalls);
+  for (let c = 0; c++; c < maxCalls) {
+    if (c === 0) {
+      expect(callback.mock.calls[c][0].total).toBe(0);
+      expect(callback.mock.calls[c][0].sinceLast).toBe(0);
+    } else {
+      expect(callback.mock.calls[c][0].sinceLast).toBeGreaterThan(0);
+      expect(callback.mock.calls[c][0].sinceLast).toBeLessThan(20);
+      expect(callback.mock.calls[c][0].total).toBe(
+        sum(...callback.mock.calls.slice(0, c + 1).map((a) => a[0].sinceLast)),
+      );
+    }
+  }
 });
 
-describe("criticallyDampedAnimationGenerator", () => {
-  test("for loop", async () => {
-    const lTarget = 200;
-    const lag = 100;
-    const dt = 10;
-    let l = 100,
-      t = 0,
-      dlFr = 0,
-      i = 0;
+test("animationFrameGenerator", async () => {
+  let c = 0;
+  const times = [];
+  for await (const { total, sinceLast } of animationFrameGenerator()) {
+    times.push({ total, sinceLast });
 
-    const iterator = utils.criticallyDampedAnimationGenerator({
-      l,
-      lTarget,
-      lag,
-      precision: 1,
-    });
-
-    for await ({ l, t, dlFr } of iterator) {
-      i++;
-
-      if (i == Math.round(lag / dt) - 1) {
-        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(5);
-      }
-
-      if (l === lTarget) {
-        expect(dlFr).toBe(1);
-      }
+    if (c === 0) {
+      expect(total).toBe(0);
+      expect(sinceLast).toBe(0);
+    } else {
+      expect(sinceLast).toBeGreaterThan(0);
+      expect(sinceLast).toBeLessThan(20);
+      expect(total).toBe(sum(...times.map((a) => a.sinceLast)));
     }
 
-    expect(i).toBeLessThan((lag * 2) / dt);
-    expect(t).toBeLessThan(lag * 2);
-  });
-
-  test("with updating target", async () => {
-    const lTarget = 200;
-    const lag = 100;
-    const dt = 10;
-    let l = 100,
-      t = 0,
-      dlFr = 0,
-      i = 0;
-
-    const iterator = utils.criticallyDampedAnimationGenerator({
-      l,
-      lTarget: lTarget / 2,
-      lag,
-      precision: 1,
-    });
-
-    let done = false;
-    while (
-      ({
-        value: { l, t, dlFr },
-        done,
-      } = await iterator.next(i > 1 ? lTarget : undefined))
-    ) {
-      i++;
-
-      if (i == Math.round(lag / dt) - 1) {
-        expect(Math.round(Math.abs(l - lTarget))).toBeLessThan(5);
-      }
-
-      if (l === lTarget) {
-        expect(dlFr).toBe(1);
-      }
-
-      if (done) {
-        break;
-      }
+    c++;
+    if (c > 5) {
+      break;
     }
-
-    expect(i).toBeLessThan((lag * 2) / dt);
-    expect(t).toBeLessThan(lag * 2);
-  });
+  }
 });

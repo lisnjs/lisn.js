@@ -32,5 +32,6 @@ export * from "@lisn/utils/scroll";
 export * from "@lisn/utils/size";
 export * from "@lisn/utils/tasks";
 export * from "@lisn/utils/text";
+export * from "@lisn/utils/tween";
 export * from "@lisn/utils/validation";
 export * from "@lisn/utils/views";

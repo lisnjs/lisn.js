@@ -6,7 +6,7 @@ import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { addClasses, removeClasses } from "@lisn/utils/css-alter";
-import { copyExistingKeys } from "@lisn/utils/misc";
+import { copyExistingKeysTo } from "@lisn/utils/misc";
 
 import { XMap, newXMapGetter, newXWeakMap } from "@lisn/modules/x-map";
 
@@ -58,7 +58,7 @@ export const addEventListenerTo = (
   // If the user passed an options object but the browser only supports a
   // boolen for 'useCapture', then handle this.
   const supports = getBrowserSupport();
-  if (MH.isNonPrimitive(options)) {
+  if (MH.isObject(options)) {
     if (!supports._optionsArg) {
       thirdArg = options.capture ?? false;
     }
@@ -241,7 +241,7 @@ const getEventOptionsStr = (
   if (options === false || options === true) {
     finalOptions.capture = options;
   } else if (MH.isObject(options)) {
-    copyExistingKeys(options, finalOptions);
+    copyExistingKeysTo(options, finalOptions);
   }
 
   return MH.stringify(finalOptions);

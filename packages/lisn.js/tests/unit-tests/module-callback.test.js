@@ -23,23 +23,29 @@ describe("sync callbacks", () => {
     await expect(cbk.invoke()).rejects.toBe("err");
   });
 
-  test("remove + onRemove", () => {
-    const rmFn = jest.fn();
+  test("remove + onRemove (multiple handlers)", () => {
+    const rmFnA = jest.fn();
+    const rmFnB = jest.fn();
     const cbk = new Callback(() => {});
-    cbk.onRemove(() => rmFn("a"));
-    cbk.onRemove(() => rmFn("a2"));
-    cbk.remove();
-    expect(rmFn).toHaveBeenCalledTimes(2);
-    expect(rmFn).toHaveBeenNthCalledWith(1, "a");
-    expect(rmFn).toHaveBeenNthCalledWith(2, "a2");
+    cbk.onRemove(rmFnA);
+    cbk.onRemove(rmFnA); // duplicate ignored
+    cbk.onRemove(rmFnB);
+
+    expect(cbk.remove()).toBe(Callback.REMOVE);
+    expect(rmFnA).toHaveBeenCalledTimes(1);
+    expect(rmFnB).toHaveBeenCalledTimes(1);
+    expect(rmFnA).toHaveBeenCalledWith(cbk);
+    expect(rmFnB).toHaveBeenCalledWith(cbk);
+
     cbk.remove(); // should be no-op
-    expect(rmFn).toHaveBeenCalledTimes(2);
+    expect(rmFnA).toHaveBeenCalledTimes(1); // no new calls
+    expect(rmFnB).toHaveBeenCalledTimes(1); // no new calls
   });
 
   test("return REMOVE + onRemove", async () => {
     const rmFn = jest.fn();
     const cbk = new Callback(() => Callback.REMOVE);
-    cbk.onRemove(() => rmFn("a"));
+    cbk.onRemove(rmFn);
 
     const p1 = cbk.invoke();
     const p2 = cbk.invoke();
@@ -48,7 +54,7 @@ describe("sync callbacks", () => {
     await expect(p2).rejects.toBe(Callback.REMOVE);
 
     expect(rmFn).toHaveBeenCalledTimes(1);
-    expect(rmFn).toHaveBeenCalledWith("a");
+    expect(rmFn).toHaveBeenCalledWith(cbk);
   });
 
   test("remove straight after scheduled", async () => {
@@ -112,81 +118,92 @@ describe("sync callbacks", () => {
     expect(fn).toHaveBeenCalledWith("d");
   });
 
-  test("remove wrapper + onRemove", () => {
+  test("remove wrapper", () => {
     const rmFn = jest.fn();
     const cbkInner = new Callback(() => {});
+    cbkInner.onRemove(rmFn);
+
     const cbkWrapper = Callback.wrap(cbkInner);
-    cbkWrapper.onRemove(() => rmFn("a"));
-    cbkWrapper.onRemove(() => rmFn("a2"));
+    cbkWrapper.onRemove(rmFn);
+
     cbkWrapper.remove(); // should only remove wrapper
 
-    expect(rmFn).toHaveBeenCalledTimes(2);
-    expect(rmFn).toHaveBeenNthCalledWith(1, "a");
-    expect(rmFn).toHaveBeenNthCalledWith(2, "a2");
+    expect(rmFn).toHaveBeenCalledTimes(1);
+    expect(rmFn).toHaveBeenCalledWith(cbkWrapper);
+
     expect(cbkInner.isRemoved()).toBe(false);
     expect(cbkWrapper.isRemoved()).toBe(true);
-
-    cbkWrapper.remove(); // should be no-op
-    cbkInner.remove(); // should remove inner, but not call wrapper's onRemove again
-    expect(rmFn).toHaveBeenCalledTimes(2);
-    expect(cbkInner.isRemoved()).toBe(true);
   });
 
-  test("remove wrapped + onRemove", () => {
+  test("remove wrapped", () => {
     const rmFn = jest.fn();
     const cbkInner = new Callback(() => {});
+    cbkInner.onRemove(rmFn);
+
     const cbkWrapper = Callback.wrap(cbkInner);
-    cbkWrapper.onRemove(() => rmFn("a"));
-    cbkWrapper.onRemove(() => rmFn("a2"));
-    cbkInner.remove(); // should remove both
+    cbkWrapper.onRemove(rmFn);
+
+    cbkInner.remove(); // should remove both wrapped and wrapper
 
     expect(rmFn).toHaveBeenCalledTimes(2);
-    expect(rmFn).toHaveBeenNthCalledWith(1, "a");
-    expect(rmFn).toHaveBeenNthCalledWith(2, "a2");
+    expect(rmFn).toHaveBeenCalledWith(cbkInner);
+    expect(rmFn).toHaveBeenCalledWith(cbkWrapper);
+
     expect(cbkInner.isRemoved()).toBe(true);
     expect(cbkWrapper.isRemoved()).toBe(true);
-
-    cbkWrapper.remove(); // should be no-op
-    cbkInner.remove(); // should be no-op
-    expect(rmFn).toHaveBeenCalledTimes(2);
   });
 
-  test("return REMOVE from wrapped + onRemove", async () => {
+  test("return REMOVE from wrapped + invoke wrapped", async () => {
     const rmFn = jest.fn();
     const cbkInner = new Callback(() => Callback.REMOVE);
+    cbkInner.onRemove(rmFn);
+
     const cbkWrapper = Callback.wrap(cbkInner);
-    cbkWrapper.onRemove(() => rmFn("a"));
-    cbkWrapper.onRemove(() => rmFn("a2"));
+    cbkWrapper.onRemove(rmFn);
+
+    await cbkInner.invoke(); // should remove both
+
+    expect(rmFn).toHaveBeenCalledTimes(2);
+    expect(rmFn).toHaveBeenCalledWith(cbkInner);
+    expect(rmFn).toHaveBeenCalledWith(cbkWrapper);
+
+    expect(cbkInner.isRemoved()).toBe(true);
+    expect(cbkWrapper.isRemoved()).toBe(true);
+  });
+
+  test("return REMOVE from wrapped + invoke wrapper", async () => {
+    const rmFn = jest.fn();
+    const cbkInner = new Callback(() => Callback.REMOVE);
+    cbkInner.onRemove(rmFn);
+
+    const cbkWrapper = Callback.wrap(cbkInner);
+    cbkWrapper.onRemove(rmFn);
+
     await cbkWrapper.invoke(); // should remove both
 
     expect(rmFn).toHaveBeenCalledTimes(2);
-    expect(rmFn).toHaveBeenNthCalledWith(1, "a");
-    expect(rmFn).toHaveBeenNthCalledWith(2, "a2");
+    expect(rmFn).toHaveBeenCalledWith(cbkInner);
+    expect(rmFn).toHaveBeenCalledWith(cbkWrapper);
+
     expect(cbkInner.isRemoved()).toBe(true);
     expect(cbkWrapper.isRemoved()).toBe(true);
-
-    cbkWrapper.remove(); // should be no-op
-    cbkInner.remove(); // should be no-op
-    expect(rmFn).toHaveBeenCalledTimes(2);
   });
 
-  test("remove wrapped invoke method + onRemove", () => {
-    const rmFn = jest.fn();
-    const cbkInner = new Callback(() => {});
-    const cbkWrapper = Callback.wrap(cbkInner.invoke);
-    cbkWrapper.onRemove(() => rmFn("a"));
-    cbkWrapper.onRemove(() => rmFn("a2"));
-    cbkInner.remove(); // should remove both
+  test("offRemove", () => {
+    const rmFnA = jest.fn();
+    const rmFnB = jest.fn();
+    const cbk = new Callback(() => {});
+    cbk.onRemove(rmFnA);
+    cbk.onRemove(rmFnA); // duplicate ignored
+    cbk.onRemove(rmFnB);
 
-    expect(rmFn).toHaveBeenCalledTimes(2);
-    expect(rmFn).toHaveBeenNthCalledWith(1, "a");
-    expect(rmFn).toHaveBeenNthCalledWith(2, "a2");
-    expect(cbkInner.isRemoved()).toBe(true);
-    expect(cbkWrapper.isRemoved()).toBe(true);
+    cbk.offRemove(rmFnA);
 
-    cbkWrapper.remove(); // should be no-op
-    cbkInner.remove(); // should be no-op
-    expect(rmFn).toHaveBeenCalledTimes(2);
+    cbk.remove();
+
+    expect(rmFnA).toHaveBeenCalledTimes(0);
+    expect(rmFnB).toHaveBeenCalledTimes(1);
+    expect(rmFnB).toHaveBeenCalledWith(cbk);
   });
 });
 

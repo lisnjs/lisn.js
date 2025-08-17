@@ -117,7 +117,9 @@ export class PointerWatcher {
       MH.remove(allCallbacks.get(target)?.get(handler));
 
       const callback = wrapCallback(handler);
-      callback.onRemove(() => MH.deleteKey(allCallbacks.get(target), handler));
+      callback.onRemove(() => {
+        MH.deleteKey(allCallbacks.get(target), handler);
+      });
 
       allCallbacks.sGet(target).set(handler, callback);
       return callback;
@@ -312,7 +314,9 @@ const setupClickListener = (
 
   addEventListenerTo(target, MC.S_CLICK, wrapper);
 
-  const remove = () => removeEventListenerFrom(target, MC.S_CLICK, wrapper);
+  const remove = () => {
+    removeEventListenerFrom(target, MC.S_CLICK, wrapper);
+  };
 
   startCallback.onRemove(remove);
   endCallback.onRemove(remove);

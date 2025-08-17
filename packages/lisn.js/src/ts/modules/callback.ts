@@ -127,11 +127,20 @@ export class Callback<Args extends readonly unknown[] = []> {
   readonly isRemoved: () => boolean;
 
   /**
-   * Registers the given function to be called when the callback is removed.
+   * Calls the given handler when the callback is removed.
    *
-   * You can call {@link onRemove} multiple times to register multiple hooks.
+   * The handler will be passed one argument: the current callback that's been
+   * removed.
+   *
+   * The handler is called after marking the callback as removed, such that
+   * calling {@link isRemoved} from the handler will return `true`.
    */
-  readonly onRemove: (fn: () => void) => void;
+  readonly onRemove: (handler: CallbackHandler<[Callback]>) => void;
+
+  /**
+   * Removes a previously added {@link onRemove} handler.
+   */
+  readonly offRemove: (handler: CallbackHandler<[Callback]>) => void;
 
   /**
    * Wraps the given handler or callback as a callback, optionally debounced by
@@ -167,7 +176,7 @@ export class Callback<Args extends readonly unknown[] = []> {
     let isRemoved = false;
     const id = MC.SYMBOL();
 
-    const onRemove = MH.newSet<() => void>();
+    const removeHandlers = MH.newSet<CallbackHandler<[Callback]>>();
 
     this.isRemoved = () => isRemoved;
 
@@ -176,18 +185,33 @@ export class Callback<Args extends readonly unknown[] = []> {
         debug: logger?.debug8("Removing");
         isRemoved = true;
 
-        for (const rmFn of onRemove) {
-          rmFn();
+        for (const handler of removeHandlers) {
+          if (MH.isInstanceOf(handler, Callback)) {
+            handler.invoke(this);
+          } else {
+            handler(this);
+          }
         }
 
-        onRemove.clear();
+        removeHandlers.clear();
         CallbackScheduler._clear(id);
       }
 
       return Callback.REMOVE;
     };
 
-    this.onRemove = (fn) => onRemove.add(fn);
+    this.onRemove = (handler) => {
+      removeHandlers.add(handler);
+      if (MH.isInstanceOf(handler, Callback)) {
+        handler.onRemove(() => {
+          MH.deleteKey(removeHandlers, handler);
+        });
+      }
+    };
+
+    this.offRemove = (handler) => {
+      MH.deleteKey(removeHandlers, handler);
+    };
 
     this.invoke = (...args) =>
       MH.newPromise((resolve, reject) => {
@@ -222,6 +246,10 @@ export class Callback<Args extends readonly unknown[] = []> {
 }
 
 /**
+ * Wraps the given handler as a new callback and adds it to the given set.
+ * Setups up an onRemove handler on the newly wrapped callback that removes it
+ * from the set when it (or the original callback that was wrapped) is removed.
+ *
  * @ignore
  * @internal
  */
@@ -231,16 +259,12 @@ export const addNewCallbackToSet = <Args extends readonly unknown[]>(
 ) => {
   const callback = wrapCallback(handler);
   set.add(callback);
-  callback.onRemove(() => MH.deleteKey(set, callback));
+  callback.onRemove(() => {
+    MH.deleteKey(set, callback);
+  });
   return callback;
 };
 
-/**
- * Will save the original handler as the key.
- *
- * @ignore
- * @internal
- */
 export function addNewCallbackToMap<
   Args extends readonly unknown[],
   Handler extends CallbackHandler<Args> | Callback<Args>,
@@ -284,6 +308,23 @@ export function addNewCallbackToMap<
   keyedByCallback: true,
 ): Callback<Args>;
 
+/**
+ * Like {@link addNewCallbackToSet} but works for a map.
+ *
+ * If `keyedByCallback` is true, the key will be newly wrapped callback and the
+ * value set will be the given data if any (or the original handler).
+ *
+ * Otherwise, if `keyedByCallback` is false (default) the key will be the
+ * original handler and:
+ * - if `data` is `null` or `undefined`, the value set will be the newly wrapped
+ *   callback.
+ * - if `data` is an array, the value set will be an array with the newly
+ *   wrapped callback prepended at the start
+ * - otherwise, the value set will be a tuple of `[callback, data]`
+ *
+ * @ignore
+ * @internal
+ */
 export function addNewCallbackToMap(
   handler: CallbackHandler<unknown[]> | Callback<unknown[]>,
   map: Map<CallbackHandler<unknown[]> | Callback<unknown[]>, unknown>,
@@ -291,12 +332,12 @@ export function addNewCallbackToMap(
   keyedByCallback?: boolean,
 ) {
   const callback = wrapCallback(handler);
-  let value: unknown = callback;
   let key = handler;
+  let value: unknown = callback;
 
   if (keyedByCallback) {
     key = callback;
-    value = data;
+    value = data ?? handler;
   } else if (MH.isArray(data)) {
     value = [callback, ...data];
   } else if (!MH.isNullish(data)) {
@@ -304,7 +345,9 @@ export function addNewCallbackToMap(
   }
 
   map.set(key, value);
-  callback.onRemove(() => MH.deleteKey(map, key));
+  callback.onRemove(() => {
+    MH.deleteKey(map, key);
+  });
   return callback;
 }
 

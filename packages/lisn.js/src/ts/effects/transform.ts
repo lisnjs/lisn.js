@@ -39,7 +39,7 @@ export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
  * `translate(...) * rotate(...) * translate(...)`.
  *
  * Perspective handlers apply at the start of all transforms and can be set only
- * once, i.e. subsequent calls to {@link setPerspective} always override previous
+ * once, i.e. subsequent calls to {@link perspective} always override previous
  * perspective handlers.
  *
  * {@link Transform} supports parallax depth as follows:
@@ -152,9 +152,7 @@ export class Transform implements EffectInterface<"transform"> {
    * {@link Effects/Effect.FXParams | parameters}, regardless of the
    * {@link Effects/FXComposer.FXComposer | composer}'s parallax depth.
    */
-  readonly setPerspective: (
-    handler: FXHandler<PerspectiveHandlerReturn>,
-  ) => this;
+  readonly perspective: (handler: FXHandler<PerspectiveHandlerReturn>) => this;
 
   /**
    * Adds a translation handler.
@@ -332,7 +330,7 @@ export class Transform implements EffectInterface<"transform"> {
     this.toMatrix = toMatrix;
     this.toFloat32Array = (negate) => toMatrix(negate).toFloat32Array();
 
-    this.setPerspective = (handler) => {
+    this.perspective = (handler) => {
       addOwnHandler([PERSPECTIVE, handler], (parameters, state, composer) => {
         const perspective = handler(parameters, state, composer);
         if (perspective !== undefined) {
@@ -652,7 +650,7 @@ const addAndSaveHandlerFor = <T extends HandlerTuple>(
   const [type, handler] = tuple;
   switch (type) {
     case PERSPECTIVE:
-      transform.setPerspective(handler);
+      transform.perspective(handler);
       break;
     case TRANSLATE:
       transform.translate(handler);

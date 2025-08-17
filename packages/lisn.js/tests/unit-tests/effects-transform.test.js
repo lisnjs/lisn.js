@@ -182,8 +182,8 @@ describe("apply", () => {
     const t = newTransform();
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: dB })); // adds to above one
-    t.setPerspective(() => p * 10);
-    t.setPerspective(() => p); // discards above one
+    t.perspective(() => p * 10);
+    t.perspective(() => p); // discards above one
 
     // not applied yet
     expect(t).toBeCloseToArray(IDENTITY);
@@ -221,8 +221,8 @@ describe("apply", () => {
     expect(t.isAbsolute()).toBe(true);
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: nCalls === 1 ? dB : dB * 4 })); // adds to above one
-    t.setPerspective(() => p * 10);
-    t.setPerspective(() => (nCalls === 1 ? p : p * 4)); // discards above
+    t.perspective(() => p * 10);
+    t.perspective(() => (nCalls === 1 ? p : p * 4)); // discards above
 
     // not applied yet
     expect(t).toBeCloseToArray(IDENTITY);
@@ -297,8 +297,8 @@ describe("apply", () => {
     const t = newTransform(init, pI);
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: dB })); // adds to above one
-    t.setPerspective(() => p * 10);
-    t.setPerspective(() => p); // discards above one
+    t.perspective(() => p * 10);
+    t.perspective(() => p); // discards above one
 
     // not applied yet
     expect(t).toBeCloseToArray(init);
@@ -345,8 +345,8 @@ describe("apply", () => {
     expect(t.isAbsolute()).toBe(true);
     t.translate(() => ({ x: dA }));
     t.translate(() => ({ x: nCalls === 1 ? dB : dB * 4 })); // adds to above one
-    t.setPerspective(() => p * 10);
-    t.setPerspective(() => (nCalls === 1 ? p : p * 4)); // discards above
+    t.perspective(() => p * 10);
+    t.perspective(() => (nCalls === 1 ? p : p * 4)); // discards above
 
     // not applied yet
     expect(t).toBeCloseToArray(init);
@@ -383,7 +383,7 @@ describe("apply", () => {
 
     const t = newTransform();
     t.translate(() => ({ x: dA }));
-    t.setPerspective(() => p * 10);
+    t.perspective(() => p * 10);
 
     // not applied yet
     expect(t).toBeCloseToArray(IDENTITY);
@@ -395,7 +395,7 @@ describe("apply", () => {
 
     // new handlers
     t.translate(() => ({ x: dB }));
-    t.setPerspective(() => p); // discards previous handler
+    t.perspective(() => p); // discards previous handler
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER); // increments by dA + dB; + perspective p
     expect(t).toBeCloseToArray(expectedFinal);
@@ -421,7 +421,7 @@ describe("apply", () => {
 
     const t = newAbsoluteTransform();
     t.translate(() => ({ x: dA }));
-    t.setPerspective(() => p * 10);
+    t.perspective(() => p * 10);
 
     // not applied yet
     expect(t).toBeCloseToArray(IDENTITY);
@@ -433,7 +433,7 @@ describe("apply", () => {
 
     // new handlers
     t.translate(() => ({ x: dB }));
-    t.setPerspective(() => p); // discards previous handler
+    t.perspective(() => p); // discards previous handler
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER); // overrides: dA + dB; perspective p
     // overrides state, starts from identity again
@@ -563,7 +563,7 @@ describe("export", () => {
     const t = newTransform();
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p);
+    t.perspective(() => p);
 
     const expectedO = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
 
@@ -600,7 +600,7 @@ describe("export", () => {
     const t = newAbsoluteTransform();
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p);
+    t.perspective(() => p);
 
     const exported = t.export();
     expect(exported).toBeCloseToArray(IDENTITY);
@@ -632,7 +632,7 @@ describe("export", () => {
     const t = newTransform(init, p);
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p * 2);
+    t.perspective(() => p * 2);
 
     const exported = t.export();
     expect(exported).toBeCloseToArray(init);
@@ -663,7 +663,7 @@ describe("export", () => {
     const t = newTransform(init); // no initial perspective
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p);
+    t.perspective(() => p);
 
     const exported = t.export();
     expect(exported).toBeCloseToArray(init);
@@ -694,7 +694,7 @@ describe("export", () => {
     const t = newAbsoluteTransform(init, p);
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p * 2);
+    t.perspective(() => p * 2);
 
     const exported = t.export();
     expect(exported).toBeCloseToArray(init);
@@ -726,7 +726,7 @@ describe("export", () => {
     const t = newTransform();
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p);
+    t.perspective(() => p);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
@@ -781,7 +781,7 @@ describe("export", () => {
       sy: sy * nCalls,
       sz: sz * nCalls,
     }));
-    t.setPerspective(() => p * nCalls);
+    t.perspective(() => p * nCalls);
 
     nCalls++;
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -870,7 +870,7 @@ describe("export", () => {
 
     const t = newTransform();
     t.translate(() => ({ x: dx, y: dy, z: dz }));
-    t.setPerspective(() => p);
+    t.perspective(() => p);
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     const expected = IDENTITY.translate(dx, dy, dz);
@@ -897,7 +897,7 @@ describe("toComposition: single (clone)", () => {
     const t = newTransform();
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p);
+    t.perspective(() => p);
 
     const expected = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
 
@@ -926,7 +926,7 @@ describe("toComposition: single (clone)", () => {
     const t = newAbsoluteTransform();
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p);
+    t.perspective(() => p);
 
     const expected = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
 
@@ -956,7 +956,7 @@ describe("toComposition: single (clone)", () => {
     const t = newTransform(init, p);
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p * 2); // adds to existing
+    t.perspective(() => p * 2); // adds to existing
 
     const expected = init.translate(dx, dy, dz).scale(sx, sy, sz);
 
@@ -986,7 +986,7 @@ describe("toComposition: single (clone)", () => {
     const t = newAbsoluteTransform(init, p);
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p * 2); // overrides existing
+    t.perspective(() => p * 2); // overrides existing
 
     const expected = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
 
@@ -1015,7 +1015,7 @@ describe("toComposition: single (clone)", () => {
     const t = newTransform();
     t.translate(() => ({ x: dx, y: dy, z: dz }));
     t.scale(() => ({ sx, sy, sz }));
-    t.setPerspective(() => p);
+    t.perspective(() => p);
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     const expected = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
@@ -1058,7 +1058,7 @@ describe("toComposition: single (clone)", () => {
     const composed = t.toComposition();
 
     t.scale(() => ({ sx, sy, sz })); // does not affect composed
-    composed.setPerspective(() => p); // does not affect original
+    composed.perspective(() => p); // does not affect original
 
     const expectedO = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
     const expectedC = IDENTITY.translate(dx, dy, dz);
@@ -1193,7 +1193,7 @@ describe("toComposition: multiple with perspective", () => {
 
   test("handler: first only", () => {
     const p = 100;
-    const tA = newTransform().setPerspective(() => p);
+    const tA = newTransform().perspective(() => p);
     const tB = newTransform();
 
     const composed = tA.toComposition(tB);
@@ -1209,7 +1209,7 @@ describe("toComposition: multiple with perspective", () => {
   test("init + handler", () => {
     const pA = 100,
       pB = 200;
-    const tA = newTransform().setPerspective(() => pA);
+    const tA = newTransform().perspective(() => pA);
     const tB = newTransform(undefined, pB);
 
     const composed = tA.toComposition(tB);
@@ -1278,9 +1278,9 @@ describe("toComposition: multiple with perspective", () => {
   test("handler: multiple", () => {
     const pA = 100,
       pC = 200;
-    const tA = newTransform().setPerspective(() => pA);
+    const tA = newTransform().perspective(() => pA);
     const tB = newTransform();
-    const tC = newTransform().setPerspective(() => pC);
+    const tC = newTransform().perspective(() => pC);
 
     const composed = tA.toComposition(tB, tC);
     expect(composed.toPerspective()).toBeUndefined();
@@ -1296,8 +1296,8 @@ describe("toComposition: multiple with perspective", () => {
     const pB = 100,
       pC = 200;
     const tA = newTransform();
-    const tB = newTransform().setPerspective(() => pB);
-    const tC = newTransform().setPerspective(() => pC);
+    const tB = newTransform().perspective(() => pB);
+    const tC = newTransform().perspective(() => pC);
     const tD = newTransform();
 
     const composed = tA.toComposition(tB, tC, tD);
@@ -1313,7 +1313,7 @@ describe("toComposition: multiple with perspective", () => {
   test("init + handler: last null", () => {
     const p = 100;
     const tA = newTransform(undefined, p);
-    const tB = newTransform(undefined).setPerspective(() => null);
+    const tB = newTransform(undefined).perspective(() => null);
 
     const composed = tA.toComposition(tB);
     expect(composed.toPerspective()).toBe(p);
@@ -1327,7 +1327,7 @@ describe("toComposition: multiple with perspective", () => {
       pB = 150,
       pC = 200;
     const tA = newTransform(undefined, pA);
-    const tB = newTransform().setPerspective(() => pB);
+    const tB = newTransform().perspective(() => pB);
     const tC = newTransform(undefined, pC);
 
     const composed = tA.toComposition(tB, tC);
@@ -1339,7 +1339,7 @@ describe("toComposition: multiple with perspective", () => {
 
   test("absolute", () => {
     const p = 100;
-    const tA = newTransform(undefined, p).setPerspective(() => p);
+    const tA = newTransform(undefined, p).perspective(() => p);
     const tB = newAbsoluteTransform(); // discards both init and handler
 
     const composed = tA.toComposition(tB);
@@ -1502,7 +1502,7 @@ describe("perspective", () => {
   test("apply", () => {
     const cbk = jest.fn(() => 2);
     const t = newTransform();
-    t.setPerspective(cbk);
+    t.perspective(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1518,7 +1518,7 @@ describe("perspective", () => {
     const init = newTestMatrix();
     const p = 200;
     const t = newTransform(init, p);
-    t.setPerspective(() => {});
+    t.perspective(() => {});
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(init);
@@ -1529,7 +1529,7 @@ describe("perspective", () => {
     const init = newTestMatrix();
     const p = 200;
     const t = newTransform(init, p);
-    t.setPerspective(() => NaN);
+    t.perspective(() => NaN);
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
       /Perspective must be finite/,
@@ -1542,7 +1542,7 @@ describe("perspective", () => {
     const init = newTestMatrix();
     const p = 200;
     const t = newTransform(init, p);
-    t.setPerspective(() => -Infinity);
+    t.perspective(() => -Infinity);
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
       /Perspective must be finite/,
@@ -1584,7 +1584,7 @@ describe("perspective", () => {
 
   test("handler => undefined", () => {
     const p = 200;
-    const t = newTransform(undefined, p).setPerspective(() => {});
+    const t = newTransform(undefined, p).perspective(() => {});
     expect(t.toPerspective()).toBe(p);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1593,7 +1593,7 @@ describe("perspective", () => {
 
   test("handler => null", () => {
     const p = 200;
-    const t = newTransform(undefined, p).setPerspective(() => null);
+    const t = newTransform(undefined, p).perspective(() => null);
     expect(t.toPerspective()).toBe(p);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1601,7 +1601,7 @@ describe("perspective", () => {
   });
 
   test("handler => number", () => {
-    const t = newTransform().setPerspective(() => 200);
+    const t = newTransform().perspective(() => 200);
     expect(t.toPerspective()).toBeUndefined();
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1609,7 +1609,7 @@ describe("perspective", () => {
   });
 
   test("init null + handler => null", () => {
-    const t = newTransform(undefined, null).setPerspective(() => null);
+    const t = newTransform(undefined, null).perspective(() => null);
     expect(t.toPerspective()).toBeNull();
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1621,7 +1621,7 @@ describe("perspective", () => {
 
   test("init number + handler => null", () => {
     const p = 200;
-    const t = newTransform(undefined, p).setPerspective(() => null);
+    const t = newTransform(undefined, p).perspective(() => null);
     expect(t.toPerspective()).toBe(p);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1633,7 +1633,7 @@ describe("perspective", () => {
 
   test("init null + handler => number", () => {
     const p = 200;
-    const t = newTransform(undefined, null).setPerspective(() => p);
+    const t = newTransform(undefined, null).perspective(() => p);
     expect(t.toPerspective()).toBeNull();
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1646,7 +1646,7 @@ describe("perspective", () => {
   test("init number + handler => number", () => {
     const pI = 100,
       p = 200;
-    const t = newTransform(undefined, pI).setPerspective(() => p);
+    const t = newTransform(undefined, pI).perspective(() => p);
     expect(t.toPerspective()).toBe(pI);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1657,7 +1657,7 @@ describe("perspective", () => {
   });
 
   test("absolute: init null + handler => null", () => {
-    const t = newAbsoluteTransform(undefined, null).setPerspective(() => null);
+    const t = newAbsoluteTransform(undefined, null).perspective(() => null);
     expect(t.toPerspective()).toBeNull();
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1669,7 +1669,7 @@ describe("perspective", () => {
 
   test("absolute: init number + handler => null", () => {
     const p = 200;
-    const t = newAbsoluteTransform(undefined, p).setPerspective(() => null);
+    const t = newAbsoluteTransform(undefined, p).perspective(() => null);
     expect(t.toPerspective()).toBe(p);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1681,7 +1681,7 @@ describe("perspective", () => {
 
   test("absolute: init null + handler => number", () => {
     const p = 200;
-    const t = newAbsoluteTransform(undefined, null).setPerspective(() => p);
+    const t = newAbsoluteTransform(undefined, null).perspective(() => p);
     expect(t.toPerspective()).toBeNull();
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1694,7 +1694,7 @@ describe("perspective", () => {
   test("absolute: init number + handler => number", () => {
     const pI = 100,
       p = 200;
-    const t = newAbsoluteTransform(undefined, pI).setPerspective(() => p);
+    const t = newAbsoluteTransform(undefined, pI).perspective(() => p);
     expect(t.toPerspective()).toBe(pI);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
@@ -1708,8 +1708,8 @@ describe("perspective", () => {
     const pA = 100,
       pB = 200;
     const t = newTransform();
-    t.setPerspective(() => pA);
-    t.setPerspective(() => pB);
+    t.perspective(() => pA);
+    t.perspective(() => pB);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pB);
@@ -1722,8 +1722,8 @@ describe("perspective", () => {
     const pA = 100,
       pB = 200;
     const t = newAbsoluteTransform();
-    t.setPerspective(() => pA);
-    t.setPerspective(() => pB);
+    t.perspective(() => pA);
+    t.perspective(() => pB);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pB);
@@ -1736,12 +1736,12 @@ describe("perspective", () => {
     const pA = 100,
       pB = 200;
     const t = newTransform();
-    t.setPerspective(() => pA);
+    t.perspective(() => pA);
 
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pA);
 
-    t.setPerspective(() => pB);
+    t.perspective(() => pB);
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t.toPerspective()).toBe(pA + pB);
 

@@ -22,6 +22,17 @@ export type CallbackReturnType =
   | void;
 
 /**
+ * The handler is invoked with one argument:
+ *
+ * - The {@link Callback} instance.
+ */
+export type OnRemoveHandlerArgs = [Callback];
+export type OnRemoveCallback = Callback<OnRemoveHandlerArgs>;
+export type OnRemoveHandler =
+  | OnRemoveCallback
+  | CallbackHandler<OnRemoveHandlerArgs>;
+
+/**
  * For minification optimization. Exposed through Callback.wrap.
  *
  * @ignore
@@ -135,12 +146,12 @@ export class Callback<Args extends readonly unknown[] = []> {
    * The handler is called after marking the callback as removed, such that
    * calling {@link isRemoved} from the handler will return `true`.
    */
-  readonly onRemove: (handler: CallbackHandler<[Callback]>) => void;
+  readonly onRemove: (handler: OnRemoveHandler) => void;
 
   /**
    * Removes a previously added {@link onRemove} handler.
    */
-  readonly offRemove: (handler: CallbackHandler<[Callback]>) => void;
+  readonly offRemove: (handler: OnRemoveHandler) => void;
 
   /**
    * Wraps the given handler or callback as a callback, optionally debounced by
@@ -176,7 +187,7 @@ export class Callback<Args extends readonly unknown[] = []> {
     let isRemoved = false;
     const id = MC.SYMBOL();
 
-    const removeHandlers = MH.newSet<CallbackHandler<[Callback]>>();
+    const removeHandlers = MH.newSet<OnRemoveHandler>();
 
     this.isRemoved = () => isRemoved;
 
@@ -188,7 +199,8 @@ export class Callback<Args extends readonly unknown[] = []> {
         for (const handler of removeHandlers) {
           if (MH.isInstanceOf(handler, Callback)) {
             handler.invoke(this);
-          } else {
+          } else if (MH.isFunction(handler)) {
+            // TypeScript can't figure it out that it's a function otherwise
             handler(this);
           }
         }

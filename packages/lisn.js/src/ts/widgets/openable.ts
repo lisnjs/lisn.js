@@ -162,6 +162,8 @@ export abstract class Openable extends Widget {
 
   /**
    * Removes a previously added {@link onOpen} handler.
+   *
+   * @since v1.3.0
    */
   readonly offOpen: (handler: WidgetHandler) => void;
 
@@ -174,6 +176,8 @@ export abstract class Openable extends Widget {
 
   /**
    * Removes a previously added {@link onClose} handler.
+   *
+   * @since v1.3.0
    */
   readonly offClose: (handler: WidgetHandler) => void;
 

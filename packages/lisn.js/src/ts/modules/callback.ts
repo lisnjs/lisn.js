@@ -150,6 +150,8 @@ export class Callback<Args extends readonly unknown[] = []> {
 
   /**
    * Removes a previously added {@link onRemove} handler.
+   *
+   * @since v1.3.0
    */
   readonly offRemove: (handler: OnRemoveHandler) => void;
 

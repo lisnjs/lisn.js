@@ -316,6 +316,8 @@ export class Pager extends Widget {
 
   /**
    * Removes a previously added {@link onTransition} handler.
+   *
+   * @since v1.3.0
    */
   readonly offTransition: (handler: WidgetHandler) => void;
 

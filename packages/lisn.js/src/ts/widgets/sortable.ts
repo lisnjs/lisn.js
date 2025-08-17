@@ -150,6 +150,8 @@ export class Sortable extends Widget {
 
   /**
    * Removes a previously added {@link onMove} handler.
+   *
+   * @since v1.3.0
    */
   readonly offMove: (handler: WidgetHandler) => void;
 

@@ -97,6 +97,8 @@ export abstract class Widget {
 
   /**
    * Removes a previously added {@link onDisable} handler.
+   *
+   * @since v1.3.0
    */
   readonly offDisable: (handler: WidgetHandler) => void;
 
@@ -111,6 +113,8 @@ export abstract class Widget {
 
   /**
    * Removes a previously added {@link onEnable} handler.
+   *
+   * @since v1.3.0
    */
   readonly offEnable: (handler: WidgetHandler) => void;
 
@@ -137,6 +141,8 @@ export abstract class Widget {
 
   /**
    * Removes a previously added {@link onDestroy} handler.
+   *
+   * @since v1.3.0
    */
   readonly offDestroy: (handler: WidgetHandler) => void;
 

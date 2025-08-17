@@ -296,7 +296,7 @@ export abstract class Openable extends Widget {
     this[MC.S_TOGGLE] = () => (isOpen ? close() : open());
 
     this.onOpen = (handler) => {
-      addNewCallbackToMap(handler, openCallbacks);
+      addNewCallbackToMap(openCallbacks, handler);
     };
 
     this.offOpen = (handler) => {
@@ -304,7 +304,7 @@ export abstract class Openable extends Widget {
     };
 
     this.onClose = (handler) => {
-      addNewCallbackToMap(handler, closeCallbacks);
+      addNewCallbackToMap(closeCallbacks, handler);
     };
 
     this.offClose = (handler) => {

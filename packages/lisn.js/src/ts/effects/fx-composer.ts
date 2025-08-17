@@ -300,7 +300,7 @@ export class FXComposer {
     // ----------
 
     const onReset = (handler: FXComposerHandler) => {
-      addNewCallbackToMap(handler, resetCallbacks);
+      addNewCallbackToMap(resetCallbacks, handler);
       return this;
     };
 
@@ -312,7 +312,7 @@ export class FXComposer {
     // ----------
 
     const onTrigger = (handler: FXComposerHandler) => {
-      addNewCallbackToMap(handler, triggerCallbacks);
+      addNewCallbackToMap(triggerCallbacks, handler);
       return this;
     };
 
@@ -324,7 +324,7 @@ export class FXComposer {
     // ----------
 
     const onTween = (handler: FXComposerHandler) => {
-      addNewCallbackToMap(handler, tweenCallbacks);
+      addNewCallbackToMap(tweenCallbacks, handler);
       return this;
     };
 

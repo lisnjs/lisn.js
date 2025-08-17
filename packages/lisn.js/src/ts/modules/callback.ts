@@ -280,8 +280,8 @@ export function addNewCallbackToMap<
   Handler extends CallbackHandler<Args> | Callback<Args>,
   Data extends unknown[],
 >(
-  handler: Handler,
   map: Map<Handler, [Callback<Args>, ...Data]>,
+  handler: Handler,
   data: Data,
 ): Callback<Args>;
 
@@ -290,18 +290,21 @@ export function addNewCallbackToMap<
   Handler extends CallbackHandler<Args> | Callback<Args>,
   Data,
 >(
-  handler: Handler,
   map: Map<Handler, [Callback<Args>, Data]>,
+  handler: Handler,
   data: Data,
 ): Callback<Args>;
 
 export function addNewCallbackToMap<
   Args extends readonly unknown[],
   Handler extends CallbackHandler<Args> | Callback<Args>,
->(handler: Handler, map: Map<Handler, Callback<Args>>): Callback<Args>;
+>(map: Map<Handler, Callback<Args>>, handler: Handler): Callback<Args>;
 
 /**
  * **Wraps** the given handler as a new callback and adds it to the given map.
+ *
+ * It also sets up an `onRemove` handler on the wrapper so that whenever it, or
+ * the original handler, are removed, the entry is deleted from the map.
  *
  * The key in the map will be the original handler and the value:
  * - if `data` is `null` or `undefined`, the value set will be the newly wrapped
@@ -314,8 +317,8 @@ export function addNewCallbackToMap<
  * @internal
  */
 export function addNewCallbackToMap(
-  handler: CallbackHandler<unknown[]> | Callback<unknown[]>,
   map: Map<CallbackHandler<unknown[]> | Callback<unknown[]>, unknown>,
+  handler: CallbackHandler<unknown[]> | Callback<unknown[]>,
   data?: unknown,
 ) {
   const callback = wrapCallback(handler);

@@ -1349,7 +1349,7 @@ const getMethods = (
     isPageDisabled(pageNum) ? enablePage(pageNum) : disablePage(pageNum);
 
   const onTransition = (handler: WidgetHandler) => {
-    addNewCallbackToMap(handler, callbacks);
+    addNewCallbackToMap(callbacks, handler);
   };
 
   const offTransition = (handler: WidgetHandler) => {

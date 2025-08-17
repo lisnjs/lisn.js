@@ -212,7 +212,7 @@ export abstract class Widget {
     };
 
     this.onDisable = (handler) => {
-      addNewCallbackToMap(handler, disableCallbacks);
+      addNewCallbackToMap(disableCallbacks, handler);
     };
 
     this.offDisable = (handler) => {
@@ -220,7 +220,7 @@ export abstract class Widget {
     };
 
     this.onEnable = (handler) => {
-      addNewCallbackToMap(handler, enableCallbacks);
+      addNewCallbackToMap(enableCallbacks, handler);
     };
 
     this.offEnable = (handler) => {
@@ -256,7 +256,7 @@ export abstract class Widget {
     };
 
     this.onDestroy = (handler) => {
-      addNewCallbackToMap(handler, destroyCallbacks);
+      addNewCallbackToMap(destroyCallbacks, handler);
     };
 
     this.offDestroy = (handler) => {

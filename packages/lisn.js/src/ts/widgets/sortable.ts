@@ -530,7 +530,7 @@ const getMethods = (
       : disableItem(itemNum, currentOrder);
 
   const onMove = (handler: WidgetHandler) => {
-    addNewCallbackToMap(handler, callbacks);
+    addNewCallbackToMap(callbacks, handler);
   };
 
   const offMove = (handler: WidgetHandler) => {

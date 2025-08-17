@@ -275,32 +275,6 @@ export const invokeHandlers = async <
   }
 };
 
-/**
- * Adds the given handler to the given set.
- *
- * If the handler is a callback, it setups up an onRemove handler on it
- * that removes it from the set when the callback is removed.
- *
- * It does not wrap it if it's not a callback.
- *
- * @ignore
- * @internal
- */
-export const saveCallbackToSet = <
-  T extends CallbackHandler<Args> | Callback<Args>,
-  Args extends readonly unknown[],
->(
-  handler: T,
-  set: Set<T>,
-) => {
-  set.add(handler);
-  if (MH.isInstanceOf(handler, Callback)) {
-    handler.onRemove(() => {
-      MH.deleteKey(set, handler);
-    });
-  }
-};
-
 export function addNewCallbackToMap<
   Args extends readonly unknown[],
   Handler extends CallbackHandler<Args> | Callback<Args>,
@@ -309,7 +283,6 @@ export function addNewCallbackToMap<
   handler: Handler,
   map: Map<Handler, [Callback<Args>, ...Data]>,
   data: Data,
-  keyedByCallback?: false,
 ): Callback<Args>;
 
 export function addNewCallbackToMap<
@@ -320,38 +293,17 @@ export function addNewCallbackToMap<
   handler: Handler,
   map: Map<Handler, [Callback<Args>, Data]>,
   data: Data,
-  keyedByCallback?: false,
 ): Callback<Args>;
 
 export function addNewCallbackToMap<
   Args extends readonly unknown[],
   Handler extends CallbackHandler<Args> | Callback<Args>,
->(
-  handler: Handler,
-  map: Map<Handler, Callback<Args>>,
-  data?: null,
-  keyedByCallback?: false,
-): Callback<Args>;
-
-export function addNewCallbackToMap<
-  Args extends readonly unknown[],
-  Handler extends CallbackHandler<Args> | Callback<Args>,
-  Data,
->(
-  handler: Handler,
-  map: Map<Callback<Args>, Data>,
-  data: Data,
-  keyedByCallback: true,
-): Callback<Args>;
+>(handler: Handler, map: Map<Handler, Callback<Args>>): Callback<Args>;
 
 /**
  * **Wraps** the given handler as a new callback and adds it to the given map.
  *
- * If `keyedByCallback` is true, the key will be newly wrapped callback and the
- * value set will be the given data if any (or the original handler).
- *
- * Otherwise, if `keyedByCallback` is false (default) the key will be the
- * original handler and:
+ * The key in the map will be the original handler and the value:
  * - if `data` is `null` or `undefined`, the value set will be the newly wrapped
  *   callback.
  * - if `data` is an array, the value set will be an array with the newly
@@ -365,25 +317,21 @@ export function addNewCallbackToMap(
   handler: CallbackHandler<unknown[]> | Callback<unknown[]>,
   map: Map<CallbackHandler<unknown[]> | Callback<unknown[]>, unknown>,
   data?: unknown,
-  keyedByCallback?: boolean,
 ) {
   const callback = wrapCallback(handler);
-  let key = handler;
   let value: unknown = callback;
 
-  if (keyedByCallback) {
-    key = callback;
-    value = data ?? handler;
-  } else if (MH.isArray(data)) {
+  if (MH.isArray(data)) {
     value = [callback, ...data];
   } else if (!MH.isNullish(data)) {
     value = [callback, data];
   }
 
-  map.set(key, value);
+  map.set(handler, value);
   callback.onRemove(() => {
-    MH.deleteKey(map, key);
+    MH.deleteKey(map, handler);
   });
+
   return callback;
 }
 

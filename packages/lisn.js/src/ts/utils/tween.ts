@@ -130,7 +130,7 @@ export const springTweener = (
   // Since the position only approaches asymptotically the target it never truly
   // reaches it exactly we need an approximation to calculate w0. N determines
   // how far away from the target position we are after `lag` milliseconds.
-  const N = 9.5; // XXX should this depend on target - initial diff?
+  const N = 8.5;
   const w0 = N / lag;
 
   deltaTime /= 1000; // to seconds
@@ -188,7 +188,7 @@ export type Tween3DGeneratorInput<Axes extends "x" | "y" | "z"> = {
      * If set to true, it tells the tween generator not to tween, but instead jump
      * straight to the target values.
      */
-    snap: boolean;
+    snap?: boolean;
   };
 };
 
@@ -210,7 +210,7 @@ export type Tween3DGeneratorOutput<Axes extends "x" | "y" | "z"> = {
     previous: number;
 
     /**
-     * The current value to interpolate towards the target.
+     * The current value the tweener interpolated.
      */
     current: number;
 
@@ -225,8 +225,8 @@ export type Tween3DGeneratorOutput<Axes extends "x" | "y" | "z"> = {
     lag: number;
 
     /**
-     * If set to true, it tells the tween generator not to tween, but instead jump
-     * straight to the target values.
+     * If set to true, it means the tweener was told to snap straight to the
+     * target value.
      */
     snap: boolean;
   };

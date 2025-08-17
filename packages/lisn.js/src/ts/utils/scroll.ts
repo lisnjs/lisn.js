@@ -712,13 +712,11 @@ const initiateScroll = async (
         current: position._start.left,
         target: position._end.left,
         lag: duration,
-        snap: false,
       },
       y: {
         current: position._start.top,
         target: position._end.top,
         lag: duration,
-        snap: false,
       },
     });
 

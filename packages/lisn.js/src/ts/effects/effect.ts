@@ -48,8 +48,10 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
 
   /**
    * Returns a **new live** effect that has all the handlers from this one and
-   * the given effects, in order. The resulting state/value is the combined
-   * product of its current state and that of all the other given ones.
+   * from the given effects, added in order. The resulting state/value is the
+   * combined product of its current state and that of all the other given ones.
+   *
+   * Calling this with no arguments essentially clones the effect.
    *
    * **NOTE:** If any of the given effects is
    * {@link Effect.isAbsolute | absolute}, all previous ones are essentially

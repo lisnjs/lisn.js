@@ -39,22 +39,29 @@ import {
 
 import { FXComposition } from "@lisn/effects/fx-composition";
 import { FXTrigger } from "@lisn/effects/triggers/fx-trigger";
+import { FXPin } from "@lisn/effects/fx-pin";
 
 /**
- * {@link FXComposer} XXX TODO
+ * {@link FXComposer} links together multiple effects or other composers. It
+ * works with {@link FXTrigger}s and each time it is triggered, it updates its
+ * effects.
  */
 export class FXComposer {
   /**
-   * Adds more effects or other composers to the current chain of composition.
+   * Adds an effect or another composer to the current chain of composition.
    *
-   * Effects added here are managed by **this** composer and will be
-   * {@link Effect.update | updated} with the composer's state at each frame
-   * while it is tweening.
+   * Adding the same link multiple times will result in it being applied
+   * multiple times when the composer updates its
+   * {@link getComposition | composition}.
    *
-   * Other composers added here will simply be queried for their current
-   * {@link getComposition | composition} each time this composer tweens and
-   * the returned effects will be used as is in the chain of this composer's
-   * composition.
+   * If the given link is an {@link Effect} it will be managed by **this**
+   * composer and will be {@link Effect.update | updated} with the composer's
+   * state at each frame while it is tweening.
+   *
+   * Otherwise, if the link is another {@link FXComposer}, it will simply be
+   * queried for its current {@link getComposition | composition} each time this
+   * composer tweens and the returned composed effects will be used as is in the
+   * state of this composer's composition.
    *
    * This allows you to animate a single property of an element (e.g. transform)
    * by multiple composers, each one with different triggers, lag or depth.
@@ -62,37 +69,40 @@ export class FXComposer {
    * However, you should call {@link startAnimate} with the element only on this
    * composer, to which you add all other relevant composers.
    *
-   * **NOTE:** If any of the effects added here or returned by related composers
-   * are {@link Effect.isAbsolute | absolute} they essentially discard all
-   * previous effects of their respective {@link Effect.type | type}.
+   * **NOTE:** Effects added here are {@link Effect.toComposition | cloned}
+   * beforehand, so you can add the same effect instance to multiple composers,
+   * or multiple times to the same composer.
+   *
+   * **IMPORTANT:** If you add an {@link Effect.isAbsolute | absolute} effect,
+   * or a composer that has absolute effects it essentially discards all
+   * previous effects of the respective {@link Effect.type | type}.
+   *
+   * @param pin If given, then when the pin is active, the given effect won't be
+   *            updated, but simply added to the composition with its current
+   *            state. Only relevant when adding an {@link Effect}, otherwise it
+   *            is ignored.
    */
-  readonly add: (...compositionLinks: Array<Effect | FXComposer>) => this;
-
-  /**
-   * Removes previously {@link add | added} effects or composers from the chain
-   * of composition.
-   */
-  readonly remove: (...compositionLinks: Array<Effect | FXComposer>) => this;
+  readonly add: (link: Effect | FXComposer, pin?: FXPin) => this;
 
   /**
    * Removes all previously added effects.
    */
-  readonly reset: () => this;
+  readonly clear: () => this;
 
   /**
-   * Calls the given handler when the composer is reset.
+   * Calls the given handler when the composer is cleared.
    *
-   * If there are no effects in the composer when {@link reset} is called, the
+   * If there are no effects in the composer when {@link clear} is called, the
    * handlers are not called.
    *
    * The handler is called after clearing the effects.
    */
-  readonly onReset: (handler: FXComposerHandler) => this;
+  readonly onClear: (handler: FXComposerHandler) => this;
 
   /**
-   * Removes a previously added {@link onReset} handler.
+   * Removes a previously added {@link onClear} handler.
    */
-  readonly offReset: (handler: FXComposerHandler) => this;
+  readonly offClear: (handler: FXComposerHandler) => this;
 
   /**
    * Calls the given handler whenever the composer is triggered.
@@ -113,8 +123,8 @@ export class FXComposer {
    * {@link FXAxisState.target | target} parameters.
    *
    * The handler is called during an animation frame **after** all effects have
-   * been applied, such that calling {@link toCss} or {@link getComposition}
-   * will reflect the latest effect states.
+   * been updated and applied, such that calling {@link toCss} or
+   * {@link getComposition} will reflect the latest effect states.
    */
   readonly onTween: (handler: FXComposerHandler) => this;
 
@@ -179,7 +189,8 @@ export class FXComposer {
   readonly toCss: (negate?: FXComposer) => Record<string, string>;
 
   /**
-   * Returns the current composition, i.e. the combined effects for each type.
+   * Returns the current state of the composition, i.e. the combined state of
+   * all effects for each effect type.
    */
   readonly getComposition: () => FXComposition;
 
@@ -254,10 +265,11 @@ export class FXComposer {
       depthZ: 1,
     };
 
-    const compositionChain = MH.newSet<Effect | FXComposer>();
+    const compositionChain: Array<[Effect | FXComposer, FXPin | undefined]> =
+      [];
     const currentComposition = new FXComposition();
 
-    const resetCallbacks = MH.newMap<FXComposerHandler, FXComposerCallback>();
+    const clearCallbacks = MH.newMap<FXComposerHandler, FXComposerCallback>();
     const triggerCallbacks = MH.newMap<FXComposerHandler, FXComposerCallback>();
     const tweenCallbacks = MH.newMap<FXComposerHandler, FXComposerCallback>();
 
@@ -270,17 +282,11 @@ export class FXComposer {
 
     // ----------
 
-    const add = (...links: Array<Effect | FXComposer>) => {
-      for (const link of links) {
-        compositionChain.add(link);
-      }
-
-      return this;
-    };
-
-    const remove = (...links: Array<Effect | FXComposer>) => {
-      for (const link of links) {
-        MH.deleteKey(compositionChain, link);
+    const add = (link: Effect | FXComposer, pin?: FXPin) => {
+      if (MH.isInstanceOf(link, FXComposer)) {
+        compositionChain.push([link, undefined]);
+      } else {
+        compositionChain.push([link.toComposition(), pin]);
       }
 
       return this;
@@ -288,10 +294,10 @@ export class FXComposer {
 
     // ----------
 
-    const reset = () => {
-      if (MH.sizeOf(compositionChain) > 0) {
-        compositionChain.clear();
-        invokeCallbacks(resetCallbacks);
+    const clear = () => {
+      if (MH.lengthOf(compositionChain) > 0) {
+        compositionChain.length = 0; // clear
+        invokeCallbacks(clearCallbacks);
       }
 
       return this;
@@ -299,13 +305,13 @@ export class FXComposer {
 
     // ----------
 
-    const onReset = (handler: FXComposerHandler) => {
-      addNewCallbackToMap(resetCallbacks, handler);
+    const onClear = (handler: FXComposerHandler) => {
+      addNewCallbackToMap(clearCallbacks, handler);
       return this;
     };
 
-    const offReset = (handler: FXComposerHandler) => {
-      MH.remove(resetCallbacks.get(handler));
+    const offClear = (handler: FXComposerHandler) => {
+      MH.remove(clearCallbacks.get(handler));
       return this;
     };
 
@@ -536,13 +542,17 @@ export class FXComposer {
     const recompose = () => {
       currentComposition.clear();
 
-      for (const link of compositionChain) {
+      for (const [link, pin] of compositionChain) {
         if (MH.isInstanceOf(link, FXComposer)) {
           for (const effect of link.getComposition().values()) {
             currentComposition.add(effect);
           }
         } else {
-          currentComposition.add(link.update(deepCopy(currentFXState), this));
+          currentComposition.add(
+            pin?.isActive()
+              ? link
+              : link.update(deepCopy(currentFXState), this),
+          );
         }
       }
 
@@ -584,11 +594,10 @@ export class FXComposer {
     // --------------------
 
     this.add = add;
-    this.remove = remove;
 
-    this.reset = reset;
-    this.onReset = onReset;
-    this.offReset = offReset;
+    this.clear = clear;
+    this.onClear = onClear;
+    this.offClear = offClear;
 
     this.onTrigger = onTrigger;
     this.offTrigger = offTrigger;

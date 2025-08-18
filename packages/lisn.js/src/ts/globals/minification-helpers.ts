@@ -11,8 +11,8 @@ import * as MC from "@lisn/globals/minification-constants";
 import {
   BoundingRect,
   IterableObject,
-  Constructor,
-  InstanceType,
+  Class,
+  ClassInstance,
   MapBase,
   SetBase,
   Spread,
@@ -350,10 +350,10 @@ export const parseFloat = MC.NUMBER.parseFloat.bind(MC.NUMBER);
 
 export const isNaN = MC.NUMBER.isNaN.bind(MC.NUMBER);
 
-export const isInstanceOf = <C extends Constructor<unknown>>(
+export const isInstanceOf = <C extends Class<unknown>>(
   value: unknown,
   Class: C,
-): value is InstanceType<C> => value instanceof Class;
+): value is ClassInstance<C> => value instanceof Class;
 
 export const constructorOf = (obj: object) => obj.constructor;
 

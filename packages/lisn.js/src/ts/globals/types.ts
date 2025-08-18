@@ -462,13 +462,13 @@ export type RangeStr<
 /**
  * @category Utility
  */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export type Constructor<T> = new (...args: any[]) => T;
+/* eslint-disable-next-line @typescript-eslint/no-unsafe-function-type */
+export type Class<T> = Function & { prototype: T };
 
 /**
  * @category Utility
  */
-export type InstanceType<C> = C extends Constructor<infer T> ? T : never;
+export type ClassInstance<C> = C extends Class<infer T> ? T : never;
 
 /**
  * @category Utility

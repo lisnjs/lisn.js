@@ -592,6 +592,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventUp],
+      watcher,
     );
 
     element.dispatchEvent(eventUp);
@@ -612,6 +613,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventUp],
+      watcher,
     );
 
     element.dispatchEvent(eventUp);
@@ -632,6 +634,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventUp],
+      watcher,
     );
 
     element.dispatchEvent(eventUp); // ignored
@@ -656,6 +659,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventDown],
+      watcher,
     );
 
     element.dispatchEvent(eventDown);
@@ -676,6 +680,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventDown],
+      watcher,
     );
 
     element.dispatchEvent(eventDown);
@@ -696,6 +701,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventDown],
+      watcher,
     );
 
     element.dispatchEvent(eventDown);
@@ -716,6 +722,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventDown],
+      watcher,
     );
 
     element.dispatchEvent(eventDown);
@@ -736,6 +743,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventDown],
+      watcher,
     );
 
     element.dispatchEvent(eventDown);
@@ -756,6 +764,7 @@ describe("min/max deltas", () => {
         intent: "scroll",
       },
       [eventDown],
+      watcher,
     );
 
     element.dispatchEvent(eventDown); // ignored
@@ -793,6 +802,7 @@ describe("min/max deltas", () => {
         intent: "zoom",
       },
       [eventIn],
+      watcher,
     );
 
     element.dispatchEvent(eventIn);
@@ -1195,6 +1205,7 @@ test("multiple gesture devices", async () => {
       intent: "zoom",
     },
     [eventK],
+    watcher,
   );
   expect(callback).toHaveBeenCalledWith(
     element,
@@ -1211,6 +1222,7 @@ test("multiple gesture devices", async () => {
       intent: "scroll",
     },
     [eventW],
+    watcher,
   );
 });
 

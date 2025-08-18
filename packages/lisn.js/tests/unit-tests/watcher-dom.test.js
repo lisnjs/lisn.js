@@ -118,13 +118,16 @@ describe("initial call", () => {
 
     await window.waitForMO();
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 
   test("+selector but no 'added' categories", async () => {
@@ -171,39 +174,51 @@ describe("initial call", () => {
     expect(callback).toHaveBeenCalledTimes(2); // parent added, parentB added
     expect(callbackB).toHaveBeenCalledTimes(4); // including root and child from initial call
 
-    expect(callbackB).toHaveBeenCalledWith({
-      // initial call
-      target: childEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callbackB).toHaveBeenCalledWith(
+      {
+        // initial call
+        target: childEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
-    expect(callbackB).toHaveBeenCalledWith({
-      target: rootEl,
-      currentTarget: rootEl,
-      attributes: new Set(),
-      addedTo: document.body,
-      removedFrom: null,
-    });
+    expect(callbackB).toHaveBeenCalledWith(
+      {
+        target: rootEl,
+        currentTarget: rootEl,
+        attributes: new Set(),
+        addedTo: document.body,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
     for (const cbk of [callback, callbackB]) {
-      expect(cbk).toHaveBeenCalledWith({
-        target: parentEl,
-        currentTarget: parentEl,
-        attributes: new Set(),
-        addedTo: rootEl,
-        removedFrom: null,
-      });
+      expect(cbk).toHaveBeenCalledWith(
+        {
+          target: parentEl,
+          currentTarget: parentEl,
+          attributes: new Set(),
+          addedTo: rootEl,
+          removedFrom: null,
+        },
+        watcher,
+      );
 
-      expect(cbk).toHaveBeenCalledWith({
-        target: parentElB,
-        currentTarget: parentElB,
-        attributes: new Set(),
-        addedTo: rootEl,
-        removedFrom: null,
-      });
+      expect(cbk).toHaveBeenCalledWith(
+        {
+          target: parentElB,
+          currentTarget: parentElB,
+          attributes: new Set(),
+          addedTo: rootEl,
+          removedFrom: null,
+        },
+        watcher,
+      );
     }
   });
 });
@@ -278,13 +293,16 @@ describe("operations", () => {
     await window.waitForMO();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(["class", "attr"]),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(["class", "attr"]),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 
   test("performing mutations prior to onMutation", async () => {
@@ -298,13 +316,16 @@ describe("operations", () => {
     await window.waitForMO();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 
   test("moving element that was added prior to onMutation: from outside tree", async () => {
@@ -321,21 +342,27 @@ describe("operations", () => {
     await window.waitForMO();
 
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
-    expect(callback).toHaveBeenCalledWith({
-      target: childEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: parentEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: childEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: parentEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 
   test("moving element that was added prior to onMutation: to outside tree", async () => {
@@ -352,21 +379,27 @@ describe("operations", () => {
     await window.waitForMO();
 
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
-    expect(callback).toHaveBeenCalledWith({
-      target: childEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: null, // adding to parentElB never observed
-      removedFrom: parentEl,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: childEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: null, // adding to parentElB never observed
+        removedFrom: parentEl,
+      },
+      watcher,
+    );
   });
 
   test("moving element that was added prior to onMutation: from/to inside tree", async () => {
@@ -382,29 +415,38 @@ describe("operations", () => {
     await window.waitForMO();
 
     expect(callback).toHaveBeenCalledTimes(3);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
-    expect(callback).toHaveBeenCalledWith({
-      target: parentElB,
-      currentTarget: parentElB,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentElB,
+        currentTarget: parentElB,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
-    expect(callback).toHaveBeenCalledWith({
-      target: childEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: parentElB,
-      removedFrom: parentEl,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: childEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: parentElB,
+        removedFrom: parentEl,
+      },
+      watcher,
+    );
   });
 
   test("overriding previous suboperations", async () => {
@@ -421,21 +463,27 @@ describe("operations", () => {
     await window.waitForMO();
 
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(["attr"]),
-      addedTo: parentElB,
-      removedFrom: rootEl,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(["attr"]),
+        addedTo: parentElB,
+        removedFrom: rootEl,
+      },
+      watcher,
+    );
 
-    expect(callback).toHaveBeenCalledWith({
-      target: parentElB,
-      currentTarget: parentElB,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentElB,
+        currentTarget: parentElB,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 });
 
@@ -657,29 +705,38 @@ describe("selector", () => {
 
     await window.waitForMO();
     expect(callback).toHaveBeenCalledTimes(3);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
-    expect(callback).toHaveBeenCalledWith({
-      target: childEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: parentEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: childEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: parentEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 
   test("top-level match v2", async () => {
@@ -694,25 +751,31 @@ describe("selector", () => {
 
     await window.waitForMO();
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
 
     parentEl.append(childEl); // match
 
     await window.waitForMO();
     expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenCalledWith({
-      target: childEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: parentEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: childEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: parentEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 
   test("deep match", async () => {
@@ -728,13 +791,16 @@ describe("selector", () => {
 
     await window.waitForMO();
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 });
 
@@ -752,13 +818,16 @@ describe("target", () => {
 
     await window.waitForMO();
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: parentEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: parentEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 
   test("deep match", async () => {
@@ -775,13 +844,16 @@ describe("target", () => {
 
     await window.waitForMO();
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith({
-      target: parentEl,
-      currentTarget: childEl,
-      attributes: new Set(),
-      addedTo: rootEl,
-      removedFrom: null,
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        target: parentEl,
+        currentTarget: childEl,
+        attributes: new Set(),
+        addedTo: rootEl,
+        removedFrom: null,
+      },
+      watcher,
+    );
   });
 });
 

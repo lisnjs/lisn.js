@@ -19,7 +19,7 @@ import {
   waitForSubsequentMeasureTime,
 } from "@lisn/utils/dom-optimize";
 import { logError } from "@lisn/utils/log";
-import { omitKeys, compareValuesIn } from "@lisn/utils/misc";
+import { omitKeys, compareValuesIn, deepCopy } from "@lisn/utils/misc";
 import { createOverlay, OverlayOptions } from "@lisn/utils/overlays";
 import { getClosestScrollable } from "@lisn/utils/scroll";
 import { fetchViewportSize } from "@lisn/utils/size";
@@ -212,14 +212,7 @@ export class ViewWatcher {
 
     const allCallbacks = newXWeakMap<
       Element,
-      Map<
-        OnViewHandler,
-        {
-          _callback: OnViewCallback;
-          _trackType: TrackType;
-          _options: OnViewOptionsInternal;
-        }
-      >
+      Map<OnViewHandler, CallbackEntry>
     >(() => MH.newMap());
 
     const intersectionHandler = (entries: IntersectionObserverEntry[]) => {
@@ -281,7 +274,7 @@ export class ViewWatcher {
       handler: OnViewHandler,
       options: OnViewOptionsInternal,
       trackType: TrackType,
-    ): OnViewCallback => {
+    ): CallbackEntry => {
       const element = options._element;
       MH.remove(allCallbacks.get(element)?.get(handler)?._callback);
 
@@ -289,13 +282,14 @@ export class ViewWatcher {
       const callback = wrapCallback(handler);
       callback.onRemove(() => deleteHandler(handler, options));
 
-      allCallbacks.sGet(element).set(handler, {
+      const entry = {
         _callback: callback,
         _trackType: trackType,
         _options: options,
-      });
+      };
+      allCallbacks.sGet(element).set(handler, entry);
 
-      return callback;
+      return entry;
     };
 
     // ----------
@@ -309,7 +303,8 @@ export class ViewWatcher {
       const options = await fetchOptions(config._root, target, userOptions);
       const element = options._element;
 
-      const callback = createCallback(handler, options, trackType);
+      const entry = createCallback(handler, options, trackType);
+      const callback = entry._callback;
 
       // View watcher should be used before the DOM is loaded since the initial
       // size of the root may be 0 or close to 0 and would lead to premature
@@ -333,9 +328,10 @@ export class ViewWatcher {
         viewData = await fetchCurrentView(element);
       }
 
+      entry._data = viewData;
+
       if (trackType === TRACK_FULL) {
-        // Detect resize or scroll
-        await setupInviewTrack(options, callback, viewData);
+        await setupInviewTrack(viewData, entry);
       }
 
       if (callback.isRemoved()) {
@@ -353,7 +349,7 @@ export class ViewWatcher {
       if (!userOptions?.skipInitial) {
         debug: logger?.debug5("Calling initially with", element, viewData);
         if (viewsToBitmask(viewData.views) & options._viewsBitmask) {
-          await invokeCallback(callback, element, viewData);
+          await invokeCallback(callback, element, viewData, undefined, this);
         }
       }
     };
@@ -421,7 +417,14 @@ export class ViewWatcher {
 
       for (const entry of allCallbacks.get(element)?.values() || []) {
         if (viewsBitmask & entry._options._viewsBitmask) {
-          invokeCallback(entry._callback, element, latestData);
+          invokeCallback(
+            entry._callback,
+            element,
+            latestData,
+            entry._data,
+            this,
+          );
+          entry._data = latestData;
         }
       }
     };
@@ -429,11 +432,12 @@ export class ViewWatcher {
     // ----------
 
     const setupInviewTrack = async (
-      options: OnViewOptionsInternal,
-      viewCallback: OnViewCallback,
       viewData: ViewData,
+      entry: CallbackEntry,
     ) => {
+      const options = entry._options;
       const element = options._element;
+      const viewCallback = entry._callback;
       debug: logger?.debug8(
         "Setting up size, scroll and attribute tracking",
         element,
@@ -487,7 +491,16 @@ export class ViewWatcher {
 
             if (isInview && !viewCallback.isRemoved()) {
               // Could have been removed during the debounce window
-              await invokeCallback(viewCallback, element, latestData);
+              const prevData = entry._data;
+              entry._data = latestData;
+
+              await invokeCallback(
+                viewCallback,
+                element,
+                latestData,
+                prevData,
+                this,
+              );
             }
           } else {
             debug: logger?.debug9("ViewData same as last");
@@ -532,7 +545,7 @@ export class ViewWatcher {
         }
       };
 
-      const enterOrLeaveCallback = createCallback(
+      const { _callback: enterOrLeaveCallback } = createCallback(
         (target__ignored, viewData) => {
           if (viewData.views[0] === MC.S_AT) {
             if (!isInview) {
@@ -556,7 +569,13 @@ export class ViewWatcher {
       allViewData.set(element, viewData); // to avoid duplicate initial call
       // Setup the track and the "inView" state
       if (!enterOrLeaveCallback.isRemoved()) {
-        invokeCallback(enterOrLeaveCallback, element, viewData);
+        invokeCallback(
+          enterOrLeaveCallback,
+          element,
+          viewData,
+          undefined,
+          this,
+        );
       }
     };
 
@@ -723,16 +742,24 @@ export type TrackViewOptions = {
 };
 
 /**
- * The handler is invoked with two arguments:
+ * The handler is invoked with four arguments:
  *
  * - The element that is the target of the IntersectionObserver. If the call to
  *   {@link ViewWatcher.onView} specified an element as the target, it will be
  *   the same. If it specified an offset, then the element passed to the
  *   callback will be an absolutely positioned trigger overlay that's created
  *   as a result.
- * - the {@link ViewData} for relative to the target
+ * - The {@link ViewData} for the target.
+ * - (since v1.3.0) The {@link ViewData} for the target when the callback was
+ *   last called. Will be `undefined` the first time.
+ * - (since v1.3.0) The {@link ViewWatcher} instance.
  */
-export type OnViewHandlerArgs = [Element, ViewData];
+export type OnViewHandlerArgs = [
+  Element,
+  ViewData,
+  ViewData | undefined,
+  ViewWatcher,
+];
 export type OnViewCallback = Callback<OnViewHandlerArgs>;
 export type OnViewHandler = CallbackHandler<OnViewHandlerArgs> | OnViewCallback;
 
@@ -794,6 +821,13 @@ type OnViewOptionsInternal = {
   _debounceWindow: number | undefined;
   _resizeThreshold: number | undefined;
   _scrollThreshold: number | undefined;
+};
+
+type CallbackEntry = {
+  _callback: OnViewCallback;
+  _trackType: TrackType;
+  _options: OnViewOptionsInternal;
+  _data?: ViewData;
 };
 
 type IntersectionData = {
@@ -1155,4 +1189,14 @@ const invokeCallback = (
   callback: OnViewCallback,
   element: Element,
   viewData: ViewData,
-) => callback.invoke(element, MH.copyObject(viewData)).catch(logError);
+  lastViewData: ViewData | undefined,
+  watcher: ViewWatcher,
+) =>
+  callback
+    .invoke(
+      element,
+      deepCopy(viewData),
+      lastViewData, // no need to copy that one as it's not used again
+      watcher,
+    )
+    .catch(logError);

@@ -287,7 +287,7 @@ export class LayoutWatcher {
         changeMatches(layoutBitmask, layoutData, null)
       ) {
         debug: logger?.debug5("Calling initially with", layoutData);
-        await invokeCallback(callback, layoutData);
+        await invokeCallback(callback, layoutData, this);
       }
     };
 
@@ -329,7 +329,7 @@ export class LayoutWatcher {
             continue;
           }
 
-          invokeCallback(entry._callback, layoutData);
+          invokeCallback(entry._callback, layoutData, this);
         }
       }
 
@@ -460,11 +460,12 @@ export type OnLayoutOptions = {
 };
 
 /**
- * The handler is invoked with one argument:
+ * The handler is invoked with two arguments:
  *
- * - the current {@link LayoutData}
+ * - The current {@link LayoutData}.
+ * - (since v1.3.0) The {@link LayoutWatcher} instance.
  */
-export type OnLayoutHandlerArgs = [LayoutData];
+export type OnLayoutHandlerArgs = [LayoutData, LayoutWatcher];
 export type OnLayoutCallback = Callback<OnLayoutHandlerArgs>;
 export type OnLayoutHandler =
   | CallbackHandler<OnLayoutHandlerArgs>
@@ -670,5 +671,8 @@ const getNonIntersecting = (
   return nonIntersectingBitmask;
 };
 
-const invokeCallback = (callback: OnLayoutCallback, layoutData: LayoutData) =>
-  callback.invoke(MH.copyObject(layoutData)).catch(logError);
+const invokeCallback = (
+  callback: OnLayoutCallback,
+  layoutData: LayoutData,
+  watcher: LayoutWatcher,
+) => callback.invoke(MH.copyObject(layoutData), watcher).catch(logError);

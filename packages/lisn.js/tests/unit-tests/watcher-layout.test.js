@@ -93,10 +93,13 @@ describe("initial call", () => {
     await window.waitForIO();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith({
-      device: "desktop",
-      aspectRatio: "very-wide",
-    });
+    expect(callback).toHaveBeenCalledWith(
+      {
+        device: "desktop",
+        aspectRatio: "very-wide",
+      },
+      watcher,
+    );
 
     const callbackB = jest.fn();
     await watcher.onLayout(callbackB);
@@ -104,10 +107,13 @@ describe("initial call", () => {
     await window.waitForIO();
     expect(callback).toHaveBeenCalledTimes(1); // no new calls
     expect(callbackB).toHaveBeenCalledTimes(1);
-    expect(callbackB).toHaveBeenCalledWith({
-      device: "desktop",
-      aspectRatio: "very-wide",
-    });
+    expect(callbackB).toHaveBeenCalledWith(
+      {
+        device: "desktop",
+        aspectRatio: "very-wide",
+      },
+      watcher,
+    );
   });
 
   test("+skipInitial: first and subsequent of type", async () => {

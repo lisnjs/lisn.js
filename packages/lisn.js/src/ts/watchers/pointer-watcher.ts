@@ -141,7 +141,13 @@ export class PointerWatcher {
           : startCallback;
 
       for (const action of options._actions) {
-        listenerSetupFn[action](target, startCallback, endCallback, options);
+        listenerSetupFn[action](
+          target,
+          startCallback,
+          endCallback,
+          options,
+          this,
+        );
       }
     };
 
@@ -227,14 +233,21 @@ export type OnPointerOptions = {
 };
 
 /**
- * The handler is invoked with two arguments:
+ * The handler is invoked with four arguments:
  *
- * - the event target that was passed to the {@link PointerWatcher.onPointer}
+ * - The event target that was passed to the {@link PointerWatcher.onPointer}
  *   call (equivalent to
  *   {@link https://developer.mozilla.org/en-US/docs/Web/API/Event/currentTarget | Event:currentTarget}).
- * - the {@link PointerActionData} describing the state of the action.
+ * - The {@link PointerActionData} describing the state of the action.
+ * - The event that triggered the action.
+ * - (since v1.3.0) The {@link PointerWatcher} instance.
  */
-export type OnPointerHandlerArgs = [EventTarget, PointerActionData, Event];
+export type OnPointerHandlerArgs = [
+  EventTarget,
+  PointerActionData,
+  Event,
+  PointerWatcher,
+];
 export type OnPointerCallback = Callback<OnPointerHandlerArgs>;
 export type OnPointerHandler =
   | CallbackHandler<OnPointerHandlerArgs>
@@ -288,6 +301,7 @@ const setupClickListener = (
   startCallback: OnPointerCallback,
   endCallback: OnPointerCallback,
   options: OnPointerOptionsInternal,
+  watcher: PointerWatcher,
 ) => {
   // false if next will start; true if next will end.
   let toggleState = false;
@@ -309,6 +323,7 @@ const setupClickListener = (
       target,
       data,
       event,
+      watcher,
     );
   };
 
@@ -328,6 +343,7 @@ const setupPointerListeners = (
   startCallback: OnPointerCallback,
   endCallback: OnPointerCallback,
   options: OnPointerOptionsInternal,
+  watcher: PointerWatcher,
 ) => {
   // If the browser doesn't support pointer events, then
   // addEventListenerTo will transform these into mouse*
@@ -349,7 +365,7 @@ const setupPointerListeners = (
           : "OFF",
     };
 
-    invokeCallback(callback, target, data, event);
+    invokeCallback(callback, target, data, event, watcher);
   };
   const startListener = (event: Event) => wrapper(event, startCallback);
   const endListener = (event: Event) => wrapper(event, endCallback);
@@ -380,6 +396,7 @@ const listenerSetupFn: {
     startCallback: OnPointerCallback,
     endCallback: OnPointerCallback,
     options: OnPointerOptionsInternal,
+    watcher: PointerWatcher,
   ) => void;
 } = {
   click: setupClickListener,
@@ -392,4 +409,8 @@ const invokeCallback = (
   target: EventTarget,
   actionData: PointerActionData,
   event: Event,
-) => callback.invoke(target, MH.copyObject(actionData), event).catch(logError);
+  watcher: PointerWatcher,
+) =>
+  callback
+    .invoke(target, MH.copyObject(actionData), event, watcher)
+    .catch(logError);

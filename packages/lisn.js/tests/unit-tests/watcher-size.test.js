@@ -90,6 +90,8 @@ describe("initial call", () => {
         i,
         elements[i - 1],
         defaultSizeData,
+        undefined,
+        watcher,
       );
     }
 
@@ -108,6 +110,8 @@ describe("initial call", () => {
         i,
         elements[i - 1],
         defaultSizeData,
+        undefined,
+        watcher,
       );
     }
   });
@@ -125,6 +129,8 @@ describe("initial call", () => {
         i,
         elements[i - 1],
         defaultSizeData,
+        undefined,
+        watcher,
       );
     }
 
@@ -143,6 +149,8 @@ describe("initial call", () => {
         i,
         elements[i - 1],
         defaultSizeData,
+        undefined,
+        watcher,
       );
     }
   });
@@ -165,6 +173,8 @@ describe("initial call", () => {
         i,
         elements[i - 1],
         defaultSizeData,
+        undefined,
+        watcher,
       );
     }
 
@@ -228,16 +238,22 @@ describe("initial call", () => {
     for (const cbk of [callback, callbackB, callbackC]) {
       expect(cbk).toHaveBeenCalledTimes(elements.length);
       for (let i = 1; i <= elements.length; i++) {
-        expect(cbk).toHaveBeenNthCalledWith(i, elements[i - 1], {
-          border: {
-            width: 1,
-            height: 1,
+        expect(cbk).toHaveBeenNthCalledWith(
+          i,
+          elements[i - 1],
+          {
+            border: {
+              width: 1,
+              height: 1,
+            },
+            content: {
+              width: 1,
+              height: 1,
+            },
           },
-          content: {
-            width: 1,
-            height: 1,
-          },
-        });
+          defaultSizeData,
+          watcher,
+        );
       }
     }
 
@@ -400,7 +416,7 @@ describe("targets", () => {
 
       await window.waitForRO();
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback.mock.calls[0].length).toBe(2);
+      expect(callback.mock.calls[0].length).toBe(4);
       expect(callback.mock.calls[0][0].classList.contains("lisn-overlay")).toBe(
         true,
       );
@@ -414,7 +430,7 @@ describe("targets", () => {
 
     await window.waitForRO();
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback.mock.calls[0].length).toBe(2);
+    expect(callback.mock.calls[0].length).toBe(4);
     expect(callback.mock.calls[0][0]).toBe(document.documentElement);
   });
 });
@@ -439,22 +455,31 @@ describe("threshold", () => {
       await window.waitForRO();
 
       let nCalls = 0;
+      let data = {
+        border: {
+          width: 10,
+          height: 20,
+        },
+        content: {
+          width: 0,
+          height: 0,
+        },
+      };
+      let lastData = undefined;
       if (onResizeConf.skipInitial) {
         expect(callback).toHaveBeenCalledTimes(0); // skipped
       } else {
         nCalls++;
         expect(callback).toHaveBeenCalledTimes(nCalls); // initial call
-        expect(callback).toHaveBeenNthCalledWith(nCalls, element, {
-          border: {
-            width: 10,
-            height: 20,
-          },
-          content: {
-            width: 0,
-            height: 0,
-          },
-        });
+        expect(callback).toHaveBeenNthCalledWith(
+          nCalls,
+          element,
+          data,
+          lastData,
+          watcher,
+        );
       }
+      lastData = data;
 
       element.resize([0, 0], [0, 0]); // max change of -20
       await window.waitForRO();
@@ -466,8 +491,7 @@ describe("threshold", () => {
 
       element.resize([15, 70], [5, 5]); // max change of +50 => trigger
       await window.waitForRO();
-      expect(callback).toHaveBeenCalledTimes(++nCalls);
-      expect(callback).toHaveBeenNthCalledWith(nCalls, element, {
+      data = {
         border: {
           width: 15,
           height: 70,
@@ -476,7 +500,16 @@ describe("threshold", () => {
           width: 5,
           height: 5,
         },
-      });
+      };
+      expect(callback).toHaveBeenCalledTimes(++nCalls);
+      expect(callback).toHaveBeenNthCalledWith(
+        nCalls,
+        element,
+        data,
+        lastData,
+        watcher,
+      );
+      lastData = data;
 
       element.resize([0, 21], [0, 0]); // max change of -49
       await window.waitForRO();
@@ -484,8 +517,7 @@ describe("threshold", () => {
 
       element.resize([10, 20], [1, 1]); // max change of -50 => trigger
       await window.waitForRO();
-      expect(callback).toHaveBeenCalledTimes(++nCalls);
-      expect(callback).toHaveBeenNthCalledWith(nCalls, element, {
+      data = {
         border: {
           width: 10,
           height: 20,
@@ -494,7 +526,16 @@ describe("threshold", () => {
           width: 1,
           height: 1,
         },
-      });
+      };
+      expect(callback).toHaveBeenCalledTimes(++nCalls);
+      expect(callback).toHaveBeenNthCalledWith(
+        nCalls,
+        element,
+        data,
+        lastData,
+        watcher,
+      );
+      lastData = data;
     });
   }
 });

@@ -84,6 +84,7 @@ test("with 1 relevant + irrelevant events + another relevant", async () => {
       intent: "drag",
     },
     [eventA, eventB, eventC, eventD],
+    watcher,
   );
 });
 
@@ -158,6 +159,7 @@ test("baseline", async () => {
       intent: "drag",
     },
     [eventA, eventB],
+    watcher,
   );
 
   expect(eventA.defaultPrevented).toBe(true);
@@ -199,6 +201,7 @@ test("with direction (single)", async () => {
       intent: "drag",
     },
     [eventB, eventC],
+    watcher,
   );
 });
 
@@ -234,6 +237,7 @@ test("with direction (multiple)", async () => {
       intent: "drag",
     },
     [eventB, eventC],
+    watcher,
   );
 
   const eventD = window.newMouse("move", 0, 250); // left since last
@@ -255,6 +259,7 @@ test("with direction (multiple)", async () => {
       intent: "drag",
     },
     [eventC, eventD],
+    watcher,
   );
 });
 
@@ -290,6 +295,7 @@ describe("preventDefault", () => {
         intent: "drag",
       },
       [eventA, eventB],
+      watcher,
     );
 
     expect(eventA.defaultPrevented).toBe(false);
@@ -329,6 +335,7 @@ describe("preventDefault", () => {
         intent: "drag",
       },
       [eventA, eventB],
+      watcher,
     );
 
     expect(eventA.defaultPrevented).toBe(true);
@@ -371,6 +378,7 @@ test("with debounceWindow", async () => {
       intent: "drag",
     },
     [eventA, eventB, eventC],
+    watcher,
   );
 });
 
@@ -416,6 +424,7 @@ test("with deltaThreshold", async () => {
       intent: "drag",
     },
     [eventA, eventB, eventC, eventD, eventE],
+    watcher,
   );
 });
 

@@ -201,6 +201,7 @@ export class GestureWatcher {
       const { _callback, _wrapper } = getCallbackAndWrapper(
         handler,
         options,
+        this,
         logger,
       );
 
@@ -707,15 +708,22 @@ export type OnGestureOptions = {
 };
 
 /**
- * The handler is invoked with two arguments:
+ * The handler is invoked with four arguments:
  *
- * - the event target that was passed to the {@link GestureWatcher.onGesture}
+ * - The event target that was passed to the {@link GestureWatcher.onGesture}
  *   call (equivalent to
  *   {@link https://developer.mozilla.org/en-US/docs/Web/API/Event/currentTarget | Event:currentTarget}).
- * - the {@link GestureData} that describes the gesture's progression since the
+ * - The {@link GestureData} that describes the gesture's progression since the
  *   last time the callback was called and since the callback was added.
+ * - The list of events that constituted the gesture.
+ * - (since v1.3.0) The {@link GestureWatcher} instance.
  */
-export type OnGestureHandlerArgs = [EventTarget, GestureData, Event[]];
+export type OnGestureHandlerArgs = [
+  EventTarget,
+  GestureData,
+  Event[],
+  GestureWatcher,
+];
 export type OnGestureCallback = Callback<OnGestureHandlerArgs>;
 export type OnGestureHandler =
   | CallbackHandler<OnGestureHandlerArgs>
@@ -933,6 +941,7 @@ const getOptions = (
 const getCallbackAndWrapper = (
   handler: OnGestureHandler,
   options: OnGestureOptionsInternal,
+  watcher: GestureWatcher,
   logger: LoggerInterface | null,
 ): { _callback: OnGestureCallback; _wrapper: OnGestureHandlerWrapper } => {
   let totalDeltaX = 0,
@@ -1055,7 +1064,7 @@ const getCallbackAndWrapper = (
         (!directions || MH.includes(directions, direction)) &&
         (!intents || MH.includes(intents, intent))
       ) {
-        callback.invoke(target, data, eventQueueCopy).catch(logError);
+        callback.invoke(target, data, eventQueueCopy, watcher).catch(logError);
       } else {
         debug: logger?.debug7(
           `[${id}] Directions or intents not matching for callback`,

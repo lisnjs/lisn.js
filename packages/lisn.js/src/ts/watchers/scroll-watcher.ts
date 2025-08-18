@@ -416,7 +416,13 @@ export class ScrollWatcher {
       ) {
         debug: logger?.debug5("Calling initially with", element, scrollData);
         // Use a one-off callback that's not debounced for the initial call.
-        await invokeCallback(wrapCallback(handler), element, scrollData);
+        await invokeCallback(
+          wrapCallback(handler),
+          element,
+          scrollData,
+          undefined,
+          this,
+        );
       }
     };
 
@@ -500,7 +506,16 @@ export class ScrollWatcher {
             entry._data,
           );
         } else if (!scrollCallback.isRemoved()) {
-          await invokeCallback(scrollCallback, element, latestData);
+          const prevData = entry._data;
+          entry._data = latestData;
+
+          await invokeCallback(
+            scrollCallback,
+            element,
+            latestData,
+            prevData,
+            this,
+          );
         }
       });
 
@@ -652,7 +667,7 @@ export class ScrollWatcher {
           continue;
         }
 
-        invokeCallback(entry._callback, element, latestData, prevData);
+        invokeCallback(entry._callback, element, latestData, prevData, this);
       }
     };
 
@@ -941,7 +956,7 @@ export type ScrollOptions = ScrollToOptions & {
 };
 
 /**
- * The handler is invoked with three arguments:
+ * The handler is invoked with four arguments:
  *
  * - The element that has been resized.
  * - The latest {@link ScrollData} for the element.
@@ -949,8 +964,14 @@ export type ScrollOptions = ScrollToOptions & {
  *   for this callback were last exceeded. If the callback is called for any
  *   scroll direction, then this will be the data when it was last invoked. Will
  *   be `undefined` the first time.
+ * - (since v1.3.0) The {@link ScrollWatcher} instance.
  */
-export type OnScrollHandlerArgs = [Element, ScrollData, ScrollData | undefined];
+export type OnScrollHandlerArgs = [
+  Element,
+  ScrollData,
+  ScrollData | undefined,
+  ScrollWatcher,
+];
 export type OnScrollCallback = Callback<OnScrollHandlerArgs>;
 export type OnScrollHandler =
   | CallbackHandler<OnScrollHandlerArgs>
@@ -1189,12 +1210,14 @@ const invokeCallback = (
   callback: OnScrollCallback,
   element: Element,
   scrollData: ScrollData,
-  lastScrollData?: ScrollData,
+  lastScrollData: ScrollData | undefined,
+  watcher: ScrollWatcher,
 ) =>
   callback
     .invoke(
       element,
       MH.copyObject(scrollData),
       lastScrollData, // no need to copy that one as it's not used again
+      watcher,
     )
     .catch(logError);

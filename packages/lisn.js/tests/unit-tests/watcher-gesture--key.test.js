@@ -65,6 +65,7 @@ test("baseline", async () => {
       intent: "scroll",
     },
     [event],
+    watcher,
   );
 
   expect(event.defaultPrevented).toBe(true);
@@ -101,6 +102,7 @@ test("with direction (single)", async () => {
       intent: "scroll",
     },
     [event],
+    watcher,
   );
 });
 
@@ -133,6 +135,7 @@ test("with direction (multiple)", async () => {
       intent: "scroll",
     },
     [event],
+    watcher,
   );
 
   event = window.newKeyDown("Left");
@@ -154,6 +157,7 @@ test("with direction (multiple)", async () => {
       intent: "scroll",
     },
     [event],
+    watcher,
   );
 });
 
@@ -184,6 +188,7 @@ test("with intent (single)", async () => {
       intent: "scroll",
     },
     [event],
+    watcher,
   );
 });
 
@@ -212,6 +217,7 @@ test("with intent (multiple)", async () => {
       intent: "zoom",
     },
     [event],
+    watcher,
   );
 
   event = window.newKeyDown("Up");
@@ -233,6 +239,7 @@ test("with intent (multiple)", async () => {
       intent: "scroll",
     },
     [event],
+    watcher,
   );
 });
 
@@ -269,6 +276,7 @@ test("with intent (multiple) + debounce window", async () => {
       intent: "zoom",
     },
     [event],
+    watcher,
   );
 });
 
@@ -298,6 +306,7 @@ describe("preventDefault", () => {
         intent: "scroll",
       },
       [event],
+      watcher,
     );
 
     expect(event.defaultPrevented).toBe(false);
@@ -332,6 +341,7 @@ describe("preventDefault", () => {
         intent: "scroll",
       },
       [irrelevantEvent, event],
+      watcher,
     );
 
     expect(event.defaultPrevented).toBe(true);
@@ -373,6 +383,7 @@ test("with debounceWindow", async () => {
       intent: "scroll",
     },
     [eventA, eventB, eventC, eventD],
+    watcher,
   );
 });
 
@@ -421,5 +432,6 @@ test("with deltaThreshold", async () => {
       intent: "scroll",
     },
     [eventA, eventB, eventC, eventD, eventE],
+    watcher,
   );
 });

@@ -488,6 +488,7 @@ test("callback args", async () => {
       state: "ON",
     },
     eventA,
+    watcher,
   );
 
   expect(startCallback).toHaveBeenCalledWith(
@@ -497,6 +498,7 @@ test("callback args", async () => {
       state: "ON",
     },
     eventB,
+    watcher,
   );
 
   expect(endCallback).toHaveBeenCalledWith(
@@ -506,6 +508,7 @@ test("callback args", async () => {
       state: "OFF",
     },
     eventC,
+    watcher,
   );
 
   expect(endCallback).toHaveBeenCalledWith(
@@ -515,6 +518,7 @@ test("callback args", async () => {
       state: "OFF",
     },
     eventD,
+    watcher,
   );
 
   expect(startCallback).toHaveBeenCalledWith(
@@ -524,6 +528,7 @@ test("callback args", async () => {
       state: "ON",
     },
     eventE,
+    watcher,
   );
 
   expect(endCallback).toHaveBeenCalledWith(
@@ -533,6 +538,7 @@ test("callback args", async () => {
       state: "OFF",
     },
     eventF,
+    watcher,
   );
 });
 

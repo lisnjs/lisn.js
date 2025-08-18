@@ -85,6 +85,7 @@ test("with 1 relevant + irrelevant events + another relevant", async () => {
       intent: "scroll",
     },
     [eventA, eventB, eventC, eventD],
+    watcher,
   );
 });
 
@@ -129,6 +130,7 @@ test("baseline", async () => {
       intent: "scroll",
     },
     [eventA, eventB],
+    watcher,
   );
 
   // touchstart and touchend are not default-prevented as they have no default action
@@ -168,6 +170,7 @@ test("with natural scrolling OFF", async () => {
       intent: "scroll",
     },
     [eventA, eventB],
+    watcher,
   );
 });
 
@@ -202,6 +205,7 @@ test("press and hold => drag", async () => {
       intent: "drag",
     },
     [eventA, eventB],
+    watcher,
   );
 });
 
@@ -237,6 +241,7 @@ test("with direction (single)", async () => {
       intent: "scroll",
     },
     [eventB, eventC],
+    watcher,
   );
 });
 
@@ -272,6 +277,7 @@ test("with direction (multiple)", async () => {
       intent: "scroll",
     },
     [eventB, eventC],
+    watcher,
   );
 
   const eventD = window.newTouch("move", [0, 250]); // right since last
@@ -293,6 +299,7 @@ test("with direction (multiple)", async () => {
       intent: "scroll",
     },
     [eventC, eventD],
+    watcher,
   );
 });
 
@@ -328,6 +335,7 @@ test("with intent (single)", async () => {
       intent: "zoom",
     },
     [eventB, eventC],
+    watcher,
   );
 });
 
@@ -358,6 +366,7 @@ test("with intent (multiple)", async () => {
       intent: "scroll",
     },
     [eventA, eventB],
+    watcher,
   );
 
   const eventC = window.newTouch("move", [50, 200], [300, 200]); // zoom in
@@ -379,6 +388,7 @@ test("with intent (multiple)", async () => {
       intent: "zoom",
     },
     [eventB, eventC],
+    watcher,
   );
 });
 
@@ -414,6 +424,7 @@ describe("preventDefault", () => {
         intent: "scroll",
       },
       [eventA, eventB],
+      watcher,
     );
 
     expect(eventA.defaultPrevented).toBe(false);
@@ -453,6 +464,7 @@ describe("preventDefault", () => {
         intent: "scroll",
       },
       [eventA, eventB],
+      watcher,
     );
 
     // touchstart and end are not prevented (TODO should we?)
@@ -496,6 +508,7 @@ test("with debounceWindow", async () => {
       intent: "scroll",
     },
     [eventA, eventB, eventC],
+    watcher,
   );
 });
 
@@ -541,6 +554,7 @@ test("with deltaThreshold", async () => {
       intent: "scroll",
     },
     [eventA, eventB, eventC, eventD, eventE],
+    watcher,
   );
 });
 

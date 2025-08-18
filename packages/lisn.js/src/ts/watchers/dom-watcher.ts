@@ -319,7 +319,7 @@ export class DOMWatcher {
             debug: logger?.debug10("Skipping operation", diffOperation);
           } else {
             debug: logger?.debug5("Calling initially with", diffOperation);
-            await invokeCallback(callback, diffOperation);
+            await invokeCallback(callback, diffOperation, [], this);
           }
         }
       }
@@ -384,7 +384,7 @@ export class DOMWatcher {
           currentTargets.push(...matches);
         }
 
-        invokeCallback(entry._callback, operation, currentTargets);
+        invokeCallback(entry._callback, operation, currentTargets, this);
       }
     };
 
@@ -589,16 +589,17 @@ export type MutationOperation = {
 };
 
 /**
- * The handler is invoked with one argument:
+ * The handler is invoked with true arguments:
  *
- * - a {@link MutationOperation} for a set of mutations related to a particular
- *   element
+ * - A {@link MutationOperation} for a set of mutations related to a particular
+ *   element.
+ * - (since v1.3.0) The {@link DOMWatcher} instance.
  *
  * The handler could be invoked multiple times in each "round" (cycle of event
  * loop) if there are mutation operations for more than one element that match
  * the supplied {@link OnMutationOptions}.
  */
-export type OnMutationHandlerArgs = [MutationOperation];
+export type OnMutationHandlerArgs = [MutationOperation, DOMWatcher];
 export type OnMutationCallback = Callback<OnMutationHandlerArgs>;
 export type OnMutationHandler =
   | CallbackHandler<OnMutationHandlerArgs>
@@ -723,7 +724,8 @@ const getDiffOperation = (
 const invokeCallback = (
   callback: OnMutationCallback,
   operation: MutationOperationInternal,
-  currentTargets: Element[] = [],
+  currentTargets: Element[],
+  watcher: DOMWatcher,
 ) => {
   if (!MH.lengthOf(currentTargets)) {
     currentTargets = [operation._target];
@@ -731,13 +733,16 @@ const invokeCallback = (
 
   for (const currentTarget of currentTargets) {
     callback
-      .invoke({
-        target: operation._target,
-        currentTarget,
-        attributes: operation._attributes,
-        addedTo: operation._addedTo,
-        removedFrom: operation._removedFrom,
-      })
+      .invoke(
+        {
+          target: operation._target,
+          currentTarget,
+          attributes: operation._attributes,
+          addedTo: operation._addedTo,
+          removedFrom: operation._removedFrom,
+        },
+        watcher,
+      )
       .catch(logError);
   }
 };

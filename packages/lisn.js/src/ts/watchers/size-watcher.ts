@@ -290,7 +290,13 @@ export class SizeWatcher {
       if (!userOptions?.skipInitial) {
         debug: logger?.debug5("Calling initially with", element, sizeData);
         // Use a one-off callback that's not debounced for the initial call.
-        await invokeCallback(wrapCallback(handler), element, sizeData);
+        await invokeCallback(
+          wrapCallback(handler),
+          element,
+          sizeData,
+          undefined,
+          this,
+        );
       }
     };
 
@@ -356,9 +362,8 @@ export class SizeWatcher {
           continue;
         }
 
+        invokeCallback(entry._callback, element, latestData, entry._data, this);
         entry._data = latestData;
-
-        invokeCallback(entry._callback, element, latestData);
       }
     };
 
@@ -491,14 +496,22 @@ export type OnResizeOptions = {
 };
 
 /**
- * The handler is invoked with three arguments:
+ * The handler is invoked with four arguments:
  *
- * - the element that has been resized: if the target you requested was the
+ * - The element that has been resized: if the target you requested was the
  *   viewport, then this will be a fixed positioned overlay that tracks the
  *   size of the viewport
- * - the {@link SizeData} for the element
+ * - The {@link SizeData} for the element.
+ * - (since v1.3.0) The {@link SizeData} for the element when the callback was
+ *   last called. Will be `undefined` the first time.
+ * - (since v1.3.0) The {@link SizeWatcher} instance.
  */
-export type OnResizeHandlerArgs = [Element, SizeData];
+export type OnResizeHandlerArgs = [
+  Element,
+  SizeData,
+  SizeData | undefined,
+  SizeWatcher,
+];
 export type OnResizeCallback = Callback<OnResizeHandlerArgs>;
 export type OnResizeHandler =
   | CallbackHandler<OnResizeHandlerArgs>
@@ -626,4 +639,14 @@ const invokeCallback = (
   callback: OnResizeCallback,
   element: Element,
   sizeData: SizeData,
-) => callback.invoke(element, MH.copyObject(sizeData)).catch(logError);
+  lastSizeData: SizeData | undefined,
+  watcher: SizeWatcher,
+) =>
+  callback
+    .invoke(
+      element,
+      MH.copyObject(sizeData),
+      lastSizeData, // no need to copy that one as it's not used again
+      watcher,
+    )
+    .catch(logError);

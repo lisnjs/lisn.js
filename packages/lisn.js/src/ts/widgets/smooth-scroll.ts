@@ -45,6 +45,7 @@ import {
 } from "@lisn/utils/validation";
 
 import { FXComposer } from "@lisn/effects/fx-composer";
+import { FXScrollTrigger } from "@lisn/effects/fx-trigger";
 import { Transform } from "@lisn/effects/transform";
 
 import { ScrollWatcher, ScrollData } from "@lisn/watchers/scroll-watcher";
@@ -280,14 +281,16 @@ export class SmoothScroll extends Widget {
       return;
     }
 
-    layers = getLayersFrom(scrollable, config);
+    const trigger = new FXScrollTrigger(scrollable);
+    trigger.pause();
+    layers = getLayersFrom(scrollable, config, trigger);
 
     (destroyPromise || MH.promiseResolve()).then(async () => {
       if (this.isDestroyed()) {
         return;
       }
 
-      init(this, scrollable, config, layers, logger);
+      init(this, scrollable, config, trigger, layers, logger);
     });
   }
 }
@@ -514,6 +517,7 @@ const getParentLayer = (scrollable: Element, layer: Element) => {
 const getLayersFrom = (
   scrollable: Element,
   rootConfig: SmoothScrollConfig | undefined,
+  trigger: FXScrollTrigger,
 ) => {
   // map will include the root scrollable
   const layerMap = MH.newMap<Element, SmoothScrollLayerState>();
@@ -531,8 +535,7 @@ const getLayersFrom = (
       parent?: FXComposer;
     },
   ) => {
-    const trigger = "XXX TODO";
-    const composer = new FXComposer(MH.merge(config, { trigger }));
+    const composer = new FXComposer(trigger, config);
     if (useDefaultEffects) {
       composer.add(
         new Transform({ isAbsolute: true }).translate((data) => ({
@@ -705,6 +708,7 @@ const init = async (
   widget: SmoothScroll,
   scrollable: HTMLElement,
   config: SmoothScrollConfig | undefined,
+  trigger: FXScrollTrigger,
   layers: Map<Element, SmoothScrollLayerState>,
   logger: LoggerInterface | null,
 ) => {
@@ -752,42 +756,38 @@ const init = async (
 
   // ----------
 
-  const addWatchersAndComposers = () => {
+  const addWatchers = () => {
     scrollWatcher?.trackScroll(updateScrollData, { scrollable });
     sizeWatcher?.onResize(updatePropsOnResize, {
       target: innerWrapper,
       threshold: 0,
     });
 
+    trigger.resume();
+
     for (const [layer, state] of layers) {
       if (stateUsesAutoDepth(state)) {
         sizeWatcher?.onResize(updateSizeData, { target: layer, threshold: 0 });
       }
-    }
 
-    // setXXXState("enable");
-    // XXX TODO add CSS from composer
+      state._composer.startAnimate([layer], state._parentState?._composer);
+    }
   };
 
-  const removeWatchersAndComposers = () => {
+  const removeWatchers = () => {
     scrollWatcher?.noTrackScroll(updateScrollData, scrollable);
     sizeWatcher?.offResize(updatePropsOnResize, innerWrapper);
+
+    trigger.pause();
 
     for (const [layer, state] of layers) {
       if (stateUsesAutoDepth(state)) {
         sizeWatcher?.offResize(updateSizeData, layer);
       }
+
+      state._composer.stopAnimate([layer], true);
     }
-
-    // setXXXState("disable");
-    // XXX TODO clear CSS from composer
   };
-
-  // const setXXXState = (method: "enable" | "disable" | "clear") => {
-  //   for (const state of layers.values()) {
-  //     state._composer[method]();
-  //   }
-  // };
 
   const resetAutoDepth = (state?: SmoothScrollLayerState) => {
     if (!state) {
@@ -858,20 +858,20 @@ const init = async (
 
   addClassesNow(root, PREFIX_ROOT);
 
-  addWatchersAndComposers();
+  addWatchers();
 
   widget.onDisable(() => {
-    removeWatchersAndComposers();
+    removeWatchers();
     removeClasses(root, PREFIX_ROOT);
   });
 
   widget.onEnable(() => {
-    addWatchersAndComposers();
+    addWatchers();
     addClasses(root, PREFIX_ROOT);
   });
 
   widget.onDestroy(async () => {
-    // setXXXState("clear");
+    rootState._composer.clear();
 
     await waitForMutateTime();
 

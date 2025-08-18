@@ -43,8 +43,8 @@ export const FX_MATCH = {
   negate: (matcher: FXMatcher) => new FXNegateMatcher(matcher),
   composer: (composer: FXComposer, bounds: FXComposerMatcherBounds) =>
     new FXComposerMatcher(composer, bounds),
-  scroll: (scrollable: ScrollTarget, bounds: FXScrollMatcherBounds) =>
-    new FXScrollMatcher(scrollable, bounds),
+  scroll: (bounds: FXScrollMatcherBounds, scrollable?: ScrollTarget) =>
+    new FXScrollMatcher(bounds, scrollable),
   view: (
     viewTarget: ViewTarget,
     views: CommaSeparatedStr<View> | View[],
@@ -75,6 +75,9 @@ export abstract class FXMatcher {
 
   /**
    * Calls the given handler whenever the matcher's state changes.
+   *
+   * The handler is called after updating the state, such that calling
+   * {@link matches} from the handler will reflect the latest state.
    */
   onChange: (handler: FXMatcherHandler) => void;
 
@@ -91,7 +94,7 @@ export abstract class FXMatcher {
       setState: (m) => {
         if (storeData.matches !== m) {
           storeData.matches = m;
-          invokeHandlers(changeCallbacks.values(), storeData.matches, this);
+          invokeHandlers(changeCallbacks.values(), m, this);
         }
       },
     };
@@ -109,6 +112,8 @@ export abstract class FXMatcher {
     this.offChange = (handler: FXMatcherHandler) => {
       MH.remove(changeCallbacks.get(handler));
     };
+
+    // --------------------
 
     executor.call(this, store);
   }
@@ -157,6 +162,8 @@ export abstract class FXRelativeMatcher<D = unknown> extends FXMatcher {
       storeData.refData = storeData.data;
     };
 
+    // --------------------
+
     executor.call(this, store);
   }
 }
@@ -164,7 +171,7 @@ export abstract class FXRelativeMatcher<D = unknown> extends FXMatcher {
 /**
  * The handler is invoked with two arguments:
  *
- * - The current state of the {@link FXMatcher} where `true` means it matches.
+ * - `true` if the matcher matches, `false` otherwise.
  * - The {@link FXMatcher} instance.
  */
 export type FXMatcherHandlerArgs<T extends FXMatcher = FXMatcher> = [
@@ -338,7 +345,11 @@ export type FXComposerMatcherBounds = AtLeastOne<{
 export class FXScrollMatcher extends FXRelativeMatcher<
   FXPinAllAxesData<"top" | "left">
 > {
-  constructor(scrollable: ScrollTarget, bounds: FXScrollMatcherBounds) {
+  /**
+   * @param scrollable If not given, then it will use {@link ScrollWatcher}
+   * default.
+   */
+  constructor(bounds: FXScrollMatcherBounds, scrollable?: ScrollTarget) {
     if (!bounds) {
       throw MH.usageError(
         "At least one scroll offset bounding value is required for FXScrollMatcher",

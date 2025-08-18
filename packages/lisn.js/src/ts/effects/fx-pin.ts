@@ -81,6 +81,9 @@ export class FXPin {
 
   /**
    * Calls the given handler whenever the pin's state changes.
+   *
+   * The handler is called after updating the state, such that calling
+   * {@link isActive} from the handler will reflect the latest state.
    */
   readonly onChange: (handler: FXPinHandler) => void;
 
@@ -116,7 +119,7 @@ export class FXPin {
           }
         }
 
-        invokeHandlers(changeCallbacks.values(), isActive, this);
+        invokeHandlers(changeCallbacks.values(), activate, this);
       }
     };
 
@@ -172,8 +175,7 @@ export class FXPin {
 /**
  * The handler is invoked with two arguments:
  *
- * - The current state of the {@link FXPin} where `true` is ON and `false`
- *   is OFF.
+ * - `true` if the pin is now active, `false` if it's inactive.
  * - The {@link FXPin} instance.
  */
 export type FXPinHandlerArgs = [boolean, FXPin];

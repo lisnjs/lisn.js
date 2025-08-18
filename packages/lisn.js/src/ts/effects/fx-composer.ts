@@ -38,7 +38,7 @@ import {
 } from "@lisn/effects/effect";
 
 import { FXComposition } from "@lisn/effects/fx-composition";
-import { FXTrigger } from "@lisn/effects/triggers/fx-trigger";
+import { FXTrigger } from "@lisn/effects/fx-trigger";
 import { FXPin } from "@lisn/effects/fx-pin";
 
 /**
@@ -243,13 +243,12 @@ export class FXComposer {
    * This creates a new async generator that will yield update data
    * whenever the returned helper callback is called.
    */
-  constructor(config: FXComposerConfig) {
-    const {
-      parent,
-      negate: defaultNegate,
-      trigger,
-      tweener = "spring",
-    } = config ?? {};
+  constructor(trigger: FXTrigger, config?: FXComposerConfig) {
+    if (!trigger) {
+      throw MH.usageError("FXComposer trigger is required");
+    }
+
+    const { parent, negate: defaultNegate, tweener = "spring" } = config ?? {};
 
     const effectiveConfig: FXComposerEffectiveConfig = {
       parent,
@@ -562,7 +561,7 @@ export class FXComposer {
     // ----------
 
     const pollTrigger = async () => {
-      for await (const updateData of trigger()) {
+      for await (const updateData of trigger.poll()) {
         const didUpdate = updateState(null, updateData, true);
 
         if (didUpdate) {
@@ -622,24 +621,11 @@ export class FXComposer {
     setLag(config);
     setDepth(config);
 
-    if (!trigger) {
-      return; // XXX
-      throw MH.usageError("FXComposer trigger is required");
-    }
-
     pollTrigger();
   }
 }
 
 export type FXComposerConfig = {
-  /**
-   * The trigger to use to get {@link Effects.FXStateUpdate | updates} to the
-   * {@link FXAxisState}s.
-   *
-   * It is required.
-   */
-  trigger: FXTrigger;
-
   /**
    * The parent composer. Used for resolving relative values of lag or depth.
    *

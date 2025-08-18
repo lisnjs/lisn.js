@@ -604,7 +604,9 @@ export class ViewWatcher {
  */
 export type ViewWatcherConfig = {
   /**
-   * The root element to use for the IntersectionObserver.
+   * The
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#root | root}
+   * to use for the IntersectionObserver.
    *
    * **NOTE:** If the target you want to observe (via
    * {@link ViewWatcher.onView}) is inside a scrolling element, then you should
@@ -621,14 +623,18 @@ export type ViewWatcherConfig = {
   root?: Element | null;
 
   /**
-   * The rootMargin to pass to the IntersectionObserver constructor options.
+   * The
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#rootmargin | rootMargin}
+   * to use for the IntersectionObserver.
    *
    * @defaultValue "0px 0px 0px 0px"
    */
   rootMargin?: string;
 
   /**
-   * The threshold to pass to the IntersectionObserver constructor options.
+   * The
+   * {@link https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#threshold | threshold}
+   * to use for the IntersectionObserver.
    *
    * @defaultValue 0
    */

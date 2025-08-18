@@ -15,20 +15,20 @@ import {
 import { newXMap } from "@lisn/modules/x-map";
 
 import {
-  FXPinMatcher,
-  FXPinRelativeMatcher,
-  PIN_MATCHERS,
-} from "@lisn/effects/fx-pin-matcher";
+  FXMatcher,
+  FXRelativeMatcher,
+  FX_MATCH,
+} from "@lisn/effects/fx-matcher";
 
 /**
  * {@link FXPin} can be associated with an {@link Effects.Effect | Effects} (for
  * each {@link Effects.FXComposer}) in order to "pin" or freeze them and stop
  * them from being updated.
  *
- * It is activated or deactivated when one or more {@link FXPinMatcher}s match.
+ * It is activated or deactivated when one or more {@link FXMatcher}s match.
  *
- * There are built-in matchers in {@link PIN_MATCHERS}, or you can create your
- * own by extending {@link FXPinMatcher}.
+ * There are built-in matchers in {@link FX_MATCH}, or you can create your own
+ * by extending {@link FXMatcher}.
  */
 export class FXPin {
   /**
@@ -45,23 +45,23 @@ export class FXPin {
    * set of matchers to watch and when all matchers in a set match, the pin is
    * activated.
    *
-   * For any {@link FXPinRelativeMatcher | relative matchers}, their
-   * {@link FXPinMatcher.restart | restart} method will be called when the pin
+   * For any {@link FXRelativeMatcher | relative matchers}, their
+   * {@link FXMatcher.restart | restart} method will be called when the pin
    * is **deactivated**. Therefore, it does not make sense to add a relative
    * matcher with both {@link when} and {@link until}.
    */
-  readonly when: (...matchers: FXPinMatcher[]) => this;
+  readonly when: (...matchers: FXMatcher[]) => this;
 
   /**
    * Like {@link when} but it deactivates the pin when **all** the given
    * matchers match.
    *
-   * For any {@link FXPinRelativeMatcher | relative matchers}, their
-   * {@link FXPinMatcher.restart | restart} method will be called when the pin
+   * For any {@link FXRelativeMatcher | relative matchers}, their
+   * {@link FXMatcher.restart | restart} method will be called when the pin
    * is **activated**. Therefore, it does not make sense to add a relative
    * matcher with both {@link when} and {@link until}.
    */
-  readonly until: (...matchers: FXPinMatcher[]) => this;
+  readonly until: (...matchers: FXMatcher[]) => this;
 
   /**
    * Activates the pin when **all** the given matchers match and deactivates it
@@ -74,10 +74,10 @@ export class FXPin {
    * // This is equivalent to:
    *
    * pin.when(matcherA, matcherB, matcherC);
-   * pin.until(...[matcherA, matcherB, matcherC].map(m => PIN_MATCHERS.negate(m)));
+   * pin.until(...[matcherA, matcherB, matcherC].map(m => FX_MATCH.negate(m)));
    * ```
    */
-  readonly while: (...matchers: FXPinMatcher[]) => this;
+  readonly while: (...matchers: FXMatcher[]) => this;
 
   /**
    * Calls the given handler whenever the pin's state changes.
@@ -95,10 +95,10 @@ export class FXPin {
     const changeCallbacks = MH.newMap<FXPinHandler, FXPinCallback>();
 
     const matcherGroups = newXMap<
-      FXPinMatcher,
+      FXMatcher,
       Array<{
         _activate: boolean;
-        _group: FXPinMatcher[];
+        _group: FXMatcher[];
       }>
     >(() => []);
 
@@ -107,7 +107,7 @@ export class FXPin {
         isActive = activate;
 
         for (const [m, entries] of matcherGroups) {
-          if (MH.isInstanceOf(m, FXPinRelativeMatcher)) {
+          if (MH.isInstanceOf(m, FXRelativeMatcher)) {
             for (const entry of entries) {
               if (entry._activate !== activate) {
                 m.restart();
@@ -120,7 +120,7 @@ export class FXPin {
       }
     };
 
-    const addMatcherGroup = (activate: boolean, matchers: FXPinMatcher[]) => {
+    const addMatcherGroup = (activate: boolean, matchers: FXMatcher[]) => {
       const entry = {
         _activate: activate,
         _group: matchers,
@@ -133,7 +133,7 @@ export class FXPin {
       }
     };
 
-    const onMatcherChange = (matches: boolean, matcher: FXPinMatcher) => {
+    const onMatcherChange = (matches: boolean, matcher: FXMatcher) => {
       const entries = matcherGroups.get(matcher) ?? [];
       for (const entry of entries) {
         if (entry._group.every((m) => m.matches())) {
@@ -165,9 +165,7 @@ export class FXPin {
     };
 
     this.while = (...matchers) =>
-      this.when(...matchers).until(
-        ...matchers.map((m) => PIN_MATCHERS.negate(m)),
-      );
+      this.when(...matchers).until(...matchers.map((m) => FX_MATCH.negate(m)));
   }
 }
 

@@ -32,6 +32,28 @@ import { FXComposer, FXComposerHandler } from "@lisn/effects/fx-composer";
 import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
 import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
 
+// -------------------------------------------------------------------------
+// -------------------- BUILT-IN MATCHERS SINGLE EXPORT --------------------
+// -------------------------------------------------------------------------
+
+/**
+ * Function wrappers around built-in matchers.
+ */
+export const FX_MATCH = {
+  negate: (matcher: FXMatcher) => new FXNegateMatcher(matcher),
+  composer: (composer: FXComposer, bounds: FXComposerMatcherBounds) =>
+    new FXComposerMatcher(composer, bounds),
+  scroll: (scrollable: ScrollTarget, bounds: FXScrollMatcherBounds) =>
+    new FXScrollMatcher(scrollable, bounds),
+  view: (
+    viewTarget: ViewTarget,
+    views: CommaSeparatedStr<View> | View[],
+    config?: ViewWatcherConfig,
+  ) => new FXViewMatcher(viewTarget, views, config),
+} as const;
+
+// -------------------------------------------------------------------------
+
 /**
  * A pin matcher internally keeps track of certain conditions and has a binary
  * state (matches/does not match).
@@ -39,13 +61,13 @@ import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
  * This is a generic class that accepts a custom executor function. You want to
  * subclass it when defining your own matcher types.
  *
- * @param executor A function which accepts a {@link FXPinMatcherStore}. The
+ * @param executor A function which accepts a {@link FXMatcherStore}. The
  *                 executor is responsible for calling
- *                 {@link FXPinMatcher.setState | store.setState} whenever it's
+ *                 {@link FXMatcher.setState | store.setState} whenever it's
  *                 state changes. It will be called inside the class constructor
  *                 with `this` set to the newly created matcher.
  */
-export abstract class FXPinMatcher {
+export abstract class FXMatcher {
   /**
    * Returns true if the matcher has matched.
    */
@@ -54,17 +76,17 @@ export abstract class FXPinMatcher {
   /**
    * Calls the given handler whenever the matcher's state changes.
    */
-  onChange: (handler: FXPinMatcherHandler) => void;
+  onChange: (handler: FXMatcherHandler) => void;
 
   /**
    * Removes a previously added {@link offChange} handler.
    */
-  offChange: (handler: FXPinMatcherHandler) => void;
+  offChange: (handler: FXMatcherHandler) => void;
 
-  protected constructor(executor: (store: FXPinMatcherStore) => void) {
+  protected constructor(executor: (store: FXMatcherStore) => void) {
     const storeData = { matches: false };
 
-    const store: FXPinMatcherStore = {
+    const store: FXMatcherStore = {
       getState: () => storeData.matches,
       setState: (m) => {
         if (storeData.matches !== m) {
@@ -74,20 +96,17 @@ export abstract class FXPinMatcher {
       },
     };
 
-    const changeCallbacks = MH.newMap<
-      FXPinMatcherHandler,
-      FXPinMatcherCallback
-    >();
+    const changeCallbacks = MH.newMap<FXMatcherHandler, FXMatcherCallback>();
 
     // --------------------
 
     this.matches = () => storeData.matches;
 
-    this.onChange = (handler: FXPinMatcherHandler) => {
+    this.onChange = (handler: FXMatcherHandler) => {
       addNewCallbackToMap(changeCallbacks, handler);
     };
 
-    this.offChange = (handler: FXPinMatcherHandler) => {
+    this.offChange = (handler: FXMatcherHandler) => {
       MH.remove(changeCallbacks.get(handler));
     };
 
@@ -97,33 +116,32 @@ export abstract class FXPinMatcher {
 
 /**
  * A relative pin matcher is a type of matcher that supports relative inputs
- * (e.g. "+200") and XXX
+ * (e.g. "+200") and it calculates the resulting value based on its internal
+ * data at the time it was last {@link FXRelativeMatcher.restart | restarted}.
  *
  * This is a generic class that accepts a custom executor function. You want to
  * subclass it when defining your own matcher types.
  *
- * @param executor A function which accepts a {@link FXPinMatcherStore}. The
+ * @param executor A function which accepts a {@link FXMatcherStore}. The
  *                 executor is responsible for calling
- *                 {@link FXPinMatcher.setState | store.setState} and
- *                 {@link FXPinMatcher.setData | store.setData} whenever it's
+ *                 {@link FXMatcher.setState | store.setState} and
+ *                 {@link FXMatcher.setData | store.setData} whenever it's
  *                 state or data change. It will be called inside the class
  *                 constructor with `this` set to the newly created matcher.
  */
-export abstract class FXPinRelativeMatcher<D = unknown> extends FXPinMatcher {
+export abstract class FXRelativeMatcher<D = unknown> extends FXMatcher {
   /**
    * Updates the matcher's internal reference data to be its current data.
    */
   restart: () => void;
 
-  protected constructor(
-    executor: (store: FXPinRelativeMatcherStore<D>) => void,
-  ) {
-    let baseStore: FXPinMatcherStore;
+  protected constructor(executor: (store: FXRelativeMatcherStore<D>) => void) {
+    let baseStore: FXMatcherStore;
     super((store) => (baseStore = store));
 
     const storeData: { data?: D; refData?: D } = {};
 
-    const store: FXPinRelativeMatcherStore<D> = {
+    const store: FXRelativeMatcherStore<D> = {
       getState: () => baseStore.getState(),
       setState: (m) => baseStore.setState(m),
       getData: () => storeData.data,
@@ -146,24 +164,24 @@ export abstract class FXPinRelativeMatcher<D = unknown> extends FXPinMatcher {
 /**
  * The handler is invoked with two arguments:
  *
- * - The current state of the {@link FXPinMatcher} where `true` means it
- *   matches.
- * - The {@link FXPinMatcher} instance.
+ * - The current state of the {@link FXMatcher} where `true` means it matches.
+ * - The {@link FXMatcher} instance.
  */
-export type FXPinMatcherHandlerArgs<T extends FXPinMatcher = FXPinMatcher> = [
+export type FXMatcherHandlerArgs<T extends FXMatcher = FXMatcher> = [
   boolean,
   T,
 ];
-export type FXPinMatcherCallback<T extends FXPinMatcher = FXPinMatcher> =
-  Callback<FXPinMatcherHandlerArgs<T>>;
-export type FXPinMatcherHandler<T extends FXPinMatcher = FXPinMatcher> =
-  | FXPinMatcherCallback<T>
-  | CallbackHandler<FXPinMatcherHandlerArgs<T>>;
+export type FXMatcherCallback<T extends FXMatcher = FXMatcher> = Callback<
+  FXMatcherHandlerArgs<T>
+>;
+export type FXMatcherHandler<T extends FXMatcher = FXMatcher> =
+  | FXMatcherCallback<T>
+  | CallbackHandler<FXMatcherHandlerArgs<T>>;
 
 /**
  * Internal state and data management for a matcher to be used by its executor.
  */
-export type FXPinMatcherStore = {
+export type FXMatcherStore = {
   /**
    * Returns the current state, last set using {@link setState}.
    */
@@ -181,7 +199,7 @@ export type FXPinMatcherStore = {
  *
  * @interface
  */
-export type FXPinRelativeMatcherStore<D = unknown> = FXPinMatcherStore & {
+export type FXRelativeMatcherStore<D = unknown> = FXMatcherStore & {
   /**
    * Returns the current data, last set using {@link setData}.
    */
@@ -193,8 +211,8 @@ export type FXPinRelativeMatcherStore<D = unknown> = FXPinMatcherStore & {
   setData: (data: D) => void;
 
   /**
-   * Returns the data at the time {@link FXPinMatcher.restart | restart} was
-   * last called on the matcher.
+   * Returns the data at the time {@link FXMatcher.restart | restart} was last
+   * called on the matcher.
    */
   getReferenceData: () => D | undefined;
 };
@@ -206,12 +224,12 @@ export type FXPinRelativeMatcherStore<D = unknown> = FXPinMatcherStore & {
 // -------------------------------- NEGATE ---------------------------------
 
 /**
- * Negates the given matcher. {@link FXPinMatcher.restart | restarting} it
+ * Negates the given matcher. {@link FXMatcher.restart | restarting} it
  * **won't** call the restart method on the original matcher.
  */
-export class FXPinNegateMatcher extends FXPinMatcher {
-  constructor(matcher: FXPinMatcher) {
-    const executor = (store: FXPinMatcherStore) => {
+export class FXNegateMatcher extends FXMatcher {
+  constructor(matcher: FXMatcher) {
+    const executor = (store: FXMatcherStore) => {
       store.setState(!matcher.matches());
       matcher.onChange((state) => store.setState(!state));
     };
@@ -222,25 +240,25 @@ export class FXPinNegateMatcher extends FXPinMatcher {
 // ------------------------------- COMPOSER --------------------------------
 
 /**
- * {@link FXPinComposerMatcher} matches when the given composer's parameters are
+ * {@link FXComposerMatcher} matches when the given composer's parameters are
  * less than or greater than the given reference values. It supports
  * {@link RawOrRelativeNumber | relative} offsets as `"+<number>"` or
  * `"-<number>"` which will be relative to when it was last restarted.
  *
  * If the value is a percentage rather than an absolute number, it will be
  * treated as a fraction of the difference between the minimum and maximum
- * values of each axis' parameters. See {@link FXPinComposerMatcherBounds} for
+ * values of each axis' parameters. See {@link FXComposerMatcherBounds} for
  * an example.
  */
-export class FXPinComposerMatcher extends FXPinRelativeMatcher<FXState> {
-  constructor(composer: FXComposer, config: FXPinComposerMatcherBounds) {
+export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
+  constructor(composer: FXComposer, config: FXComposerMatcherBounds) {
     if (!config) {
       throw MH.usageError(
-        "At least one parameter bounding value is required for FXPinComposerMatcher",
+        "At least one parameter bounding value is required for FXComposerMatcher",
       );
     }
 
-    const executor = (store: FXPinRelativeMatcherStore<FXState>) => {
+    const executor = (store: FXRelativeMatcherStore<FXState>) => {
       const updateData: FXComposerHandler = (fxState) => {
         store.setData(fxState);
         store.setState(
@@ -279,7 +297,7 @@ export class FXPinComposerMatcher extends FXPinRelativeMatcher<FXState> {
  * - `"-10%"` is treated as 10% less than the value since the matcher was last
  *   restarted.
  */
-export type FXPinComposerMatcherBounds = AtLeastOne<{
+export type FXComposerMatcherBounds = AtLeastOne<{
   /**
    * Maximum X, Y and/or Z values for the composer's state parameters. If the
    * parameters exceed this, the matcher will not match.
@@ -304,33 +322,33 @@ export type FXPinComposerMatcherBounds = AtLeastOne<{
 // -------------------------------- SCROLL ---------------------------------
 
 /**
- * {@link FXPinScrollMatcher} matches when the scroll offset of the given
+ * {@link FXScrollMatcher} matches when the scroll offset of the given
  * scrollable is less than or greater than the given reference. It supports
  * {@link RawOrRelativeNumber | relative} offsets as `"+<number>"` or
  * `"-<number>"` which will be relative to when it was last restarted.
  *
  * If the value is a percentage rather than an absolute number, it will be
  * treated as a fraction of the scroll width or height of the scrollable. See
- * {@link FXPinScrollMatcherBounds} for an example.
+ * {@link FXScrollMatcherBounds} for an example.
  *
  * If you are using this matcher for an effect that's triggered on scroll (i.e.
  * updated by a composer that is triggered by an {@link FXScrollTrigger}), it's
- * better to use the {@link FXPinComposerMatcher} and pass it the composer.
+ * better to use the {@link FXComposerMatcher} and pass it the composer.
  */
-export class FXPinScrollMatcher extends FXPinRelativeMatcher<
+export class FXScrollMatcher extends FXRelativeMatcher<
   FXPinAllAxesData<"top" | "left">
 > {
-  constructor(scrollable: ScrollTarget, bounds: FXPinScrollMatcherBounds) {
+  constructor(scrollable: ScrollTarget, bounds: FXScrollMatcherBounds) {
     if (!bounds) {
       throw MH.usageError(
-        "At least one scroll offset bounding value is required for FXPinScrollMatcher",
+        "At least one scroll offset bounding value is required for FXScrollMatcher",
       );
     }
 
     const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
 
     const executor = (
-      store: FXPinRelativeMatcherStore<FXPinAllAxesData<"top" | "left">>,
+      store: FXRelativeMatcherStore<FXPinAllAxesData<"top" | "left">>,
     ) => {
       const updateData: OnScrollHandler = (e__ignored, scrollData) => {
         const data: FXPinAllAxesData<"top" | "left"> = {
@@ -384,7 +402,7 @@ export class FXPinScrollMatcher extends FXPinRelativeMatcher<
  * - `"-10%"` is treated as 10% the scroll height/width back up/left since the
  *   matcher was last restarted.
  */
-export type FXPinScrollMatcherBounds = AtLeastOne<{
+export type FXScrollMatcherBounds = AtLeastOne<{
   /**
    * Maximum top and/or left scroll offset. If the scroll offset exceeds this,
    * the matcher will not match.
@@ -407,13 +425,13 @@ export type FXPinScrollMatcherBounds = AtLeastOne<{
 // --------------------------------- VIEW ----------------------------------
 
 /**
- * {@link FXPinViewMatcher} matches when the "view" of given root, or the
+ * {@link FXViewMatcher} matches when the "view" of given root, or the
  * viewport by default, relative to the given view target matches the specified
  * {@link View | views}.
  *
  * @see {@link ViewWatcher}.
  */
-export class FXPinViewMatcher extends FXPinMatcher {
+export class FXViewMatcher extends FXMatcher {
   constructor(
     viewTarget: ViewTarget,
     views: CommaSeparatedStr<View> | View[],
@@ -421,20 +439,20 @@ export class FXPinViewMatcher extends FXPinMatcher {
   ) {
     if (!viewTarget || !views) {
       throw MH.usageError(
-        "View target and views are required for FXPinViewMatcher",
+        "View target and views are required for FXViewMatcher",
       );
     }
 
     const oppositeViews = getOppositeViews(views);
     if (!MH.lengthOf(oppositeViews)) {
       throw MH.usageError(
-        "Views given to FXPinViewMatcher cannot include all possible views",
+        "Views given to FXViewMatcher cannot include all possible views",
       );
     }
 
     const viewWatcher = ViewWatcher.reuse(config);
 
-    const executor = (store: FXPinMatcherStore) => {
+    const executor = (store: FXMatcherStore) => {
       viewWatcher.onView(viewTarget, () => store.setState(true), { views });
       viewWatcher.onView(viewTarget, () => store.setState(false), {
         views: oppositeViews,
@@ -445,26 +463,6 @@ export class FXPinViewMatcher extends FXPinMatcher {
   }
 }
 
-// -------------------------------------------------------------------------
-// -------------------- BUILT-IN MATCHERS SINGLE EXPORT --------------------
-// -------------------------------------------------------------------------
-
-/**
- * Function wrappers around built-in matchers.
- */
-export const PIN_MATCHERS = {
-  negate: (matcher: FXPinMatcher) => new FXPinNegateMatcher(matcher),
-  composer: (composer: FXComposer, bounds: FXPinComposerMatcherBounds) =>
-    new FXPinComposerMatcher(composer, bounds),
-  scroll: (scrollable: ScrollTarget, bounds: FXPinScrollMatcherBounds) =>
-    new FXPinScrollMatcher(scrollable, bounds),
-  view: (
-    viewTarget: ViewTarget,
-    views: CommaSeparatedStr<View> | View[],
-    config?: ViewWatcherConfig,
-  ) => new FXPinViewMatcher(viewTarget, views, config),
-} as const;
-
 // ------------------------------
 
 type FXPinAxisData = { min: number; max: number; current: number };
@@ -473,7 +471,7 @@ type FXPinAllAxesData<Keys extends string> = { [K in Keys]: FXPinAxisData };
 
 /**
  * Converts the given input raw or relative number as explained in
- * {@link FXPinComposerMatcherBounds}.
+ * {@link FXComposerMatcherBounds}.
  *
  * @return `defaultValue` if it doesn't resolve to a valid number.
  */

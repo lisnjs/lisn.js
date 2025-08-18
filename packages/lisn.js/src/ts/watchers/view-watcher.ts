@@ -751,7 +751,7 @@ export type TrackViewOptions = {
  *   as a result.
  * - The {@link ViewData} for the target.
  * - (since v1.3.0) The {@link ViewData} for the target when the callback was
- *   last called. Will be `undefined` the first time.
+ *   last called. Will be `undefined` during the initial call.
  * - (since v1.3.0) The {@link ViewWatcher} instance.
  */
 export type OnViewHandlerArgs = [

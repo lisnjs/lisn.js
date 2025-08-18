@@ -504,7 +504,7 @@ export type OnResizeOptions = {
  *   size of the viewport
  * - The {@link SizeData} for the element.
  * - (since v1.3.0) The {@link SizeData} for the element when the callback was
- *   last called. Will be `undefined` the first time.
+ *   last called. Will be `undefined` during the initial call.
  * - (since v1.3.0) The {@link SizeWatcher} instance.
  */
 export type OnResizeHandlerArgs = [

@@ -964,7 +964,7 @@ export type ScrollOptions = ScrollToOptions & {
  * - (since v1.3.0) The {@link ScrollData} for the element when the thresholds
  *   for this callback were last exceeded. If the callback is called for any
  *   scroll direction, then this will be the data when it was last invoked. Will
- *   be `undefined` the first time.
+ *   be `undefined` during the initial call.
  * - (since v1.3.0) The {@link ScrollWatcher} instance.
  */
 export type OnScrollHandlerArgs = [

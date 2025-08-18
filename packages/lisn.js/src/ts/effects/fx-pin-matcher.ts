@@ -8,12 +8,16 @@ import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
 import {
+  View,
+  ViewTarget,
+  CommaSeparatedStr,
   AtLeastOne,
   ScrollTarget,
   RawOrRelativeNumber,
 } from "@lisn/globals/types";
 
 import { toRawNum, RawNumberCalculator } from "@lisn/utils/math";
+import { getOppositeViews } from "@lisn/utils/views";
 
 import {
   CallbackHandler,
@@ -26,6 +30,7 @@ import { FXState } from "@lisn/effects/effect";
 import { FXComposer, FXComposerHandler } from "@lisn/effects/fx-composer";
 
 import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
+import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
 
 /**
  * A pin matcher internally keeps track of certain conditions and has a binary
@@ -214,124 +219,21 @@ export class FXPinNegateMatcher extends FXPinMatcher {
   }
 }
 
-// -------------------------------- SCROLL ---------------------------------
+// ------------------------------- COMPOSER --------------------------------
 
 /**
- * Matches when the scroll offset of the given scrollable is less than or
- * greater than the given reference. It supports
+ * {@link FXPinComposerMatcher} matches when the given composer's parameters are
+ * less than or greater than the given reference values. It supports
  * {@link RawOrRelativeNumber | relative} offsets as `"+<number>"` or
  * `"-<number>"` which will be relative to when it was last restarted.
  *
  * If the value is a percentage rather than an absolute number, it will be
- * treated as a fraction of the scroll width or height of the scrollable. See
- * {@link FXPinScrollMatcherConfig} for an example.
- *
- * If you are using this matcher for an effect that's triggered on scroll (i.e.
- * updated by a composer that is triggered by an {@link FXScrollTrigger}), it's
- * better to use the {@link FXPinComposerMatcher} and pass it the composer.
- */
-export class FXPinScrollMatcher extends FXPinRelativeMatcher<
-  FXPinAllAxesData<"top" | "left">
-> {
-  constructor(scrollable: ScrollTarget, config: FXPinScrollMatcherConfig) {
-    if (!config) {
-      throw MH.usageError(
-        "At least one scroll offset bounding value is required for FXPinScrollMatcher",
-      );
-    }
-
-    const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
-
-    const executor = (
-      store: FXPinRelativeMatcherStore<FXPinAllAxesData<"top" | "left">>,
-    ) => {
-      const updateData: OnScrollHandler = (e__ignored, scrollData) => {
-        const data: FXPinAllAxesData<"top" | "left"> = {
-          top: {
-            min: 0,
-            max: scrollData[MC.S_SCROLL_HEIGHT],
-            current: scrollData[MC.S_SCROLL_TOP],
-          },
-          left: {
-            min: 0,
-            max: scrollData[MC.S_SCROLL_WIDTH],
-            current: scrollData[MC.S_SCROLL_LEFT],
-          },
-        };
-
-        store.setData(data);
-        store.setState(
-          axesAreWithinBounds(config, data, store.getReferenceData()),
-        );
-      };
-
-      scrollWatcher.trackScroll(updateData, { scrollable });
-    };
-
-    super(executor);
-  }
-}
-
-/**
- * Minimum and/or maximum top and/or left scroll offsets.
- *
- * {@link RawOrRelativeNumber | Relative} offsets with `+` or `-` prefix are
- * relative to when the matcher was last restarted.
- *
- * If the value is a percentage, it will be treated as a fraction of the scroll
- * width or height of the scrollable.
- *
- * @example
- * - `10` or `"10"` is treated as an absolute scroll top/left offset of 10
- *   pixels ignoring the reference value (at the time of last restart).
- * - `"10%"` is treated as an absolute scroll top/left offset of 10%
- *   of the scroll height/width of the scrollable, ignoring the reference value
- *   (at the time of last restart).
- *
- * - `"+10"` is treated as 10 pixels further down/right since the matcher was
- *   last restarted.
- * - `"-10"` is treated as 10 pixels back up/left since the matcher was last
- *   restarted.
- * - `"+10%"` is treated as 10% the scroll height/width further down/right since
- *   the matcher was last restarted.
- * - `"-10%"` is treated as 10% the scroll height/width back up/left since the
- *   matcher was last restarted.
- */
-export type FXPinScrollMatcherConfig = AtLeastOne<{
-  /**
-   * Maximum top and/or left scroll offset. If the scroll offset exceeds this,
-   * the matcher will not match.
-   */
-  max: AtLeastOne<{
-    top: RawOrRelativeNumber;
-    left: RawOrRelativeNumber;
-  }>;
-
-  /**
-   * Minimum top and/or left scroll offset. If the scroll offset is less than
-   * this, the matcher will not match.
-   */
-  min: AtLeastOne<{
-    top: RawOrRelativeNumber;
-    left: RawOrRelativeNumber;
-  }>;
-}>;
-
-// ------------------------------- COMPOSER --------------------------------
-
-/**
- * Matches when the given composer's parameters are less than or greater than
- * the given reference values. It supports {@link RawOrRelativeNumber | relative}
- * offsets as `"+<number>"` or `"-<number>"` which will be relative to when it
- * was last restarted.
- *
- * If the value is a percentage rather than an absolute number, it will be
  * treated as a fraction of the difference between the minimum and maximum
- * values of each axis' parameters. See {@link FXPinComposerMatcherConfig} for
+ * values of each axis' parameters. See {@link FXPinComposerMatcherBounds} for
  * an example.
  */
 export class FXPinComposerMatcher extends FXPinRelativeMatcher<FXState> {
-  constructor(composer: FXComposer, config: FXPinComposerMatcherConfig) {
+  constructor(composer: FXComposer, config: FXPinComposerMatcherBounds) {
     if (!config) {
       throw MH.usageError(
         "At least one parameter bounding value is required for FXPinComposerMatcher",
@@ -377,7 +279,7 @@ export class FXPinComposerMatcher extends FXPinRelativeMatcher<FXState> {
  * - `"-10%"` is treated as 10% less than the value since the matcher was last
  *   restarted.
  */
-export type FXPinComposerMatcherConfig = AtLeastOne<{
+export type FXPinComposerMatcherBounds = AtLeastOne<{
   /**
    * Maximum X, Y and/or Z values for the composer's state parameters. If the
    * parameters exceed this, the matcher will not match.
@@ -399,6 +301,150 @@ export type FXPinComposerMatcherConfig = AtLeastOne<{
   }>;
 }>;
 
+// -------------------------------- SCROLL ---------------------------------
+
+/**
+ * {@link FXPinScrollMatcher} matches when the scroll offset of the given
+ * scrollable is less than or greater than the given reference. It supports
+ * {@link RawOrRelativeNumber | relative} offsets as `"+<number>"` or
+ * `"-<number>"` which will be relative to when it was last restarted.
+ *
+ * If the value is a percentage rather than an absolute number, it will be
+ * treated as a fraction of the scroll width or height of the scrollable. See
+ * {@link FXPinScrollMatcherBounds} for an example.
+ *
+ * If you are using this matcher for an effect that's triggered on scroll (i.e.
+ * updated by a composer that is triggered by an {@link FXScrollTrigger}), it's
+ * better to use the {@link FXPinComposerMatcher} and pass it the composer.
+ */
+export class FXPinScrollMatcher extends FXPinRelativeMatcher<
+  FXPinAllAxesData<"top" | "left">
+> {
+  constructor(scrollable: ScrollTarget, bounds: FXPinScrollMatcherBounds) {
+    if (!bounds) {
+      throw MH.usageError(
+        "At least one scroll offset bounding value is required for FXPinScrollMatcher",
+      );
+    }
+
+    const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
+
+    const executor = (
+      store: FXPinRelativeMatcherStore<FXPinAllAxesData<"top" | "left">>,
+    ) => {
+      const updateData: OnScrollHandler = (e__ignored, scrollData) => {
+        const data: FXPinAllAxesData<"top" | "left"> = {
+          top: {
+            min: 0,
+            max: scrollData[MC.S_SCROLL_HEIGHT],
+            current: scrollData[MC.S_SCROLL_TOP],
+          },
+          left: {
+            min: 0,
+            max: scrollData[MC.S_SCROLL_WIDTH],
+            current: scrollData[MC.S_SCROLL_LEFT],
+          },
+        };
+
+        store.setData(data);
+        store.setState(
+          axesAreWithinBounds(bounds, data, store.getReferenceData()),
+        );
+      };
+
+      scrollWatcher.trackScroll(updateData, { scrollable });
+    };
+
+    super(executor);
+  }
+}
+
+/**
+ * Minimum and/or maximum top and/or left scroll offsets.
+ *
+ * {@link RawOrRelativeNumber | Relative} offsets with `+` or `-` prefix are
+ * relative to when the matcher was last restarted.
+ *
+ * If the value is a percentage, it will be treated as a fraction of the scroll
+ * width or height of the scrollable.
+ *
+ * @example
+ * - `10` or `"10"` is treated as an absolute scroll top/left offset of 10
+ *   pixels ignoring the reference value (at the time of last restart).
+ * - `"10%"` is treated as an absolute scroll top/left offset of 10%
+ *   of the scroll height/width of the scrollable, ignoring the reference value
+ *   (at the time of last restart).
+ *
+ * - `"+10"` is treated as 10 pixels further down/right since the matcher was
+ *   last restarted.
+ * - `"-10"` is treated as 10 pixels back up/left since the matcher was last
+ *   restarted.
+ * - `"+10%"` is treated as 10% the scroll height/width further down/right since
+ *   the matcher was last restarted.
+ * - `"-10%"` is treated as 10% the scroll height/width back up/left since the
+ *   matcher was last restarted.
+ */
+export type FXPinScrollMatcherBounds = AtLeastOne<{
+  /**
+   * Maximum top and/or left scroll offset. If the scroll offset exceeds this,
+   * the matcher will not match.
+   */
+  max: AtLeastOne<{
+    top: RawOrRelativeNumber;
+    left: RawOrRelativeNumber;
+  }>;
+
+  /**
+   * Minimum top and/or left scroll offset. If the scroll offset is less than
+   * this, the matcher will not match.
+   */
+  min: AtLeastOne<{
+    top: RawOrRelativeNumber;
+    left: RawOrRelativeNumber;
+  }>;
+}>;
+//
+// --------------------------------- VIEW ----------------------------------
+
+/**
+ * {@link FXPinViewMatcher} matches when the "view" of given root, or the
+ * viewport by default, relative to the given view target matches the specified
+ * {@link View | views}.
+ *
+ * @see {@link ViewWatcher}.
+ */
+export class FXPinViewMatcher extends FXPinMatcher {
+  constructor(
+    viewTarget: ViewTarget,
+    views: CommaSeparatedStr<View> | View[],
+    config?: ViewWatcherConfig,
+  ) {
+    if (!viewTarget || !views) {
+      throw MH.usageError(
+        "View target and views are required for FXPinViewMatcher",
+      );
+    }
+
+    const oppositeViews = getOppositeViews(views);
+    if (!MH.lengthOf(oppositeViews)) {
+      throw MH.usageError(
+        "Views given to FXPinViewMatcher cannot include all possible views",
+      );
+    }
+
+    const viewWatcher = ViewWatcher.reuse(config);
+
+    const executor = (store: FXPinMatcherStore) => {
+      viewWatcher.onView(viewTarget, () => store.setState(true), { views });
+      viewWatcher.onView(viewTarget, () => store.setState(false), {
+        views: oppositeViews,
+      });
+    };
+
+    super(executor);
+  }
+}
+
 // -------------------------------------------------------------------------
 // -------------------- BUILT-IN MATCHERS SINGLE EXPORT --------------------
 // -------------------------------------------------------------------------
@@ -408,10 +454,15 @@ export type FXPinComposerMatcherConfig = AtLeastOne<{
  */
 export const PIN_MATCHERS = {
   negate: (matcher: FXPinMatcher) => new FXPinNegateMatcher(matcher),
-  scroll: (scrollable: ScrollTarget, config: FXPinScrollMatcherConfig) =>
-    new FXPinScrollMatcher(scrollable, config),
-  composer: (composer: FXComposer, config: FXPinComposerMatcherConfig) =>
-    new FXPinComposerMatcher(composer, config),
+  composer: (composer: FXComposer, bounds: FXPinComposerMatcherBounds) =>
+    new FXPinComposerMatcher(composer, bounds),
+  scroll: (scrollable: ScrollTarget, bounds: FXPinScrollMatcherBounds) =>
+    new FXPinScrollMatcher(scrollable, bounds),
+  view: (
+    viewTarget: ViewTarget,
+    views: CommaSeparatedStr<View> | View[],
+    config?: ViewWatcherConfig,
+  ) => new FXPinViewMatcher(viewTarget, views, config),
 } as const;
 
 // ------------------------------
@@ -422,7 +473,7 @@ type FXPinAllAxesData<Keys extends string> = { [K in Keys]: FXPinAxisData };
 
 /**
  * Converts the given input raw or relative number as explained in
- * FXPinComposerMatcherConfig.
+ * {@link FXPinComposerMatcherBounds}.
  *
  * @return `defaultValue` if it doesn't resolve to a valid number.
  */

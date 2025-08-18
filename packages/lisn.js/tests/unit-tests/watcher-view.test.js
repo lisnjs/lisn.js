@@ -95,6 +95,11 @@ describe("initial call", () => {
 
     await window.waitForVW();
     expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback.mock.calls[0].length).toBe(4);
+    expect(callback.mock.calls[0][0]).toBe(element);
+    expect(callback.mock.calls[0][1].isIntersecting).toBe(true);
+    expect(callback.mock.calls[0][2]).toBeUndefined();
+    expect(callback.mock.calls[0][3]).toBe(watcher);
 
     const callbackB = jest.fn();
     await watcher.onView(element, callbackB);
@@ -152,6 +157,17 @@ describe("initial call", () => {
     expect(callbackB).toHaveBeenCalledTimes(2);
     expect(callbackC).toHaveBeenCalledTimes(2);
     expect(callbackD).toHaveBeenCalledTimes(1);
+
+    for (const cbk of [callback, callbackB, callbackC, callbackD]) {
+      const c = cbk.mock.calls.length - 1;
+      expect(cbk.mock.calls[c].length).toBe(4);
+      expect(cbk.mock.calls[c][0]).toBe(element);
+      if (c > 0) {
+        // previous data equals the latest data from the previous call
+        expect(cbk.mock.calls[c][2]).toEqual(cbk.mock.calls[c - 1][1]);
+      }
+      expect(cbk.mock.calls[c][3]).toBe(watcher);
+    }
   });
 
   test("after there's been a matching 'view': first and subsequent of type", async () => {
@@ -344,11 +360,10 @@ describe("views", () => {
         expect(restrictedCallbacks[filterView]).toHaveBeenCalledTimes(0);
       }
 
-      let nCalls = 0;
       observer.trigger(element, [triggerView]);
       await window.waitForVW();
-      expect(callback).toHaveBeenCalledTimes(++nCalls);
-      expect(callback.mock.calls[nCalls - 1][1].views).toEqual([triggerView]);
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback.mock.calls[0][1].views).toEqual([triggerView]);
       for (const filterView in restrictedCallbacks) {
         expect(restrictedCallbacks[filterView]).toHaveBeenCalledTimes(
           filterView === triggerView ? 1 : 0,
@@ -372,11 +387,10 @@ describe("views", () => {
       expect(callback).toHaveBeenCalledTimes(0);
       expect(restrictedCallback).toHaveBeenCalledTimes(0);
 
-      let nCalls = 0;
       observer.trigger(element, [triggerView]);
       await window.waitForVW();
-      expect(callback).toHaveBeenCalledTimes(++nCalls);
-      expect(callback.mock.calls[nCalls - 1][1].views).toEqual([triggerView]);
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback.mock.calls[0][1].views).toEqual([triggerView]);
       expect(restrictedCallback).toHaveBeenCalledTimes(
         triggerView === "left" || triggerView === "above" ? 1 : 0,
       );

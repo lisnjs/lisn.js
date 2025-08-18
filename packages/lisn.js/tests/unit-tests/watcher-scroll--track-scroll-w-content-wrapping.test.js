@@ -9,7 +9,6 @@ let viewportOverlay;
 window.LISN.settings.contentWrappingAllowed = true;
 
 document.documentElement.enableScroll();
-
 beforeAll(async () => {
   viewportOverlay = await fetchViewportOverlay();
 });
@@ -43,7 +42,7 @@ describe("trackScroll", () => {
     element.append(document.createElement("div"));
     element.append(document.createElement("div"));
     // The above will activate DOMWatcher and SizeWatcher, so wait before adding
-    await window.waitForAF();
+    await window.waitFor(100);
 
     const wrapper = Callback.wrap(callback);
 
@@ -57,15 +56,15 @@ describe("trackScroll", () => {
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(2);
 
-    // resize element
+    // resize client width/height
     element.resize([100, 100]);
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(3);
 
-    // add children (resize content)
+    // add children (resize scroll width/height
     element.append(document.createElement("div"));
     element.append(document.createElement("div"));
-    await window.waitFor(150);
+    await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(4);
 
     // remove
@@ -77,13 +76,15 @@ describe("trackScroll", () => {
     expect(callback).toHaveBeenCalledTimes(4); // no new calls
   });
 
-  test("custom handler on window", async () => {
+  test("custom handler on main", async () => {
     const { watcher, callback } = newWatcherElement();
     document.body.append(document.createElement("div"));
     document.body.append(document.createElement("div"));
-    document.documentElement.enableScroll();
+    document.documentElement.resize([700, 500]);
+    viewportOverlay.resize([700, 500]);
+
     // The above will activate DOMWatcher and SizeWatcher, so wait before adding
-    await window.waitForAF();
+    await window.waitFor(100);
 
     await watcher.trackScroll(callback);
 
@@ -91,23 +92,21 @@ describe("trackScroll", () => {
     expect(callback).toHaveBeenCalledTimes(1); // initial call
 
     // scroll document
-    document.documentElement.scrollTo(1, 1);
+    document.documentElement.scrollTo(200, 200);
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(2);
 
     // resize viewport
-    document.documentElement.resize([100, 100]); // content
+    viewportOverlay.resize([100, 100]);
+    document.documentElement.resize([100, 100]);
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(3);
 
-    viewportOverlay.resize([100, 100]); // viewport
+    // change content size
+    // add content (our mock appendAndResize will resize documentElement, so no
+    // need to: document.documentElement.resize([1000, 1000]);
+    document.body.appendAndResize(document.createElement("div"));
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(4);
-
-    // add children (resize content)
-    // TODO how to mock: our mock append to body won't resize documentElement
-    // document.body.append(document.createElement("div"));
-    // await window.waitFor(100);
-    // expect(callback).toHaveBeenCalledTimes(5);
   });
 });

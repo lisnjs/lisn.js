@@ -29,7 +29,7 @@ const newWatcherElement = (config = null) => {
   return { watcher, callback, element };
 };
 
-test("on window", async () => {
+test("on main", async () => {
   const { watcher } = newWatcherElement();
 
   window.MAIN_CONTENT_ELEMENT.scrollTo(10, 15);

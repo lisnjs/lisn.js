@@ -37,16 +37,55 @@ Element.prototype.getBoundingClientRect = function () {
   return boundingClientRect;
 };
 
+const resizeThisAndParents = (el) => {
+  while (el) {
+    if (el._isScrollable) {
+      el.resize(
+        [el.offsetWidth, el.offsetHeight],
+        [el.clientWidth, el.clientHeight],
+        [el.scrollWidth, el.scrollHeight + 100],
+      );
+    }
+
+    if (el === document.documentElement || !el._isScrollable) {
+      el.resize(
+        [el.offsetWidth, el.offsetHeight + 100],
+        [el.clientWidth, el.clientHeight + 100],
+      );
+    }
+    el = el.parentElement;
+  }
+};
+
 const elementAppend = Element.prototype.append;
 Element.prototype.append = function (...args) {
+  // Ugly hack to make scroll watcher with content wrapping trigger when new
+  // elements are added to the original scrollable which it then moves into its
+  // content wrapper.
   elementAppend.apply(this, args);
-
-  if (!this._isScrollable) {
-    this.resize(
-      [this.offsetWidth, this.offsetHeight + 10],
-      [this.clientWidth, this.offsetHeight + 10],
-    );
+  if (this.classList.contains("lisn-scroll-watcher-wrapper")) {
+    resizeThisAndParents(this);
   }
+};
+
+Element.prototype.appendAndResize = function (...args) {
+  elementAppend.apply(this, args);
+  resizeThisAndParents(this);
+};
+
+Element.prototype.prependAndResize = function (...args) {
+  this.prepend(args);
+  resizeThisAndParents(this);
+};
+
+Element.prototype.beforeAndResize = function (...args) {
+  this.before(args);
+  resizeThisAndParents(this.parentElement);
+};
+
+Element.prototype.afterAndResize = function (...args) {
+  this.after(args);
+  resizeThisAndParents(this.parentElement);
 };
 
 // Prevent modifying scrollTop/Left unless element's been marked as scrollable
@@ -183,24 +222,30 @@ Object.defineProperty(HTMLElement.prototype, "offsetTop", {
 Element.prototype.resize = function (
   offset = [Math.random() * 1000, Math.random() * 1000],
   client = null,
+  scroll = null,
 ) {
   // For the purposes of mocking ResizeObserver, use offsetWidth/Height as
   // border box size and use clientWidth/Height as content box size...
   client = client ?? offset;
 
-  [this._prevOffsetWidth, this._prevOffsetHeight] = [
-    this.offsetWidth,
-    this.offsetHeight,
-  ];
-  [this._prevClientWidth, this._prevClientHeight] = [
-    this.clientWidth,
-    this.clientHeight,
-  ];
-  [this.offsetWidth, this.offsetHeight] = offset;
-  [this.clientWidth, this.clientHeight] = client;
+  if (this.offsetWidth !== offset[0] || this.offsetHeight !== offset[1]) {
+    [this._prevOffsetWidth, this._prevOffsetHeight] = [
+      this.offsetWidth,
+      this.offsetHeight,
+    ];
+    [this.offsetWidth, this.offsetHeight] = offset;
+  }
 
-  if (this.scrollWidth === 0 && this.scrollHeight === 0) {
-    [this.scrollWidth, this.scrollHeight] = client;
+  if (this.clientWidth !== client[0] || this.clientHeight !== client[1]) {
+    [this._prevClientWidth, this._prevClientHeight] = [
+      this.clientWidth,
+      this.clientHeight,
+    ];
+    [this.clientWidth, this.clientHeight] = client;
+  }
+
+  if (scroll) {
+    [this.scrollWidth, this.scrollHeight] = scroll;
   }
 
   this.dispatchEvent(new Event("resize"));

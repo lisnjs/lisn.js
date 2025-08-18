@@ -28,12 +28,12 @@ const newWatcherElement = (config = null) => {
   return { watcher, callback, element };
 };
 
-test("custom handler on window", async () => {
+test("custom handler on main", async () => {
   const { watcher, callback } = newWatcherElement();
   window.MAIN_CONTENT_ELEMENT.append(document.createElement("div"));
   window.MAIN_CONTENT_ELEMENT.append(document.createElement("div"));
   // The above will activate DOMWatcher and SizeWatcher, so wait before adding
-  await window.waitForAF();
+  await window.waitFor(100);
 
   await watcher.trackScroll(callback);
 
@@ -45,13 +45,13 @@ test("custom handler on window", async () => {
   await window.waitFor(100);
   expect(callback).toHaveBeenCalledTimes(2);
 
-  // resize element
+  // resize client width/height
   window.MAIN_CONTENT_ELEMENT.resize([100, 100]);
   await window.waitFor(100);
   expect(callback).toHaveBeenCalledTimes(3);
 
-  // add children (resize content)
-  window.MAIN_CONTENT_ELEMENT.append(document.createElement("div"));
+  // add children (resize scroll width/height)
+  window.MAIN_CONTENT_ELEMENT.appendAndResize(document.createElement("div"));
   await window.waitFor(100);
   expect(callback).toHaveBeenCalledTimes(4);
 });

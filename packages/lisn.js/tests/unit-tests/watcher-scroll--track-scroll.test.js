@@ -76,7 +76,7 @@ describe("trackScroll", () => {
     element.append(document.createElement("div"));
     element.append(document.createElement("div"));
     // The above will activate DOMWatcher and SizeWatcher, so wait before adding
-    await window.waitForAF();
+    await window.waitFor(100);
 
     const wrapper = Callback.wrap(callback);
 
@@ -90,13 +90,14 @@ describe("trackScroll", () => {
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(2);
 
-    // resize element
+    // resize client width/height
     element.resize([100, 100]);
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(3);
 
-    // add children (resize content)
-    element.append(document.createElement("div"));
+    // add children (resize scroll width/height)
+    element.appendAndResize(document.createElement("div"));
+    element.appendAndResize(document.createElement("div"));
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(4);
 
@@ -104,7 +105,7 @@ describe("trackScroll", () => {
     wrapper.remove();
     element.scrollTo(10, 10);
     element.resize([500, 500]);
-    element.append(document.createElement("div"));
+    element.appendAndResize(document.createElement("div"));
     await window.waitFor(100);
     expect(callback).toHaveBeenCalledTimes(4); // no new calls
   });

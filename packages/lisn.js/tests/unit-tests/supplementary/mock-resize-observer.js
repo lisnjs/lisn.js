@@ -59,6 +59,7 @@ class ResizeObserver {
       const changedContentW = content[0] !== target._prevClientWidth;
       const changedContentH = content[1] !== target._prevClientHeight;
       const observeType = this.targets.get(target);
+
       if (
         (observeType === "content-box" && changedContentH) ||
         changedContentW ||

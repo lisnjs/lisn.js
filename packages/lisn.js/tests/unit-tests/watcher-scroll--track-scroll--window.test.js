@@ -34,7 +34,7 @@ const roundTopF = (n) =>
 const roundLeftF = (n) =>
   round(n / (window.SCROLL_WIDTH - window.CLIENT_WIDTH)) + "";
 
-test("on window", async () => {
+test("on main", async () => {
   const { watcher } = newWatcherElement();
 
   document.documentElement.scrollTo(10, 15);

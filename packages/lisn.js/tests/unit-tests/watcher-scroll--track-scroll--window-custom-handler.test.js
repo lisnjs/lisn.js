@@ -33,12 +33,15 @@ const newWatcherElement = (config = null) => {
   return { watcher, callback, element };
 };
 
-test("custom handler on window", async () => {
+test("custom handler on main", async () => {
   const { watcher, callback } = newWatcherElement();
   document.body.append(document.createElement("div"));
   document.body.append(document.createElement("div"));
+  document.documentElement.resize([700, 500]);
+  viewportOverlay.resize([700, 500]);
+
   // The above will activate DOMWatcher and SizeWatcher, so wait before adding
-  await window.waitForAF();
+  await window.waitFor(100);
 
   await watcher.trackScroll(callback);
 
@@ -46,22 +49,20 @@ test("custom handler on window", async () => {
   expect(callback).toHaveBeenCalledTimes(1); // initial call
 
   // scroll document
-  document.documentElement.scrollTo(1, 1);
+  document.documentElement.scrollTo(200, 200);
   await window.waitFor(100);
   expect(callback).toHaveBeenCalledTimes(2);
 
   // resize viewport
-  document.documentElement.resize([100, 100]); // content
+  viewportOverlay.resize([100, 100]);
+  document.documentElement.resize([100, 100]);
   await window.waitFor(100);
   expect(callback).toHaveBeenCalledTimes(3);
 
-  viewportOverlay.resize([100, 100]); // viewport
+  // change content size
+  // add content (our mock append will resize documentElement, so no need to:
+  // document.documentElement.resize([1000, 1000]);
+  document.body.appendAndResize(document.createElement("div"));
   await window.waitFor(100);
   expect(callback).toHaveBeenCalledTimes(4);
-
-  // add children (resize content)
-  // TODO how to mock: our mock append to body won't resize documentElement
-  // document.body.append(document.createElement("div"));
-  // await window.waitFor(100);
-  // expect(callback).toHaveBeenCalledTimes(5);
 });

@@ -12,16 +12,23 @@ import { roundNumTo } from "@lisn/utils/math";
 
 /**
  * Copies object deeply including nested properties. Plain objects are recursed
- * into, but other values are copied as is.
+ * into, arrays and sets are cloned, but other values are copied as is.
  *
  * @since v1.3.0
  */
 export const deepCopy = <T extends NestedRecord<V>, V>(obj: T): T => {
+  // XXX TODO generalise it to work with arbitrary values and copy each iterable
+  // element
   const clone = MH.copyObject(obj); // shallow copy
 
   for (const key in clone) {
-    if (MH.isPlainObject(obj[key])) {
-      clone[key] = deepCopy(obj[key]) as T[typeof key];
+    const value = obj[key];
+    if (MH.isPlainObject(value)) {
+      clone[key] = deepCopy(value) as T[typeof key];
+    } else if (MH.isArray(value)) {
+      clone[key] = [...value] as T[typeof key]; // TODO deep copy each element
+    } else if (MH.isInstanceOf(value, Set)) {
+      clone[key] = MH.newSet(value) as T[typeof key]; // TODO deep copy each element
     }
   }
 

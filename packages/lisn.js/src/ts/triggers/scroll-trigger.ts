@@ -21,6 +21,7 @@ import {
   isValidXYDirection,
 } from "@lisn/utils/directions";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
+import { deepCopy } from "@lisn/utils/misc";
 import { validateStrList, validateNumber } from "@lisn/utils/validation";
 
 import { Action } from "@lisn/actions/action";
@@ -155,7 +156,7 @@ export class ScrollTrigger extends Trigger {
     }
 
     super(element, actions, config);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
 
     if (!MH.lengthOf(actions)) {
       return;

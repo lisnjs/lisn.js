@@ -10,6 +10,7 @@ import { Box, Dimension, Size, SizeTarget } from "@lisn/globals/types";
 import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { logError } from "@lisn/utils/log";
 import { toNonNegNum } from "@lisn/utils/math";
+import { deepCopy } from "@lisn/utils/misc";
 import {
   isValidBox,
   isValidDimension,
@@ -188,7 +189,7 @@ export class SizeWatcher {
       const element = await fetchElement(target);
       const sizeData = allSizeData.get(element);
       if (sizeData) {
-        return MH.copyObject(sizeData);
+        return deepCopy(sizeData);
       }
 
       return MH.newPromise((resolve) => {
@@ -645,7 +646,7 @@ const invokeCallback = (
   callback
     .invoke(
       element,
-      MH.copyObject(sizeData),
+      deepCopy(sizeData),
       lastSizeData, // no need to copy that one as it's not used again
       watcher,
     )

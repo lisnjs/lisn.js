@@ -24,6 +24,7 @@ import {
   getOtherDevices,
   getOtherAspectRatios,
 } from "@lisn/utils/layout";
+import { deepCopy } from "@lisn/utils/misc";
 import { validateStringRequired } from "@lisn/utils/validation";
 
 import { Action } from "@lisn/actions/action";
@@ -178,7 +179,7 @@ export class LayoutTrigger extends Trigger {
     }
 
     super(element, actions, config);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
 
     if (!MH.lengthOf(actions)) {
       return;

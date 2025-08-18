@@ -23,6 +23,7 @@ import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
 import { toNonNegNum, maxAbs } from "@lisn/utils/math";
+import { deepCopy } from "@lisn/utils/misc";
 import {
   scrollTo,
   getCurrentScrollAction,
@@ -1216,7 +1217,7 @@ const invokeCallback = (
   callback
     .invoke(
       element,
-      MH.copyObject(scrollData),
+      deepCopy(scrollData),
       lastScrollData, // no need to copy that one as it's not used again
       watcher,
     )

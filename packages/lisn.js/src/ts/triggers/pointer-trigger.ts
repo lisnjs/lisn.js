@@ -20,7 +20,7 @@ import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { omitKeys } from "@lisn/utils/misc";
+import { deepCopy, omitKeys } from "@lisn/utils/misc";
 import { validateBoolean } from "@lisn/utils/validation";
 
 import {
@@ -141,7 +141,7 @@ export class ClickTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
 
     setupWatcher(this, element, actions, config, MC.S_CLICK);
   }
@@ -252,7 +252,7 @@ export class PressTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
 
     setupWatcher(this, element, actions, config, MC.S_PRESS);
   }
@@ -360,7 +360,7 @@ export class HoverTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
 
     setupWatcher(this, element, actions, config, MC.S_HOVER);
   }

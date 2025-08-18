@@ -8,6 +8,7 @@
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { waitForPageReady } from "@lisn/utils/dom-events";
+import { deepCopy } from "@lisn/utils/misc";
 
 import { Action } from "@lisn/actions/action";
 
@@ -73,7 +74,7 @@ export class LoadTrigger extends Trigger {
    */
   constructor(element: Element, actions: Action[], config: TriggerConfig) {
     super(element, actions, config);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
 
     if (!MH.lengthOf(actions)) {
       return;

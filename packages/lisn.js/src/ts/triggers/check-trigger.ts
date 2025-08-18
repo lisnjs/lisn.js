@@ -10,6 +10,7 @@ import * as MH from "@lisn/globals/minification-helpers";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
+import { deepCopy } from "@lisn/utils/misc";
 
 import { Action } from "@lisn/actions/action";
 
@@ -121,7 +122,7 @@ export class CheckTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
 
     if (!MH.lengthOf(actions)) {
       return;

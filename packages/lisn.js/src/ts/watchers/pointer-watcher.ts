@@ -14,6 +14,7 @@ import {
   undoPreventSelect,
 } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
+import { deepCopy } from "@lisn/utils/misc";
 import { isValidPointerAction, POINTER_ACTIONS } from "@lisn/utils/pointer";
 import { objToStrKey } from "@lisn/utils/text";
 import { validateStrList } from "@lisn/utils/validation";
@@ -411,6 +412,4 @@ const invokeCallback = (
   event: Event,
   watcher: PointerWatcher,
 ) =>
-  callback
-    .invoke(target, MH.copyObject(actionData), event, watcher)
-    .catch(logError);
+  callback.invoke(target, deepCopy(actionData), event, watcher).catch(logError);

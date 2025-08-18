@@ -71,6 +71,7 @@ import { wrapCallback } from "@lisn/modules/callback";
 
 import { getData } from "@lisn/utils/css-alter";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
+import { deepCopy } from "@lisn/utils/misc";
 import { waitForDelay } from "@lisn/utils/tasks";
 import { formatAsString, randId, splitOn } from "@lisn/utils/text";
 import {
@@ -265,7 +266,7 @@ export class Trigger extends Widget {
     this.reverse = reverse.invoke;
     this[MC.S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
     this.getActions = () => [...actions]; // copy
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
   }
 }
 

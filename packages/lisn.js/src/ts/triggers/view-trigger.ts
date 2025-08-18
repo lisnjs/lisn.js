@@ -16,6 +16,7 @@ import { ViewTarget, View, CommaSeparatedStr } from "@lisn/globals/types";
 import { hasClass } from "@lisn/utils/css-alter";
 import { insertGhostClone, tryWrap } from "@lisn/utils/dom-alter";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
+import { deepCopy } from "@lisn/utils/misc";
 import { formatAsString } from "@lisn/utils/text";
 import {
   validateStrList,
@@ -202,7 +203,7 @@ export class ViewTrigger extends Trigger {
         })
       : null;
 
-    this.getConfig = () => MH.copyObject(config);
+    this.getConfig = () => deepCopy(config);
 
     if (!MH.lengthOf(actions)) {
       return;

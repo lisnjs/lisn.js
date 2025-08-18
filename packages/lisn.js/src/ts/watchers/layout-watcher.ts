@@ -74,7 +74,7 @@ import {
   ORDERED_ASPECTR,
 } from "@lisn/utils/layout";
 import { logError, logWarn } from "@lisn/utils/log";
-import { omitKeys, copyExistingKeysTo } from "@lisn/utils/misc";
+import { deepCopy, omitKeys, copyExistingKeysTo } from "@lisn/utils/misc";
 import { createOverlay } from "@lisn/utils/overlays";
 import { objToStrKey } from "@lisn/utils/text";
 
@@ -186,7 +186,7 @@ export class LayoutWatcher {
     const fetchCurrentLayout = async (): Promise<LayoutData> => {
       await readyPromise;
 
-      return MH.copyObject(currentLayoutData);
+      return deepCopy(currentLayoutData);
     };
 
     // ----------
@@ -675,4 +675,4 @@ const invokeCallback = (
   callback: OnLayoutCallback,
   layoutData: LayoutData,
   watcher: LayoutWatcher,
-) => callback.invoke(MH.copyObject(layoutData), watcher).catch(logError);
+) => callback.invoke(deepCopy(layoutData), watcher).catch(logError);

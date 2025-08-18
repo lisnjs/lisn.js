@@ -197,8 +197,6 @@ export type RawNumberCalculator = (props: {
  *                  Otherwise, if given as a function, then it is used as the
  *                  calculator and its return value is used as the final result.
  *
- * @since v1.3.0
- *
  * @example
  * If you want to use the default calculator function, but specify a custom
  * reference value based on the type of input, you could call {@link toRawNum}
@@ -211,6 +209,8 @@ export type RawNumberCalculator = (props: {
  *
  * toRawNum(input, calculator);
  * ```
+ *
+ * @since v1.3.0
  *
  * @category Math
  */

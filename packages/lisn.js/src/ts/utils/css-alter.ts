@@ -662,9 +662,9 @@ export const delStyleProp = asyncMutatorFor(delStylePropNow);
  *
  * @returns `null` if the element does not have a flex layout.
  *
- * @category DOM: Querying (optimized)
- *
  * @since v1.2.0
+ *
+ * @category DOM: Querying (optimized)
  */
 export const getFlexDirection = async (
   element: Element,
@@ -686,9 +686,9 @@ export const getFlexDirection = async (
  *
  * @returns `null` if the element's parent does not have a flex layout.
  *
- * @category DOM: Querying (optimized)
- *
  * @since v1.2.0
+ *
+ * @category DOM: Querying (optimized)
  */
 export const getParentFlexDirection = async (
   element: Element,
@@ -701,9 +701,9 @@ export const getParentFlexDirection = async (
  * Returns true if the given element has a flex layout. If direction is given,
  * then it also needs to match.
  *
- * @category DOM: Querying (optimized)
- *
  * @since v1.2.0
+ *
+ * @category DOM: Querying (optimized)
  */
 export const isFlex = async (element: Element, direction?: FlexDirection) => {
   const flexDirection = await getFlexDirection(element);
@@ -719,9 +719,9 @@ export const isFlex = async (element: Element, direction?: FlexDirection) => {
  * Returns true if the given element's parent has a flex layout. If direction is
  * given, then it also needs to match.
  *
- * @category DOM: Querying (optimized)
- *
  * @since v1.2.0
+ *
+ * @category DOM: Querying (optimized)
  */
 export const isFlexChild = async (
   element: Element,

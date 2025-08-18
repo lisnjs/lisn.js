@@ -14,25 +14,25 @@ import { isValidNum, roundNumTo, toNumWithBounds } from "@lisn/utils/math";
 import { deepCopy, compareValuesIn } from "@lisn/utils/misc";
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type Tweener<Input extends Partial<TweenerInput> = TweenerInput> =
   | TweenerFn<Input>
   | TweenerName;
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type TweenerName = keyof typeof TWEENERS;
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type TweenerFn<Input extends Partial<TweenerInput> = TweenerInput> = (
   input: Input,
@@ -41,9 +41,9 @@ export type TweenerFn<Input extends Partial<TweenerInput> = TweenerInput> = (
 /**
  * Possible inputs to tweener functions. Not all may be required.
  *
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type TweenerInput = {
   /**
@@ -78,9 +78,9 @@ export type TweenerInput = {
 };
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type TweenerOutput = {
   /**
@@ -97,9 +97,9 @@ export type TweenerOutput = {
 };
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type SpringTweenerInput = {
   current: number;
@@ -116,9 +116,9 @@ export type SpringTweenerInput = {
  *                             order to determine when it's "done" (close enough
  *                             to target).
  *
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export const springTweener = (
   { current, target, lag, velocity, deltaTime }: SpringTweenerInput,
@@ -152,9 +152,9 @@ export const springTweener = (
 };
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export const TWEENERS = {
   spring: springTweener,
@@ -163,9 +163,9 @@ export const TWEENERS = {
 // ------------------------------
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type Tween3DGeneratorInput<Axes extends "x" | "y" | "z"> = {
   [K in Axes]: {
@@ -193,9 +193,9 @@ export type Tween3DGeneratorInput<Axes extends "x" | "y" | "z"> = {
 };
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type Tween3DGeneratorOutput<Axes extends "x" | "y" | "z"> = {
   [K in Axes]: {
@@ -233,9 +233,9 @@ export type Tween3DGeneratorOutput<Axes extends "x" | "y" | "z"> = {
 };
 
 /**
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export type Tween3DUpdate<Axes extends "x" | "y" | "z"> = {
   [K in Axes]?: {
@@ -266,9 +266,9 @@ export type Tween3DUpdate<Axes extends "x" | "y" | "z"> = {
  *
  * When all input axis have reached their target values, the generator returns.
  *
- * @category Tweening
- *
  * @since v1.3.0
+ *
+ * @category Tweening
  */
 export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
   tweener: Tweener | { [K in Axes]: Tweener },
@@ -379,7 +379,7 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
  *
  * @since v1.2.0
  *
- * @category Math
+ * @category Tweening
  */
 export const criticallyDamped = (settings: {
   lTarget: number;
@@ -419,7 +419,7 @@ export const criticallyDamped = (settings: {
  *
  * @since v1.2.0
  *
- * @category Animations
+ * @category Tweening
  */
 export async function* newCriticallyDampedAnimationIterator(settings: {
   lTarget: number;

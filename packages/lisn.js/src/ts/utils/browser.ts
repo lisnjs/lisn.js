@@ -7,9 +7,9 @@ import * as MH from "@lisn/globals/minification-helpers";
 /**
  * Returns true if the device has a touch screen.
  *
- * @category Browser info
- *
  * @since v1.2.0
+ *
+ * @category Browser info
  */
 export const isTouchScreen = () =>
   MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
@@ -17,9 +17,9 @@ export const isTouchScreen = () =>
 /**
  * Returns true if the browser supports position: sticky.
  *
- * @category Browser info
- *
  * @since v1.2.0
+ *
+ * @category Browser info
  */
 export const supportsSticky = () =>
   MH.hasDOM()
@@ -29,9 +29,9 @@ export const supportsSticky = () =>
 /**
  * Returns true if the page is in quirks mode.
  *
- * @category Browser info
- *
  * @since v1.2.0
+ *
+ * @category Browser info
  */
 export const isInQuirksMode = () =>
   MH.hasDOM() ? document.compatMode === "BackCompat" : false;
@@ -39,9 +39,9 @@ export const isInQuirksMode = () =>
 /**
  * Returns true if the device is mobile (based on user agent).
  *
- * @category Browser info
- *
  * @since v1.2.0
+ *
+ * @category Browser info
  */
 export const isMobile = () =>
   MH.hasDOM()

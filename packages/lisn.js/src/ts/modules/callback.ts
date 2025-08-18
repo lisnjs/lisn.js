@@ -255,6 +255,9 @@ export class Callback<Args extends readonly unknown[] = []> {
 /**
  * Invokes the given callbacks or handlers with the given args.
  *
+ * They are invoked concurrently, but if any return a Promise, it will be
+ * awaited upon.
+ *
  * @ignore
  * @internal
  */
@@ -265,14 +268,17 @@ export const invokeHandlers = async <
   set: Iterable<T>,
   ...args: Args
 ) => {
+  const promises: unknown[] = [];
   for (const handler of set) {
     if (MH.isInstanceOf(handler, Callback)) {
-      handler.invoke(...args);
+      promises.push(handler.invoke(...args));
     } else if (MH.isFunction(handler)) {
       // TypeScript can't figure it out that it's a function otherwise
-      await handler(...args);
+      promises.push(handler(...args));
     }
   }
+
+  await Promise.all(promises);
 };
 
 export function addNewCallbackToMap<

@@ -5,7 +5,7 @@
 import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { Size, StrRecord } from "@lisn/globals/types";
+import { Anchor, Size, StrRecord } from "@lisn/globals/types";
 
 /**
  * Formats an object as a string. It supports more meaningful formatting as
@@ -158,44 +158,152 @@ export const randId = (nChars = 8) => {
  * units are not supported.
  *
  * Percentage values are converted to pixels relative to the given
- * `absoluteSize`: left/right margins relative to the width, and top/bottom
- * margins relative to the height.
+ * `absoluteSize`: left/right margins are calculated relative to the width, and
+ * top/bottom margins are calculated relative to the height.
  *
- * Note that for the margin property, percentages are always relative to the
- * WIDTH of the parent, so you should pass the parent width as both the width
- * and the height keys in `absoluteSize`. But for IntersectionObserver's
- * `rootMargin`, top/bottom margin is relative to the height of the root, so
- * pass the actual root size.
+ * **IMPORTANT:** For the margin property itself, percentages are always
+ * relative to the **width** of the parent, so you should pass the parent width
+ * as both the width and the height keys in `absoluteSize`. But for
+ * IntersectionObserver's `rootMargin`, top/bottom margin is relative to the
+ * height of the root, so pass the actual root size (width and height).
+ *
+ * @param absoluteSize The size of the parent. If you are calculating margins
+ *                     for the CSS margin property, only the width is used. In
+ *                     this case you can simply pass the width (a number) as
+ *                     this parameter.
+ *
+ * @throws {@link Errors.LisnUsageError | LisnUsageError}
+ *                If any of the margins is not in the format `<number>`,
+ *                `<number>px` or `<number>%`
  *
  * @returns [topMarginInPx, rightMarginInPx, bottomMarginInPx, leftMarginInPx]
  *
+ * @since Since v1.3.0 `absoluteSize` can be a plain number. Previously it was
+ * required to be a {@link Size}.
+ *
  * @category Text
  */
-export const toMargins = (value: string, absoluteSize: Size) => {
-  const toPxValue = (strValue: string | undefined, index: number) => {
+export const toMargins = (value: string, absoluteSize: Size | number) => {
+  let width: number, height: number;
+  if (MH.isNumber(absoluteSize)) {
+    width = height = absoluteSize;
+  } else {
+    ({ width, height } = absoluteSize);
+    height ??= width;
+  }
+
+  const toPxValue = (strValue: string | undefined, absValue: number) => {
     let margin = MH.parseFloat(strValue ?? "") || 0;
 
-    if (strValue === margin + "%") {
-      margin *=
-        index % 2 ? absoluteSize[MC.S_HEIGHT] : absoluteSize[MC.S_WIDTH];
+    if (strValue === `${margin}%`) {
+      margin *= absValue;
+    } else if (strValue !== `${margin}px` && strValue !== `${margin}`) {
+      throw MH.usageError(
+        "Converting margin string to pixels: margin values should be in pixel or percentage.",
+      );
     }
 
     return margin;
   };
 
-  const parts = splitOn(value, " ", true);
-  const margins: [number, number, number, number] = [
-    // top
-    toPxValue(parts[0], 0),
-    // right
-    toPxValue(parts[1] ?? parts[0], 1),
-    // bottom
-    toPxValue(parts[2] ?? parts[0], 2),
-    // left
-    toPxValue(parts[3] ?? parts[1] ?? parts[0], 3),
+  const parts = toFourMargins(splitOn(value, " ", true));
+  // Even indices (0 and 2) are for top/bottom, so relative to height, otherwise
+  // relative to width
+  return parts.map((v, i) => toPxValue(v, i % 2 ? width : height)) as [
+    number,
+    number,
+    number,
+    number,
+  ];
+};
+
+/**
+ * Like {@link toMargins} except it returns an object containing `top`, `right`,
+ * `bottom`, `left` properties with the numeric margins in pixels.
+ *
+ * @since v1.3.0
+ *
+ * @category Text
+ */
+export const toMarginProps = (value: string, absoluteSize: Size) => {
+  const margins = toMargins(value, absoluteSize);
+
+  return {
+    top: margins[0],
+    right: margins[1],
+    bottom: margins[2],
+    left: margins[3],
+  };
+};
+
+/**
+ * Converts the given margins as a string in the
+ * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/margin | expected format}
+ *
+ * @param value If it's a number, it's used for all four sides.
+ *
+ *              If it's a string, it should be any valid CSS margin string, i.e.
+ *              a space-separated list of one to four margins.
+ *
+ *              If it's an array it should be in one of these forms:
+ *              - [margin]: the margin for all four sides
+ *              - [margin, margin]: the margin for
+ *                top and bottom | left and right respectively
+ *              - [margin, margin, margin]: the margin for
+ *                top | left and right | bottom respectively
+ *              - [margin, margin, margin, margin]: the margin for
+ *                top | right | bottom | left respectively
+ *
+ *              If it's an object it should contain one or more of
+ *              top/right/bottom/left values.
+ *
+ *              Each value should be a number of a string. If it's a string,
+ *              it's preserved as is. If it's a number, it's assumed to be
+ *              pixels and converted to a `<number>px` string.
+ *
+ * @returns `<top> <right> <bottom> <left>`
+ *
+ * @since v1.3.0
+ *
+ * @category Text
+ */
+export const toMarginString = (
+  value:
+    | number
+    | string
+    | Array<number | string>
+    | { [K in Anchor]?: number | string },
+) => {
+  let parts: [
+    string | number,
+    string | number,
+    string | number,
+    string | number,
   ];
 
-  return margins;
+  if (MH.isNumber(value)) {
+    value = [value];
+  } else if (MH.isString(value)) {
+    value = splitOn(value, " ", true);
+  }
+
+  if (MH.isArray(value)) {
+    parts = toFourMargins(value);
+  } else {
+    const top = value.top ?? 0;
+    parts = [
+      // top
+      top,
+      // right
+      value.right ?? top,
+      // bottom
+      value.bottom ?? top,
+      // left
+      value.left ?? value.right ?? top,
+    ];
+  }
+
+  return parts.map((v) => (MH.isNumber(v) ? `${v}px` : v)).join(" ");
 };
 
 /**
@@ -206,6 +314,19 @@ export const objToStrKey = (obj: StrRecord): string =>
   MH.stringify(flattenForSorting(obj));
 
 // --------------------
+
+const toFourMargins = <T extends string | number>(parts: T[]): [T, T, T, T] => {
+  return [
+    // top
+    parts[0],
+    // right
+    parts[1] ?? parts[0],
+    // bottom
+    parts[2] ?? parts[0],
+    // left
+    parts[3] ?? parts[1] ?? parts[0],
+  ];
+};
 
 const flattenForSorting = (obj: StrRecord): unknown[] => {
   const array = MH.isArray(obj)

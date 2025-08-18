@@ -243,6 +243,386 @@ describe("randId", () => {
   });
 });
 
+describe("toMargins", () => {
+  const sizeObj = { width: 100, height: 200 };
+  const size = sizeObj.width;
+
+  test("invalid", () => {
+    expect(() => utils.toMargins("10em", size)).toThrow(
+      /values should be in pixel or percentage/,
+    );
+    expect(() => utils.toMargins("auto", size)).toThrow(
+      /values should be in pixel or percentage/,
+    );
+  });
+
+  test("absolute: one value", () => {
+    expect(utils.toMargins("10px", size)).toEqual([10, 10, 10, 10]);
+    expect(utils.toMargins("10", size)).toEqual([10, 10, 10, 10]);
+
+    expect(utils.toMargins("0px", size)).toEqual([0, 0, 0, 0]);
+    expect(utils.toMargins("0", size)).toEqual([0, 0, 0, 0]);
+
+    expect(utils.toMargins("-10px", size)).toEqual([-10, -10, -10, -10]);
+    expect(utils.toMargins("-10", size)).toEqual([-10, -10, -10, -10]);
+  });
+
+  test("absolute: two values", () => {
+    expect(utils.toMargins("10px -20px", size)).toEqual([10, -20, 10, -20]);
+    expect(utils.toMargins("10 -20", size)).toEqual([10, -20, 10, -20]);
+
+    expect(utils.toMargins("0px -10", size)).toEqual([0, -10, 0, -10]);
+    expect(utils.toMargins("0 -10px", size)).toEqual([0, -10, 0, -10]);
+  });
+
+  test("absolute: three values", () => {
+    expect(utils.toMargins("10px -20px 0px", size)).toEqual([10, -20, 0, -20]);
+    expect(utils.toMargins("10 -20 0", size)).toEqual([10, -20, 0, -20]);
+
+    expect(utils.toMargins("0px -10 20", size)).toEqual([0, -10, 20, -10]);
+    expect(utils.toMargins("0 -10px 20px", size)).toEqual([0, -10, 20, -10]);
+  });
+
+  test("absolute: four values", () => {
+    expect(utils.toMargins("10px -20px 0px 5px", size)).toEqual([
+      10, -20, 0, 5,
+    ]);
+    expect(utils.toMargins("10 -20 0 5", size)).toEqual([10, -20, 0, 5]);
+
+    expect(utils.toMargins("0px -10 20 5px", size)).toEqual([0, -10, 20, 5]);
+    expect(utils.toMargins("0 -10px 20px 5", size)).toEqual([0, -10, 20, 5]);
+  });
+
+  test("percentage: one value", () => {
+    expect(utils.toMargins("10%", sizeObj)).toEqual([
+      10 * sizeObj.height,
+      10 * sizeObj.width,
+      10 * sizeObj.height,
+      10 * sizeObj.width,
+    ]);
+    expect(utils.toMargins("10%", size)).toEqual([
+      10 * size,
+      10 * size,
+      10 * size,
+      10 * size,
+    ]);
+  });
+
+  test("percentage: two values", () => {
+    expect(utils.toMargins("10% -20%", sizeObj)).toEqual([
+      10 * sizeObj.height,
+      -20 * sizeObj.width,
+      10 * sizeObj.height,
+      -20 * sizeObj.width,
+    ]);
+    expect(utils.toMargins("10% -20%", size)).toEqual([
+      10 * size,
+      -20 * size,
+      10 * size,
+      -20 * size,
+    ]);
+
+    expect(utils.toMargins("0% -10%", sizeObj)).toEqual([
+      0 * sizeObj.height,
+      -10 * sizeObj.width,
+      0 * sizeObj.height,
+      -10 * sizeObj.width,
+    ]);
+    expect(utils.toMargins("0% -10%", size)).toEqual([
+      0 * size,
+      -10 * size,
+      0 * size,
+      -10 * size,
+    ]);
+  });
+
+  test("percentage: three values", () => {
+    expect(utils.toMargins("10% -20% 0%", sizeObj)).toEqual([
+      10 * sizeObj.height,
+      -20 * sizeObj.width,
+      0 * sizeObj.height,
+      -20 * sizeObj.width,
+    ]);
+    expect(utils.toMargins("10% -20% 0%", size)).toEqual([
+      10 * size,
+      -20 * size,
+      0 * size,
+      -20 * size,
+    ]);
+  });
+
+  test("percentage: four values", () => {
+    expect(utils.toMargins("10% -20% 0% 5%", sizeObj)).toEqual([
+      10 * sizeObj.height,
+      -20 * sizeObj.width,
+      0 * sizeObj.height,
+      5 * sizeObj.width,
+    ]);
+    expect(utils.toMargins("10% -20% 0% 5%", size)).toEqual([
+      10 * size,
+      -20 * size,
+      0 * size,
+      5 * size,
+    ]);
+  });
+});
+
+describe("toMarginProps", () => {
+  const sizeObj = { width: 100, height: 200 };
+  const size = sizeObj.width;
+
+  test("invalid", () => {
+    expect(() => utils.toMarginProps("10em", size)).toThrow(
+      /values should be in pixel or percentage/,
+    );
+    expect(() => utils.toMarginProps("auto", size)).toThrow(
+      /values should be in pixel or percentage/,
+    );
+  });
+
+  test("absolute: one value", () => {
+    expect(utils.toMarginProps("10px", size)).toEqual({
+      top: 10,
+      right: 10,
+      bottom: 10,
+      left: 10,
+    });
+    expect(utils.toMarginProps("10", size)).toEqual({
+      top: 10,
+      right: 10,
+      bottom: 10,
+      left: 10,
+    });
+
+    expect(utils.toMarginProps("0px", size)).toEqual({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
+    expect(utils.toMarginProps("0", size)).toEqual({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    });
+
+    expect(utils.toMarginProps("-10px", size)).toEqual({
+      top: -10,
+      right: -10,
+      bottom: -10,
+      left: -10,
+    });
+    expect(utils.toMarginProps("-10", size)).toEqual({
+      top: -10,
+      right: -10,
+      bottom: -10,
+      left: -10,
+    });
+  });
+
+  test("absolute: two values", () => {
+    expect(utils.toMarginProps("10px -20px", size)).toEqual({
+      top: 10,
+      right: -20,
+      bottom: 10,
+      left: -20,
+    });
+    expect(utils.toMarginProps("10 -20", size)).toEqual({
+      top: 10,
+      right: -20,
+      bottom: 10,
+      left: -20,
+    });
+
+    expect(utils.toMarginProps("0px -10", size)).toEqual({
+      top: 0,
+      right: -10,
+      bottom: 0,
+      left: -10,
+    });
+    expect(utils.toMarginProps("0 -10px", size)).toEqual({
+      top: 0,
+      right: -10,
+      bottom: 0,
+      left: -10,
+    });
+  });
+
+  test("absolute: three values", () => {
+    expect(utils.toMarginProps("10px -20px 0px", size)).toEqual({
+      top: 10,
+      right: -20,
+      bottom: 0,
+      left: -20,
+    });
+    expect(utils.toMarginProps("10 -20 0", size)).toEqual({
+      top: 10,
+      right: -20,
+      bottom: 0,
+      left: -20,
+    });
+
+    expect(utils.toMarginProps("0px -10 20", size)).toEqual({
+      top: 0,
+      right: -10,
+      bottom: 20,
+      left: -10,
+    });
+    expect(utils.toMarginProps("0 -10px 20px", size)).toEqual({
+      top: 0,
+      right: -10,
+      bottom: 20,
+      left: -10,
+    });
+  });
+
+  test("absolute: four values", () => {
+    expect(utils.toMarginProps("10px -20px 0px 5px", size)).toEqual({
+      top: 10,
+      right: -20,
+      bottom: 0,
+      left: 5,
+    });
+    expect(utils.toMarginProps("10 -20 0 5", size)).toEqual({
+      top: 10,
+      right: -20,
+      bottom: 0,
+      left: 5,
+    });
+
+    expect(utils.toMarginProps("0px -10 20 5px", size)).toEqual({
+      top: 0,
+      right: -10,
+      bottom: 20,
+      left: 5,
+    });
+    expect(utils.toMarginProps("0 -10px 20px 5", size)).toEqual({
+      top: 0,
+      right: -10,
+      bottom: 20,
+      left: 5,
+    });
+  });
+
+  test("percentage: one value", () => {
+    expect(utils.toMarginProps("10%", sizeObj)).toEqual({
+      top: 10 * sizeObj.height,
+      right: 10 * sizeObj.width,
+      bottom: 10 * sizeObj.height,
+      left: 10 * sizeObj.width,
+    });
+    expect(utils.toMarginProps("10%", size)).toEqual({
+      top: 10 * size,
+      right: 10 * size,
+      bottom: 10 * size,
+      left: 10 * size,
+    });
+  });
+
+  test("percentage: two values", () => {
+    expect(utils.toMarginProps("10% -20%", sizeObj)).toEqual({
+      top: 10 * sizeObj.height,
+      right: -20 * sizeObj.width,
+      bottom: 10 * sizeObj.height,
+      left: -20 * sizeObj.width,
+    });
+    expect(utils.toMarginProps("10% -20%", size)).toEqual({
+      top: 10 * size,
+      right: -20 * size,
+      bottom: 10 * size,
+      left: -20 * size,
+    });
+
+    expect(utils.toMarginProps("0% -10%", sizeObj)).toEqual({
+      top: 0 * sizeObj.height,
+      right: -10 * sizeObj.width,
+      bottom: 0 * sizeObj.height,
+      left: -10 * sizeObj.width,
+    });
+    expect(utils.toMarginProps("0% -10%", size)).toEqual({
+      top: 0 * size,
+      right: -10 * size,
+      bottom: 0 * size,
+      left: -10 * size,
+    });
+  });
+
+  test("percentage: three values", () => {
+    expect(utils.toMarginProps("10% -20% 0%", sizeObj)).toEqual({
+      top: 10 * sizeObj.height,
+      right: -20 * sizeObj.width,
+      bottom: 0 * sizeObj.height,
+      left: -20 * sizeObj.width,
+    });
+    expect(utils.toMarginProps("10% -20% 0%", size)).toEqual({
+      top: 10 * size,
+      right: -20 * size,
+      bottom: 0 * size,
+      left: -20 * size,
+    });
+  });
+
+  test("percentage: four values", () => {
+    expect(utils.toMarginProps("10% -20% 0% 5%", sizeObj)).toEqual({
+      top: 10 * sizeObj.height,
+      right: -20 * sizeObj.width,
+      bottom: 0 * sizeObj.height,
+      left: 5 * sizeObj.width,
+    });
+    expect(utils.toMarginProps("10% -20% 0% 5%", size)).toEqual({
+      top: 10 * size,
+      right: -20 * size,
+      bottom: 0 * size,
+      left: 5 * size,
+    });
+  });
+});
+
+describe("toMarginString", () => {
+  test("single value", () => {
+    expect(utils.toMarginString(10)).toBe("10px 10px 10px 10px");
+    expect(utils.toMarginString("10px")).toBe("10px 10px 10px 10px");
+    expect(utils.toMarginString("10em")).toBe("10em 10em 10em 10em");
+  });
+
+  test("string with multiple", () => {
+    expect(utils.toMarginString("10px -10em")).toBe("10px -10em 10px -10em");
+    expect(utils.toMarginString("10px -10em 5%")).toBe("10px -10em 5% -10em");
+    expect(utils.toMarginString("10px -10em 5% 0px")).toBe("10px -10em 5% 0px");
+  });
+
+  test("[margin]", () => {
+    expect(utils.toMarginString([10])).toBe("10px 10px 10px 10px");
+    expect(utils.toMarginString(["10px"])).toBe("10px 10px 10px 10px");
+    expect(utils.toMarginString(["10em"])).toBe("10em 10em 10em 10em");
+  });
+
+  test("[margin, margin]", () => {
+    expect(utils.toMarginString([10, -10])).toBe("10px -10px 10px -10px");
+    expect(utils.toMarginString([10, "2em"])).toBe("10px 2em 10px 2em");
+    expect(utils.toMarginString(["10px", "-10%"])).toBe("10px -10% 10px -10%");
+  });
+
+  test("[margin, margin, margin]", () => {
+    expect(utils.toMarginString([10, -10, 0])).toBe("10px -10px 0px -10px");
+    expect(utils.toMarginString([10, "2em", "0%"])).toBe("10px 2em 0% 2em");
+    expect(utils.toMarginString(["10px", "-10%", 0])).toBe(
+      "10px -10% 0px -10%",
+    );
+  });
+
+  test("[margin, margin, margin, margin]", () => {
+    expect(utils.toMarginString([10, -10, 0, 1])).toBe("10px -10px 0px 1px");
+    expect(utils.toMarginString([10, "2em", "0%", "5px"])).toBe(
+      "10px 2em 0% 5px",
+    );
+    expect(utils.toMarginString(["10px", "-10%", 0, "5px"])).toBe(
+      "10px -10% 0px 5px",
+    );
+  });
+});
+
 describe("objToStrKey", () => {
   test("basic: order", () => {
     expect(utils.objToStrKey({ b: 1, a: 2 })).toBe("[2,1]");

@@ -208,9 +208,14 @@ export class ViewTrigger extends Trigger {
       return;
     }
 
+    let rootMargin = config.rootMargin;
+    if (MH.isString(rootMargin)) {
+      rootMargin = rootMargin.replace(/,/g, " ");
+    }
+
     const watcher = ViewWatcher.reuse({
       root: config.root,
-      rootMargin: config.rootMargin?.replace(/,/g, " "),
+      rootMargin,
       threshold: config.threshold,
     });
 
@@ -289,11 +294,11 @@ export type ViewTriggerConfig = TriggerConfig & {
    * The root margin to pass to the {@link ViewWatcher}.
    * See also {@link Watchers/ViewWatcher.ViewWatcherConfig | ViewWatcherConfig}
    *
-   * It can be either space-separated or comma-separated.
-   *
    * @defaultValue {@link ViewWatcher} default
    */
-  rootMargin?: string;
+  rootMargin?:
+    | string
+    | { top?: number; right?: number; bottom?: number; left?: number };
 
   /**
    * The threshold to pass to the {@link ViewWatcher}.

@@ -23,7 +23,7 @@ import { omitKeys, compareValuesIn } from "@lisn/utils/misc";
 import { createOverlay, OverlayOptions } from "@lisn/utils/overlays";
 import { getClosestScrollable } from "@lisn/utils/scroll";
 import { fetchViewportSize } from "@lisn/utils/size";
-import { toMargins, objToStrKey } from "@lisn/utils/text";
+import { toMarginString, toMarginProps, objToStrKey } from "@lisn/utils/text";
 import {
   VIEWS_SPACE,
   getViewsBitmask,
@@ -627,9 +627,13 @@ export type ViewWatcherConfig = {
    * {@link https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver#rootmargin | rootMargin}
    * to use for the IntersectionObserver.
    *
+   * Since v1.3.0 you can also pass an object with one or more sides (top/right/bottom/left).
+   *
    * @defaultValue "0px 0px 0px 0px"
    */
-  rootMargin?: string;
+  rootMargin?:
+    | string
+    | { top?: number; right?: number; bottom?: number; left?: number };
 
   /**
    * The
@@ -796,7 +800,7 @@ type IntersectionData = {
   _target: Element;
   _targetBounds: BoundingRect;
   _root: Element | null;
-  _rootMargins: [number, number, number, number];
+  _rootMargins: { top: number; right: number; bottom: number; left: number };
   _rootBounds: BoundingRect;
   _isIntersecting: boolean | null; // null means unknown, no IntersectionObserverEntry
   _isCrossOrigin: boolean | null; // null means unknown, no IntersectionObserverEntry
@@ -814,7 +818,7 @@ const getConfig = (
 ): ViewWatcherConfigInternal => {
   return {
     _root: config?.root ?? null,
-    _rootMargin: config?.rootMargin ?? "0px 0px 0px 0px",
+    _rootMargin: toMarginString(config?.rootMargin ?? "0px"),
     _threshold: config?.threshold ?? 0,
   };
 };
@@ -875,7 +879,7 @@ const fetchIntersectionData = async (
 ): Promise<IntersectionData> => {
   const root = config._root;
   const vpSize = await fetchViewportSize(realtime);
-  const rootMargins = toMargins(config._rootMargin, vpSize);
+  const rootMargins = toMarginProps(config._rootMargin, vpSize);
 
   let target: Element;
   let targetBounds: BoundingRect;
@@ -912,7 +916,7 @@ const fetchIntersectionData = async (
 const fetchBounds = async (
   root: Element | null,
   realtime: boolean,
-  rootMargins?: [number, number, number, number],
+  rootMargins?: { top: number; right: number; bottom: number; left: number },
 ): Promise<BoundingRect> => {
   let rect: BoundingRect;
 
@@ -937,13 +941,13 @@ const fetchBounds = async (
   }
 
   if (rootMargins) {
-    rect.x = rect[MC.S_LEFT] -= rootMargins[3];
-    rect[MC.S_RIGHT] += rootMargins[1];
-    rect[MC.S_WIDTH] += rootMargins[1] + rootMargins[3];
+    rect.x = rect[MC.S_LEFT] -= rootMargins[MC.S_LEFT];
+    rect[MC.S_RIGHT] += rootMargins[MC.S_RIGHT];
+    rect[MC.S_WIDTH] += rootMargins[MC.S_RIGHT] + rootMargins[MC.S_LEFT];
 
-    rect.y = rect[MC.S_TOP] -= rootMargins[0];
-    rect[MC.S_BOTTOM] += rootMargins[2];
-    rect[MC.S_HEIGHT] += rootMargins[0] + rootMargins[2];
+    rect.y = rect[MC.S_TOP] -= rootMargins[MC.S_TOP];
+    rect[MC.S_BOTTOM] += rootMargins[MC.S_BOTTOM];
+    rect[MC.S_HEIGHT] += rootMargins[MC.S_TOP] + rootMargins[MC.S_BOTTOM];
   }
 
   return rect;

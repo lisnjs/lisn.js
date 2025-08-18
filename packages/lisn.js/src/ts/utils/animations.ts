@@ -84,10 +84,10 @@ export const onEveryAnimationFrame = async (
 };
 
 /**
- * Generator version of {@link onEveryAnimationFrame}.
+ * Infinite async generator version of {@link onEveryAnimationFrame}.
  *
- * Returns a new async iterator which yields the total elapsed time and elapsed
- * time since the last call on every animation frame.
+ * Continually yields the total elapsed time and elapsed time since the last
+ * call on every animation frame.
  *
  * @example
  * ```javascript

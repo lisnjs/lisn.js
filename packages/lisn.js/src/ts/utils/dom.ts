@@ -8,7 +8,7 @@ import { MutationCategory } from "@lisn/globals/types";
 
 import { isValidStrList } from "@lisn/utils/validation";
 
-import { newBitSpaces, createBitSpace } from "@lisn/modules/bit-spaces";
+import { createBitSpaces, addBitSpace } from "@lisn/modules/bit-spaces";
 
 /**
  * Returns true if the given string is a valid category.
@@ -31,8 +31,8 @@ export const isValidMutationCategoryList = (categories: string | string[]) =>
  * @ignore
  * @internal
  */
-export const DOM_CATEGORIES_SPACE = createBitSpace<MutationCategory>(
-  newBitSpaces(),
+export const DOM_CATEGORIES_SPACE = addBitSpace<MutationCategory>(
+  createBitSpaces(),
   _.S_ADDED,
   _.S_REMOVED,
   _.S_ATTRIBUTE,

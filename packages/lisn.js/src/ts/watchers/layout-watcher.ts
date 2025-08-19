@@ -83,7 +83,7 @@ import {
   Callback,
   wrapCallback,
 } from "@lisn/modules/callback";
-import { newXMap } from "@lisn/modules/x-map";
+import { createXMap } from "@lisn/modules/x-map";
 
 import { SizeWatcher } from "@lisn/watchers/size-watcher";
 
@@ -173,7 +173,7 @@ export class LayoutWatcher {
       aspectRatio: null,
     };
 
-    const allCallbacks = _.newMap<
+    const allCallbacks = _.createMap<
       OnLayoutHandler,
       {
         _callback: OnLayoutCallback;
@@ -198,7 +198,7 @@ export class LayoutWatcher {
         config._aspectRatioBreakpoints,
       );
 
-      return _.newPromise<void>((resolve) => {
+      return _.createPromise<void>((resolve) => {
         let isReady = false;
 
         const intersectionHandler = (entries: IntersectionObserverEntry[]) => {
@@ -239,7 +239,7 @@ export class LayoutWatcher {
           rootMargin: "5px 0% 5px -100%",
         };
 
-        const observer = _.newIntersectionObserver(
+        const observer = _.createIntersectionObserver(
           intersectionHandler,
           observeOptions,
         );
@@ -492,8 +492,8 @@ type LayoutWatcherConfigInternal = {
 };
 
 const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = newXMap<HTMLElement | null, Map<string, LayoutWatcher>>(() =>
-  _.newMap(),
+const instances = createXMap<HTMLElement | null, Map<string, LayoutWatcher>>(
+  () => _.createMap(),
 );
 
 const VAR_BORDER_HEIGHT = _.prefixCssJsVar("border-height");

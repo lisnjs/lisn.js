@@ -104,7 +104,7 @@ export class CheckTrigger extends Trigger {
       "check",
       (element, args, actions, config) =>
         new CheckTrigger(element, actions, config),
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -158,7 +158,7 @@ export type CheckTriggerConfig = TriggerConfig & {
 
 // --------------------
 
-const newConfigValidator: WidgetConfigValidatorFunc<CheckTriggerConfig> = (
+const createConfigValidator: WidgetConfigValidatorFunc<CheckTriggerConfig> = (
   element,
 ) => {
   return {

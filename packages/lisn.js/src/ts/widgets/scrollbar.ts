@@ -583,7 +583,7 @@ const init = (
 
   // ----------
 
-  const newScrollbar = (wrapper: Element, position: string) => {
+  const createScrollbar = (wrapper: Element, position: string) => {
     const barIsHorizontal = position === _.S_TOP || position === _.S_BOTTOM;
 
     const scrollbar = _.createElement("div");
@@ -939,11 +939,11 @@ const init = (
     setData(wrapper, _.PREFIX_POSITION, _.S_STICKY);
   }
 
-  const { _bar: scrollbarH, _handle: handleH } = newScrollbar(
+  const { _bar: scrollbarH, _handle: handleH } = createScrollbar(
     wrapper,
     positionH,
   );
-  const { _bar: scrollbarV, _handle: handleV } = newScrollbar(
+  const { _bar: scrollbarV, _handle: handleV } = createScrollbar(
     wrapper,
     positionV,
   );

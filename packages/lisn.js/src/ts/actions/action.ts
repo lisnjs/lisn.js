@@ -37,20 +37,20 @@ export type ActionCreateFn<Config extends Record<string, unknown>> = (
  * **IMPORTANT:** If an action by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param name      The name of the action. Should be in kebab-case.
- * @param newAction Called for every action specification for a trigger
- *                  parsed by {@link Triggers.registerTrigger}
+ * @param name         The name of the action. Should be in kebab-case.
+ * @param createAction Called for every action specification for a trigger
+ *                     parsed by {@link Triggers.registerTrigger}
  */
 export const registerAction = <Config extends Record<string, unknown>>(
   name: string,
-  newAction: ActionCreateFn<Config>,
+  createAction: ActionCreateFn<Config>,
   configValidator?: null | WidgetConfigValidator<Config>,
 ) => {
   if (registeredActions.has(name)) {
     return;
   }
 
-  const newActionFromSpec = async (
+  const createActionFromSpec = async (
     element: Element,
     argsAndOptions: string,
   ) => {
@@ -80,10 +80,10 @@ export const registerAction = <Config extends Record<string, unknown>>(
       }
     }
 
-    return newAction(element, args, config);
+    return createAction(element, args, config);
   };
 
-  registeredActions.set(name, newActionFromSpec);
+  registeredActions.set(name, createActionFromSpec);
 };
 
 /**
@@ -98,19 +98,19 @@ export const fetchAction = async (
   name: string,
   argsAndOptions?: string,
 ): Promise<Action> => {
-  const newActionFromSpec = registeredActions.get(name);
-  if (!newActionFromSpec) {
+  const createActionFromSpec = registeredActions.get(name);
+  if (!createActionFromSpec) {
     throw usageError(`Unknown action '${name}'`);
   }
 
-  return await newActionFromSpec(element, argsAndOptions ?? "");
+  return await createActionFromSpec(element, argsAndOptions ?? "");
 };
 
 // --------------------
 
 const ARG_SEP_CHAR = ",";
 
-const registeredActions = _.newMap<
+const registeredActions = _.createMap<
   string,
   (element: Element, spec: string) => Action | Promise<Action>
 >();

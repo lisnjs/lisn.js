@@ -878,7 +878,7 @@ type CSSTransition = {
 
 const PREFIX_HAS_MODAL = _.prefixName("has-modal");
 
-const scheduledCSSTransitions = _.newWeakMap<
+const scheduledCSSTransitions = _.createWeakMap<
   Element,
   Record<string, CSSTransition>
 >();

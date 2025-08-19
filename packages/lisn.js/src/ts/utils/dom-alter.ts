@@ -589,7 +589,7 @@ type ContentWrappingOptions = {
   _requiredBy?: string; // for logging purposes
 };
 
-const recordsToSkipOnce = _.newMap<
+const recordsToSkipOnce = _.createMap<
   /* target being moved */ Element,
   { from: Element | null; to: Element | null }
 >();

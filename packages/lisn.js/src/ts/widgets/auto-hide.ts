@@ -107,7 +107,7 @@ export class AutoHide extends Widget {
         (element, config) => {
           return new AutoHide(element, config);
         },
-        newConfigValidator(remove),
+        createConfigValidator(remove),
         { supportsMultiple: true },
       );
     }
@@ -227,7 +227,7 @@ const WIDGET_NAME_REMOVE = "auto-remove";
 const DEFAULT_DELAY = 3000;
 
 // For HTML API only
-const newConfigValidator = (
+const createConfigValidator = (
   autoRemove: boolean,
 ): WidgetConfigValidatorObject<AutoHideConfig> => {
   return {

@@ -56,14 +56,14 @@ export class XResizeObserver {
 
     // Keep the latest ResizeObserverEntry for each target during the
     // debounceWindow. Short-lived, so ok to use a Map.
-    const buffer = _.newMap<Element, ResizeObserverEntry>();
+    const buffer = _.createMap<Element, ResizeObserverEntry>();
 
     // Since internally we have two observers, one for border box, one for
     // content box, we will get called initially twice for a target. So we keep
     // a counter of 1 or 2 for how many more calls to ignore.
-    const targetsToSkip = _.newWeakMap<Element, 1 | 2>();
+    const targetsToSkip = _.createWeakMap<Element, 1 | 2>();
 
-    let observedTargets = _.newWeakSet<Element>();
+    let observedTargets = _.createWeakSet<Element>();
 
     debounceWindow ??= 0;
 
@@ -111,8 +111,8 @@ export class XResizeObserver {
       }
     };
 
-    const borderObserver = _.newResizeObserver(resizeHandler);
-    const contentObserver = _.newResizeObserver(resizeHandler);
+    const borderObserver = _.createResizeObserver(resizeHandler);
+    const contentObserver = _.createResizeObserver(resizeHandler);
     if (!borderObserver || !contentObserver) {
       logWarn(
         "This browser does not support ResizeObserver. Some features won't work.",
@@ -161,7 +161,7 @@ export class XResizeObserver {
 
     this.disconnect = () => {
       debug: logger?.debug10("Disconnecting");
-      observedTargets = _.newWeakSet();
+      observedTargets = _.createWeakSet();
       borderObserver?.disconnect();
       contentObserver?.disconnect();
     };

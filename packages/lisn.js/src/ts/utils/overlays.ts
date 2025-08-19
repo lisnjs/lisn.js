@@ -20,7 +20,7 @@ import {
   fetchMainContentElement,
 } from "@lisn/utils/scroll";
 
-import { newXWeakMap } from "@lisn/modules/x-map";
+import { createXWeakMap } from "@lisn/modules/x-map";
 
 /**
  * @category Overlays
@@ -178,8 +178,8 @@ type OverlayOptionsInternal = {
 
 const PREFIX_WRAPPER = _.prefixName("overlay-wrapper");
 
-const overlays = newXWeakMap<HTMLElement, Map<string, HTMLElement>>(() =>
-  _.newMap(),
+const overlays = createXWeakMap<HTMLElement, Map<string, HTMLElement>>(() =>
+  _.createMap(),
 );
 
 const tryGetOverlayOptions = (

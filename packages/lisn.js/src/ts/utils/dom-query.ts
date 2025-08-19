@@ -54,7 +54,7 @@ export const isNodeBAfterA = (nodeA: Node, nodeB: Node) =>
 
 // --------------------
 
-const inlineTags = _.newSet([
+const inlineTags = _.createSet([
   "a",
   "abbr",
   "acronym",

@@ -521,12 +521,12 @@ const getLayersFrom = (
   trigger: FXScrollTrigger,
 ) => {
   // map will include the root scrollable
-  const layerMap = _.newMap<Element, SmoothScrollLayerState>();
+  const layerMap = _.createMap<Element, SmoothScrollLayerState>();
   const defaultLag = rootConfig?.lag ?? settings.effectLag;
   const defaultLagX = rootConfig?.lagX ?? defaultLag;
   const defaultLagY = rootConfig?.lagY ?? defaultLag;
 
-  const newComposer = (
+  const createComposer = (
     useDefaultEffects: boolean,
     config: {
       lagX: number;
@@ -607,14 +607,14 @@ const getLayersFrom = (
         _lagY: lagY,
         _depthX: depthX,
         _depthY: depthY,
-        _composer: newComposer(useDefaultEffects, {
+        _composer: createComposer(useDefaultEffects, {
           lagX,
           lagY,
           depthX: depthX === _.S_AUTO ? 1 : depthX,
           depthY: depthY === _.S_AUTO ? 1 : depthY,
           parent: parentState?._composer,
         }),
-        _children: _.newSet(),
+        _children: _.createSet(),
         _parentState: parentState,
       };
 

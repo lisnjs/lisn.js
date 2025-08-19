@@ -36,7 +36,7 @@ import {
   Callback,
   wrapCallback,
 } from "@lisn/modules/callback";
-import { newXMap, newXWeakMap } from "@lisn/modules/x-map";
+import { createXMap, createXWeakMap } from "@lisn/modules/x-map";
 import { XIntersectionObserver } from "@lisn/modules/x-intersection-observer";
 
 import { DOMWatcher } from "@lisn/watchers/dom-watcher";
@@ -209,12 +209,12 @@ export class ViewWatcher {
       ? new debug.Logger({ name: "ViewWatcher", logAtCreation: config })
       : null;
 
-    const allViewData = _.newWeakMap<Element, ViewData>();
+    const allViewData = _.createWeakMap<Element, ViewData>();
 
-    const allCallbacks = newXWeakMap<
+    const allCallbacks = createXWeakMap<
       Element,
       Map<OnViewHandler, CallbackEntry>
-    >(() => _.newMap());
+    >(() => _.createMap());
 
     const intersectionHandler = (entries: IntersectionObserverEntry[]) => {
       debug: logger?.debug9(`Got ${entries.length} new entries`, entries);
@@ -257,9 +257,9 @@ export class ViewWatcher {
         return fetchData(element);
       }
 
-      return _.newPromise((resolve) => {
+      return _.createPromise((resolve) => {
         // Use a temp IntersectionObserver
-        const observer = _.newIntersectionObserver((entries) => {
+        const observer = _.createIntersectionObserver((entries) => {
           const promise = fetchData(entries[0]);
           observer.disconnect();
           promise.then(resolve);
@@ -838,8 +838,8 @@ type IntersectionData = {
 type TrackType = typeof TRACK_REGULAR | typeof TRACK_FULL;
 
 const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = newXMap<Element | null, Map<string, ViewWatcher>>(() =>
-  _.newMap(),
+const instances = createXMap<Element | null, Map<string, ViewWatcher>>(() =>
+  _.createMap(),
 );
 
 const getConfig = (

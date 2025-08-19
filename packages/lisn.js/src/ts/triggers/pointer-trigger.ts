@@ -122,7 +122,7 @@ export class ClickTrigger extends Trigger {
       _.S_CLICK,
       (element, args, actions, config) =>
         new ClickTrigger(element, actions, config),
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -233,7 +233,7 @@ export class PressTrigger extends Trigger {
       _.S_PRESS,
       (element, args, actions, config) =>
         new PressTrigger(element, actions, config),
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -341,7 +341,7 @@ export class HoverTrigger extends Trigger {
       _.S_HOVER,
       (element, args, actions, config) =>
         new HoverTrigger(element, actions, config),
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -393,7 +393,7 @@ export type PointerTriggerConfig = TriggerConfig & {
 
 // --------------------
 
-const newConfigValidator: WidgetConfigValidatorFunc<PointerTriggerConfig> = (
+const createConfigValidator: WidgetConfigValidatorFunc<PointerTriggerConfig> = (
   element,
 ) => {
   return {

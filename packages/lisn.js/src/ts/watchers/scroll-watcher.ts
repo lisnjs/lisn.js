@@ -45,7 +45,7 @@ import {
   Callback,
   wrapCallback,
 } from "@lisn/modules/callback";
-import { newXWeakMap } from "@lisn/modules/x-map";
+import { createXWeakMap } from "@lisn/modules/x-map";
 
 import { MutationOperation, DOMWatcher } from "@lisn/watchers/dom-watcher";
 import { SizeWatcher } from "@lisn/watchers/size-watcher";
@@ -303,17 +303,17 @@ export class ScrollWatcher {
       ? new debug.Logger({ name: "ScrollWatcher", logAtCreation: config })
       : null;
 
-    const allScrollData = _.newWeakMap<Element, ScrollData>();
+    const allScrollData = _.createWeakMap<Element, ScrollData>();
 
-    const activeListeners = _.newWeakMap<
+    const activeListeners = _.createWeakMap<
       ScrollTarget,
       { _nRealtime: number }
     >();
 
-    const allCallbacks = newXWeakMap<
+    const allCallbacks = createXWeakMap<
       Element,
       Map<OnScrollHandler, CallbackEntry>
-    >(() => _.newMap());
+    >(() => _.createMap());
 
     // ----------
 
@@ -550,7 +550,7 @@ export class ScrollWatcher {
       // the size of the content.
       // We also need to keep track of elements being added to the scrollable element.
 
-      const observedElements = _.newSet<Element>([element]);
+      const observedElements = _.createSet<Element>([element]);
 
       // Observe the scrolling element
       setupOnResize(element);
@@ -1031,7 +1031,7 @@ type CallbackEntry = {
 type TrackType = typeof TRACK_REGULAR | typeof TRACK_FULL;
 
 const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = _.newMap<string, ScrollWatcher>();
+const instances = _.createMap<string, ScrollWatcher>();
 
 const PREFIX_WRAPPER = _.prefixName("scroll-watcher-wrapper");
 

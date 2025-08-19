@@ -28,7 +28,7 @@ import {
   Callback,
   wrapCallback,
 } from "@lisn/modules/callback";
-import { newXMap } from "@lisn/modules/x-map";
+import { createXMap } from "@lisn/modules/x-map";
 
 import debug from "@lisn/debug/debug";
 
@@ -147,15 +147,15 @@ export class DOMWatcher {
       ? new debug.Logger({ name: "DOMWatcher", logAtCreation: config })
       : null;
 
-    const buffer = newXMap<Element, MutationOperationInternal>((t) => ({
+    const buffer = createXMap<Element, MutationOperationInternal>((t) => ({
       _target: t,
       _categoryBitmask: 0,
-      _attributes: _.newSet(),
+      _attributes: _.createSet(),
       _addedTo: null,
       _removedFrom: null,
     }));
 
-    const allCallbacks = _.newMap<
+    const allCallbacks = _.createMap<
       OnMutationHandler,
       {
         _callback: OnMutationCallback;
@@ -224,11 +224,11 @@ export class DOMWatcher {
 
     const observers: Record<MutationType, MyObserver> = {
       [_.S_CHILD_LIST]: {
-        _observer: _.newMutationObserver(mutationHandler),
+        _observer: _.createMutationObserver(mutationHandler),
         _isActive: false,
       },
       [_.S_ATTRIBUTES]: {
-        _observer: _.newMutationObserver(mutationHandler),
+        _observer: _.createMutationObserver(mutationHandler),
         _isActive: false,
       },
     };
@@ -303,7 +303,7 @@ export class DOMWatcher {
         const initOperation: MutationOperationInternal = {
           _target: element,
           _categoryBitmask: ADDED_BIT,
-          _attributes: _.newSet(),
+          _attributes: _.createSet(),
           _addedTo: _.parentOf(element),
           _removedFrom: null,
         };
@@ -634,8 +634,8 @@ type MutationOperationInternal = {
 };
 
 const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = newXMap<Element | null, Map<string, DOMWatcher>>(() =>
-  _.newMap(),
+const instances = createXMap<Element | null, Map<string, DOMWatcher>>(() =>
+  _.createMap(),
 );
 
 const getConfig = (
@@ -690,7 +690,7 @@ const getDiffOperation = (
     return operationA;
   }
 
-  const attributes = _.newSet<string>();
+  const attributes = _.createSet<string>();
   for (const attr of operationA._attributes) {
     if (!operationB._attributes.has(attr)) {
       attributes.add(attr);

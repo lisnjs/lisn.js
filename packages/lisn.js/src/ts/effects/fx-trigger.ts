@@ -83,10 +83,11 @@ export abstract class FXTrigger {
   ) {
     let isActive = true;
 
-    const changeCallbacks = _.newMap<FXTriggerHandler, FXTriggerCallback>();
+    const changeCallbacks = _.createMap<FXTriggerHandler, FXTriggerCallback>();
 
     let resolve: (update: FXStateUpdate) => void;
-    const nextPromise = () => _.newPromise<FXStateUpdate>((r) => (resolve = r));
+    const nextPromise = () =>
+      _.createPromise<FXStateUpdate>((r) => (resolve = r));
 
     const push = (update: FXStateUpdate) => resolve(update);
 

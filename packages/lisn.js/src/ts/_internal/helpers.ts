@@ -105,7 +105,7 @@ export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
   }
 
   if (isMap(value)) {
-    const out = M.newMap();
+    const out = M.createMap();
     _seen.set(value, out);
     for (const [k, v] of value) {
       const kCopy = deepCopy(k, _seen);
@@ -116,7 +116,7 @@ export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
   }
 
   if (isSet(value)) {
-    const out = M.newSet();
+    const out = M.createSet();
     _seen.set(value, out);
     for (const v of value) {
       out.add(deepCopy(v, _seen));

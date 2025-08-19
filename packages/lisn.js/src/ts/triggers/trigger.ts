@@ -345,30 +345,30 @@ export type TriggerCreateFn<Config extends TriggerConfig> = (
  * **IMPORTANT:** If a trigger by that name is already registered, the current
  * call does nothing, even if the remaining arguments differ.
  *
- * @param name       The name of the trigger. Should be in kebab-case.
- * @param newTrigger Called for every trigger specification on any element
- *                   that has one or more trigger specifications.
+ * @param name          The name of the trigger. Should be in kebab-case.
+ * @param createTrigger Called for every trigger specification on any element
+ *                      that has one or more trigger specifications.
  * @param configValidator
- *                   A validator object, or a function that returns such an
- *                   object, for all options that are specific to the
- *                   trigger. Base options (in {@link TriggerConfig}) will
- *                   be parsed automatically and don't need to be handled by
- *                   `configValidator`.
- *                   If the parameter is a function, it will be called with
- *                   the element on which the trigger is being defined.
+ *                      A validator object, or a function that returns such an
+ *                      object, for all options that are specific to the
+ *                      trigger. Base options (in {@link TriggerConfig}) will
+ *                      be parsed automatically and don't need to be handled by
+ *                      `configValidator`.
+ *                      If the parameter is a function, it will be called with
+ *                      the element on which the trigger is being defined.
  *
  * @see {@link registerWidget}
  */
 export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
   name: string,
-  newTrigger: TriggerCreateFn<Config>,
+  createTrigger: TriggerCreateFn<Config>,
   configValidator?: null | WidgetConfigValidator<Config>,
 ) => {
   const clsPref = _.prefixName(`on-${name}`);
 
-  const newWidget = async (element: Element) => {
+  const createWidget = async (element: Element) => {
     const widgets: Widget[] = [];
-    const baseConfigValidator = newBaseConfigValidator(element);
+    const baseConfigValidator = createBaseConfigValidator(element);
     const thisConfigValidator = _.isFunction(configValidator)
       ? await configValidator(element)
       : configValidator;
@@ -429,13 +429,13 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
         }
       }
 
-      widgets.push(await newTrigger(element, args, actions, config));
+      widgets.push(await createTrigger(element, args, actions, config));
     }
 
     return widgets;
   };
 
-  registerWidget(name, newWidget, null, {
+  registerWidget(name, createWidget, null, {
     selector: `[class^="${clsPref}--"],[class*=" ${clsPref}--"],[data-${clsPref}]`,
   });
 };
@@ -448,7 +448,7 @@ const OPTION_PREF_CHAR = "+";
 const ACTION_PREF_CHAR = "@";
 const ACTION_ARGS_PREF_CHAR = ":";
 
-const newBaseConfigValidator: WidgetConfigValidatorFunc<TriggerConfig> = (
+const createBaseConfigValidator: WidgetConfigValidatorFunc<TriggerConfig> = (
   element,
 ) => {
   return {

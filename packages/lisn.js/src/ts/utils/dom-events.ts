@@ -27,7 +27,7 @@ export function waitForElement<F>(
   timeout: number,
 ): Promise<null | NonNullable<F>>;
 export function waitForElement(checkFn: () => unknown, timeout?: number) {
-  return _.newPromise((resolve) => {
+  return _.createPromise((resolve) => {
     const callFn = () => {
       const result = checkFn();
       if (!_.isNullish(result)) {
@@ -80,7 +80,7 @@ export function waitForElement(checkFn: () => unknown, timeout?: number) {
  * @category DOM: Events
  */
 export const waitForElementOrInteractive = <F>(checkFn: () => F) =>
-  _.newPromise<NonNullable<true | F> | null>((resolve) => {
+  _.createPromise<NonNullable<true | F> | null>((resolve) => {
     let isInteractive = false;
     // Check element first, then readyState. The callback to waitForElement is
     // run synchronously first time, so isInteractive will be false and checkFn
@@ -106,7 +106,7 @@ export const waitForElementOrInteractive = <F>(checkFn: () => F) =>
  * @category DOM: Events
  */
 export const waitForInteractive = () =>
-  _.newPromise<void>((resolve) => {
+  _.createPromise<void>((resolve) => {
     const readyState = _.getReadyState();
     if (readyState === INTERACTIVE || readyState === COMPLETE) {
       resolve();
@@ -125,7 +125,7 @@ export const waitForInteractive = () =>
  * @category DOM: Events
  */
 export const waitForComplete = () =>
-  _.newPromise<void>((resolve) => {
+  _.createPromise<void>((resolve) => {
     if (_.getReadyState() === COMPLETE) {
       resolve();
       return;
@@ -148,7 +148,7 @@ export const waitForComplete = () =>
  * @category DOM: Events
  */
 export const waitForPageReady = () =>
-  _.newPromise<void>((resolve) => {
+  _.createPromise<void>((resolve) => {
     if (pageIsReady) {
       resolve();
       return;

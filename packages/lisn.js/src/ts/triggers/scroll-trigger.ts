@@ -130,7 +130,7 @@ export class ScrollTrigger extends Trigger {
           }),
         );
       },
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -218,7 +218,7 @@ export type ScrollTriggerConfig = TriggerConfig & {
 
 // --------------------
 
-const newConfigValidator: WidgetConfigValidatorFunc<
+const createConfigValidator: WidgetConfigValidatorFunc<
   Omit<ScrollTriggerConfig, "directions">
 > = (element) => {
   return {

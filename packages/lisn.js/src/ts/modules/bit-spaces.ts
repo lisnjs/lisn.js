@@ -194,9 +194,9 @@ export class BitSpaces {
   readonly bitmask!: number;
 
   constructor() {
-    const counter = newCounter();
+    const counter = createCounter();
 
-    this.create = (...propNames) => newBitSpace(counter, propNames);
+    this.create = (...propNames) => createBitSpace(counter, propNames);
     _.defineProperty(this, "nBits", { get: () => counter._nBits });
     _.defineProperty(this, "bitmask", { get: () => counter._bitmask });
   }
@@ -208,7 +208,7 @@ export class BitSpaces {
  * @ignore
  * @internal
  */
-export const newBitSpaces = () => new BitSpaces();
+export const createBitSpaces = () => new BitSpaces();
 
 /**
  * For minification optimization
@@ -216,7 +216,7 @@ export const newBitSpaces = () => new BitSpaces();
  * @ignore
  * @internal
  */
-export const createBitSpace = <T extends BitPropName>(
+export const addBitSpace = <T extends BitPropName>(
   spaces: BitSpaces,
   ...propNames: readonly T[]
 ): BitSpace<T> => spaces.create(...propNames);
@@ -228,12 +228,12 @@ type BitCounter = {
   _bitmask: number;
 };
 
-const newCounter = (): BitCounter => ({
+const createCounter = (): BitCounter => ({
   _nBits: 0,
   _bitmask: 0,
 });
 
-const newBitSpace = <T extends BitPropName>(
+const createBitSpace = <T extends BitPropName>(
   counter: BitCounter,
   propNames: readonly T[],
 ): BitSpace<T> => {

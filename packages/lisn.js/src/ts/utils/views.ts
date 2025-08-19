@@ -10,7 +10,7 @@ import { ScrollOffsetSpec, View, CommaSeparatedStr } from "@lisn/globals/types";
 
 import { isValidStrList, validateStrList } from "@lisn/utils/validation";
 
-import { newBitSpaces, createBitSpace } from "@lisn/modules/bit-spaces";
+import { createBitSpaces, addBitSpace } from "@lisn/modules/bit-spaces";
 
 /**
  * Returns true if the given string is a valid {@link ScrollOffsetSpec}.
@@ -195,7 +195,7 @@ const VIEWS: View[] = [
  * @ignore
  * @internal
  */
-export const VIEWS_SPACE = createBitSpace<View>(newBitSpaces(), ...VIEWS);
+export const VIEWS_SPACE = addBitSpace<View>(createBitSpaces(), ...VIEWS);
 
 // --------------------
 

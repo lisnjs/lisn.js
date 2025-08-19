@@ -93,6 +93,6 @@ export const getDebouncedHandler = <Args extends readonly unknown[]>(
  * @category Tasks
  */
 export const waitForDelay = (delay?: number) =>
-  _.newPromise<void>((resolve) => {
+  _.createPromise<void>((resolve) => {
     _.setTimer(resolve, delay);
   });

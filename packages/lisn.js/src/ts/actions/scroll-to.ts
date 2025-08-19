@@ -130,7 +130,7 @@ export class ScrollTo implements Action {
           scrollable: config?.scrollable,
         });
       },
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -228,7 +228,7 @@ export type ScrollToConfig = {
 
 // --------------------
 
-const newConfigValidator: WidgetConfigValidatorFunc<{
+const createConfigValidator: WidgetConfigValidatorFunc<{
   offsetX: number;
   offsetY: number;
   duration: number | undefined;

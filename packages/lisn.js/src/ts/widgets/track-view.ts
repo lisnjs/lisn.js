@@ -80,7 +80,7 @@ export class TrackView extends Widget {
         }
         return null;
       },
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -160,7 +160,7 @@ const WIDGET_NAME = "track-view";
 const DUMMY_ID = WIDGET_NAME;
 
 // For HTML API only
-const newConfigValidator: WidgetConfigValidatorFunc<TrackViewConfig> = (
+const createConfigValidator: WidgetConfigValidatorFunc<TrackViewConfig> = (
   element: Element,
 ) => {
   return {

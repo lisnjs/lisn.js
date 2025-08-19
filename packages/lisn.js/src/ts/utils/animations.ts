@@ -51,7 +51,7 @@ export type AnimationCallback = (elapsed: ElapsedTimes) => boolean;
  * @category Animations
  */
 export const waitForAnimationFrame = async () =>
-  _.newPromise<number>((resolve) => {
+  _.createPromise<number>((resolve) => {
     _.onAnimationFrame(resolve);
   });
 

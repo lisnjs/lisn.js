@@ -26,7 +26,7 @@ import {
   Callback,
   wrapCallback,
 } from "@lisn/modules/callback";
-import { newXWeakMap } from "@lisn/modules/x-map";
+import { createXWeakMap } from "@lisn/modules/x-map";
 import { XResizeObserver } from "@lisn/modules/x-resize-observer";
 
 import debug from "@lisn/debug/debug";
@@ -163,12 +163,12 @@ export class SizeWatcher {
       ? new debug.Logger({ name: "SizeWatcher", logAtCreation: config })
       : null;
 
-    const allSizeData = _.newWeakMap<Element, SizeData>();
+    const allSizeData = _.createWeakMap<Element, SizeData>();
 
-    const allCallbacks = newXWeakMap<
+    const allCallbacks = createXWeakMap<
       Element,
       Map<OnResizeHandler, CallbackEntry>
-    >(() => _.newMap());
+    >(() => _.createMap());
 
     // ----------
 
@@ -192,9 +192,9 @@ export class SizeWatcher {
         return _.deepCopy(sizeData);
       }
 
-      return _.newPromise((resolve) => {
+      return _.createPromise((resolve) => {
         // Use a temp ResizeObserver
-        const observer = _.newResizeObserver((entries) => {
+        const observer = _.createResizeObserver((entries) => {
           const sizeData = getSizeData(entries[0]);
           observer?.disconnect();
           resolve(sizeData); // no need to copy or save it
@@ -541,7 +541,7 @@ type CallbackEntry = {
 };
 
 const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = _.newMap<string, SizeWatcher>();
+const instances = _.createMap<string, SizeWatcher>();
 
 const getConfig = (
   config: SizeWatcherConfig | undefined,

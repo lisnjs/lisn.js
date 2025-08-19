@@ -12,7 +12,7 @@ import {
   addNewCallbackToMap,
   invokeHandlers,
 } from "@lisn/modules/callback";
-import { newXMap } from "@lisn/modules/x-map";
+import { createXMap } from "@lisn/modules/x-map";
 
 import {
   FXMatcher,
@@ -95,9 +95,9 @@ export class FXPin {
   constructor() {
     let isActive = true;
 
-    const changeCallbacks = _.newMap<FXPinHandler, FXPinCallback>();
+    const changeCallbacks = _.createMap<FXPinHandler, FXPinCallback>();
 
-    const matcherGroups = newXMap<
+    const matcherGroups = createXMap<
       FXMatcher,
       Array<{
         _activate: boolean;

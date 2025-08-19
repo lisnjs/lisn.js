@@ -24,7 +24,7 @@ import {
   Callback,
   wrapCallback,
 } from "@lisn/modules/callback";
-import { newXWeakMap } from "@lisn/modules/x-map";
+import { createXWeakMap } from "@lisn/modules/x-map";
 
 /**
  * {@link PointerWatcher} listens for simple pointer actions like clicks, press
@@ -104,10 +104,10 @@ export class PointerWatcher {
     // Keep a map of callbacks so we can lookup the callback by the handler
     // (and also to prevent duplicate handler for each target, for consistency
     // with other watchers).
-    const allCallbacks = newXWeakMap<
+    const allCallbacks = createXWeakMap<
       EventTarget,
       Map<OnPointerHandler, OnPointerCallback>
-    >(() => _.newMap());
+    >(() => _.createMap());
 
     // ----------
 
@@ -273,7 +273,7 @@ type OnPointerOptionsInternal = {
 };
 
 const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = _.newMap<string, PointerWatcher>();
+const instances = _.createMap<string, PointerWatcher>();
 
 const getConfig = (
   config: PointerWatcherConfig | undefined,

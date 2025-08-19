@@ -98,7 +98,7 @@ export type OpenableCreateFn<Config extends Record<string, unknown>> = (
  * but it does not need to be the same.
  *
  * @param name            The name of the openable. Should be in kebab-case.
- * @param newOpenable     Called for every element matching the selector.
+ * @param createOpenable  Called for every element matching the selector.
  * @param configValidator A validator object, or a function that returns such
  *                        an object, for all options supported by the widget.
  *
@@ -106,7 +106,7 @@ export type OpenableCreateFn<Config extends Record<string, unknown>> = (
  */
 export const registerOpenable = <Config extends Record<string, unknown>>(
   name: string,
-  newOpenable: OpenableCreateFn<Config>,
+  createOpenable: OpenableCreateFn<Config>,
   configValidator?: null | WidgetConfigValidator<Config>,
 ) => {
   registerWidget(
@@ -114,7 +114,7 @@ export const registerOpenable = <Config extends Record<string, unknown>>(
     (element, config) => {
       if (_.isHTMLElement(element)) {
         if (!Openable.get(element)) {
-          return newOpenable(element, config);
+          return createOpenable(element, config);
         }
       } else {
         logError(usageError("Openable widget supports only HTMLElement"));
@@ -234,8 +234,8 @@ export abstract class Openable extends Widget {
 
     const { isModal, isOffcanvas } = config;
 
-    const openCallbacks = _.newMap<WidgetHandler, WidgetCallback>();
-    const closeCallbacks = _.newMap<WidgetHandler, WidgetCallback>();
+    const openCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
+    const closeCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
 
     let isOpen = false;
 
@@ -316,7 +316,7 @@ export abstract class Openable extends Widget {
     this.getRoot = () => root;
     this.getContainer = () => container;
     this.getTriggers = () => [...triggers.keys()];
-    this.getTriggerConfigs = () => _.newMap([...triggers.entries()]);
+    this.getTriggerConfigs = () => _.createMap([...triggers.entries()]);
 
     this.onDestroy(() => {
       openCallbacks.clear();
@@ -1709,7 +1709,7 @@ type ElementsCollection = {
   triggers: Map<Element, OpenableTriggerConfig>;
 };
 
-const instances = _.newWeakMap<Element, Openable>();
+const instances = _.createWeakMap<Element, Openable>();
 
 const WIDGET_NAME_COLLAPSIBLE = "collapsible";
 const WIDGET_NAME_POPUP = "popup";
@@ -1909,7 +1909,7 @@ const getTriggersFrom = (
   wrapTriggers: boolean,
   prefixedNames: ReturnType<typeof getPrefixedNames>,
 ) => {
-  const triggerMap = _.newMap<Element, OpenableTriggerConfig>();
+  const triggerMap = _.createMap<Element, OpenableTriggerConfig>();
 
   inputTriggers = inputTriggers ?? findTriggers(content, prefixedNames);
 

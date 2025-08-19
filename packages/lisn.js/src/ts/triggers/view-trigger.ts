@@ -181,7 +181,7 @@ export class ViewTrigger extends Trigger {
           } as const),
         );
       },
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -310,7 +310,7 @@ export type ViewTriggerConfig = TriggerConfig & {
 
 // ----------
 
-const newConfigValidator: WidgetConfigValidatorFunc<
+const createConfigValidator: WidgetConfigValidatorFunc<
   Omit<ViewTriggerConfig, "views">
 > = (element) => {
   return {

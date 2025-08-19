@@ -19,7 +19,7 @@ export type IteratorCallback<K, V> = (
  * @ignore
  * @internal
  */
-export const newXMap = <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
+export const createXMap = <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
   new XMap(getDefaultV);
 
 /**
@@ -28,10 +28,10 @@ export const newXMap = <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
  * @ignore
  * @internal
  */
-export const newXMapGetter =
+export const createXMapGetter =
   <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
   () =>
-    newXMap(getDefaultV);
+    createXMap(getDefaultV);
 
 /**
  * For minification optimization
@@ -39,20 +39,20 @@ export const newXMapGetter =
  * @ignore
  * @internal
  */
-export const newXWeakMap = <K extends WeakKey, V>(
+export const createXWeakMap = <K extends WeakKey, V>(
   getDefaultV: DefaultValueGetter<K, V>,
 ) => new XWeakMap(getDefaultV);
 
 /**
- * For minification optimization. Exposed through {@link XMap.newXWeakMapGetter}.
+ * For minification optimization. Exposed through {@link XMap.createXWeakMapGetter}.
  *
  * @ignore
  * @internal
  */
-export const newXWeakMapGetter =
+export const createXWeakMapGetter =
   <K extends WeakKey, V>(getDefaultV: DefaultValueGetter<K, V>) =>
   () =>
-    newXWeakMap(getDefaultV);
+    createXWeakMap(getDefaultV);
 
 export abstract class XMapBase<K, V> {
   /**
@@ -172,7 +172,7 @@ export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
    * You can pass this to the constructor of an {@link XMap} or an
    * {@link XWeakMap}, whose values are {@link XMap}s.
    */
-  static readonly newXMapGetter = newXMapGetter;
+  static readonly newXMapGetter = createXMapGetter;
 
   /**
    * @param getDefaultV This function is called each time {@link sGet} is
@@ -180,7 +180,7 @@ export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
    *                    that is then set for that key and returned.
    */
   constructor(getDefaultV: DefaultValueGetter<K, V>) {
-    const root = _.newMap<K, V>();
+    const root = _.createMap<K, V>();
     super(root, getDefaultV);
 
     _.defineProperty(this, "size", { get: () => root.size });
@@ -208,7 +208,7 @@ export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
    * You can pass this to the constructor of an {@link XMap} or an
    * {@link XWeakMap}, whose values are {@link XWeakMap}s.
    */
-  static readonly newXWeakMapGetter = newXWeakMapGetter;
+  static readonly newXWeakMapGetter = createXWeakMapGetter;
 
   /**
    * @param getDefaultV This function is called each time {@link sGet} is
@@ -216,7 +216,7 @@ export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
    *                    that is then set for that key and returned.
    */
   constructor(getDefaultV: DefaultValueGetter<K, V>) {
-    const root = _.newWeakMap<K, V>();
+    const root = _.createWeakMap<K, V>();
     super(root, getDefaultV);
   }
 }

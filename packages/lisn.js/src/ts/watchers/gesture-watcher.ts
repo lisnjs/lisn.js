@@ -55,7 +55,7 @@ import {
   Callback,
   wrapCallback,
 } from "@lisn/modules/callback";
-import { newXWeakMap } from "@lisn/modules/x-map";
+import { createXWeakMap } from "@lisn/modules/x-map";
 
 import { LoggerInterface } from "@lisn/debug/types";
 import debug from "@lisn/debug/debug";
@@ -170,7 +170,7 @@ export class GestureWatcher {
       ? new debug.Logger({ name: "GestureWatcher", logAtCreation: config })
       : null;
 
-    const allCallbacks = newXWeakMap<
+    const allCallbacks = createXWeakMap<
       EventTarget,
       Map<
         OnGestureHandler,
@@ -180,14 +180,14 @@ export class GestureWatcher {
           _options: OnGestureOptionsInternal;
         }
       >
-    >(() => _.newMap());
+    >(() => _.createMap());
 
     // For each target and event type, add only 1 global listener that will then
     // manage the event queues and callbacks.
-    const allListeners = newXWeakMap<
+    const allListeners = createXWeakMap<
       EventTarget,
       Map<GestureDevice, DeviceListeners>
-    >(() => _.newMap());
+    >(() => _.createMap());
 
     // ----------
 
@@ -823,7 +823,7 @@ type DeviceListeners = {
 };
 
 const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = _.newMap<string, GestureWatcher>();
+const instances = _.createMap<string, GestureWatcher>();
 
 const getConfig = (
   config: GestureWatcherConfig | undefined,

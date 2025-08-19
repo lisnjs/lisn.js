@@ -6,7 +6,7 @@ import * as _ from "@lisn/_internal";
 
 import { addClasses, removeClasses } from "@lisn/utils/css-alter";
 
-import { XMap, newXMapGetter, newXWeakMap } from "@lisn/modules/x-map";
+import { XMap, createXMapGetter, createXWeakMap } from "@lisn/modules/x-map";
 
 /**
  * Calls the given event listener, which could be a function that's callable
@@ -201,7 +201,7 @@ type EventHandlerData = {
 
 let browserEventSupport: BrowserEventSupport;
 
-const registeredEventHandlerData = newXWeakMap<
+const registeredEventHandlerData = createXWeakMap<
   EventTarget,
   XMap<
     string, // event type
@@ -213,7 +213,7 @@ const registeredEventHandlerData = newXWeakMap<
       >
     >
   >
->(newXMapGetter(newXMapGetter(() => _.newMap())));
+>(createXMapGetter(createXMapGetter(() => _.createMap())));
 
 // detect browser features, see below
 type BrowserEventSupport = {

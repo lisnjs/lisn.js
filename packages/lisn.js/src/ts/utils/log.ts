@@ -49,7 +49,7 @@ export const logError: LogFunction = (...args) => {
   }
 };
 
-const discardMessages = _.newSet<string>();
+const discardMessages = _.createSet<string>();
 const isMessageSeen = (args: unknown[]) => {
   const msg = joinAsString(" ", ...args);
   const isSeen = discardMessages.has(msg);

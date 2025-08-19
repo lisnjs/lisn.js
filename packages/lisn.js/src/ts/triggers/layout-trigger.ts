@@ -159,7 +159,7 @@ export class LayoutTrigger extends Trigger {
           }),
         );
       },
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -239,7 +239,7 @@ export type LayoutTriggerConfig = TriggerConfig & {
 
 // --------------------
 
-const newConfigValidator: WidgetConfigValidatorFunc<
+const createConfigValidator: WidgetConfigValidatorFunc<
   Omit<LayoutTriggerConfig, "layout">
 > = (element) => {
   return {

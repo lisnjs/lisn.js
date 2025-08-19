@@ -404,7 +404,7 @@ export const promiseResolve = PROMISE.resolve.bind(PROMISE);
 
 export const promiseAll = PROMISE.all.bind(PROMISE);
 
-export const newPromise = <T>(
+export const createPromise = <T>(
   executor: (
     resolve: (value: T) => void,
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -448,17 +448,19 @@ export const isNaN = NUMBER.isNaN.bind(NUMBER);
 
 // ---------- Maps and Sets
 
-export const newMap = <K, V>(entries?: readonly (readonly [K, V])[] | null) =>
-  new Map(entries);
+export const createMap = <K, V>(
+  entries?: readonly (readonly [K, V])[] | null,
+) => new Map(entries);
 
-export const newWeakMap = <K extends WeakKey, V>(
+export const createWeakMap = <K extends WeakKey, V>(
   entries?: readonly (readonly [K, V])[] | null,
 ) => new WeakMap(entries);
 
-export const newSet = <T>(values?: readonly T[] | null) => new Set(values);
+export const createSet = <T>(values?: readonly T[] | null) => new Set(values);
 
-export const newWeakSet = <T extends WeakKey>(values?: readonly T[] | null) =>
-  new WeakSet(values);
+export const createWeakSet = <T extends WeakKey>(
+  values?: readonly T[] | null,
+) => new WeakSet(values);
 
 export const deleteKey = <K, V>(
   map: MapBase<K, V> | SetBase<K> | null | undefined,
@@ -475,15 +477,15 @@ export const remove = <A extends readonly unknown[]>(
   ...args: A
 ) => obj?.remove(...args);
 
-export const newIntersectionObserver = (
+export const createIntersectionObserver = (
   callback: IntersectionObserverCallback,
   options?: IntersectionObserverInit,
 ) => new IntersectionObserver(callback, options);
 
-export const newResizeObserver = (callback: ResizeObserverCallback) =>
+export const createResizeObserver = (callback: ResizeObserverCallback) =>
   typeof ResizeObserver === "undefined" ? null : new ResizeObserver(callback);
 
-export const newMutationObserver = (callback: MutationCallback) =>
+export const createMutationObserver = (callback: MutationCallback) =>
   new MutationObserver(callback);
 
 // ---------- Console

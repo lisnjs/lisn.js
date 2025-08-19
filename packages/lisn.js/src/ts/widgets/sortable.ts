@@ -495,7 +495,7 @@ const getMethods = (
   const doSwap = config?.mode === "swap";
 
   const disabledItems: Record<number, boolean> = {};
-  const callbacks = _.newMap<WidgetHandler, WidgetCallback>();
+  const callbacks = _.createMap<WidgetHandler, WidgetCallback>();
 
   const getSortedItems = () =>
     [...items].sort((a, b) => (isNodeBAfterA(a, b) ? -1 : 1));

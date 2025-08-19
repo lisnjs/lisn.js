@@ -8,7 +8,7 @@ import { LogFunction } from "@lisn/globals/types";
 
 import { joinAsString } from "@lisn/utils/text";
 
-import { newXMap } from "@lisn/modules/x-map";
+import { createXMap } from "@lisn/modules/x-map";
 
 import { ConsoleInterface } from "@lisn/debug/types";
 
@@ -179,7 +179,9 @@ export class RemoteConsole implements ConsoleInterface {
   }
 }
 
-const instances = newXMap<string, Map<number, RemoteConsole>>(() => _.newMap());
+const instances = createXMap<string, Map<number, RemoteConsole>>(() =>
+  _.createMap(),
+);
 
 const DEFAULT_TIMEOUT = 1500;
 

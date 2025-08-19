@@ -100,7 +100,7 @@ export abstract class FXMatcher {
       },
     };
 
-    const changeCallbacks = _.newMap<FXMatcherHandler, FXMatcherCallback>();
+    const changeCallbacks = _.createMap<FXMatcherHandler, FXMatcherCallback>();
 
     // --------------------
 

@@ -270,16 +270,19 @@ export class FXComposer {
       [];
     const currentComposition = new FXComposition();
 
-    const clearCallbacks = _.newMap<FXComposerHandler, FXComposerCallback>();
-    const triggerCallbacks = _.newMap<FXComposerHandler, FXComposerCallback>();
-    const tweenCallbacks = _.newMap<FXComposerHandler, FXComposerCallback>();
+    const clearCallbacks = _.createMap<FXComposerHandler, FXComposerCallback>();
+    const triggerCallbacks = _.createMap<
+      FXComposerHandler,
+      FXComposerCallback
+    >();
+    const tweenCallbacks = _.createMap<FXComposerHandler, FXComposerCallback>();
 
-    const animatedElements = _.newMap<
+    const animatedElements = _.createMap<
       Element,
       [FXComposerHandler, Set<Element>]
     >();
 
-    const currentFXState = newDefaultState();
+    const currentFXState = createState();
 
     // ----------
 
@@ -357,7 +360,7 @@ export class FXComposer {
     const startAnimate = (elements: Element[], negate?: FXComposer) => {
       // Use a single handler for all elements for performance gain.
       // Clean it up when all have been called with stopAnimate.
-      const relatedElements = _.newSet(elements);
+      const relatedElements = _.createSet(elements);
 
       const handler = () => {
         applyCss(relatedElements, false, negate);
@@ -757,7 +760,7 @@ export type FXComposerHandler =
 
 // ------------------------------
 
-const newDefaultState = (): FXState => {
+const createState = (): FXState => {
   const axisState: FXAxisState = {
     min: 0,
     max: 0,

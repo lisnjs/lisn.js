@@ -190,7 +190,7 @@ export class Callback<Args extends readonly unknown[] = []> {
     let isRemoved = false;
     const id = _.SYMBOL();
 
-    const removeHandlers = _.newSet<OnRemoveHandler>();
+    const removeHandlers = _.createSet<OnRemoveHandler>();
 
     this.isRemoved = () => isRemoved;
 
@@ -222,7 +222,7 @@ export class Callback<Args extends readonly unknown[] = []> {
     };
 
     this.invoke = (...args) =>
-      _.newPromise((resolve, reject) => {
+      _.createPromise((resolve, reject) => {
         debug: logger?.debug8("Calling with", args);
         if (isRemoved) {
           reject(usageError("Callback has been removed"));
@@ -364,10 +364,10 @@ type CallableCallback<Args extends readonly unknown[] = []> = (
   ...args: Args
 ) => void;
 
-const callablesMap = _.newWeakMap<CallableCallback, Callback>();
+const callablesMap = _.createWeakMap<CallableCallback, Callback>();
 
 const CallbackScheduler = (() => {
-  const queues = _.newMap<symbol, CallbackSchedulerQueueItem[]>();
+  const queues = _.createMap<symbol, CallbackSchedulerQueueItem[]>();
 
   const flush = async (queue: CallbackSchedulerQueueItem[]) => {
     // So that callbacks are always called asynchronously for consistency,

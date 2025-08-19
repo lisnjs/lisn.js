@@ -31,7 +31,7 @@ import { randId, formatAsString } from "@lisn/utils/text";
 import { tween3DAnimationGenerator, Tweener } from "@lisn/utils/tween";
 import { isValidStrList } from "@lisn/utils/validation";
 
-import { newXMap } from "@lisn/modules/x-map";
+import { createXMap } from "@lisn/modules/x-map";
 
 import debug from "@lisn/debug/debug";
 
@@ -500,13 +500,13 @@ type ScrollInfo = {
 };
 
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
-const isScrollableCache = newXMap<Element, Map<"x" | "y", boolean>>(() =>
-  _.newMap(),
+const isScrollableCache = createXMap<Element, Map<"x" | "y", boolean>>(() =>
+  _.createMap(),
 );
 
-const mappedScrollables = _.newWeakMap<Element, Element>();
+const mappedScrollables = _.createWeakMap<Element, Element>();
 
-const currentScrollInfos = _.newWeakMap<Element, ScrollInfo>();
+const currentScrollInfos = _.createWeakMap<Element, ScrollInfo>();
 
 const DIFF_THRESHOLD = 5;
 const arePositionsDifferent = (

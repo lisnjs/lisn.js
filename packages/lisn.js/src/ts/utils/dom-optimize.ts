@@ -38,7 +38,7 @@ import { scheduleHighPriorityTask } from "@lisn/utils/tasks";
  * @category DOM: Preventing layout trashing
  */
 export const waitForMutateTime = () =>
-  _.newPromise<void>((resolve) => {
+  _.createPromise<void>((resolve) => {
     scheduleDOMTask(scheduledDOMMutations, resolve);
   });
 
@@ -49,7 +49,7 @@ export const waitForMutateTime = () =>
  * @category DOM: Preventing layout trashing
  */
 export const waitForMeasureTime = () =>
-  _.newPromise<void>((resolve) => {
+  _.createPromise<void>((resolve) => {
     scheduleDOMTask(scheduledDOMMeasurements, resolve);
   });
 

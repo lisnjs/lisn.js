@@ -1175,7 +1175,7 @@ const getMethods = (
   const scrollWatcher = ScrollWatcher.reuse();
   const isFullscreen = config?.fullscreen;
   const disabledPages: Record<number, boolean> = {};
-  const callbacks = _.newMap<WidgetHandler, WidgetCallback>();
+  const callbacks = _.createMap<WidgetHandler, WidgetCallback>();
 
   const fetchScrollOptions = async (): Promise<ScrollOptions> => ({
     scrollable: await fetchClosestScrollable(element),

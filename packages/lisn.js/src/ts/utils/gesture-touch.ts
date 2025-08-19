@@ -16,7 +16,7 @@ import {
 } from "@lisn/utils/math";
 import { GestureFragment } from "@lisn/utils/gesture";
 
-import { newXMap } from "@lisn/modules/x-map";
+import { createXMap } from "@lisn/modules/x-map";
 
 /**
  * @category Gestures
@@ -221,7 +221,7 @@ export const getTouchDiff = (
 ): TouchDiff[] | null => {
   // Group each touch point of each event by identifier, so that we can get the
   // start and end coordinate of each finger
-  const groupedTouches = newXMap<number, Touch[]>((): Touch[] => []);
+  const groupedTouches = createXMap<number, Touch[]>((): Touch[] => []);
 
   for (const event of events) {
     if (!_.isTouchEvent(event)) {

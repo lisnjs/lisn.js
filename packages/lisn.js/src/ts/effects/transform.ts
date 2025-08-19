@@ -12,7 +12,7 @@ import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
 import { sum } from "@lisn/utils/math";
 
-import { newXWeakMap } from "@lisn/modules/x-map";
+import { createXWeakMap } from "@lisn/modules/x-map";
 
 import {
   EffectInterface,
@@ -202,7 +202,7 @@ export class Transform implements EffectInterface<"transform"> {
     let perspectiveFn: FXHandler<void> | null = null;
 
     let currentPerspective: number | null | undefined = initPerspective;
-    const stateMatrix = newMatrix(false, init);
+    const stateMatrix = createMatrix(false, init);
 
     // ----------
 
@@ -221,8 +221,8 @@ export class Transform implements EffectInterface<"transform"> {
     // ----------
 
     const toMatrix = (negate?: TransformLike) => {
-      const m = newMatrix(true, stateMatrix);
-      const relM = negate ? newMatrix(true, negate) : null;
+      const m = createMatrix(true, stateMatrix);
+      const relM = negate ? createMatrix(true, negate) : null;
       return relM ? relM.inverse().multiply(m) : m;
     };
 
@@ -629,7 +629,7 @@ type HandlerTuple = {
   [K in keyof HandlersMap]: [K, HandlersMap[K]];
 }[keyof HandlersMap];
 
-const allUserHandlersMap = newXWeakMap<Transform, HandlerTuple[]>(() => []);
+const allUserHandlersMap = createXWeakMap<Transform, HandlerTuple[]>(() => []);
 
 const getHandlersFor = (t: Transform) => allUserHandlersMap.sGet(t);
 
@@ -668,9 +668,9 @@ const addAndSaveHandlerFor = <T extends HandlerTuple>(
   }
 };
 
-function newMatrix(readonly: true, init?: TransformLike): DOMMatrixReadOnly;
-function newMatrix(readonly: false, init?: TransformLike): DOMMatrix;
-function newMatrix(readonly: boolean, init?: TransformLike) {
+function createMatrix(readonly: true, init?: TransformLike): DOMMatrixReadOnly;
+function createMatrix(readonly: false, init?: TransformLike): DOMMatrix;
+function createMatrix(readonly: boolean, init?: TransformLike) {
   const initM = _.isInstanceOf(init, Transform) ? init.toMatrix() : init;
   return new (readonly ? DOMMatrixReadOnly : DOMMatrix)(
     _.isNullish(initM)

@@ -191,7 +191,7 @@ export class ScrollToTop extends Widget {
         }
         return null;
       },
-      newConfigValidator,
+      createConfigValidator,
     );
   }
 
@@ -398,7 +398,7 @@ const PREFIX_FIXED = _.prefixName("fixed");
 let mainWidget: ScrollToTop | null = null;
 
 // For HTML API only
-const newConfigValidator: WidgetConfigValidatorFunc<ScrollToTopConfig> = (
+const createConfigValidator: WidgetConfigValidatorFunc<ScrollToTopConfig> = (
   element,
 ) => {
   return {

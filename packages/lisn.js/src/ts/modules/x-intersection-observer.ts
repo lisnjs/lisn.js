@@ -64,8 +64,8 @@ export class XIntersectionObserver {
     callback: XIntersectionObserverCallback,
     observeOptions?: IntersectionObserverInit,
   ) {
-    let observedTargets = _.newWeakSet<Element>();
-    const targetsToSkip = _.newWeakSet<Element>();
+    let observedTargets = _.createWeakSet<Element>();
+    const targetsToSkip = _.createWeakSet<Element>();
 
     const intersectionHandler = (entries: IntersectionObserverEntry[]) => {
       const selectedEntries = [];
@@ -84,7 +84,7 @@ export class XIntersectionObserver {
       }
     };
 
-    const observer = _.newIntersectionObserver(
+    const observer = _.createIntersectionObserver(
       intersectionHandler,
       observeOptions,
     );
@@ -125,7 +125,7 @@ export class XIntersectionObserver {
     };
 
     this.disconnect = () => {
-      observedTargets = _.newWeakSet();
+      observedTargets = _.createWeakSet();
       observer.disconnect();
     };
 

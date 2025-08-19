@@ -20,8 +20,8 @@ import { validateStrList } from "@lisn/utils/validation";
 
 import {
   BitSpace,
-  newBitSpaces,
-  createBitSpace,
+  createBitSpaces,
+  addBitSpace,
 } from "@lisn/modules/bit-spaces";
 
 /**
@@ -126,25 +126,19 @@ export const getLayoutBitmask = (options?: {
 const ORDERED_DEVICE_NAMES = sortedKeysByVal(settings.deviceBreakpoints);
 const ORDERED_ASPECTR_NAMES = sortedKeysByVal(settings.aspectRatioBreakpoints);
 
-const bitSpaces = newBitSpaces();
+const bitSpaces = createBitSpaces();
 
 /**
  * @ignore
  * @internal
  */
-export const ORDERED_DEVICES = createBitSpace(
-  bitSpaces,
-  ...ORDERED_DEVICE_NAMES,
-);
+export const ORDERED_DEVICES = addBitSpace(bitSpaces, ...ORDERED_DEVICE_NAMES);
 
 /**
  * @ignore
  * @internal
  */
-export const ORDERED_ASPECTR = createBitSpace(
-  bitSpaces,
-  ...ORDERED_ASPECTR_NAMES,
-);
+export const ORDERED_ASPECTR = addBitSpace(bitSpaces, ...ORDERED_ASPECTR_NAMES);
 
 /**
  * @ignore

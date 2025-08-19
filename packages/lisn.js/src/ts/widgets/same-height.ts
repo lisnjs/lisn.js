@@ -588,7 +588,7 @@ export class SameHeight extends Widget {
     this.toRow = () => delData(containerElement, _.PREFIX_ORIENTATION);
 
     this.getItems = () => [...items.keys()];
-    this.getItemConfigs = () => _.newMap([...items.entries()]);
+    this.getItemConfigs = () => _.createMap([...items.entries()]);
   }
 }
 
@@ -819,7 +819,7 @@ const getItemsFrom = (
   containerElement: HTMLElement,
   inputItems: Element[] | Map<Element, "image" | "text"> | undefined,
 ) => {
-  const itemMap = _.newMap<Element, "image" | "text">();
+  const itemMap = _.createMap<Element, "image" | "text">();
 
   inputItems = inputItems || findItems(containerElement);
 
@@ -861,7 +861,7 @@ const init = (
     resizeThreshold: config._resizeThreshold,
   });
 
-  const allItems = _.newMap<Element, ItemProperties>();
+  const allItems = _.createMap<Element, ItemProperties>();
 
   let callCounter = 0;
   let isFirstTime = true;

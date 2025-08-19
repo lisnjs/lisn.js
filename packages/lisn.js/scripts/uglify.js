@@ -22,7 +22,7 @@ const uglify = (build, useESM = false) => {
       `--compress keep_infinity=true,passes=3 ` +
       `${useESM ? "--module" : ""} ` +
       `--mangle reserved=${reserved} ` +
-      `--mangle-props regex='/^_/' ` +
+      `--mangle-props regex='/^_./' ` +
       `--comments /^\\/\\*!/ ` +
       `--output ${output}`,
     { stdio: [0, 1, 2] },

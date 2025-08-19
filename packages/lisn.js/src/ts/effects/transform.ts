@@ -229,7 +229,7 @@ export class Transform implements EffectInterface<"transform"> {
     // ----------
 
     const reset = () => {
-      currentPerspective = undefined;
+      currentPerspective = void 0;
 
       stateMatrix.m12 =
         stateMatrix.m13 =
@@ -292,10 +292,10 @@ export class Transform implements EffectInterface<"transform"> {
 
       const resultInit = new DOMMatrix();
       const resultHandlers: HandlerTuple[] = [];
-      let resultPerspective: number | null | undefined = undefined;
+      let resultPerspective: number | null | undefined = void 0;
       for (const t of toCombine) {
         const thisPerspective = t.toPerspective();
-        if (thisPerspective !== undefined) {
+        if (!_.isUndefined(thisPerspective)) {
           resultPerspective = thisPerspective;
         }
 
@@ -332,7 +332,7 @@ export class Transform implements EffectInterface<"transform"> {
     this.perspective = (handler) => {
       addOwnHandler([PERSPECTIVE, handler], (parameters, state, composer) => {
         const perspective = handler(parameters, state, composer);
-        if (perspective !== undefined) {
+        if (!_.isUndefined(perspective)) {
           validateOutputParameters("Perspective", [perspective ?? 0]);
 
           if (_.isNullish(currentPerspective) || _.isNullish(perspective)) {

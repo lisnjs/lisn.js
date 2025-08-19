@@ -159,7 +159,7 @@ export const iterateAnimations = async (
   /* istanbul ignore next */ // jsdom doesn't support Web Animations
   if (
     "getAnimations" in element &&
-    getData(element, _.prefixName("test-legacy")) === null
+    _.isNull(getData(element, _.prefixName("test-legacy")))
   ) {
     if (!realtime) {
       await waitForMeasureTime();

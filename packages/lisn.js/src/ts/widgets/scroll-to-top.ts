@@ -407,8 +407,8 @@ const newConfigValidator: WidgetConfigValidatorFunc<ScrollToTopConfig> = (
       validateString(key, value, (v) => v === _.S_LEFT || v === _.S_RIGHT),
     scrollable: (key, value) =>
       _.isLiteralString(value)
-        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
-        : undefined,
+        ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...
+        : void 0,
   };
 };
 

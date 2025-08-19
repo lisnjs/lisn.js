@@ -318,12 +318,12 @@ const newConfigValidator: WidgetConfigValidatorFunc<
       _.isLiteralString(value) && isValidScrollOffset(value)
         ? value
         : _.isLiteralString(value)
-          ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
-          : undefined,
+          ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...
+          : void 0,
     root: (key, value) =>
       _.isLiteralString(value)
-        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
-        : undefined,
+        ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...
+        : void 0,
     rootMargin: validateString,
     threshold: (key, value) => validateNumList(key, value),
   };

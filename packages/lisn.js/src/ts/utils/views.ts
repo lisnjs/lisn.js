@@ -19,7 +19,7 @@ import { newBitSpaces, createBitSpace } from "@lisn/modules/bit-spaces";
  */
 export const isValidScrollOffset = (
   offset: string,
-): offset is ScrollOffsetSpec => offset.match(OFFSET_REGEX) !== null;
+): offset is ScrollOffsetSpec => !_.isNull(offset.match(OFFSET_REGEX));
 
 /**
  * Returns true if the given string is a valid "view".

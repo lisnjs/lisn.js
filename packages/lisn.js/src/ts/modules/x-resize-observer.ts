@@ -74,7 +74,7 @@ export class XResizeObserver {
       for (const entry of entries) {
         const target = _.targetOf(entry);
         const skipNum = targetsToSkip.get(target);
-        if (skipNum !== undefined) {
+        if (!_.isUndefined(skipNum)) {
           if (skipNum === 2) {
             // expect one more call
             targetsToSkip.set(target, 1);

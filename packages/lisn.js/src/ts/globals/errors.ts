@@ -35,6 +35,13 @@ export class LisnBugError extends LisnError {
  * @ignore
  * @internal
  */
+export const isUsageError = (value: unknown) =>
+  _.isInstanceOf(value, LisnUsageError);
+
+/**
+ * @ignore
+ * @internal
+ */
 export const usageError = (msg: string) => new LisnUsageError(msg);
 
 /**

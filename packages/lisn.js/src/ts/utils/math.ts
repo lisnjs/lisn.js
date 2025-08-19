@@ -63,7 +63,7 @@ export const toInt = <D extends number | false | null = 0>(
   defaultValue: D | 0 = 0,
 ): number | D => {
   let numValue = toNum(value, null);
-  numValue = numValue === null ? numValue : _.floor(numValue);
+  numValue = _.isNull(numValue) ? numValue : _.floor(numValue);
 
   // Ensure that the parsed int equaled the original by loose equality.
   return isValidNum(numValue) && numValue == value ? numValue : defaultValue;
@@ -80,7 +80,7 @@ export const toNonNegNum = <D extends number | false | null = 0>(
   defaultValue: D | 0 = 0,
 ): number | D => {
   const numValue = toNum(value, null);
-  return numValue !== null && numValue >= 0 ? numValue : defaultValue;
+  return !_.isNull(numValue) && numValue >= 0 ? numValue : defaultValue;
 };
 
 /**
@@ -94,7 +94,7 @@ export const toPosNum = <D extends number | false | null = 0>(
   defaultValue: D | 0 = 0,
 ): number | D => {
   const numValue = toNum(value, null);
-  return numValue !== null && numValue > 0 ? numValue : defaultValue;
+  return !_.isNull(numValue) && numValue > 0 ? numValue : defaultValue;
 };
 
 /**
@@ -117,7 +117,7 @@ export const toNumWithBounds = <D extends number | false | null = number>(
   limits: AtLeastOne<{ min: number | null; max: number | null }>,
   defaultValue?: D,
 ): number | D => {
-  const isDefaultGiven = defaultValue !== undefined;
+  const isDefaultGiven = !_.isUndefined(defaultValue);
   const numValue = toNum(value, null);
   const min = limits?.min ?? null;
   const max = limits?.max ?? null;
@@ -125,9 +125,9 @@ export const toNumWithBounds = <D extends number | false | null = number>(
   let result: number | D;
   if (!isValidNum(numValue)) {
     result = isDefaultGiven ? defaultValue : (min ?? max ?? 0);
-  } else if (min !== null && numValue < min) {
+  } else if (!_.isNull(min) && numValue < min) {
     result = isDefaultGiven ? defaultValue : min;
-  } else if (max !== null && numValue > max) {
+  } else if (!_.isNull(max) && numValue > max) {
     result = isDefaultGiven ? defaultValue : max;
   } else {
     result = numValue;
@@ -323,12 +323,12 @@ export const hAngle = (x: number, y: number) =>
  */
 export const normalizeAngle = (a: number) => {
   // ensure it's positive in the range 0 to 2 PI
-  while (a < 0 || a > _.PI * 2) {
-    a += (a < 0 ? 1 : -1) * _.PI * 2;
+  while (a < 0 || a > _.MATH.PI * 2) {
+    a += (a < 0 ? 1 : -1) * _.MATH.PI * 2;
   }
 
   // then, if > PI, offset by - 2PI
-  return a > _.PI ? a - _.PI * 2 : a;
+  return a > _.MATH.PI ? a - _.MATH.PI * 2 : a;
 };
 
 /**
@@ -348,14 +348,14 @@ export const normalizeAxis = (x: number, y: number, z = 0) => {
  *
  * @category Math
  */
-export const degToRad = (a: number) => (a * _.PI) / 180;
+export const degToRad = (a: number) => (a * _.MATH.PI) / 180;
 
 /**
  * Converts the given angle in radians to degrees.
  *
  * @category Math
  */
-export const radToDeg = (a: number) => (a * 180) / _.PI;
+export const radToDeg = (a: number) => (a * 180) / _.MATH.PI;
 
 /**
  * Returns true if the given vectors point in the same direction.

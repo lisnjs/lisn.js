@@ -51,6 +51,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import * as _ from "@lisn/_internal";
+
 import { settings } from "@lisn/globals/settings";
 
 /**
@@ -163,16 +165,16 @@ export const normalizeWheel = (event: LegacyWheelEvent): WheelData => {
   const LINE = settings.deltaLineHeight;
 
   // Legacy
-  if (event.detail !== undefined) {
+  if (!_.isUndefined(event.detail)) {
     spinY = event.detail;
   }
-  if (event.wheelDelta !== undefined) {
+  if (!_.isUndefined(event.wheelDelta)) {
     spinY = -event.wheelDelta / 120;
   }
-  if (event.wheelDeltaY !== undefined) {
+  if (!_.isUndefined(event.wheelDeltaY)) {
     spinY = -event.wheelDeltaY / 120;
   }
-  if (event.wheelDeltaX !== undefined) {
+  if (!_.isUndefined(event.wheelDeltaX)) {
     spinX = -event.wheelDeltaX / 120;
   }
 

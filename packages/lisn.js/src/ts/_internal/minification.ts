@@ -32,9 +32,7 @@ export const MATH = Math;
 export const NUMBER = Number;
 export const PROMISE = Promise;
 
-export const PI = MATH.PI;
 export const INFINITY = Infinity;
-export const UNDEFINED = void 0;
 
 export const S_ABSOLUTE = "absolute";
 export const S_FIXED = "fixed";
@@ -307,13 +305,13 @@ export const preventDefault = (event: Event) => event.preventDefault();
 export function targetOf<T>(obj: { target: T }): T;
 export function targetOf(obj: object | null | undefined): undefined;
 export function targetOf(obj: object | null | undefined) {
-  return obj && "target" in obj ? obj.target : undefined;
+  return obj && "target" in obj ? obj.target : void 0;
 }
 
 export function currentTargetOf<T>(obj: { currentTarget: T }): T;
 export function currentTargetOf(obj: object | null | undefined): undefined;
 export function currentTargetOf(obj: object | null | undefined) {
-  return obj && "currentTarget" in obj ? obj.currentTarget : undefined;
+  return obj && "currentTarget" in obj ? obj.currentTarget : void 0;
 }
 
 // ---------- Array-like

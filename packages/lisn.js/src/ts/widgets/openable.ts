@@ -2468,7 +2468,7 @@ const fetchPopupPlacement = async (
   };
 
   const placement = keyWithMaxVal(placementVars);
-  if (placement === undefined) {
+  if (_.isNullish(placement)) {
     // container must be out-view and so left/right are NaN
     return;
   }

@@ -246,7 +246,7 @@ const newConfigValidator: WidgetConfigValidatorFunc<
     root: async (key, value) => {
       const root = _.isLiteralString(value)
         ? await waitForReferenceElement(value, element)
-        : undefined;
+        : void 0;
       if (root && !_.isHTMLElement(root)) {
         throw usageError("root must be HTMLElement");
       }

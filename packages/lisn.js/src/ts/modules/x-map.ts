@@ -102,7 +102,7 @@ export abstract class XMapBase<K, V> {
 
     this.sGet = (key) => {
       let result = root.get(key);
-      if (result === undefined) {
+      if (_.isUndefined(result)) {
         result = getDefaultV(key);
         root.set(key, result);
       }
@@ -116,7 +116,7 @@ export abstract class XMapBase<K, V> {
       }
 
       if (
-        value === undefined ||
+        _.isUndefined(value) ||
         (_.isIterableObject(value) &&
           !(
             ("size" in value && value.size) ||

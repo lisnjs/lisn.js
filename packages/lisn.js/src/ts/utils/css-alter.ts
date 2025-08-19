@@ -465,7 +465,7 @@ export const getData = (element: Element, name: string) =>
  */
 export const getBooleanData = (element: Element, name: string) => {
   const value = getData(element, name);
-  return value !== null && value !== "false";
+  return !_.isNull(value) && value !== "false";
 };
 
 /**
@@ -711,7 +711,7 @@ export const isFlex = async (element: Element, direction?: FlexDirection) => {
     return direction === flexDirection;
   }
 
-  return flexDirection !== null;
+  return !_.isNull(flexDirection);
 };
 
 /**
@@ -852,7 +852,7 @@ export const setNumericStyleJsVarsNow = (
       value = roundNumTo(value, thisNumDecimal);
     }
 
-    if (value === null) {
+    if (_.isNull(value)) {
       delStylePropNow(element, varName);
     } else {
       setStylePropNow(element, varName, value + (options?._units ?? ""));
@@ -871,8 +871,8 @@ export const setNumericStyleJsVars = asyncMutatorFor(setNumericStyleJsVarsNow);
 type CssNumericProps = Record<string, number | undefined | null>;
 
 type CSSTransition = {
-  _cancel: () => undefined;
-  _finish: () => undefined;
+  _cancel: () => void;
+  _finish: () => void;
   _isCancelled: () => boolean;
 };
 

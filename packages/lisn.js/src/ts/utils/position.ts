@@ -18,7 +18,7 @@ export const isValidPosition = (position: string): position is Position =>
 export const isValidTwoFoldPosition = (
   position: string,
 ): position is `${Position}-${Position}` =>
-  position.match(TWO_FOLD_POSITION_REGEX) !== null;
+  !_.isNull(position.match(TWO_FOLD_POSITION_REGEX));
 
 /**
  * @ignore

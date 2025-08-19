@@ -44,8 +44,7 @@ export const isInQuirksMode = () =>
  * @category Browser info
  */
 export const isMobile = () =>
-  _.hasDOM()
-    ? _.userAgent.match(
-        /Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/,
-      ) !== null
-    : false;
+  _.hasDOM() &&
+  !!_.userAgent.match(
+    /Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/,
+  );

@@ -59,9 +59,9 @@ export const filterBlank = <A extends readonly unknown[]>(
 ) => {
   const result = array
     ? M.filter(array, (v): v is NonNullable<A[number]> => !isEmpty(v))
-    : undefined;
+    : void 0;
 
-  return M.lengthOf(result) ? result : undefined;
+  return M.lengthOf(result) ? result : void 0;
 };
 
 // -------------------- Object operations
@@ -143,15 +143,14 @@ export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
   }
 
   if (isOfType(value, "RegExp")) {
-    const flags =
-      value.flags !== undefined
-        ? value.flags
-        : (value.global ? "g" : "") +
-          (value.ignoreCase ? "i" : "") +
-          (value.multiline ? "m" : "") +
-          (value.unicode ? "u" : "") +
-          (value.sticky ? "y" : "") +
-          (value.dotAll ? "s" : "");
+    const flags = !isUndefined(value.flags)
+      ? value.flags
+      : (value.global ? "g" : "") +
+        (value.ignoreCase ? "i" : "") +
+        (value.multiline ? "m" : "") +
+        (value.unicode ? "u" : "") +
+        (value.sticky ? "y" : "") +
+        (value.dotAll ? "s" : "");
     const copy = new RegExp(value.source, flags);
     copy.lastIndex = value.lastIndex;
     return copy as T;
@@ -207,7 +206,7 @@ export const copyExistingKeysTo = <T extends NestedRecord<V>, V>(
       const updated = fromObj[key];
       if (isPlainObject(updated) && isPlainObject(current)) {
         copyExistingKeysTo(updated, current);
-      } else if (updated !== undefined) {
+      } else if (!isUndefined(updated)) {
         toObj[key] = updated;
       }
     }
@@ -295,7 +294,11 @@ export const typeOf = (obj: unknown) => typeof obj;
 export const typeOrClassOf = (obj: unknown) =>
   isObject(obj) ? constructorOf(obj)?.name : typeOf(obj);
 
-export const isNullish = (v: unknown) => v === undefined || v === null;
+export const isNull = (v: unknown) => v === null;
+
+export const isUndefined = (v: unknown) => v === void 0;
+
+export const isNullish = (v: unknown) => isNull(v) || isUndefined(v);
 
 export const isEmpty = (v: unknown) => isNullish(v) || v === "";
 
@@ -309,14 +312,14 @@ export const isOfType = <T extends keyof StringTagMap>(
   (checkLevelsUp > 0 && isOfType(M.getPrototypeOf(v), tag, checkLevelsUp - 1));
 
 // Not including function
-export const isObject = (v: unknown) => v !== null && typeof v === "object";
+export const isObject = (v: unknown) => !isNull(v) && typeof v === "object";
 
 export const isPlainObject = (
   v: unknown,
 ): v is Record<string | symbol, unknown> =>
   isObject(v) &&
-  (M.getPrototypeOf(v) === null ||
-    M.getPrototypeOf(M.getPrototypeOf(v)) === null);
+  (isNull(M.getPrototypeOf(v)) ||
+    isNull(M.getPrototypeOf(M.getPrototypeOf(v))));
 
 export const isIterableObject = (v: unknown): v is IterableObject<unknown> =>
   isObject(v) && M.SYMBOL.iterator in v;
@@ -519,7 +522,7 @@ const isInstanceOfLisnClass = <C extends Class<unknown>>(
   const proto = Class.prototype;
   const clsBrandSym = isObject(proto)
     ? (proto as { [LISN_BRAND_PROP]: symbol })[LISN_BRAND_PROP]
-    : undefined;
+    : void 0;
 
   if (!clsBrandSym) {
     return false;

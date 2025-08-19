@@ -77,7 +77,7 @@ export const getDebouncedHandler = <Args extends readonly unknown[]>(
   return (...args: Args) => {
     lastArgs = args;
 
-    if (timer === null) {
+    if (_.isNull(timer)) {
       timer = _.setTimer(async () => {
         await handler(...lastArgs);
         timer = null;

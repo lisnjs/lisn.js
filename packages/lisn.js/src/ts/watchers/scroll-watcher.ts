@@ -421,7 +421,7 @@ export class ScrollWatcher {
           wrapCallback(handler),
           element,
           scrollData,
-          undefined,
+          void 0,
           this,
         );
       }
@@ -712,7 +712,7 @@ export class ScrollWatcher {
               (sign * amount * el[_.S_SCROLL_WIDTH]) / 100;
 
         //
-      } else if (asFractionOf !== undefined && asFractionOf !== "pixel") {
+      } else if (!_.isNullish(asFractionOf) && asFractionOf !== "pixel") {
         throw usageError(`Unknown 'asFractionOf' keyword: '${asFractionOf}'`);
 
         //

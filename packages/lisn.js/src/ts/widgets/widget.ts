@@ -406,7 +406,7 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
         for (const spec of configSpecs) {
           const config = thisConfigValidator
             ? await fetchWidgetConfig(spec, thisConfigValidator)
-            : undefined;
+            : void 0;
 
           const theseWidgets = await newWidget(element, config);
           if (theseWidgets) {
@@ -536,7 +536,7 @@ export const getDataAttrConfigSpecs = (
       configSpecs.push("");
     }
 
-    if (dataAttr !== null) {
+    if (!_.isNull(dataAttr)) {
       configSpecs.push(
         ...(dataAttr ? splitOn(dataAttr, CONFIG_SEP_CHAR, true) : [""]),
       );

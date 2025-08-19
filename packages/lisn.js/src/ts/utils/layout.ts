@@ -4,9 +4,8 @@
 
 import * as _ from "@lisn/_internal";
 
-import { usageError } from "@lisn/globals/errors";
+import { usageError, isUsageError } from "@lisn/globals/errors";
 
-import { LisnUsageError } from "@lisn/globals/errors";
 import { settings } from "@lisn/globals/settings";
 
 import {
@@ -210,7 +209,7 @@ const isValidForType = <T extends Device | AspectRatio>(
     const bitmask = getBitmaskFromSpec(keyName, spec, bitSpace);
     return bitmask !== 0;
   } catch (err) {
-    if (_.isInstanceOf(err, LisnUsageError)) {
+    if (isUsageError(err)) {
       return false;
     }
     throw err;
@@ -233,11 +232,11 @@ const getBitmaskFromSpec = <T extends Device | AspectRatio>(
       const minLayout = rangeMatch[1] || rangeMatch[3];
       const maxLayout = rangeMatch[2] || rangeMatch[4];
 
-      if (minLayout !== undefined && !bitSpace.has(minLayout)) {
+      if (!_.isNullish(minLayout) && !bitSpace.has(minLayout)) {
         throw usageError(`Unknown ${singleKeyName} '${minLayout}'`);
       }
 
-      if (maxLayout !== undefined && !bitSpace.has(maxLayout)) {
+      if (!_.isNullish(maxLayout) && !bitSpace.has(maxLayout)) {
         throw usageError(`Unknown ${singleKeyName} '${maxLayout}'`);
       }
 

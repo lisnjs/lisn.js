@@ -547,7 +547,7 @@ const axesAreWithinBounds = <Keys extends string>(
 
   let result = true;
   for (const a in data) {
-    const axisRef = referenceData ? referenceData[a] : undefined;
+    const axisRef = referenceData ? referenceData[a] : void 0;
     const axisMax = max ? max[a] : NaN;
     const axisMin = min ? min[a] : NaN;
 

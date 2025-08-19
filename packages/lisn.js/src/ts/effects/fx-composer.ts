@@ -285,7 +285,7 @@ export class FXComposer {
 
     const add = (link: Effect | FXComposer, pin?: FXPin) => {
       if (_.isInstanceOf(link, FXComposer)) {
-        compositionChain.push([link, undefined]);
+        compositionChain.push([link, void 0]);
       } else {
         compositionChain.push([link.toComposition(), pin]);
       }
@@ -484,7 +484,7 @@ export class FXComposer {
         updateData,
       );
 
-      let didUpdate: boolean | undefined = undefined;
+      let didUpdate: boolean | undefined = void 0;
       if (checkIfChanged) {
         didUpdate = !compareValuesIn(currentFXState, newState, 5);
       }

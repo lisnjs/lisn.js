@@ -4,7 +4,7 @@
 
 import * as _ from "@lisn/_internal";
 
-import { usageError, LisnUsageError } from "@lisn/globals/errors";
+import { usageError, isUsageError } from "@lisn/globals/errors";
 
 import { CommaSeparatedStr, RawOrRelativeNumber } from "@lisn/globals/types";
 
@@ -28,7 +28,7 @@ export const isValidStrList = <T extends string = string>(
     const res = validateStrList("", value, checkFn);
     return allowEmpty || !_.isNullish(res);
   } catch (err) {
-    if (_.isInstanceOf(err, LisnUsageError)) {
+    if (isUsageError(err)) {
       return false;
     }
     throw err;
@@ -246,7 +246,7 @@ const toArray = (value: unknown): unknown[] | undefined => {
 
   return result
     ? _.filterBlank(result.map((v) => (_.isLiteralString(v) ? v.trim() : v)))
-    : undefined;
+    : void 0;
 };
 
 const _validateNumber = (
@@ -259,7 +259,7 @@ const _validateNumber = (
   }
 
   const numVal = toNum(value, null);
-  if (numVal === null) {
+  if (_.isNull(numVal)) {
     throw usageError(`'${key}' must be ${typeDescription ?? "a number"}`);
   }
 
@@ -276,7 +276,7 @@ const _validateBoolean = (
   }
 
   const boolVal = toBoolean(value);
-  if (boolVal === null) {
+  if (_.isNull(boolVal)) {
     throw usageError(
       `'${key}' must be ${typeDescription ?? '"true" or "false"'}`,
     );
@@ -327,7 +327,7 @@ const _validateBooleanOrString = <T extends string = string>(
   }
 
   const boolVal = toBoolean(value);
-  if (boolVal !== null) {
+  if (!_.isNull(boolVal)) {
     return boolVal;
   }
 

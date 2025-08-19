@@ -122,7 +122,7 @@ export class ScrollTo implements Action {
               left: config.offsetX,
               top: config.offsetY,
             }
-          : undefined;
+          : void 0;
 
         return new ScrollTo(element, {
           offset,
@@ -240,8 +240,8 @@ const newConfigValidator: WidgetConfigValidatorFunc<{
     duration: validateNumber,
     scrollable: (key, value) =>
       _.isLiteralString(value)
-        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
-        : undefined,
+        ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...
+        : void 0,
   };
 };
 

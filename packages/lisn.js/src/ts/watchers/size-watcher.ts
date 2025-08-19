@@ -294,7 +294,7 @@ export class SizeWatcher {
           wrapCallback(handler),
           element,
           sizeData,
-          undefined,
+          void 0,
           this,
         );
       }

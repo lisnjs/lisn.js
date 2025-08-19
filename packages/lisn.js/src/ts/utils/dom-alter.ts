@@ -310,7 +310,7 @@ export const getOrAssignID = (element: Element, prefix = "") => {
  */
 export const isAllowedToWrap = (element: Element) =>
   settings.contentWrappingAllowed === true &&
-  getData(element, _.PREFIX_NO_WRAP) === null;
+  _.isNull(getData(element, _.PREFIX_NO_WRAP));
 
 /**
  * @ignore

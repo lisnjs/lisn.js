@@ -1105,7 +1105,7 @@ const getCallbackAndWrapper = (
       // not enough events in the queue, pass
       debug: logger?.debug9(`[${id}] Not enough events for gesture ${device}`);
       return false;
-    } else if (fragment === null) {
+    } else if (_.isNull(fragment)) {
       // consider the gesture terminated
       clearEventQueue(device, eventQueue);
       debug: logger?.debug9(`[${id}] Gesture for ${device} terminated`);

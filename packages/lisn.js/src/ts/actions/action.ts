@@ -70,7 +70,7 @@ export const registerAction = <Config extends Record<string, unknown>>(
           thisConfigValidator,
           ARG_SEP_CHAR,
         )
-      : undefined;
+      : void 0;
 
     for (const entry of splitOn(argsAndOptions, ARG_SEP_CHAR, true)) {
       if (entry) {

@@ -399,8 +399,8 @@ const newConfigValidator: WidgetConfigValidatorFunc<PointerTriggerConfig> = (
   return {
     target: (key, value) =>
       _.isLiteralString(value)
-        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
-        : undefined,
+        ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...
+        : void 0,
     preventDefault: validateBoolean,
     preventSelect: validateBoolean,
   };

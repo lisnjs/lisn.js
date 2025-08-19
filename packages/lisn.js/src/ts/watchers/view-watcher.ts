@@ -350,7 +350,7 @@ export class ViewWatcher {
       if (!userOptions?.skipInitial) {
         debug: logger?.debug5("Calling initially with", element, viewData);
         if (viewsToBitmask(viewData.views) & options._viewsBitmask) {
-          await invokeCallback(callback, element, viewData, undefined, this);
+          await invokeCallback(callback, element, viewData, void 0, this);
         }
       }
     };
@@ -570,13 +570,7 @@ export class ViewWatcher {
       allViewData.set(element, viewData); // to avoid duplicate initial call
       // Setup the track and the "inView" state
       if (!enterOrLeaveCallback.isRemoved()) {
-        invokeCallback(
-          enterOrLeaveCallback,
-          element,
-          viewData,
-          undefined,
-          this,
-        );
+        invokeCallback(enterOrLeaveCallback, element, viewData, void 0, this);
       }
     };
 
@@ -1178,7 +1172,7 @@ const getOverlayOptions = (
   }
 
   return {
-    parent: _.isHTMLElement(root) ? root : undefined,
+    parent: _.isHTMLElement(root) ? root : void 0,
     style: {
       [reference]: value,
       [ovrDimension]: "100%",

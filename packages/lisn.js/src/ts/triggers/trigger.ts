@@ -64,7 +64,7 @@
 
 import * as _ from "@lisn/_internal";
 
-import { LisnUsageError } from "@lisn/globals/errors";
+import { isUsageError } from "@lisn/globals/errors";
 
 import { wrapCallback } from "@lisn/modules/callback";
 
@@ -420,7 +420,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
             await fetchAction(actionTarget, name, actionArgsAndOptions ?? ""),
           );
         } catch (err) {
-          if (_.isInstanceOf(err, LisnUsageError)) {
+          if (isUsageError(err)) {
             // fetchAction would have logged an error
             continue;
           }
@@ -460,8 +460,8 @@ const newBaseConfigValidator: WidgetConfigValidatorFunc<TriggerConfig> = (
     undoDelay: validateNumber,
     actOn: (key, value) =>
       _.isLiteralString(value)
-        ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
-        : undefined,
+        ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...
+        : void 0,
   };
 };
 

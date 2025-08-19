@@ -520,7 +520,7 @@ const getBorderWidth = (element: Element, side: Anchor) =>
   _.ceil(_.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
 
 const isScrollableBodyInQuirks = (element: Element): element is HTMLElement =>
-  element === _.getBody() && _.getDocScrollingElement() === null;
+  element === _.getBody() && !_.getDocScrollingElement();
 
 const toScrollableOrMain = <R>(
   target: ScrollTarget | null | undefined,

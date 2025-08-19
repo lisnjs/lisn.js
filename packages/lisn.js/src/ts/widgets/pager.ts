@@ -761,11 +761,11 @@ const configValidator: WidgetConfigValidatorObject<PagerConfig> = {
   horizontal: validateBoolean,
   useGestures: (key, value) => {
     if (_.isNullish(value)) {
-      return undefined;
+      return;
     }
 
     const bool = toBoolean(value);
-    if (bool !== null) {
+    if (!_.isNull(bool)) {
       return bool;
     }
 
@@ -783,7 +783,7 @@ const configValidator: WidgetConfigValidatorObject<PagerConfig> = {
 
 const fetchClosestScrollable = (element: Element) =>
   waitForMeasureTime().then(
-    () => getClosestScrollable(element, { active: true }) ?? undefined,
+    () => getClosestScrollable(element, { active: true }) ?? void 0,
   );
 
 const setPageNumber = (components: Components, pageNum: number) => {
@@ -987,7 +987,7 @@ const init = (
   ): OnGestureOptions => {
     return {
       devices: _.isBoolean(useGestures) // i.e. true; if it's false, then gestureWatcher is null
-        ? undefined // all devices
+        ? void 0 // all devices
         : useGestures,
       intents: [_.S_DRAG, _.S_SCROLL],
       directions,
@@ -1021,7 +1021,7 @@ const init = (
           ? isHorizontal
             ? [_.S_LEFT, _.S_RIGHT]
             : [_.S_UP, _.S_DOWN]
-          : undefined, // all directions
+          : void 0, // all directions
       ),
     );
 

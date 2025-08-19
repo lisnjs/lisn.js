@@ -165,9 +165,9 @@ const newConfigValidator: WidgetConfigValidatorFunc<TrackViewConfig> = (
 ) => {
   return {
     root: (key, value) =>
-      (_.isLiteralString(value)
-        ? waitForReferenceElement(value, element)
-        : null) ?? undefined,
+      _.isLiteralString(value)
+        ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...
+        : void 0,
     rootMargin: validateString,
     threshold: (key, value) => validateNumList(key, value),
     debounceWindow: validateNumber,

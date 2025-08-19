@@ -297,12 +297,14 @@ LISN.watchers.ScrollWatcher.onScroll(
           <h4>
             Debug/dev (not minified): <code>lisn.debug.js</code>
           </h4>
+          {/*
           <div>
             <Badge
               label="File size in bytes"
               path="github/size/lisnjs/lisn.js/packages%2F%40lisn.js%2Fbundles%2Flisn.debug.js"
             />
           </div>
+          */}
           <p className="small">
             You likely won't be using it but it's there. Includes everything the
             default bundle does <em>plus</em> utility functions and logging

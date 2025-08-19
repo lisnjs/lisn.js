@@ -4,6 +4,10 @@
  * @since v1.3.0
  */
 
+// XXX should we set this:
+// will-change: transform;
+// transition: transform 0.05s linear;
+
 import * as _ from "@lisn/_internal";
 
 import { bugError } from "@lisn/globals/errors";

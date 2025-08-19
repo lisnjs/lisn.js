@@ -539,10 +539,13 @@ const getLayersFrom = (
     const composer = new FXComposer(_.merge(config, { trigger }));
     if (useDefaultEffects) {
       composer.add(
-        new Transform({ isAbsolute: true }).translate((data) => ({
-          x: data.x,
-          y: data.y,
-        })),
+        new Transform({ isAbsolute: true }).translate((data) => {
+          console.log("XXX", data);
+          return {
+            x: -data.x,
+            y: -data.y,
+          };
+        }),
       );
     }
 
@@ -771,7 +774,10 @@ const init = async (
         sizeWatcher?.onResize(updateSizeData, { target: layer, threshold: 0 });
       }
 
-      state._composer.startAnimate([layer], state._parentState?._composer);
+      state._composer.startAnimate(
+        [layer === scrollable ? outerWrapper : layer],
+        state._parentState?._composer,
+      );
     }
   };
 

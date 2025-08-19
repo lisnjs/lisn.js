@@ -1,4 +1,4 @@
-const { jest, describe, test, expect } = require("@jest/globals");
+const { describe, test, expect } = require("@jest/globals");
 
 const { FXComposer, FXComposition, Transform } = window.LISN.effects;
 

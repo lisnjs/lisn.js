@@ -41,6 +41,8 @@ import { FXComposition } from "@lisn/effects/fx-composition";
 import { FXScrollTrigger, FXTrigger } from "@lisn/effects/fx-trigger";
 import { FXPin } from "@lisn/effects/fx-pin";
 
+import debug from "@lisn/debug/debug";
+
 /**
  * {@link FXComposer} links together multiple effects or other composers. It
  * works with {@link FXTrigger}s and each time it is triggered, it updates its
@@ -172,10 +174,10 @@ export class FXComposer {
   /**
    * Will stop animating the given elements.
    *
-   * @param clear If true, the {@link toCss | CSS} properties will be cleared
-   *              from the elements now.
+   * @param clearCss If true, the {@link toCss | CSS} properties will be cleared
+   *                 from the elements now.
    */
-  readonly stopAnimate: (elements: Element[], clear?: boolean) => this;
+  readonly stopAnimate: (elements: Element[], clearCss?: boolean) => this;
 
   /**
    * Returns an object with the CSS properties and their values to be set on
@@ -287,6 +289,7 @@ export class FXComposer {
     // ----------
 
     const add = (link: Effect | FXComposer, pin?: FXPin) => {
+      logger?.debug7("Adding link ", link, pin);
       if (_.isInstanceOf(link, FXComposer)) {
         compositionChain.push([link, void 0]);
       } else {
@@ -299,6 +302,7 @@ export class FXComposer {
     // ----------
 
     const clear = () => {
+      logger?.debug5("Clearing");
       if (_.lengthOf(compositionChain) > 0) {
         compositionChain.length = 0; // clear
         invokeCallbacks(clearCallbacks);
@@ -358,6 +362,7 @@ export class FXComposer {
     // ----------
 
     const startAnimate = (elements: Element[], negate?: FXComposer) => {
+      logger?.debug5("Starting animating ", elements, negate);
       // Use a single handler for all elements for performance gain.
       // Clean it up when all have been called with stopAnimate.
       const relatedElements = _.createSet(elements);
@@ -383,8 +388,9 @@ export class FXComposer {
 
     // ----------
 
-    const stopAnimate = (elements: Element[], clear?: boolean) => {
-      if (clear) {
+    const stopAnimate = (elements: Element[], clearCss?: boolean) => {
+      logger?.debug5("Stopping animating ", elements, clearCss);
+      if (clearCss) {
         applyCss(elements, true); // no need to await
       }
 
@@ -568,6 +574,7 @@ export class FXComposer {
     const pollTrigger = async () => {
       for await (const updateData of trigger.poll()) {
         const didUpdate = updateState(null, updateData, true);
+        logger?.debug9("Got trigger data", { updateData, didUpdate });
 
         if (didUpdate) {
           tween();
@@ -580,16 +587,17 @@ export class FXComposer {
 
     const applyCss = async (
       elements: Element[] | Set<Element>,
-      clear: boolean,
+      clearCss: boolean,
       negate?: FXComposer,
     ) => {
       const css = toCss(negate);
+      logger?.debug10("Applying CSS ", elements, css, clearCss);
       for (const prop in css) {
         for (const element of elements) {
-          if (clear) {
-            await setStyleProp(element, prop, css[prop]);
-          } else {
+          if (clearCss) {
             await delStyleProp(element, prop);
+          } else {
+            await setStyleProp(element, prop, css[prop]);
           }
         }
       }
@@ -625,6 +633,10 @@ export class FXComposer {
 
     setLag(config);
     setDepth(config);
+
+    const logger = debug
+      ? new debug.Logger({ name: "FXComposer", logAtCreation: effectiveConfig })
+      : null;
 
     pollTrigger();
   }

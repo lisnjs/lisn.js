@@ -4,6 +4,8 @@
  * @since v1.3.0
  */
 
+// XXX TODO support delay and offsets
+
 import * as _ from "@lisn/_internal";
 
 import { ScrollTarget } from "@lisn/globals/types";
@@ -44,7 +46,7 @@ export const FX_TRIGGER = {
  *                 set up an {@link onChange} handler and pause its data
  *                 collection when the trigger is paused.
  */
-export abstract class FXTrigger {
+export class FXTrigger {
   /**
    * An infinite async generator that continually yields new data.
    */
@@ -78,9 +80,7 @@ export abstract class FXTrigger {
    */
   readonly offChange: (handler: FXTriggerHandler) => void;
 
-  protected constructor(
-    executor: (push: (update: FXStateUpdate) => void) => void,
-  ) {
+  constructor(executor: (push: (update: FXStateUpdate) => void) => void) {
     let isActive = true;
 
     const changeCallbacks = _.createMap<FXTriggerHandler, FXTriggerCallback>();
@@ -104,7 +104,10 @@ export abstract class FXTrigger {
 
     this.poll = async function* () {
       while (true) {
-        yield await nextPromise();
+        const data = await nextPromise();
+        if (isActive) {
+          yield data;
+        }
       }
     };
 
@@ -148,8 +151,10 @@ export class FXScrollTrigger extends FXTrigger {
   constructor(scrollable?: ScrollTarget) {
     const scrollWatcher = ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
     let scrollHandler: OnScrollHandler;
+    let shouldSnap = true;
 
     const addOrRemoveWatcher = () => {
+      shouldSnap = true;
       if (this.isActive()) {
         scrollWatcher.trackScroll(scrollHandler, { scrollable });
       } else {
@@ -158,24 +163,23 @@ export class FXScrollTrigger extends FXTrigger {
     };
 
     const executor = (push: (update: FXStateUpdate) => void) => {
-      scrollHandler = (e__ignored, scrollData) =>
+      scrollHandler = (e__ignored, scrollData) => {
         push({
           x: {
             min: 0,
             max: scrollData[_.S_SCROLL_WIDTH],
             target: scrollData[_.S_SCROLL_LEFT],
+            snap: shouldSnap,
           },
           y: {
             min: 0,
             max: scrollData[_.S_SCROLL_HEIGHT],
             target: scrollData[_.S_SCROLL_TOP],
-          },
-          z: {
-            min: 0,
-            max: 0,
-            target: 0,
+            snap: shouldSnap,
           },
         });
+        shouldSnap = false;
+      };
     };
 
     // --------------------

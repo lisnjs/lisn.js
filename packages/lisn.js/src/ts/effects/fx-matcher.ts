@@ -68,7 +68,7 @@ export const FX_MATCH = {
  *                 state changes. It will be called inside the class constructor
  *                 with `this` set to the newly created matcher.
  */
-export abstract class FXMatcher {
+export class FXMatcher {
   /**
    * Returns true if the matcher has matched.
    */
@@ -87,7 +87,7 @@ export abstract class FXMatcher {
    */
   offChange: (handler: FXMatcherHandler) => void;
 
-  protected constructor(executor: (store: FXMatcherStore) => void) {
+  constructor(executor: (store: FXMatcherStore) => void) {
     const storeData = { matches: false };
 
     const store: FXMatcherStore = {
@@ -135,13 +135,13 @@ export abstract class FXMatcher {
  *                 state or data change. It will be called inside the class
  *                 constructor with `this` set to the newly created matcher.
  */
-export abstract class FXRelativeMatcher<D = unknown> extends FXMatcher {
+export class FXRelativeMatcher<D = unknown> extends FXMatcher {
   /**
    * Updates the matcher's internal reference data to be its current data.
    */
   restart: () => void;
 
-  protected constructor(executor: (store: FXRelativeMatcherStore<D>) => void) {
+  constructor(executor: (store: FXRelativeMatcherStore<D>) => void) {
     let baseStore: FXMatcherStore;
     super((store) => (baseStore = store));
 

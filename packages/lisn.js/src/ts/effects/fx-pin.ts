@@ -4,7 +4,7 @@
  * @since v1.3.0
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import {
   CallbackHandler,
@@ -95,7 +95,7 @@ export class FXPin {
   constructor() {
     let isActive = true;
 
-    const changeCallbacks = MH.newMap<FXPinHandler, FXPinCallback>();
+    const changeCallbacks = _.newMap<FXPinHandler, FXPinCallback>();
 
     const matcherGroups = newXMap<
       FXMatcher,
@@ -110,7 +110,7 @@ export class FXPin {
         isActive = activate;
 
         for (const [m, entries] of matcherGroups) {
-          if (MH.isInstanceOf(m, FXRelativeMatcher)) {
+          if (_.isInstanceOf(m, FXRelativeMatcher)) {
             for (const entry of entries) {
               if (entry._activate !== activate) {
                 m.restart();
@@ -152,7 +152,7 @@ export class FXPin {
     };
 
     this.offChange = (handler) => {
-      MH.remove(changeCallbacks.get(handler));
+      _.remove(changeCallbacks.get(handler));
     };
 
     this.isActive = () => isActive;
@@ -181,3 +181,5 @@ export class FXPin {
 export type FXPinHandlerArgs = [boolean, FXPin];
 export type FXPinCallback = Callback<FXPinHandlerArgs>;
 export type FXPinHandler = FXPinCallback | CallbackHandler<FXPinHandlerArgs>;
+
+_.brandClass(FXPin, "FXPin");

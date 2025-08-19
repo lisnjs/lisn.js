@@ -2,7 +2,7 @@
  * @module Modules/XIntersectionObserver
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 export type XIntersectionObserverCallback = (
   entries: IntersectionObserverEntry[],
@@ -64,36 +64,36 @@ export class XIntersectionObserver {
     callback: XIntersectionObserverCallback,
     observeOptions?: IntersectionObserverInit,
   ) {
-    let observedTargets = MH.newWeakSet<Element>();
-    const targetsToSkip = MH.newWeakSet<Element>();
+    let observedTargets = _.newWeakSet<Element>();
+    const targetsToSkip = _.newWeakSet<Element>();
 
     const intersectionHandler = (entries: IntersectionObserverEntry[]) => {
       const selectedEntries = [];
 
       for (const entry of entries) {
-        if (targetsToSkip.has(MH.targetOf(entry))) {
-          MH.deleteKey(targetsToSkip, MH.targetOf(entry));
+        if (targetsToSkip.has(_.targetOf(entry))) {
+          _.deleteKey(targetsToSkip, _.targetOf(entry));
           continue;
         }
 
         selectedEntries.push(entry);
       }
 
-      if (MH.lengthOf(selectedEntries)) {
+      if (_.lengthOf(selectedEntries)) {
         callback(selectedEntries, this);
       }
     };
 
-    const observer = MH.newIntersectionObserver(
+    const observer = _.newIntersectionObserver(
       intersectionHandler,
       observeOptions,
     );
 
-    MH.defineProperty(this, "root", { get: () => observer.root });
-    MH.defineProperty(this, "rootMargin", {
+    _.defineProperty(this, "root", { get: () => observer.root });
+    _.defineProperty(this, "rootMargin", {
       get: () => observer.rootMargin,
     });
-    MH.defineProperty(this, "thresholds", {
+    _.defineProperty(this, "thresholds", {
       get: () => observer.thresholds,
     });
 
@@ -119,16 +119,18 @@ export class XIntersectionObserver {
 
     this.unobserve = (...targets) => {
       for (const target of targets) {
-        MH.deleteKey(observedTargets, target);
+        _.deleteKey(observedTargets, target);
         observer.unobserve(target);
       }
     };
 
     this.disconnect = () => {
-      observedTargets = MH.newWeakSet();
+      observedTargets = _.newWeakSet();
       observer.disconnect();
     };
 
     this.takeRecords = () => observer.takeRecords();
   }
 }
+
+_.brandClass(XIntersectionObserver, "XIntersectionObserver");

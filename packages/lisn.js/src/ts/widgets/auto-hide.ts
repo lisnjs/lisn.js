@@ -2,8 +2,7 @@
  * @module Widgets
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { hideElement } from "@lisn/utils/css-alter";
 import { hideAndRemoveElement } from "@lisn/utils/dom-alter";
@@ -92,7 +91,7 @@ import {
 export class AutoHide extends Widget {
   static get(element: Element, id: string): AutoHide | null {
     const instance = super.get(element, id);
-    if (MH.isInstanceOf(instance, AutoHide)) {
+    if (_.isInstanceOf(instance, AutoHide)) {
       return instance;
     }
     return null;
@@ -129,12 +128,12 @@ export class AutoHide extends Widget {
     const watcherOptions: OnMutationOptions = selector
       ? {
           selector: selector,
-          categories: [MC.S_ADDED, MC.S_ATTRIBUTE],
-          [MC.S_SKIP_INITIAL]: true,
+          categories: [_.S_ADDED, _.S_ATTRIBUTE],
+          [_.S_SKIP_INITIAL]: true,
         }
       : {
-          categories: [MC.S_ATTRIBUTE],
-          [MC.S_SKIP_INITIAL]: true,
+          categories: [_.S_ATTRIBUTE],
+          [_.S_SKIP_INITIAL]: true,
         };
 
     const hideOrRemoveEl = config?.remove ? hideAndRemoveElement : hideElement;
@@ -145,7 +144,7 @@ export class AutoHide extends Widget {
       }
 
       const targetElements = selector
-        ? MH.querySelectorAll(element, selector)
+        ? _.querySelectorAll(element, selector)
         : [element];
 
       for (const elem of targetElements) {
@@ -238,3 +237,5 @@ const newConfigValidator = (
     delay: validateNumber,
   };
 };
+
+_.brandClass(AutoHide, "AutoHide");

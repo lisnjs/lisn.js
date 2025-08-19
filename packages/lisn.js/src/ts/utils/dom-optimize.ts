@@ -27,7 +27,7 @@
  *   measurement task, it will run in the same batch.
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { logError } from "@lisn/utils/log";
 import { scheduleHighPriorityTask } from "@lisn/utils/tasks";
@@ -38,7 +38,7 @@ import { scheduleHighPriorityTask } from "@lisn/utils/tasks";
  * @category DOM: Preventing layout trashing
  */
 export const waitForMutateTime = () =>
-  MH.newPromise<void>((resolve) => {
+  _.newPromise<void>((resolve) => {
     scheduleDOMTask(scheduledDOMMutations, resolve);
   });
 
@@ -49,7 +49,7 @@ export const waitForMutateTime = () =>
  * @category DOM: Preventing layout trashing
  */
 export const waitForMeasureTime = () =>
-  MH.newPromise<void>((resolve) => {
+  _.newPromise<void>((resolve) => {
     scheduleDOMTask(scheduledDOMMeasurements, resolve);
   });
 
@@ -106,7 +106,7 @@ const scheduleDOMTask = (queue: DOMTaskQueue, resolve: TaskResolver) => {
   queue.push(resolve);
   if (!hasScheduledDOMTasks) {
     hasScheduledDOMTasks = true;
-    MH.onAnimationFrame(runAllDOMTasks);
+    _.onAnimationFrame(runAllDOMTasks);
   }
 };
 
@@ -117,7 +117,7 @@ const runAllDOMTasks = async () => {
   // can be flushed now, in the same batch.
 
   // We're inside an animation frame. Run all mutation tasks now.
-  while (MH.lengthOf(scheduledDOMMutations)) {
+  while (_.lengthOf(scheduledDOMMutations)) {
     runDOMTaskQueue(scheduledDOMMutations);
     // wait for tasks awaiting on the resolved promises, then check queue again
     await null;
@@ -130,15 +130,15 @@ const runAllDOMTasks = async () => {
   // Schedule the measurement tasks as soon as possible, after the upcoming
   // paint. Use a macro task with as high priority as possible.
   scheduleHighPriorityTask(async () => {
-    while (MH.lengthOf(scheduledDOMMeasurements)) {
+    while (_.lengthOf(scheduledDOMMeasurements)) {
       runDOMTaskQueue(scheduledDOMMeasurements);
       // wait for tasks awaiting on the resolved promises, then check queue again
       await null;
     }
 
-    if (MH.lengthOf(scheduledDOMMutations)) {
+    if (_.lengthOf(scheduledDOMMutations)) {
       // There have been mutations added. Schedule another flush.
-      MH.onAnimationFrame(runAllDOMTasks);
+      _.onAnimationFrame(runAllDOMTasks);
     } else {
       hasScheduledDOMTasks = false;
     }

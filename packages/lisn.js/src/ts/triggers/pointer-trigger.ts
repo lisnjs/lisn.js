@@ -16,11 +16,9 @@
  * the target. On touch devices it acts just like {@link PressTrigger}.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { deepCopy, omitKeys } from "@lisn/utils/misc";
 import { validateBoolean } from "@lisn/utils/validation";
 
 import {
@@ -121,7 +119,7 @@ export class ClickTrigger extends Trigger {
 
   static register() {
     registerTrigger(
-      MC.S_CLICK,
+      _.S_CLICK,
       (element, args, actions, config) =>
         new ClickTrigger(element, actions, config),
       newConfigValidator,
@@ -141,9 +139,9 @@ export class ClickTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
 
-    setupWatcher(this, element, actions, config, MC.S_CLICK);
+    setupWatcher(this, element, actions, config, _.S_CLICK);
   }
 }
 
@@ -232,7 +230,7 @@ export class PressTrigger extends Trigger {
 
   static register() {
     registerTrigger(
-      MC.S_PRESS,
+      _.S_PRESS,
       (element, args, actions, config) =>
         new PressTrigger(element, actions, config),
       newConfigValidator,
@@ -252,9 +250,9 @@ export class PressTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
 
-    setupWatcher(this, element, actions, config, MC.S_PRESS);
+    setupWatcher(this, element, actions, config, _.S_PRESS);
   }
 }
 
@@ -340,7 +338,7 @@ export class HoverTrigger extends Trigger {
 
   static register() {
     registerTrigger(
-      MC.S_HOVER,
+      _.S_HOVER,
       (element, args, actions, config) =>
         new HoverTrigger(element, actions, config),
       newConfigValidator,
@@ -360,9 +358,9 @@ export class HoverTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
 
-    setupWatcher(this, element, actions, config, MC.S_HOVER);
+    setupWatcher(this, element, actions, config, _.S_HOVER);
   }
 }
 
@@ -400,7 +398,7 @@ const newConfigValidator: WidgetConfigValidatorFunc<PointerTriggerConfig> = (
 ) => {
   return {
     target: (key, value) =>
-      MH.isLiteralString(value)
+      _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
         : undefined,
     preventDefault: validateBoolean,
@@ -415,20 +413,20 @@ const setupWatcher = (
   config: PointerTriggerConfig,
   action: "click" | "hover" | "press",
 ) => {
-  if (!MH.lengthOf(actions)) {
+  if (!_.lengthOf(actions)) {
     return;
   }
 
   config ??= {};
-  const target = MH.targetOf(config) ?? element;
+  const target = _.targetOf(config) ?? element;
 
   // For clicks use the trigger's own toggle function so that it remembers ITS
   // state rather than the odd/even clicks. Otherwise if the trigger is
   // disabled, then clicking will "swap" the state.
   let startHandler: OnPointerHandler;
   let endHandler: OnPointerHandler;
-  if (action === MC.S_CLICK) {
-    startHandler = endHandler = widget[MC.S_TOGGLE];
+  if (action === _.S_CLICK) {
+    startHandler = endHandler = widget[_.S_TOGGLE];
   } else {
     startHandler = widget.run;
     endHandler = widget.reverse;
@@ -438,11 +436,15 @@ const setupWatcher = (
     target,
     startHandler,
     endHandler,
-    MH.merge(
+    _.merge(
       {
         actions: action,
       },
-      omitKeys(config, { target: null }),
+      _.omitKeys(config, { target: null }),
     ),
   );
 };
+
+_.brandClass(ClickTrigger, "ClickTrigger");
+_.brandClass(PressTrigger, "PressTrigger");
+_.brandClass(HoverTrigger, "HoverTrigger");

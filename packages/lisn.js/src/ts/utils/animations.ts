@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import {
   addClassesNow,
@@ -52,8 +51,8 @@ export type AnimationCallback = (elapsed: ElapsedTimes) => boolean;
  * @category Animations
  */
 export const waitForAnimationFrame = async () =>
-  MH.newPromise<number>((resolve) => {
-    MH.onAnimationFrame(resolve);
+  _.newPromise<number>((resolve) => {
+    _.onAnimationFrame(resolve);
   });
 
 /**
@@ -160,7 +159,7 @@ export const iterateAnimations = async (
   /* istanbul ignore next */ // jsdom doesn't support Web Animations
   if (
     "getAnimations" in element &&
-    getData(element, MH.prefixName("test-legacy")) === null
+    getData(element, _.prefixName("test-legacy")) === null
   ) {
     if (!realtime) {
       await waitForMeasureTime();
@@ -185,7 +184,7 @@ export const iterateAnimations = async (
  * @internal
  */
 export const resetCssAnimationsNow = (element: Element) => {
-  addClassesNow(element, MC.PREFIX_ANIMATE_DISABLE); // cause it to reset
+  addClassesNow(element, _.PREFIX_ANIMATE_DISABLE); // cause it to reset
   // If we remove the disable class immediately, then it will not have the
   // effect to reset the animation, since the browser won't see any change in
   // the classList at the start of the frame. So we ideally need to remove the
@@ -193,7 +192,7 @@ export const resetCssAnimationsNow = (element: Element) => {
   // and its state, disabling animation and waiting for the next animation
   // frame may cause a visible glitch, so we need to force layout now.
   /* eslint-disable-next-line @typescript-eslint/no-unused-expressions */
-  element[MC.S_CLIENT_WIDTH]; // forces layout
+  element[_.S_CLIENT_WIDTH]; // forces layout
 
-  removeClassesNow(element, MC.PREFIX_ANIMATE_DISABLE);
+  removeClassesNow(element, _.PREFIX_ANIMATE_DISABLE);
 };

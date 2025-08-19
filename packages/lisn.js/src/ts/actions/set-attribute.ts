@@ -5,8 +5,9 @@
  * {@link SetAttribute} sets or deletes an attribute on the given element.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { waitForMutateTime } from "@lisn/utils/dom-optimize";
 import { camelToKebabCase } from "@lisn/utils/text";
@@ -142,7 +143,7 @@ export class SetAttribute implements Action {
 
   constructor(element: Element, attributes: Attributes) {
     if (!attributes) {
-      throw MH.usageError("Attributes are required");
+      throw usageError("Attributes are required");
     }
 
     let isOn = false;
@@ -156,10 +157,10 @@ export class SetAttribute implements Action {
         const value = attributes[attr][on ? "on" : "off"];
         const attrName = camelToKebabCase(attr);
 
-        if (MH.isNullish(value)) {
-          MH.delAttr(element, attrName);
+        if (_.isNullish(value)) {
+          _.delAttr(element, attrName);
         } else {
-          MH.setAttr(element, attrName, value);
+          _.setAttr(element, attrName, value);
         }
       }
     };
@@ -168,7 +169,7 @@ export class SetAttribute implements Action {
 
     this.undo = () => setAttrs(false);
 
-    this[MC.S_TOGGLE] = () => setAttrs(!isOn);
+    this[_.S_TOGGLE] = () => setAttrs(!isOn);
 
     this.undo(); // initial state
   }
@@ -197,3 +198,5 @@ const configValidator: WidgetConfigValidatorObject<Attributes[string]> = {
   on: validateString,
   off: validateString,
 };
+
+_.brandClass(SetAttribute, "SetAttribute");

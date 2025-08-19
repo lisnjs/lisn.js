@@ -7,8 +7,7 @@
  * undo those actions when they scroll in the opposite direction.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import {
   XYDirection,
@@ -21,7 +20,6 @@ import {
   isValidXYDirection,
 } from "@lisn/utils/directions";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { deepCopy } from "@lisn/utils/misc";
 import { validateStrList, validateNumber } from "@lisn/utils/validation";
 
 import { Action } from "@lisn/actions/action";
@@ -122,12 +120,12 @@ export class ScrollTrigger extends Trigger {
 
   static register() {
     registerTrigger(
-      MC.S_SCROLL,
+      _.S_SCROLL,
       (element, args, actions, config) => {
         return new ScrollTrigger(
           element,
           actions,
-          MH.assign(config, {
+          _.assign(config, {
             directions: validateStrList("directions", args, isValidXYDirection),
           }),
         );
@@ -152,13 +150,13 @@ export class ScrollTrigger extends Trigger {
     let directions = config.directions;
     if (!directions) {
       config.once = true;
-      directions = [MC.S_UP, MC.S_DOWN, MC.S_LEFT, MC.S_RIGHT];
+      directions = [_.S_UP, _.S_DOWN, _.S_LEFT, _.S_RIGHT];
     }
 
     super(element, actions, config);
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
 
-    if (!MH.lengthOf(actions)) {
+    if (!_.lengthOf(actions)) {
       return;
     }
 
@@ -176,7 +174,7 @@ export class ScrollTrigger extends Trigger {
       threshold,
     });
 
-    if (MH.lengthOf(oppositeDirections)) {
+    if (_.lengthOf(oppositeDirections)) {
       watcher.onScroll(this.reverse, {
         directions: oppositeDirections,
         scrollable,
@@ -225,9 +223,11 @@ const newConfigValidator: WidgetConfigValidatorFunc<
 > = (element) => {
   return {
     scrollable: (key, value) =>
-      MH.isLiteralString(value)
+      _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
         : undefined,
     threshold: validateNumber,
   };
 };
+
+_.brandClass(ScrollTrigger, "ScrollTrigger");

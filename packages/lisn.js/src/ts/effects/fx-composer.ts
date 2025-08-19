@@ -4,7 +4,7 @@
  * @since v1.3.0
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -16,7 +16,7 @@ import {
 
 import { setStyleProp, delStyleProp } from "@lisn/utils/css-alter";
 import { toRawNum } from "@lisn/utils/math";
-import { deepCopy, compareValuesIn } from "@lisn/utils/misc";
+import { compareValuesIn } from "@lisn/utils/misc";
 import {
   tween3DAnimationGenerator,
   Tweener,
@@ -38,7 +38,7 @@ import {
 } from "@lisn/effects/effect";
 
 import { FXComposition } from "@lisn/effects/fx-composition";
-import { FXTrigger } from "@lisn/effects/fx-trigger";
+import { FXScrollTrigger, FXTrigger } from "@lisn/effects/fx-trigger";
 import { FXPin } from "@lisn/effects/fx-pin";
 
 /**
@@ -243,14 +243,16 @@ export class FXComposer {
    * This creates a new async generator that will yield update data
    * whenever the returned helper callback is called.
    */
-  constructor(trigger: FXTrigger, config?: FXComposerConfig) {
-    if (!trigger) {
-      throw MH.usageError("FXComposer trigger is required");
-    }
-
-    const { parent, negate: defaultNegate, tweener = "spring" } = config ?? {};
+  constructor(config?: FXComposerConfig) {
+    const {
+      parent,
+      negate: defaultNegate,
+      tweener = "spring",
+      trigger = new FXScrollTrigger(),
+    } = config ?? {};
 
     const effectiveConfig: FXComposerEffectiveConfig = {
+      trigger,
       parent,
       negate: defaultNegate,
       tweener,
@@ -268,11 +270,11 @@ export class FXComposer {
       [];
     const currentComposition = new FXComposition();
 
-    const clearCallbacks = MH.newMap<FXComposerHandler, FXComposerCallback>();
-    const triggerCallbacks = MH.newMap<FXComposerHandler, FXComposerCallback>();
-    const tweenCallbacks = MH.newMap<FXComposerHandler, FXComposerCallback>();
+    const clearCallbacks = _.newMap<FXComposerHandler, FXComposerCallback>();
+    const triggerCallbacks = _.newMap<FXComposerHandler, FXComposerCallback>();
+    const tweenCallbacks = _.newMap<FXComposerHandler, FXComposerCallback>();
 
-    const animatedElements = MH.newMap<
+    const animatedElements = _.newMap<
       Element,
       [FXComposerHandler, Set<Element>]
     >();
@@ -282,7 +284,7 @@ export class FXComposer {
     // ----------
 
     const add = (link: Effect | FXComposer, pin?: FXPin) => {
-      if (MH.isInstanceOf(link, FXComposer)) {
+      if (_.isInstanceOf(link, FXComposer)) {
         compositionChain.push([link, undefined]);
       } else {
         compositionChain.push([link.toComposition(), pin]);
@@ -294,7 +296,7 @@ export class FXComposer {
     // ----------
 
     const clear = () => {
-      if (MH.lengthOf(compositionChain) > 0) {
+      if (_.lengthOf(compositionChain) > 0) {
         compositionChain.length = 0; // clear
         invokeCallbacks(clearCallbacks);
       }
@@ -310,7 +312,7 @@ export class FXComposer {
     };
 
     const offClear = (handler: FXComposerHandler) => {
-      MH.remove(clearCallbacks.get(handler));
+      _.remove(clearCallbacks.get(handler));
       return this;
     };
 
@@ -322,7 +324,7 @@ export class FXComposer {
     };
 
     const offTrigger = (handler: FXComposerHandler) => {
-      MH.remove(triggerCallbacks.get(handler));
+      _.remove(triggerCallbacks.get(handler));
       return this;
     };
 
@@ -334,7 +336,7 @@ export class FXComposer {
     };
 
     const offTween = (handler: FXComposerHandler) => {
-      MH.remove(tweenCallbacks.get(handler));
+      _.remove(tweenCallbacks.get(handler));
       return this;
     };
 
@@ -355,7 +357,7 @@ export class FXComposer {
     const startAnimate = (elements: Element[], negate?: FXComposer) => {
       // Use a single handler for all elements for performance gain.
       // Clean it up when all have been called with stopAnimate.
-      const relatedElements = MH.newSet(elements);
+      const relatedElements = _.newSet(elements);
 
       const handler = () => {
         applyCss(relatedElements, false, negate);
@@ -386,9 +388,9 @@ export class FXComposer {
       for (const element of elements) {
         const [handler, relatedElements] = animatedElements.get(element) ?? [];
 
-        MH.deleteKey(animatedElements, element);
-        MH.deleteKey(relatedElements, element);
-        if (handler && MH.sizeOf(relatedElements) === 0) {
+        _.deleteKey(animatedElements, element);
+        _.deleteKey(relatedElements, element);
+        if (handler && _.sizeOf(relatedElements) === 0) {
           offTween(handler);
         }
       }
@@ -404,7 +406,7 @@ export class FXComposer {
 
       for (const [type, effect] of currentComposition) {
         const negatedEffect = negatedComposition?.get(type);
-        MH.assign(css, effect.toCss(negatedEffect));
+        _.assign(css, effect.toCss(negatedEffect));
       }
 
       return css;
@@ -441,7 +443,7 @@ export class FXComposer {
         parent?.getConfig() ?? {};
 
       let values: Partial<FXComposerConfig>;
-      if (MH.isObject(input)) {
+      if (_.isObject(input)) {
         values = input;
       } else {
         values = { [prop]: input };
@@ -477,7 +479,7 @@ export class FXComposer {
       checkIfChanged?: T,
     ) => {
       newState = getUpdatedState(
-        MH.merge(currentFXState, newState),
+        _.merge(currentFXState, newState),
         this,
         updateData,
       );
@@ -487,7 +489,7 @@ export class FXComposer {
         didUpdate = !compareValuesIn(currentFXState, newState, 5);
       }
 
-      MH.assign(currentFXState, newState); // override current state object
+      _.assign(currentFXState, newState); // override current state object
 
       return didUpdate as T extends boolean ? boolean : void;
     };
@@ -498,7 +500,7 @@ export class FXComposer {
       callbacks: Map<FXComposerHandler, FXComposerCallback>,
     ) => {
       for (const cbk of callbacks.values()) {
-        cbk.invoke(deepCopy(currentFXState), this);
+        cbk.invoke(_.deepCopy(currentFXState), this);
       }
     };
 
@@ -542,7 +544,7 @@ export class FXComposer {
       currentComposition.clear();
 
       for (const [link, pin] of compositionChain) {
-        if (MH.isInstanceOf(link, FXComposer)) {
+        if (_.isInstanceOf(link, FXComposer)) {
           for (const effect of link.getComposition().values()) {
             currentComposition.add(effect);
           }
@@ -550,7 +552,7 @@ export class FXComposer {
           currentComposition.add(
             pin?.isActive()
               ? link
-              : link.update(deepCopy(currentFXState), this),
+              : link.update(_.deepCopy(currentFXState), this),
           );
         }
       }
@@ -611,8 +613,8 @@ export class FXComposer {
 
     this.toCss = toCss;
     this.getComposition = () => currentComposition.export();
-    this.getState = () => deepCopy(currentFXState);
-    this.getConfig = () => deepCopy(effectiveConfig);
+    this.getState = () => _.deepCopy(currentFXState);
+    this.getConfig = () => _.deepCopy(effectiveConfig);
     this.setLag = setLag;
     this.setDepth = setDepth;
 
@@ -632,6 +634,15 @@ export type FXComposerConfig = {
    * @defaultValue undefined
    */
   parent?: FXComposer;
+
+  /**
+   * The trigger to use. By default an {@link FXScrollTrigger} is used with the
+   * default scrollable (see
+   * {@link Watchers/ScrollWatcher.OnScrollOptions.scrollable | ScrollWatcher})
+   *
+   * @defaultValue undefined // new FXScrollTrigger()
+   */
+  trigger?: FXTrigger;
 
   /**
    * The default value for the composer to negate in calls to
@@ -720,6 +731,7 @@ export type FXComposerConfig = {
 };
 
 export type FXComposerEffectiveConfig = {
+  trigger: FXTrigger;
   parent: FXComposer | undefined;
   negate: FXComposer | undefined;
   tweener: Tweener | { [K in "x" | "y" | "z"]: Tweener };
@@ -758,5 +770,7 @@ const newDefaultState = (): FXState => {
     snap: false,
   };
 
-  return deepCopy({ x: axisState, y: axisState, z: axisState });
+  return _.deepCopy({ x: axisState, y: axisState, z: axisState });
 };
+
+_.brandClass(FXComposer, "FXComposer");

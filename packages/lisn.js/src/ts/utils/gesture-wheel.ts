@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { Direction, GestureIntent } from "@lisn/globals/types";
 
@@ -62,23 +61,23 @@ export const getWheelGestureFragment = (
     angleDiffThreshold?: number;
   },
 ): GestureFragment | null | false => {
-  if (!MH.isIterableObject(events)) {
+  if (!_.isIterableObject(events)) {
     events = [events];
   }
 
-  let direction: Direction = MC.S_NONE;
+  let direction: Direction = _.S_NONE;
   let intent: GestureIntent | null = null;
   let deltaX = 0,
     deltaY = 0,
     deltaZ = 1;
 
   for (const event of events) {
-    if (!MH.isWheelEvent(event) || event.type !== MC.S_WHEEL) {
+    if (!_.isWheelEvent(event) || event.type !== _.S_WHEEL) {
       continue;
     }
 
     const data = normalizeWheel(event);
-    let thisIntent: GestureIntent = MC.S_SCROLL;
+    let thisIntent: GestureIntent = _.S_SCROLL;
     let thisDeltaX = data.pixelX;
     let thisDeltaY = data.pixelY;
     let thisDeltaZ = 1;
@@ -89,14 +88,14 @@ export const getWheelGestureFragment = (
       let percentage = -maxDelta;
       // If it's more than 50, assume it's a mouse wheel => delta is roughly
       // multiple of 10%. Otherwise a trackpad => delta is roughly multiple of 1%
-      if (MH.abs(percentage) >= 50) {
+      if (_.abs(percentage) >= 50) {
         percentage /= 10;
       }
 
       thisDeltaZ = 1 + percentage / 100;
 
       thisDeltaX = thisDeltaY = 0;
-      thisIntent = MC.S_ZOOM;
+      thisIntent = _.S_ZOOM;
     } else if (event.shiftKey && !thisDeltaX) {
       // Holding Shift while turning wheel or swiping trackpad in vertically
       // results in sideways scroll.
@@ -114,16 +113,16 @@ export const getWheelGestureFragment = (
       intent = thisIntent;
     } else if (intent !== thisIntent) {
       // mixture of zoom and scroll
-      intent = MC.S_UNKNOWN;
+      intent = _.S_UNKNOWN;
     }
   }
 
   if (!intent) {
     return false; // no relevant events
-  } else if (intent === MC.S_UNKNOWN) {
-    direction = MC.S_AMBIGUOUS;
-  } else if (intent === MC.S_ZOOM) {
-    direction = deltaZ > 1 ? MC.S_IN : deltaZ < 1 ? MC.S_OUT : MC.S_NONE;
+  } else if (intent === _.S_UNKNOWN) {
+    direction = _.S_AMBIGUOUS;
+  } else if (intent === _.S_ZOOM) {
+    direction = deltaZ > 1 ? _.S_IN : deltaZ < 1 ? _.S_OUT : _.S_NONE;
   } else {
     direction = getVectorDirection(
       [deltaX, deltaY],
@@ -131,10 +130,10 @@ export const getWheelGestureFragment = (
     );
   }
 
-  return direction === MC.S_NONE
+  return direction === _.S_NONE
     ? false
     : {
-        device: MC.S_WHEEL,
+        device: _.S_WHEEL,
         direction,
         intent,
         deltaX,

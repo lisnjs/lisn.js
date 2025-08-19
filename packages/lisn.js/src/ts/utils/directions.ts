@@ -2,8 +2,9 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import {
   Direction,
@@ -32,18 +33,18 @@ export const getMaxDeltaDirection = (
   deltaX: number,
   deltaY: number,
 ): XYDirection | NoDirection | AmbiguousDirection => {
-  if (!MH.abs(deltaX) && !MH.abs(deltaY)) {
-    return MC.S_NONE;
+  if (!_.abs(deltaX) && !_.abs(deltaY)) {
+    return _.S_NONE;
   }
 
-  if (MH.abs(deltaX) === MH.abs(deltaY)) {
-    return MC.S_AMBIGUOUS;
+  if (_.abs(deltaX) === _.abs(deltaY)) {
+    return _.S_AMBIGUOUS;
   }
 
-  if (MH.abs(deltaX) > MH.abs(deltaY)) {
-    return deltaX < 0 ? MC.S_LEFT : MC.S_RIGHT;
+  if (_.abs(deltaX) > _.abs(deltaY)) {
+    return deltaX < 0 ? _.S_LEFT : _.S_RIGHT;
   }
-  return deltaY < 0 ? MC.S_UP : MC.S_DOWN;
+  return deltaY < 0 ? _.S_UP : _.S_DOWN;
 };
 
 /**
@@ -66,21 +67,21 @@ export const getVectorDirection = (
   vector: Vector,
   angleDiffThreshold = 0,
 ): XYDirection | AmbiguousDirection | NoDirection => {
-  angleDiffThreshold = MH.min(44.99, MH.abs(angleDiffThreshold));
+  angleDiffThreshold = _.min(44.99, _.abs(angleDiffThreshold));
 
   if (!maxAbs(...vector)) {
-    return MC.S_NONE;
+    return _.S_NONE;
   } else if (areParallel(vector, [1, 0], angleDiffThreshold)) {
-    return MC.S_RIGHT;
+    return _.S_RIGHT;
   } else if (areParallel(vector, [0, 1], angleDiffThreshold)) {
-    return MC.S_DOWN;
+    return _.S_DOWN;
   } else if (areParallel(vector, [-1, 0], angleDiffThreshold)) {
-    return MC.S_LEFT;
+    return _.S_LEFT;
   } else if (areParallel(vector, [0, -1], angleDiffThreshold)) {
-    return MC.S_UP;
+    return _.S_UP;
   }
 
-  return MC.S_AMBIGUOUS;
+  return _.S_AMBIGUOUS;
 };
 
 /**
@@ -106,7 +107,7 @@ export const getOppositeDirection = (
   direction: Direction,
 ): Direction | null => {
   if (!(direction in OPPOSITE_DIRECTIONS)) {
-    throw MH.usageError("Invalid 'direction'");
+    throw usageError("Invalid 'direction'");
   }
 
   return OPPOSITE_DIRECTIONS[direction];
@@ -148,7 +149,7 @@ export const getOppositeXYDirections = (
   );
 
   if (!directionList) {
-    throw MH.usageError("'directions' is required");
+    throw usageError("'directions' is required");
   }
 
   const opposites: XYDirection[] = [];
@@ -157,15 +158,15 @@ export const getOppositeXYDirections = (
     if (
       opposite &&
       isValidXYDirection(opposite) &&
-      !MH.includes(directionList, opposite)
+      !_.includes(directionList, opposite)
     ) {
       opposites.push(opposite);
     }
   }
 
-  if (!MH.lengthOf(opposites)) {
+  if (!_.lengthOf(opposites)) {
     for (const direction of XY_DIRECTIONS) {
-      if (!MH.includes(directionList, direction)) {
+      if (!_.includes(directionList, direction)) {
         opposites.push(direction);
       }
     }
@@ -181,7 +182,7 @@ export const getOppositeXYDirections = (
  */
 export const isValidXYDirection = (
   direction: string,
-): direction is XYDirection => MH.includes(XY_DIRECTIONS, direction);
+): direction is XYDirection => _.includes(XY_DIRECTIONS, direction);
 
 /**
  * Returns true if the given direction is one of the known Z ones.
@@ -189,7 +190,7 @@ export const isValidXYDirection = (
  * @category Validation
  */
 export const isValidZDirection = (direction: string): direction is ZDirection =>
-  MH.includes(Z_DIRECTIONS, direction);
+  _.includes(Z_DIRECTIONS, direction);
 
 /**
  * Returns true if the given string is a valid direction.
@@ -197,7 +198,7 @@ export const isValidZDirection = (direction: string): direction is ZDirection =>
  * @category Validation
  */
 export const isValidDirection = (direction: string): direction is Direction =>
-  MH.includes(DIRECTIONS, direction);
+  _.includes(DIRECTIONS, direction);
 
 /**
  * Returns true if the given string or array is a list of valid directions.
@@ -213,18 +214,13 @@ export const isValidDirectionList = (
  * @ignore
  * @internal
  */
-export const XY_DIRECTIONS = [
-  MC.S_UP,
-  MC.S_DOWN,
-  MC.S_LEFT,
-  MC.S_RIGHT,
-] as const;
+export const XY_DIRECTIONS = [_.S_UP, _.S_DOWN, _.S_LEFT, _.S_RIGHT] as const;
 
 /**
  * @ignore
  * @internal
  */
-export const Z_DIRECTIONS = [MC.S_IN, MC.S_OUT] as const;
+export const Z_DIRECTIONS = [_.S_IN, _.S_OUT] as const;
 
 /**
  * @ignore
@@ -232,8 +228,8 @@ export const Z_DIRECTIONS = [MC.S_IN, MC.S_OUT] as const;
  */
 export const SCROLL_DIRECTIONS = [
   ...XY_DIRECTIONS,
-  MC.S_NONE,
-  MC.S_AMBIGUOUS,
+  _.S_NONE,
+  _.S_AMBIGUOUS,
 ] as const;
 
 /**
@@ -243,19 +239,19 @@ export const SCROLL_DIRECTIONS = [
 export const DIRECTIONS = [
   ...XY_DIRECTIONS,
   ...Z_DIRECTIONS,
-  MC.S_NONE,
-  MC.S_AMBIGUOUS,
+  _.S_NONE,
+  _.S_AMBIGUOUS,
 ] as const;
 
 // --------------------
 
 const OPPOSITE_DIRECTIONS = {
-  [MC.S_UP]: MC.S_DOWN,
-  [MC.S_DOWN]: MC.S_UP,
-  [MC.S_LEFT]: MC.S_RIGHT,
-  [MC.S_RIGHT]: MC.S_LEFT,
-  [MC.S_IN]: MC.S_OUT,
-  [MC.S_OUT]: MC.S_IN,
-  [MC.S_NONE]: null,
-  [MC.S_AMBIGUOUS]: null,
+  [_.S_UP]: _.S_DOWN,
+  [_.S_DOWN]: _.S_UP,
+  [_.S_LEFT]: _.S_RIGHT,
+  [_.S_RIGHT]: _.S_LEFT,
+  [_.S_IN]: _.S_OUT,
+  [_.S_OUT]: _.S_IN,
+  [_.S_NONE]: null,
+  [_.S_AMBIGUOUS]: null,
 } as const;

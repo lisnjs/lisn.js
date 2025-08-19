@@ -4,8 +4,7 @@
  * @since v1.3.0
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { Effect, EffectRegistry } from "@lisn/effects/effect";
 
@@ -53,7 +52,7 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
   constructor() {
     const map: EffectsMap = new Map();
 
-    MH.defineProperty(this, "size", { get: () => map.size });
+    _.defineProperty(this, "size", { get: () => map.size });
 
     this.add = (effect) => {
       map.set(
@@ -89,7 +88,7 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
     this.keys = () => map.keys();
     this.values = () => map.values();
     this.entries = () => map.entries();
-    this[MC.SYMBOL.iterator] = () => map[MC.SYMBOL.iterator]();
+    this[_.SYMBOL.iterator] = () => map[_.SYMBOL.iterator]();
   }
 }
 
@@ -109,3 +108,5 @@ interface EffectsMap {
     [T, Effect<T>]
   >;
 }
+
+_.brandClass(FXComposition, "FXComposition");

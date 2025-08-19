@@ -2,13 +2,9 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
-
-import { NestedRecord } from "@lisn/globals/types";
+import * as _ from "@lisn/_internal";
 
 import { addClasses, removeClasses } from "@lisn/utils/css-alter";
-import { copyExistingKeysTo } from "@lisn/utils/misc";
 
 import { XMap, newXMapGetter, newXWeakMap } from "@lisn/modules/x-map";
 
@@ -22,7 +18,7 @@ export const callEventListener = (
   handler: EventListenerOrEventListenerObject,
   event: Event,
 ) => {
-  if (MH.isFunction(handler)) {
+  if (_.isFunction(handler)) {
     handler.call(event.currentTarget ?? self, event);
   } else {
     handler.handleEvent.call(event.currentTarget ?? self, event);
@@ -60,7 +56,7 @@ export const addEventListenerTo = (
   // If the user passed an options object but the browser only supports a
   // boolen for 'useCapture', then handle this.
   const supports = getBrowserSupport();
-  if (MH.isObject(options)) {
+  if (_.isObject(options)) {
     if (!supports._optionsArg) {
       thirdArg = options.capture ?? false;
     }
@@ -122,9 +118,9 @@ export const removeEventListenerFrom = (
  * @internal
  */
 export const preventSelect = (target: EventTarget) => {
-  addEventListenerTo(target, MC.S_SELECTSTART, MH.preventDefault);
-  if (MH.isElement(target)) {
-    addClasses(target, MC.PREFIX_NO_SELECT);
+  addEventListenerTo(target, _.S_SELECTSTART, _.preventDefault);
+  if (_.isElement(target)) {
+    addClasses(target, _.PREFIX_NO_SELECT);
   }
 };
 
@@ -133,9 +129,9 @@ export const preventSelect = (target: EventTarget) => {
  * @internal
  */
 export const undoPreventSelect = (target: EventTarget) => {
-  removeEventListenerFrom(target, MC.S_SELECTSTART, MH.preventDefault);
-  if (MH.isElement(target)) {
-    removeClasses(target, MC.PREFIX_NO_SELECT);
+  removeEventListenerFrom(target, _.S_SELECTSTART, _.preventDefault);
+  if (_.isElement(target)) {
+    removeClasses(target, _.PREFIX_NO_SELECT);
   }
 };
 
@@ -165,7 +161,7 @@ export const getBrowserSupport = (): BrowserEventSupport => {
   let opt: keyof typeof supports._options;
   for (opt in supports._options) {
     const thisOpt = opt;
-    MH.defineProperty(optTest, thisOpt, {
+    _.defineProperty(optTest, thisOpt, {
       get: () => {
         supports._options[thisOpt] = true;
         if (thisOpt === "signal") {
@@ -177,7 +173,7 @@ export const getBrowserSupport = (): BrowserEventSupport => {
   }
 
   const dummyHandler = () => {}; // TypeScript does not accept null
-  const dummyElement = MH.createElement("div");
+  const dummyElement = _.createElement("div");
   try {
     dummyElement.addEventListener("testOptionSupport", dummyHandler, optTest);
     dummyElement.removeEventListener(
@@ -217,7 +213,7 @@ const registeredEventHandlerData = newXWeakMap<
       >
     >
   >
->(newXMapGetter(newXMapGetter(() => MH.newMap())));
+>(newXMapGetter(newXMapGetter(() => _.newMap())));
 
 // detect browser features, see below
 type BrowserEventSupport = {
@@ -242,14 +238,14 @@ const getEventOptionsStr = (
 
   if (options === false || options === true) {
     finalOptions.capture = options;
-  } else if (MH.isObject(options)) {
+  } else if (_.isObject(options)) {
     let p: keyof typeof finalOptions;
     for (p in finalOptions) {
       finalOptions[p] = options[p] ?? false;
     }
   }
 
-  return MH.stringify(finalOptions);
+  return _.stringify(finalOptions);
 };
 
 const getEventHandlerData = (
@@ -273,7 +269,7 @@ const deleteEventHandlerData = (
   options: boolean | AddEventListenerOptions,
 ) => {
   const optionsStr = getEventOptionsStr(options);
-  MH.deleteKey(
+  _.deleteKey(
     registeredEventHandlerData.get(target)?.get(eventType)?.get(handler),
     optionsStr,
   );
@@ -297,10 +293,10 @@ const setEventHandlerData = (
 
 const transformEventType = (eventType: string) => {
   const supports = getBrowserSupport();
-  if (eventType.startsWith(MC.S_POINTER) && !supports._pointer) {
+  if (eventType.startsWith(_.S_POINTER) && !supports._pointer) {
     // TODO maybe log a warning message is it's not supported, e.g. there's no
     // mousecancel
-    return MH.strReplace(eventType, MC.S_POINTER, MC.S_MOUSE);
+    return _.strReplace(eventType, _.S_POINTER, _.S_MOUSE);
   }
 
   return eventType;

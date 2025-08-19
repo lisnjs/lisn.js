@@ -2,7 +2,7 @@
  * @module Utils
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 /**
  * Returns true if the device has a touch screen.
@@ -12,7 +12,7 @@ import * as MH from "@lisn/globals/minification-helpers";
  * @category Browser info
  */
 export const isTouchScreen = () =>
-  MH.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
+  _.hasDOM() ? matchMedia("(any-pointer: coarse)").matches : false;
 
 /**
  * Returns true if the browser supports position: sticky.
@@ -22,7 +22,7 @@ export const isTouchScreen = () =>
  * @category Browser info
  */
 export const supportsSticky = () =>
-  MH.hasDOM()
+  _.hasDOM()
     ? typeof CSS !== "undefined" && CSS.supports("position", "sticky")
     : false;
 
@@ -34,7 +34,7 @@ export const supportsSticky = () =>
  * @category Browser info
  */
 export const isInQuirksMode = () =>
-  MH.hasDOM() ? document.compatMode === "BackCompat" : false;
+  _.hasDOM() ? document.compatMode === "BackCompat" : false;
 
 /**
  * Returns true if the device is mobile (based on user agent).
@@ -44,8 +44,8 @@ export const isInQuirksMode = () =>
  * @category Browser info
  */
 export const isMobile = () =>
-  MH.hasDOM()
-    ? MH.userAgent.match(
+  _.hasDOM()
+    ? _.userAgent.match(
         /Mobile|Android|Silk\/|Kindle|BlackBerry|Opera Mini|Opera Mobi/,
       ) !== null
     : false;

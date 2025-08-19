@@ -2,15 +2,15 @@
  * @module Watchers/SizeWatcher
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, illegalConstructorError } from "@lisn/globals/errors";
 
 import { Box, Dimension, Size, SizeTarget } from "@lisn/globals/types";
 
 import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { logError } from "@lisn/utils/log";
 import { toNonNegNum } from "@lisn/utils/math";
-import { deepCopy } from "@lisn/utils/misc";
 import {
   isValidBox,
   isValidDimension,
@@ -156,19 +156,19 @@ export class SizeWatcher {
     key: typeof CONSTRUCTOR_KEY,
   ) {
     if (key !== CONSTRUCTOR_KEY) {
-      throw MH.illegalConstructorError("SizeWatcher.create");
+      throw illegalConstructorError("SizeWatcher.create");
     }
 
     const logger = debug
       ? new debug.Logger({ name: "SizeWatcher", logAtCreation: config })
       : null;
 
-    const allSizeData = MH.newWeakMap<Element, SizeData>();
+    const allSizeData = _.newWeakMap<Element, SizeData>();
 
     const allCallbacks = newXWeakMap<
       Element,
       Map<OnResizeHandler, CallbackEntry>
-    >(() => MH.newMap());
+    >(() => _.newMap());
 
     // ----------
 
@@ -189,12 +189,12 @@ export class SizeWatcher {
       const element = await fetchElement(target);
       const sizeData = allSizeData.get(element);
       if (sizeData) {
-        return deepCopy(sizeData);
+        return _.deepCopy(sizeData);
       }
 
-      return MH.newPromise((resolve) => {
+      return _.newPromise((resolve) => {
         // Use a temp ResizeObserver
-        const observer = MH.newResizeObserver((entries) => {
+        const observer = _.newResizeObserver((entries) => {
           const sizeData = getSizeData(entries[0]);
           observer?.disconnect();
           resolve(sizeData); // no need to copy or save it
@@ -205,8 +205,8 @@ export class SizeWatcher {
         } else {
           // Warning would have already been logged by XResizeObserver
           resolve({
-            border: { [MC.S_WIDTH]: 0, [MC.S_HEIGHT]: 0 },
-            content: { [MC.S_WIDTH]: 0, [MC.S_HEIGHT]: 0 },
+            border: { [_.S_WIDTH]: 0, [_.S_HEIGHT]: 0 },
+            content: { [_.S_WIDTH]: 0, [_.S_HEIGHT]: 0 },
           });
         }
       });
@@ -219,23 +219,22 @@ export class SizeWatcher {
     ): Promise<OnResizeOptionsInternal> => {
       const box = options.box ?? null;
       if (box && !isValidBox(box)) {
-        throw MH.usageError(`Unknown box type: '${box}'`);
+        throw usageError(`Unknown box type: '${box}'`);
       }
 
       const dimension = options.dimension ?? null;
       if (dimension && !isValidDimension(dimension)) {
-        throw MH.usageError(`Unknown dimension: '${dimension}'`);
+        throw usageError(`Unknown dimension: '${dimension}'`);
       }
 
       return {
-        _element: await fetchElement(MH.targetOf(options)),
+        _element: await fetchElement(_.targetOf(options)),
         _box: box,
         _dimension: dimension,
         // If threshold is 0, internally treat as 1 (pixel)
         _threshold:
           toNonNegNum(options.threshold, config._resizeThreshold) || 1,
-        _debounceWindow:
-          options[MC.S_DEBOUNCE_WINDOW] ?? config._debounceWindow,
+        _debounceWindow: options[_.S_DEBOUNCE_WINDOW] ?? config._debounceWindow,
       };
     };
 
@@ -246,7 +245,7 @@ export class SizeWatcher {
       options: OnResizeOptionsInternal,
     ): CallbackEntry => {
       const element = options._element;
-      MH.remove(allCallbacks.get(element)?.get(handler)?._callback);
+      _.remove(allCallbacks.get(element)?.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", options);
       const callback = wrapCallback(handler, options._debounceWindow);
@@ -311,7 +310,7 @@ export class SizeWatcher {
       const element = options._element;
       const currEntry = allCallbacks.get(element)?.get(handler);
       if (currEntry) {
-        MH.remove(currEntry._callback);
+        _.remove(currEntry._callback);
 
         if (handler === setSizeCssProps) {
           // delete the properties
@@ -327,7 +326,7 @@ export class SizeWatcher {
       options: OnResizeOptionsInternal,
     ) => {
       const element = options._element;
-      MH.deleteKey(allCallbacks.get(element), handler);
+      _.deleteKey(allCallbacks.get(element), handler);
       allCallbacks.prune(element);
 
       if (!allCallbacks.has(element)) {
@@ -336,7 +335,7 @@ export class SizeWatcher {
           element,
         );
         xObserver.unobserve(element);
-        MH.deleteKey(allSizeData, element);
+        _.deleteKey(allSizeData, element);
       }
     };
 
@@ -344,7 +343,7 @@ export class SizeWatcher {
 
     const processEntry = (entry: ResizeObserverEntry) => {
       // In reality, it can't be just a base Element
-      const element = MH.targetOf(entry);
+      const element = _.targetOf(entry);
 
       const latestData = getSizeData(entry);
       allSizeData.set(element, latestData);
@@ -541,15 +540,15 @@ type CallbackEntry = {
   _data?: SizeData;
 };
 
-const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = MH.newMap<string, SizeWatcher>();
+const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
+const instances = _.newMap<string, SizeWatcher>();
 
 const getConfig = (
   config: SizeWatcherConfig | undefined,
 ): SizeWatcherConfigInternal => {
   config ??= {};
   return {
-    _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 75),
+    _debounceWindow: toNonNegNum(config[_.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
     _resizeThreshold: toNonNegNum(config.resizeThreshold, 50) || 1,
   };
@@ -578,7 +577,7 @@ const hasExceededThreshold = (
         continue;
       }
 
-      const diff = MH.abs(latestData[box][dim] - lastThresholdData[box][dim]);
+      const diff = _.abs(latestData[box][dim] - lastThresholdData[box][dim]);
       if (diff >= options._threshold) {
         return true;
       }
@@ -605,15 +604,15 @@ const setSizeCssProps = (
   let prefix = "";
   if (element === tryGetViewportOverlay()) {
     // Set the CSS vars on the root element
-    element = MH.getDocElement();
+    element = _.getDocElement();
     prefix = "window-";
   }
 
   const props = {
-    borderWidth: sizeData?.border[MC.S_WIDTH],
-    borderHeight: sizeData?.border[MC.S_HEIGHT],
-    contentWidth: sizeData?.content[MC.S_WIDTH],
-    contentHeight: sizeData?.content[MC.S_HEIGHT],
+    borderWidth: sizeData?.border[_.S_WIDTH],
+    borderHeight: sizeData?.border[_.S_HEIGHT],
+    contentWidth: sizeData?.content[_.S_WIDTH],
+    contentHeight: sizeData?.content[_.S_HEIGHT],
   };
   setNumericStyleJsVars(element, props, { _prefix: prefix }); // don't await here
 };
@@ -621,19 +620,19 @@ const setSizeCssProps = (
 const fetchElement = async (
   target: SizeTarget | undefined,
 ): Promise<Element> => {
-  if (MH.isElement(target)) {
+  if (_.isElement(target)) {
     return target;
   }
 
-  if (!target || target === MH.getWindow()) {
+  if (!target || target === _.getWindow()) {
     return fetchViewportOverlay();
   }
 
-  if (target === MH.getDoc()) {
-    return MH.getDocElement();
+  if (target === _.getDoc()) {
+    return _.getDocElement();
   }
 
-  throw MH.usageError("Unsupported resize target");
+  throw usageError("Unsupported resize target");
 };
 
 const invokeCallback = (
@@ -646,8 +645,10 @@ const invokeCallback = (
   callback
     .invoke(
       element,
-      deepCopy(sizeData),
+      _.deepCopy(sizeData),
       lastSizeData, // no need to copy that one as it's not used again
       watcher,
     )
     .catch(logError);
+
+_.brandClass(SizeWatcher, "SizeWatcher");

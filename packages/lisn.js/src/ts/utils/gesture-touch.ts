@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { Direction, GestureIntent, Vector } from "@lisn/globals/types";
 
@@ -90,7 +89,7 @@ export const getTouchGestureFragment = (
     dragNumFingers?: number;
   },
 ): GestureFragment | null | false => {
-  if (!MH.isIterableObject(events)) {
+  if (!_.isIterableObject(events)) {
     events = [events];
   }
 
@@ -100,7 +99,7 @@ export const getTouchGestureFragment = (
     return null; // terminated
   }
 
-  let numMoves = MH.lengthOf(moves);
+  let numMoves = _.lengthOf(moves);
 
   const holdTime = getHoldTime(events);
   const canBeDrag =
@@ -114,12 +113,12 @@ export const getTouchGestureFragment = (
 
   if (numMoves > 2) {
     // Take only the significant ones
-    moves = MH.filter(moves, (d) => d.isSignificant);
-    numMoves = MH.lengthOf(moves);
+    moves = _.filter(moves, (d) => d.isSignificant);
+    numMoves = _.lengthOf(moves);
   }
 
-  let direction: Direction = MC.S_NONE;
-  let intent: GestureIntent = MC.S_UNKNOWN;
+  let direction: Direction = _.S_NONE;
+  let intent: GestureIntent = _.S_UNKNOWN;
   if (numMoves === 2) {
     // Check if it's a zoom
     const vectorA: Vector = [moves[0].deltaX, moves[0].deltaY];
@@ -143,10 +142,10 @@ export const getTouchGestureFragment = (
         [moves[1].endX, moves[1].endY],
       );
 
-      direction = startDistance < endDistance ? MC.S_IN : MC.S_OUT;
+      direction = startDistance < endDistance ? _.S_IN : _.S_OUT;
       deltaZ = endDistance / startDistance;
       deltaX = deltaY = 0;
-      intent = MC.S_ZOOM;
+      intent = _.S_ZOOM;
     }
   }
 
@@ -156,27 +155,27 @@ export const getTouchGestureFragment = (
   deltaX = deltaSign * deltaX + 0;
   deltaY = deltaSign * deltaY + 0;
 
-  if (direction === MC.S_NONE) {
+  if (direction === _.S_NONE) {
     // Wasn't a zoom. Check if all moves are aligned.
     let isFirst = true;
 
     for (const m of moves) {
       // There's at least one significant move, assume scroll or drag intent.
-      intent = canBeDrag ? MC.S_DRAG : MC.S_SCROLL;
+      intent = canBeDrag ? _.S_DRAG : _.S_SCROLL;
 
       const thisDirection = getVectorDirection(
         [deltaSign * m.deltaX, deltaSign * m.deltaY],
         angleDiffThreshold,
       );
 
-      if (thisDirection === MC.S_NONE) {
+      if (thisDirection === _.S_NONE) {
         continue;
       }
 
       if (isFirst) {
         direction = thisDirection;
       } else if (direction !== thisDirection) {
-        direction = MC.S_AMBIGUOUS;
+        direction = _.S_AMBIGUOUS;
         break;
       }
 
@@ -184,15 +183,15 @@ export const getTouchGestureFragment = (
     }
   }
 
-  if (direction === MC.S_NONE) {
-    const lastTouchEvent = MH.lastOf(events.filter(MH.isTouchEvent));
+  if (direction === _.S_NONE) {
+    const lastTouchEvent = _.lastOf(events.filter(_.isTouchEvent));
     // If all fingers have lifted off, consider it terminated, otherwise wait
     // for more events.
-    return MH.lengthOf(lastTouchEvent?.touches) ? false : null;
+    return _.lengthOf(lastTouchEvent?.touches) ? false : null;
   }
 
   return {
-    device: MC.S_TOUCH,
+    device: _.S_TOUCH,
     direction,
     intent,
     deltaX,
@@ -225,11 +224,11 @@ export const getTouchDiff = (
   const groupedTouches = newXMap<number, Touch[]>((): Touch[] => []);
 
   for (const event of events) {
-    if (!MH.isTouchEvent(event)) {
+    if (!_.isTouchEvent(event)) {
       continue;
     }
 
-    if (event.type === MC.S_TOUCHCANCEL) {
+    if (event.type === _.S_TOUCHCANCEL) {
       return null; // gesture terminated
     }
 
@@ -241,7 +240,7 @@ export const getTouchDiff = (
   const moves: TouchDiff[] = [];
 
   for (const touchList of groupedTouches.values()) {
-    const nTouches = MH.lengthOf(touchList);
+    const nTouches = _.lengthOf(touchList);
     if (nTouches < 2) {
       // Only one event had that finger in it, so there's no move for it
       continue;
@@ -278,8 +277,8 @@ export const getTouchDiff = (
 // --------------------
 
 const getHoldTime = (events: Event[]) => {
-  const firstStart = events.findIndex((e) => e.type === MC.S_TOUCHSTART);
-  const firstMove = events.findIndex((e) => e.type === MC.S_TOUCHMOVE);
+  const firstStart = events.findIndex((e) => e.type === _.S_TOUCHSTART);
+  const firstMove = events.findIndex((e) => e.type === _.S_TOUCHMOVE);
   if (firstStart < 0 || firstMove < 1) {
     return 0;
   }

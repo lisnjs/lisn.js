@@ -2,7 +2,7 @@
  * @module Debugging
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { LogFunction } from "@lisn/globals/types";
 
@@ -99,7 +99,7 @@ export class RemoteConsole implements ConsoleInterface {
 
       const instance = instances.get(url)?.get(connectTimeout);
       if (instance === this) {
-        MH.deleteKey(instances.get(url), connectTimeout);
+        _.deleteKey(instances.get(url), connectTimeout);
         instances.prune(url);
       }
     };
@@ -118,22 +118,22 @@ export class RemoteConsole implements ConsoleInterface {
       const ioClient = socket.io(url);
 
       // if not connected within connectTimeout initially, set as failed
-      let disconnectTimer = MH.setTimer(() => {
+      let disconnectTimer = _.setTimer(() => {
         hasFailed = true;
       }, connectTimeout);
 
       ioClient.on("disconnect", () => {
         // if not re-connected within connectTimeout, set as failed
-        MH.clearTimer(disconnectTimer);
+        _.clearTimer(disconnectTimer);
         if (!isClosed) {
-          disconnectTimer = MH.setTimer(() => {
+          disconnectTimer = _.setTimer(() => {
             hasFailed = true;
           }, connectTimeout);
         }
       });
 
       ioClient.on("connect", () => {
-        MH.clearTimer(disconnectTimer);
+        _.clearTimer(disconnectTimer);
         hasFailed = false;
       });
 
@@ -179,8 +179,8 @@ export class RemoteConsole implements ConsoleInterface {
   }
 }
 
-const instances = newXMap<string, Map<number, RemoteConsole>>(() =>
-  MH.newMap(),
-);
+const instances = newXMap<string, Map<number, RemoteConsole>>(() => _.newMap());
 
 const DEFAULT_TIMEOUT = 1500;
+
+_.brandClass(RemoteConsole, "RemoteConsole");

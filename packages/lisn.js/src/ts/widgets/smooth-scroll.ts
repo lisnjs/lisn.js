@@ -5,8 +5,9 @@
 // XXX TODO more effect types: opacity, color, background-color, filters, svg stroke, etc, and custom props
 // for svg stroke, see svg.getTotalLength, stroke-dasharray and stroke-offset
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, bugError } from "@lisn/globals/errors";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -198,13 +199,13 @@ export class SmoothScroll extends Widget {
       return mainWidget;
     }
 
-    if (!MH.isHTMLElement(scrollable)) {
+    if (!_.isHTMLElement(scrollable)) {
       throw ONLY_HTML_ELEMENT_ERR;
     }
     scrollable = toScrollable(scrollable);
 
     const instance = super.get(scrollable, DUMMY_ID);
-    if (MH.isInstanceOf(instance, SmoothScroll)) {
+    if (_.isInstanceOf(instance, SmoothScroll)) {
       return instance;
     }
     return null;
@@ -234,7 +235,7 @@ export class SmoothScroll extends Widget {
     registerWidget(
       WIDGET_NAME,
       (element, config) => {
-        if (MH.isHTMLElement(element)) {
+        if (_.isHTMLElement(element)) {
           if (!SmoothScroll.get(element)) {
             // TODO parse effects from the data-lisn-smooth-scroll-effects
             // attribute?
@@ -285,7 +286,7 @@ export class SmoothScroll extends Widget {
     trigger.pause();
     layers = getLayersFrom(scrollable, config, trigger);
 
-    (destroyPromise || MH.promiseResolve()).then(async () => {
+    (destroyPromise || _.promiseResolve()).then(async () => {
       if (this.isDestroyed()) {
         return;
       }
@@ -435,19 +436,19 @@ export type SmoothScrollLayerConfig = {
 // --------------------
 
 const WIDGET_NAME = "smooth-scroll";
-const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
+const PREFIXED_NAME = _.prefixName(WIDGET_NAME);
 // Only one SmoothScroll widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID = PREFIXED_NAME;
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 const PREFIX_OUTER_WRAPPER = `${PREFIXED_NAME}__content`;
 const PREFIX_INNER_WRAPPER = `${PREFIXED_NAME}__inner`;
-const PREFIX_USES_STICKY = MH.prefixName("uses-sticky");
+const PREFIX_USES_STICKY = _.prefixName("uses-sticky");
 
 const PREFIX_LAYER = `${PREFIXED_NAME}-layer`;
 const SELECTOR_LAYER = `[data-${PREFIX_LAYER}]`;
 
-const ONLY_HTML_ELEMENT_ERR = MH.usageError(
+const ONLY_HTML_ELEMENT_ERR = usageError(
   "Only HTMLElement is supported for SmoothScroll widget",
 );
 
@@ -484,20 +485,20 @@ const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig>
   };
 
 const stateUsesAutoDepth = (state: SmoothScrollLayerState) =>
-  state._depthX === MC.S_AUTO || state._depthY === MC.S_AUTO;
+  state._depthX === _.S_AUTO || state._depthY === _.S_AUTO;
 
 const toScrollable = (scrollable: HTMLElement) =>
-  scrollable === MH.getDocElement() || scrollable === MH.getBody()
+  scrollable === _.getDocElement() || scrollable === _.getBody()
     ? getDefaultScrollingElement()
     : scrollable;
 
 const toDepth = (depth: unknown, parentDepth: number | "auto") => {
   depth ??= parentDepth;
-  if (depth === MC.S_AUTO) {
+  if (depth === _.S_AUTO) {
     return depth;
   }
 
-  const reference = parentDepth === MC.S_AUTO ? 1 : parentDepth;
+  const reference = parentDepth === _.S_AUTO ? 1 : parentDepth;
   return toNumWithBounds(
     toRawNum(depth, reference, reference),
     { min: 0.01 },
@@ -506,7 +507,7 @@ const toDepth = (depth: unknown, parentDepth: number | "auto") => {
 };
 
 const getParentLayer = (scrollable: Element, layer: Element) => {
-  let closest = MH.closestParent(layer, SELECTOR_LAYER) ?? scrollable;
+  let closest = _.closestParent(layer, SELECTOR_LAYER) ?? scrollable;
   if (!scrollable.contains(closest)) {
     closest = scrollable;
   }
@@ -520,7 +521,7 @@ const getLayersFrom = (
   trigger: FXScrollTrigger,
 ) => {
   // map will include the root scrollable
-  const layerMap = MH.newMap<Element, SmoothScrollLayerState>();
+  const layerMap = _.newMap<Element, SmoothScrollLayerState>();
   const defaultLag = rootConfig?.lag ?? settings.effectLag;
   const defaultLagX = rootConfig?.lagX ?? defaultLag;
   const defaultLagY = rootConfig?.lagY ?? defaultLag;
@@ -535,7 +536,7 @@ const getLayersFrom = (
       parent?: FXComposer;
     },
   ) => {
-    const composer = new FXComposer(trigger, config);
+    const composer = new FXComposer(_.merge(config, { trigger }));
     if (useDefaultEffects) {
       composer.add(
         new Transform({ isAbsolute: true }).translate((data) => ({
@@ -554,7 +555,7 @@ const getLayersFrom = (
 
     if (layer === scrollable) {
       config = rootConfig;
-    } else if (MH.isArray(inputLayers)) {
+    } else if (_.isArray(inputLayers)) {
       // parseEffectsAttr = true;
       config = getWidgetConfig(
         getData(layer, PREFIX_LAYER) ?? "",
@@ -609,11 +610,11 @@ const getLayersFrom = (
         _composer: newComposer(useDefaultEffects, {
           lagX,
           lagY,
-          depthX: depthX === MC.S_AUTO ? 1 : depthX,
-          depthY: depthY === MC.S_AUTO ? 1 : depthY,
+          depthX: depthX === _.S_AUTO ? 1 : depthX,
+          depthY: depthY === _.S_AUTO ? 1 : depthY,
           parent: parentState?._composer,
         }),
-        _children: MH.newSet(),
+        _children: _.newSet(),
         _parentState: parentState,
       };
 
@@ -626,10 +627,10 @@ const getLayersFrom = (
   // ----------
 
   const inputLayers = rootConfig?.layers ?? [
-    ...MH.querySelectorAll(scrollable, SELECTOR_LAYER),
+    ..._.querySelectorAll(scrollable, SELECTOR_LAYER),
   ];
 
-  const layersIterable = MH.isArray(inputLayers)
+  const layersIterable = _.isArray(inputLayers)
     ? inputLayers
     : (inputLayers?.keys() ?? []);
 
@@ -713,21 +714,21 @@ const init = async (
   logger: LoggerInterface | null,
 ) => {
   const isBody = scrollable === getDefaultScrollingElement();
-  const root = isBody ? MH.getBody() : scrollable;
+  const root = isBody ? _.getBody() : scrollable;
   const anyIsAutoDepth = !![...layers].find(([__ignored, state]) =>
     stateUsesAutoDepth(state),
   );
   const rootState = layers.get(scrollable);
   if (!rootState) {
-    throw MH.bugError("No SmoothScroll state saved for the root");
+    throw bugError("No SmoothScroll state saved for the root");
   }
 
   const scrollWatcher = anyIsAutoDepth
-    ? ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 })
+    ? ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 })
     : null;
   const sizeWatcher =
     anyIsAutoDepth || isBody
-      ? SizeWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 })
+      ? SizeWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 })
       : null;
 
   const updateScrollData = (target: Element, scrollData: ScrollData) => {
@@ -738,7 +739,7 @@ const init = async (
   const updateSizeData = (target: Element, sizeData: SizeData) => {
     const state = layers.get(target);
     if (!state) {
-      throw MH.bugError("No SmoothScroll state saved for layer");
+      throw bugError("No SmoothScroll state saved for layer");
     }
     state._sizeData = sizeData.border;
     resetAutoDepth(state);
@@ -749,8 +750,8 @@ const init = async (
   const updatePropsOnResize = (target: Element, sizeData: SizeData) => {
     setSizeVars(
       root, // document.body
-      sizeData.border[MC.S_WIDTH],
-      sizeData.border[MC.S_HEIGHT],
+      sizeData.border[_.S_WIDTH],
+      sizeData.border[_.S_HEIGHT],
     );
   };
 
@@ -800,11 +801,11 @@ const init = async (
     const rootScrollData = rootState._scrollData;
     const layerSize = state._sizeData;
     if (!rootScrollData || !layerSize) {
-      throw MH.bugError("No size data saved for root or layer");
+      throw bugError("No size data saved for root or layer");
     }
 
-    const depthX = rootScrollData[MC.S_SCROLL_WIDTH] / layerSize[MC.S_WIDTH];
-    const depthY = rootScrollData[MC.S_SCROLL_HEIGHT] / layerSize[MC.S_HEIGHT];
+    const depthX = rootScrollData[_.S_SCROLL_WIDTH] / layerSize[_.S_WIDTH];
+    const depthY = rootScrollData[_.S_SCROLL_HEIGHT] / layerSize[_.S_HEIGHT];
     state._composer.setDepth({ depthX, depthY });
   };
 
@@ -815,12 +816,12 @@ const init = async (
   const propsToCopy: Record<string, string> = {};
   if (isBody) {
     await waitForMeasureTime();
-    initialContentWidth = scrollable[MC.S_SCROLL_WIDTH];
-    initialContentHeight = scrollable[MC.S_SCROLL_HEIGHT];
+    initialContentWidth = scrollable[_.S_SCROLL_WIDTH];
+    initialContentHeight = scrollable[_.S_SCROLL_HEIGHT];
 
     // Copy over the margins and paddings from body to match since the container
     // will be positioned as fixed.
-    for (const side of [MC.S_TOP, MC.S_RIGHT, MC.S_BOTTOM, MC.S_LEFT]) {
+    for (const side of [_.S_TOP, _.S_RIGHT, _.S_BOTTOM, _.S_LEFT]) {
       for (const key of [`margin-${side}`, `padding-${side}`]) {
         propsToCopy[key] = getComputedStylePropNow(root, key);
       }
@@ -838,8 +839,8 @@ const init = async (
   // Wrap the contents in a fixed/sticky positioned wrapper.
   // [TODO v2]: Better way to centrally manage wrapping and wrapping of elements
   const { wrappers, unwrapFn } = createWrappersNow(root, [
-    ["o", [PREFIX_OUTER_WRAPPER], [MC.PREFIX_WRAPPER]],
-    ["i", [PREFIX_INNER_WRAPPER], [MC.PREFIX_WRAPPER_INLINE]],
+    ["o", [PREFIX_OUTER_WRAPPER], [_.PREFIX_WRAPPER]],
+    ["i", [PREFIX_INNER_WRAPPER], [_.PREFIX_WRAPPER_INLINE]],
   ]);
 
   const outerWrapper = wrappers.o;
@@ -884,3 +885,5 @@ const init = async (
     delDataNow(root, PREFIX_USES_STICKY);
   });
 };
+
+_.brandClass(SmoothScroll, "SmoothScroll");

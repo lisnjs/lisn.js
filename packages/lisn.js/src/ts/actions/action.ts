@@ -7,7 +7,9 @@
  * @module Actions
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { splitOn } from "@lisn/utils/text";
 
@@ -52,7 +54,7 @@ export const registerAction = <Config extends Record<string, unknown>>(
     element: Element,
     argsAndOptions: string,
   ) => {
-    const thisConfigValidator = MH.isFunction(configValidator)
+    const thisConfigValidator = _.isFunction(configValidator)
       ? await configValidator(element)
       : configValidator;
 
@@ -72,7 +74,7 @@ export const registerAction = <Config extends Record<string, unknown>>(
 
     for (const entry of splitOn(argsAndOptions, ARG_SEP_CHAR, true)) {
       if (entry) {
-        if (!MH.includes(entry, "=") && !(config && entry in config)) {
+        if (!_.includes(entry, "=") && !(config && entry in config)) {
           args.push(entry);
         }
       }
@@ -98,7 +100,7 @@ export const fetchAction = async (
 ): Promise<Action> => {
   const newActionFromSpec = registeredActions.get(name);
   if (!newActionFromSpec) {
-    throw MH.usageError(`Unknown action '${name}'`);
+    throw usageError(`Unknown action '${name}'`);
   }
 
   return await newActionFromSpec(element, argsAndOptions ?? "");
@@ -108,7 +110,7 @@ export const fetchAction = async (
 
 const ARG_SEP_CHAR = ",";
 
-const registeredActions = MH.newMap<
+const registeredActions = _.newMap<
   string,
   (element: Element, spec: string) => Action | Promise<Action>
 >();

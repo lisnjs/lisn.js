@@ -1,7 +1,7 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
-const { springTweener, tween3DAnimationGenerator, deepCopy, sum } =
-  window.LISN.utils;
+const { deepCopy } = window.LISN._;
+const { springTweener, tween3DAnimationGenerator, sum } = window.LISN.utils;
 
 describe("springTweener", () => {
   test("to larger", () => {

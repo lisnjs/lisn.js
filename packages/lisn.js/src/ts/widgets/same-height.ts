@@ -327,8 +327,9 @@
 // We use resize observers to get the size of relevant elements and
 // re-calculate as needed.
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, bugError } from "@lisn/globals/errors";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -530,7 +531,7 @@ export class SameHeight extends Widget {
    */
   static get(containerElement: Element): SameHeight | null {
     const instance = super.get(containerElement, DUMMY_ID);
-    if (MH.isInstanceOf(instance, SameHeight)) {
+    if (_.isInstanceOf(instance, SameHeight)) {
       return instance;
     }
     return null;
@@ -540,15 +541,13 @@ export class SameHeight extends Widget {
     registerWidget(
       WIDGET_NAME,
       (element, config) => {
-        if (MH.isHTMLElement(element)) {
+        if (_.isHTMLElement(element)) {
           if (!SameHeight.get(element)) {
             return new SameHeight(element, config);
           }
         } else {
           logError(
-            MH.usageError(
-              "Only HTMLElement is supported for SameHeight widget",
-            ),
+            usageError("Only HTMLElement is supported for SameHeight widget"),
           );
         }
         return null;
@@ -563,20 +562,18 @@ export class SameHeight extends Widget {
 
     const items = getItemsFrom(containerElement, config?.items);
 
-    if (MH.sizeOf(items) < 2) {
-      throw MH.usageError("SameHeight must have more than 1 item");
+    if (_.sizeOf(items) < 2) {
+      throw usageError("SameHeight must have more than 1 item");
     }
 
     for (const item of items.keys()) {
-      if (MH.parentOf(item) !== containerElement) {
-        throw MH.usageError(
-          "SameHeight's items must be its immediate children",
-        );
+      if (_.parentOf(item) !== containerElement) {
+        throw usageError("SameHeight's items must be its immediate children");
       }
     }
 
     fetchConfig(containerElement, config).then((fullConfig) => {
-      (destroyPromise || MH.promiseResolve()).then(() => {
+      (destroyPromise || _.promiseResolve()).then(() => {
         if (this.isDestroyed()) {
           return;
         }
@@ -586,12 +583,12 @@ export class SameHeight extends Widget {
     });
 
     this.toColumn = () =>
-      setData(containerElement, MC.PREFIX_ORIENTATION, MC.S_VERTICAL);
+      setData(containerElement, _.PREFIX_ORIENTATION, _.S_VERTICAL);
 
-    this.toRow = () => delData(containerElement, MC.PREFIX_ORIENTATION);
+    this.toRow = () => delData(containerElement, _.PREFIX_ORIENTATION);
 
     this.getItems = () => [...items.keys()];
-    this.getItemConfigs = () => MH.newMap([...items.entries()]);
+    this.getItemConfigs = () => _.newMap([...items.entries()]);
   }
 }
 
@@ -714,7 +711,7 @@ type AverageMeasurements = {
 };
 
 const WIDGET_NAME = "same-height";
-const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
+const PREFIXED_NAME = _.prefixName(WIDGET_NAME);
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 
 // Use different classes for styling items to the one used for auto-discovering
@@ -738,7 +735,7 @@ const MIN_CHARS_FOR_TEXT = 100;
 const configValidator: WidgetConfigValidatorObject<SameHeightConfig> = {
   diffTolerance: validateNumber,
   resizeThreshold: validateNumber,
-  [MC.S_DEBOUNCE_WINDOW]: validateNumber,
+  [_.S_DEBOUNCE_WINDOW]: validateNumber,
   minGap: validateNumber,
   maxFreeR: validateNumber,
   maxWidthR: validateNumber,
@@ -747,8 +744,8 @@ const configValidator: WidgetConfigValidatorObject<SameHeightConfig> = {
 const isText = (element: Element) =>
   getData(element, PREFIX_ITEM__FOR_SELECT) === S_TEXT ||
   (getData(element, PREFIX_ITEM__FOR_SELECT) !== S_IMAGE &&
-    MH.isHTMLElement(element) &&
-    MH.lengthOf(element.innerText) >= MIN_CHARS_FOR_TEXT);
+    _.isHTMLElement(element) &&
+    _.lengthOf(element.innerText) >= MIN_CHARS_FOR_TEXT);
 
 const areImagesLoaded = (element: Element) => {
   for (const img of element.querySelectorAll("img")) {
@@ -773,7 +770,7 @@ const fetchConfig = async (
 ): Promise<SameHeightConfigInternal> => {
   const colGapStr = await getComputedStyleProp(containerElement, "column-gap");
   const minGap = getNumValue(
-    MH.strReplace(colGapStr, /px$/, ""),
+    _.strReplace(colGapStr, /px$/, ""),
     settings.sameHeightMinGap,
   );
 
@@ -799,19 +796,19 @@ const fetchConfig = async (
 };
 
 const getNumValue = (strValue: string | null, defaultValue: number): number => {
-  const num = strValue ? MH.parseFloat(strValue) : NaN;
-  return MH.isNaN(num) ? defaultValue : num;
+  const num = strValue ? _.parseFloat(strValue) : NaN;
+  return _.isNaN(num) ? defaultValue : num;
 };
 
 const findItems = (containerElement: HTMLElement) => {
   const items = [
-    ...MH.querySelectorAll(
+    ..._.querySelectorAll(
       containerElement,
       getDefaultWidgetSelector(PREFIX_ITEM__FOR_SELECT),
     ),
   ];
 
-  if (!MH.lengthOf(items)) {
+  if (!_.lengthOf(items)) {
     items.push(...getVisibleContentChildren(containerElement));
   }
 
@@ -822,7 +819,7 @@ const getItemsFrom = (
   containerElement: HTMLElement,
   inputItems: Element[] | Map<Element, "image" | "text"> | undefined,
 ) => {
-  const itemMap = MH.newMap<Element, "image" | "text">();
+  const itemMap = _.newMap<Element, "image" | "text">();
 
   inputItems = inputItems || findItems(containerElement);
 
@@ -831,11 +828,11 @@ const getItemsFrom = (
     itemMap.set(item, itemType);
   };
 
-  if (MH.isArray(inputItems)) {
+  if (_.isArray(inputItems)) {
     for (const item of inputItems) {
       addItem(item);
     }
-  } else if (MH.isMap(inputItems)) {
+  } else if (_.isMap(inputItems)) {
     for (const [item, itemType] of inputItems.entries()) {
       addItem(item, itemType);
     }
@@ -860,11 +857,11 @@ const init = (
   const debounceWindow = config._debounceWindow;
 
   const sizeWatcher = SizeWatcher.reuse({
-    [MC.S_DEBOUNCE_WINDOW]: debounceWindow,
+    [_.S_DEBOUNCE_WINDOW]: debounceWindow,
     resizeThreshold: config._resizeThreshold,
   });
 
-  const allItems = MH.newMap<Element, ItemProperties>();
+  const allItems = _.newMap<Element, ItemProperties>();
 
   let callCounter = 0;
   let isFirstTime = true;
@@ -884,7 +881,7 @@ const init = (
       debug: logger?.debug7("Scheduling calculations", callCounter);
       hasScheduledReset = true;
 
-      MH.setTimer(() => {
+      _.setTimer(() => {
         hasScheduledReset = false;
 
         if (callCounter > 1) {
@@ -895,7 +892,7 @@ const init = (
 
         callCounter++;
         if (counterTimeout) {
-          MH.clearTimer(counterTimeout);
+          _.clearTimer(counterTimeout);
         }
 
         const measurements = calculateMeasurements(
@@ -909,7 +906,7 @@ const init = (
           ? getOptimalHeight(measurements, config, logger)
           : null;
 
-        if (height && MH.abs(lastOptimalHeight - height) > diffTolerance) {
+        if (height && _.abs(lastOptimalHeight - height) > diffTolerance) {
           // Re-set widths again. We may be called again in the next cycle if
           // the change in size exceeds the resizeThreshold.
           lastOptimalHeight = height;
@@ -919,7 +916,7 @@ const init = (
           // If we are _not_ called again in the next cycle (just after
           // debounceWindow), then reset the counter. It means the resultant
           // change in size did not exceed the SizeWatcher threshold.
-          counterTimeout = MH.setTimer(() => {
+          counterTimeout = _.setTimer(() => {
             callCounter = 0;
           }, debounceWindow + 50);
         } else {
@@ -932,14 +929,14 @@ const init = (
     // Save the size of the item
     const properties = allItems.get(element);
     if (!properties) {
-      logError(MH.bugError("Got SizeWatcher call for unknown element"));
+      logError(bugError("Got SizeWatcher call for unknown element"));
       return;
     }
 
     properties._width =
-      sizeData.border[MC.S_WIDTH] || sizeData.content[MC.S_WIDTH];
+      sizeData.border[_.S_WIDTH] || sizeData.content[_.S_WIDTH];
     properties._height =
-      sizeData.border[MC.S_HEIGHT] || sizeData.content[MC.S_HEIGHT];
+      sizeData.border[_.S_HEIGHT] || sizeData.content[_.S_HEIGHT];
 
     debug: logger?.debug7("Got size", element, properties);
   };
@@ -966,7 +963,7 @@ const init = (
 
   const setWidths = (height: number) => {
     for (const [element, properties] of allItems.entries()) {
-      if (MH.parentOf(element) === containerElement) {
+      if (_.parentOf(element) === containerElement) {
         const width = getWidthAtH(element, properties, height);
         debug: logger?.debug9(
           "Setting width property",
@@ -990,7 +987,7 @@ const init = (
 
   widget.onDestroy(async () => {
     for (const element of allItems.keys()) {
-      if (MH.parentOf(element) === containerElement) {
+      if (_.parentOf(element) === containerElement) {
         // delete the property and attribute
         await setNumericStyleJsVars(element, { sameHeightW: NaN });
         await removeClasses(element, PREFIX_ITEM);
@@ -1058,7 +1055,7 @@ const calculateMeasurements = (
   isFirstTime: boolean,
   logger: LoggerInterface | null,
 ): AverageMeasurements | null => {
-  if (getData(containerElement, MC.PREFIX_ORIENTATION) === MC.S_VERTICAL) {
+  if (getData(containerElement, _.PREFIX_ORIENTATION) === _.S_VERTICAL) {
     debug: logger?.debug8("In vertical mode");
     return null;
   }
@@ -1077,7 +1074,7 @@ const calculateMeasurements = (
 
     if (element === containerElement) {
       flexW = width;
-      nItems = MH.lengthOf(getVisibleContentChildren(element));
+      nItems = _.lengthOf(getVisibleContentChildren(element));
 
       //
     } else if (properties._type === S_TEXT) {
@@ -1085,13 +1082,13 @@ const calculateMeasurements = (
         thisTxtExtraH = 0;
       const components = properties._components;
 
-      if (MH.lengthOf(components)) {
+      if (_.lengthOf(components)) {
         for (const component of properties._components) {
           const cmpProps = allItems.get(component);
           if (cmpProps) {
             thisTxtArea += cmpProps._width * cmpProps._height;
           } else {
-            logError(MH.bugError("Text component not observed"));
+            logError(bugError("Text component not observed"));
           }
         }
         thisTxtExtraH = height - thisTxtArea / width;
@@ -1164,7 +1161,7 @@ const getOptimalHeight = (
   debug: logger?.debug8("Getting optimal height", measurements, config);
 
   // CASE 1: No text items
-  if (MH.isNaN(tArea)) {
+  if (_.isNaN(tArea)) {
     debug: logger?.debug8("No text items");
     if (!imgAR) {
       debug: logger?.debug8("Images not loaded");
@@ -1175,7 +1172,7 @@ const getOptimalHeight = (
   }
 
   // CASE 2: No images
-  if (MH.isNaN(imgAR)) {
+  if (_.isNaN(imgAR)) {
     debug: logger?.debug8("No images");
     return tArea / flexW + tExtraH;
   }
@@ -1187,7 +1184,7 @@ const getOptimalHeight = (
     return NaN;
   }
 
-  const h0 = MH.sqrt(tArea / imgAR) + tExtraH;
+  const h0 = _.sqrt(tArea / imgAR) + tExtraH;
 
   // heights satisfying w(h) === flexW
   const [h2, h1] = quadraticRoots(
@@ -1229,8 +1226,8 @@ const getOptimalHeight = (
   }
 
   // limits on constraints
-  const hConstr1 = MH.max(...MH.filter([h1, hR1, hF1], (v) => isValidNum(v)));
-  const hConstr2 = MH.min(...MH.filter([h2, hR2, hF2], (v) => isValidNum(v)));
+  const hConstr1 = _.max(..._.filter([h1, hR1, hF1], (v) => isValidNum(v)));
+  const hConstr2 = _.min(..._.filter([h2, hR2, hF2], (v) => isValidNum(v)));
 
   // text and image widths at h0
   const tw0 = tArea / (h0 - tExtraH);
@@ -1297,14 +1294,12 @@ const getOptimalHeight = (
       return h0;
     } else {
       // scenario 3
-      return MH.min(hConstr1, hConstr2);
+      return _.min(hConstr1, hConstr2);
     }
   }
 
-  logError(
-    MH.bugError("Invalid SameHeight calculations"),
-    measurements,
-    config,
-  );
+  logError(bugError("Invalid SameHeight calculations"), measurements, config);
   return NaN; // sanity checks failed
 };
+
+_.brandClass(SameHeight, "SameHeight");

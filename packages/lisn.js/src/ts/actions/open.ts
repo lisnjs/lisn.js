@@ -6,7 +6,7 @@
  * element.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
+import * as _ from "@lisn/_internal";
 
 import { Openable } from "@lisn/widgets/openable";
 import { fetchUniqueWidget } from "@lisn/widgets/widget";
@@ -59,6 +59,8 @@ export class Open implements Action {
 
     this.do = () => widgetPromise.then(open);
     this.undo = () => widgetPromise.then(close);
-    this[MC.S_TOGGLE] = () => widgetPromise.then(toggle);
+    this[_.S_TOGGLE] = () => widgetPromise.then(toggle);
   }
 }
+
+_.brandClass(Open, "Open");

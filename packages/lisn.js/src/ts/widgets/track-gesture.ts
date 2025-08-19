@@ -2,7 +2,7 @@
  * @module Widgets
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { validateBoolean, validateNumber } from "@lisn/utils/validation";
 
@@ -57,7 +57,7 @@ import {
 export class TrackGesture extends Widget {
   static get(element: Element): TrackGesture | null {
     const instance = super.get(element, DUMMY_ID);
-    if (MH.isInstanceOf(instance, TrackGesture)) {
+    if (_.isInstanceOf(instance, TrackGesture)) {
       return instance;
     }
     return null;
@@ -171,3 +171,5 @@ const configValidator: WidgetConfigValidatorObject<TrackGestureConfig> = {
   minDeltaZ: validateNumber,
   maxDeltaZ: validateNumber,
 };
+
+_.brandClass(TrackGesture, "TrackGesture");

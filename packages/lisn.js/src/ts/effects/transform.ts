@@ -4,8 +4,9 @@
  * @since v1.3.0
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { bugError } from "@lisn/globals/errors";
 
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
@@ -318,7 +319,7 @@ export class Transform implements EffectInterface<"transform"> {
     this.toCss = (negate) => ({ transform: this.toString(negate) });
 
     this.toString = (negate) =>
-      (MH.isNullish(currentPerspective)
+      (_.isNullish(currentPerspective)
         ? ""
         : `perspective(${currentPerspective}px) `) +
       toMatrix(negate).toString();
@@ -334,7 +335,7 @@ export class Transform implements EffectInterface<"transform"> {
         if (perspective !== undefined) {
           validateOutputParameters("Perspective", [perspective ?? 0]);
 
-          if (MH.isNullish(currentPerspective) || MH.isNullish(perspective)) {
+          if (_.isNullish(currentPerspective) || _.isNullish(perspective)) {
             currentPerspective = perspective;
           } else {
             // If transform is absolute, perspective would have been reset to null,
@@ -353,7 +354,7 @@ export class Transform implements EffectInterface<"transform"> {
         const result: Partial<TranslateHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
-        if (!MH.isNullish(result)) {
+        if (!_.isNullish(result)) {
           const { x = 0, y = 0, z = 0 } = result;
 
           validateOutputParameters("Translate distance", [x, y, z]);
@@ -369,7 +370,7 @@ export class Transform implements EffectInterface<"transform"> {
         const result: Partial<ScaleHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
-        if (!MH.isNullish(result)) {
+        if (!_.isNullish(result)) {
           const { s = 1, sx = s, sy = s, sz = s, origin = [0, 0, 0] } = result;
 
           validateOutputParameters("Scale factor", [sx, sy, sz], true);
@@ -386,7 +387,7 @@ export class Transform implements EffectInterface<"transform"> {
         const result: Partial<SkewHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
-        if (!MH.isNullish(result)) {
+        if (!_.isNullish(result)) {
           const { deg = 0, degX = deg, degY = deg } = result;
 
           validateOutputParameters("Skew angle", [degX, degY]);
@@ -403,7 +404,7 @@ export class Transform implements EffectInterface<"transform"> {
         const result: Partial<RotateHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
-        if (!MH.isNullish(result)) {
+        if (!_.isNullish(result)) {
           const { deg = 0, axis = [0, 0, 1] } = result;
 
           validateOutputParameters("Rotation angle", [deg]);
@@ -610,11 +611,11 @@ declare module "@lisn/effects/effect" {
 
 // ----------------------------------------
 
-const PERSPECTIVE: unique symbol = MC.SYMBOL() as typeof PERSPECTIVE;
-const TRANSLATE: unique symbol = MC.SYMBOL() as typeof TRANSLATE;
-const SCALE: unique symbol = MC.SYMBOL() as typeof SCALE;
-const SKEW: unique symbol = MC.SYMBOL() as typeof SKEW;
-const ROTATE: unique symbol = MC.SYMBOL() as typeof ROTATE;
+const PERSPECTIVE: unique symbol = _.SYMBOL() as typeof PERSPECTIVE;
+const TRANSLATE: unique symbol = _.SYMBOL() as typeof TRANSLATE;
+const SCALE: unique symbol = _.SYMBOL() as typeof SCALE;
+const SKEW: unique symbol = _.SYMBOL() as typeof SKEW;
+const ROTATE: unique symbol = _.SYMBOL() as typeof ROTATE;
 
 type HandlersMap = {
   [PERSPECTIVE]: FXHandler<PerspectiveHandlerReturn>;
@@ -663,21 +664,23 @@ const addAndSaveHandlerFor = <T extends HandlerTuple>(
       transform.rotate(handler);
       break;
     default:
-      throw MH.bugError("Unhandled transform effect category");
+      throw bugError("Unhandled transform effect category");
   }
 };
 
 function newMatrix(readonly: true, init?: TransformLike): DOMMatrixReadOnly;
 function newMatrix(readonly: false, init?: TransformLike): DOMMatrix;
 function newMatrix(readonly: boolean, init?: TransformLike) {
-  const initM = MH.isInstanceOf(init, Transform) ? init.toMatrix() : init;
+  const initM = _.isInstanceOf(init, Transform) ? init.toMatrix() : init;
   return new (readonly ? DOMMatrixReadOnly : DOMMatrix)(
-    MH.isNullish(initM)
+    _.isNullish(initM)
       ? initM
-      : MH.arrayFrom(
-          MH.isOfType(initM, "DOMMatrixReadOnly")
+      : _.arrayFrom(
+          _.isOfType(initM, "DOMMatrixReadOnly")
             ? initM.toFloat32Array()
             : initM,
         ),
   );
 }
+
+_.brandClass(Transform, "Transform");

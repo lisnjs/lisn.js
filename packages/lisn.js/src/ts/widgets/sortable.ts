@@ -2,8 +2,9 @@
  * @module Widgets
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import {
   addClasses,
@@ -17,7 +18,10 @@ import {
 } from "@lisn/utils/css-alter";
 import { moveElement, swapElements, cloneElement } from "@lisn/utils/dom-alter";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
-import { getVisibleContentChildren } from "@lisn/utils/dom-query";
+import {
+  getVisibleContentChildren,
+  isNodeBAfterA,
+} from "@lisn/utils/dom-query";
 import {
   addEventListenerTo,
   removeEventListenerFrom,
@@ -166,7 +170,7 @@ export class Sortable extends Widget {
 
   static get(element: Element): Sortable | null {
     const instance = super.get(element, DUMMY_ID);
-    if (MH.isInstanceOf(instance, Sortable)) {
+    if (_.isInstanceOf(instance, Sortable)) {
       return instance;
     }
     return null;
@@ -194,30 +198,30 @@ export class Sortable extends Widget {
     super(element, { id: DUMMY_ID });
 
     const items = config?.items || [];
-    if (!MH.lengthOf(items)) {
+    if (!_.lengthOf(items)) {
       items.push(
-        ...MH.querySelectorAll(
+        ..._.querySelectorAll(
           element,
           getDefaultWidgetSelector(PREFIX_ITEM__FOR_SELECT),
         ),
       );
 
-      if (!MH.lengthOf(items)) {
-        items.push(...MH.querySelectorAll(element, `[${MC.S_DRAGGABLE}]`));
+      if (!_.lengthOf(items)) {
+        items.push(..._.querySelectorAll(element, `[${_.S_DRAGGABLE}]`));
 
-        if (!MH.lengthOf(items)) {
+        if (!_.lengthOf(items)) {
           items.push(...getVisibleContentChildren(element));
         }
       }
     }
 
-    if (MH.lengthOf(items) < 2) {
-      throw MH.usageError("Sortable must have more than 1 item");
+    if (_.lengthOf(items) < 2) {
+      throw usageError("Sortable must have more than 1 item");
     }
 
     const methods = getMethods(this, items, config);
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || _.promiseResolve()).then(() => {
       if (this.isDestroyed()) {
         return;
       }
@@ -274,8 +278,8 @@ export type SortableConfig = {
 // --------------------
 
 const WIDGET_NAME = "sortable";
-const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
-const PREFIX_IS_DRAGGABLE = MH.prefixName("is-draggable");
+const PREFIXED_NAME = _.prefixName(WIDGET_NAME);
+const PREFIX_IS_DRAGGABLE = _.prefixName("is-draggable");
 
 // Use different classes for styling items to the one used for auto-discovering
 // them, so that re-creating existing widgets can correctly find the items to
@@ -314,26 +318,26 @@ const init = (
   const setIgnoreCancel = () => (ignoreCancel = true);
 
   const onDragStart = (event: Event) => {
-    const currTarget = MH.currentTargetOf(event);
+    const currTarget = _.currentTargetOf(event);
 
     if (
-      MH.isElement(currTarget) &&
+      _.isElement(currTarget) &&
       isItemDraggable(currTarget) &&
-      MH.isMouseEvent(event)
+      _.isMouseEvent(event)
     ) {
       currentDraggedItem = currTarget;
-      MH.setAttr(currTarget, MC.S_DRAGGABLE);
+      _.setAttr(currTarget, _.S_DRAGGABLE);
 
-      if (MH.isTouchPointerEvent(event)) {
-        const target = MH.targetOf(event);
-        if (MH.isElement(target)) {
+      if (_.isTouchPointerEvent(event)) {
+        const target = _.targetOf(event);
+        if (_.isElement(target)) {
           target.releasePointerCapture(event.pointerId);
         }
       }
 
       addEventListenerTo(
-        MH.getDoc(),
-        MC.S_TOUCHMOVE,
+        _.getDoc(),
+        _.S_TOUCHMOVE,
         onTouchMove,
         touchMoveOptions,
       );
@@ -342,25 +346,25 @@ const init = (
         // Get pointer offset relative to the current item being dragged
         // regardless of what the event target is and what transforms is has
         // applied.
-        const rect = MH.getBoundingClientRect(currTarget);
+        const rect = _.getBoundingClientRect(currTarget);
         grabOffset = [event.clientX - rect.left, event.clientY - rect.top];
       });
     }
   };
 
   const onDragEnd = (event: Event) => {
-    if (ignoreCancel && event.type === MC.S_POINTERCANCEL) {
+    if (ignoreCancel && event.type === _.S_POINTERCANCEL) {
       ignoreCancel = false;
       return;
     }
 
     if (currentDraggedItem) {
-      MH.unsetAttr(currentDraggedItem, MC.S_DRAGGABLE);
+      _.unsetAttr(currentDraggedItem, _.S_DRAGGABLE);
       currentDraggedItem = null;
 
       removeEventListenerFrom(
-        MH.getDoc(),
-        MC.S_TOUCHMOVE,
+        _.getDoc(),
+        _.S_TOUCHMOVE,
         onTouchMove,
         touchMoveOptions,
       );
@@ -373,10 +377,10 @@ const init = (
   };
 
   const onTouchMove = (event: Event) => {
-    if (MH.isTouchEvent(event) && MH.lengthOf(event.touches) === 1) {
-      const parentEl = MH.parentOf(currentDraggedItem);
+    if (_.isTouchEvent(event) && _.lengthOf(event.touches) === 1) {
+      const parentEl = _.parentOf(currentDraggedItem);
       if (parentEl && currentDraggedItem) {
-        MH.preventDefault(event);
+        _.preventDefault(event);
 
         const touch = event.touches[0];
         const clientX = touch.clientX;
@@ -410,13 +414,13 @@ const init = (
   };
 
   const onDragEnter = (event: Event) => {
-    const currTarget = MH.currentTargetOf(event);
+    const currTarget = _.currentTargetOf(event);
     const dragged = currentDraggedItem;
 
     if (
-      (MH.isTouchPointerEvent(event) || event.type === MC.S_DRAGENTER) &&
+      (_.isTouchPointerEvent(event) || event.type === _.S_DRAGENTER) &&
       dragged &&
-      MH.isElement(currTarget) &&
+      _.isElement(currTarget) &&
       currTarget !== dragged
     ) {
       methods._dragItemOnto(dragged, currTarget); // no need to await
@@ -427,20 +431,20 @@ const init = (
     for (const item of items) {
       preventSelect(item);
 
-      addEventListenerTo(item, MC.S_POINTERDOWN, onDragStart);
+      addEventListenerTo(item, _.S_POINTERDOWN, onDragStart);
 
-      addEventListenerTo(item, MC.S_DRAGSTART, setIgnoreCancel); // non-touch
+      addEventListenerTo(item, _.S_DRAGSTART, setIgnoreCancel); // non-touch
 
-      addEventListenerTo(item, MC.S_POINTERENTER, onDragEnter); // touch
-      addEventListenerTo(item, MC.S_DRAGENTER, onDragEnter); // non-touch
+      addEventListenerTo(item, _.S_POINTERENTER, onDragEnter); // touch
+      addEventListenerTo(item, _.S_DRAGENTER, onDragEnter); // non-touch
 
-      addEventListenerTo(item, MC.S_DRAGOVER, MH.preventDefault); // non-touch
+      addEventListenerTo(item, _.S_DRAGOVER, _.preventDefault); // non-touch
 
-      addEventListenerTo(item, MC.S_DRAGEND, onDragEnd); // non-touch
-      addEventListenerTo(item, MC.S_DROP, onDragEnd); // non-touch
+      addEventListenerTo(item, _.S_DRAGEND, onDragEnd); // non-touch
+      addEventListenerTo(item, _.S_DROP, onDragEnd); // non-touch
 
-      addEventListenerTo(MH.getDoc(), MC.S_POINTERUP, onDragEnd);
-      addEventListenerTo(MH.getDoc(), MC.S_POINTERCANCEL, onDragEnd);
+      addEventListenerTo(_.getDoc(), _.S_POINTERUP, onDragEnd);
+      addEventListenerTo(_.getDoc(), _.S_POINTERCANCEL, onDragEnd);
     }
   };
 
@@ -457,19 +461,19 @@ const init = (
     for (const item of items) {
       undoPreventSelect(item);
 
-      removeEventListenerFrom(item, MC.S_POINTERDOWN, onDragStart);
+      removeEventListenerFrom(item, _.S_POINTERDOWN, onDragStart);
 
-      removeEventListenerFrom(item, MC.S_DRAGSTART, setIgnoreCancel);
+      removeEventListenerFrom(item, _.S_DRAGSTART, setIgnoreCancel);
 
-      removeEventListenerFrom(item, MC.S_POINTERENTER, onDragEnter);
-      removeEventListenerFrom(item, MC.S_DRAGENTER, onDragEnter);
+      removeEventListenerFrom(item, _.S_POINTERENTER, onDragEnter);
+      removeEventListenerFrom(item, _.S_DRAGENTER, onDragEnter);
 
-      removeEventListenerFrom(item, MC.S_DRAGOVER, MH.preventDefault);
+      removeEventListenerFrom(item, _.S_DRAGOVER, _.preventDefault);
 
-      removeEventListenerFrom(item, MC.S_POINTERUP, onDragEnd);
-      removeEventListenerFrom(item, MC.S_POINTERCANCEL, onDragEnd);
-      removeEventListenerFrom(item, MC.S_DRAGEND, onDragEnd);
-      removeEventListenerFrom(item, MC.S_DROP, onDragEnd);
+      removeEventListenerFrom(item, _.S_POINTERUP, onDragEnd);
+      removeEventListenerFrom(item, _.S_POINTERCANCEL, onDragEnd);
+      removeEventListenerFrom(item, _.S_DRAGEND, onDragEnd);
+      removeEventListenerFrom(item, _.S_DROP, onDragEnd);
     }
   });
 
@@ -491,10 +495,10 @@ const getMethods = (
   const doSwap = config?.mode === "swap";
 
   const disabledItems: Record<number, boolean> = {};
-  const callbacks = MH.newMap<WidgetHandler, WidgetCallback>();
+  const callbacks = _.newMap<WidgetHandler, WidgetCallback>();
 
   const getSortedItems = () =>
-    [...items].sort((a, b) => (MH.isNodeBAfterA(a, b) ? -1 : 1));
+    [...items].sort((a, b) => (isNodeBAfterA(a, b) ? -1 : 1));
 
   const getOrigItemNumber = (itemNum: number, currentOrder = false) =>
     currentOrder ? items.indexOf(getSortedItems()[itemNum - 1]) + 1 : itemNum;
@@ -504,7 +508,7 @@ const getMethods = (
 
   const disableItem = async (itemNum: number, currentOrder = false) => {
     itemNum = getOrigItemNumber(toInt(itemNum), currentOrder);
-    if (widget.isDisabled() || itemNum < 1 || itemNum > MH.lengthOf(items)) {
+    if (widget.isDisabled() || itemNum < 1 || itemNum > _.lengthOf(items)) {
       return;
     }
 
@@ -534,7 +538,7 @@ const getMethods = (
   };
 
   const offMove = (handler: WidgetHandler) => {
-    MH.remove(callbacks.get(handler));
+    _.remove(callbacks.get(handler));
   };
 
   // This is internal only for now...
@@ -544,7 +548,7 @@ const getMethods = (
     } else {
       await moveElement(dragged, {
         to: draggedOver,
-        position: MH.isNodeBAfterA(dragged, draggedOver) ? "after" : "before",
+        position: isNodeBAfterA(dragged, draggedOver) ? "after" : "before",
         ignoreMove: true,
       });
     }
@@ -563,3 +567,5 @@ const getMethods = (
     _dragItemOnto: dragItemOnto,
   };
 };
+
+_.brandClass(Sortable, "Sortable");

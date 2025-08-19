@@ -2,8 +2,9 @@
  * @module Widgets
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -111,12 +112,12 @@ export const registerOpenable = <Config extends Record<string, unknown>>(
   registerWidget(
     name,
     (element, config) => {
-      if (MH.isHTMLElement(element)) {
+      if (_.isHTMLElement(element)) {
         if (!Openable.get(element)) {
           return newOpenable(element, config);
         }
       } else {
-        logError(MH.usageError("Openable widget supports only HTMLElement"));
+        logError(usageError("Openable widget supports only HTMLElement"));
       }
 
       return null;
@@ -233,8 +234,8 @@ export abstract class Openable extends Widget {
 
     const { isModal, isOffcanvas } = config;
 
-    const openCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
-    const closeCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
+    const openCallbacks = _.newMap<WidgetHandler, WidgetCallback>();
+    const closeCallbacks = _.newMap<WidgetHandler, WidgetCallback>();
 
     let isOpen = false;
 
@@ -283,7 +284,7 @@ export abstract class Openable extends Widget {
       // Assume no more than 1s animation time.
       await waitForDelay(1000);
       await waitForMeasureTime();
-      MH.elScrollTo(outerWrapper, {
+      _.elScrollTo(outerWrapper, {
         top: 0,
         left: 0,
       });
@@ -293,14 +294,14 @@ export abstract class Openable extends Widget {
 
     this.open = open;
     this.close = close;
-    this[MC.S_TOGGLE] = () => (isOpen ? close() : open());
+    this[_.S_TOGGLE] = () => (isOpen ? close() : open());
 
     this.onOpen = (handler) => {
       addNewCallbackToMap(openCallbacks, handler);
     };
 
     this.offOpen = (handler) => {
-      MH.remove(openCallbacks.get(handler));
+      _.remove(openCallbacks.get(handler));
     };
 
     this.onClose = (handler) => {
@@ -308,14 +309,14 @@ export abstract class Openable extends Widget {
     };
 
     this.offClose = (handler) => {
-      MH.remove(closeCallbacks.get(handler));
+      _.remove(closeCallbacks.get(handler));
     };
 
     this.isOpen = () => isOpen;
     this.getRoot = () => root;
     this.getContainer = () => container;
     this.getTriggers = () => [...triggers.keys()];
-    this.getTriggerConfigs = () => MH.newMap([...triggers.entries()]);
+    this.getTriggerConfigs = () => _.newMap([...triggers.entries()]);
 
     this.onDestroy(() => {
       openCallbacks.clear();
@@ -722,7 +723,7 @@ export class Collapsible extends Openable {
 
   constructor(element: HTMLElement, config?: CollapsibleConfig) {
     const isHorizontal = config?.horizontal;
-    const orientation = isHorizontal ? MC.S_HORIZONTAL : MC.S_VERTICAL;
+    const orientation = isHorizontal ? _.S_HORIZONTAL : _.S_VERTICAL;
 
     const onSetup = () => {
       // The triggers here are wrappers around the original which will be
@@ -732,7 +733,7 @@ export class Collapsible extends Openable {
         triggerConfig,
       ] of this.getTriggerConfigs().entries()) {
         insertCollapsibleIcon(trigger, triggerConfig, this, config);
-        setDataNow(trigger, MC.PREFIX_ORIENTATION, orientation);
+        setDataNow(trigger, _.PREFIX_ORIENTATION, orientation);
       }
     };
 
@@ -750,9 +751,9 @@ export class Collapsible extends Openable {
     });
 
     const root = this.getRoot();
-    const wrapper = MH.childrenOf(root)[0];
+    const wrapper = _.childrenOf(root)[0];
 
-    setData(root, MC.PREFIX_ORIENTATION, orientation);
+    setData(root, _.PREFIX_ORIENTATION, orientation);
     setBooleanData(root, PREFIX_REVERSE, config?.reverse ?? false);
 
     // -------------------- Transitions
@@ -762,18 +763,18 @@ export class Collapsible extends Openable {
 
     let disableTransitionTimer: ReturnType<typeof setTimeout> | null = null;
     const tempEnableTransition = async () => {
-      await removeClasses(root, MC.PREFIX_TRANSITION_DISABLE);
-      await removeClasses(wrapper, MC.PREFIX_TRANSITION_DISABLE);
+      await removeClasses(root, _.PREFIX_TRANSITION_DISABLE);
+      await removeClasses(wrapper, _.PREFIX_TRANSITION_DISABLE);
 
       if (disableTransitionTimer) {
-        MH.clearTimer(disableTransitionTimer);
+        _.clearTimer(disableTransitionTimer);
       }
 
       const transitionDuration = await getMaxTransitionDuration(root);
-      disableTransitionTimer = MH.setTimer(() => {
+      disableTransitionTimer = _.setTimer(() => {
         if (this.isOpen()) {
-          addClasses(root, MC.PREFIX_TRANSITION_DISABLE);
-          addClasses(wrapper, MC.PREFIX_TRANSITION_DISABLE);
+          addClasses(root, _.PREFIX_TRANSITION_DISABLE);
+          addClasses(wrapper, _.PREFIX_TRANSITION_DISABLE);
           disableTransitionTimer = null;
         }
       }, transitionDuration);
@@ -789,7 +790,7 @@ export class Collapsible extends Openable {
     if (peek) {
       (async () => {
         let peekSize: string | null = null;
-        if (MH.isString(peek)) {
+        if (_.isString(peek)) {
           peekSize = peek;
         } else {
           peekSize = await getStyleProp(element, VAR_PEEK_SIZE);
@@ -805,11 +806,11 @@ export class Collapsible extends Openable {
     // -------------------- Width in horizontal mode
     if (isHorizontal) {
       const updateWidth = async () => {
-        const width = await getComputedStyleProp(root, MC.S_WIDTH);
+        const width = await getComputedStyleProp(root, _.S_WIDTH);
         await setStyleProp(element, VAR_JS_COLLAPSIBLE_WIDTH, width);
       };
 
-      MH.setTimer(updateWidth);
+      _.setTimer(updateWidth);
 
       // Save its current width so that if it contains text, it does not
       // "collapse" and end up super tall.
@@ -1117,20 +1118,20 @@ export class Popup extends Openable {
 
     const position = config?.position || S_AUTO;
     if (position !== S_AUTO) {
-      setData(root, MC.PREFIX_PLACE, position);
+      setData(root, _.PREFIX_PLACE, position);
     }
 
     if (container && position === S_AUTO) {
       // Automatic position
       this.onOpen(async () => {
-        const [contentSize, containerView] = await MH.promiseAll([
+        const [contentSize, containerView] = await _.promiseAll([
           SizeWatcher.reuse().fetchCurrentSize(element),
           ViewWatcher.reuse().fetchCurrentView(container),
         ]);
 
         const placement = await fetchPopupPlacement(contentSize, containerView);
         if (placement) {
-          await setData(root, MC.PREFIX_PLACE, placement);
+          await setData(root, _.PREFIX_PLACE, placement);
         }
       });
     }
@@ -1617,8 +1618,8 @@ export class Offcanvas extends Openable {
       triggers: config?.triggers,
     });
 
-    const position = config?.position || MC.S_RIGHT;
-    setData(this.getRoot(), MC.PREFIX_PLACE, position);
+    const position = config?.position || _.S_RIGHT;
+    setData(this.getRoot(), _.PREFIX_PLACE, position);
   }
 }
 
@@ -1708,36 +1709,36 @@ type ElementsCollection = {
   triggers: Map<Element, OpenableTriggerConfig>;
 };
 
-const instances = MH.newWeakMap<Element, Openable>();
+const instances = _.newWeakMap<Element, Openable>();
 
 const WIDGET_NAME_COLLAPSIBLE = "collapsible";
 const WIDGET_NAME_POPUP = "popup";
 const WIDGET_NAME_MODAL = "modal";
 const WIDGET_NAME_OFFCANVAS = "offcanvas";
 
-const PREFIX_CLOSE_BTN = MH.prefixName("close-button");
-const PREFIX_IS_OPEN = MH.prefixName("is-open");
-const PREFIX_REVERSE = MH.prefixName(MC.S_REVERSE);
-const PREFIX_PEEK = MH.prefixName("peek");
-const PREFIX_OPENS_ON_HOVER = MH.prefixName("opens-on-hover");
-const PREFIX_LINE = MH.prefixName("line");
-const PREFIX_ICON_POSITION = MH.prefixName("icon-position");
-const PREFIX_TRIGGER_ICON = MH.prefixName("trigger-icon");
-const PREFIX_ICON_WRAPPER = MH.prefixName("icon-wrapper");
+const PREFIX_CLOSE_BTN = _.prefixName("close-button");
+const PREFIX_IS_OPEN = _.prefixName("is-open");
+const PREFIX_REVERSE = _.prefixName(_.S_REVERSE);
+const PREFIX_PEEK = _.prefixName("peek");
+const PREFIX_OPENS_ON_HOVER = _.prefixName("opens-on-hover");
+const PREFIX_LINE = _.prefixName("line");
+const PREFIX_ICON_POSITION = _.prefixName("icon-position");
+const PREFIX_TRIGGER_ICON = _.prefixName("trigger-icon");
+const PREFIX_ICON_WRAPPER = _.prefixName("icon-wrapper");
 const S_AUTO = "auto";
-const S_ARIA_EXPANDED = MC.ARIA_PREFIX + "expanded";
-const S_ARIA_MODAL = MC.ARIA_PREFIX + "modal";
-const VAR_PEEK_SIZE = MH.prefixCssVar("peek-size");
-const VAR_JS_COLLAPSIBLE_WIDTH = MH.prefixCssJsVar("collapsible-width");
+const S_ARIA_EXPANDED = _.ARIA_PREFIX + "expanded";
+const S_ARIA_MODAL = _.ARIA_PREFIX + "modal";
+const VAR_PEEK_SIZE = _.prefixCssVar("peek-size");
+const VAR_JS_COLLAPSIBLE_WIDTH = _.prefixCssJsVar("collapsible-width");
 const MIN_CLICK_TIME_AFTER_HOVER_OPEN = 1000;
 const S_ARROW_UP =
-  `${MC.S_ARROW}-${MC.S_UP}` as `${typeof MC.S_ARROW}-${typeof MC.S_UP}`;
+  `${_.S_ARROW}-${_.S_UP}` as `${typeof _.S_ARROW}-${typeof _.S_UP}`;
 const S_ARROW_DOWN =
-  `${MC.S_ARROW}-${MC.S_DOWN}` as `${typeof MC.S_ARROW}-${typeof MC.S_DOWN}`;
+  `${_.S_ARROW}-${_.S_DOWN}` as `${typeof _.S_ARROW}-${typeof _.S_DOWN}`;
 const S_ARROW_LEFT =
-  `${MC.S_ARROW}-${MC.S_LEFT}` as `${typeof MC.S_ARROW}-${typeof MC.S_LEFT}`;
+  `${_.S_ARROW}-${_.S_LEFT}` as `${typeof _.S_ARROW}-${typeof _.S_LEFT}`;
 const S_ARROW_RIGHT =
-  `${MC.S_ARROW}-${MC.S_RIGHT}` as `${typeof MC.S_ARROW}-${typeof MC.S_RIGHT}`;
+  `${_.S_ARROW}-${_.S_RIGHT}` as `${typeof _.S_ARROW}-${typeof _.S_RIGHT}`;
 
 const ARROW_TYPES = [
   S_ARROW_UP,
@@ -1752,10 +1753,10 @@ type IconCloseType = (typeof ICON_CLOSED_TYPES)[number];
 type IconOpenType = (typeof ICON_OPEN_TYPES)[number];
 
 const isValidIconClosed = (value: string): value is IconCloseType =>
-  MH.includes(ICON_CLOSED_TYPES, value);
+  _.includes(ICON_CLOSED_TYPES, value);
 
 const isValidIconOpen = (value: string): value is IconOpenType =>
-  MH.includes(ICON_OPEN_TYPES, value);
+  _.includes(ICON_OPEN_TYPES, value);
 
 // For HTML API only
 const triggerConfigValidator: WidgetConfigValidatorObject<OpenableTriggerConfig> =
@@ -1822,7 +1823,7 @@ const offcanvasConfigValidator: WidgetConfigValidatorObject<OffcanvasConfig> = {
 };
 
 const getPrefixedNames = (name: string) => {
-  const pref = MH.prefixName(name);
+  const pref = _.prefixName(name);
   return {
     _root: `${pref}__root`,
     _overlay: `${pref}__overlay`, // only used for modal/offcanvas
@@ -1849,20 +1850,20 @@ const findContainer = (content: Element, cls: string) => {
   // element, use the current widget's root element, which is located in the
   // content element's original place.
   let childRef = currWidget?.getRoot() ?? content;
-  if (!MH.parentOf(childRef)) {
+  if (!_.parentOf(childRef)) {
     // The current widget is not yet initialized (i.e. we are re-creating it
     // immediately after it was constructed)
     childRef = content;
   }
 
   // Find the content container
-  let container = MH.closestParent(childRef, `.${cls}`);
+  let container = _.closestParent(childRef, `.${cls}`);
   if (!container) {
-    container = MH.parentOf(childRef);
+    container = _.parentOf(childRef);
   }
 
-  if (container && !MH.isHTMLElement(container)) {
-    logError(MH.usageError("Openable widget supports only HTMLElement"));
+  if (container && !_.isHTMLElement(container)) {
+    logError(usageError("Openable widget supports only HTMLElement"));
     return null;
   }
 
@@ -1886,13 +1887,13 @@ const findTriggers = (
 
   if (contentId) {
     triggers = [
-      ...MH.docQuerySelectorAll(
+      ..._.docQuerySelectorAll(
         getTriggerSelector(`[data-${prefixedNames._contentId}="${contentId}"]`),
       ),
     ];
   } else if (container) {
     triggers = [
-      ...MH.querySelectorAll(
+      ..._.querySelectorAll(
         container,
         getTriggerSelector(`:not([data-${prefixedNames._contentId}])`),
       ),
@@ -1908,7 +1909,7 @@ const getTriggersFrom = (
   wrapTriggers: boolean,
   prefixedNames: ReturnType<typeof getPrefixedNames>,
 ) => {
-  const triggerMap = MH.newMap<Element, OpenableTriggerConfig>();
+  const triggerMap = _.newMap<Element, OpenableTriggerConfig>();
 
   inputTriggers = inputTriggers ?? findTriggers(content, prefixedNames);
 
@@ -1925,7 +1926,7 @@ const getTriggersFrom = (
     triggerMap.set(trigger, triggerConfig);
   };
 
-  if (MH.isArray(inputTriggers)) {
+  if (_.isArray(inputTriggers)) {
     for (const trigger of inputTriggers) {
       addTrigger(
         trigger,
@@ -1935,7 +1936,7 @@ const getTriggersFrom = (
         ),
       );
     }
-  } else if (MH.isMap(inputTriggers)) {
+  } else if (_.isMap(inputTriggers)) {
     for (const [trigger, triggerConfig] of inputTriggers.entries()) {
       addTrigger(trigger, triggerConfig ?? {});
     }
@@ -1961,7 +1962,7 @@ const init = (
   );
 
   // Create two wrappers
-  const innerWrapper = MH.createElement("div");
+  const innerWrapper = _.createElement("div");
   addClasses(innerWrapper, prefixedNames._innerWrapper);
 
   const outerWrapper = wrapElementNow(innerWrapper);
@@ -1977,9 +1978,9 @@ const init = (
   if (config.isOffcanvas) {
     addClasses(outerWrapper, prefixedNames._outerWrapper);
     root = wrapElementNow(outerWrapper);
-    placeholder = MH.createElement("div");
+    placeholder = _.createElement("div");
 
-    const overlay = MH.createElement("div");
+    const overlay = _.createElement("div");
     addClasses(overlay, prefixedNames._overlay);
     moveElement(overlay, { to: root });
   } else {
@@ -1999,8 +2000,8 @@ const init = (
   const domID = getOrAssignID(root, config.name);
 
   if (config.isModal) {
-    MH.setAttr(root, MC.S_ROLE, "dialog");
-    MH.setAttr(root, S_ARIA_MODAL);
+    _.setAttr(root, _.S_ROLE, "dialog");
+    _.setAttr(root, S_ARIA_MODAL);
   }
 
   addClasses(root, prefixedNames._root);
@@ -2008,12 +2009,12 @@ const init = (
 
   // Add a close button?
   if (config.closeButton) {
-    const closeBtn = MH.createButton("Close");
+    const closeBtn = _.createButton("Close");
     addClasses(closeBtn, PREFIX_CLOSE_BTN);
 
     // If autoClose is true, it will be closed on click anyway, because the
     // close button is outside the content.
-    addEventListenerTo(closeBtn, MC.S_CLICK, () => {
+    addEventListenerTo(closeBtn, _.S_CLICK, () => {
       widget.close();
     });
 
@@ -2045,7 +2046,7 @@ const init = (
   widget.onClose(async () => {
     for (const trigger of triggers.keys()) {
       delData(trigger, PREFIX_OPENS_ON_HOVER);
-      MH.unsetAttr(trigger, S_ARIA_EXPANDED);
+      _.unsetAttr(trigger, S_ARIA_EXPANDED);
       await unsetBooleanData(trigger, PREFIX_IS_OPEN);
     }
   });
@@ -2062,8 +2063,8 @@ const init = (
     }
 
     for (const [trigger, triggerConfig] of triggers.entries()) {
-      MH.delAttr(trigger, MC.S_ARIA_CONTROLS);
-      MH.delAttr(trigger, S_ARIA_EXPANDED);
+      _.delAttr(trigger, _.S_ARIA_CONTROLS);
+      _.delAttr(trigger, S_ARIA_EXPANDED);
 
       delDataNow(trigger, PREFIX_OPENS_ON_HOVER);
       delDataNow(trigger, PREFIX_IS_OPEN);
@@ -2079,7 +2080,7 @@ const init = (
       }
 
       if (wrapTriggers) {
-        replaceElementNow(trigger, MH.childrenOf(trigger)[0], {
+        replaceElementNow(trigger, _.childrenOf(trigger)[0], {
           ignoreMove: true,
         });
       }
@@ -2089,7 +2090,7 @@ const init = (
 
     for (const el of [content, ...triggers.keys()]) {
       if (instances.get(el) === widget) {
-        MH.deleteKey(instances, el);
+        _.deleteKey(instances, el);
       }
     }
   });
@@ -2118,7 +2119,7 @@ const init = (
 
       if (config.isOffcanvas) {
         moveElementNow(root, {
-          to: MH.getBody(),
+          to: _.getBody(),
           ignoreMove: true,
         });
       }
@@ -2136,13 +2137,13 @@ const init = (
 
       // Setup the triggers
       for (const [trigger, triggerConfig] of triggers.entries()) {
-        MH.setAttr(trigger, MC.S_ARIA_CONTROLS, domID);
-        MH.unsetAttr(trigger, S_ARIA_EXPANDED);
+        _.setAttr(trigger, _.S_ARIA_CONTROLS, domID);
+        _.unsetAttr(trigger, S_ARIA_EXPANDED);
 
         setBooleanDataNow(
           trigger,
           PREFIX_OPENS_ON_HOVER,
-          triggerConfig[MC.S_HOVER],
+          triggerConfig[_.S_HOVER],
         );
         unsetBooleanDataNow(trigger, PREFIX_IS_OPEN);
 
@@ -2174,7 +2175,7 @@ const setupListeners = (
   prefixedNames: ReturnType<typeof getPrefixedNames>,
 ) => {
   const { content, root, triggers } = elements;
-  const doc = MH.getDoc();
+  const doc = _.getDoc();
 
   let hoverTimeOpened = 0;
   let isPointerOver = false;
@@ -2183,9 +2184,9 @@ const setupListeners = (
   // ----------
 
   const isTrigger = (element: Element) =>
-    MH.includes(
+    _.includes(
       [...triggers.keys()],
-      MH.closestParent(
+      _.closestParent(
         element,
         getDefaultWidgetSelector(prefixedNames._trigger),
       ),
@@ -2202,17 +2203,17 @@ const setupListeners = (
   // ----------
 
   const toggleTrigger = (event: Event, openIt?: boolean) => {
-    const trigger = MH.currentTargetOf(event);
-    if (MH.isElement(trigger)) {
+    const trigger = _.currentTargetOf(event);
+    if (_.isElement(trigger)) {
       if (shouldPreventDefault(trigger)) {
-        MH.preventDefault(event);
+        _.preventDefault(event);
       }
 
       // If a click was fired shortly after opening on hover, ignore
       if (
         openIt !== false && // not explicitly asked to close
         widget.isOpen() &&
-        MH.timeSince(hoverTimeOpened) < MIN_CLICK_TIME_AFTER_HOVER_OPEN
+        _.timeSince(hoverTimeOpened) < MIN_CLICK_TIME_AFTER_HOVER_OPEN
       ) {
         return;
       }
@@ -2220,15 +2221,15 @@ const setupListeners = (
       if (openIt ?? !widget.isOpen()) {
         // open it
         activeTrigger = trigger;
-        MH.setAttr(trigger, S_ARIA_EXPANDED); // will be unset on close
+        _.setAttr(trigger, S_ARIA_EXPANDED); // will be unset on close
         setBooleanData(trigger, PREFIX_IS_OPEN); // will be unset on close
 
         widget.open(); // no need to await
 
         if (usesAutoClose(trigger)) {
           if (usesHover(trigger)) {
-            addEventListenerTo(root, MC.S_POINTERENTER, setIsPointerOver);
-            addEventListenerTo(root, MC.S_POINTERLEAVE, pointerLeft);
+            addEventListenerTo(root, _.S_POINTERENTER, setIsPointerOver);
+            addEventListenerTo(root, _.S_POINTERLEAVE, pointerLeft);
           }
 
           // auto-close listeners setup by the onOpen handler below
@@ -2249,7 +2250,7 @@ const setupListeners = (
 
   const unsetIsPointerOver = (event: Event) => {
     // Keep it set to true if this is a touch pointer type; otherwise unset
-    isPointerOver = isPointerOver && MH.isTouchPointerEvent(event);
+    isPointerOver = isPointerOver && _.isTouchPointerEvent(event);
   };
 
   // ----------
@@ -2257,7 +2258,7 @@ const setupListeners = (
   const pointerEntered = (event: Event) => {
     setIsPointerOver();
     if (!widget.isOpen()) {
-      hoverTimeOpened = MH.timeNow();
+      hoverTimeOpened = _.timeNow();
       toggleTrigger(event, true);
     }
   };
@@ -2266,9 +2267,9 @@ const setupListeners = (
 
   const pointerLeft = (event: Event) => {
     unsetIsPointerOver(event);
-    const trigger = MH.currentTargetOf(event);
-    if (MH.isElement(trigger) && usesAutoClose(trigger)) {
-      MH.setTimer(
+    const trigger = _.currentTargetOf(event);
+    if (_.isElement(trigger) && usesAutoClose(trigger)) {
+      _.setTimer(
         () => {
           if (!isPointerOver) {
             widget.close();
@@ -2293,10 +2294,10 @@ const setupListeners = (
   // ----------
 
   const closeIfClickOutside = (event: Event) => {
-    const target = MH.targetOf(event);
+    const target = _.targetOf(event);
     if (
       target === doc ||
-      (MH.isElement(target) &&
+      (_.isElement(target) &&
         !content.contains(target) && // outside content
         !isTrigger(target)) // handled by pointer watcher
     ) {
@@ -2317,10 +2318,10 @@ const setupListeners = (
 
       // Add a short delay so that we don't catch the bubbling of the click event
       // that opened the widget.
-      MH.setTimer(() => addOrRemove(doc, MC.S_CLICK, closeIfClickOutside), 100);
+      _.setTimer(() => addOrRemove(doc, _.S_CLICK, closeIfClickOutside), 100);
 
       if (trigger && usesHover(trigger)) {
-        addOrRemove(trigger, MC.S_POINTERLEAVE, pointerLeft);
+        addOrRemove(trigger, _.S_POINTERLEAVE, pointerLeft);
       }
     }
   };
@@ -2332,10 +2333,10 @@ const setupListeners = (
 
     for (const [trigger, triggerConfig] of triggers.entries()) {
       // Always setup click listeners
-      addOrRemove(trigger, MC.S_CLICK, toggleTrigger);
+      addOrRemove(trigger, _.S_CLICK, toggleTrigger);
 
-      if (triggerConfig[MC.S_HOVER]) {
-        addOrRemove(trigger, MC.S_POINTERENTER, pointerEntered);
+      if (triggerConfig[_.S_HOVER]) {
+        addOrRemove(trigger, _.S_POINTERENTER, pointerEntered);
       }
     }
   };
@@ -2352,8 +2353,8 @@ const setupListeners = (
     hoverTimeOpened = 0;
     isPointerOver = false;
 
-    removeEventListenerFrom(root, MC.S_POINTERENTER, setIsPointerOver);
-    removeEventListenerFrom(root, MC.S_POINTERLEAVE, pointerLeft);
+    removeEventListenerFrom(root, _.S_POINTERENTER, setIsPointerOver);
+    removeEventListenerFrom(root, _.S_POINTERLEAVE, pointerLeft);
 
     maybeSetupAutoCloseListeners(activeTrigger, true); // remove listeners if any
     activeTrigger = null;
@@ -2382,11 +2383,11 @@ const insertCollapsibleIcon = (
     addClasses(trigger, PREFIX_ICON_WRAPPER);
     setData(trigger, PREFIX_ICON_POSITION, iconPosition);
 
-    const icon = MH.createElement("span");
+    const icon = _.createElement("span");
     setDataNow(icon, PREFIX_TRIGGER_ICON, iconClosed);
 
     for (let l = 0; l < 2; l++) {
-      const line = MH.createElement("span");
+      const line = _.createElement("span");
       addClassesNow(line, PREFIX_LINE);
       moveElementNow(line, { to: icon });
     }
@@ -2412,15 +2413,15 @@ const fetchPopupPlacement = async (
   containerView: ViewData,
 ) => {
   const containerPosition = containerView.relative;
-  const containerTop = containerPosition[MC.S_TOP];
-  const containerBottom = containerPosition[MC.S_BOTTOM];
-  const containerLeft = containerPosition[MC.S_LEFT];
-  const containerRight = containerPosition[MC.S_RIGHT];
+  const containerTop = containerPosition[_.S_TOP];
+  const containerBottom = containerPosition[_.S_BOTTOM];
+  const containerLeft = containerPosition[_.S_LEFT];
+  const containerRight = containerPosition[_.S_RIGHT];
   const containerHMiddle = containerPosition.hMiddle;
   const containerVMiddle = containerPosition.vMiddle;
   const vpSize = await fetchViewportSize();
-  const popupWidth = contentSize.border[MC.S_WIDTH] / vpSize[MC.S_WIDTH];
-  const popupHeight = contentSize.border[MC.S_HEIGHT] / vpSize[MC.S_HEIGHT];
+  const popupWidth = contentSize.border[_.S_WIDTH] / vpSize[_.S_WIDTH];
+  const popupHeight = contentSize.border[_.S_HEIGHT] / vpSize[_.S_HEIGHT];
 
   // - Find the maximum of these quantities:
   //   - containerTop - popupHeight:
@@ -2475,24 +2476,24 @@ const fetchPopupPlacement = async (
 
   let alignmentVars;
   switch (placement) {
-    case MC.S_TOP:
-    case MC.S_BOTTOM:
+    case _.S_TOP:
+    case _.S_BOTTOM:
       alignmentVars = {
         left: 1 - (containerLeft + popupWidth),
         right: containerRight - popupWidth,
-        middle: MH.min(
+        middle: _.min(
           containerHMiddle - popupWidth / 2,
           1 - (containerHMiddle + popupWidth / 2),
         ),
       };
       break;
 
-    case MC.S_LEFT:
-    case MC.S_RIGHT:
+    case _.S_LEFT:
+    case _.S_RIGHT:
       alignmentVars = {
         top: 1 - (containerTop + popupHeight),
         bottom: containerBottom - popupHeight,
-        middle: MH.min(
+        middle: _.min(
           containerVMiddle - popupHeight / 2,
           1 - (containerVMiddle + popupHeight / 2),
         ),
@@ -2510,3 +2511,9 @@ const fetchPopupPlacement = async (
 
   return finalPlacement;
 };
+
+_.brandClass(Openable, "Openable");
+_.brandClass(Collapsible, "Collapsible");
+_.brandClass(Popup, "Popup");
+_.brandClass(Modal, "Modal");
+_.brandClass(Offcanvas, "Offcanvas");

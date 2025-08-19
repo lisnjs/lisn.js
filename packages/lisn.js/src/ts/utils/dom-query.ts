@@ -2,7 +2,7 @@
  * @module Utils
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 /**
  * Returns all the child elements of the given element that are not `script` or
@@ -11,8 +11,8 @@ import * as MH from "@lisn/globals/minification-helpers";
  * @category DOM: Querying
  */
 export const getVisibleContentChildren = (element: Element) =>
-  MH.filter([...MH.childrenOf(element)], (ch) =>
-    isVisibleContentTag(MH.tagName(ch)),
+  _.filter([..._.childrenOf(element)], (ch) =>
+    isVisibleContentTag(_.tagName(ch)),
   );
 
 /**
@@ -22,7 +22,7 @@ export const getVisibleContentChildren = (element: Element) =>
  * @category DOM: Querying
  */
 export const isVisibleContentTag = (tagName: string) =>
-  !MH.includes(["script", "style"], MH.toLowerCase(tagName));
+  !_.includes(["script", "style"], _.toLowerCase(tagName));
 
 /**
  * Returns whether the given tag name has by default an inline display.
@@ -38,11 +38,23 @@ export const isInlineTag = (tagName: string) =>
  *
  * @category DOM: Querying
  */
-export const isDOMElement = MH.isStyledElement;
+export const isDOMElement = _.isStyledElement;
+
+/**
+ * @ignore
+ * @internal
+ *
+ * Returns true if `nodeA` follows `nodeB` in document order.
+ *
+ * @category DOM: Querying
+ */
+export const isNodeBAfterA = (nodeA: Node, nodeB: Node) =>
+  (nodeA.compareDocumentPosition(nodeB) & Node.DOCUMENT_POSITION_FOLLOWING) !==
+  0;
 
 // --------------------
 
-const inlineTags = MH.newSet([
+const inlineTags = _.newSet([
   "a",
   "abbr",
   "acronym",

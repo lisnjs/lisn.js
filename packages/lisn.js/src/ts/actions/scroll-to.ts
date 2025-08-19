@@ -6,13 +6,11 @@
  * position.
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
-import * as MC from "@lisn/globals/minification-constants";
+import * as _ from "@lisn/_internal";
 
 import { CoordinateOffset } from "@lisn/globals/types";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { omitKeys } from "@lisn/utils/misc";
 import { validateNumber } from "@lisn/utils/validation";
 
 import { ScrollWatcher } from "@lisn/watchers/scroll-watcher";
@@ -144,8 +142,8 @@ export class ScrollTo implements Action {
 
     this.do = async () => {
       const current = await watcher.fetchCurrentScroll(scrollable);
-      prevScrollTop = current[MC.S_SCROLL_TOP];
-      prevScrollLeft = current[MC.S_SCROLL_LEFT];
+      prevScrollTop = current[_.S_SCROLL_TOP];
+      prevScrollLeft = current[_.S_SCROLL_LEFT];
 
       const action = await watcher.scrollTo(element, config);
       await action?.waitFor();
@@ -158,13 +156,13 @@ export class ScrollTo implements Action {
             top: prevScrollTop,
             left: prevScrollLeft,
           },
-          omitKeys(config ?? {}, { offset: true }), // no offset when undoing
+          _.omitKeys(config ?? {}, { offset: true }), // no offset when undoing
         );
         await action?.waitFor();
       }
     };
 
-    this[MC.S_TOGGLE] = async () => {
+    this[_.S_TOGGLE] = async () => {
       const start = await watcher.fetchCurrentScroll(scrollable);
 
       const canReverse = prevScrollTop !== -1;
@@ -182,7 +180,7 @@ export class ScrollTo implements Action {
 
       const action = await watcher.scrollTo(
         element,
-        MH.merge(
+        _.merge(
           config,
           canReverse
             ? { altTarget } // no altOffset when reversing
@@ -194,8 +192,8 @@ export class ScrollTo implements Action {
       if (!hasReversed) {
         // We've scrolled to the element, so save the starting position as the
         // previous one.
-        prevScrollTop = start[MC.S_SCROLL_TOP];
-        prevScrollLeft = start[MC.S_SCROLL_LEFT];
+        prevScrollTop = start[_.S_SCROLL_TOP];
+        prevScrollLeft = start[_.S_SCROLL_LEFT];
       }
     };
   }
@@ -241,8 +239,10 @@ const newConfigValidator: WidgetConfigValidatorFunc<{
     offsetY: (key, value) => validateNumber(key, value) ?? 0,
     duration: validateNumber,
     scrollable: (key, value) =>
-      MH.isLiteralString(value)
+      _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
         : undefined,
   };
 };
+
+_.brandClass(ScrollTo, "ScrollTo");

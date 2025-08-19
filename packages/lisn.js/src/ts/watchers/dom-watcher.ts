@@ -2,8 +2,9 @@
  * @module Watchers/DOMWatcher
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, illegalConstructorError } from "@lisn/globals/errors";
 
 import {
   MutationCategory,
@@ -19,7 +20,6 @@ import {
 } from "@lisn/utils/dom-alter";
 import { waitForElement } from "@lisn/utils/dom-events";
 import { logError } from "@lisn/utils/log";
-import { omitKeys } from "@lisn/utils/misc";
 import { objToStrKey } from "@lisn/utils/text";
 import { validateStrList } from "@lisn/utils/validation";
 
@@ -123,9 +123,9 @@ export class DOMWatcher {
    */
   static reuse(config?: DOMWatcherConfig) {
     const myConfig = getConfig(config);
-    const configStrKey = objToStrKey(omitKeys(myConfig, { _root: null }));
+    const configStrKey = objToStrKey(_.omitKeys(myConfig, { _root: null }));
 
-    const root = myConfig._root === MH.getBody() ? null : myConfig._root;
+    const root = myConfig._root === _.getBody() ? null : myConfig._root;
     let instance = instances.get(root)?.get(configStrKey);
     if (!instance) {
       instance = new DOMWatcher(myConfig, CONSTRUCTOR_KEY);
@@ -140,7 +140,7 @@ export class DOMWatcher {
     key: typeof CONSTRUCTOR_KEY,
   ) {
     if (key !== CONSTRUCTOR_KEY) {
-      throw MH.illegalConstructorError("DOMWatcher.create");
+      throw illegalConstructorError("DOMWatcher.create");
     }
 
     const logger = debug
@@ -150,12 +150,12 @@ export class DOMWatcher {
     const buffer = newXMap<Element, MutationOperationInternal>((t) => ({
       _target: t,
       _categoryBitmask: 0,
-      _attributes: MH.newSet(),
+      _attributes: _.newSet(),
       _addedTo: null,
       _removedFrom: null,
     }));
 
-    const allCallbacks = MH.newMap<
+    const allCallbacks = _.newMap<
       OnMutationHandler,
       {
         _callback: OnMutationCallback;
@@ -170,17 +170,17 @@ export class DOMWatcher {
       debug: logger?.debug9(`Got ${records.length} new records`, records);
 
       for (const record of records) {
-        const target = MH.targetOf(record);
+        const target = _.targetOf(record);
         const recType = record.type;
 
         /* istanbul ignore next */
-        if (!MH.isElement(target)) {
+        if (!_.isElement(target)) {
           continue;
         }
 
-        if (recType === MC.S_CHILD_LIST) {
+        if (recType === _.S_CHILD_LIST) {
           for (const child of record.addedNodes) {
-            if (MH.isElement(child)) {
+            if (_.isElement(child)) {
               const operation = buffer.sGet(child);
               operation._addedTo = target;
               operation._categoryBitmask |= ADDED_BIT;
@@ -188,7 +188,7 @@ export class DOMWatcher {
           }
 
           for (const child of record.removedNodes) {
-            if (MH.isElement(child)) {
+            if (_.isElement(child)) {
               const operation = buffer.sGet(child);
               operation._removedFrom = target;
               operation._categoryBitmask |= REMOVED_BIT;
@@ -196,7 +196,7 @@ export class DOMWatcher {
           }
 
           //
-        } else if (recType === MC.S_ATTRIBUTES && record.attributeName) {
+        } else if (recType === _.S_ATTRIBUTES && record.attributeName) {
           const operation = buffer.sGet(target);
           operation._attributes.add(record.attributeName);
           operation._categoryBitmask |= ATTRIBUTE_BIT;
@@ -205,8 +205,8 @@ export class DOMWatcher {
 
       // Schedule flushing of the buffer asynchronously so that we can combine
       // the records from the two MutationObservers.
-      if (!timer && MH.sizeOf(buffer)) {
-        timer = MH.setTimer(() => {
+      if (!timer && _.sizeOf(buffer)) {
+        timer = _.setTimer(() => {
           debug: logger?.debug9(`Processing ${buffer.size} operations`);
           for (const operation of buffer.values()) {
             if (shouldSkipOperation(operation)) {
@@ -223,12 +223,12 @@ export class DOMWatcher {
     };
 
     const observers: Record<MutationType, MyObserver> = {
-      [MC.S_CHILD_LIST]: {
-        _observer: MH.newMutationObserver(mutationHandler),
+      [_.S_CHILD_LIST]: {
+        _observer: _.newMutationObserver(mutationHandler),
         _isActive: false,
       },
-      [MC.S_ATTRIBUTES]: {
-        _observer: MH.newMutationObserver(mutationHandler),
+      [_.S_ATTRIBUTES]: {
+        _observer: _.newMutationObserver(mutationHandler),
         _isActive: false,
       },
     };
@@ -239,7 +239,7 @@ export class DOMWatcher {
       handler: OnMutationHandler,
       options: OnMutationOptionsInternal,
     ): OnMutationCallback => {
-      MH.remove(allCallbacks.get(handler)?._callback);
+      _.remove(allCallbacks.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", options);
       const callback = wrapCallback(handler);
@@ -258,9 +258,9 @@ export class DOMWatcher {
       const options = getOptions(userOptions ?? {});
       const callback = createCallback(handler, options);
 
-      let root = config._root ?? MH.getBody();
+      let root = config._root ?? _.getBody();
       if (!root) {
-        root = await waitForElement(MH.getBody);
+        root = await waitForElement(_.getBody);
       } else {
         // So that the call is always async
         await null;
@@ -271,11 +271,11 @@ export class DOMWatcher {
       }
 
       if (options._categoryBitmask & (ADDED_BIT | REMOVED_BIT)) {
-        activateObserver(root, MC.S_CHILD_LIST);
+        activateObserver(root, _.S_CHILD_LIST);
       }
 
       if (options._categoryBitmask & ATTRIBUTE_BIT) {
-        activateObserver(root, MC.S_ATTRIBUTES);
+        activateObserver(root, _.S_ATTRIBUTES);
       }
 
       if (
@@ -293,18 +293,18 @@ export class DOMWatcher {
       // Then we skip any elements returned in querySelectorAll that were in
       // the queue.
 
-      const childQueue = observers[MC.S_CHILD_LIST]._observer.takeRecords();
+      const childQueue = observers[_.S_CHILD_LIST]._observer.takeRecords();
       mutationHandler(childQueue);
 
       for (const element of [
-        ...MH.querySelectorAll(root, options._selector),
+        ..._.querySelectorAll(root, options._selector),
         ...(root.matches(options._selector) ? [root] : []),
       ]) {
         const initOperation: MutationOperationInternal = {
           _target: element,
           _categoryBitmask: ADDED_BIT,
-          _attributes: MH.newSet(),
-          _addedTo: MH.parentOf(element),
+          _attributes: _.newSet(),
+          _addedTo: _.parentOf(element),
           _removedFrom: null,
         };
 
@@ -328,7 +328,7 @@ export class DOMWatcher {
     // ----------
 
     const deleteHandler = (handler: OnMutationHandler) => {
-      MH.deleteKey(allCallbacks, handler);
+      _.deleteKey(allCallbacks, handler);
 
       let activeCategories = 0;
       for (const entry of allCallbacks.values()) {
@@ -336,11 +336,11 @@ export class DOMWatcher {
       }
 
       if (!(activeCategories & (ADDED_BIT | REMOVED_BIT))) {
-        deactivateObserver(MC.S_CHILD_LIST);
+        deactivateObserver(_.S_CHILD_LIST);
       }
 
       if (!(activeCategories & ATTRIBUTE_BIT)) {
-        deactivateObserver(MC.S_ATTRIBUTES);
+        deactivateObserver(_.S_ATTRIBUTES);
       }
     };
 
@@ -370,13 +370,13 @@ export class DOMWatcher {
         }
 
         if (selector) {
-          const matches = [...MH.querySelectorAll(operation._target, selector)];
+          const matches = [..._.querySelectorAll(operation._target, selector)];
 
           if (operation._target.matches(selector)) {
             matches.push(operation._target);
           }
 
-          if (!MH.lengthOf(matches)) {
+          if (!_.lengthOf(matches)) {
             debug: logger?.debug10(`Selector does not match: ${selector}`);
             continue;
           }
@@ -427,11 +427,11 @@ export class DOMWatcher {
       }
 
       const removedFrom = operation._removedFrom;
-      const addedTo = MH.parentOf(target);
+      const addedTo = _.parentOf(target);
       const requestFrom = requestToSkip.from;
       const requestTo = requestToSkip.to;
 
-      const root = config._root ?? MH.getBody();
+      const root = config._root ?? _.getBody();
       // If "from" is currently outside our root, we may not have seen a
       // removal operation.
       if (
@@ -457,7 +457,7 @@ export class DOMWatcher {
 
     this.offMutation = (handler) => {
       debug: logger?.debug5("Removing handler");
-      MH.remove(allCallbacks.get(handler)?._callback);
+      _.remove(allCallbacks.get(handler)?._callback);
     };
   }
 }
@@ -633,9 +633,9 @@ type MutationOperationInternal = {
   _categoryBitmask: number;
 };
 
-const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
+const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
 const instances = newXMap<Element | null, Map<string, DOMWatcher>>(() =>
-  MH.newMap(),
+  _.newMap(),
 );
 
 const getConfig = (
@@ -648,9 +648,9 @@ const getConfig = (
 };
 
 const CATEGORIES_BITS = DOM_CATEGORIES_SPACE.bit;
-const ADDED_BIT = CATEGORIES_BITS[MC.S_ADDED];
-const REMOVED_BIT = CATEGORIES_BITS[MC.S_REMOVED];
-const ATTRIBUTE_BIT = CATEGORIES_BITS[MC.S_ATTRIBUTE];
+const ADDED_BIT = CATEGORIES_BITS[_.S_ADDED];
+const REMOVED_BIT = CATEGORIES_BITS[_.S_REMOVED];
+const ATTRIBUTE_BIT = CATEGORIES_BITS[_.S_ATTRIBUTE];
 
 // ----------------------------------------
 
@@ -671,8 +671,8 @@ const getOptions = (options: OnMutationOptions): OnMutationOptionsInternal => {
   }
 
   const selector = options.selector ?? "";
-  if (!MH.isString(selector)) {
-    throw MH.usageError("'selector' must be a string");
+  if (!_.isString(selector)) {
+    throw usageError("'selector' must be a string");
   }
 
   return {
@@ -690,7 +690,7 @@ const getDiffOperation = (
     return operationA;
   }
 
-  const attributes = MH.newSet<string>();
+  const attributes = _.newSet<string>();
   for (const attr of operationA._attributes) {
     if (!operationB._attributes.has(attr)) {
       attributes.add(attr);
@@ -708,7 +708,7 @@ const getDiffOperation = (
       ? null
       : operationA._removedFrom;
 
-  if (!MH.sizeOf(attributes) && !categoryBitmask && !addedTo && !removedFrom) {
+  if (!_.sizeOf(attributes) && !categoryBitmask && !addedTo && !removedFrom) {
     return null;
   }
 
@@ -727,7 +727,7 @@ const invokeCallback = (
   currentTargets: Element[],
   watcher: DOMWatcher,
 ) => {
-  if (!MH.lengthOf(currentTargets)) {
+  if (!_.lengthOf(currentTargets)) {
     currentTargets = [operation._target];
   }
 
@@ -746,3 +746,5 @@ const invokeCallback = (
       .catch(logError);
   }
 };
+
+_.brandClass(DOMWatcher, "DOMWatcher");

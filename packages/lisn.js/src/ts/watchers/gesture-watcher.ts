@@ -2,8 +2,9 @@
  * @module Watchers/GestureWatcher
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { illegalConstructorError } from "@lisn/globals/errors";
 
 import {
   Direction,
@@ -162,7 +163,7 @@ export class GestureWatcher {
     key: typeof CONSTRUCTOR_KEY,
   ) {
     if (key !== CONSTRUCTOR_KEY) {
-      throw MH.illegalConstructorError("GestureWatcher.create");
+      throw illegalConstructorError("GestureWatcher.create");
     }
 
     const logger = debug
@@ -179,14 +180,14 @@ export class GestureWatcher {
           _options: OnGestureOptionsInternal;
         }
       >
-    >(() => MH.newMap());
+    >(() => _.newMap());
 
     // For each target and event type, add only 1 global listener that will then
     // manage the event queues and callbacks.
     const allListeners = newXWeakMap<
       EventTarget,
       Map<GestureDevice, DeviceListeners>
-    >(() => MH.newMap());
+    >(() => _.newMap());
 
     // ----------
 
@@ -195,7 +196,7 @@ export class GestureWatcher {
       handler: OnGestureHandler,
       options: OnGestureOptionsInternal,
     ): OnGestureCallback => {
-      MH.remove(allCallbacks.get(target)?.get(handler)?._callback);
+      _.remove(allCallbacks.get(target)?.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler for", options);
       const { _callback, _wrapper } = getCallbackAndWrapper(
@@ -261,7 +262,7 @@ export class GestureWatcher {
       handler: OnGestureHandler,
       options: OnGestureOptionsInternal,
     ) => {
-      MH.deleteKey(allCallbacks.get(target), handler);
+      _.deleteKey(allCallbacks.get(target), handler);
       allCallbacks.prune(target);
 
       for (const device of options._devices ?? DEVICES) {
@@ -278,7 +279,7 @@ export class GestureWatcher {
               target,
             );
 
-            MH.deleteKey(allListeners.get(target), device);
+            _.deleteKey(allListeners.get(target), device);
             listeners._remove();
           }
         }
@@ -315,20 +316,16 @@ export class GestureWatcher {
       let hasAddedTabIndex = false;
       let hasPreventedSelect = false;
 
-      if (
-        device === MC.S_KEY &&
-        MH.isElement(target) &&
-        !MH.getTabIndex(target)
-      ) {
+      if (device === _.S_KEY && _.isElement(target) && !_.getTabIndex(target)) {
         hasAddedTabIndex = true;
         // enable element to receive keydown events
-        MH.setTabIndex(target);
-      } else if (MH.isElement(target) && device === MC.S_TOUCH) {
+        _.setTabIndex(target);
+      } else if (_.isElement(target) && device === _.S_TOUCH) {
         if (options._preventDefault) {
-          addClasses(target, MC.PREFIX_NO_TOUCH_ACTION);
+          addClasses(target, _.PREFIX_NO_TOUCH_ACTION);
         }
 
-        if (!intents || MH.includes(intents, MC.S_DRAG)) {
+        if (!intents || _.includes(intents, _.S_DRAG)) {
           hasPreventedSelect = true;
           preventSelect(target);
         }
@@ -386,12 +383,12 @@ export class GestureWatcher {
         _nCallbacks: 0,
         _nPreventDefault: 0,
         _remove: () => {
-          if (MH.isElement(target)) {
+          if (_.isElement(target)) {
             if (hasAddedTabIndex) {
-              MH.unsetTabIndex(target);
+              _.unsetTabIndex(target);
             }
 
-            removeClasses(target, MC.PREFIX_NO_TOUCH_ACTION);
+            removeClasses(target, _.PREFIX_NO_TOUCH_ACTION);
 
             if (hasPreventedSelect) {
               undoPreventSelect(target);
@@ -446,7 +443,7 @@ export class GestureWatcher {
 
     this.offGesture = (target, handler) => {
       debug: logger?.debug5("Removing handler");
-      MH.remove(allCallbacks.get(target)?.get(handler)?._callback);
+      _.remove(allCallbacks.get(target)?.get(handler)?._callback);
     };
   }
 }
@@ -825,8 +822,8 @@ type DeviceListeners = {
   _remove: () => void;
 };
 
-const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = MH.newMap<string, GestureWatcher>();
+const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
+const instances = _.newMap<string, GestureWatcher>();
 
 const getConfig = (
   config: GestureWatcherConfig | undefined,
@@ -834,7 +831,7 @@ const getConfig = (
   config ??= {};
   return {
     _preventDefault: config.preventDefault ?? true,
-    _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 150),
+    _debounceWindow: toNonNegNum(config[_.S_DEBOUNCE_WINDOW], 150),
     _deltaThreshold: toNonNegNum(config.deltaThreshold, 5),
     _angleDiffThreshold: toPosNum(config.angleDiffThreshold, 35),
     _naturalTouchScroll: config.naturalTouchScroll ?? true,
@@ -846,33 +843,33 @@ const getConfig = (
 const initiatingEvents: {
   [D in GestureDevice]: readonly (keyof GlobalEventHandlersEventMap)[];
 } = {
-  key: [MC.S_KEYDOWN],
+  key: [_.S_KEYDOWN],
   // If the browser doesn't support pointer events, then
   // addEventListenerTo will transform it into mousedown
   //
   // We need to listen for click, since that occurs after a pointerup (i.e.
   // after a gesure is terminated and the ongoing listeners removed), but it
   // needs to have its default action prevented.
-  pointer: [MC.S_POINTERDOWN, MC.S_CLICK],
-  touch: [MC.S_TOUCHSTART],
-  wheel: [MC.S_WHEEL],
+  pointer: [_.S_POINTERDOWN, _.S_CLICK],
+  touch: [_.S_TOUCHSTART],
+  wheel: [_.S_WHEEL],
 } as const;
 
 const ongoingEvents: {
   [D in GestureDevice]: readonly (keyof GlobalEventHandlersEventMap)[];
 } = {
-  key: [MC.S_KEYDOWN],
+  key: [_.S_KEYDOWN],
   pointer: [
     // If the browser doesn't support point events, then
     // addEventListenerTo will transform them into mouse*
-    MC.S_POINTERDOWN,
-    MC.S_POINTERUP, // would terminate
-    MC.S_POINTERMOVE,
-    MC.S_POINTERCANCEL, // would terminate
-    MC.S_CLICK, // would terminate; can be default-prevented
+    _.S_POINTERDOWN,
+    _.S_POINTERUP, // would terminate
+    _.S_POINTERMOVE,
+    _.S_POINTERCANCEL, // would terminate
+    _.S_CLICK, // would terminate; can be default-prevented
   ],
-  touch: [MC.S_TOUCHSTART, MC.S_TOUCHEND, MC.S_TOUCHMOVE, MC.S_TOUCHCANCEL],
-  wheel: [MC.S_WHEEL],
+  touch: [_.S_TOUCHSTART, _.S_TOUCHEND, _.S_TOUCHMOVE, _.S_TOUCHCANCEL],
+  wheel: [_.S_WHEEL],
 } as const;
 
 const fragmentGetters: {
@@ -887,10 +884,10 @@ const fragmentGetters: {
     },
   ) => GestureFragment | null | false;
 } = {
-  [MC.S_KEY]: getKeyGestureFragment,
-  [MC.S_POINTER]: getPointerGestureFragment,
-  [MC.S_TOUCH]: getTouchGestureFragment,
-  [MC.S_WHEEL]: getWheelGestureFragment,
+  [_.S_KEY]: getKeyGestureFragment,
+  [_.S_POINTER]: getPointerGestureFragment,
+  [_.S_TOUCH]: getTouchGestureFragment,
+  [_.S_WHEEL]: getWheelGestureFragment,
 };
 
 const getOptions = (
@@ -898,7 +895,7 @@ const getOptions = (
   options: OnGestureOptions,
 ): OnGestureOptionsInternal => {
   const debounceWindow = toNonNegNum(
-    options[MC.S_DEBOUNCE_WINDOW],
+    options[_.S_DEBOUNCE_WINDOW],
     config._debounceWindow, // watcher is never debounced, so apply default here
   );
   const deltaThreshold = toNonNegNum(
@@ -1002,7 +999,7 @@ const getCallbackAndWrapper = (
       const device = fragment.device;
 
       if (
-        MH.round(maxAbs(deltaX, deltaY, (1 - deltaZ) * 100)) < deltaThreshold
+        _.round(maxAbs(deltaX, deltaY, (1 - deltaZ) * 100)) < deltaThreshold
       ) {
         debug: logger?.debug7(
           `[${id}] Delta threshold not exceeded for callback`,
@@ -1043,7 +1040,7 @@ const getCallbackAndWrapper = (
       const direction = fragment.direction;
       const intent = fragment.intent;
       const time =
-        eventQueueCopy[MH.lengthOf(eventQueueCopy) - 1]?.timeStamp -
+        eventQueueCopy[_.lengthOf(eventQueueCopy) - 1]?.timeStamp -
           eventQueueCopy[0]?.timeStamp || 0;
 
       const data = {
@@ -1060,9 +1057,9 @@ const getCallbackAndWrapper = (
       };
 
       if (
-        direction !== MC.S_NONE &&
-        (!directions || MH.includes(directions, direction)) &&
-        (!intents || MH.includes(intents, intent))
+        direction !== _.S_NONE &&
+        (!directions || _.includes(directions, direction)) &&
+        (!intents || _.includes(intents, intent))
       ) {
         callback.invoke(target, data, eventQueueCopy, watcher).catch(logError);
       } else {
@@ -1100,7 +1097,7 @@ const getCallbackAndWrapper = (
     if (preventDefault) {
       preventDefaultActionFor(
         event,
-        !!fragment || (event.type === MC.S_CLICK && preventNextClick),
+        !!fragment || (event.type === _.S_CLICK && preventNextClick),
       );
     }
 
@@ -1115,11 +1112,11 @@ const getCallbackAndWrapper = (
       return true;
     }
 
-    if (device === MC.S_POINTER) {
+    if (device === _.S_POINTER) {
       // If we're here, there's been a drag, expect a click immediately
       // afterwards and prevent default action.
       preventNextClick = true;
-      MH.setTimer(() => {
+      _.setTimer(() => {
         preventNextClick = false;
       }, 10);
     }
@@ -1137,26 +1134,26 @@ const getCallbackAndWrapper = (
 };
 
 const clearEventQueue = (device: GestureDevice, queue: Event[]) => {
-  const keepLastEvent = device === MC.S_POINTER || device === MC.S_TOUCH;
-  queue.splice(0, MH.lengthOf(queue) - (keepLastEvent ? 1 : 0));
+  const keepLastEvent = device === _.S_POINTER || device === _.S_TOUCH;
+  queue.splice(0, _.lengthOf(queue) - (keepLastEvent ? 1 : 0));
 };
 
 const preventDefaultActionFor = (event: Event, isActualGesture: boolean) => {
   const target = event.currentTarget;
   const eventType = event.type;
   const isPointerDown =
-    eventType === MC.S_POINTERDOWN || eventType === MC.S_MOUSEDOWN;
+    eventType === _.S_POINTERDOWN || eventType === _.S_MOUSEDOWN;
 
   if (
-    eventType === MC.S_TOUCHMOVE ||
-    eventType === MC.S_WHEEL ||
-    ((eventType === MC.S_CLICK || eventType === MC.S_KEYDOWN) &&
+    eventType === _.S_TOUCHMOVE ||
+    eventType === _.S_WHEEL ||
+    ((eventType === _.S_CLICK || eventType === _.S_KEYDOWN) &&
       isActualGesture) ||
     (isPointerDown && (event as MouseEvent).buttons === 1)
   ) {
-    MH.preventDefault(event);
+    _.preventDefault(event);
 
-    if (isPointerDown && MH.isHTMLElement(target)) {
+    if (isPointerDown && _.isHTMLElement(target)) {
       // Otherwise capturing key events won't work
       target.focus({ preventScroll: true });
     }
@@ -1169,13 +1166,13 @@ const setGestureCssProps = (
 ) => {
   const intent = data.intent;
 
-  if (!MH.isElement(target) || !intent || intent === MC.S_UNKNOWN) {
+  if (!_.isElement(target) || !intent || intent === _.S_UNKNOWN) {
     return;
   }
 
   const prefix = `${intent}-`;
 
-  if (intent === MC.S_ZOOM) {
+  if (intent === _.S_ZOOM) {
     setNumericStyleJsVars(
       target,
       {
@@ -1199,3 +1196,5 @@ const setGestureCssProps = (
     ); // don't await here
   }
 };
+
+_.brandClass(GestureWatcher, "GestureWatcher");

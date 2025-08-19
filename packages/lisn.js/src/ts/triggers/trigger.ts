@@ -60,10 +60,9 @@
  * manually (by e.g. the {@link Actions.Run | Run} action).
  */
 
-// [TODO v2]: Perhaps remove support for trigger spec as part of CSS classes?
+// [TODO v2]: Perhaps remove support for trigger spec in CSS classes?
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { LisnUsageError } from "@lisn/globals/errors";
 
@@ -71,7 +70,6 @@ import { wrapCallback } from "@lisn/modules/callback";
 
 import { getData } from "@lisn/utils/css-alter";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { deepCopy } from "@lisn/utils/misc";
 import { waitForDelay } from "@lisn/utils/tasks";
 import { formatAsString, randId, splitOn } from "@lisn/utils/text";
 import {
@@ -140,7 +138,7 @@ export class Trigger extends Widget {
 
   static get(element: Element, id: string): Trigger | null {
     const instance = super.get(element, id);
-    if (MH.isInstanceOf(instance, Trigger)) {
+    if (_.isInstanceOf(instance, Trigger)) {
       return instance;
     }
     return null;
@@ -247,7 +245,7 @@ export class Trigger extends Widget {
       callActions(
         toggleState ? undoDelay : doDelay,
         (action) => {
-          action[MC.S_TOGGLE]();
+          action[_.S_TOGGLE]();
         },
         !toggleState,
       ); // don't await
@@ -257,16 +255,16 @@ export class Trigger extends Widget {
 
     this.onDestroy(() => {
       debug: logger?.debug5("Removing callbacks");
-      MH.remove(run);
-      MH.remove(reverse);
-      MH.remove(toggle);
+      _.remove(run);
+      _.remove(reverse);
+      _.remove(toggle);
     });
 
     this.run = run.invoke;
     this.reverse = reverse.invoke;
-    this[MC.S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
+    this[_.S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
     this.getActions = () => [...actions]; // copy
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
   }
 }
 
@@ -366,24 +364,24 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
   newTrigger: TriggerCreateFn<Config>,
   configValidator?: null | WidgetConfigValidator<Config>,
 ) => {
-  const clsPref = MH.prefixName(`on-${name}`);
+  const clsPref = _.prefixName(`on-${name}`);
 
   const newWidget = async (element: Element) => {
     const widgets: Widget[] = [];
     const baseConfigValidator = newBaseConfigValidator(element);
-    const thisConfigValidator = MH.isFunction(configValidator)
+    const thisConfigValidator = _.isFunction(configValidator)
       ? await configValidator(element)
       : configValidator;
 
     const allSpecs = splitOn(
-      getData(element, MH.prefixName(`on-${name}`)) ?? "",
+      getData(element, _.prefixName(`on-${name}`)) ?? "",
       TRIGGER_SEP_CHAR,
       true,
     );
 
-    for (const cls of MH.classList(element)) {
+    for (const cls of _.classList(element)) {
       if (cls.startsWith(`${clsPref}--`)) {
-        allSpecs.push(cls.slice(MH.lengthOf(clsPref) + 2));
+        allSpecs.push(cls.slice(_.lengthOf(clsPref) + 2));
       }
     }
 
@@ -391,11 +389,11 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
       const [tmp, configSpec] = splitOn(spec, OPTION_PREF_CHAR, true, 1);
       const [argSpec, allActionSpecs] = splitOn(tmp, ACTION_PREF_CHAR, true, 1);
 
-      const args = MH.filterBlank(splitOn(argSpec, ARGS_SEP_CHAR, true)) || [];
+      const args = _.filterBlank(splitOn(argSpec, ARGS_SEP_CHAR, true)) || [];
 
       const config = await fetchWidgetConfig(
         configSpec,
-        MH.assign(
+        _.assign(
           baseConfigValidator,
           thisConfigValidator,
         ) as WidgetConfigAsyncValidatorObject<Required<TriggerConfig> & Config>,
@@ -422,7 +420,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
             await fetchAction(actionTarget, name, actionArgsAndOptions ?? ""),
           );
         } catch (err) {
-          if (MH.isInstanceOf(err, LisnUsageError)) {
+          if (_.isInstanceOf(err, LisnUsageError)) {
             // fetchAction would have logged an error
             continue;
           }
@@ -461,8 +459,10 @@ const newBaseConfigValidator: WidgetConfigValidatorFunc<TriggerConfig> = (
     doDelay: validateNumber,
     undoDelay: validateNumber,
     actOn: (key, value) =>
-      MH.isLiteralString(value)
+      _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
         : undefined,
   };
 };
+
+_.brandClass(Trigger, "Trigger");

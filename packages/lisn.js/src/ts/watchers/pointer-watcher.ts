@@ -2,8 +2,9 @@
  * @module Watchers/PointerWatcher
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { illegalConstructorError } from "@lisn/globals/errors";
 
 import { PointerAction, CommaSeparatedStr } from "@lisn/globals/types";
 
@@ -14,7 +15,6 @@ import {
   undoPreventSelect,
 } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
-import { deepCopy } from "@lisn/utils/misc";
 import { isValidPointerAction, POINTER_ACTIONS } from "@lisn/utils/pointer";
 import { objToStrKey } from "@lisn/utils/text";
 import { validateStrList } from "@lisn/utils/validation";
@@ -93,7 +93,7 @@ export class PointerWatcher {
     key: typeof CONSTRUCTOR_KEY,
   ) {
     if (key !== CONSTRUCTOR_KEY) {
-      throw MH.illegalConstructorError("PointerWatcher.create");
+      throw illegalConstructorError("PointerWatcher.create");
     }
 
     // Keep this watcher super simple. The events we listen for don't fire at a
@@ -107,7 +107,7 @@ export class PointerWatcher {
     const allCallbacks = newXWeakMap<
       EventTarget,
       Map<OnPointerHandler, OnPointerCallback>
-    >(() => MH.newMap());
+    >(() => _.newMap());
 
     // ----------
 
@@ -115,11 +115,11 @@ export class PointerWatcher {
       target: EventTarget,
       handler: OnPointerHandler,
     ): OnPointerCallback => {
-      MH.remove(allCallbacks.get(target)?.get(handler));
+      _.remove(allCallbacks.get(target)?.get(handler));
 
       const callback = wrapCallback(handler);
       callback.onRemove(() => {
-        MH.deleteKey(allCallbacks.get(target), handler);
+        _.deleteKey(allCallbacks.get(target), handler);
       });
 
       allCallbacks.sGet(target).set(handler, callback);
@@ -160,9 +160,9 @@ export class PointerWatcher {
 
     this.offPointer = (target, startHandler, endHandler?) => {
       const entry = allCallbacks.get(target);
-      MH.remove(entry?.get(startHandler));
+      _.remove(entry?.get(startHandler));
       if (endHandler) {
-        MH.remove(entry?.get(endHandler));
+        _.remove(entry?.get(endHandler));
       }
     };
   }
@@ -272,8 +272,8 @@ type OnPointerOptionsInternal = {
   _preventSelect: boolean;
 };
 
-const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = MH.newMap<string, PointerWatcher>();
+const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
+const instances = _.newMap<string, PointerWatcher>();
 
 const getConfig = (
   config: PointerWatcherConfig | undefined,
@@ -309,13 +309,13 @@ const setupClickListener = (
 
   const wrapper = (event: Event) => {
     if (options._preventDefault) {
-      MH.preventDefault(event);
+      _.preventDefault(event);
     }
 
     toggleState = !toggleState;
 
     const data: PointerActionData = {
-      action: MC.S_CLICK,
+      action: _.S_CLICK,
       state: toggleState ? "ON" : "OFF",
     };
 
@@ -328,10 +328,10 @@ const setupClickListener = (
     );
   };
 
-  addEventListenerTo(target, MC.S_CLICK, wrapper);
+  addEventListenerTo(target, _.S_CLICK, wrapper);
 
   const remove = () => {
-    removeEventListenerFrom(target, MC.S_CLICK, wrapper);
+    removeEventListenerFrom(target, _.S_CLICK, wrapper);
   };
 
   startCallback.onRemove(remove);
@@ -339,7 +339,7 @@ const setupClickListener = (
 };
 
 const setupPointerListeners = (
-  action: typeof MC.S_HOVER | typeof MC.S_PRESS,
+  action: typeof _.S_HOVER | typeof _.S_PRESS,
   target: EventTarget,
   startCallback: OnPointerCallback,
   endCallback: OnPointerCallback,
@@ -348,20 +348,20 @@ const setupPointerListeners = (
 ) => {
   // If the browser doesn't support pointer events, then
   // addEventListenerTo will transform these into mouse*
-  const startEventSuff = action === MC.S_HOVER ? "enter" : "down";
-  const endEventSuff = action === MC.S_HOVER ? "leave" : "up";
-  const startEvent = MC.S_POINTER + startEventSuff;
-  const endEvent = MC.S_POINTER + endEventSuff;
+  const startEventSuff = action === _.S_HOVER ? "enter" : "down";
+  const endEventSuff = action === _.S_HOVER ? "leave" : "up";
+  const startEvent = _.S_POINTER + startEventSuff;
+  const endEvent = _.S_POINTER + endEventSuff;
 
   const wrapper = (event: Event, callback: OnPointerCallback) => {
     if (options._preventDefault) {
-      MH.preventDefault(event);
+      _.preventDefault(event);
     }
 
     const data: PointerActionData = {
       action,
       state:
-        MH.strReplace(event.type, /pointer|mouse/, "") === startEventSuff
+        _.strReplace(event.type, /pointer|mouse/, "") === startEventSuff
           ? "ON"
           : "OFF",
     };
@@ -401,8 +401,8 @@ const listenerSetupFn: {
   ) => void;
 } = {
   click: setupClickListener,
-  hover: (...args) => setupPointerListeners(MC.S_HOVER, ...args),
-  press: (...args) => setupPointerListeners(MC.S_PRESS, ...args),
+  hover: (...args) => setupPointerListeners(_.S_HOVER, ...args),
+  press: (...args) => setupPointerListeners(_.S_PRESS, ...args),
 } as const;
 
 const invokeCallback = (
@@ -412,4 +412,8 @@ const invokeCallback = (
   event: Event,
   watcher: PointerWatcher,
 ) =>
-  callback.invoke(target, deepCopy(actionData), event, watcher).catch(logError);
+  callback
+    .invoke(target, _.deepCopy(actionData), event, watcher)
+    .catch(logError);
+
+_.brandClass(PointerWatcher, "PointerWatcher");

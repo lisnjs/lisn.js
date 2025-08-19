@@ -9,7 +9,7 @@
  * given element with a smooth fading transition.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
+import * as _ from "@lisn/_internal";
 
 import {
   displayElement,
@@ -68,7 +68,7 @@ export class Display implements Action {
     const { _display, _undisplay, _toggle } = getMethods(element);
     this.do = _display;
     this.undo = _undisplay;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -119,7 +119,7 @@ export class Undisplay implements Action {
     const { _display, _undisplay, _toggle } = getMethods(element);
     this.do = _undisplay;
     this.undo = _display;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -140,3 +140,6 @@ const getMethods = (element: Element) => {
     },
   };
 };
+
+_.brandClass(Display, "Display");
+_.brandClass(Undisplay, "Undisplay");

@@ -2,8 +2,9 @@
  * @module Widgets
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import {
   Direction,
@@ -338,7 +339,7 @@ export class Pager extends Widget {
 
   static get(element: Element): Pager | null {
     const instance = super.get(element, DUMMY_ID);
-    if (MH.isInstanceOf(instance, Pager)) {
+    if (_.isInstanceOf(instance, Pager)) {
       return instance;
     }
     return null;
@@ -384,10 +385,10 @@ export class Pager extends Widget {
       PREFIX_PREV_SWITCH__FOR_SELECT,
     );
 
-    if (!MH.lengthOf(pages)) {
-      pages.push(...MH.querySelectorAll(element, pageSelector));
+    if (!_.lengthOf(pages)) {
+      pages.push(..._.querySelectorAll(element, pageSelector));
 
-      if (!MH.lengthOf(pages)) {
+      if (!_.lengthOf(pages)) {
         pages.push(
           ...getVisibleContentChildren(element).filter(
             (e) => !e.matches(switchSelector),
@@ -396,30 +397,30 @@ export class Pager extends Widget {
       }
     }
 
-    if (!MH.lengthOf(toggles)) {
-      toggles.push(...MH.querySelectorAll(element, toggleSelector));
+    if (!_.lengthOf(toggles)) {
+      toggles.push(..._.querySelectorAll(element, toggleSelector));
     }
 
-    if (!MH.lengthOf(switches)) {
-      switches.push(...MH.querySelectorAll(element, switchSelector));
+    if (!_.lengthOf(switches)) {
+      switches.push(..._.querySelectorAll(element, switchSelector));
     }
 
     if (!nextPrevSwitch._next) {
-      nextPrevSwitch._next = MH.querySelector(element, nextSwitchSelector);
+      nextPrevSwitch._next = _.querySelector(element, nextSwitchSelector);
     }
 
     if (!nextPrevSwitch._prev) {
-      nextPrevSwitch._prev = MH.querySelector(element, prevSwitchSelector);
+      nextPrevSwitch._prev = _.querySelector(element, prevSwitchSelector);
     }
 
-    const numPages = MH.lengthOf(pages);
+    const numPages = _.lengthOf(pages);
     if (numPages < 2) {
-      throw MH.usageError("Pager must have more than 1 page");
+      throw usageError("Pager must have more than 1 page");
     }
 
     for (const page of pages) {
       if (!element.contains(page) || page === element) {
-        throw MH.usageError("Pager's pages must be its descendants");
+        throw usageError("Pager's pages must be its descendants");
       }
     }
 
@@ -432,7 +433,7 @@ export class Pager extends Widget {
 
     const methods = getMethods(this, components, element, config);
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || _.promiseResolve()).then(() => {
       if (this.isDestroyed()) {
         return;
       }
@@ -698,7 +699,7 @@ type Components = {
 const MIN_TIME_BETWEEN_WHEEL = 1000;
 
 const S_CURRENT = "current";
-const S_ARIA_CURRENT = MC.ARIA_PREFIX + S_CURRENT;
+const S_ARIA_CURRENT = _.ARIA_PREFIX + S_CURRENT;
 const S_COVERED = "covered";
 const S_NEXT = "next";
 const S_TOTAL_PAGES = "total-pages";
@@ -706,7 +707,7 @@ const S_VISIBLE_PAGES = "visible-pages";
 const S_CURRENT_PAGE = "current-page";
 const S_PAGE_NUMBER = "page-number";
 const WIDGET_NAME = "pager";
-const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
+const PREFIXED_NAME = _.prefixName(WIDGET_NAME);
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 const PREFIX_PAGE_CONTAINER = `${PREFIXED_NAME}__page-container`;
 
@@ -721,23 +722,23 @@ const PREFIX_NEXT_SWITCH__FOR_SELECT = `${PREFIXED_NAME}-next-switch`;
 const PREFIX_PREV_SWITCH__FOR_SELECT = `${PREFIXED_NAME}-prev-switch`;
 
 const PREFIX_STYLE = `${PREFIXED_NAME}-style`;
-const PREFIX_IS_FULLSCREEN = MH.prefixName("is-fullscreen");
-const PREFIX_USE_PARALLAX = MH.prefixName("use-parallax");
-const PREFIX_TOTAL_PAGES = MH.prefixName(S_TOTAL_PAGES);
-const PREFIX_VISIBLE_PAGES = MH.prefixName(S_VISIBLE_PAGES);
-const PREFIX_CURRENT_PAGE = MH.prefixName(S_CURRENT_PAGE);
+const PREFIX_IS_FULLSCREEN = _.prefixName("is-fullscreen");
+const PREFIX_USE_PARALLAX = _.prefixName("use-parallax");
+const PREFIX_TOTAL_PAGES = _.prefixName(S_TOTAL_PAGES);
+const PREFIX_VISIBLE_PAGES = _.prefixName(S_VISIBLE_PAGES);
+const PREFIX_CURRENT_PAGE = _.prefixName(S_CURRENT_PAGE);
 const PREFIX_CURRENT_PAGE_IS_LAST = `${PREFIX_CURRENT_PAGE}-is-last`;
 const PREFIX_CURRENT_PAGE_IS_FIRST_ENABLED = `${PREFIX_CURRENT_PAGE}-is-first-enabled`;
 const PREFIX_CURRENT_PAGE_IS_LAST_ENABLED = `${PREFIX_CURRENT_PAGE_IS_LAST}-enabled`;
-const PREFIX_PAGE_STATE = MH.prefixName("page-state");
-const PREFIX_PAGE_NUMBER = MH.prefixName(S_PAGE_NUMBER);
-const VAR_CURRENT_PAGE = MH.prefixCssJsVar(S_CURRENT_PAGE);
-const VAR_TOTAL_PAGES = MH.prefixCssJsVar(S_TOTAL_PAGES);
-const VAR_VISIBLE_PAGES = MH.prefixCssJsVar(S_VISIBLE_PAGES);
-const VAR_VISIBLE_GAPS = MH.prefixCssJsVar("visible-gaps");
-const VAR_TRANSLATED_PAGES = MH.prefixCssJsVar("translated-pages");
-const VAR_TRANSLATED_GAPS = MH.prefixCssJsVar("translated-gaps");
-const VAR_PAGE_NUMBER = MH.prefixCssJsVar(S_PAGE_NUMBER);
+const PREFIX_PAGE_STATE = _.prefixName("page-state");
+const PREFIX_PAGE_NUMBER = _.prefixName(S_PAGE_NUMBER);
+const VAR_CURRENT_PAGE = _.prefixCssJsVar(S_CURRENT_PAGE);
+const VAR_TOTAL_PAGES = _.prefixCssJsVar(S_TOTAL_PAGES);
+const VAR_VISIBLE_PAGES = _.prefixCssJsVar(S_VISIBLE_PAGES);
+const VAR_VISIBLE_GAPS = _.prefixCssJsVar("visible-gaps");
+const VAR_TRANSLATED_PAGES = _.prefixCssJsVar("translated-pages");
+const VAR_TRANSLATED_GAPS = _.prefixCssJsVar("translated-gaps");
+const VAR_PAGE_NUMBER = _.prefixCssJsVar(S_PAGE_NUMBER);
 
 // Only one Pager widget per element is allowed, but Widget requires a
 // non-blank ID.
@@ -747,7 +748,7 @@ const SUPPORTED_STYLES = ["slider", "carousel", "tabs"] as const;
 type PagerStyle = (typeof SUPPORTED_STYLES)[number];
 
 const isValidStyle = (value: string): value is PagerStyle =>
-  MH.includes(SUPPORTED_STYLES, value);
+  _.includes(SUPPORTED_STYLES, value);
 
 // For HTML API only
 const configValidator: WidgetConfigValidatorObject<PagerConfig> = {
@@ -759,7 +760,7 @@ const configValidator: WidgetConfigValidatorObject<PagerConfig> = {
   parallax: validateBoolean,
   horizontal: validateBoolean,
   useGestures: (key, value) => {
-    if (MH.isNullish(value)) {
+    if (_.isNullish(value)) {
       return undefined;
     }
 
@@ -786,7 +787,7 @@ const fetchClosestScrollable = (element: Element) =>
   );
 
 const setPageNumber = (components: Components, pageNum: number) => {
-  let lastPromise: Promise<void> = MH.promiseResolve();
+  let lastPromise: Promise<void> = _.promiseResolve();
   for (const el of [
     components._pages[pageNum - 1],
     components._toggles[pageNum - 1],
@@ -871,7 +872,7 @@ const init = (
   const switches = components._switches;
   const nextSwitch = components._nextPrevSwitch._next;
   const prevSwitch = components._nextPrevSwitch._prev;
-  const pageContainer = MH.parentOf(pages[0]);
+  const pageContainer = _.parentOf(pages[0]);
 
   let initialPage = toInt(config?.initialPage ?? 1);
   const pagerStyle = config?.style || "slider";
@@ -881,7 +882,7 @@ const init = (
   const isFullscreen = config?.fullscreen ?? false;
   const isParallax = config?.parallax ?? false;
   const isHorizontal = config?.horizontal ?? false;
-  const orientation = isHorizontal ? MC.S_HORIZONTAL : MC.S_VERTICAL;
+  const orientation = isHorizontal ? _.S_HORIZONTAL : _.S_VERTICAL;
   const useGestures = config?.useGestures ?? true;
   const alignGestureDirection = config?.alignGestureDirection ?? false;
   const preventDefault = config?.preventDefault ?? true;
@@ -898,16 +899,14 @@ const init = (
   const recalculateCarouselProps = async (t?: Element, data?: SizeData) => {
     if (data) {
       // there's been a resize
-      const gap =
-        MH.parseFloat(await getComputedStyleProp(element, "gap")) || 0;
-      const containerSize =
-        data.content[isHorizontal ? MC.S_WIDTH : MC.S_HEIGHT];
+      const gap = _.parseFloat(await getComputedStyleProp(element, "gap")) || 0;
+      const containerSize = data.content[isHorizontal ? _.S_WIDTH : _.S_HEIGHT];
 
       const getNumVisiblePages = (addPeek = false) =>
-        (numVisiblePages = MH.max(
+        (numVisiblePages = _.max(
           1, // at least 1
-          MH.min(
-            MH.floor(
+          _.min(
+            _.floor(
               (containerSize + gap - (addPeek ? 0.5 * minPageSize : 0)) /
                 (minPageSize + gap),
             ),
@@ -950,10 +949,10 @@ const init = (
 
     let numTranslated = 0;
     if (hasPeek) {
-      numTranslated = MH.max(0, visibleStart - 1 - (isAtEdge ? 0.5 : 0.25));
+      numTranslated = _.max(0, visibleStart - 1 - (isAtEdge ? 0.5 : 0.25));
     } else {
       numTranslated =
-        (prevPageNum > currPageNum ? MH.floor : MH.ceil)(visibleStart) - 1;
+        (prevPageNum > currPageNum ? _.floor : _.ceil)(visibleStart) - 1;
     }
 
     const numVisibleGaps = !hasPeek
@@ -980,17 +979,17 @@ const init = (
     setStyleProp(element, VAR_VISIBLE_PAGES, fractionalNumVisiblePages + "");
     setStyleProp(element, VAR_VISIBLE_GAPS, numVisibleGaps + "");
     setStyleProp(element, VAR_TRANSLATED_PAGES, numTranslated + "");
-    setStyleProp(element, VAR_TRANSLATED_GAPS, MH.floor(numTranslated) + "");
+    setStyleProp(element, VAR_TRANSLATED_GAPS, _.floor(numTranslated) + "");
   };
 
   const getGestureOptions = (
     directions: Direction | Direction[] | undefined,
   ): OnGestureOptions => {
     return {
-      devices: MH.isBoolean(useGestures) // i.e. true; if it's false, then gestureWatcher is null
+      devices: _.isBoolean(useGestures) // i.e. true; if it's false, then gestureWatcher is null
         ? undefined // all devices
         : useGestures,
-      intents: [MC.S_DRAG, MC.S_SCROLL],
+      intents: [_.S_DRAG, _.S_SCROLL],
       directions,
       deltaThreshold: 25,
       preventDefault,
@@ -1004,9 +1003,9 @@ const init = (
   };
 
   const transitionOnGesture = (target: EventTarget, data: GestureData) => {
-    const swapDirection = data.intent === MC.S_DRAG;
+    const swapDirection = data.intent === _.S_DRAG;
 
-    if (MH.includes([MC.S_LEFT, MC.S_UP], data.direction)) {
+    if (_.includes([_.S_LEFT, _.S_UP], data.direction)) {
       (swapDirection ? methods._nextPage : methods._prevPage)(data);
     } else {
       (swapDirection ? methods._prevPage : methods._nextPage)(data);
@@ -1020,8 +1019,8 @@ const init = (
       getGestureOptions(
         alignGestureDirection
           ? isHorizontal
-            ? [MC.S_LEFT, MC.S_RIGHT]
-            : [MC.S_UP, MC.S_DOWN]
+            ? [_.S_LEFT, _.S_RIGHT]
+            : [_.S_UP, _.S_DOWN]
           : undefined, // all directions
       ),
     );
@@ -1037,10 +1036,8 @@ const init = (
   };
 
   const getPageNumForEvent = (event: Event) => {
-    const target = MH.currentTargetOf(event);
-    return MH.isElement(target)
-      ? toInt(getData(target, PREFIX_PAGE_NUMBER))
-      : 0;
+    const target = _.currentTargetOf(event);
+    return _.isElement(target) ? toInt(getData(target, PREFIX_PAGE_NUMBER)) : 0;
   };
 
   const toggleClickListener = (event: Event) => {
@@ -1063,7 +1060,7 @@ const init = (
 
   widget.onDestroy(async () => {
     await waitForMutateTime();
-    delDataNow(element, MC.PREFIX_ORIENTATION);
+    delDataNow(element, _.PREFIX_ORIENTATION);
     delDataNow(element, PREFIX_STYLE);
     delDataNow(element, PREFIX_IS_FULLSCREEN);
     delDataNow(element, PREFIX_USE_PARALLAX);
@@ -1080,7 +1077,7 @@ const init = (
     delStylePropNow(element, VAR_TRANSLATED_PAGES);
     delStylePropNow(element, VAR_TRANSLATED_GAPS);
 
-    for (let idx = 0; idx < MH.lengthOf(pages); idx++) {
+    for (let idx = 0; idx < _.lengthOf(pages); idx++) {
       removeClassesNow(pages[idx], PREFIX_PAGE);
 
       for (const [el, listener] of [
@@ -1093,20 +1090,20 @@ const init = (
           delDataNow(el, PREFIX_PAGE_NUMBER);
           delStylePropNow(el, VAR_PAGE_NUMBER);
           if (listener) {
-            removeEventListenerFrom(el, MC.S_CLICK, listener);
+            removeEventListenerFrom(el, _.S_CLICK, listener);
           }
         }
       }
 
-      MH.delAttr(pages[idx], S_ARIA_CURRENT);
+      _.delAttr(pages[idx], S_ARIA_CURRENT);
     }
 
     if (nextSwitch) {
-      removeEventListenerFrom(nextSwitch, MC.S_CLICK, nextSwitchClickListener);
+      removeEventListenerFrom(nextSwitch, _.S_CLICK, nextSwitchClickListener);
     }
 
     if (prevSwitch) {
-      removeEventListenerFrom(prevSwitch, MC.S_CLICK, prevSwitchClickListener);
+      removeEventListenerFrom(prevSwitch, _.S_CLICK, prevSwitchClickListener);
     }
 
     removeClassesNow(element, PREFIX_ROOT);
@@ -1125,10 +1122,10 @@ const init = (
     addClasses(pageContainer, PREFIX_PAGE_CONTAINER);
   }
 
-  const numPages = MH.lengthOf(pages);
+  const numPages = _.lengthOf(pages);
   let numVisiblePages = numPages;
 
-  setData(element, MC.PREFIX_ORIENTATION, orientation);
+  setData(element, _.PREFIX_ORIENTATION, orientation);
   setData(element, PREFIX_STYLE, pagerStyle);
   setBooleanData(element, PREFIX_IS_FULLSCREEN, isFullscreen);
   setBooleanData(element, PREFIX_USE_PARALLAX, isParallax);
@@ -1149,17 +1146,17 @@ const init = (
       [switches[idx], switchClickListener],
     ] as const) {
       if (el) {
-        addEventListenerTo(el, MC.S_CLICK, listener);
+        addEventListenerTo(el, _.S_CLICK, listener);
       }
     }
   }
 
   if (nextSwitch) {
-    addEventListenerTo(nextSwitch, MC.S_CLICK, nextSwitchClickListener);
+    addEventListenerTo(nextSwitch, _.S_CLICK, nextSwitchClickListener);
   }
 
   if (prevSwitch) {
-    addEventListenerTo(prevSwitch, MC.S_CLICK, prevSwitchClickListener);
+    addEventListenerTo(prevSwitch, _.S_CLICK, prevSwitchClickListener);
   }
 
   if (initialPage < 1 || initialPage > numPages) {
@@ -1178,7 +1175,7 @@ const getMethods = (
   const scrollWatcher = ScrollWatcher.reuse();
   const isFullscreen = config?.fullscreen;
   const disabledPages: Record<number, boolean> = {};
-  const callbacks = MH.newMap<WidgetHandler, WidgetCallback>();
+  const callbacks = _.newMap<WidgetHandler, WidgetCallback>();
 
   const fetchScrollOptions = async (): Promise<ScrollOptions> => ({
     scrollable: await fetchClosestScrollable(element),
@@ -1196,11 +1193,11 @@ const getMethods = (
       return false;
     }
 
-    if (gestureData?.device !== MC.S_WHEEL) {
+    if (gestureData?.device !== _.S_WHEEL) {
       return true;
     }
 
-    const timeNow = MH.timeNow();
+    const timeNow = _.timeNow();
     if (timeNow - lastTransition > MIN_TIME_BETWEEN_WHEEL) {
       lastTransition = timeNow;
       return true;
@@ -1215,7 +1212,7 @@ const getMethods = (
       return;
     }
 
-    const numPages = MH.lengthOf(pages);
+    const numPages = _.lengthOf(pages);
 
     if (
       (currPageNum === 1 && pageNum === 0) ||
@@ -1225,12 +1222,12 @@ const getMethods = (
       if (isFullscreen) {
         scrollWatcher.scroll(
           pageNum
-            ? gestureData?.direction === MC.S_RIGHT
-              ? MC.S_RIGHT
-              : MC.S_DOWN
-            : gestureData?.direction === MC.S_LEFT
-              ? MC.S_LEFT
-              : MC.S_UP,
+            ? gestureData?.direction === _.S_RIGHT
+              ? _.S_RIGHT
+              : _.S_DOWN
+            : gestureData?.direction === _.S_LEFT
+              ? _.S_LEFT
+              : _.S_UP,
           await fetchScrollOptions(),
         ); // no need to await
       }
@@ -1248,7 +1245,7 @@ const getMethods = (
 
     await invokeHandlers(callbacks.values(), widget);
 
-    MH.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
+    _.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
     for (
       let n = lastPageNum;
       n !== currPageNum;
@@ -1268,7 +1265,7 @@ const getMethods = (
       { _current: currPageNum, _total: numPages },
       isPageDisabled,
     );
-    MH.setAttr(pages[currPageNum - 1], S_ARIA_CURRENT);
+    _.setAttr(pages[currPageNum - 1], S_ARIA_CURRENT);
     await setPageState(components, currPageNum, S_CURRENT);
   };
 
@@ -1294,7 +1291,7 @@ const getMethods = (
 
   const disablePage = async (pageNum: number) => {
     pageNum = toInt(pageNum);
-    if (widget.isDisabled() || pageNum < 1 || pageNum > MH.lengthOf(pages)) {
+    if (widget.isDisabled() || pageNum < 1 || pageNum > _.lengthOf(pages)) {
       return;
     }
 
@@ -1318,10 +1315,10 @@ const getMethods = (
 
     setCurrentPage(
       element,
-      { _current: currPageNum, _total: MH.lengthOf(pages) },
+      { _current: currPageNum, _total: _.lengthOf(pages) },
       isPageDisabled,
     );
-    await setPageState(components, pageNum, MC.S_DISABLED);
+    await setPageState(components, pageNum, _.S_DISABLED);
   };
 
   const enablePage = async (pageNum: number) => {
@@ -1335,7 +1332,7 @@ const getMethods = (
 
     setCurrentPage(
       element,
-      { _current: currPageNum, _total: MH.lengthOf(pages) },
+      { _current: currPageNum, _total: _.lengthOf(pages) },
       isPageDisabled,
     );
     await setPageState(
@@ -1353,7 +1350,7 @@ const getMethods = (
   };
 
   const offTransition = (handler: WidgetHandler) => {
-    MH.remove(callbacks.get(handler));
+    _.remove(callbacks.get(handler));
   };
 
   return {
@@ -1366,9 +1363,11 @@ const getMethods = (
     _isPageDisabled: isPageDisabled,
     _getCurrentPage: () => pages[currPageNum - 1],
     _getPreviousPage: () => pages[lastPageNum - 1],
-    _getCurrentPageNum: () => (MH.lengthOf(pages) > 0 ? currPageNum : 0),
-    _getPreviousPageNum: () => (MH.lengthOf(pages) > 0 ? lastPageNum : 0),
+    _getCurrentPageNum: () => (_.lengthOf(pages) > 0 ? currPageNum : 0),
+    _getPreviousPageNum: () => (_.lengthOf(pages) > 0 ? lastPageNum : 0),
     _onTransition: onTransition,
     _offTransition: offTransition,
   };
 };
+
+_.brandClass(Pager, "Pager");

@@ -2,8 +2,9 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { Anchor, Size, StrRecord } from "@lisn/globals/types";
 
@@ -28,8 +29,8 @@ import { Anchor, Size, StrRecord } from "@lisn/globals/types";
 export const formatAsString = (value: unknown, maxLen?: number) => {
   const result = maybeConvertToString(value, false);
 
-  if (!MH.isNullish(maxLen) && maxLen > 0 && MH.lengthOf(result) > maxLen) {
-    return result.slice(0, MH.max(0, maxLen - 3)) + "...";
+  if (!_.isNullish(maxLen) && maxLen > 0 && _.lengthOf(result) > maxLen) {
+    return result.slice(0, _.max(0, maxLen - 3)) + "...";
   }
 
   return result;
@@ -93,13 +94,13 @@ export const splitOn = (
   while (limit--) {
     let matchIndex = -1,
       matchLength = 0;
-    if (MH.isLiteralString(separator)) {
+    if (_.isLiteralString(separator)) {
       matchIndex = input.indexOf(separator);
-      matchLength = MH.lengthOf(separator);
+      matchLength = _.lengthOf(separator);
     } else {
       const match = separator.exec(input);
       matchIndex = match?.index ?? -1;
-      matchLength = match ? MH.lengthOf(match[0]) : 0;
+      matchLength = match ? _.lengthOf(match[0]) : 0;
     }
 
     if (matchIndex < 0) {
@@ -121,7 +122,7 @@ export const splitOn = (
  *
  * @category Text
  */
-export const kebabToCamelCase = MH.kebabToCamelCase;
+export const kebabToCamelCase = _.kebabToCamelCase;
 
 /**
  * Converts a camelCasedString to kebab-case.
@@ -130,7 +131,7 @@ export const kebabToCamelCase = MH.kebabToCamelCase;
  *
  * @category Text
  */
-export const camelToKebabCase = MH.camelToKebabCase;
+export const camelToKebabCase = _.camelToKebabCase;
 
 /**
  * Generates a random string of a fixed length.
@@ -142,11 +143,10 @@ export const camelToKebabCase = MH.camelToKebabCase;
  * @category Text
  */
 export const randId = (nChars = 8) => {
-  const segment = () =>
-    MH.floor(100000 + MC.MATH.random() * 900000).toString(36);
+  const segment = () => _.floor(100000 + _.random() * 900000).toString(36);
 
   let s = "";
-  while (MH.lengthOf(s) < nChars) {
+  while (_.lengthOf(s) < nChars) {
     s += segment();
   }
   return s.slice(0, nChars);
@@ -185,7 +185,7 @@ export const randId = (nChars = 8) => {
  */
 export const toMargins = (value: string, absoluteSize: Size | number) => {
   let width: number, height: number;
-  if (MH.isNumber(absoluteSize)) {
+  if (_.isNumber(absoluteSize)) {
     width = height = absoluteSize;
   } else {
     ({ width, height } = absoluteSize);
@@ -193,12 +193,12 @@ export const toMargins = (value: string, absoluteSize: Size | number) => {
   }
 
   const toPxValue = (strValue: string | undefined, absValue: number) => {
-    let margin = MH.parseFloat(strValue ?? "") || 0;
+    let margin = _.parseFloat(strValue ?? "") || 0;
 
     if (strValue === `${margin}%`) {
       margin *= absValue;
     } else if (strValue !== `${margin}px` && strValue !== `${margin}`) {
-      throw MH.usageError(
+      throw usageError(
         "Converting margin string to pixels: margin values should be in pixel or percentage.",
       );
     }
@@ -281,13 +281,13 @@ export const toMarginString = (
     string | number,
   ];
 
-  if (MH.isNumber(value)) {
+  if (_.isNumber(value)) {
     value = [value];
-  } else if (MH.isString(value)) {
+  } else if (_.isString(value)) {
     value = splitOn(value, " ", true);
   }
 
-  if (MH.isArray(value)) {
+  if (_.isArray(value)) {
     parts = toFourMargins(value);
   } else {
     const top = value.top ?? 0;
@@ -303,7 +303,7 @@ export const toMarginString = (
     ];
   }
 
-  return parts.map((v) => (MH.isNumber(v) ? `${v}px` : v)).join(" ");
+  return parts.map((v) => (_.isNumber(v) ? `${v}px` : v)).join(" ");
 };
 
 /**
@@ -311,7 +311,7 @@ export const toMarginString = (
  * @internal
  */
 export const objToStrKey = (obj: StrRecord): string =>
-  MH.stringify(flattenForSorting(obj));
+  _.stringify(flattenForSorting(obj));
 
 // --------------------
 
@@ -329,14 +329,14 @@ const toFourMargins = <T extends string | number>(parts: T[]): [T, T, T, T] => {
 };
 
 const flattenForSorting = (obj: StrRecord): unknown[] => {
-  const array = MH.isArray(obj)
+  const array = _.isArray(obj)
     ? obj
-    : MH.keysOf(obj)
+    : _.keysOf(obj)
         .sort()
         .map((k) => obj[k]);
 
   return array.map((value) => {
-    if (MH.isArray(value) || MH.isPlainObject(value)) {
+    if (_.isArray(value) || _.isPlainObject(value)) {
       return flattenForSorting(value);
     }
     return value;
@@ -351,49 +351,49 @@ function maybeConvertToString(value: unknown, nested: false): string;
 function maybeConvertToString<V>(value: V, nested: boolean) {
   let result: string | V = "";
 
-  if (MH.isElement(value)) {
-    const classStr = MH.classList(value).toString().trim();
+  if (_.isElement(value)) {
+    const classStr = _.classList(value).toString().trim();
 
     result = value.id
       ? "#" + value.id
-      : `<${MH.tagName(value)}${classStr ? ' class="' + classStr + '"' : ""}>`;
+      : `<${_.tagName(value)}${classStr ? ' class="' + classStr + '"' : ""}>`;
 
     //
-  } else if (MH.isOfType(value, "Error")) {
+  } else if (_.isOfType(value, "Error")) {
     /* istanbul ignore else */
-    if ("stack" in value && MH.isString(value.stack)) {
+    if ("stack" in value && _.isString(value.stack)) {
       result = value.stack;
     } else {
       result = `Error: ${value.message}`;
     }
 
     //
-  } else if (MH.isArray(value)) {
+  } else if (_.isArray(value)) {
     result =
       "[" +
       value
         .map((v) =>
-          MH.isString(v) ? MH.stringify(v) : maybeConvertToString(v, false),
+          _.isString(v) ? _.stringify(v) : maybeConvertToString(v, false),
         )
         .join(",") +
       "]";
 
     //
-  } else if (MH.isIterableObject(value)) {
+  } else if (_.isIterableObject(value)) {
     result =
-      MH.typeOrClassOf(value) +
+      _.typeOrClassOf(value) +
       "(" +
-      maybeConvertToString(MH.arrayFrom(value), false) +
+      maybeConvertToString(_.arrayFrom(value), false) +
       ")";
 
     //
-  } else if (!MH.isPrimitive(value)) {
-    result = nested ? value : MH.stringify(value, stringifyReplacer);
+  } else if (!_.isPrimitive(value)) {
+    result = nested ? value : _.stringify(value, stringifyReplacer);
 
     //
   } else {
     // primitive
-    result = nested ? value : MC.STRING(value);
+    result = nested ? value : _.STRING(value);
   }
 
   return result;

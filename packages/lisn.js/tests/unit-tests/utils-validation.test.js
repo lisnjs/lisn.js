@@ -2,6 +2,30 @@ const { describe, test, expect } = require("@jest/globals");
 
 const utils = window.LISN.utils;
 
+test("isValidStrList", () => {
+  expect(utils.isValidStrList([], () => true)).toBe(true);
+  expect(utils.isValidStrList([""], () => true)).toBe(true);
+  expect(utils.isValidStrList("", () => true)).toBe(true);
+  expect(utils.isValidStrList(",", () => true)).toBe(true);
+  expect(utils.isValidStrList(" ", () => true)).toBe(true);
+
+  expect(utils.isValidStrList([], () => true, false)).toBe(false);
+  expect(utils.isValidStrList([""], () => true, false)).toBe(false);
+  expect(utils.isValidStrList("", () => true, false)).toBe(false);
+  expect(utils.isValidStrList(",", () => true, false)).toBe(false);
+  expect(utils.isValidStrList(" ", () => true, false)).toBe(false);
+
+  expect(utils.isValidStrList([" a", "", "b "], () => true)).toBe(true);
+  expect(utils.isValidStrList("a ,, b ,", () => true)).toBe(true);
+
+  expect(utils.isValidStrList("a", (s) => s === "a")).toBe(true);
+
+  expect(utils.isValidStrList(false, () => true)).toBe(false);
+  expect(utils.isValidStrList([false], () => true)).toBe(false);
+  expect(utils.isValidStrList("a,b", () => false)).toBe(false);
+  expect(utils.isValidStrList([1], () => true)).toBe(false);
+});
+
 test("validateStrList", () => {
   expect(utils.validateStrList("test", [], () => true)).toBeUndefined();
   expect(utils.validateStrList("test", [""], () => true)).toBeUndefined();

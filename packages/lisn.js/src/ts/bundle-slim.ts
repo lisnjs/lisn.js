@@ -6,14 +6,14 @@
 
 import "@lisn/bundle-essentials"; // side effects
 
-import { omitKeys } from "@lisn/utils/misc";
+import * as _ from "@lisn/_internal";
 import * as _actions from "@lisn/actions/index";
 import * as triggers from "@lisn/triggers/index";
 
 export * from "@lisn/bundle-essentials";
 
 // --- remove widget specific actions
-export const actions = omitKeys(_actions, {
+export const actions = _.omitKeys(_actions, {
   Open: true,
   NextPage: true,
   PrevPage: true,

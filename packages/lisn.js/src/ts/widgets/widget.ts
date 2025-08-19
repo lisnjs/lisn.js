@@ -40,8 +40,7 @@
  * @module Widgets
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -185,9 +184,9 @@ export abstract class Widget {
     let isDestroyed = false;
     let destroyPromise: Promise<void>;
 
-    const enableCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
-    const disableCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
-    const destroyCallbacks = MH.newMap<WidgetHandler, WidgetCallback>();
+    const enableCallbacks = _.newMap<WidgetHandler, WidgetCallback>();
+    const disableCallbacks = _.newMap<WidgetHandler, WidgetCallback>();
+    const destroyCallbacks = _.newMap<WidgetHandler, WidgetCallback>();
 
     this.disable = async () => {
       if (!isDisabled) {
@@ -216,7 +215,7 @@ export abstract class Widget {
     };
 
     this.offDisable = (handler) => {
-      MH.remove(disableCallbacks.get(handler));
+      _.remove(disableCallbacks.get(handler));
     };
 
     this.onEnable = (handler) => {
@@ -224,7 +223,7 @@ export abstract class Widget {
     };
 
     this.offEnable = (handler) => {
-      MH.remove(enableCallbacks.get(handler));
+      _.remove(enableCallbacks.get(handler));
     };
 
     this.isDisabled = () => isDisabled;
@@ -245,7 +244,7 @@ export abstract class Widget {
           if (id) {
             const elInstances = instances.get(element);
             if (elInstances?.get(id) === this) {
-              MH.deleteKey(elInstances, id);
+              _.deleteKey(elInstances, id);
               instances.prune(element);
             }
           }
@@ -260,7 +259,7 @@ export abstract class Widget {
     };
 
     this.offDestroy = (handler) => {
-      MH.remove(destroyCallbacks.get(handler));
+      _.remove(destroyCallbacks.get(handler));
     };
 
     this.isDestroyed = () => isDestroyed;
@@ -386,14 +385,14 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
   await waitForInteractive();
 
   const selector =
-    options?.selector || getDefaultWidgetSelector(MH.prefixName(name));
+    options?.selector || getDefaultWidgetSelector(_.prefixName(name));
 
   if (settings.autoWidgets) {
     const domWatcher = DOMWatcher.reuse();
     domWatcher.onMutation(
       async (operation) => {
-        const element = MH.currentTargetOf(operation);
-        const thisConfigValidator = MH.isFunction(configValidator)
+        const element = _.currentTargetOf(operation);
+        const thisConfigValidator = _.isFunction(configValidator)
           ? await configValidator(element)
           : configValidator;
 
@@ -416,7 +415,7 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
         }
 
         // auto-destroy on element remove
-        if (MH.lengthOf(widgets)) {
+        if (_.lengthOf(widgets)) {
           domWatcher.onMutation(
             () => {
               for (const w of widgets) {
@@ -425,14 +424,14 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
             },
             {
               target: element,
-              categories: [MC.S_REMOVED],
+              categories: [_.S_REMOVED],
             },
           );
         }
       },
       {
         selector,
-        categories: [MC.S_ADDED],
+        categories: [_.S_ADDED],
       },
     );
   }
@@ -525,11 +524,11 @@ export const getDataAttrConfigSpecs = (
   element: Element,
   separator?: null | string, // If given, it will split input
 ) => {
-  const prefixedName = MH.prefixName(name);
+  const prefixedName = _.prefixName(name);
   const configSpecs: string[] = [];
   const dataAttr = getData(element, prefixedName);
 
-  if (MH.isNullish(separator)) {
+  if (_.isNullish(separator)) {
     // Does not support multiple configs
     configSpecs.push(dataAttr ?? "");
   } else {
@@ -582,20 +581,22 @@ export const fetchUniqueWidget = async <W extends Widget>(
 const CONFIG_SEP_CHAR = ";";
 const OPT_SEP_CHAR = "|";
 
-const instances = newXWeakMap<Element, Map<string, Widget>>(() => MH.newMap());
-const registeredWidgets = MH.newSet<string>();
+const instances = newXWeakMap<Element, Map<string, Widget>>(() => _.newMap());
+const registeredWidgets = _.newSet<string>();
 
 const toOptionsObject = (
   input: string | null | undefined,
   separator: string,
 ) => {
   const options: Record<string, string> = {};
-  for (const entry of MH.filter(
+  for (const entry of _.filter(
     splitOn(input ?? "", separator, true),
-    (v) => !MH.isEmpty(v),
+    (v) => !_.isEmpty(v),
   )) {
     const [key, value] = splitOn(entry, /\s*=\s*/, true, 1);
     options[kebabToCamelCase(key)] = value ?? "";
   }
   return options;
 };
+
+_.brandClass(Widget, "Widget");

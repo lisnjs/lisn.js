@@ -7,8 +7,9 @@
 // element as the scrolling one but wrap IT (not its children) and insert the
 // scrollbars before it. Then remove, "id" and "className" config options.
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -226,12 +227,12 @@ export class Scrollbar extends Widget {
       return mainWidget;
     }
 
-    if (scrollable === MH.getDocElement()) {
-      scrollable = MH.getBody();
+    if (scrollable === _.getDocElement()) {
+      scrollable = _.getBody();
     }
 
     const instance = super.get(scrollable, DUMMY_ID);
-    if (MH.isInstanceOf(instance, Scrollbar)) {
+    if (_.isInstanceOf(instance, Scrollbar)) {
       return instance;
     }
     return null;
@@ -266,13 +267,13 @@ export class Scrollbar extends Widget {
     registerWidget(
       WIDGET_NAME,
       (element, config) => {
-        if (MH.isHTMLElement(element)) {
+        if (_.isHTMLElement(element)) {
           if (!Scrollbar.get(element)) {
             return new Scrollbar(element, config);
           }
         } else {
           logError(
-            MH.usageError("Only HTMLElement is supported for Scrollbar widget"),
+            usageError("Only HTMLElement is supported for Scrollbar widget"),
           );
         }
         return null;
@@ -286,8 +287,8 @@ export class Scrollbar extends Widget {
    * `document.documentElement`.
    */
   constructor(scrollable: HTMLElement, config?: ScrollbarConfig) {
-    if (scrollable === MH.getDocElement()) {
-      scrollable = MH.getBody();
+    if (scrollable === _.getDocElement()) {
+      scrollable = _.getBody();
     }
 
     const destroyPromise = Scrollbar.get(scrollable)?.destroy();
@@ -296,7 +297,7 @@ export class Scrollbar extends Widget {
     const props = getScrollableProps(scrollable);
     const ourScrollable = props.scrollable;
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || _.promiseResolve()).then(() => {
       if (this.isDestroyed()) {
         return;
       }
@@ -420,7 +421,7 @@ export type ScrollbarConfig = {
 // --------------------
 
 const WIDGET_NAME = "scrollbar";
-const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
+const PREFIXED_NAME = _.prefixName(WIDGET_NAME);
 // Only one Scrollbar widget per element is allowed, but Widget
 // requires a non-blank ID.
 const DUMMY_ID = PREFIXED_NAME;
@@ -432,17 +433,17 @@ const PREFIX_WRAPPER = `${PREFIXED_NAME}__wrapper`;
 const PREFIX_FILL = `${PREFIXED_NAME}__fill`;
 const PREFIX_SPACER = `${PREFIXED_NAME}__spacer`;
 const PREFIX_HANDLE = `${PREFIXED_NAME}__handle`;
-const PREFIX_DRAGGABLE = MH.prefixName("draggable");
-const PREFIX_CLICKABLE = MH.prefixName("clickable");
-const PREFIX_HAS_WRAPPER = MH.prefixName("has-wrapper");
-const PREFIX_ALLOW_COLLAPSE = MH.prefixName("allow-collapse");
-const PREFIX_HAS_V_SCROLL = MH.prefixName("has-v-scroll");
-const PREFIX_HAS_SCROLLBAR = MH.prefixName("has-scrollbar");
-const PREFIX_HIDE_SCROLL = MH.prefixName("hide-scroll");
+const PREFIX_DRAGGABLE = _.prefixName("draggable");
+const PREFIX_CLICKABLE = _.prefixName("clickable");
+const PREFIX_HAS_WRAPPER = _.prefixName("has-wrapper");
+const PREFIX_ALLOW_COLLAPSE = _.prefixName("allow-collapse");
+const PREFIX_HAS_V_SCROLL = _.prefixName("has-v-scroll");
+const PREFIX_HAS_SCROLLBAR = _.prefixName("has-scrollbar");
+const PREFIX_HIDE_SCROLL = _.prefixName("hide-scroll");
 
 const S_SET_POINTER_CAPTURE = "setPointerCapture";
 const S_RELEASE_POINTER_CAPTURE = "releasePointerCapture";
-const S_ARIA_VALUENOW = MC.ARIA_PREFIX + "valuenow";
+const S_ARIA_VALUENOW = _.ARIA_PREFIX + "valuenow";
 const S_SCROLLBAR = "scrollbar";
 
 let mainWidget: Scrollbar | null = null;
@@ -466,7 +467,7 @@ const getScrollableProps = (containerElement: HTMLElement) => {
   // passed can't be it anyway, so no need to use fetchMainScrollableElement.
   const mainScrollableElement = tryGetMainScrollableElement();
 
-  const body = MH.getBody();
+  const body = _.getBody();
   const defaultScrollable = getDefaultScrollingElement();
 
   const isBody = containerElement === body;
@@ -495,7 +496,7 @@ const getScrollableProps = (containerElement: HTMLElement) => {
     contentWrapper = getContentWrapper(containerElement, {
       _classNames: [PREFIX_CONTENT],
     });
-    hasExistingWrapper = !MH.isNullish(contentWrapper);
+    hasExistingWrapper = !_.isNullish(contentWrapper);
 
     if (!contentWrapper) {
       const warnMsgPrefix =
@@ -506,7 +507,7 @@ const getScrollableProps = (containerElement: HTMLElement) => {
       if (allowedToWrap) {
         // we'll wrap later, but create the wrapper now as it will be the actual
         // scrollable
-        contentWrapper = MH.createElement("div");
+        contentWrapper = _.createElement("div");
       } else if (supportsSticky()) {
         logWarn(`${warnMsgPrefix}, is experimental and may not work properly.`);
       } else {
@@ -583,28 +584,28 @@ const init = (
   // ----------
 
   const newScrollbar = (wrapper: Element, position: string) => {
-    const barIsHorizontal = position === MC.S_TOP || position === MC.S_BOTTOM;
+    const barIsHorizontal = position === _.S_TOP || position === _.S_BOTTOM;
 
-    const scrollbar = MH.createElement("div");
+    const scrollbar = _.createElement("div");
     addClassesNow(scrollbar, PREFIX_BAR);
     setDataNow(
       scrollbar,
-      MC.PREFIX_ORIENTATION,
-      barIsHorizontal ? MC.S_HORIZONTAL : MC.S_VERTICAL,
+      _.PREFIX_ORIENTATION,
+      barIsHorizontal ? _.S_HORIZONTAL : _.S_VERTICAL,
     );
-    setDataNow(scrollbar, MC.PREFIX_PLACE, position);
+    setDataNow(scrollbar, _.PREFIX_PLACE, position);
 
     if (clickScroll || dragScroll) {
-      MH.setAttr(scrollbar, MC.S_ROLE, S_SCROLLBAR);
-      MH.setAttr(scrollbar, MC.S_ARIA_CONTROLS, scrollDomID);
+      _.setAttr(scrollbar, _.S_ROLE, S_SCROLLBAR);
+      _.setAttr(scrollbar, _.S_ARIA_CONTROLS, scrollDomID);
     }
 
-    const fill = MH.createElement("div");
+    const fill = _.createElement("div");
     addClassesNow(fill, useHandle ? PREFIX_SPACER : PREFIX_FILL);
 
     let handle: Element | null = null;
     if (useHandle) {
-      handle = MH.createElement("div");
+      handle = _.createElement("div");
       addClassesNow(handle, PREFIX_HANDLE);
       setBooleanDataNow(handle, PREFIX_DRAGGABLE, dragScroll);
     }
@@ -633,12 +634,12 @@ const init = (
     const hasBarPrefix = `${PREFIX_HAS_SCROLLBAR}-${tracksH ? positionH : positionV}`;
 
     const completeFraction = tracksH
-      ? scrollData[MC.S_SCROLL_LEFT_FRACTION]
-      : scrollData[MC.S_SCROLL_TOP_FRACTION];
+      ? scrollData[_.S_SCROLL_LEFT_FRACTION]
+      : scrollData[_.S_SCROLL_TOP_FRACTION];
 
     const viewFraction = tracksH
-      ? scrollData[MC.S_CLIENT_WIDTH] / scrollData[MC.S_SCROLL_WIDTH]
-      : scrollData[MC.S_CLIENT_HEIGHT] / scrollData[MC.S_SCROLL_HEIGHT];
+      ? scrollData[_.S_CLIENT_WIDTH] / scrollData[_.S_SCROLL_WIDTH]
+      : scrollData[_.S_CLIENT_HEIGHT] / scrollData[_.S_SCROLL_HEIGHT];
 
     debug: logger?.debug9("Updating progress", {
       tracksH,
@@ -646,11 +647,7 @@ const init = (
       viewFraction,
     });
 
-    MH.setAttr(
-      scrollbar,
-      S_ARIA_VALUENOW,
-      MH.round(completeFraction * 100) + "",
-    );
+    _.setAttr(scrollbar, S_ARIA_VALUENOW, _.round(completeFraction * 100) + "");
 
     setNumericStyleJsVars(
       scrollbar,
@@ -699,7 +696,7 @@ const init = (
     setBoxMeasureProps(containerElement);
     setNumericStyleJsVars(
       containerElement,
-      { barHeight: sizeData.border[MC.S_HEIGHT] },
+      { barHeight: sizeData.border[_.S_HEIGHT] },
       { _units: "px", _numDecimal: 2 },
     );
   };
@@ -712,19 +709,19 @@ const init = (
   let scrollAction: ScrollAction | null;
 
   const onClickOrDrag = async (event: Event, tracksH: boolean) => {
-    MH.preventDefault(event);
+    _.preventDefault(event);
     const scrollbar = tracksH ? scrollbarH : scrollbarV;
     const handle = tracksH ? handleH : handleV;
 
-    const target = MH.targetOf(event);
-    if (!MH.isMouseEvent(event) || !MH.isHTMLElement(target)) {
+    const target = _.targetOf(event);
+    if (!_.isMouseEvent(event) || !_.isHTMLElement(target)) {
       return;
     }
 
     const eventType = event.type;
 
     const isClick =
-      eventType === MC.S_POINTERDOWN || eventType === MC.S_MOUSEDOWN;
+      eventType === _.S_POINTERDOWN || eventType === _.S_MOUSEDOWN;
     const isHandleClick =
       isClick && useHandle && hasClass(target, PREFIX_HANDLE);
     const startsDrag = isClick && dragScroll && (isHandleClick || !useHandle);
@@ -753,20 +750,20 @@ const init = (
     const barIsHorizontal = isHorizontal(scrollbar);
 
     const barLength = barIsHorizontal
-      ? scrollbar[MC.S_CLIENT_WIDTH]
-      : scrollbar[MC.S_CLIENT_HEIGHT];
+      ? scrollbar[_.S_CLIENT_WIDTH]
+      : scrollbar[_.S_CLIENT_HEIGHT];
 
     const currScrollOffset = tracksH
-      ? scrollable[MC.S_SCROLL_LEFT]
-      : scrollable[MC.S_SCROLL_TOP];
+      ? scrollable[_.S_SCROLL_LEFT]
+      : scrollable[_.S_SCROLL_TOP];
 
     const maxScrollOffset = tracksH
-      ? scrollable[MC.S_SCROLL_WIDTH] - getClientWidthNow(scrollable)
-      : scrollable[MC.S_SCROLL_HEIGHT] - getClientHeightNow(scrollable);
+      ? scrollable[_.S_SCROLL_WIDTH] - getClientWidthNow(scrollable)
+      : scrollable[_.S_SCROLL_HEIGHT] - getClientHeightNow(scrollable);
 
     // Get click offset relative to the scrollbar regardless of what the
     // event target is and what transforms is has applied.
-    const rect = MH.getBoundingClientRect(scrollbar);
+    const rect = _.getBoundingClientRect(scrollbar);
     const offset = barIsHorizontal
       ? event.clientX - rect.left
       : event.clientY - rect.top;
@@ -783,10 +780,10 @@ const init = (
     if (!isClick && useHandle) {
       // Dragging the handle
       const handleLength = handle
-        ? MH.parseFloat(
+        ? _.parseFloat(
             getComputedStylePropNow(
               handle,
-              barIsHorizontal ? MC.S_WIDTH : MC.S_HEIGHT,
+              barIsHorizontal ? _.S_WIDTH : _.S_HEIGHT,
             ),
           )
         : 0;
@@ -824,7 +821,7 @@ const init = (
     } else {
       scrollAction?.cancel();
       scrollAction = null;
-      MH.elScrollTo(scrollable, targetCoordinates);
+      _.elScrollTo(scrollable, targetCoordinates);
     }
   };
 
@@ -849,7 +846,7 @@ const init = (
     if (hideNative) {
       addClasses(scrollable, PREFIX_HIDE_SCROLL);
       if (isBodyInQuirks) {
-        addClasses(MH.getDocElement(), PREFIX_HIDE_SCROLL);
+        addClasses(_.getDocElement(), PREFIX_HIDE_SCROLL);
       }
     }
   };
@@ -857,7 +854,7 @@ const init = (
   const setNativeShown = () => {
     removeClasses(scrollable, PREFIX_HIDE_SCROLL);
     if (isBodyInQuirks) {
-      removeClasses(MH.getDocElement(), PREFIX_HIDE_SCROLL);
+      removeClasses(_.getDocElement(), PREFIX_HIDE_SCROLL);
     }
   };
 
@@ -891,8 +888,8 @@ const init = (
     return;
   }
 
-  const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
-  const sizeWatcher = SizeWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
+  const scrollWatcher = ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
+  const sizeWatcher = SizeWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
 
   if (!isMainScrollable && !isBody) {
     addClasses(containerElement, PREFIX_CONTAINER);
@@ -931,15 +928,15 @@ const init = (
 
   addClasses(barParent, PREFIX_ROOT);
 
-  const wrapper = MH.createElement("div");
+  const wrapper = _.createElement("div");
   preventSelect(wrapper);
-  addClasses(wrapper, MC.PREFIX_NO_TOUCH_ACTION);
+  addClasses(wrapper, _.PREFIX_NO_TOUCH_ACTION);
   addClasses(wrapper, PREFIX_WRAPPER);
 
   if (isBody || isMainScrollable) {
-    setData(wrapper, MC.PREFIX_POSITION, MC.S_FIXED);
+    setData(wrapper, _.PREFIX_POSITION, _.S_FIXED);
   } else if (needsSticky) {
-    setData(wrapper, MC.PREFIX_POSITION, MC.S_STICKY);
+    setData(wrapper, _.PREFIX_POSITION, _.S_STICKY);
   }
 
   const { _bar: scrollbarH, _handle: handleH } = newScrollbar(
@@ -960,16 +957,16 @@ const init = (
 
   // Track clicking and dragging on the two scrollbars
   if (dragScroll) {
-    addEventListenerTo(scrollbarH, MC.S_POINTERMOVE, onClickOrDragH);
-    addEventListenerTo(scrollbarV, MC.S_POINTERMOVE, onClickOrDragV);
+    addEventListenerTo(scrollbarH, _.S_POINTERMOVE, onClickOrDragH);
+    addEventListenerTo(scrollbarV, _.S_POINTERMOVE, onClickOrDragV);
 
-    addEventListenerTo(scrollbarH, MC.S_POINTERUP, onReleaseH);
-    addEventListenerTo(scrollbarV, MC.S_POINTERUP, onReleaseV);
+    addEventListenerTo(scrollbarH, _.S_POINTERUP, onReleaseH);
+    addEventListenerTo(scrollbarV, _.S_POINTERUP, onReleaseV);
   }
 
   if (dragScroll || clickScroll) {
-    addEventListenerTo(scrollbarH, MC.S_POINTERDOWN, onClickOrDragH);
-    addEventListenerTo(scrollbarV, MC.S_POINTERDOWN, onClickOrDragV);
+    addEventListenerTo(scrollbarH, _.S_POINTERDOWN, onClickOrDragH);
+    addEventListenerTo(scrollbarV, _.S_POINTERDOWN, onClickOrDragV);
   }
 
   widget.onDisable(() => {
@@ -1002,22 +999,22 @@ const init = (
     moveElementNow(wrapper); // remove
 
     if (dragScroll) {
-      removeEventListenerFrom(scrollbarH, MC.S_POINTERMOVE, onClickOrDragH);
-      removeEventListenerFrom(scrollbarV, MC.S_POINTERMOVE, onClickOrDragV);
+      removeEventListenerFrom(scrollbarH, _.S_POINTERMOVE, onClickOrDragH);
+      removeEventListenerFrom(scrollbarV, _.S_POINTERMOVE, onClickOrDragV);
 
-      removeEventListenerFrom(scrollbarH, MC.S_POINTERUP, onReleaseH);
-      removeEventListenerFrom(scrollbarV, MC.S_POINTERUP, onReleaseV);
+      removeEventListenerFrom(scrollbarH, _.S_POINTERUP, onReleaseH);
+      removeEventListenerFrom(scrollbarV, _.S_POINTERUP, onReleaseV);
     }
 
     if (dragScroll || clickScroll) {
-      removeEventListenerFrom(scrollbarH, MC.S_POINTERDOWN, onClickOrDragH);
-      removeEventListenerFrom(scrollbarV, MC.S_POINTERDOWN, onClickOrDragV);
+      removeEventListenerFrom(scrollbarH, _.S_POINTERDOWN, onClickOrDragH);
+      removeEventListenerFrom(scrollbarV, _.S_POINTERDOWN, onClickOrDragV);
     }
 
     removeClassesNow(barParent, PREFIX_ROOT);
     removeClassesNow(containerElement, PREFIX_CONTAINER);
 
-    for (const position of [MC.S_TOP, MC.S_BOTTOM, MC.S_LEFT, MC.S_RIGHT]) {
+    for (const position of [_.S_TOP, _.S_BOTTOM, _.S_LEFT, _.S_RIGHT]) {
       delDataNow(containerElement, `${PREFIX_HAS_SCROLLBAR}-${position}`);
     }
 
@@ -1028,13 +1025,13 @@ const init = (
 };
 
 const isHorizontal = (scrollbar: Element) =>
-  getData(scrollbar, MC.PREFIX_ORIENTATION) === MC.S_HORIZONTAL;
+  getData(scrollbar, _.PREFIX_ORIENTATION) === _.S_HORIZONTAL;
 
 const setBoxMeasureProps = async (element: HTMLElement) => {
-  for (const side of [MC.S_TOP, MC.S_RIGHT, MC.S_BOTTOM, MC.S_LEFT]) {
+  for (const side of [_.S_TOP, _.S_RIGHT, _.S_BOTTOM, _.S_LEFT]) {
     for (const key of [`padding-${side}`, `border-${side}-width`]) {
       const value = await getComputedStyleProp(element, key);
-      setStyleProp(element, MH.prefixCssJsVar(key), value);
+      setStyleProp(element, _.prefixCssJsVar(key), value);
     }
   }
 };
@@ -1044,7 +1041,9 @@ const setOrReleasePointerCapture = (
   scrollbar: Element,
   method: "setPointerCapture" | "releasePointerCapture",
 ) => {
-  if (MH.isPointerEvent(event) && method in scrollbar) {
+  if (_.isPointerEvent(event) && method in scrollbar) {
     scrollbar[method](event.pointerId);
   }
 };
+
+_.brandClass(Scrollbar, "Scrollbar");

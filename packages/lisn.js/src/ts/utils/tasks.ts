@@ -2,7 +2,7 @@
  * @module Utils
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 /**
  * @category Tasks
@@ -78,7 +78,7 @@ export const getDebouncedHandler = <Args extends readonly unknown[]>(
     lastArgs = args;
 
     if (timer === null) {
-      timer = MH.setTimer(async () => {
+      timer = _.setTimer(async () => {
         await handler(...lastArgs);
         timer = null;
       }, debounceWindow);
@@ -93,6 +93,6 @@ export const getDebouncedHandler = <Args extends readonly unknown[]>(
  * @category Tasks
  */
 export const waitForDelay = (delay?: number) =>
-  MH.newPromise<void>((resolve) => {
-    MH.setTimer(resolve, delay);
+  _.newPromise<void>((resolve) => {
+    _.setTimer(resolve, delay);
   });

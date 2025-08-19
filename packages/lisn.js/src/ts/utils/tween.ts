@@ -7,11 +7,13 @@
  * target position.
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { animationFrameGenerator } from "@lisn/utils/animations";
 import { isValidNum, roundNumTo, toNumWithBounds } from "@lisn/utils/math";
-import { deepCopy, compareValuesIn } from "@lisn/utils/misc";
+import { compareValuesIn } from "@lisn/utils/misc";
 
 /**
  * @since v1.3.0
@@ -142,7 +144,7 @@ export const springTweener = (
   } else if (deltaTime > 0) {
     const A = current - target;
     const B = velocity + w0 * A;
-    const e = MH.exp(-w0 * deltaTime);
+    const e = _.exp(-w0 * deltaTime);
 
     current = target + (A + B * deltaTime) * e;
     velocity = (B - w0 * (A + B * deltaTime)) * e;
@@ -298,12 +300,12 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
     !motion.x._done || !motion.y._done || !motion.z._done;
 
   const isUpdated = (newUpdateData: Tween3DUpdate<Axes> | undefined) => {
-    newUpdateData = MH.merge(updateData, newUpdateData);
+    newUpdateData = _.merge(updateData, newUpdateData);
     return !compareValuesIn(newUpdateData, updateData);
   };
 
   // We'll be updating the state object. previous updated in every loop
-  const state = deepCopy(init) as Tween3DGeneratorOutput<Axes>;
+  const state = _.deepCopy(init) as Tween3DGeneratorOutput<Axes>;
   for (const a in init) {
     state[a].initial = state[a].previous = state[a].current;
   }
@@ -358,7 +360,7 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
       motionParams._done = params.current === params.target;
     }
 
-    const newUpdateData = yield deepCopy(state);
+    const newUpdateData = yield _.deepCopy(state);
     const done = !isTweening() && !isUpdated(newUpdateData);
 
     if (done) {
@@ -470,20 +472,20 @@ const getTweenerFn = <Axes extends "x" | "y" | "z">(
   tweener: Tweener | { [K in Axes]: Tweener },
   axis: Axes,
 ) => {
-  if (MH.isFunction(tweener)) {
+  if (_.isFunction(tweener)) {
     return tweener;
   }
 
-  if (MH.isObject(tweener)) {
+  if (_.isObject(tweener)) {
     if (!(axis in tweener)) {
-      throw MH.usageError(`Missing tweener for axis ${axis}`);
+      throw usageError(`Missing tweener for axis ${axis}`);
     }
 
     return getTweenerFn(tweener[axis], axis);
   }
 
   if (!(tweener in TWEENERS)) {
-    throw MH.usageError("Unknown tweener name");
+    throw usageError("Unknown tweener name");
   }
 
   return TWEENERS[tweener];

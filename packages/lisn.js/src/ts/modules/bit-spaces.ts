@@ -2,7 +2,9 @@
  * @module Modules/BitSpaces
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { getBitmask } from "@lisn/utils/math";
 
@@ -195,8 +197,8 @@ export class BitSpaces {
     const counter = newCounter();
 
     this.create = (...propNames) => newBitSpace(counter, propNames);
-    MH.defineProperty(this, "nBits", { get: () => counter._nBits });
-    MH.defineProperty(this, "bitmask", { get: () => counter._bitmask });
+    _.defineProperty(this, "nBits", { get: () => counter._nBits });
+    _.defineProperty(this, "bitmask", { get: () => counter._bitmask });
   }
 }
 
@@ -236,9 +238,9 @@ const newBitSpace = <T extends BitPropName>(
   propNames: readonly T[],
 ): BitSpace<T> => {
   const start = counter._nBits;
-  const end = start + MH.lengthOf(propNames) - 1;
+  const end = start + _.lengthOf(propNames) - 1;
   if (end >= 31) {
-    throw MH.usageError("BitSpaces overflow");
+    throw usageError("BitSpaces overflow");
   }
 
   const bitmask = getBitmask(start, end);
@@ -249,31 +251,29 @@ const newBitSpace = <T extends BitPropName>(
     bitmask,
 
     has: (p) =>
-      MH.isString(p) &&
+      _.isString(p) &&
       p in space.bit &&
-      MH.isNumber((space.bit as Record<string, unknown>)[p]),
+      _.isNumber((space.bit as Record<string, unknown>)[p]),
 
     bitmaskFor: (pStart, pEnd) => {
       if (
-        (!MH.isEmpty(pStart) && !space.has(pStart)) ||
-        (!MH.isEmpty(pEnd) && !space.has(pEnd))
+        (!_.isEmpty(pStart) && !space.has(pStart)) ||
+        (!_.isEmpty(pEnd) && !space.has(pEnd))
       ) {
         return 0;
       }
 
-      const thisStart = !MH.isEmpty(pStart)
-        ? MH.log2(space.bit[pStart])
-        : start;
-      const thisEnd = !MH.isEmpty(pEnd) ? MH.log2(space.bit[pEnd]) : end;
+      const thisStart = !_.isEmpty(pStart) ? _.log2(space.bit[pStart]) : start;
+      const thisEnd = !_.isEmpty(pEnd) ? _.log2(space.bit[pEnd]) : end;
 
       return getBitmask(thisStart, thisEnd);
     },
 
-    nameOf: (val) => propNames[MH.log2(val) - start] ?? null,
+    nameOf: (val) => propNames[_.log2(val) - start] ?? null,
   } as BitSpace<T>;
 
   for (const name of propNames) {
-    MH.defineProperty(space.bit, name, {
+    _.defineProperty(space.bit, name, {
       value: 1 << counter._nBits++,
       enumerable: true,
     });
@@ -283,3 +283,5 @@ const newBitSpace = <T extends BitPropName>(
 
   return space;
 };
+
+_.brandClass(BitSpaces, "BitSpaces");

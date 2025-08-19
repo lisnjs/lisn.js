@@ -2,7 +2,7 @@
  * @module Actions
  */
 
-import * as MC from "@lisn/globals/minification-constants";
+import * as _ from "@lisn/_internal";
 
 import {
   showElement,
@@ -61,7 +61,7 @@ export class Show implements Action {
     const { _show, _hide, _toggle } = getMethods(element);
     this.do = _show;
     this.undo = _hide;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -113,7 +113,7 @@ export class Hide implements Action {
     const { _show, _hide, _toggle } = getMethods(element);
     this.do = _hide;
     this.undo = _show;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -134,3 +134,6 @@ const getMethods = (element: Element) => {
     },
   };
 };
+
+_.brandClass(Show, "Show");
+_.brandClass(Hide, "Hide");

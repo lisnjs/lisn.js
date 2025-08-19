@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { LogFunction } from "@lisn/globals/types";
 
@@ -19,7 +18,7 @@ import { Callback } from "@lisn/modules/callback";
  */
 export const logInfo: LogFunction = (...args) => {
   if (!isMessageSeen(args)) {
-    MH.consoleInfo(MC.LOG_PREFIX, ...args);
+    _.consoleInfo(_.LOG_PREFIX, ...args);
   }
 };
 
@@ -31,7 +30,7 @@ export const logInfo: LogFunction = (...args) => {
  */
 export const logWarn: LogFunction = (...args) => {
   if (!isMessageSeen(args)) {
-    MH.consoleWarn(MC.LOG_PREFIX, ...args);
+    _.consoleWarn(_.LOG_PREFIX, ...args);
   }
 };
 
@@ -43,14 +42,14 @@ export const logWarn: LogFunction = (...args) => {
  */
 export const logError: LogFunction = (...args) => {
   if (
-    (MH.lengthOf(args) > 1 || args[0] !== Callback.REMOVE) &&
+    (_.lengthOf(args) > 1 || args[0] !== Callback.REMOVE) &&
     !isMessageSeen(args)
   ) {
-    MH.consoleError(MC.LOG_PREFIX, ...args);
+    _.consoleError(_.LOG_PREFIX, ...args);
   }
 };
 
-const discardMessages = MH.newSet<string>();
+const discardMessages = _.newSet<string>();
 const isMessageSeen = (args: unknown[]) => {
   const msg = joinAsString(" ", ...args);
   const isSeen = discardMessages.has(msg);

@@ -53,8 +53,9 @@
 //
 // For simplicity we create overlays also for layouts that have a 0-width.
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { bugError, illegalConstructorError } from "@lisn/globals/errors";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -74,7 +75,6 @@ import {
   ORDERED_ASPECTR,
 } from "@lisn/utils/layout";
 import { logError, logWarn } from "@lisn/utils/log";
-import { deepCopy, omitKeys, copyExistingKeysTo } from "@lisn/utils/misc";
 import { createOverlay } from "@lisn/utils/overlays";
 import { objToStrKey } from "@lisn/utils/text";
 
@@ -145,7 +145,7 @@ export class LayoutWatcher {
    */
   static reuse(config?: LayoutWatcherConfig) {
     const myConfig = getConfig(config);
-    const configStrKey = objToStrKey(omitKeys(myConfig, { _root: null }));
+    const configStrKey = objToStrKey(_.omitKeys(myConfig, { _root: null }));
 
     let instance = instances.get(myConfig._root)?.get(configStrKey);
     if (!instance) {
@@ -161,7 +161,7 @@ export class LayoutWatcher {
     key: typeof CONSTRUCTOR_KEY,
   ) {
     if (key !== CONSTRUCTOR_KEY) {
-      throw MH.illegalConstructorError("LayoutWatcher.create");
+      throw illegalConstructorError("LayoutWatcher.create");
     }
 
     const logger = debug
@@ -173,7 +173,7 @@ export class LayoutWatcher {
       aspectRatio: null,
     };
 
-    const allCallbacks = MH.newMap<
+    const allCallbacks = _.newMap<
       OnLayoutHandler,
       {
         _callback: OnLayoutCallback;
@@ -186,7 +186,7 @@ export class LayoutWatcher {
     const fetchCurrentLayout = async (): Promise<LayoutData> => {
       await readyPromise;
 
-      return deepCopy(currentLayoutData);
+      return _.deepCopy(currentLayoutData);
     };
 
     // ----------
@@ -198,18 +198,18 @@ export class LayoutWatcher {
         config._aspectRatioBreakpoints,
       );
 
-      return MH.newPromise<void>((resolve) => {
+      return _.newPromise<void>((resolve) => {
         let isReady = false;
 
         const intersectionHandler = (entries: IntersectionObserverEntry[]) => {
-          const numEntries = MH.lengthOf(entries);
+          const numEntries = _.lengthOf(entries);
           debug: logger?.debug9(`Got ${numEntries} new entries`, entries);
 
           if (!isReady) {
             /* istanbul ignore next */ // shouldn't happen
             if (numEntries < NUM_LAYOUTS) {
               logWarn(
-                MH.bugError(
+                bugError(
                   `Got IntersectionObserver ${numEntries}, ` +
                     `expected >= ${NUM_LAYOUTS}`,
                 ),
@@ -239,7 +239,7 @@ export class LayoutWatcher {
           rootMargin: "5px 0% 5px -100%",
         };
 
-        const observer = MH.newIntersectionObserver(
+        const observer = _.newIntersectionObserver(
           intersectionHandler,
           observeOptions,
         );
@@ -256,7 +256,7 @@ export class LayoutWatcher {
       handler: OnLayoutHandler,
       layoutBitmask: number,
     ): OnLayoutCallback => {
-      MH.remove(allCallbacks.get(handler)?._callback);
+      _.remove(allCallbacks.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", layoutBitmask);
       const callback = wrapCallback(handler);
@@ -292,17 +292,17 @@ export class LayoutWatcher {
     };
 
     const deleteHandler = (handler: OnLayoutHandler) => {
-      MH.deleteKey(allCallbacks, handler);
+      _.deleteKey(allCallbacks, handler);
       // no need to unobserve the overlays
     };
 
     const processLayoutChange = (skipCallbacks: boolean) => {
-      const deviceBit = MH.floor(
-        MH.log2(nonIntersectingBitmask & ORDERED_DEVICES.bitmask),
+      const deviceBit = _.floor(
+        _.log2(nonIntersectingBitmask & ORDERED_DEVICES.bitmask),
       );
 
-      const aspectRatioBit = MH.floor(
-        MH.log2(nonIntersectingBitmask & ORDERED_ASPECTR.bitmask),
+      const aspectRatioBit = _.floor(
+        _.log2(nonIntersectingBitmask & ORDERED_ASPECTR.bitmask),
       );
 
       const layoutData: LayoutData = { device: null, aspectRatio: null };
@@ -310,10 +310,10 @@ export class LayoutWatcher {
       // -Infinity means all of the overlays are intersecting, which would only
       // happen if the narrowest overlay is not actually 0-width (which is not the
       // case by default and against the recommended settings).
-      if (deviceBit !== -MC.INFINITY) {
+      if (deviceBit !== -_.INFINITY) {
         layoutData.device = ORDERED_DEVICES.nameOf(1 << deviceBit);
       }
-      if (aspectRatioBit !== -MC.INFINITY) {
+      if (aspectRatioBit !== -_.INFINITY) {
         layoutData.aspectRatio = ORDERED_ASPECTR.nameOf(1 << aspectRatioBit);
       }
 
@@ -350,7 +350,7 @@ export class LayoutWatcher {
 
     this.offLayout = (handler) => {
       debug: logger?.debug5("Removing handler");
-      MH.remove(allCallbacks.get(handler)?._callback);
+      _.remove(allCallbacks.get(handler)?._callback);
     };
   }
 }
@@ -491,27 +491,27 @@ type LayoutWatcherConfigInternal = {
   _aspectRatioBreakpoints: typeof settings.aspectRatioBreakpoints;
 };
 
-const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
+const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
 const instances = newXMap<HTMLElement | null, Map<string, LayoutWatcher>>(() =>
-  MH.newMap(),
+  _.newMap(),
 );
 
-const VAR_BORDER_HEIGHT = MH.prefixCssJsVar("border-height");
-const PREFIX_DEVICE = MH.prefixName("device");
-const PREFIX_ASPECTR = MH.prefixName("aspect-ratio");
+const VAR_BORDER_HEIGHT = _.prefixCssJsVar("border-height");
+const PREFIX_DEVICE = _.prefixName("device");
+const PREFIX_ASPECTR = _.prefixName("aspect-ratio");
 
 const getConfig = (
   config: LayoutWatcherConfig | undefined,
 ): LayoutWatcherConfigInternal => {
-  const deviceBreakpoints = MH.copyObject(settings.deviceBreakpoints);
+  const deviceBreakpoints = _.copyObject(settings.deviceBreakpoints);
   if (config?.deviceBreakpoints) {
-    copyExistingKeysTo(config.deviceBreakpoints, deviceBreakpoints);
+    _.copyExistingKeysTo(config.deviceBreakpoints, deviceBreakpoints);
   }
 
-  const aspectRatioBreakpoints = MH.copyObject(settings.aspectRatioBreakpoints);
+  const aspectRatioBreakpoints = _.copyObject(settings.aspectRatioBreakpoints);
 
   if (config?.aspectRatioBreakpoints) {
-    copyExistingKeysTo(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
+    _.copyExistingKeysTo(config.aspectRatioBreakpoints, aspectRatioBreakpoints);
   }
 
   return {
@@ -542,7 +542,7 @@ const createOverlays = async (
     overlayParent = await createOverlay({
       style: {
         position: "fixed",
-        [MC.S_WIDTH]: "100vw",
+        [_.S_WIDTH]: "100vw",
       },
     });
   }
@@ -554,7 +554,7 @@ const createOverlays = async (
         parent: overlayParent,
         style: {
           position: "absolute",
-          [MC.S_WIDTH]: deviceBreakpoints[device] + "px",
+          [_.S_WIDTH]: deviceBreakpoints[device] + "px",
         },
         data: {
           [PREFIX_DEVICE]: device,
@@ -575,7 +575,7 @@ const createOverlays = async (
         parent: overlayParent,
         style: {
           position: "absolute",
-          [MC.S_WIDTH]:
+          [_.S_WIDTH]:
             `calc(${aspectRatioBreakpoints[aspectRatio]} ` +
             `* ${parentHeightCss})`,
         },
@@ -586,7 +586,7 @@ const createOverlays = async (
     );
   }
 
-  const overlays = await MH.promiseAll(overlayPromises);
+  const overlays = await _.promiseAll(overlayPromises);
   return { root: overlayParent, overlays };
 };
 
@@ -598,7 +598,7 @@ const getOverlayLayout = (overlay: HTMLElement): Layout | null => {
     return layout;
   } else {
     // shouldn't happen
-    logError(MH.bugError("No device or aspectRatio data attribute"));
+    logError(bugError("No device or aspectRatio data attribute"));
     return null;
   }
 };
@@ -636,12 +636,12 @@ const getNonIntersecting = (
   nonIntersectingBitmask: number, // current
   entry: IntersectionObserverEntry,
 ): number => {
-  const target = MH.targetOf(entry);
+  const target = _.targetOf(entry);
   /* istanbul ignore next */ // shouldn't happen
-  if (!MH.isHTMLElement(target)) {
+  if (!_.isHTMLElement(target)) {
     logError(
-      MH.bugError(
-        `IntersectionObserver called us with '${MH.typeOrClassOf(target)}'`,
+      bugError(
+        `IntersectionObserver called us with '${_.typeOrClassOf(target)}'`,
       ),
     );
     return nonIntersectingBitmask;
@@ -658,7 +658,7 @@ const getNonIntersecting = (
   } else {
     /* istanbul ignore next */ // shouldn't happen
     logError(
-      MH.bugError(`Unknown device or aspectRatio data attribute: ${layout}`),
+      bugError(`Unknown device or aspectRatio data attribute: ${layout}`),
     );
   }
 
@@ -675,4 +675,6 @@ const invokeCallback = (
   callback: OnLayoutCallback,
   layoutData: LayoutData,
   watcher: LayoutWatcher,
-) => callback.invoke(deepCopy(layoutData), watcher).catch(logError);
+) => callback.invoke(_.deepCopy(layoutData), watcher).catch(logError);
+
+_.brandClass(LayoutWatcher, "LayoutWatcher");

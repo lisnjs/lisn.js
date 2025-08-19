@@ -2,7 +2,7 @@
  * @module Settings
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 // TODO add defaults for watchers' debounce window, thresholds
 
@@ -30,7 +30,7 @@ import * as MH from "@lisn/globals/minification-helpers";
  * </html>
  * ```
  */
-export const settings = MH.preventExtensions({
+export const settings = _.preventExtensions({
   /**
    * A unique selector (preferably `#some-id`) for the element that holds the
    * main page content, if other than `document.body`.
@@ -504,5 +504,3 @@ export const settings = MH.preventExtensions({
    */
   remoteLoggerOnMobileOnly: false,
 });
-
-// --------------------

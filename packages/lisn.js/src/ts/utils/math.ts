@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { Point, Vector, AtLeastOne } from "@lisn/globals/types";
 
@@ -13,8 +12,8 @@ import { Point, Vector, AtLeastOne } from "@lisn/globals/types";
  * @category Math
  */
 export const roundNumTo = (value: number, numDecimal = 0) => {
-  const multiplicationFactor = MH.pow(10, numDecimal);
-  return MH.round(value * multiplicationFactor) / multiplicationFactor;
+  const multiplicationFactor = _.pow(10, numDecimal);
+  return _.round(value * multiplicationFactor) / multiplicationFactor;
 };
 
 /**
@@ -23,7 +22,7 @@ export const roundNumTo = (value: number, numDecimal = 0) => {
  * @category Validation
  */
 export const isValidNum = (value: unknown): value is number =>
-  MH.isNumber(value) && MC.NUMBER.isFinite(value);
+  _.isNumber(value) && _.NUMBER.isFinite(value);
 
 /**
  * Returns true if the given value is a valid _finite_ number or a numerical
@@ -45,7 +44,7 @@ export const toNum = <D extends number | false | null = 0>(
   value: unknown,
   defaultValue: D | 0 = 0,
 ): number | D => {
-  const numValue = MH.isLiteralString(value) ? MH.parseFloat(value) : value;
+  const numValue = _.isLiteralString(value) ? _.parseFloat(value) : value;
 
   // parseFloat will strip trailing non-numeric characters, so we check that
   // the parsed number is equal to the string, if it was a string, using loose
@@ -64,7 +63,7 @@ export const toInt = <D extends number | false | null = 0>(
   defaultValue: D | 0 = 0,
 ): number | D => {
   let numValue = toNum(value, null);
-  numValue = numValue === null ? numValue : MH.floor(numValue);
+  numValue = numValue === null ? numValue : _.floor(numValue);
 
   // Ensure that the parsed int equaled the original by loose equality.
   return isValidNum(numValue) && numValue == value ? numValue : defaultValue;
@@ -223,9 +222,9 @@ export const toRawNum = <D extends number | false | null = 0>(
     isAdditive = false,
     isPercent = false;
 
-  if (MH.isLiteralNumber(input)) {
+  if (_.isLiteralNumber(input)) {
     numerical = input;
-  } else if (MH.isString(input)) {
+  } else if (_.isString(input)) {
     const opA = input.slice(0, 1);
     const opB = input.slice(-1);
     isAdditive = opA === "+" || opA === "-";
@@ -235,7 +234,7 @@ export const toRawNum = <D extends number | false | null = 0>(
 
   let result = numerical;
   if (isAdditive || isPercent) {
-    const calculator: RawNumberCalculator = MH.isFunction(referenceOrCalculator)
+    const calculator: RawNumberCalculator = _.isFunction(referenceOrCalculator)
       ? referenceOrCalculator
       : ({ isAdditive, isPercent, numerical }) => {
           const reference = referenceOrCalculator;
@@ -259,7 +258,7 @@ export const toRawNum = <D extends number | false | null = 0>(
  * @category Math
  */
 export const maxAbs = (...values: number[]) =>
-  MH.max(...values.map((v) => MH.abs(v)));
+  _.max(...values.map((v) => _.abs(v)));
 
 /**
  * Returns the smallest absolute value among the given ones.
@@ -269,7 +268,7 @@ export const maxAbs = (...values: number[]) =>
  * @category Math
  */
 export const minAbs = (...values: number[]) =>
-  MH.min(...values.map((v) => MH.abs(v)));
+  _.min(...values.map((v) => _.abs(v)));
 
 /**
  * Returns the value with the largest absolute value among the given ones.
@@ -279,9 +278,9 @@ export const minAbs = (...values: number[]) =>
  * @category Math
  */
 export const havingMaxAbs = (...values: number[]): number =>
-  MH.lengthOf(values)
-    ? values.sort((a, b) => MH.abs(b) - MH.abs(a))[0]
-    : -MC.INFINITY;
+  _.lengthOf(values)
+    ? values.sort((a, b) => _.abs(b) - _.abs(a))[0]
+    : -_.INFINITY;
 
 /**
  * Returns the value with the smallest absolute value among the given ones.
@@ -291,9 +290,9 @@ export const havingMaxAbs = (...values: number[]): number =>
  * @category Math
  */
 export const havingMinAbs = (...values: number[]) =>
-  MH.lengthOf(values)
-    ? values.sort((a, b) => MH.abs(a) - MH.abs(b))[0]
-    : MC.INFINITY;
+  _.lengthOf(values)
+    ? values.sort((a, b) => _.abs(a) - _.abs(b))[0]
+    : _.INFINITY;
 
 /**
  * Returns the sum of the given values.
@@ -314,7 +313,7 @@ export const sum = (...values: number[]) =>
  * @category Math
  */
 export const hAngle = (x: number, y: number) =>
-  normalizeAngle(MC.MATH.atan2(y, x)); // ensure that -PI is transformed to +PI
+  normalizeAngle(_.MATH.atan2(y, x)); // ensure that -PI is transformed to +PI
 
 /**
  * Normalizes the given angle (in radians) so that it's in the range -PI to PI,
@@ -324,12 +323,12 @@ export const hAngle = (x: number, y: number) =>
  */
 export const normalizeAngle = (a: number) => {
   // ensure it's positive in the range 0 to 2 PI
-  while (a < 0 || a > MC.PI * 2) {
-    a += (a < 0 ? 1 : -1) * MC.PI * 2;
+  while (a < 0 || a > _.PI * 2) {
+    a += (a < 0 ? 1 : -1) * _.PI * 2;
   }
 
   // then, if > PI, offset by - 2PI
-  return a > MC.PI ? a - MC.PI * 2 : a;
+  return a > _.PI ? a - _.PI * 2 : a;
 };
 
 /**
@@ -340,7 +339,7 @@ export const normalizeAngle = (a: number) => {
  * @category Math
  */
 export const normalizeAxis = (x: number, y: number, z = 0) => {
-  const len = MH.sqrt(x * x + y * y + z * z);
+  const len = _.sqrt(x * x + y * y + z * z);
   return len > 0 ? [x / len, y / len, z / len] : [0, 0, 0];
 };
 
@@ -349,14 +348,14 @@ export const normalizeAxis = (x: number, y: number, z = 0) => {
  *
  * @category Math
  */
-export const degToRad = (a: number) => (a * MC.PI) / 180;
+export const degToRad = (a: number) => (a * _.PI) / 180;
 
 /**
  * Converts the given angle in radians to degrees.
  *
  * @category Math
  */
-export const radToDeg = (a: number) => (a * 180) / MC.PI;
+export const radToDeg = (a: number) => (a * 180) / _.PI;
 
 /**
  * Returns true if the given vectors point in the same direction.
@@ -375,11 +374,9 @@ export const radToDeg = (a: number) => (a * 180) / MC.PI;
 export const areParallel = (vA: Vector, vB: Vector, angleDiffThreshold = 0) => {
   const angleA = hAngle(vA[0], vA[1]);
   const angleB = hAngle(vB[0], vB[1]);
-  angleDiffThreshold = MH.min(89.99, MH.abs(angleDiffThreshold));
+  angleDiffThreshold = _.min(89.99, _.abs(angleDiffThreshold));
 
-  return (
-    MH.abs(normalizeAngle(angleA - angleB)) <= degToRad(angleDiffThreshold)
-  );
+  return _.abs(normalizeAngle(angleA - angleB)) <= degToRad(angleDiffThreshold);
 };
 
 /**
@@ -408,7 +405,7 @@ export const areAntiParallel = (
  * @category Math
  */
 export const distanceBetween = (ptA: Point, ptB: Point) =>
-  MH.sqrt(MH.pow(ptA[0] - ptB[0], 2) + MH.pow(ptA[1] - ptB[1], 2));
+  _.sqrt(_.pow(ptA[0] - ptB[0], 2) + _.pow(ptA[1] - ptB[1], 2));
 
 /**
  * Returns the two roots of the quadratic equation with coefficients
@@ -419,7 +416,7 @@ export const distanceBetween = (ptA: Point, ptB: Point) =>
  * @category Math
  */
 export const quadraticRoots = (a: number, b: number, c: number) => {
-  const z = MH.sqrt(b * b - 4 * a * c);
+  const z = _.sqrt(b * b - 4 * a * c);
   return [(-b + z) / (2 * a), (-b - z) / (2 * a)];
 };
 
@@ -436,7 +433,7 @@ export const quadraticRoots = (a: number, b: number, c: number) => {
  * @category Math
  */
 export const easeInOutQuad = (x: number) =>
-  x < 0.5 ? 2 * x * x : 1 - MH.pow(-2 * x + 2, 2) / 2;
+  x < 0.5 ? 2 * x * x : 1 - _.pow(-2 * x + 2, 2) / 2;
 
 /**
  * Returns an array of object's keys sorted by the numeric value they hold.
@@ -448,10 +445,10 @@ export const sortedKeysByVal = <T extends Record<string, number>>(
   descending = false,
 ): Array<keyof T> => {
   if (descending) {
-    return MH.keysOf(obj).sort((x: keyof T, y: keyof T) => obj[y] - obj[x]);
+    return _.keysOf(obj).sort((x: keyof T, y: keyof T) => obj[y] - obj[x]);
   }
 
-  return MH.keysOf(obj).sort((x: keyof T, y: keyof T) => obj[x] - obj[y]);
+  return _.keysOf(obj).sort((x: keyof T, y: keyof T) => obj[x] - obj[y]);
 };
 
 /**
@@ -464,7 +461,7 @@ export const sortedKeysByVal = <T extends Record<string, number>>(
 export const keyWithMaxVal = (
   obj: Record<string, number>,
 ): string | undefined => {
-  return MH.lastOf(sortedKeysByVal(obj));
+  return _.lastOf(sortedKeysByVal(obj));
 };
 
 /**
@@ -477,7 +474,7 @@ export const keyWithMaxVal = (
 export const keyWithMinVal = (
   obj: Record<string, number>,
 ): string | undefined => {
-  return MH.firstOf(sortedKeysByVal(obj));
+  return _.firstOf(sortedKeysByVal(obj));
 };
 
 /**

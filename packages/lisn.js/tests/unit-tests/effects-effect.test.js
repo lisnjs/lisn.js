@@ -1,6 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
-const { deepCopy, copyExistingKeysTo } = window.LISN.utils;
+const { deepCopy, copyExistingKeysTo } = window.LISN._;
 const { toParameters, scaleParameters, getUpdatedState, FXComposer } =
   window.LISN.effects;
 

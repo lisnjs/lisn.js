@@ -2,7 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
+import * as _ from "@lisn/_internal";
 
 import { MutationCategory } from "@lisn/globals/types";
 
@@ -33,7 +33,7 @@ export const isValidMutationCategoryList = (categories: string | string[]) =>
  */
 export const DOM_CATEGORIES_SPACE = createBitSpace<MutationCategory>(
   newBitSpaces(),
-  MC.S_ADDED,
-  MC.S_REMOVED,
-  MC.S_ATTRIBUTE,
+  _.S_ADDED,
+  _.S_REMOVED,
+  _.S_ATTRIBUTE,
 );

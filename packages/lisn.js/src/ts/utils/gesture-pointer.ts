@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { getVectorDirection } from "@lisn/utils/directions";
 import { getBrowserSupport } from "@lisn/utils/event";
@@ -38,7 +37,7 @@ export const getPointerGestureFragment = (
     angleDiffThreshold?: number;
   },
 ): GestureFragment | null | false => {
-  if (!MH.isIterableObject(events)) {
+  if (!_.isIterableObject(events)) {
     events = [events];
   }
 
@@ -47,16 +46,16 @@ export const getPointerGestureFragment = (
 
   // If the browser supports pointer events, then only take those, and not
   // other mouse events; otherwise take all mouse events
-  const pointerUpType = supports._pointer ? MC.S_POINTERUP : MC.S_MOUSEUP;
+  const pointerUpType = supports._pointer ? _.S_POINTERUP : _.S_MOUSEUP;
   const isPointerOrMouse = (event: Event): event is MouseEvent =>
-    supports._pointer ? MH.isPointerEvent(event) : MH.isMouseEvent(event);
+    supports._pointer ? _.isPointerEvent(event) : _.isMouseEvent(event);
 
-  const filteredEvents: MouseEvent[] = MH.filter(
+  const filteredEvents: MouseEvent[] = _.filter(
     events,
     (event): event is MouseEvent => {
       const eType = event.type;
-      isCancelled = isCancelled || eType === MC.S_POINTERCANCEL;
-      if (eType !== MC.S_CLICK && isPointerOrMouse(event)) {
+      isCancelled = isCancelled || eType === _.S_POINTERCANCEL;
+      if (eType !== _.S_CLICK && isPointerOrMouse(event)) {
         // Only events where the primary button is pressed (unless it's a
         // pointerup event, in which case no buttons should be pressed) are
         // considered, otherwise consider it terminated
@@ -65,14 +64,14 @@ export const getPointerGestureFragment = (
           (eType === pointerUpType && event.buttons !== 0) ||
           (eType !== pointerUpType && event.buttons !== 1);
         // we don't handle touch pointer events
-        return !MH.isTouchPointerEvent(event);
+        return !_.isTouchPointerEvent(event);
       }
 
       return false;
     },
   );
 
-  const numEvents = MH.lengthOf(filteredEvents);
+  const numEvents = _.lengthOf(filteredEvents);
   if (numEvents < 2) {
     return false; // no enough events
   }
@@ -83,7 +82,7 @@ export const getPointerGestureFragment = (
 
   const firstEvent = filteredEvents[0];
   const lastEvent = filteredEvents[numEvents - 1];
-  if (MH.getPointerType(firstEvent) !== MH.getPointerType(lastEvent)) {
+  if (_.getPointerType(firstEvent) !== _.getPointerType(lastEvent)) {
     return null; // different devices, consider it terminated
   }
 
@@ -94,12 +93,12 @@ export const getPointerGestureFragment = (
     options?.angleDiffThreshold,
   );
 
-  return direction === MC.S_NONE
+  return direction === _.S_NONE
     ? false
     : {
-        device: MC.S_POINTER,
+        device: _.S_POINTER,
         direction,
-        intent: MC.S_DRAG,
+        intent: _.S_DRAG,
         deltaX,
         deltaY,
         deltaZ: 1,

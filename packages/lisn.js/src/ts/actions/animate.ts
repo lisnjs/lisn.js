@@ -2,8 +2,7 @@
  * @module Actions
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import {
   iterateAnimations,
@@ -78,7 +77,7 @@ export class Animate implements Action {
 
     this.do = () => animate(element, GO_FORWARD, logger);
     this.undo = () => animate(element, GO_BACKWARD, logger);
-    this[MC.S_TOGGLE] = () => {
+    this[_.S_TOGGLE] = () => {
       const res = animate(element, isFirst ? GO_FORWARD : GO_TOGGLE, logger);
       isFirst = false;
       return res;
@@ -161,13 +160,13 @@ const setupAnimation = (
 
   // If the element is moved (including if wrapped, such as by the ViewTrigger),
   // this will cancel CSS animations and replace them with new running ones
-  if (MH.isCSSAnimation(animation)) {
+  if (_.isCSSAnimation(animation)) {
     const cancelHandler = (event: AnimationPlaybackEvent) =>
       onAnimationCancel(event, animation, direction, logger, isInitial);
 
-    animation.addEventListener(MC.S_CANCEL, cancelHandler);
+    animation.addEventListener(_.S_CANCEL, cancelHandler);
     animation.addEventListener("finish", () =>
-      animation.removeEventListener(MC.S_CANCEL, cancelHandler),
+      animation.removeEventListener(_.S_CANCEL, cancelHandler),
     );
   }
 };
@@ -182,19 +181,19 @@ const onAnimationCancel = (
 ) => {
   // setup again the new animation
   debug: logger?.debug9("Animation cancelled, re-setting up new one");
-  const target = MH.targetOf(event);
-  if (!MH.isAnimation(target)) {
+  const target = _.targetOf(event);
+  if (!_.isAnimation(target)) {
     return;
   }
 
   const effect = target.effect;
-  if (!MH.isKeyframeEffect(effect)) {
+  if (!_.isKeyframeEffect(effect)) {
     return;
   }
 
-  for (const newAnimation of MH.targetOf(effect)?.getAnimations() || []) {
+  for (const newAnimation of _.targetOf(effect)?.getAnimations() || []) {
     if (
-      MH.isCSSAnimation(newAnimation) &&
+      _.isCSSAnimation(newAnimation) &&
       newAnimation.animationName === animation.animationName
     ) {
       setupAnimation(newAnimation, direction, logger, isInitial);
@@ -209,8 +208,8 @@ const setupAnimationLegacy = (
   logger: LoggerInterface | null,
   isInitial: boolean,
 ) => {
-  const isBackward = hasClass(element, MC.PREFIX_ANIMATE_REVERSE);
-  const isPaused = hasClass(element, MC.PREFIX_ANIMATE_PAUSE);
+  const isBackward = hasClass(element, _.PREFIX_ANIMATE_REVERSE);
+  const isPaused = hasClass(element, _.PREFIX_ANIMATE_PAUSE);
 
   const pauseTillReady = !isPageReady();
 
@@ -235,16 +234,18 @@ const setupAnimationLegacy = (
 
   resetCssAnimationsNow(element);
 
-  removeClassesNow(element, MC.PREFIX_ANIMATE_PAUSE, MC.PREFIX_ANIMATE_REVERSE);
+  removeClassesNow(element, _.PREFIX_ANIMATE_PAUSE, _.PREFIX_ANIMATE_REVERSE);
   addClassesNow(
     element,
-    ...(goBackwards ? [MC.PREFIX_ANIMATE_REVERSE] : []),
-    ...(doPause ? [MC.PREFIX_ANIMATE_PAUSE] : []),
+    ...(goBackwards ? [_.PREFIX_ANIMATE_REVERSE] : []),
+    ...(doPause ? [_.PREFIX_ANIMATE_PAUSE] : []),
   );
 
   if (!isInitial && pauseTillReady) {
     waitForPageReady().then(() =>
-      removeClasses(element, MC.PREFIX_ANIMATE_PAUSE),
+      removeClasses(element, _.PREFIX_ANIMATE_PAUSE),
     );
   }
 };
+
+_.brandClass(Animate, "Animate");

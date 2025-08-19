@@ -2,8 +2,9 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, bugError } from "@lisn/globals/errors";
 
 import { ScrollOffsetSpec, View, CommaSeparatedStr } from "@lisn/globals/types";
 
@@ -26,7 +27,7 @@ export const isValidScrollOffset = (
  * @category Validation
  */
 export const isValidView = (view: string): view is View =>
-  MH.includes(VIEWS, view);
+  _.includes(VIEWS, view);
 
 /**
  * Returns true if the given string or array is a list of valid views.
@@ -105,7 +106,7 @@ export const getOppositeViews = (
   views: CommaSeparatedStr<View> | View[],
 ): View[] => {
   if (!views) {
-    throw MH.usageError("'views' cannot be empty");
+    throw usageError("'views' cannot be empty");
   }
 
   const bitmask = getViewsBitmask(views);
@@ -150,7 +151,7 @@ export const getViewsBitmask = (
   if (views) {
     for (const v of views) {
       if (!isValidView(v)) {
-        throw MH.usageError(`Unknown view '${v}'`);
+        throw usageError(`Unknown view '${v}'`);
       }
 
       viewsBitmask |= VIEWS_SPACE.bit[v];
@@ -169,25 +170,25 @@ export const getViewsBitmask = (
 export const parseScrollOffset = (input: string) => {
   const match = input.match(OFFSET_REGEX);
   if (!match) {
-    throw MH.usageError(`Invalid offset: '${input}'`);
+    throw usageError(`Invalid offset: '${input}'`);
   }
 
   const reference = match[1];
   const value = match[2];
   /* istanbul ignore next */ // shouldn't happen
   if (!reference || !value) {
-    throw MH.bugError("Offset regex: blank capture groups");
+    throw bugError("Offset regex: blank capture groups");
   }
 
   return { reference, value };
 };
 
 const VIEWS: View[] = [
-  MC.S_AT,
-  MC.S_ABOVE,
-  MC.S_BELOW,
-  MC.S_LEFT,
-  MC.S_RIGHT,
+  _.S_AT,
+  _.S_ABOVE,
+  _.S_BELOW,
+  _.S_LEFT,
+  _.S_RIGHT,
 ] as const;
 
 /**

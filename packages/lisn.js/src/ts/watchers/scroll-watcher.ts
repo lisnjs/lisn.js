@@ -2,8 +2,9 @@
  * @module Watchers/ScrollWatcher
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, illegalConstructorError } from "@lisn/globals/errors";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -23,7 +24,6 @@ import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
 import { toNonNegNum, maxAbs } from "@lisn/utils/math";
-import { deepCopy } from "@lisn/utils/misc";
 import {
   scrollTo,
   getCurrentScrollAction,
@@ -296,16 +296,16 @@ export class ScrollWatcher {
     key: typeof CONSTRUCTOR_KEY,
   ) {
     if (key !== CONSTRUCTOR_KEY) {
-      throw MH.illegalConstructorError("ScrollWatcher.create");
+      throw illegalConstructorError("ScrollWatcher.create");
     }
 
     const logger = debug
       ? new debug.Logger({ name: "ScrollWatcher", logAtCreation: config })
       : null;
 
-    const allScrollData = MH.newWeakMap<Element, ScrollData>();
+    const allScrollData = _.newWeakMap<Element, ScrollData>();
 
-    const activeListeners = MH.newWeakMap<
+    const activeListeners = _.newWeakMap<
       ScrollTarget,
       { _nRealtime: number }
     >();
@@ -313,7 +313,7 @@ export class ScrollWatcher {
     const allCallbacks = newXWeakMap<
       Element,
       Map<OnScrollHandler, CallbackEntry>
-    >(() => MH.newMap());
+    >(() => _.newMap());
 
     // ----------
 
@@ -346,7 +346,7 @@ export class ScrollWatcher {
       trackType: TrackType,
     ): CallbackEntry => {
       const element = options._element;
-      MH.remove(allCallbacks.get(element)?.get(handler)?._callback);
+      _.remove(allCallbacks.get(element)?.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", options);
       const callback = wrapCallback(handler, options._debounceWindow);
@@ -402,7 +402,7 @@ export class ScrollWatcher {
         listenerOptions = { _nRealtime: 0 };
         activeListeners.set(eventTarget, listenerOptions);
         // Don't debounce the scroll handler, only the callbacks.
-        addEventListenerTo(eventTarget, MC.S_SCROLL, scrollHandler);
+        addEventListenerTo(eventTarget, _.S_SCROLL, scrollHandler);
       }
 
       if (options._debounceWindow === 0) {
@@ -438,7 +438,7 @@ export class ScrollWatcher {
       const element = options._element;
       const currEntry = allCallbacks.get(element)?.get(handler);
       if (currEntry?._trackType === trackType) {
-        MH.remove(currEntry._callback);
+        _.remove(currEntry._callback);
 
         if (handler === setScrollCssProps) {
           // delete the properties
@@ -456,7 +456,7 @@ export class ScrollWatcher {
       const element = options._element;
       const eventTarget = options._eventTarget;
 
-      MH.deleteKey(allCallbacks.get(element), handler);
+      _.deleteKey(allCallbacks.get(element), handler);
       allCallbacks.prune(element);
 
       const listenerOptions = activeListeners.get(eventTarget);
@@ -470,9 +470,9 @@ export class ScrollWatcher {
           element,
         );
 
-        MH.deleteKey(allScrollData, element);
-        removeEventListenerFrom(eventTarget, MC.S_SCROLL, scrollHandler);
-        MH.deleteKey(activeListeners, eventTarget);
+        _.deleteKey(allScrollData, element);
+        removeEventListenerFrom(eventTarget, _.S_SCROLL, scrollHandler);
+        _.deleteKey(activeListeners, eventTarget);
         // TODO: Should we unwrap children if previously WE wrapped them?
       }
     };
@@ -485,8 +485,8 @@ export class ScrollWatcher {
       const scrollCallback = entry._callback;
       debug: logger?.debug8("Setting up size tracking", element);
 
-      const doc = MH.getDoc();
-      const docScrollingElement = MH.getDocScrollingElement();
+      const doc = _.getDoc();
+      const docScrollingElement = _.getDocScrollingElement();
 
       const resizeCallback = wrapCallback(async () => {
         // Get the latest scroll data for the scrollable
@@ -527,7 +527,7 @@ export class ScrollWatcher {
       const setupOnResize = (target?: SizeTarget) =>
         sizeWatcher.onResize(resizeCallback, {
           target,
-          [MC.S_DEBOUNCE_WINDOW]: options._debounceWindow,
+          [_.S_DEBOUNCE_WINDOW]: options._debounceWindow,
           // TODO maybe accepts resizeThreshold option
           threshold: options._threshold,
         });
@@ -550,7 +550,7 @@ export class ScrollWatcher {
       // the size of the content.
       // We also need to keep track of elements being added to the scrollable element.
 
-      const observedElements = MH.newSet<Element>([element]);
+      const observedElements = _.newSet<Element>([element]);
 
       // Observe the scrolling element
       setupOnResize(element);
@@ -558,8 +558,8 @@ export class ScrollWatcher {
       // And also its children (if possible, a single wrapper around them
       const wrapper = await tryWrapContent(element, {
         _classNames: [
-          MC.PREFIX_WRAPPER,
-          MC.PREFIX_WRAPPER_CONTENT,
+          _.PREFIX_WRAPPER,
+          _.PREFIX_WRAPPER_CONTENT,
           PREFIX_WRAPPER,
         ],
       });
@@ -569,7 +569,7 @@ export class ScrollWatcher {
 
         //
       } else {
-        for (const child of MH.childrenOf(element)) {
+        for (const child of _.childrenOf(element)) {
           setupOnResize(child);
           observedElements.add(child);
         }
@@ -583,7 +583,7 @@ export class ScrollWatcher {
       });
 
       const onAddedCallback = wrapCallback((operation: MutationOperation) => {
-        const child = MH.currentTargetOf(operation);
+        const child = _.currentTargetOf(operation);
         // If we've just added the wrapper, it will be in DOMWatcher's queue,
         // so check.
         if (child !== wrapper) {
@@ -600,7 +600,7 @@ export class ScrollWatcher {
         }
       });
 
-      domWatcher.onMutation(onAddedCallback, { categories: [MC.S_ADDED] });
+      domWatcher.onMutation(onAddedCallback, { categories: [_.S_ADDED] });
       resizeCallback.onRemove(onAddedCallback.remove);
     };
 
@@ -620,9 +620,9 @@ export class ScrollWatcher {
       //   document
       //
       // then event.target suffices.
-      const scrollable = MH.targetOf(event);
+      const scrollable = _.targetOf(event);
       /* istanbul ignore next */
-      if (!scrollable || !(MH.isElement(scrollable) || MH.isDoc(scrollable))) {
+      if (!scrollable || !(_.isElement(scrollable) || _.isDoc(scrollable))) {
         return;
       }
 
@@ -683,11 +683,11 @@ export class ScrollWatcher {
 
     this.scroll = (direction, options) => {
       if (!isValidScrollDirection(direction)) {
-        throw MH.usageError(`Unknown scroll direction: '${direction}'`);
+        throw usageError(`Unknown scroll direction: '${direction}'`);
       }
 
-      const isVertical = direction === MC.S_UP || direction === MC.S_DOWN;
-      const sign = direction === MC.S_UP || direction === MC.S_LEFT ? -1 : 1;
+      const isVertical = direction === _.S_UP || direction === _.S_DOWN;
+      const sign = direction === _.S_UP || direction === _.S_LEFT ? -1 : 1;
       let targetCoordinate: TargetCoordinate;
 
       const amount = options?.amount ?? 100;
@@ -696,33 +696,30 @@ export class ScrollWatcher {
       if (asFractionOf === "visible") {
         targetCoordinate = isVertical
           ? (el) =>
-              el[MC.S_SCROLL_TOP] +
+              el[_.S_SCROLL_TOP] +
               (sign * amount * getClientHeightNow(el)) / 100
           : (el) =>
-              el[MC.S_SCROLL_LEFT] +
+              el[_.S_SCROLL_LEFT] +
               (sign * amount * getClientWidthNow(el)) / 100;
 
         //
       } else if (asFractionOf === "content") {
         targetCoordinate = isVertical
           ? (el) =>
-              el[MC.S_SCROLL_TOP] +
-              (sign * amount * el[MC.S_SCROLL_HEIGHT]) / 100
+              el[_.S_SCROLL_TOP] + (sign * amount * el[_.S_SCROLL_HEIGHT]) / 100
           : (el) =>
-              el[MC.S_SCROLL_LEFT] +
-              (sign * amount * el[MC.S_SCROLL_WIDTH]) / 100;
+              el[_.S_SCROLL_LEFT] +
+              (sign * amount * el[_.S_SCROLL_WIDTH]) / 100;
 
         //
       } else if (asFractionOf !== undefined && asFractionOf !== "pixel") {
-        throw MH.usageError(
-          `Unknown 'asFractionOf' keyword: '${asFractionOf}'`,
-        );
+        throw usageError(`Unknown 'asFractionOf' keyword: '${asFractionOf}'`);
 
         //
       } else {
         targetCoordinate = isVertical
-          ? (el) => el[MC.S_SCROLL_TOP] + sign * amount
-          : (el) => el[MC.S_SCROLL_LEFT] + sign * amount;
+          ? (el) => el[_.S_SCROLL_TOP] + sign * amount
+          : (el) => el[_.S_SCROLL_LEFT] + sign * amount;
       }
 
       const target = isVertical
@@ -737,7 +734,7 @@ export class ScrollWatcher {
     this.scrollTo = async (to, options) =>
       scrollTo(
         to,
-        MH.merge(options, {
+        _.merge(options, {
           duration: options?.duration ?? config._scrollDuration, // default
           scrollable: await fetchScrollableElement(options?.scrollable), // override
         }),
@@ -755,9 +752,9 @@ export class ScrollWatcher {
     this.stopUserScrolling = async (options) => {
       const element = await fetchScrollableElement(options?.scrollable);
       const stopScroll = () =>
-        MH.elScrollTo(element, {
-          top: element[MC.S_SCROLL_TOP],
-          left: element[MC.S_SCROLL_LEFT],
+        _.elScrollTo(element, {
+          top: element[_.S_SCROLL_TOP],
+          left: element[_.S_SCROLL_LEFT],
         });
 
       if (options?.immediate) {
@@ -1033,17 +1030,17 @@ type CallbackEntry = {
 
 type TrackType = typeof TRACK_REGULAR | typeof TRACK_FULL;
 
-const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
-const instances = MH.newMap<string, ScrollWatcher>();
+const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
+const instances = _.newMap<string, ScrollWatcher>();
 
-const PREFIX_WRAPPER = MH.prefixName("scroll-watcher-wrapper");
+const PREFIX_WRAPPER = _.prefixName("scroll-watcher-wrapper");
 
 const getConfig = (
   config: ScrollWatcherConfig | undefined,
 ): ScrollWatcherConfigInternal => {
   config ??= {};
   return {
-    _debounceWindow: toNonNegNum(config[MC.S_DEBOUNCE_WINDOW], 75),
+    _debounceWindow: toNonNegNum(config[_.S_DEBOUNCE_WINDOW], 75),
     // If threshold is 0, internally treat as 1 (pixel)
     _scrollThreshold: toNonNegNum(config.scrollThreshold, 50) || 1,
     _scrollDuration: toNonNegNum(config.scrollDuration, settings.effectLag),
@@ -1071,14 +1068,14 @@ const fetchOnScrollOptions = async (
     _directions: directions,
     // If threshold is 0, internally treat as 1 (pixel)
     _threshold: toNonNegNum(options.threshold, config._scrollThreshold) || 1,
-    _debounceWindow: options[MC.S_DEBOUNCE_WINDOW] ?? config._debounceWindow,
+    _debounceWindow: options[_.S_DEBOUNCE_WINDOW] ?? config._debounceWindow,
   };
 };
 
 const directionMatches = (
   userDirections: ScrollDirection[] | null,
   latestDirection: ScrollDirection,
-) => !userDirections || MH.includes(userDirections, latestDirection);
+) => !userDirections || _.includes(userDirections, latestDirection);
 
 const hasExceededThreshold = (
   options: OnScrollOptionsInternal,
@@ -1093,15 +1090,15 @@ const hasExceededThreshold = (
   }
 
   const topDiff = maxAbs(
-    latestData[MC.S_SCROLL_TOP] - lastThresholdData[MC.S_SCROLL_TOP],
-    latestData[MC.S_SCROLL_HEIGHT] - lastThresholdData[MC.S_SCROLL_HEIGHT],
-    latestData[MC.S_CLIENT_HEIGHT] - lastThresholdData[MC.S_CLIENT_HEIGHT],
+    latestData[_.S_SCROLL_TOP] - lastThresholdData[_.S_SCROLL_TOP],
+    latestData[_.S_SCROLL_HEIGHT] - lastThresholdData[_.S_SCROLL_HEIGHT],
+    latestData[_.S_CLIENT_HEIGHT] - lastThresholdData[_.S_CLIENT_HEIGHT],
   );
 
   const leftDiff = maxAbs(
-    latestData[MC.S_SCROLL_LEFT] - lastThresholdData[MC.S_SCROLL_LEFT],
-    latestData[MC.S_SCROLL_WIDTH] - lastThresholdData[MC.S_SCROLL_WIDTH],
-    latestData[MC.S_CLIENT_WIDTH] - lastThresholdData[MC.S_CLIENT_WIDTH],
+    latestData[_.S_SCROLL_LEFT] - lastThresholdData[_.S_SCROLL_LEFT],
+    latestData[_.S_SCROLL_WIDTH] - lastThresholdData[_.S_SCROLL_WIDTH],
+    latestData[_.S_CLIENT_WIDTH] - lastThresholdData[_.S_CLIENT_WIDTH],
   );
 
   // If the callback is only interested in up/down, then only check the
@@ -1110,21 +1107,15 @@ const hasExceededThreshold = (
     checkLeft = false;
   if (
     !directions ||
-    MH.includes(directions, MC.S_NONE) ||
-    MH.includes(directions, MC.S_AMBIGUOUS)
+    _.includes(directions, _.S_NONE) ||
+    _.includes(directions, _.S_AMBIGUOUS)
   ) {
     checkTop = checkLeft = true;
   } else {
-    if (
-      MH.includes(directions, MC.S_UP) ||
-      MH.includes(directions, MC.S_DOWN)
-    ) {
+    if (_.includes(directions, _.S_UP) || _.includes(directions, _.S_DOWN)) {
       checkTop = true;
     }
-    if (
-      MH.includes(directions, MC.S_LEFT) ||
-      MH.includes(directions, MC.S_RIGHT)
-    ) {
+    if (_.includes(directions, _.S_LEFT) || _.includes(directions, _.S_RIGHT)) {
       checkLeft = true;
     }
   }
@@ -1143,17 +1134,17 @@ const fetchScrollData = async (
     await waitForMeasureTime();
   }
 
-  const scrollTop = MH.ceil(element[MC.S_SCROLL_TOP]);
-  const scrollLeft = MH.ceil(element[MC.S_SCROLL_LEFT]);
-  const scrollWidth = element[MC.S_SCROLL_WIDTH];
-  const scrollHeight = element[MC.S_SCROLL_HEIGHT];
+  const scrollTop = _.ceil(element[_.S_SCROLL_TOP]);
+  const scrollLeft = _.ceil(element[_.S_SCROLL_LEFT]);
+  const scrollWidth = element[_.S_SCROLL_WIDTH];
+  const scrollHeight = element[_.S_SCROLL_HEIGHT];
   const clientWidth = getClientWidthNow(element);
   const clientHeight = getClientHeightNow(element);
 
   const scrollTopFraction =
-    MH.round(scrollTop) / (scrollHeight - clientHeight || MC.INFINITY);
+    _.round(scrollTop) / (scrollHeight - clientHeight || _.INFINITY);
   const scrollLeftFraction =
-    MH.round(scrollLeft) / (scrollWidth - clientWidth || MC.INFINITY);
+    _.round(scrollLeft) / (scrollWidth - clientWidth || _.INFINITY);
 
   const prevScrollTop = previousEventData?.scrollTop ?? 0;
   const prevScrollLeft = previousEventData?.scrollLeft ?? 0;
@@ -1165,14 +1156,14 @@ const fetchScrollData = async (
 
   return {
     direction,
-    [MC.S_CLIENT_WIDTH]: clientWidth,
-    [MC.S_CLIENT_HEIGHT]: clientHeight,
-    [MC.S_SCROLL_WIDTH]: scrollWidth,
-    [MC.S_SCROLL_HEIGHT]: scrollHeight,
-    [MC.S_SCROLL_TOP]: scrollTop,
-    [MC.S_SCROLL_TOP_FRACTION]: scrollTopFraction,
-    [MC.S_SCROLL_LEFT]: scrollLeft,
-    [MC.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
+    [_.S_CLIENT_WIDTH]: clientWidth,
+    [_.S_CLIENT_HEIGHT]: clientHeight,
+    [_.S_SCROLL_WIDTH]: scrollWidth,
+    [_.S_SCROLL_HEIGHT]: scrollHeight,
+    [_.S_SCROLL_TOP]: scrollTop,
+    [_.S_SCROLL_TOP_FRACTION]: scrollTopFraction,
+    [_.S_SCROLL_LEFT]: scrollLeft,
+    [_.S_SCROLL_LEFT_FRACTION]: scrollLeftFraction,
   };
 };
 
@@ -1183,25 +1174,25 @@ const setScrollCssProps = (
   let prefix = "";
   if (element === tryGetMainScrollableElement()) {
     // Set the CSS vars on the root element
-    element = MH.getDocElement();
+    element = _.getDocElement();
     prefix = "page-";
   }
 
   scrollData ??= {};
   const props = {
-    [MC.S_SCROLL_TOP]: scrollData[MC.S_SCROLL_TOP],
-    [MC.S_SCROLL_TOP_FRACTION]: scrollData[MC.S_SCROLL_TOP_FRACTION],
-    [MC.S_SCROLL_LEFT]: scrollData[MC.S_SCROLL_LEFT],
-    [MC.S_SCROLL_LEFT_FRACTION]: scrollData[MC.S_SCROLL_LEFT_FRACTION],
-    [MC.S_SCROLL_WIDTH]: scrollData[MC.S_SCROLL_WIDTH],
-    [MC.S_SCROLL_HEIGHT]: scrollData[MC.S_SCROLL_HEIGHT],
+    [_.S_SCROLL_TOP]: scrollData[_.S_SCROLL_TOP],
+    [_.S_SCROLL_TOP_FRACTION]: scrollData[_.S_SCROLL_TOP_FRACTION],
+    [_.S_SCROLL_LEFT]: scrollData[_.S_SCROLL_LEFT],
+    [_.S_SCROLL_LEFT_FRACTION]: scrollData[_.S_SCROLL_LEFT_FRACTION],
+    [_.S_SCROLL_WIDTH]: scrollData[_.S_SCROLL_WIDTH],
+    [_.S_SCROLL_HEIGHT]: scrollData[_.S_SCROLL_HEIGHT],
   };
   setNumericStyleJsVars(element, props, { _prefix: prefix });
 };
 
 const getEventTarget = (element: Element): ScrollTarget => {
-  if (element === MH.getDocScrollingElement()) {
-    return MH.getDoc();
+  if (element === _.getDocScrollingElement()) {
+    return _.getDoc();
   }
 
   return element;
@@ -1217,8 +1208,10 @@ const invokeCallback = (
   callback
     .invoke(
       element,
-      deepCopy(scrollData),
+      _.deepCopy(scrollData),
       lastScrollData, // no need to copy that one as it's not used again
       watcher,
     )
     .catch(logError);
+
+_.brandClass(ScrollWatcher, "ScrollWatcher");

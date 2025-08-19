@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { Position } from "@lisn/globals/types";
 
@@ -11,7 +10,7 @@ import { Position } from "@lisn/globals/types";
  * @category Validation
  */
 export const isValidPosition = (position: string): position is Position =>
-  MH.includes(POSITIONS as readonly string[], position);
+  _.includes(POSITIONS as readonly string[], position);
 
 /**
  * @category Validation
@@ -25,12 +24,7 @@ export const isValidTwoFoldPosition = (
  * @ignore
  * @internal
  */
-export const POSITIONS = [
-  MC.S_TOP,
-  MC.S_BOTTOM,
-  MC.S_LEFT,
-  MC.S_RIGHT,
-] as const;
+export const POSITIONS = [_.S_TOP, _.S_BOTTOM, _.S_LEFT, _.S_RIGHT] as const;
 
 // --------------------
 

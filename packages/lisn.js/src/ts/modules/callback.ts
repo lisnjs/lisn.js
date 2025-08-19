@@ -2,8 +2,9 @@
  * @module Modules/Callback
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { getDebouncedHandler } from "@lisn/utils/tasks";
 
@@ -42,7 +43,7 @@ export const wrapCallback = <Args extends readonly unknown[] = []>(
   handlerOrCallback: CallbackHandler<Args> | Callback<Args>,
   debounceWindow = 0,
 ): Callback<Args> => {
-  const isFunction = MH.isFunction(handlerOrCallback);
+  const isFunction = _.isFunction(handlerOrCallback);
   let isRemoved = () => false;
 
   if (isFunction) {
@@ -91,7 +92,7 @@ export class Callback<Args extends readonly unknown[] = []> {
    *
    * Do not do anything. Same as not retuning anything from the function.
    */
-  static readonly KEEP: unique symbol = MC.SYMBOL(
+  static readonly KEEP: unique symbol = _.SYMBOL(
     "KEEP",
   ) as typeof Callback.KEEP;
 
@@ -100,7 +101,7 @@ export class Callback<Args extends readonly unknown[] = []> {
    *
    * Will remove this callback.
    */
-  static readonly REMOVE: unique symbol = MC.SYMBOL(
+  static readonly REMOVE: unique symbol = _.SYMBOL(
     "REMOVE",
   ) as typeof Callback.REMOVE;
 
@@ -187,9 +188,9 @@ export class Callback<Args extends readonly unknown[] = []> {
       : null;
 
     let isRemoved = false;
-    const id = MC.SYMBOL();
+    const id = _.SYMBOL();
 
-    const removeHandlers = MH.newSet<OnRemoveHandler>();
+    const removeHandlers = _.newSet<OnRemoveHandler>();
 
     this.isRemoved = () => isRemoved;
 
@@ -209,22 +210,22 @@ export class Callback<Args extends readonly unknown[] = []> {
 
     this.onRemove = (handler) => {
       removeHandlers.add(handler);
-      if (MH.isInstanceOf(handler, Callback)) {
+      if (_.isInstanceOf(handler, Callback)) {
         handler.onRemove(() => {
-          MH.deleteKey(removeHandlers, handler);
+          _.deleteKey(removeHandlers, handler);
         });
       }
     };
 
     this.offRemove = (handler) => {
-      MH.deleteKey(removeHandlers, handler);
+      _.deleteKey(removeHandlers, handler);
     };
 
     this.invoke = (...args) =>
-      MH.newPromise((resolve, reject) => {
+      _.newPromise((resolve, reject) => {
         debug: logger?.debug8("Calling with", args);
         if (isRemoved) {
-          reject(MH.usageError("Callback has been removed"));
+          reject(usageError("Callback has been removed"));
           return;
         }
 
@@ -252,6 +253,8 @@ export class Callback<Args extends readonly unknown[] = []> {
   }
 }
 
+// ----------
+
 /**
  * Invokes the given callbacks or handlers with the given args.
  *
@@ -270,9 +273,9 @@ export const invokeHandlers = async <
 ) => {
   const promises: unknown[] = [];
   for (const handler of set) {
-    if (MH.isInstanceOf(handler, Callback)) {
+    if (_.isInstanceOf(handler, Callback)) {
       promises.push(handler.invoke(...args));
-    } else if (MH.isFunction(handler)) {
+    } else if (_.isFunction(handler)) {
       // TypeScript can't figure it out that it's a function otherwise
       promises.push(handler(...args));
     }
@@ -334,15 +337,15 @@ export function addNewCallbackToMap(
   const callback = wrapCallback(handler);
   let value: unknown = callback;
 
-  if (MH.isArray(data)) {
+  if (_.isArray(data)) {
     value = [callback, ...data];
-  } else if (!MH.isNullish(data)) {
+  } else if (!_.isNullish(data)) {
     value = [callback, data];
   }
 
   map.set(handler, value);
   callback.onRemove(() => {
-    MH.deleteKey(map, handler);
+    _.deleteKey(map, handler);
   });
 
   return callback;
@@ -361,16 +364,16 @@ type CallableCallback<Args extends readonly unknown[] = []> = (
   ...args: Args
 ) => void;
 
-const callablesMap = MH.newWeakMap<CallableCallback, Callback>();
+const callablesMap = _.newWeakMap<CallableCallback, Callback>();
 
 const CallbackScheduler = (() => {
-  const queues = MH.newMap<symbol, CallbackSchedulerQueueItem[]>();
+  const queues = _.newMap<symbol, CallbackSchedulerQueueItem[]>();
 
   const flush = async (queue: CallbackSchedulerQueueItem[]) => {
     // So that callbacks are always called asynchronously for consistency,
     // await here before calling 1st
     await null;
-    while (MH.lengthOf(queue)) {
+    while (_.lengthOf(queue)) {
       // shouldn't throw anything as Callback must catch errors
       queue[0]._running = true;
       await queue[0]._task();
@@ -391,7 +394,7 @@ const CallbackScheduler = (() => {
           }
         }
 
-        MH.deleteKey(queues, id);
+        _.deleteKey(queues, id);
       }
     },
 
@@ -403,9 +406,11 @@ const CallbackScheduler = (() => {
       }
 
       queue.push({ _task: task, _onRemove: onRemove, _running: false });
-      if (MH.lengthOf(queue) === 1) {
+      if (_.lengthOf(queue) === 1) {
         flush(queue);
       }
     },
   };
 })();
+
+_.brandClass(Callback, "Callback");

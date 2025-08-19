@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { PointerAction } from "@lisn/globals/types";
 
@@ -15,7 +14,7 @@ import { isValidStrList } from "@lisn/utils/validation";
  * @category Validation
  */
 export const isValidPointerAction = (action: string): action is PointerAction =>
-  MH.includes(POINTER_ACTIONS, action);
+  _.includes(POINTER_ACTIONS, action);
 
 /**
  * Returns true if the given string or array is a valid list of pointer
@@ -31,7 +30,7 @@ export const isValidPointerActionList = (actions: string | string[]) =>
  * @internal
  */
 export const POINTER_ACTIONS: PointerAction[] = [
-  MC.S_CLICK,
-  MC.S_HOVER,
-  MC.S_PRESS,
+  _.S_CLICK,
+  _.S_HOVER,
+  _.S_PRESS,
 ] as const;

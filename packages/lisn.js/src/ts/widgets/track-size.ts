@@ -2,7 +2,7 @@
  * @module Widgets
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { validateNumber } from "@lisn/utils/validation";
 
@@ -51,7 +51,7 @@ import {
 export class TrackSize extends Widget {
   static get(element: Element): TrackSize | null {
     const instance = super.get(element, DUMMY_ID);
-    if (MH.isInstanceOf(instance, TrackSize)) {
+    if (_.isInstanceOf(instance, TrackSize)) {
       return instance;
     }
     return null;
@@ -75,7 +75,7 @@ export class TrackSize extends Widget {
 
     SizeWatcher.reuse().trackSize(
       null,
-      MH.assign(
+      _.assign(
         {
           target: element,
         },
@@ -122,3 +122,5 @@ const configValidator: WidgetConfigValidatorObject<TrackSizeConfig> = {
   threshold: validateNumber,
   debounceWindow: validateNumber,
 };
+
+_.brandClass(TrackSize, "TrackSize");

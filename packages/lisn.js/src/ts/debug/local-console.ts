@@ -2,7 +2,7 @@
  * @module Debugging
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { LogFunction } from "@lisn/globals/types";
 
@@ -26,25 +26,27 @@ export class LocalConsole implements ConsoleInterface {
   readonly error: LogFunction;
 
   constructor() {
-    this.debug = isiOS ? iOSlog : isJest ? jestLog.debug : MH.consoleDebug;
-    this.log = isiOS ? iOSlog : isJest ? jestLog.log : MH.consoleLog;
-    this.info = isiOS ? iOSlog : isJest ? jestLog.info : MH.consoleInfo;
-    this.warn = isiOS ? iOSlog : isJest ? jestLog.warn : MH.consoleWarn;
-    this.error = isiOS ? iOSlog : isJest ? jestLog.error : MH.consoleError;
+    this.debug = isiOS ? iOSlog : isJest ? jestLog.debug : _.consoleDebug;
+    this.log = isiOS ? iOSlog : isJest ? jestLog.log : _.consoleLog;
+    this.info = isiOS ? iOSlog : isJest ? jestLog.info : _.consoleInfo;
+    this.warn = isiOS ? iOSlog : isJest ? jestLog.warn : _.consoleWarn;
+    this.error = isiOS ? iOSlog : isJest ? jestLog.error : _.consoleError;
   }
 }
 
 // ------------------------------
 
-const isiOS = MH.includes(MH.userAgent, "iPhone OS");
+const isiOS = _.includes(_.userAgent, "iPhone OS");
 const iOSlog: LogFunction = (...args) =>
-  MH.consoleInfo(joinAsString(" ", ...args));
+  _.consoleInfo(joinAsString(" ", ...args));
 
-const isJest = MH.includes(MH.userAgent, " jsdom/");
+const isJest = _.includes(_.userAgent, " jsdom/");
 const jestLog: Record<LevelName, LogFunction> = {
-  debug: (...args) => MH.consoleDebug(joinAsString(" ", ...args)),
-  log: (...args) => MH.consoleLog(joinAsString(" ", ...args)),
-  info: (...args) => MH.consoleInfo(joinAsString(" ", ...args)),
-  warn: (...args) => MH.consoleWarn(joinAsString(" ", ...args)),
-  error: (...args) => MH.consoleError(joinAsString(" ", ...args)),
+  debug: (...args) => _.consoleDebug(joinAsString(" ", ...args)),
+  log: (...args) => _.consoleLog(joinAsString(" ", ...args)),
+  info: (...args) => _.consoleInfo(joinAsString(" ", ...args)),
+  warn: (...args) => _.consoleWarn(joinAsString(" ", ...args)),
+  error: (...args) => _.consoleError(joinAsString(" ", ...args)),
 };
+
+_.brandClass(LocalConsole, "LocalConsole");

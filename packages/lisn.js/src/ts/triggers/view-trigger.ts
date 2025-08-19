@@ -8,15 +8,13 @@
  * actions when the viewport's "view" is not matching.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { ViewTarget, View, CommaSeparatedStr } from "@lisn/globals/types";
 
 import { hasClass } from "@lisn/utils/css-alter";
 import { insertGhostClone, tryWrap } from "@lisn/utils/dom-alter";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { deepCopy } from "@lisn/utils/misc";
 import { formatAsString } from "@lisn/utils/text";
 import {
   validateStrList,
@@ -178,7 +176,7 @@ export class ViewTrigger extends Trigger {
         return new ViewTrigger(
           element,
           actions,
-          MH.assign(config, {
+          _.assign(config, {
             views: validateStrList("views", args, isValidView),
           } as const),
         );
@@ -203,14 +201,14 @@ export class ViewTrigger extends Trigger {
         })
       : null;
 
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
 
-    if (!MH.lengthOf(actions)) {
+    if (!_.lengthOf(actions)) {
       return;
     }
 
     let rootMargin = config.rootMargin;
-    if (MH.isString(rootMargin)) {
+    if (_.isString(rootMargin)) {
       rootMargin = rootMargin.replace(/,/g, " ");
     }
 
@@ -221,11 +219,11 @@ export class ViewTrigger extends Trigger {
     });
 
     const target = config.target ?? element;
-    const views = config.views || MC.S_AT;
+    const views = config.views || _.S_AT;
     const oppositeViews = getOppositeViews(views);
 
     const setupWatcher = (target: ViewTarget) => {
-      if (!MH.lengthOf(oppositeViews)) {
+      if (!_.lengthOf(oppositeViews)) {
         debug: logger?.debug6("Trigger can never be reversed, running now");
         // The action is never undone
         this.run();
@@ -240,8 +238,8 @@ export class ViewTrigger extends Trigger {
     let willAnimate = false;
     for (const action of actions) {
       if (
-        MH.isInstanceOf(action, Animate) ||
-        MH.isInstanceOf(action, AnimatePlay)
+        _.isInstanceOf(action, Animate) ||
+        _.isInstanceOf(action, AnimatePlay)
       ) {
         willAnimate = true;
         break;
@@ -317,13 +315,13 @@ const newConfigValidator: WidgetConfigValidatorFunc<
 > = (element) => {
   return {
     target: (key, value) =>
-      MH.isLiteralString(value) && isValidScrollOffset(value)
+      _.isLiteralString(value) && isValidScrollOffset(value)
         ? value
-        : MH.isLiteralString(value)
+        : _.isLiteralString(value)
           ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
           : undefined,
     root: (key, value) =>
-      MH.isLiteralString(value)
+      _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
         : undefined,
     rootMargin: validateString,
@@ -340,12 +338,12 @@ const setupRepresentative = async (element: Element): Promise<Element> => {
     // element's regular (pre-transformed) position.
 
     const prev = element.previousElementSibling;
-    const prevChild = MH.childrenOf(prev)[0];
+    const prevChild = _.childrenOf(prev)[0];
     if (
       prev &&
-      hasClass(prev, MC.PREFIX_WRAPPER) &&
+      hasClass(prev, _.PREFIX_WRAPPER) &&
       prevChild &&
-      hasClass(prevChild, MC.PREFIX_GHOST)
+      hasClass(prevChild, _.PREFIX_GHOST)
     ) {
       // Already cloned by a previous animate action?
       target = prevChild;
@@ -356,3 +354,5 @@ const setupRepresentative = async (element: Element): Promise<Element> => {
 
   return target;
 };
+
+_.brandClass(ViewTrigger, "ViewTrigger");

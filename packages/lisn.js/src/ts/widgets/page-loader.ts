@@ -2,7 +2,7 @@
  * @module Widgets
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import {
   displayElement,
@@ -82,7 +82,7 @@ export class PageLoader extends Widget {
     }
 
     const instance = super.get(element, DUMMY_ID);
-    if (MH.isInstanceOf(instance, PageLoader)) {
+    if (_.isInstanceOf(instance, PageLoader)) {
       return instance;
     }
     return null;
@@ -106,7 +106,7 @@ export class PageLoader extends Widget {
    * as a {@link PageLoader}.
    */
   static enableMain(config?: PageLoaderConfig) {
-    const loader = MH.createElement("div");
+    const loader = _.createElement("div");
     const widget = new PageLoader(loader, config);
     widget.onDestroy(() => {
       if (mainWidget === widget) {
@@ -115,7 +115,7 @@ export class PageLoader extends Widget {
       return moveElement(loader);
     });
 
-    waitForElement(MH.getBody).then((body) => {
+    waitForElement(_.getBody).then((body) => {
       if (!widget.isDestroyed()) {
         moveElement(loader, { to: body });
       }
@@ -129,18 +129,18 @@ export class PageLoader extends Widget {
     const destroyPromise = PageLoader.get(element)?.destroy();
     super(element, { id: DUMMY_ID });
 
-    (destroyPromise || MH.promiseResolve()).then(() => {
+    (destroyPromise || _.promiseResolve()).then(() => {
       if (this.isDestroyed()) {
         return;
       }
 
       addClasses(element, PREFIX_ROOT);
 
-      const spinner = MH.createElement("div");
+      const spinner = _.createElement("div");
       addClasses(spinner, PREFIX_SPINNER);
 
       moveElement(spinner, { to: element });
-      waitForElement(MH.getBody).then(setHasModal); // we could be init before body
+      waitForElement(_.getBody).then(setHasModal); // we could be init before body
 
       if (config?.autoRemove ?? true) {
         waitForPageReady()
@@ -150,7 +150,7 @@ export class PageLoader extends Widget {
 
       this.onDisable(() => {
         undisplayElement(element);
-        if (!MH.docQuerySelector(`.${PREFIX_ROOT}`)) {
+        if (!_.docQuerySelector(`.${PREFIX_ROOT}`)) {
           delHasModal();
         }
       });
@@ -184,9 +184,9 @@ export type PageLoaderConfig = {
 // --------------------
 
 const WIDGET_NAME = "page-loader";
-const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
+const PREFIXED_NAME = _.prefixName(WIDGET_NAME);
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
-const PREFIX_SPINNER = MH.prefixName("spinner");
+const PREFIX_SPINNER = _.prefixName("spinner");
 // Only one PageLoader widget per element is allowed, but Widget requires a
 // non-blank ID.
 // In fact, it doesn't make much sense to have more than 1 page loader on the
@@ -198,3 +198,5 @@ let mainWidget: PageLoader | null = null;
 const configValidator: WidgetConfigValidatorObject<PageLoaderConfig> = {
   autoRemove: validateBoolean,
 };
+
+_.brandClass(PageLoader, "PageLoader");

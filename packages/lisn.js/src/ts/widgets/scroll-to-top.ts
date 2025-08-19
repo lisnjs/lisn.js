@@ -2,8 +2,7 @@
  * @module Widgets
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { ScrollOffsetSpec } from "@lisn/globals/types";
 
@@ -177,7 +176,7 @@ export class ScrollToTop extends Widget {
     }
 
     const instance = super.get(element, DUMMY_ID);
-    if (MH.isInstanceOf(instance, ScrollToTop)) {
+    if (_.isInstanceOf(instance, ScrollToTop)) {
       return instance;
     }
     return null;
@@ -201,7 +200,7 @@ export class ScrollToTop extends Widget {
    * configures it as a {@link ScrollToTop}.
    */
   static enableMain(config?: ScrollToTopConfig) {
-    const button = MH.createButton("Back to top");
+    const button = _.createButton("Back to top");
     const widget = new ScrollToTop(button, config);
     widget.onDestroy(() => {
       if (mainWidget === widget) {
@@ -210,7 +209,7 @@ export class ScrollToTop extends Widget {
       return moveElement(button);
     });
 
-    waitForElement(MH.getBody).then((body) => {
+    waitForElement(_.getBody).then((body) => {
       if (!widget.isDestroyed()) {
         moveElement(button, { to: body });
       }
@@ -226,13 +225,13 @@ export class ScrollToTop extends Widget {
 
     const offset: ScrollOffsetSpec =
       config?.offset ||
-      `${MC.S_TOP}: var(${MH.prefixCssVar("scroll-to-top--offset")}, 200vh)`;
-    const position: "left" | "right" = config?.position || MC.S_RIGHT;
+      `${_.S_TOP}: var(${_.prefixCssVar("scroll-to-top--offset")}, 200vh)`;
+    const position: "left" | "right" = config?.position || _.S_RIGHT;
     const scrollable = config?.scrollable;
     const hasCustomScrollable =
       scrollable &&
-      scrollable !== MH.getDocElement() &&
-      scrollable !== MH.getBody();
+      scrollable !== _.getDocElement() &&
+      scrollable !== _.getBody();
 
     const scrollWatcher = ScrollWatcher.reuse();
     const viewWatcher = ViewWatcher.reuse(
@@ -256,7 +255,7 @@ export class ScrollToTop extends Widget {
 
     // SETUP ------------------------------
 
-    (destroyPromise || MH.promiseResolve()).then(async () => {
+    (destroyPromise || _.promiseResolve()).then(async () => {
       const flexDirection = scrollable
         ? await getParentFlexDirection(scrollable)
         : null;
@@ -268,7 +267,7 @@ export class ScrollToTop extends Widget {
 
       if (hasCustomScrollable) {
         // Add a placeholder to restore its position on destroy.
-        placeholder = MH.createElement("div");
+        placeholder = _.createElement("div");
         moveElementNow(placeholder, {
           to: element,
           position: "before",
@@ -280,8 +279,8 @@ export class ScrollToTop extends Widget {
         // we need to insert it before the scrollable.
         const shouldInsertBefore =
           flexDirection === "column-reverse" ||
-          (position === MC.S_LEFT && flexDirection === "row") ||
-          (position === MC.S_RIGHT && flexDirection === "row-reverse");
+          (position === _.S_LEFT && flexDirection === "row") ||
+          (position === _.S_RIGHT && flexDirection === "row-reverse");
 
         moveElementNow(element, {
           to: scrollable,
@@ -297,20 +296,20 @@ export class ScrollToTop extends Widget {
       addClassesNow(root, PREFIX_ROOT);
       addClassesNow(element, PREFIX_BTN);
       setBooleanDataNow(root, PREFIX_FIXED, !hasCustomScrollable);
-      setDataNow(root, MC.PREFIX_PLACE, position);
+      setDataNow(root, _.PREFIX_PLACE, position);
 
-      arrow = insertArrow(element, MC.S_UP);
+      arrow = insertArrow(element, _.S_UP);
 
       hideIt(); // initial
 
-      addEventListenerTo(element, MC.S_CLICK, clickListener);
+      addEventListenerTo(element, _.S_CLICK, clickListener);
 
       viewWatcher.onView(offset, showIt, {
-        views: [MC.S_AT, MC.S_BELOW],
+        views: [_.S_AT, _.S_BELOW],
       });
 
       viewWatcher.onView(offset, hideIt, {
-        views: [MC.S_ABOVE],
+        views: [_.S_ABOVE],
       });
 
       this.onDisable(() => {
@@ -323,12 +322,12 @@ export class ScrollToTop extends Widget {
 
       this.onDestroy(async () => {
         await waitForMutateTime();
-        removeEventListenerFrom(element, MC.S_CLICK, clickListener);
+        removeEventListenerFrom(element, _.S_CLICK, clickListener);
 
         removeClassesNow(root, PREFIX_ROOT);
         removeClassesNow(element, PREFIX_BTN);
         delDataNow(root, PREFIX_FIXED);
-        delDataNow(root, MC.PREFIX_PLACE);
+        delDataNow(root, _.PREFIX_PLACE);
         displayElementNow(root); // revert undisplay by onDisable
 
         if (arrow) {
@@ -388,13 +387,13 @@ export type ScrollToTopConfig = {
 // --------------------
 
 const WIDGET_NAME = "scroll-to-top";
-const PREFIXED_NAME = MH.prefixName(WIDGET_NAME);
+const PREFIXED_NAME = _.prefixName(WIDGET_NAME);
 // Only one ScrollToTop widget per element is allowed, but Widget requires a
 // non-blank ID.
 const DUMMY_ID = PREFIXED_NAME;
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
 const PREFIX_BTN = `${PREFIXED_NAME}__btn`;
-const PREFIX_FIXED = MH.prefixName("fixed");
+const PREFIX_FIXED = _.prefixName("fixed");
 
 let mainWidget: ScrollToTop | null = null;
 
@@ -405,10 +404,12 @@ const newConfigValidator: WidgetConfigValidatorFunc<ScrollToTopConfig> = (
   return {
     offset: (key, value) => validateString(key, value, isValidScrollOffset),
     position: (key, value) =>
-      validateString(key, value, (v) => v === MC.S_LEFT || v === MC.S_RIGHT),
+      validateString(key, value, (v) => v === _.S_LEFT || v === _.S_RIGHT),
     scrollable: (key, value) =>
-      MH.isLiteralString(value)
+      _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
         : undefined,
   };
 };
+
+_.brandClass(ScrollToTop, "ScrollToTop");

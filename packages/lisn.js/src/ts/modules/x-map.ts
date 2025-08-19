@@ -2,8 +2,7 @@
  * @module Modules/XMap
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { MapBase } from "@lisn/globals/types";
 
@@ -112,19 +111,19 @@ export abstract class XMapBase<K, V> {
 
     this.prune = (sk, ...rest) => {
       const value = root.get(sk);
-      if (value instanceof XMapBase && MH.lengthOf(rest)) {
+      if (value instanceof XMapBase && _.lengthOf(rest)) {
         value.prune(rest[0], ...rest.slice(1));
       }
 
       if (
         value === undefined ||
-        (MH.isIterableObject(value) &&
+        (_.isIterableObject(value) &&
           !(
             ("size" in value && value.size) ||
             ("length" in value && value.length)
           ))
       ) {
-        MH.deleteKey(root, sk);
+        _.deleteKey(root, sk);
       }
     };
   }
@@ -181,15 +180,15 @@ export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
    *                    that is then set for that key and returned.
    */
   constructor(getDefaultV: DefaultValueGetter<K, V>) {
-    const root = MH.newMap<K, V>();
+    const root = _.newMap<K, V>();
     super(root, getDefaultV);
 
-    MH.defineProperty(this, "size", { get: () => root.size });
+    _.defineProperty(this, "size", { get: () => root.size });
     this.clear = () => root.clear();
     this.entries = () => root.entries();
     this.keys = () => root.keys();
     this.values = () => root.values();
-    this[MC.SYMBOL.iterator] = () => root[MC.SYMBOL.iterator]();
+    this[_.SYMBOL.iterator] = () => root[_.SYMBOL.iterator]();
   }
 }
 
@@ -217,7 +216,11 @@ export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
    *                    that is then set for that key and returned.
    */
   constructor(getDefaultV: DefaultValueGetter<K, V>) {
-    const root = MH.newWeakMap<K, V>();
+    const root = _.newWeakMap<K, V>();
     super(root, getDefaultV);
   }
 }
+
+_.brandClass(XMapBase, "XMapBase");
+_.brandClass(XMap, "XMap");
+_.brandClass(XWeakMap, "XWeakMap");

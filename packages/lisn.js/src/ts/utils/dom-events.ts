@@ -2,7 +2,7 @@
  * @module Utils
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -27,10 +27,10 @@ export function waitForElement<F>(
   timeout: number,
 ): Promise<null | NonNullable<F>>;
 export function waitForElement(checkFn: () => unknown, timeout?: number) {
-  return MH.newPromise((resolve) => {
+  return _.newPromise((resolve) => {
     const callFn = () => {
       const result = checkFn();
-      if (!MH.isNullish(result)) {
+      if (!_.isNullish(result)) {
         resolve(result);
         return true; // done
       }
@@ -41,7 +41,7 @@ export function waitForElement(checkFn: () => unknown, timeout?: number) {
       return; // resolved already
     }
 
-    if (!MH.isNullish(timeout)) {
+    if (!_.isNullish(timeout)) {
       setTimeout(() => {
         resolve(null);
         observer.disconnect();
@@ -80,7 +80,7 @@ export function waitForElement(checkFn: () => unknown, timeout?: number) {
  * @category DOM: Events
  */
 export const waitForElementOrInteractive = <F>(checkFn: () => F) =>
-  MH.newPromise<NonNullable<true | F> | null>((resolve) => {
+  _.newPromise<NonNullable<true | F> | null>((resolve) => {
     let isInteractive = false;
     // Check element first, then readyState. The callback to waitForElement is
     // run synchronously first time, so isInteractive will be false and checkFn
@@ -106,14 +106,14 @@ export const waitForElementOrInteractive = <F>(checkFn: () => F) =>
  * @category DOM: Events
  */
 export const waitForInteractive = () =>
-  MH.newPromise<void>((resolve) => {
-    const readyState = MH.getReadyState();
+  _.newPromise<void>((resolve) => {
+    const readyState = _.getReadyState();
     if (readyState === INTERACTIVE || readyState === COMPLETE) {
       resolve();
       return;
     }
 
-    MH.getDoc().addEventListener("DOMContentLoaded", () => resolve());
+    _.getDoc().addEventListener("DOMContentLoaded", () => resolve());
   });
 
 /**
@@ -125,14 +125,14 @@ export const waitForInteractive = () =>
  * @category DOM: Events
  */
 export const waitForComplete = () =>
-  MH.newPromise<void>((resolve) => {
-    if (MH.getReadyState() === COMPLETE) {
+  _.newPromise<void>((resolve) => {
+    if (_.getReadyState() === COMPLETE) {
       resolve();
       return;
     }
 
-    MH.getDoc().addEventListener("readystatechange", () => {
-      if (MH.getReadyState() === COMPLETE) {
+    _.getDoc().addEventListener("readystatechange", () => {
+      if (_.getReadyState() === COMPLETE) {
         resolve();
       }
     });
@@ -148,7 +148,7 @@ export const waitForComplete = () =>
  * @category DOM: Events
  */
 export const waitForPageReady = () =>
-  MH.newPromise<void>((resolve) => {
+  _.newPromise<void>((resolve) => {
     if (pageIsReady) {
       resolve();
       return;
@@ -162,14 +162,14 @@ export const waitForPageReady = () =>
       const dispatchReady = () => {
         pageIsReady = true;
         if (timer) {
-          MH.clearTimer(timer);
+          _.clearTimer(timer);
           timer = null;
         }
         resolve();
       };
 
       if (settings.pageLoadTimeout > 0) {
-        timer = MH.setTimer(() => {
+        timer = _.setTimer(() => {
           dispatchReady();
         }, settings.pageLoadTimeout);
       }
@@ -192,7 +192,7 @@ const INTERACTIVE = "interactive";
 
 let pageIsReady = false;
 
-if (!MH.hasDOM()) {
+if (!_.hasDOM()) {
   pageIsReady = true;
 } else {
   waitForPageReady(); // ensure pageIsReady is set even if waitForPageReady is not called

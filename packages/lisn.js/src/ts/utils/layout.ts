@@ -2,7 +2,9 @@
  * @module Utils
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { LisnUsageError } from "@lisn/globals/errors";
 import { settings } from "@lisn/globals/settings";
@@ -150,7 +152,7 @@ export const ORDERED_ASPECTR = createBitSpace(
  * @internal
  */
 export const NUM_LAYOUTS =
-  MH.lengthOf(ORDERED_DEVICE_NAMES) + MH.lengthOf(ORDERED_ASPECTR_NAMES);
+  _.lengthOf(ORDERED_DEVICE_NAMES) + _.lengthOf(ORDERED_ASPECTR_NAMES);
 
 // --------------------
 
@@ -208,7 +210,7 @@ const isValidForType = <T extends Device | AspectRatio>(
     const bitmask = getBitmaskFromSpec(keyName, spec, bitSpace);
     return bitmask !== 0;
   } catch (err) {
-    if (MH.isInstanceOf(err, LisnUsageError)) {
+    if (_.isInstanceOf(err, LisnUsageError)) {
       return false;
     }
     throw err;
@@ -220,23 +222,23 @@ const getBitmaskFromSpec = <T extends Device | AspectRatio>(
   spec: string | string[] | undefined | null,
   bitSpace: BitSpace<T>,
 ): number => {
-  if (MH.isEmpty(spec)) {
+  if (_.isEmpty(spec)) {
     return 0;
   }
   const singleKeyName = keyName.slice(0, -1);
 
-  if (MH.isString(spec)) {
+  if (_.isString(spec)) {
     const rangeMatch = spec.match(LAYOUT_RANGE_REGEX);
     if (rangeMatch) {
       const minLayout = rangeMatch[1] || rangeMatch[3];
       const maxLayout = rangeMatch[2] || rangeMatch[4];
 
       if (minLayout !== undefined && !bitSpace.has(minLayout)) {
-        throw MH.usageError(`Unknown ${singleKeyName} '${minLayout}'`);
+        throw usageError(`Unknown ${singleKeyName} '${minLayout}'`);
       }
 
       if (maxLayout !== undefined && !bitSpace.has(maxLayout)) {
-        throw MH.usageError(`Unknown ${singleKeyName} '${maxLayout}'`);
+        throw usageError(`Unknown ${singleKeyName} '${maxLayout}'`);
       }
 
       return bitSpace.bitmaskFor(minLayout, maxLayout);

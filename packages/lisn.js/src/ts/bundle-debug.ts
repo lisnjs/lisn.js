@@ -13,3 +13,5 @@ export * from "@lisn/bundle";
 export * as debug from "@lisn/debug/index";
 export * as utils from "@lisn/utils/index";
 export * as modules from "@lisn/modules/index";
+
+export * as _ from "@lisn/_internal";

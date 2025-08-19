@@ -10,8 +10,7 @@
  * {@link Utils.waitForMutateTime} and so are asynchronous.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -56,12 +55,12 @@ export const wrapElementNow = (
 
   if (options?.ignoreMove === true) {
     ignoreMove(element, {
-      from: MH.parentOf(element),
+      from: _.parentOf(element),
       to: wrapper,
     });
 
     ignoreMove(wrapper, {
-      to: MH.parentOf(element),
+      to: _.parentOf(element),
     });
   }
 
@@ -132,13 +131,13 @@ export const replaceElementNow = (
     ignoreMove(
       // remove element
       element,
-      { from: MH.parentOf(element) },
+      { from: _.parentOf(element) },
     );
 
     ignoreMove(
       // move newElement to element's current parent
       newElement,
-      { from: MH.parentOf(newElement), to: MH.parentOf(element) },
+      { from: _.parentOf(newElement), to: _.parentOf(element) },
     );
   }
 
@@ -168,7 +167,7 @@ export const swapElementsNow = (
     ignoreMove?: boolean;
   },
 ) => {
-  const temp = MH.createElement("div");
+  const temp = _.createElement("div");
   replaceElementNow(elementA, temp, options);
   replaceElementNow(elementB, elementA, options);
   replaceElementNow(temp, elementB, options);
@@ -200,7 +199,7 @@ export const moveChildrenNow = (
   },
 ) => {
   if (options?.ignoreMove === true) {
-    for (const child of MH.childrenOf(oldParent)) {
+    for (const child of _.childrenOf(oldParent)) {
       ignoreMove(child, {
         from: oldParent,
         to: newParent,
@@ -208,7 +207,7 @@ export const moveChildrenNow = (
     }
   }
 
-  newParent.append(...MH.childrenOf(oldParent));
+  newParent.append(..._.childrenOf(oldParent));
 };
 
 /**
@@ -245,12 +244,12 @@ export const moveElementNow = (
   let parentEl = options?.to ?? null;
   const position = options?.position || "append";
   if (position === "before" || position === "after") {
-    parentEl = MH.parentOf(options?.to);
+    parentEl = _.parentOf(options?.to);
   }
 
   if (options?.ignoreMove === true) {
     ignoreMove(element, {
-      from: MH.parentOf(element),
+      from: _.parentOf(element),
       to: parentEl,
     });
   }
@@ -258,7 +257,7 @@ export const moveElementNow = (
   if (options?.to) {
     options.to[position](element);
   } else {
-    MH.remove(element);
+    _.remove(element);
   }
 };
 
@@ -311,13 +310,13 @@ export const getOrAssignID = (element: Element, prefix = "") => {
  */
 export const isAllowedToWrap = (element: Element) =>
   settings.contentWrappingAllowed === true &&
-  getData(element, MC.PREFIX_NO_WRAP) === null;
+  getData(element, _.PREFIX_NO_WRAP) === null;
 
 /**
  * @ignore
  * @internal
  *
- * @param [options.classNames] Default is [MC.PREFIX_WRAPPER].
+ * @param [options.classNames] Default is [_.PREFIX_WRAPPER].
  *                             Pass `null` to disable check.
  *
  * @since v1.2.0
@@ -329,13 +328,13 @@ export const getWrapper = (
     _classNames?: string[] | null;
   },
 ) => {
-  const { _tagName: tagName, _classNames: classNames = [MC.PREFIX_WRAPPER] } =
+  const { _tagName: tagName, _classNames: classNames = [_.PREFIX_WRAPPER] } =
     options ?? {};
-  const parent = MH.parentOf(element);
+  const parent = _.parentOf(element);
   if (
-    MH.lengthOf(MH.childrenOf(parent)) === 1 &&
-    MH.isHTMLElement(parent) &&
-    (!tagName || MH.hasTagName(parent, tagName)) &&
+    _.lengthOf(_.childrenOf(parent)) === 1 &&
+    _.isHTMLElement(parent) &&
+    (!tagName || _.hasTagName(parent, tagName)) &&
     (!classNames || hasAnyClass(parent, ...classNames))
   ) {
     // Already wrapped
@@ -349,7 +348,7 @@ export const getWrapper = (
  * @ignore
  * @internal
  *
- * @param [options.classNames] Default is [MC.PREFIX_WRAPPER_CONTENT].
+ * @param [options.classNames] Default is [_.PREFIX_WRAPPER_CONTENT].
  *                             Pass `null` to disable check.
  *
  * @since v1.2.0
@@ -363,13 +362,13 @@ export const getContentWrapper = (
 ) => {
   const {
     _tagName: tagName,
-    _classNames: classNames = [MC.PREFIX_WRAPPER_CONTENT],
+    _classNames: classNames = [_.PREFIX_WRAPPER_CONTENT],
   } = options ?? {};
-  const firstChild = MH.childrenOf(element)[0];
+  const firstChild = _.childrenOf(element)[0];
   if (
-    MH.lengthOf(MH.childrenOf(element)) === 1 &&
-    MH.isHTMLElement(firstChild) &&
-    (!tagName || MH.hasTagName(firstChild, tagName)) &&
+    _.lengthOf(_.childrenOf(element)) === 1 &&
+    _.isHTMLElement(firstChild) &&
+    (!tagName || _.hasTagName(firstChild, tagName)) &&
     (!classNames || hasAnyClass(firstChild, ...classNames))
   ) {
     // Already wrapped
@@ -387,20 +386,20 @@ export const createWrapperFor = (
   element: Element,
   wrapper?: HTMLElement | keyof HTMLElementTagNameMap,
 ) => {
-  if (MH.isElement(wrapper)) {
+  if (_.isElement(wrapper)) {
     return wrapper;
   }
 
   let tag = wrapper;
   if (!tag) {
-    if (isInlineTag(MH.tagName(element))) {
+    if (isInlineTag(_.tagName(element))) {
       tag = "span";
     } else {
       tag = "div";
     }
   }
 
-  return MH.createElement(tag);
+  return _.createElement(tag);
 };
 
 /**
@@ -472,7 +471,7 @@ export const unwrapContent = asyncMutatorFor(unwrapContentNow);
  */
 export const cloneElement = <E extends Element>(element: E) => {
   const clone = element.cloneNode(true) as E;
-  setBooleanData(clone, MH.prefixName("clone"));
+  setBooleanData(clone, _.prefixName("clone"));
   return clone;
 };
 
@@ -499,13 +498,13 @@ export const insertGhostCloneNow = <E extends Element>(
 
   addClassesNow(
     clone,
-    MC.PREFIX_GHOST,
-    MC.PREFIX_TRANSITION_DISABLE,
-    MC.PREFIX_ANIMATE_DISABLE,
+    _.PREFIX_GHOST,
+    _.PREFIX_TRANSITION_DISABLE,
+    _.PREFIX_ANIMATE_DISABLE,
   );
 
   const wrapper = _tryWrapNow(clone, {
-    _classNames: [MC.PREFIX_RELATIVE, MC.PREFIX_WRAPPER],
+    _classNames: [_.PREFIX_RELATIVE, _.PREFIX_WRAPPER],
     _required: true,
   });
 
@@ -558,8 +557,8 @@ export const clearIgnoreMove = (target: Element) => {
   // We should not clear the entry the first time the operation is observed
   // (when we return true here), because there may be multiple DOMWatcher
   // instances that will observe it and need to query it. Instead do it shortly.
-  MH.setTimer(() => {
-    MH.deleteKey(recordsToSkipOnce, target);
+  _.setTimer(() => {
+    _.deleteKey(recordsToSkipOnce, target);
   }, 100);
 };
 
@@ -573,9 +572,9 @@ export const insertArrow = (
   position: "prepend" | "append" | "before" | "after" = "append",
   tag = "span",
 ) => {
-  const arrow = MH.createElement(tag);
-  addClassesNow(arrow, MH.prefixName(MC.S_ARROW));
-  setDataNow(arrow, MH.prefixName("direction"), direction);
+  const arrow = _.createElement(tag);
+  addClassesNow(arrow, _.prefixName(_.S_ARROW));
+  setDataNow(arrow, _.prefixName("direction"), direction);
   moveElement(arrow, { to: target, position, ignoreMove: true });
   return arrow;
 };
@@ -590,7 +589,7 @@ type ContentWrappingOptions = {
   _requiredBy?: string; // for logging purposes
 };
 
-const recordsToSkipOnce = MH.newMap<
+const recordsToSkipOnce = _.newMap<
   /* target being moved */ Element,
   { from: Element | null; to: Element | null }
 >();
@@ -603,8 +602,8 @@ const _tryWrapNow = <O extends ContentWrappingOptions>(
   const {
     _tagName: tagName,
     _classNames: classNames = wrapContent
-      ? [MC.PREFIX_WRAPPER_CONTENT]
-      : [MC.PREFIX_WRAPPER],
+      ? [_.PREFIX_WRAPPER_CONTENT]
+      : [_.PREFIX_WRAPPER],
     _ignoreMove: ignoreMove = true,
     _required: required = false,
     _requiredBy: requiredBy = "",

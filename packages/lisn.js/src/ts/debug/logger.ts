@@ -19,9 +19,11 @@
  * debug messages that identifies the instance.
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { settings } from "@lisn/globals/settings";
+
+import { bugError } from "@lisn/globals/errors";
 
 import { LogFunction } from "@lisn/globals/types";
 
@@ -59,7 +61,7 @@ export class Logger implements LoggerInterface {
 
   constructor(config?: LoggerConfig) {
     config ??= {};
-    const myConfig = MH.merge(
+    const myConfig = _.merge(
       {
         // set defaults
         verbosityLevel: settings.verbosityLevel,
@@ -131,10 +133,10 @@ export type ErrorMatchList = Array<
 // ----------------------------------------
 
 const logDebugN = (logger: Logger, level: number, ...args: unknown[]) => {
-  if (!MH.isNumber(level)) {
+  if (!_.isNumber(level)) {
     args.unshift(level);
     level = 1;
-    logger.error(MH.bugError("Missing logger.debug level"));
+    logger.error(bugError("Missing logger.debug level"));
   }
 
   if (logger.getVerbosityLevel() < level) {
@@ -147,26 +149,26 @@ const logDebugN = (logger: Logger, level: number, ...args: unknown[]) => {
 const isMobile = () => {
   const regex =
     /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-  return regex.test(MH.userAgent);
+  return regex.test(_.userAgent);
 };
 
 const getBooleanURLParam = (name: string) => {
   const value = getURLParameter(name);
-  return value && (value === "1" || MH.toLowerCase(value) === "true");
+  return value && (value === "1" || _.toLowerCase(value) === "true");
 };
 
 const getURLParameter = (name: string) => {
-  if (!MH.hasDOM()) {
+  if (!_.hasDOM()) {
     return null;
   }
 
-  const loc = MH.getDoc().location;
+  const loc = _.getDoc().location;
   if (typeof URLSearchParams !== "undefined") {
     const urlParams = new URLSearchParams(loc.search);
     return urlParams.get(name);
   }
 
-  name = MH.strReplace(name, /[[\]]/g, "\\$&");
+  name = _.strReplace(name, /[[\]]/g, "\\$&");
   const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
   const match = loc.href.match(regex);
 
@@ -177,5 +179,7 @@ const getURLParameter = (name: string) => {
   if (!match[2]) {
     return "";
   }
-  return decodeURIComponent(MH.strReplace(match[2], /\+/g, " "));
+  return decodeURIComponent(_.strReplace(match[2], /\+/g, " "));
 };
+
+_.brandClass(Logger, "Logger");

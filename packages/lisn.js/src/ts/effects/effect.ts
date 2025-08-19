@@ -4,7 +4,9 @@
  * @since v1.3.0
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, bugError } from "@lisn/globals/errors";
 
 import { toNum, toNumWithBounds, isValidNum } from "@lisn/utils/math";
 
@@ -296,7 +298,7 @@ export const toParameters = (
 
     if (!isValidNum(result) || result < minResult || result > maxResult) {
       // getUpdatedState should have ensured values are in range.
-      throw MH.bugError(
+      throw bugError(
         "FX: Calculated invalid value for normalized axis parameter",
       );
     }
@@ -356,7 +358,7 @@ export const getUpdatedState = (
   const composerConfig = composer.getConfig();
 
   const toBool = (input: unknown, defaultValue: boolean) =>
-    MH.isBoolean(input) ? input : defaultValue;
+    _.isBoolean(input) ? input : defaultValue;
 
   const validateAxis = (
     axisState: Partial<FXAxisState> | undefined,
@@ -428,8 +430,8 @@ export const validateOutputParameters = (
   requireNonZero = false,
 ) => {
   for (const p of outputs) {
-    if (!isValidNum(p) || (requireNonZero && MH.abs(p) < 1e-10)) {
-      throw MH.usageError(
+    if (!isValidNum(p) || (requireNonZero && _.abs(p) < 1e-10)) {
+      throw usageError(
         `${name} must be finite${requireNonZero ? " and non-zero" : ""}`,
       );
     }

@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { Direction, GestureDevice, GestureIntent } from "@lisn/globals/types";
 
@@ -44,7 +43,7 @@ export type GestureFragment = {
  * @category Validation
  */
 export const isValidInputDevice = (device: string): device is GestureDevice =>
-  MH.includes(DEVICES, device);
+  _.includes(DEVICES, device);
 
 /**
  * Returns true if the given string is a valid gesture intent.
@@ -52,7 +51,7 @@ export const isValidInputDevice = (device: string): device is GestureDevice =>
  * @category Validation
  */
 export const isValidIntent = (intent: string): intent is GestureIntent =>
-  MH.includes(INTENTS, intent);
+  _.includes(INTENTS, intent);
 
 /**
  * Returns true if the given string or array is a list of valid gesture
@@ -77,17 +76,17 @@ export const isValidIntentList = (intents: string | string[]) =>
  * @internal
  */
 export const addDeltaZ = (current: number, increment: number) =>
-  MH.max(MIN_DELTA_Z, current * increment);
+  _.max(MIN_DELTA_Z, current * increment);
 
 /**
  * @ignore
  * @internal
  */
 export const DEVICES: GestureDevice[] = [
-  MC.S_KEY,
-  MC.S_POINTER,
-  MC.S_TOUCH,
-  MC.S_WHEEL,
+  _.S_KEY,
+  _.S_POINTER,
+  _.S_TOUCH,
+  _.S_WHEEL,
 ] as const;
 
 /**
@@ -95,10 +94,10 @@ export const DEVICES: GestureDevice[] = [
  * @internal
  */
 export const INTENTS: GestureIntent[] = [
-  MC.S_SCROLL,
-  MC.S_ZOOM,
-  MC.S_DRAG,
-  MC.S_UNKNOWN,
+  _.S_SCROLL,
+  _.S_ZOOM,
+  _.S_DRAG,
+  _.S_UNKNOWN,
 ] as const;
 
 // Do not allow zooming out more than this value

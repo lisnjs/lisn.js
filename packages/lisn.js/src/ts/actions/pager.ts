@@ -12,8 +12,9 @@
  * of the {@link Pager} widget setup for the given element.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { toInt } from "@lisn/utils/math";
 
@@ -75,7 +76,7 @@ export class NextPage implements Action {
       return _prevPage();
     };
 
-    this[MC.S_TOGGLE] = () => {
+    this[_.S_TOGGLE] = () => {
       const method = toggleState ? _prevPage : _nextPage;
       toggleState = !toggleState;
       return method();
@@ -136,7 +137,7 @@ export class PrevPage implements Action {
       return _nextPage();
     };
 
-    this[MC.S_TOGGLE] = () => {
+    this[_.S_TOGGLE] = () => {
       const method = toggleState ? _nextPage : _prevPage;
       toggleState = !toggleState;
       return method();
@@ -190,14 +191,14 @@ export class GoToPage implements Action {
 
   constructor(element: Element, pageNum: number) {
     if (!pageNum) {
-      throw MH.usageError("Target page is required");
+      throw usageError("Target page is required");
     }
 
     const { _goToPage } = getMethods(element);
 
     this.do = () => _goToPage(pageNum);
     this.undo = () => _goToPage(-1);
-    this[MC.S_TOGGLE] = () => _goToPage(pageNum, -1);
+    this[_.S_TOGGLE] = () => _goToPage(pageNum, -1);
   }
 }
 
@@ -249,7 +250,7 @@ export class EnablePage implements Action {
 
   constructor(element: Element, pageNum: number) {
     if (!pageNum) {
-      throw MH.usageError("Target page number is required");
+      throw usageError("Target page number is required");
     }
 
     const { _enablePage, _disablePage, _togglePage } = getMethods(element);
@@ -257,7 +258,7 @@ export class EnablePage implements Action {
 
     this.do = () => _enablePage(pageNum);
     this.undo = () => _disablePage(pageNum);
-    this[MC.S_TOGGLE] = () => _togglePage(pageNum);
+    this[_.S_TOGGLE] = () => _togglePage(pageNum);
   }
 }
 
@@ -309,7 +310,7 @@ export class DisablePage implements Action {
 
   constructor(element: Element, pageNum: number) {
     if (!pageNum) {
-      throw MH.usageError("Target page number is required");
+      throw usageError("Target page number is required");
     }
 
     const { _enablePage, _disablePage, _togglePage } = getMethods(element);
@@ -317,7 +318,7 @@ export class DisablePage implements Action {
 
     this.do = () => _disablePage(pageNum);
     this.undo = () => _enablePage(pageNum);
-    this[MC.S_TOGGLE] = () => _togglePage(pageNum);
+    this[_.S_TOGGLE] = () => _togglePage(pageNum);
   }
 }
 
@@ -375,3 +376,9 @@ const getMethods = (element: Element) => {
       widgetPromise.then((w) => togglePage(w, pageNum)),
   };
 };
+
+_.brandClass(NextPage, "NextPage");
+_.brandClass(PrevPage, "PrevPage");
+_.brandClass(GoToPage, "GoToPage");
+_.brandClass(EnablePage, "EnablePage");
+_.brandClass(DisablePage, "DisablePage");

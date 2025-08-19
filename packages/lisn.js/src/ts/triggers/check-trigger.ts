@@ -6,11 +6,10 @@
  * checkbox input element, and undo those actions when they uncheck the checkbox.
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
-import { deepCopy } from "@lisn/utils/misc";
 
 import { Action } from "@lisn/actions/action";
 
@@ -122,15 +121,15 @@ export class CheckTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
 
-    if (!MH.lengthOf(actions)) {
+    if (!_.lengthOf(actions)) {
       return;
     }
 
-    const target = MH.targetOf(config) ?? element;
+    const target = _.targetOf(config) ?? element;
 
-    if (!MH.isHTMLInputElement(target)) {
+    if (!_.isHTMLInputElement(target)) {
       return;
     }
 
@@ -164,8 +163,10 @@ const newConfigValidator: WidgetConfigValidatorFunc<CheckTriggerConfig> = (
 ) => {
   return {
     target: (key, value) =>
-      MH.isLiteralString(value)
+      _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? undefined) // ugh, typescript...
         : undefined,
   };
 };
+
+_.brandClass(CheckTrigger, "CheckTrigger");

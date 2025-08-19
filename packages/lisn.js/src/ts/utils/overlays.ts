@@ -2,8 +2,7 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import {
   addClasses,
@@ -110,7 +109,7 @@ export const createOverlay = async (userOptions?: OverlayOptions) => {
       ?.get(options._overlayKey);
 
     if (existingOverlay) {
-      if (!MH.parentOf(existingOverlay)) {
+      if (!_.parentOf(existingOverlay)) {
         // not yet inserted into the DOM, so wait until it is
         await waitForMutateTime();
       }
@@ -128,12 +127,12 @@ export const createOverlay = async (userOptions?: OverlayOptions) => {
     overlay.id = options._id;
   }
 
-  const isPercentageHOffset = MH.includes(
+  const isPercentageHOffset = _.includes(
     (options._style.left || "") + (options._style.right || ""),
     "%",
   );
 
-  const isPercentageVOffset = MH.includes(
+  const isPercentageVOffset = _.includes(
     (options._style.top || "") + (options._style.bottom || ""),
     "%",
   );
@@ -151,19 +150,15 @@ export const createOverlay = async (userOptions?: OverlayOptions) => {
     // overlay? Probably not worth the effort. ViewWatcher doesn't remove old
     // olverlays anyway.
     parentEl = await tryWrapContent(parentEl, {
-      _classNames: [
-        MC.PREFIX_WRAPPER,
-        MC.PREFIX_WRAPPER_CONTENT,
-        PREFIX_WRAPPER,
-      ],
+      _classNames: [_.PREFIX_WRAPPER, _.PREFIX_WRAPPER_CONTENT, PREFIX_WRAPPER],
       _required: true,
       _requiredBy: "percentage offset view trigger with scrolling root",
     });
   }
 
-  if (options._style.position === MC.S_ABSOLUTE) {
+  if (options._style.position === _.S_ABSOLUTE) {
     // Ensure parent has non-static positioning
-    addClasses(parentEl, MC.PREFIX_RELATIVE);
+    addClasses(parentEl, _.PREFIX_RELATIVE);
   }
 
   await moveElement(overlay, { to: parentEl });
@@ -181,10 +176,10 @@ type OverlayOptionsInternal = {
   _overlayKey: string;
 };
 
-const PREFIX_WRAPPER = MH.prefixName("overlay-wrapper");
+const PREFIX_WRAPPER = _.prefixName("overlay-wrapper");
 
 const overlays = newXWeakMap<HTMLElement, Map<string, HTMLElement>>(() =>
-  MH.newMap(),
+  _.newMap(),
 );
 
 const tryGetOverlayOptions = (
@@ -228,25 +223,25 @@ const getOverlayKey = (
 ) => objToStrKey(style) + "|" + objToStrKey(data);
 
 const getCssProperties = (style: Record<string, string> | undefined) => {
-  const finalCssProperties: Record<string, string> = MH.merge(
+  const finalCssProperties: Record<string, string> = _.merge(
     style,
-    { position: style?.position || MC.S_ABSOLUTE }, // default
+    { position: style?.position || _.S_ABSOLUTE }, // default
   );
 
   if (
-    finalCssProperties.position === MC.S_ABSOLUTE ||
-    finalCssProperties.position === MC.S_FIXED
+    finalCssProperties.position === _.S_ABSOLUTE ||
+    finalCssProperties.position === _.S_FIXED
   ) {
     if (
-      MH.isEmpty(finalCssProperties.top) &&
-      MH.isEmpty(finalCssProperties.bottom)
+      _.isEmpty(finalCssProperties.top) &&
+      _.isEmpty(finalCssProperties.bottom)
     ) {
       finalCssProperties.top = "0px";
     }
 
     if (
-      MH.isEmpty(finalCssProperties.left) &&
-      MH.isEmpty(finalCssProperties.right)
+      _.isEmpty(finalCssProperties.left) &&
+      _.isEmpty(finalCssProperties.right)
     ) {
       finalCssProperties.left = "0px";
     }
@@ -260,29 +255,29 @@ const tryGetParent = (
   position: string,
 ) =>
   userSuppliedParent ??
-  (position === MC.S_FIXED ? MH.getBody() : tryGetMainContentElement());
+  (position === _.S_FIXED ? _.getBody() : tryGetMainContentElement());
 
 const fetchParent = async (
   userSuppliedParent: HTMLElement | undefined | null,
   position: string,
 ) =>
   userSuppliedParent ??
-  (position === MC.S_FIXED
-    ? await waitForElement(MH.getBody)
+  (position === _.S_FIXED
+    ? await waitForElement(_.getBody)
     : await fetchMainContentElement());
 
 const createOnlyOverlay = (options: OverlayOptionsInternal) => {
-  const overlay = MH.createElement("div");
+  const overlay = _.createElement("div");
 
-  addClassesNow(overlay, MH.prefixName("overlay"));
+  addClassesNow(overlay, _.prefixName("overlay"));
 
   const data = options._data;
-  for (const attr of MH.keysOf(data)) {
+  for (const attr of _.keysOf(data)) {
     setDataNow(overlay, camelToKebabCase(attr), data[attr]);
   }
 
   const style = options._style;
-  for (const prop of MH.keysOf(style)) {
+  for (const prop of _.keysOf(style)) {
     setStylePropNow(overlay, prop, style[prop]);
   }
 

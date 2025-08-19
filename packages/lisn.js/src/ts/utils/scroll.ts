@@ -2,8 +2,9 @@
  * @module Utils
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { settings } from "@lisn/globals/settings";
 
@@ -177,7 +178,7 @@ export const isScrollable = (
 
   if (!noCache) {
     const cachedResult = isScrollableCache.get(element)?.get(axis);
-    if (!MH.isNullish(cachedResult)) {
+    if (!_.isNullish(cachedResult)) {
       return cachedResult;
     }
   }
@@ -191,30 +192,30 @@ export const isScrollable = (
     // Use scrollTo with explicit behavior set to instant instead of setting
     // the scrollTop/Left properties since the latter doesn't work with
     // scroll-behavior smooth.
-    MH.elScrollTo(element, { [MH.toLowerCase(offset)]: 1 });
+    _.elScrollTo(element, { [_.toLowerCase(offset)]: 1 });
     const canScroll = element[`scroll${offset}`] > 0;
-    MH.elScrollTo(element, { [MH.toLowerCase(offset)]: 0 });
+    _.elScrollTo(element, { [_.toLowerCase(offset)]: 0 });
     result = canScroll;
   } else {
     const dimension = axis === "x" ? "Width" : "Height";
-    const isDocScrollable = element === MH.getDocScrollingElement();
+    const isDocScrollable = element === _.getDocScrollingElement();
 
     const hasOverflow =
       element[`scroll${dimension}`] > element[`client${dimension}`];
     const overflowProp = getComputedStylePropNow(element, "overflow");
     const scrollingOverflows = [
-      MC.S_SCROLL,
-      MC.S_AUTO,
-      ...(isDocScrollable ? [MC.S_VISIBLE] : []),
+      _.S_SCROLL,
+      _.S_AUTO,
+      ...(isDocScrollable ? [_.S_VISIBLE] : []),
     ];
 
-    result = hasOverflow && MH.includes(scrollingOverflows, overflowProp);
+    result = hasOverflow && _.includes(scrollingOverflows, overflowProp);
   }
 
   if (!noCache) {
     isScrollableCache.sGet(element).set(axis, result);
-    MH.setTimer(() => {
-      MH.deleteKey(isScrollableCache.get(element), axis);
+    _.setTimer(() => {
+      _.deleteKey(isScrollableCache.get(element), axis);
       isScrollableCache.prune(element);
     }, IS_SCROLLABLE_CACHE_TIMEOUT);
   }
@@ -242,7 +243,7 @@ export const getClosestScrollable = (
 ) => {
   // Walk up the tree, starting at the element in question but excluding it.
   let ancestor: Element | null | undefined = element;
-  while ((ancestor = MH.parentOf(ancestor))) {
+  while ((ancestor = _.parentOf(ancestor))) {
     if (isScrollable(ancestor, options)) {
       return ancestor;
     }
@@ -261,7 +262,7 @@ export const getCurrentScrollAction = (
 ): ScrollAction | null => {
   scrollable = toScrollableOrDefault(scrollable);
   const action = currentScrollInfos.get(scrollable)?._action;
-  return action ? MH.copyObject(action) : null;
+  return action ? _.copyObject(action) : null;
 };
 
 /**
@@ -321,7 +322,7 @@ export const scrollTo = (
       );
     }
   } else {
-    preventScrollHandler = MH.preventDefault;
+    preventScrollHandler = _.preventDefault;
     for (const eventType of scrollEvents) {
       addEventListenerTo(scrollable, eventType, preventScrollHandler, {
         passive: false,
@@ -340,7 +341,7 @@ export const scrollTo = (
     if (currentScrollInfos.get(scrollable)?._action === thisInfo._action) {
       // It means our action completed; otherwise, if we were cancelled by
       // another action, _action would have been overridden by the next one.
-      MH.deleteKey(currentScrollInfos, scrollable);
+      _.deleteKey(currentScrollInfos, scrollable);
     }
 
     if (preventScrollHandler) {
@@ -366,7 +367,7 @@ export const scrollTo = (
  */
 export const isValidScrollDirection = (
   direction: string,
-): direction is ScrollDirection => MH.includes(SCROLL_DIRECTIONS, direction);
+): direction is ScrollDirection => _.includes(SCROLL_DIRECTIONS, direction);
 
 /**
  * Returns true if the given string or array is a list of valid scroll
@@ -389,7 +390,7 @@ export const mapScrollable = (original: Element, actualScrollable: Element) =>
  * @internal
  */
 export const unmapScrollable = (original: Element) =>
-  MH.deleteKey(mappedScrollables, original);
+  _.deleteKey(mappedScrollables, original);
 
 /**
  * @ignore
@@ -398,9 +399,9 @@ export const unmapScrollable = (original: Element) =>
 export const getClientWidthNow = (element: Element) =>
   isScrollableBodyInQuirks(element)
     ? element.offsetWidth -
-      getBorderWidth(element, MC.S_LEFT) -
-      getBorderWidth(element, MC.S_RIGHT)
-    : element[MC.S_CLIENT_WIDTH];
+      getBorderWidth(element, _.S_LEFT) -
+      getBorderWidth(element, _.S_RIGHT)
+    : element[_.S_CLIENT_WIDTH];
 
 /**
  * @ignore
@@ -409,9 +410,9 @@ export const getClientWidthNow = (element: Element) =>
 export const getClientHeightNow = (element: Element) =>
   isScrollableBodyInQuirks(element)
     ? element.offsetHeight -
-      getBorderWidth(element, MC.S_TOP) -
-      getBorderWidth(element, MC.S_BOTTOM)
-    : element[MC.S_CLIENT_HEIGHT];
+      getBorderWidth(element, _.S_TOP) -
+      getBorderWidth(element, _.S_BOTTOM)
+    : element[_.S_CLIENT_HEIGHT];
 
 /**
  * @ignore
@@ -456,8 +457,8 @@ export const fetchMainScrollableElement = async (): Promise<HTMLElement> => {
  * @internal
  */
 export const getDefaultScrollingElement = () => {
-  const body = MH.getBody();
-  return isScrollable(body) ? body : (MH.getDocScrollingElement() ?? body);
+  const body = _.getBody();
+  return isScrollable(body) ? body : (_.getDocScrollingElement() ?? body);
 };
 
 /**
@@ -500,12 +501,12 @@ type ScrollInfo = {
 
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
 const isScrollableCache = newXMap<Element, Map<"x" | "y", boolean>>(() =>
-  MH.newMap(),
+  _.newMap(),
 );
 
-const mappedScrollables = MH.newWeakMap<Element, Element>();
+const mappedScrollables = _.newWeakMap<Element, Element>();
 
-const currentScrollInfos = MH.newWeakMap<Element, ScrollInfo>();
+const currentScrollInfos = _.newWeakMap<Element, ScrollInfo>();
 
 const DIFF_THRESHOLD = 5;
 const arePositionsDifferent = (
@@ -516,24 +517,24 @@ const arePositionsDifferent = (
 
 // must be called in "measure time"
 const getBorderWidth = (element: Element, side: Anchor) =>
-  MH.ceil(MH.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
+  _.ceil(_.parseFloat(getComputedStylePropNow(element, `border-${side}`)));
 
 const isScrollableBodyInQuirks = (element: Element): element is HTMLElement =>
-  element === MH.getBody() && MH.getDocScrollingElement() === null;
+  element === _.getBody() && _.getDocScrollingElement() === null;
 
 const toScrollableOrMain = <R>(
   target: ScrollTarget | null | undefined,
   getMain: () => R,
 ): Element | R => {
-  if (MH.isElement(target)) {
+  if (_.isElement(target)) {
     return mappedScrollables.get(target) ?? target;
   }
 
-  if (!target || target === MH.getWindow() || target === MH.getDoc()) {
+  if (!target || target === _.getWindow() || target === _.getDoc()) {
     return getMain();
   }
 
-  throw MH.usageError("Unsupported scroll target");
+  throw usageError("Unsupported scroll target");
 };
 
 const toScrollableOrDefault = (scrollable: Element | undefined): Element =>
@@ -567,43 +568,43 @@ const updateCurrentScrollInfo = (
   newInfo: Partial<ScrollInfo>,
 ) => {
   const existingScrollInfo = currentScrollInfos.get(scrollable);
-  currentScrollInfos.set(scrollable, MH.merge(existingScrollInfo, newInfo));
+  currentScrollInfos.set(scrollable, _.merge(existingScrollInfo, newInfo));
 };
 
 const getTargetCoordinates = (
   scrollable: Element,
   target: TargetCoordinates | Element | string,
 ): TargetCoordinates => {
-  const isDocScrollingElement = scrollable === MH.getDocScrollingElement();
+  const isDocScrollingElement = scrollable === _.getDocScrollingElement();
 
-  if (MH.isElement(target)) {
+  if (_.isElement(target)) {
     if (scrollable === target || !scrollable.contains(target)) {
-      throw MH.usageError("Target must be a descendant of the scrollable one");
+      throw usageError("Target must be a descendant of the scrollable one");
     }
 
     return {
       top: () =>
-        MH.getBoundingClientRect(target).top -
-        MH.getBoundingClientRect(scrollable).top +
-        (isDocScrollingElement ? 0 : scrollable[MC.S_SCROLL_TOP]),
+        _.getBoundingClientRect(target).top -
+        _.getBoundingClientRect(scrollable).top +
+        (isDocScrollingElement ? 0 : scrollable[_.S_SCROLL_TOP]),
       left: () =>
-        MH.getBoundingClientRect(target).left -
-        MH.getBoundingClientRect(scrollable).left +
-        (isDocScrollingElement ? 0 : scrollable[MC.S_SCROLL_LEFT]),
+        _.getBoundingClientRect(target).left -
+        _.getBoundingClientRect(scrollable).left +
+        (isDocScrollingElement ? 0 : scrollable[_.S_SCROLL_LEFT]),
     };
   }
 
-  if (MH.isString(target)) {
-    const targetEl = MH.docQuerySelector(target);
+  if (_.isString(target)) {
+    const targetEl = _.docQuerySelector(target);
     if (!targetEl) {
-      throw MH.usageError(`No match for '${target}'`);
+      throw usageError(`No match for '${target}'`);
     }
 
     return getTargetCoordinates(scrollable, targetEl);
   }
 
-  if (!MH.isObject(target) || !("top" in target || "left" in target)) {
-    throw MH.usageError("Invalid coordinates");
+  if (!_.isObject(target) || !("top" in target || "left" in target)) {
+    throw usageError("Invalid coordinates");
   }
 
   return target;
@@ -624,8 +625,8 @@ const getStartEndPosition = async (
 
   const scrollable = options._scrollable;
   const start = {
-    top: scrollable[MC.S_SCROLL_TOP],
-    left: scrollable[MC.S_SCROLL_LEFT],
+    top: scrollable[_.S_SCROLL_TOP],
+    left: scrollable[_.S_SCROLL_LEFT],
   };
 
   let end = getEndPosition(scrollable, start, options._target);
@@ -646,18 +647,18 @@ const getEndPosition = (
   targetCoordinates: TargetCoordinates,
 ): ScrollPosition => {
   // by default no change in scroll top or left
-  const endPosition = MH.copyObject(startPosition);
+  const endPosition = _.copyObject(startPosition);
 
-  if (!MH.isNullish(targetCoordinates?.top)) {
-    if (MH.isFunction(targetCoordinates.top)) {
+  if (!_.isNullish(targetCoordinates?.top)) {
+    if (_.isFunction(targetCoordinates.top)) {
       endPosition.top = targetCoordinates.top(scrollable);
     } else {
       endPosition.top = targetCoordinates.top;
     }
   }
 
-  if (!MH.isNullish(targetCoordinates?.left)) {
-    if (MH.isFunction(targetCoordinates.left)) {
+  if (!_.isNullish(targetCoordinates?.left)) {
+    if (_.isFunction(targetCoordinates.left)) {
       endPosition.left = targetCoordinates.left(scrollable);
     } else {
       endPosition.left = targetCoordinates.left;
@@ -665,15 +666,15 @@ const getEndPosition = (
   }
 
   // Set boundaries
-  const scrollH = scrollable[MC.S_SCROLL_HEIGHT];
-  const scrollW = scrollable[MC.S_SCROLL_WIDTH];
+  const scrollH = scrollable[_.S_SCROLL_HEIGHT];
+  const scrollW = scrollable[_.S_SCROLL_WIDTH];
   const clientH = getClientHeightNow(scrollable);
   const clientW = getClientWidthNow(scrollable);
-  endPosition.top = MH.min(scrollH - clientH, endPosition.top);
-  endPosition.top = MH.max(0, endPosition.top);
+  endPosition.top = _.min(scrollH - clientH, endPosition.top);
+  endPosition.top = _.max(0, endPosition.top);
 
-  endPosition.left = MH.min(scrollW - clientW, endPosition.left);
-  endPosition.left = MH.max(0, endPosition.left);
+  endPosition.left = _.min(scrollW - clientW, endPosition.left);
+  endPosition.left = _.max(0, endPosition.left);
 
   return endPosition;
 };
@@ -696,7 +697,7 @@ const initiateScroll = async (
       })
     : null;
 
-  const currentPosition = MH.copyObject(position._start);
+  const currentPosition = _.copyObject(position._start);
 
   if (isCancelled()) {
     // Reject the promise
@@ -743,7 +744,7 @@ const initiateScroll = async (
     currentPosition.left = state.x.current;
     currentPosition.top = state.y.current;
 
-    MH.elScrollTo(scrollable, currentPosition);
+    _.elScrollTo(scrollable, currentPosition);
   }
 
   logger?.debug8("Done");
@@ -764,22 +765,22 @@ const init = (): Promise<void> => {
 
       const contentElement = await waitForElementOrInteractive(() => {
         return mainScrollableElementSelector
-          ? MH.docQuerySelector(mainScrollableElementSelector)
-          : MH.getBody(); // default if no selector
+          ? _.docQuerySelector(mainScrollableElementSelector)
+          : _.getBody(); // default if no selector
       });
 
       // defaults
       mainScrollableElement = getDefaultScrollingElement();
-      mainContentElement = MH.getBody();
+      mainContentElement = _.getBody();
 
       if (!contentElement) {
         logError(
-          MH.usageError(
+          usageError(
             `No match for '${mainScrollableElementSelector}'. ` +
               "Scroll tracking/capturing may not work as intended.",
           ),
         );
-      } else if (!MH.isHTMLElement(contentElement)) {
+      } else if (!_.isHTMLElement(contentElement)) {
         logWarn("mainScrollableElementSelector should point to an HTMLElement");
       } else if (contentElement !== mainContentElement) {
         mainScrollableElement = mainContentElement = contentElement;
@@ -792,6 +793,6 @@ const init = (): Promise<void> => {
 
 // Try to find the main scrollable/content elements asap so that tryGetMain*
 // can return them if called before fetchMain*
-if (MH.hasDOM()) {
+if (_.hasDOM()) {
   waitForInteractive().then(init);
 }

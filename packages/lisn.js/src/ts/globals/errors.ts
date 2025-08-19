@@ -2,7 +2,7 @@
  * @module Errors
  */
 
-import { LOG_PREFIX } from "@lisn/globals/minification-constants";
+import * as _ from "@lisn/_internal";
 
 /**
  * Base error type emitted by LISN.
@@ -14,7 +14,7 @@ export abstract class LisnError extends Error {}
  */
 export class LisnUsageError extends LisnError {
   constructor(message = "") {
-    super(`${LOG_PREFIX} Incorrect usage: ${message}`);
+    super(`${_.LOG_PREFIX} Incorrect usage: ${message}`);
     this.name = "LisnUsageError";
   }
 }
@@ -24,7 +24,32 @@ export class LisnUsageError extends LisnError {
  */
 export class LisnBugError extends LisnError {
   constructor(message = "") {
-    super(`${LOG_PREFIX} Please report a bug: ${message}`);
+    super(`${_.LOG_PREFIX} Please report a bug: ${message}`);
     this.name = "LisnBugError";
   }
 }
+
+// ----------
+
+/**
+ * @ignore
+ * @internal
+ */
+export const usageError = (msg: string) => new LisnUsageError(msg);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const bugError = (msg: string) => new LisnBugError(msg);
+
+/**
+ * @ignore
+ * @internal
+ */
+export const illegalConstructorError = (useWhat: string) =>
+  usageError(`Illegal constructor. Use ${useWhat}.`);
+
+_.brandClass(LisnError, "LisnError");
+_.brandClass(LisnUsageError, "LisnUsageError");
+_.brandClass(LisnBugError, "LisnBugError");

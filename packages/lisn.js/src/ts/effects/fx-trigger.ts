@@ -4,8 +4,7 @@
  * @since v1.3.0
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { ScrollTarget } from "@lisn/globals/types";
 
@@ -84,11 +83,10 @@ export abstract class FXTrigger {
   ) {
     let isActive = true;
 
-    const changeCallbacks = MH.newMap<FXTriggerHandler, FXTriggerCallback>();
+    const changeCallbacks = _.newMap<FXTriggerHandler, FXTriggerCallback>();
 
     let resolve: (update: FXStateUpdate) => void;
-    const nextPromise = () =>
-      MH.newPromise<FXStateUpdate>((r) => (resolve = r));
+    const nextPromise = () => _.newPromise<FXStateUpdate>((r) => (resolve = r));
 
     const push = (update: FXStateUpdate) => resolve(update);
 
@@ -114,7 +112,7 @@ export abstract class FXTrigger {
     };
 
     this.offChange = (handler) => {
-      MH.remove(changeCallbacks.get(handler));
+      _.remove(changeCallbacks.get(handler));
     };
 
     // --------------------
@@ -147,7 +145,7 @@ export class FXScrollTrigger extends FXTrigger {
    * default.
    */
   constructor(scrollable?: ScrollTarget) {
-    const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
+    const scrollWatcher = ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
     let scrollHandler: OnScrollHandler;
 
     const addOrRemoveWatcher = () => {
@@ -163,13 +161,13 @@ export class FXScrollTrigger extends FXTrigger {
         push({
           x: {
             min: 0,
-            max: scrollData[MC.S_SCROLL_WIDTH],
-            target: scrollData[MC.S_SCROLL_LEFT],
+            max: scrollData[_.S_SCROLL_WIDTH],
+            target: scrollData[_.S_SCROLL_LEFT],
           },
           y: {
             min: 0,
-            max: scrollData[MC.S_SCROLL_HEIGHT],
-            target: scrollData[MC.S_SCROLL_TOP],
+            max: scrollData[_.S_SCROLL_HEIGHT],
+            target: scrollData[_.S_SCROLL_TOP],
           },
           z: {
             min: 0,
@@ -177,8 +175,6 @@ export class FXScrollTrigger extends FXTrigger {
             target: 0,
           },
         });
-
-      addOrRemoveWatcher();
     };
 
     // --------------------
@@ -186,5 +182,10 @@ export class FXScrollTrigger extends FXTrigger {
     super(executor);
 
     this.onChange(addOrRemoveWatcher);
+
+    addOrRemoveWatcher();
   }
 }
+
+_.brandClass(FXTrigger, "FXTrigger");
+_.brandClass(FXScrollTrigger, "FXScrollTrigger");

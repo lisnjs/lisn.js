@@ -2,7 +2,7 @@
  * @module Types
  */
 
-import { settings } from "@lisn/globals/settings";
+import type { settings } from "@lisn/globals/settings";
 
 /**
  * @category Layout
@@ -494,44 +494,3 @@ export type SetBase<V> = {
   delete: (value: V) => boolean;
   has: (value: V) => boolean;
 };
-
-const EMPTY__ignored = {} as const;
-
-/**
- * @ignore
- * @internal
- */
-export type EmptyLiteral = typeof EMPTY__ignored;
-
-/**
- * @ignore
- * @internal
- */
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export type Spread<A extends readonly [...any]> = A extends [infer L]
-  ? L extends null | undefined
-    ? EmptyLiteral
-    : L
-  : A extends [infer L, ...infer R]
-    ? SpreadTwo<L extends null | undefined ? EmptyLiteral : L, Spread<R>>
-    : unknown;
-
-// --------------------
-
-type OptionalPropertyNames<T> = {
-  /* eslint-disable-next-line @typescript-eslint/no-empty-object-type */
-  [K in keyof T]-?: {} extends { [P in K]: T[K] } ? K : never;
-}[keyof T];
-
-type SpreadProperties<L, R, K extends keyof L & keyof R> = {
-  [P in K]: L[P] | Exclude<R[P], undefined>;
-};
-
-type Id<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
-
-type SpreadTwo<L, R> = Id<
-  Pick<L, Exclude<keyof L, keyof R>> &
-    Pick<R, Exclude<keyof R, OptionalPropertyNames<R>>> &
-    Pick<R, Exclude<OptionalPropertyNames<R>, keyof L>> &
-    SpreadProperties<L, R, OptionalPropertyNames<R> & keyof L>
->;

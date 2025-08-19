@@ -2,7 +2,9 @@
  * @module Modules/XResizeObserver
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { bugError } from "@lisn/globals/errors";
 
 import { logWarn, logError } from "@lisn/utils/log";
 
@@ -54,14 +56,14 @@ export class XResizeObserver {
 
     // Keep the latest ResizeObserverEntry for each target during the
     // debounceWindow. Short-lived, so ok to use a Map.
-    const buffer = MH.newMap<Element, ResizeObserverEntry>();
+    const buffer = _.newMap<Element, ResizeObserverEntry>();
 
     // Since internally we have two observers, one for border box, one for
     // content box, we will get called initially twice for a target. So we keep
     // a counter of 1 or 2 for how many more calls to ignore.
-    const targetsToSkip = MH.newWeakMap<Element, 1 | 2>();
+    const targetsToSkip = _.newWeakMap<Element, 1 | 2>();
 
-    let observedTargets = MH.newWeakSet<Element>();
+    let observedTargets = _.newWeakSet<Element>();
 
     debounceWindow ??= 0;
 
@@ -70,7 +72,7 @@ export class XResizeObserver {
       // Override entries for previous targets, but keep entries whose targets
       // were not resized in this round
       for (const entry of entries) {
-        const target = MH.targetOf(entry);
+        const target = _.targetOf(entry);
         const skipNum = targetsToSkip.get(target);
         if (skipNum !== undefined) {
           if (skipNum === 2) {
@@ -80,9 +82,9 @@ export class XResizeObserver {
             // done
             /* istanbul ignore next */
             if (skipNum !== 1) {
-              logError(MH.bugError(`# targetsToSkip is ${skipNum}`));
+              logError(bugError(`# targetsToSkip is ${skipNum}`));
             }
-            MH.deleteKey(targetsToSkip, target);
+            _.deleteKey(targetsToSkip, target);
           }
 
           continue;
@@ -97,9 +99,9 @@ export class XResizeObserver {
         entries,
       );
 
-      if (!timer && MH.sizeOf(buffer)) {
-        timer = MH.setTimer(() => {
-          if (MH.sizeOf(buffer)) {
+      if (!timer && _.sizeOf(buffer)) {
+        timer = _.setTimer(() => {
+          if (_.sizeOf(buffer)) {
             callback([...buffer.values()], this);
             buffer.clear();
           }
@@ -109,8 +111,8 @@ export class XResizeObserver {
       }
     };
 
-    const borderObserver = MH.newResizeObserver(resizeHandler);
-    const contentObserver = MH.newResizeObserver(resizeHandler);
+    const borderObserver = _.newResizeObserver(resizeHandler);
+    const contentObserver = _.newResizeObserver(resizeHandler);
     if (!borderObserver || !contentObserver) {
       logWarn(
         "This browser does not support ResizeObserver. Some features won't work.",
@@ -151,7 +153,7 @@ export class XResizeObserver {
       debug: logger?.debug10("Unobserving targets", targets);
 
       for (const target of targets) {
-        MH.deleteKey(observedTargets, target);
+        _.deleteKey(observedTargets, target);
         borderObserver?.unobserve(target);
         contentObserver?.unobserve(target);
       }
@@ -159,9 +161,11 @@ export class XResizeObserver {
 
     this.disconnect = () => {
       debug: logger?.debug10("Disconnecting");
-      observedTargets = MH.newWeakSet();
+      observedTargets = _.newWeakSet();
       borderObserver?.disconnect();
       contentObserver?.disconnect();
     };
   }
 }
+
+_.brandClass(XResizeObserver, "XResizeObserver");

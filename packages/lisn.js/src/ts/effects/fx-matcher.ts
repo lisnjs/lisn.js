@@ -4,8 +4,9 @@
  * @since v1.3.0
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import {
   View,
@@ -99,7 +100,7 @@ export abstract class FXMatcher {
       },
     };
 
-    const changeCallbacks = MH.newMap<FXMatcherHandler, FXMatcherCallback>();
+    const changeCallbacks = _.newMap<FXMatcherHandler, FXMatcherCallback>();
 
     // --------------------
 
@@ -110,7 +111,7 @@ export abstract class FXMatcher {
     };
 
     this.offChange = (handler: FXMatcherHandler) => {
-      MH.remove(changeCallbacks.get(handler));
+      _.remove(changeCallbacks.get(handler));
     };
 
     // --------------------
@@ -260,7 +261,7 @@ export class FXNegateMatcher extends FXMatcher {
 export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
   constructor(composer: FXComposer, config: FXComposerMatcherBounds) {
     if (!config) {
-      throw MH.usageError(
+      throw usageError(
         "At least one parameter bounding value is required for FXComposerMatcher",
       );
     }
@@ -351,12 +352,12 @@ export class FXScrollMatcher extends FXRelativeMatcher<
    */
   constructor(bounds: FXScrollMatcherBounds, scrollable?: ScrollTarget) {
     if (!bounds) {
-      throw MH.usageError(
+      throw usageError(
         "At least one scroll offset bounding value is required for FXScrollMatcher",
       );
     }
 
-    const scrollWatcher = ScrollWatcher.reuse({ [MC.S_DEBOUNCE_WINDOW]: 0 });
+    const scrollWatcher = ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
 
     const executor = (
       store: FXRelativeMatcherStore<FXPinAllAxesData<"top" | "left">>,
@@ -365,13 +366,13 @@ export class FXScrollMatcher extends FXRelativeMatcher<
         const data: FXPinAllAxesData<"top" | "left"> = {
           top: {
             min: 0,
-            max: scrollData[MC.S_SCROLL_HEIGHT],
-            current: scrollData[MC.S_SCROLL_TOP],
+            max: scrollData[_.S_SCROLL_HEIGHT],
+            current: scrollData[_.S_SCROLL_TOP],
           },
           left: {
             min: 0,
-            max: scrollData[MC.S_SCROLL_WIDTH],
-            current: scrollData[MC.S_SCROLL_LEFT],
+            max: scrollData[_.S_SCROLL_WIDTH],
+            current: scrollData[_.S_SCROLL_LEFT],
           },
         };
 
@@ -449,14 +450,12 @@ export class FXViewMatcher extends FXMatcher {
     config?: ViewWatcherConfig,
   ) {
     if (!viewTarget || !views) {
-      throw MH.usageError(
-        "View target and views are required for FXViewMatcher",
-      );
+      throw usageError("View target and views are required for FXViewMatcher");
     }
 
     const oppositeViews = getOppositeViews(views);
-    if (!MH.lengthOf(oppositeViews)) {
-      throw MH.usageError(
+    if (!_.lengthOf(oppositeViews)) {
+      throw usageError(
         "Views given to FXViewMatcher cannot include all possible views",
       );
     }
@@ -523,7 +522,7 @@ const axisIsGreaterThan = (
   minValue: RawOrRelativeNumber | undefined,
   values: FXPinAxisData,
   reference: FXPinAxisData | undefined,
-) => values.current > toRawAxisValue(minValue, values, reference, -MC.INFINITY);
+) => values.current > toRawAxisValue(minValue, values, reference, -_.INFINITY);
 
 /**
  * Converts the given `maxValue` raw or relative number with
@@ -537,7 +536,7 @@ const axisIsLessThan = (
   maxValue: RawOrRelativeNumber | undefined,
   values: FXPinAxisData,
   reference: FXPinAxisData | undefined,
-) => values.current < toRawAxisValue(maxValue, values, reference, MC.INFINITY);
+) => values.current < toRawAxisValue(maxValue, values, reference, _.INFINITY);
 
 const axesAreWithinBounds = <Keys extends string>(
   bounds: { [B in "min" | "max"]?: { [K in Keys]?: RawOrRelativeNumber } },
@@ -559,3 +558,10 @@ const axesAreWithinBounds = <Keys extends string>(
 
   return result;
 };
+
+_.brandClass(FXMatcher, "FXMatcher");
+_.brandClass(FXRelativeMatcher, "FXRelativeMatcher");
+_.brandClass(FXNegateMatcher, "FXNegateMatcher");
+_.brandClass(FXComposerMatcher, "FXComposerMatcher");
+_.brandClass(FXScrollMatcher, "FXScrollMatcher");
+_.brandClass(FXViewMatcher, "FXViewMatcher");

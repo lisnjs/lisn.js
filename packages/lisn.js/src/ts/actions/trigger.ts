@@ -9,8 +9,7 @@
  * element.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { logWarn } from "@lisn/utils/log";
 import { waitForDelay } from "@lisn/utils/tasks";
@@ -73,7 +72,7 @@ export class Enable implements Action {
 
     this.do = _enable;
     this.undo = _disable;
-    this[MC.S_TOGGLE] = _toggleEnable;
+    this[_.S_TOGGLE] = _toggleEnable;
   }
 }
 
@@ -130,7 +129,7 @@ export class Disable implements Action {
 
     this.do = _disable;
     this.undo = _enable;
-    this[MC.S_TOGGLE] = _toggleEnable;
+    this[_.S_TOGGLE] = _toggleEnable;
   }
 }
 
@@ -182,7 +181,7 @@ export class Run implements Action {
 
     this.do = _run;
     this.undo = _reverse;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -211,13 +210,13 @@ const getMethods = (element: Element, ids: string[]) => {
     _toggleEnable: () => call("toggleEnable"),
     _run: () => call("run"),
     _reverse: () => call("reverse"),
-    _toggle: () => call(MC.S_TOGGLE),
+    _toggle: () => call(_.S_TOGGLE),
   };
 };
 
 const getTriggers = async (element: Element, ids: string[]) => {
   const triggers: Trigger[] = [];
-  if (!MH.lengthOf(ids)) {
+  if (!_.lengthOf(ids)) {
     logWarn("At least 1 ID is required for enable action");
     return triggers;
   }
@@ -241,3 +240,7 @@ const getTriggers = async (element: Element, ids: string[]) => {
 
   return triggers;
 };
+
+_.brandClass(Enable, "Enable");
+_.brandClass(Disable, "Disable");
+_.brandClass(Run, "Run");

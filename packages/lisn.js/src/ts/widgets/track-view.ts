@@ -2,7 +2,7 @@
  * @module Widgets
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
 import {
@@ -65,7 +65,7 @@ import {
 export class TrackView extends Widget {
   static get(element: Element): TrackView | null {
     const instance = super.get(element, DUMMY_ID);
-    if (MH.isInstanceOf(instance, TrackView)) {
+    if (_.isInstanceOf(instance, TrackView)) {
       return instance;
     }
     return null;
@@ -165,7 +165,7 @@ const newConfigValidator: WidgetConfigValidatorFunc<TrackViewConfig> = (
 ) => {
   return {
     root: (key, value) =>
-      (MH.isLiteralString(value)
+      (_.isLiteralString(value)
         ? waitForReferenceElement(value, element)
         : null) ?? undefined,
     rootMargin: validateString,
@@ -175,3 +175,5 @@ const newConfigValidator: WidgetConfigValidatorFunc<TrackViewConfig> = (
     scrollThreshold: validateNumber,
   };
 };
+
+_.brandClass(TrackView, "TrackView");

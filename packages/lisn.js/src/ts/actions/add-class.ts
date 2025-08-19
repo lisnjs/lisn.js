@@ -6,7 +6,7 @@
  * to/from the given element.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
+import * as _ from "@lisn/_internal";
 
 import {
   addClasses,
@@ -65,7 +65,7 @@ export class AddClass implements Action {
 
     this.do = _add;
     this.undo = _remove;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -118,7 +118,7 @@ export class RemoveClass implements Action {
 
     this.do = _remove;
     this.undo = _add;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -131,3 +131,6 @@ const getMethods = (element: Element, classNames: string[]) => {
     _toggle: () => toggleClasses(element, ...classNames),
   };
 };
+
+_.brandClass(AddClass, "AddClass");
+_.brandClass(RemoveClass, "RemoveClass");

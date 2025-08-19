@@ -2,9 +2,9 @@
  * @module Utils
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
-import { LisnUsageError } from "@lisn/globals/errors";
+import { usageError, LisnUsageError } from "@lisn/globals/errors";
 
 import { CommaSeparatedStr, RawOrRelativeNumber } from "@lisn/globals/types";
 
@@ -18,8 +18,6 @@ import { splitOn } from "@lisn/utils/text";
  *
  * @param allowEmpty If `false`, then input without any entries is
  * considered _invalid_.
- *
- * @category Validation
  */
 export const isValidStrList = <T extends string = string>(
   value: unknown,
@@ -28,9 +26,9 @@ export const isValidStrList = <T extends string = string>(
 ): value is CommaSeparatedStr<T> | T[] => {
   try {
     const res = validateStrList("", value, checkFn);
-    return allowEmpty || !MH.isNullish(res);
+    return allowEmpty || !_.isNullish(res);
   } catch (err) {
-    if (MH.isInstanceOf(err, LisnUsageError)) {
+    if (_.isInstanceOf(err, LisnUsageError)) {
       return false;
     }
     throw err;
@@ -61,7 +59,7 @@ export const validateStrList = <T extends string = string>(
   value: unknown,
   checkFn?: (value: string) => value is T,
 ): T[] | undefined =>
-  MH.filterBlank(
+  _.filterBlank(
     toArray(value)?.map((v) =>
       _validateString(key, v, checkFn, "a string or a string array"),
     ),
@@ -89,7 +87,7 @@ export const validateNumList = (
   key: string,
   value: unknown,
 ): number[] | undefined =>
-  MH.filterBlank(
+  _.filterBlank(
     toArray(value)?.map((v) =>
       _validateNumber(key, v, "a number or a number array"),
     ),
@@ -167,8 +165,8 @@ export const validateStringRequired = <T extends string = string>(
 ): T => {
   const result = _validateString(key, value, checkFn);
 
-  if (MH.isEmpty(result)) {
-    throw MH.usageError(`'${key}' is required`);
+  if (_.isEmpty(result)) {
+    throw usageError(`'${key}' is required`);
   }
 
   return result;
@@ -217,11 +215,11 @@ export const validateRawOrRelativeNumber = (
   const typeDescription =
     "numerical with an optional prefix of + or -, or suffix of %";
 
-  if (MH.isString(value)) {
+  if (_.isString(value)) {
     const isRaw = toRawNum(value, NaN, false) !== false; // reference was not used
     const raw = toRawNum(value, 1, false);
     if (raw === false) {
-      throw MH.usageError(`'${key}' must be ${typeDescription}`);
+      throw usageError(`'${key}' must be ${typeDescription}`);
     }
 
     return isRaw ? raw : (value as RawOrRelativeNumber);
@@ -234,20 +232,20 @@ export const validateRawOrRelativeNumber = (
 
 const toArray = (value: unknown): unknown[] | undefined => {
   let result: unknown[] | null;
-  if (MH.isArray(value)) {
+  if (_.isArray(value)) {
     result = value;
-  } else if (MH.isIterableObject(value)) {
-    result = MH.arrayFrom(value);
-  } else if (MH.isLiteralString(value)) {
+  } else if (_.isIterableObject(value)) {
+    result = _.arrayFrom(value);
+  } else if (_.isLiteralString(value)) {
     result = splitOn(value, ",");
-  } else if (!MH.isNullish(value)) {
+  } else if (!_.isNullish(value)) {
     result = [value];
   } else {
     result = null;
   }
 
   return result
-    ? MH.filterBlank(result.map((v) => (MH.isLiteralString(v) ? v.trim() : v)))
+    ? _.filterBlank(result.map((v) => (_.isLiteralString(v) ? v.trim() : v)))
     : undefined;
 };
 
@@ -256,13 +254,13 @@ const _validateNumber = (
   value: unknown,
   typeDescription?: string,
 ) => {
-  if (MH.isNullish(value)) {
+  if (_.isNullish(value)) {
     return;
   }
 
   const numVal = toNum(value, null);
   if (numVal === null) {
-    throw MH.usageError(`'${key}' must be ${typeDescription ?? "a number"}`);
+    throw usageError(`'${key}' must be ${typeDescription ?? "a number"}`);
   }
 
   return numVal;
@@ -273,13 +271,13 @@ const _validateBoolean = (
   value: unknown,
   typeDescription?: string,
 ) => {
-  if (MH.isNullish(value)) {
+  if (_.isNullish(value)) {
     return;
   }
 
   const boolVal = toBoolean(value);
   if (boolVal === null) {
-    throw MH.usageError(
+    throw usageError(
       `'${key}' must be ${typeDescription ?? '"true" or "false"'}`,
     );
   }
@@ -305,14 +303,14 @@ function _validateString(
   checkFn?: null | ((value: string) => boolean),
   typeDescription?: string,
 ) {
-  if (MH.isNullish(value)) {
+  if (_.isNullish(value)) {
     return;
   }
 
-  if (!MH.isLiteralString(value)) {
-    throw MH.usageError(`'${key}' must be ${typeDescription ?? "a string"}`);
+  if (!_.isLiteralString(value)) {
+    throw usageError(`'${key}' must be ${typeDescription ?? "a string"}`);
   } else if (checkFn && !checkFn(value)) {
-    throw MH.usageError(`Invalid value for '${key}'`);
+    throw usageError(`Invalid value for '${key}'`);
   }
 
   return value;
@@ -324,7 +322,7 @@ const _validateBooleanOrString = <T extends string = string>(
   stringCheckFn?: (value: string) => value is T,
   typeDescription?: string,
 ) => {
-  if (MH.isNullish(value)) {
+  if (_.isNullish(value)) {
     return;
   }
 
@@ -333,8 +331,8 @@ const _validateBooleanOrString = <T extends string = string>(
     return boolVal;
   }
 
-  if (!MH.isLiteralString(value)) {
-    throw MH.usageError(
+  if (!_.isLiteralString(value)) {
+    throw usageError(
       `'${key}' must be ${typeDescription ?? "a boolean or string"}`,
     );
   }

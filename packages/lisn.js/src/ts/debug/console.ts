@@ -2,6 +2,8 @@
  * @module Debugging
  */
 
+import * as _ from "@lisn/_internal";
+
 import { LogFunction } from "@lisn/globals/types";
 
 import { LevelName, ConsoleInterface } from "@lisn/debug/types";
@@ -49,3 +51,5 @@ export class Console implements ConsoleInterface {
     this.error = (...args) => sendLog("error", args);
   }
 }
+
+_.brandClass(Console, "Console");

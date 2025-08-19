@@ -9,7 +9,7 @@
  * given element. It works with CSS or Web Animations.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
+import * as _ from "@lisn/_internal";
 
 import {
   iterateAnimations,
@@ -74,7 +74,7 @@ export class AnimatePlay implements Action {
 
     this.do = _play;
     this.undo = _pause;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -129,7 +129,7 @@ export class AnimatePause implements Action {
 
     this.do = _pause;
     this.undo = _play;
-    this[MC.S_TOGGLE] = _toggle;
+    this[_.S_TOGGLE] = _toggle;
   }
 }
 
@@ -170,13 +170,16 @@ const animate = (
         resetCssAnimationsNow(element);
       }
 
-      const isPaused = hasClass(element, MC.PREFIX_ANIMATE_PAUSE);
+      const isPaused = hasClass(element, _.PREFIX_ANIMATE_PAUSE);
       if (action === PLAY || (isPaused && action === TOGGLE)) {
-        removeClassesNow(element, MC.PREFIX_ANIMATE_PAUSE);
+        removeClassesNow(element, _.PREFIX_ANIMATE_PAUSE);
       } else {
-        addClassesNow(element, MC.PREFIX_ANIMATE_PAUSE);
+        addClassesNow(element, _.PREFIX_ANIMATE_PAUSE);
       }
     },
     isInitial,
   );
 };
+
+_.brandClass(AnimatePlay, "AnimatePlay");
+_.brandClass(AnimatePause, "AnimatePause");

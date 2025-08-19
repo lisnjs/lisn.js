@@ -8,7 +8,9 @@
  * matches.
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError } from "@lisn/globals/errors";
 
 import {
   DeviceSpec,
@@ -24,7 +26,6 @@ import {
   getOtherDevices,
   getOtherAspectRatios,
 } from "@lisn/utils/layout";
-import { deepCopy } from "@lisn/utils/misc";
 import { validateStringRequired } from "@lisn/utils/validation";
 
 import { Action } from "@lisn/actions/action";
@@ -144,11 +145,11 @@ export class LayoutTrigger extends Trigger {
         return new LayoutTrigger(
           element,
           actions,
-          MH.assign(config, {
+          _.assign(config, {
             layout: validateStringRequired(
               "layout",
-              MH.strReplace(
-                MH.strReplace(args[0] ?? "", /(min|max)-/g, "$1 "),
+              _.strReplace(
+                _.strReplace(args[0] ?? "", /(min|max)-/g, "$1 "),
                 /-to-/g,
                 " to ",
               ),
@@ -175,13 +176,13 @@ export class LayoutTrigger extends Trigger {
   ) {
     const layout = config?.layout ?? "";
     if (!layout) {
-      throw MH.usageError("'layout' is required");
+      throw usageError("'layout' is required");
     }
 
     super(element, actions, config);
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
 
-    if (!MH.lengthOf(actions)) {
+    if (!_.lengthOf(actions)) {
       return;
     }
 
@@ -203,7 +204,7 @@ export class LayoutTrigger extends Trigger {
 
     watcher.onLayout(this.run, { devices, aspectRatios });
 
-    if (MH.lengthOf(otherDevices) || MH.lengthOf(otherAspectRatios)) {
+    if (_.lengthOf(otherDevices) || _.lengthOf(otherAspectRatios)) {
       watcher.onLayout(this.reverse, {
         devices: otherDevices,
         aspectRatios: otherAspectRatios,
@@ -243,13 +244,15 @@ const newConfigValidator: WidgetConfigValidatorFunc<
 > = (element) => {
   return {
     root: async (key, value) => {
-      const root = MH.isLiteralString(value)
+      const root = _.isLiteralString(value)
         ? await waitForReferenceElement(value, element)
         : undefined;
-      if (root && !MH.isHTMLElement(root)) {
-        throw MH.usageError("root must be HTMLElement");
+      if (root && !_.isHTMLElement(root)) {
+        throw usageError("root must be HTMLElement");
       }
       return root;
     },
   };
 };
+
+_.brandClass(LayoutTrigger, "LayoutTrigger");

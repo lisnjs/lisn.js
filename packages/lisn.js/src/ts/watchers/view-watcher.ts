@@ -2,8 +2,9 @@
  * @module Watchers/ViewWatcher
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, illegalConstructorError } from "@lisn/globals/errors";
 
 import {
   ViewTarget,
@@ -19,7 +20,7 @@ import {
   waitForSubsequentMeasureTime,
 } from "@lisn/utils/dom-optimize";
 import { logError } from "@lisn/utils/log";
-import { omitKeys, compareValuesIn, deepCopy } from "@lisn/utils/misc";
+import { compareValuesIn } from "@lisn/utils/misc";
 import { createOverlay, OverlayOptions } from "@lisn/utils/overlays";
 import { getClosestScrollable } from "@lisn/utils/scroll";
 import { fetchViewportSize } from "@lisn/utils/size";
@@ -185,7 +186,7 @@ export class ViewWatcher {
    */
   static reuse(config?: ViewWatcherConfig) {
     const myConfig = getConfig(config);
-    const configStrKey = objToStrKey(omitKeys(myConfig, { _root: null }));
+    const configStrKey = objToStrKey(_.omitKeys(myConfig, { _root: null }));
 
     let instance = instances.get(myConfig._root)?.get(configStrKey);
     if (!instance) {
@@ -201,19 +202,19 @@ export class ViewWatcher {
     key: typeof CONSTRUCTOR_KEY,
   ) {
     if (key !== CONSTRUCTOR_KEY) {
-      throw MH.illegalConstructorError("ViewWatcher.create");
+      throw illegalConstructorError("ViewWatcher.create");
     }
 
     const logger = debug
       ? new debug.Logger({ name: "ViewWatcher", logAtCreation: config })
       : null;
 
-    const allViewData = MH.newWeakMap<Element, ViewData>();
+    const allViewData = _.newWeakMap<Element, ViewData>();
 
     const allCallbacks = newXWeakMap<
       Element,
       Map<OnViewHandler, CallbackEntry>
-    >(() => MH.newMap());
+    >(() => _.newMap());
 
     const intersectionHandler = (entries: IntersectionObserverEntry[]) => {
       debug: logger?.debug9(`Got ${entries.length} new entries`, entries);
@@ -256,9 +257,9 @@ export class ViewWatcher {
         return fetchData(element);
       }
 
-      return MH.newPromise((resolve) => {
+      return _.newPromise((resolve) => {
         // Use a temp IntersectionObserver
-        const observer = MH.newIntersectionObserver((entries) => {
+        const observer = _.newIntersectionObserver((entries) => {
           const promise = fetchData(entries[0]);
           observer.disconnect();
           promise.then(resolve);
@@ -276,7 +277,7 @@ export class ViewWatcher {
       trackType: TrackType,
     ): CallbackEntry => {
       const element = options._element;
-      MH.remove(allCallbacks.get(element)?.get(handler)?._callback);
+      _.remove(allCallbacks.get(element)?.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", options);
       const callback = wrapCallback(handler);
@@ -316,8 +317,8 @@ export class ViewWatcher {
       let viewData = await fetchCurrentView(element);
 
       if (
-        viewData.rootBounds[MC.S_WIDTH] === 0 &&
-        viewData.rootBounds[MC.S_HEIGHT] === 0
+        viewData.rootBounds[_.S_WIDTH] === 0 &&
+        viewData.rootBounds[_.S_HEIGHT] === 0
       ) {
         // Possibly the root is being setup now, wait for one AF
         debug: logger?.debug5(
@@ -370,7 +371,7 @@ export class ViewWatcher {
 
       const currEntry = allCallbacks.get(element)?.get(handler);
       if (currEntry?._trackType === trackType) {
-        MH.remove(currEntry._callback);
+        _.remove(currEntry._callback);
 
         if (handler === setViewCssProps) {
           // delete the properties
@@ -387,7 +388,7 @@ export class ViewWatcher {
     ) => {
       const element = options._element;
 
-      MH.deleteKey(allCallbacks.get(element), handler);
+      _.deleteKey(allCallbacks.get(element), handler);
       allCallbacks.prune(element);
 
       if (!allCallbacks.has(element)) {
@@ -397,7 +398,7 @@ export class ViewWatcher {
         );
 
         xObserver.unobserve(element);
-        MH.deleteKey(allViewData, element);
+        _.deleteKey(allViewData, element);
       }
     };
 
@@ -405,7 +406,7 @@ export class ViewWatcher {
 
     const processEntry = async (entry: IntersectionObserverEntry) => {
       // In reality, it can't be just a base Element
-      const element = MH.targetOf(entry);
+      const element = _.targetOf(entry);
 
       // This doesn't need to be "realtime", since IntersectionObserver alone
       // introduces a delay.
@@ -513,24 +514,24 @@ export class ViewWatcher {
 
         // Detect when target's class or style attribute change
         domWatcher.onMutation(trackCallback, {
-          categories: [MC.S_ATTRIBUTE],
-          [MC.S_SKIP_INITIAL]: true,
+          categories: [_.S_ATTRIBUTE],
+          [_.S_SKIP_INITIAL]: true,
         });
 
         // Detect when target is resized
         sizeWatcher.onResize(trackCallback, {
           target: element,
-          [MC.S_DEBOUNCE_WINDOW]: options._debounceWindow,
+          [_.S_DEBOUNCE_WINDOW]: options._debounceWindow,
           threshold: options._resizeThreshold,
-          [MC.S_SKIP_INITIAL]: true,
+          [_.S_SKIP_INITIAL]: true,
         });
 
         // Detect when the root is resized
         sizeWatcher.onResize(trackCallback, {
-          target: config._root ?? MH.getWindow(),
-          [MC.S_DEBOUNCE_WINDOW]: options._debounceWindow,
+          target: config._root ?? _.getWindow(),
+          [_.S_DEBOUNCE_WINDOW]: options._debounceWindow,
           threshold: options._resizeThreshold,
-          [MC.S_SKIP_INITIAL]: true,
+          [_.S_SKIP_INITIAL]: true,
         });
 
         // Detect when the target's scrollable ancestors are scrolled (this
@@ -538,16 +539,16 @@ export class ViewWatcher {
         for (const ancestor of scrollableAncestors) {
           scrollWatcher.onScroll(trackCallback, {
             scrollable: ancestor,
-            [MC.S_DEBOUNCE_WINDOW]: options._debounceWindow,
+            [_.S_DEBOUNCE_WINDOW]: options._debounceWindow,
             threshold: options._scrollThreshold,
-            [MC.S_SKIP_INITIAL]: true,
+            [_.S_SKIP_INITIAL]: true,
           });
         }
       };
 
       const { _callback: enterOrLeaveCallback } = createCallback(
         (target__ignored, viewData) => {
-          if (viewData.views[0] === MC.S_AT) {
+          if (viewData.views[0] === _.S_AT) {
             if (!isInview) {
               isInview = true;
               addTrackCallback();
@@ -558,7 +559,7 @@ export class ViewWatcher {
             removeTrackCallback = null;
           }
         },
-        MH.assign(options, {
+        _.assign(options, {
           _viewsBitmask: VIEWS_SPACE.bitmask,
         }),
         TRACK_REGULAR,
@@ -842,9 +843,9 @@ type IntersectionData = {
 
 type TrackType = typeof TRACK_REGULAR | typeof TRACK_FULL;
 
-const CONSTRUCTOR_KEY: unique symbol = MC.SYMBOL() as typeof CONSTRUCTOR_KEY;
+const CONSTRUCTOR_KEY: unique symbol = _.SYMBOL() as typeof CONSTRUCTOR_KEY;
 const instances = newXMap<Element | null, Map<string, ViewWatcher>>(() =>
-  MH.newMap(),
+  _.newMap(),
 );
 
 const getConfig = (
@@ -897,8 +898,8 @@ const viewChanged = (latestData: ViewData, prevData: ViewData | undefined) =>
   !prevData ||
   viewsToBitmask(prevData.views) !== viewsToBitmask(latestData.views) ||
   !compareValuesIn(
-    MH.copyBoundingRectProps(prevData.targetBounds),
-    MH.copyBoundingRectProps(latestData.targetBounds),
+    _.copyBoundingRectProps(prevData.targetBounds),
+    _.copyBoundingRectProps(latestData.targetBounds),
   ) ||
   !compareValuesIn(prevData.rootBounds, latestData.rootBounds) ||
   !compareValuesIn(prevData.relative, latestData.relative);
@@ -921,7 +922,7 @@ const fetchIntersectionData = async (
   let isIntersecting: boolean | null = null;
   let isCrossOrigin: boolean | null = null;
 
-  if (MH.isOfType(entryOrTarget, "IntersectionObserverEntry")) {
+  if (_.isOfType(entryOrTarget, "IntersectionObserverEntry")) {
     target = entryOrTarget.target;
     targetBounds = entryOrTarget.boundingClientRect;
     rootBounds = entryOrTarget.rootBounds;
@@ -959,7 +960,7 @@ const fetchBounds = async (
       await waitForMeasureTime();
     }
 
-    rect = MH.copyBoundingRectProps(MH.getBoundingClientRect(root));
+    rect = _.copyBoundingRectProps(_.getBoundingClientRect(root));
   } else {
     const { width, height } = await fetchViewportSize(realtime);
     rect = {
@@ -975,13 +976,13 @@ const fetchBounds = async (
   }
 
   if (rootMargins) {
-    rect.x = rect[MC.S_LEFT] -= rootMargins[MC.S_LEFT];
-    rect[MC.S_RIGHT] += rootMargins[MC.S_RIGHT];
-    rect[MC.S_WIDTH] += rootMargins[MC.S_RIGHT] + rootMargins[MC.S_LEFT];
+    rect.x = rect[_.S_LEFT] -= rootMargins[_.S_LEFT];
+    rect[_.S_RIGHT] += rootMargins[_.S_RIGHT];
+    rect[_.S_WIDTH] += rootMargins[_.S_RIGHT] + rootMargins[_.S_LEFT];
 
-    rect.y = rect[MC.S_TOP] -= rootMargins[MC.S_TOP];
-    rect[MC.S_BOTTOM] += rootMargins[MC.S_BOTTOM];
-    rect[MC.S_HEIGHT] += rootMargins[MC.S_TOP] + rootMargins[MC.S_BOTTOM];
+    rect.y = rect[_.S_TOP] -= rootMargins[_.S_TOP];
+    rect[_.S_BOTTOM] += rootMargins[_.S_BOTTOM];
+    rect[_.S_HEIGHT] += rootMargins[_.S_TOP] + rootMargins[_.S_BOTTOM];
   }
 
   return rect;
@@ -992,31 +993,31 @@ const fetchViewData = async (
   realtime = false,
 ): Promise<ViewData> => {
   const vpSize = await fetchViewportSize(realtime);
-  const vpHeight = vpSize[MC.S_HEIGHT];
-  const vpWidth = vpSize[MC.S_WIDTH];
+  const vpHeight = vpSize[_.S_HEIGHT];
+  const vpWidth = vpSize[_.S_WIDTH];
 
   const views = await fetchViews(intersection, realtime);
 
-  const relative = MH.merge(
+  const relative = _.merge(
     { hMiddle: NaN, vMiddle: NaN },
-    MH.copyBoundingRectProps(intersection._targetBounds),
+    _.copyBoundingRectProps(intersection._targetBounds),
   );
 
   relative.y /= vpHeight;
-  relative[MC.S_TOP] /= vpHeight;
-  relative[MC.S_BOTTOM] /= vpHeight;
-  relative[MC.S_HEIGHT] /= vpHeight;
+  relative[_.S_TOP] /= vpHeight;
+  relative[_.S_BOTTOM] /= vpHeight;
+  relative[_.S_HEIGHT] /= vpHeight;
 
   relative.x /= vpWidth;
-  relative[MC.S_LEFT] /= vpWidth;
-  relative[MC.S_RIGHT] /= vpWidth;
-  relative[MC.S_WIDTH] /= vpWidth;
+  relative[_.S_LEFT] /= vpWidth;
+  relative[_.S_RIGHT] /= vpWidth;
+  relative[_.S_WIDTH] /= vpWidth;
 
-  relative.hMiddle = (relative[MC.S_LEFT] + relative[MC.S_RIGHT]) / 2;
-  relative.vMiddle = (relative[MC.S_TOP] + relative[MC.S_BOTTOM]) / 2;
+  relative.hMiddle = (relative[_.S_LEFT] + relative[_.S_RIGHT]) / 2;
+  relative.vMiddle = (relative[_.S_TOP] + relative[_.S_BOTTOM]) / 2;
 
   const viewData: ViewData = {
-    isIntersecting: intersection._isIntersecting ?? views[0] === MC.S_AT,
+    isIntersecting: intersection._isIntersecting ?? views[0] === _.S_AT,
     targetBounds: intersection._targetBounds,
     rootBounds: intersection._rootBounds,
     views,
@@ -1032,7 +1033,7 @@ const fetchViews = async (
   useScrollingAncestor?: Element,
 ): Promise<[View, View?]> => {
   if (intersection._isIntersecting) {
-    return [MC.S_AT];
+    return [_.S_AT];
   }
 
   let rootBounds: BoundingRect;
@@ -1048,10 +1049,10 @@ const fetchViews = async (
 
   const targetBounds = intersection._targetBounds;
   const delta = {
-    _left: rootBounds[MC.S_LEFT] - targetBounds[MC.S_LEFT],
-    _right: targetBounds[MC.S_RIGHT] - rootBounds[MC.S_RIGHT],
-    _top: rootBounds[MC.S_TOP] - targetBounds[MC.S_TOP],
-    _bottom: targetBounds[MC.S_BOTTOM] - rootBounds[MC.S_BOTTOM],
+    _left: rootBounds[_.S_LEFT] - targetBounds[_.S_LEFT],
+    _right: targetBounds[_.S_RIGHT] - rootBounds[_.S_RIGHT],
+    _top: rootBounds[_.S_TOP] - targetBounds[_.S_TOP],
+    _bottom: targetBounds[_.S_BOTTOM] - rootBounds[_.S_BOTTOM],
   };
 
   let xView: View | null = null;
@@ -1059,25 +1060,25 @@ const fetchViews = async (
   if (delta._left > 0 && delta._right > 0) {
     // Target is wider than root: use greater delta to determine position.
     // Remember, the view is the _root_ position relative to target.
-    xView = delta._left > delta._right ? MC.S_RIGHT : MC.S_LEFT;
+    xView = delta._left > delta._right ? _.S_RIGHT : _.S_LEFT;
   } else if (delta._left > 0) {
     // Target is to the left of the root
-    xView = MC.S_RIGHT;
+    xView = _.S_RIGHT;
   } else if (delta._right > 0) {
     // Target is to the right of the root
-    xView = MC.S_LEFT;
+    xView = _.S_LEFT;
   } // else target is horizontally contained in root, see below
 
   if (delta._top > 0 && delta._bottom > 0) {
     // Target is taller than root: use greater delta to determine position.
     // Remember, the view is the _root_ position relative to target.
-    yView = delta._top > delta._bottom ? MC.S_BELOW : MC.S_ABOVE;
+    yView = delta._top > delta._bottom ? _.S_BELOW : _.S_ABOVE;
   } else if (delta._top > 0) {
     // Target is above the root
-    yView = MC.S_BELOW;
+    yView = _.S_BELOW;
   } else if (delta._bottom > 0) {
     // Target is below the root
-    yView = MC.S_ABOVE;
+    yView = _.S_ABOVE;
   } // else target is vertically contained in root, see below
 
   if (xView && yView) {
@@ -1124,7 +1125,7 @@ const fetchViews = async (
   // Either case 3. (cross-origin iframe outside the viewport) or case 1. and
   // the target is actually intersecting the root. Either way, it's to be
   // considered in-view of its root.
-  return [MC.S_AT];
+  return [_.S_AT];
 };
 
 const setViewCssProps = (
@@ -1137,8 +1138,8 @@ const setViewCssProps = (
     bottom: relative.bottom,
     left: relative.left,
     right: relative.right,
-    [MC.S_WIDTH]: relative[MC.S_WIDTH],
-    [MC.S_HEIGHT]: relative[MC.S_HEIGHT],
+    [_.S_WIDTH]: relative[_.S_WIDTH],
+    [_.S_HEIGHT]: relative[_.S_HEIGHT],
     hMiddle: relative.hMiddle,
     vMiddle: relative.vMiddle,
   };
@@ -1149,10 +1150,10 @@ const fetchElement = async (
   root: Element | null,
   target: ViewTarget,
 ): Promise<Element> => {
-  if (MH.isElement(target)) {
+  if (_.isElement(target)) {
     return target;
-  } else if (!MH.isString(target)) {
-    throw MH.usageError(
+  } else if (!_.isString(target)) {
+    throw usageError(
       "'target' must be an offset string or an HTMLElement | SVGElement | MathMLElement",
     );
   }
@@ -1168,16 +1169,16 @@ const getOverlayOptions = (
   const { reference, value } = parseScrollOffset(target);
 
   let ovrDimension: "width" | "height";
-  if (reference === MC.S_TOP || reference === MC.S_BOTTOM) {
-    ovrDimension = MC.S_WIDTH;
-  } else if (reference === MC.S_LEFT || reference === MC.S_RIGHT) {
-    ovrDimension = MC.S_HEIGHT;
+  if (reference === _.S_TOP || reference === _.S_BOTTOM) {
+    ovrDimension = _.S_WIDTH;
+  } else if (reference === _.S_LEFT || reference === _.S_RIGHT) {
+    ovrDimension = _.S_HEIGHT;
   } else {
-    throw MH.usageError(`Invalid offset reference: '${reference}'`);
+    throw usageError(`Invalid offset reference: '${reference}'`);
   }
 
   return {
-    parent: MH.isHTMLElement(root) ? root : undefined,
+    parent: _.isHTMLElement(root) ? root : undefined,
     style: {
       [reference]: value,
       [ovrDimension]: "100%",
@@ -1195,8 +1196,10 @@ const invokeCallback = (
   callback
     .invoke(
       element,
-      deepCopy(viewData),
+      _.deepCopy(viewData),
       lastViewData, // no need to copy that one as it's not used again
       watcher,
     )
     .catch(logError);
+
+_.brandClass(ViewWatcher, "ViewWatcher");

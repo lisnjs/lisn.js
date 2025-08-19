@@ -6,10 +6,13 @@
  * specification.
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
+
+import { usageError, bugError } from "@lisn/globals/errors";
 
 import { getData } from "@lisn/utils/css-alter";
 import { waitForElement } from "@lisn/utils/dom-events";
+import { isNodeBAfterA } from "@lisn/utils/dom-query";
 import { logError } from "@lisn/utils/log";
 
 /**
@@ -70,7 +73,7 @@ export const getReferenceElement = (
 
   if (spec[0] === "#") {
     // element ID
-    const referenceElement = MH.getElementById(spec.slice(1));
+    const referenceElement = _.getElementById(spec.slice(1));
     if (!referenceElement) {
       return null;
     }
@@ -82,10 +85,10 @@ export const getReferenceElement = (
   );
 
   if (!relation) {
-    throw MH.usageError(`Invalid search specification '${spec}'`);
+    throw usageError(`Invalid search specification '${spec}'`);
   }
 
-  const rest = spec.slice(MH.lengthOf(relation));
+  const rest = spec.slice(_.lengthOf(relation));
   const matchOp = rest.slice(0, 1);
   let refOrCls = rest.slice(1);
 
@@ -98,7 +101,7 @@ export const getReferenceElement = (
     }
 
     if (!refOrCls) {
-      throw MH.usageError(`No reference name in '${spec}'`);
+      throw usageError(`No reference name in '${spec}'`);
     }
 
     selector = `[${DATA_REF}="${refOrCls}"]`;
@@ -118,7 +121,7 @@ export const getReferenceElement = (
       referenceElement = getPrevReferenceElement(selector, thisElement);
     } else {
       /* istanbul ignore next */ {
-        logError(MH.bugError(`Unhandled relation case ${relation}`));
+        logError(bugError(`Unhandled relation case ${relation}`));
         return null;
       }
     }
@@ -145,25 +148,25 @@ export const waitForReferenceElement = (
 
 // ----------------------------------------
 
-const PREFIX_REF = MH.prefixName("ref");
-const DATA_REF = MH.toDataAttrName(PREFIX_REF);
+const PREFIX_REF = _.prefixName("ref");
+const DATA_REF = _.toDataAttrName(PREFIX_REF);
 
 const getAllReferenceElements = (
   selector: string,
-): NodeListOf<Element> | null => MH.docQuerySelectorAll(selector);
+): NodeListOf<Element> | null => _.docQuerySelectorAll(selector);
 
 const getFirstReferenceElement = (selector: string): Element | null =>
-  MH.docQuerySelector(selector);
+  _.docQuerySelector(selector);
 
 const getLastReferenceElement = (selector: string): Element | null => {
   const allRefs = getAllReferenceElements(selector);
-  return (allRefs && allRefs[MH.lengthOf(allRefs) - 1]) || null;
+  return (allRefs && allRefs[_.lengthOf(allRefs) - 1]) || null;
 };
 
 const getThisReferenceElement = (
   selector: string,
   thisElement: Element,
-): Element | null => MH.closestParent(thisElement, selector);
+): Element | null => _.closestParent(thisElement, selector);
 
 const getNextReferenceElement = (selector: string, thisElement: Element) =>
   getNextOrPrevReferenceElement(selector, thisElement, false);
@@ -178,7 +181,7 @@ const getNextOrPrevReferenceElement = (
 ): Element | null => {
   thisElement = getThisReferenceElement(selector, thisElement) ?? thisElement;
 
-  if (!MH.getDoc().contains(thisElement)) {
+  if (!_.getDoc().contains(thisElement)) {
     return null;
   }
 
@@ -187,10 +190,10 @@ const getNextOrPrevReferenceElement = (
     return null;
   }
 
-  const numRefs = MH.lengthOf(allRefs);
+  const numRefs = _.lengthOf(allRefs);
   let refIndex = goBackward ? numRefs - 1 : -1;
   for (let i = 0; i < numRefs; i++) {
-    const currentIsAfter = MH.isNodeBAfterA(thisElement, allRefs[i]);
+    const currentIsAfter = isNodeBAfterA(thisElement, allRefs[i]);
 
     // As soon as we find either the starting element or the first element
     // that follows it, stop iteration.

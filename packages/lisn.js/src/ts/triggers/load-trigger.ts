@@ -5,10 +5,9 @@
  * {@link LoadTrigger} allows you to run actions once when the page is loaded.
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { waitForPageReady } from "@lisn/utils/dom-events";
-import { deepCopy } from "@lisn/utils/misc";
 
 import { Action } from "@lisn/actions/action";
 
@@ -74,12 +73,14 @@ export class LoadTrigger extends Trigger {
    */
   constructor(element: Element, actions: Action[], config: TriggerConfig) {
     super(element, actions, config);
-    this.getConfig = () => deepCopy(config);
+    this.getConfig = () => _.deepCopy(config);
 
-    if (!MH.lengthOf(actions)) {
+    if (!_.lengthOf(actions)) {
       return;
     }
 
     waitForPageReady().then(this.run);
   }
 }
+
+_.brandClass(LoadTrigger, "LoadTrigger");

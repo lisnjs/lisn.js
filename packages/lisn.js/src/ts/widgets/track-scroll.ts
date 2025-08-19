@@ -2,7 +2,7 @@
  * @module Widgets
  */
 
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { validateNumber } from "@lisn/utils/validation";
 
@@ -46,7 +46,7 @@ import {
 export class TrackScroll extends Widget {
   static get(element: Element): TrackScroll | null {
     const instance = super.get(element, DUMMY_ID);
-    if (MH.isInstanceOf(instance, TrackScroll)) {
+    if (_.isInstanceOf(instance, TrackScroll)) {
       return instance;
     }
     return null;
@@ -70,7 +70,7 @@ export class TrackScroll extends Widget {
 
     ScrollWatcher.reuse().trackScroll(
       null,
-      MH.assign(
+      _.assign(
         {
           scrollable: element,
         },
@@ -115,3 +115,5 @@ const configValidator: WidgetConfigValidatorObject<TrackScrollConfig> = {
   threshold: validateNumber,
   debounceWindow: validateNumber,
 };
+
+_.brandClass(TrackScroll, "TrackScroll");

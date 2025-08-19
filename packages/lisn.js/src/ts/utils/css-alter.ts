@@ -26,8 +26,7 @@
  * is cancelled. See {@link transitionElement} for an example.
  */
 
-import * as MC from "@lisn/globals/minification-constants";
-import * as MH from "@lisn/globals/minification-helpers";
+import * as _ from "@lisn/_internal";
 
 import { DOMElement, FlexDirection } from "@lisn/globals/types";
 
@@ -171,7 +170,7 @@ export const transitionElement = async (
  * @category Style: Altering
  */
 export const displayElementNow = (element: Element) =>
-  transitionElementNow(element, MC.PREFIX_UNDISPLAY, MC.PREFIX_DISPLAY);
+  transitionElementNow(element, _.PREFIX_UNDISPLAY, _.PREFIX_DISPLAY);
 
 /**
  * Like {@link displayElementNow} except it will {@link waitForMutateTime}, and
@@ -182,7 +181,7 @@ export const displayElementNow = (element: Element) =>
  * @category Style: Altering (optimized)
  */
 export const displayElement = (element: Element, delay = 0) =>
-  transitionElement(element, MC.PREFIX_UNDISPLAY, MC.PREFIX_DISPLAY, delay);
+  transitionElement(element, _.PREFIX_UNDISPLAY, _.PREFIX_DISPLAY, delay);
 
 /**
  * The opposite of {@link displayElementNow}.
@@ -192,7 +191,7 @@ export const displayElement = (element: Element, delay = 0) =>
  * @category Style: Altering
  */
 export const undisplayElementNow = (element: Element) =>
-  transitionElementNow(element, MC.PREFIX_DISPLAY, MC.PREFIX_UNDISPLAY);
+  transitionElementNow(element, _.PREFIX_DISPLAY, _.PREFIX_UNDISPLAY);
 
 /**
  * Like {@link undisplayElementNow} except it will {@link waitForMutateTime},
@@ -203,7 +202,7 @@ export const undisplayElementNow = (element: Element) =>
  * @category Style: Altering (optimized)
  */
 export const undisplayElement = (element: Element, delay = 0) =>
-  transitionElement(element, MC.PREFIX_DISPLAY, MC.PREFIX_UNDISPLAY, delay);
+  transitionElement(element, _.PREFIX_DISPLAY, _.PREFIX_UNDISPLAY, delay);
 
 /**
  * Transitions an element from class `lisn-hide` (which makes the element
@@ -215,7 +214,7 @@ export const undisplayElement = (element: Element, delay = 0) =>
  * @category Style: Altering
  */
 export const showElementNow = (element: Element) =>
-  transitionElementNow(element, MC.PREFIX_HIDE, MC.PREFIX_SHOW);
+  transitionElementNow(element, _.PREFIX_HIDE, _.PREFIX_SHOW);
 
 /**
  * Like {@link showElementNow} except it will {@link waitForMutateTime}, and
@@ -226,7 +225,7 @@ export const showElementNow = (element: Element) =>
  * @category Style: Altering (optimized)
  */
 export const showElement = (element: Element, delay = 0) =>
-  transitionElement(element, MC.PREFIX_HIDE, MC.PREFIX_SHOW, delay);
+  transitionElement(element, _.PREFIX_HIDE, _.PREFIX_SHOW, delay);
 
 /**
  * The opposite of {@link showElementNow}.
@@ -236,7 +235,7 @@ export const showElement = (element: Element, delay = 0) =>
  * @category Style: Altering
  */
 export const hideElementNow = (element: Element) =>
-  transitionElementNow(element, MC.PREFIX_SHOW, MC.PREFIX_HIDE);
+  transitionElementNow(element, _.PREFIX_SHOW, _.PREFIX_HIDE);
 
 /**
  * Like {@link hideElementNow} except it will {@link waitForMutateTime}, and
@@ -247,7 +246,7 @@ export const hideElementNow = (element: Element) =>
  * @category Style: Altering (optimized)
  */
 export const hideElement = (element: Element, delay = 0) =>
-  transitionElement(element, MC.PREFIX_SHOW, MC.PREFIX_HIDE, delay);
+  transitionElement(element, _.PREFIX_SHOW, _.PREFIX_HIDE, delay);
 
 /**
  * If {@link isElementUndisplayed}, it will {@link displayElementNow},
@@ -305,7 +304,7 @@ export const toggleShowElement = (element: Element, delay = 0) =>
  * @category DOM: Querying (optimized)
  */
 export const isElementHidden = (element: Element) =>
-  hasClass(element, MC.PREFIX_HIDE);
+  hasClass(element, _.PREFIX_HIDE);
 
 /**
  * Returns true if the element's class list contains `lisn-undisplay`.
@@ -313,7 +312,7 @@ export const isElementHidden = (element: Element) =>
  * @category DOM: Querying (optimized)
  */
 export const isElementUndisplayed = (element: Element) =>
-  hasClass(element, MC.PREFIX_UNDISPLAY);
+  hasClass(element, _.PREFIX_UNDISPLAY);
 
 /**
  * Returns true if the element's class list contains the given class.
@@ -321,7 +320,7 @@ export const isElementUndisplayed = (element: Element) =>
  * @category DOM: Querying (optimized)
  */
 export const hasClass = (element: Element, className: string) =>
-  MH.classList(element).contains(className);
+  _.classList(element).contains(className);
 
 /**
  * Returns true if the element's class list contains all of the given classes.
@@ -331,8 +330,8 @@ export const hasClass = (element: Element, className: string) =>
  * @category DOM: Querying (optimized)
  */
 export const hasAllClasses = (element: Element, ...classNames: string[]) =>
-  MH.lengthOf(classNames) > 0 &&
-  !MH.some(classNames, (className) => !hasClass(element, className));
+  _.lengthOf(classNames) > 0 &&
+  !_.some(classNames, (className) => !hasClass(element, className));
 
 /**
  * Returns true if the element's class list contains any of the given classes.
@@ -342,7 +341,7 @@ export const hasAllClasses = (element: Element, ...classNames: string[]) =>
  * @category DOM: Querying (optimized)
  */
 export const hasAnyClass = (element: Element, ...classNames: string[]) =>
-  MH.some(classNames, (className) => hasClass(element, className));
+  _.some(classNames, (className) => hasClass(element, className));
 
 /**
  * Adds the given classes to the element.
@@ -350,7 +349,7 @@ export const hasAnyClass = (element: Element, ...classNames: string[]) =>
  * @category Style: Altering
  */
 export const addClassesNow = (element: Element, ...classNames: string[]) =>
-  MH.classList(element).add(...classNames);
+  _.classList(element).add(...classNames);
 
 /**
  * Like {@link addClassesNow} except it will {@link waitForMutateTime}.
@@ -365,7 +364,7 @@ export const addClasses = asyncMutatorFor(addClassesNow);
  * @category Style: Altering
  */
 export const removeClassesNow = (element: Element, ...classNames: string[]) =>
-  MH.remove(MH.classList(element), ...classNames);
+  _.remove(_.classList(element), ...classNames);
 
 /**
  * Like {@link removeClassesNow} except it will {@link waitForMutateTime}.
@@ -385,7 +384,7 @@ export const toggleClassNow = (
   element: Element,
   className: string,
   force?: boolean,
-) => MH.classList(element).toggle(className, force);
+) => _.classList(element).toggle(className, force);
 
 /**
  * Like {@link toggleClassNow} except it will {@link waitForMutateTime}.
@@ -428,7 +427,7 @@ export const replaceClassNow = (
   element: Element,
   oldClassName: string,
   newClassName: string,
-) => MH.classList(element).replace(oldClassName, newClassName);
+) => _.classList(element).replace(oldClassName, newClassName);
 
 /**
  * Like {@link replaceClassNow} except it will {@link waitForMutateTime}.
@@ -450,7 +449,7 @@ export const replaceClass = asyncMutatorFor(replaceClassNow);
  * @category DOM: Querying (optimized)
  */
 export const getData = (element: Element, name: string) =>
-  MH.getAttr(element, MH.toDataAttrName(name));
+  _.getAttr(element, _.toDataAttrName(name));
 
 /**
  * Returns the value of the given data attribute as a boolean. Its value is
@@ -486,7 +485,7 @@ export const getBoolData = getBooleanData;
  * @category Style: Altering
  */
 export const setDataNow = (element: Element, name: string, value: string) =>
-  MH.setAttr(element, MH.toDataAttrName(name), value);
+  _.setAttr(element, _.toDataAttrName(name), value);
 
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
@@ -509,7 +508,7 @@ export const setBooleanDataNow = (
   element: Element,
   name: string,
   value = true,
-) => MH.setAttr(element, MH.toDataAttrName(name), value + "");
+) => _.setAttr(element, _.toDataAttrName(name), value + "");
 
 /**
  * @ignore
@@ -547,7 +546,7 @@ export const setBoolData = setBooleanData;
  * @category Style: Altering
  */
 export const unsetBooleanDataNow = (element: Element, name: string) =>
-  MH.unsetAttr(element, MH.toDataAttrName(name));
+  _.unsetAttr(element, _.toDataAttrName(name));
 
 /**
  * @ignore
@@ -583,7 +582,7 @@ export const unsetBoolData = unsetBooleanData;
  * @category Style: Altering
  */
 export const delDataNow = (element: Element, name: string) =>
-  MH.delAttr(element, MH.toDataAttrName(name));
+  _.delAttr(element, _.toDataAttrName(name));
 
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.
@@ -693,7 +692,7 @@ export const getFlexDirection = async (
 export const getParentFlexDirection = async (
   element: Element,
 ): Promise<FlexDirection | null> => {
-  const parent = MH.parentOf(element);
+  const parent = _.parentOf(element);
   return parent ? getFlexDirection(parent) : null;
 };
 
@@ -727,7 +726,7 @@ export const isFlexChild = async (
   element: Element,
   direction?: FlexDirection,
 ) => {
-  const parent = MH.parentOf(element);
+  const parent = _.parentOf(element);
   return parent ? isFlex(parent, direction) : false;
 };
 
@@ -740,9 +739,9 @@ export const isFlexChild = async (
 export const getMaxTransitionDuration = async (element: Element) => {
   const propVal = await getComputedStyleProp(element, "transition-duration");
 
-  return MH.max(
+  return _.max(
     ...splitOn(propVal, ",", true).map((strValue) => {
-      let duration = MH.parseFloat(strValue) || 0;
+      let duration = _.parseFloat(strValue) || 0;
 
       if (strValue === duration + "s") {
         duration *= 1000;
@@ -758,26 +757,26 @@ export const getMaxTransitionDuration = async (element: Element) => {
  * @internal
  */
 export const disableInitialTransition = async (element: Element, delay = 0) => {
-  await addClasses(element, MC.PREFIX_TRANSITION_DISABLE);
+  await addClasses(element, _.PREFIX_TRANSITION_DISABLE);
   if (delay) {
     await waitForDelay(delay);
   }
 
   await waitForSubsequentMutateTime();
-  removeClassesNow(element, MC.PREFIX_TRANSITION_DISABLE);
+  removeClassesNow(element, _.PREFIX_TRANSITION_DISABLE);
 };
 
 /**
  * @ignore
  * @internal
  */
-export const setHasModal = () => setBooleanData(MH.getBody(), PREFIX_HAS_MODAL);
+export const setHasModal = () => setBooleanData(_.getBody(), PREFIX_HAS_MODAL);
 
 /**
  * @ignore
  * @internal
  */
-export const delHasModal = () => delData(MH.getBody(), PREFIX_HAS_MODAL);
+export const delHasModal = () => delData(_.getBody(), PREFIX_HAS_MODAL);
 
 /**
  * @ignore
@@ -813,7 +812,7 @@ export const copyStyle = async (
     setStyleProp(toElement, prop, props[prop]);
   }
 
-  addClasses(toElement, ...MH.classList(fromElement));
+  addClasses(toElement, ..._.classList(fromElement));
 };
 
 /**
@@ -837,7 +836,7 @@ export const setNumericStyleJsVarsNow = (
     return;
   }
 
-  const varPrefix = MH.prefixCssJsVar(options?._prefix ?? "");
+  const varPrefix = _.prefixCssJsVar(options?._prefix ?? "");
   for (const prop in props) {
     const cssPropSuffix = camelToKebabCase(prop);
     const varName = `${varPrefix}${cssPropSuffix}`;
@@ -877,9 +876,9 @@ type CSSTransition = {
   _isCancelled: () => boolean;
 };
 
-const PREFIX_HAS_MODAL = MH.prefixName("has-modal");
+const PREFIX_HAS_MODAL = _.prefixName("has-modal");
 
-const scheduledCSSTransitions = MH.newWeakMap<
+const scheduledCSSTransitions = _.newWeakMap<
   Element,
   Record<string, CSSTransition>
 >();
@@ -909,10 +908,10 @@ const scheduleCSSTransition = (element: Element, toCls: string) => {
   scheduledTransitions[toCls] = {
     _cancel: () => {
       isCancelled = true;
-      MH.deleteObjKey(scheduledTransitions, toCls);
+      _.deleteObjKey(scheduledTransitions, toCls);
     },
     _finish: () => {
-      MH.deleteObjKey(scheduledTransitions, toCls);
+      _.deleteObjKey(scheduledTransitions, toCls);
     },
     _isCancelled: () => {
       return isCancelled;

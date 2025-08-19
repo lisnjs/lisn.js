@@ -4,8 +4,6 @@
 
 import * as MH from "@lisn/globals/minification-helpers";
 
-import { DOMElement } from "@lisn/globals/types";
-
 /**
  * Returns all the child elements of the given element that are not `script` or
  * `style` tags.
@@ -40,11 +38,7 @@ export const isInlineTag = (tagName: string) =>
  *
  * @category DOM: Querying
  */
-export const isDOMElement = (target: unknown): target is DOMElement =>
-  MH.isHTMLElement(target) ||
-  MH.isInstanceOf(target, SVGElement) ||
-  (typeof MathMLElement !== "undefined" &&
-    MH.isInstanceOf(target, MathMLElement));
+export const isDOMElement = MH.isStyledElement;
 
 // --------------------
 

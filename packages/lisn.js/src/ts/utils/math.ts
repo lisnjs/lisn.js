@@ -223,7 +223,7 @@ export const toRawNum = <D extends number | false | null = 0>(
     isAdditive = false,
     isPercent = false;
 
-  if (MH.isNumber(input)) {
+  if (MH.isLiteralNumber(input)) {
     numerical = input;
   } else if (MH.isString(input)) {
     const opA = input.slice(0, 1);

@@ -675,7 +675,7 @@ function newMatrix(readonly: boolean, init?: TransformLike) {
     MH.isNullish(initM)
       ? initM
       : MH.arrayFrom(
-          MH.isInstanceOf(initM, DOMMatrixReadOnly)
+          MH.isOfType(initM, "DOMMatrixReadOnly")
             ? initM.toFloat32Array()
             : initM,
         ),

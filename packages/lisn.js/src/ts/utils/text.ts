@@ -359,7 +359,7 @@ function maybeConvertToString<V>(value: V, nested: boolean) {
       : `<${MH.tagName(value)}${classStr ? ' class="' + classStr + '"' : ""}>`;
 
     //
-  } else if (MH.isInstanceOf(value, Error)) {
+  } else if (MH.isOfType(value, "Error")) {
     /* istanbul ignore else */
     if ("stack" in value && MH.isString(value.stack)) {
       result = value.stack;
@@ -387,7 +387,7 @@ function maybeConvertToString<V>(value: V, nested: boolean) {
       ")";
 
     //
-  } else if (MH.isNonPrimitive(value)) {
+  } else if (!MH.isPrimitive(value)) {
     result = nested ? value : MH.stringify(value, stringifyReplacer);
 
     //

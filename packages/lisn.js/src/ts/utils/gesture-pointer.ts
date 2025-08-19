@@ -45,17 +45,18 @@ export const getPointerGestureFragment = (
   let isCancelled = false;
   const supports = getBrowserSupport();
 
-  // If the browser supports pointer events, then only take those; otherwise
-  // take the mouse events
-  const pointerEventClass = supports._pointer ? PointerEvent : MouseEvent;
+  // If the browser supports pointer events, then only take those, and not
+  // other mouse events; otherwise take all mouse events
   const pointerUpType = supports._pointer ? MC.S_POINTERUP : MC.S_MOUSEUP;
+  const isPointerOrMouse = (event: Event): event is MouseEvent =>
+    supports._pointer ? MH.isPointerEvent(event) : MH.isMouseEvent(event);
 
   const filteredEvents: MouseEvent[] = MH.filter(
     events,
     (event): event is MouseEvent => {
       const eType = event.type;
       isCancelled = isCancelled || eType === MC.S_POINTERCANCEL;
-      if (eType !== MC.S_CLICK && MH.isInstanceOf(event, pointerEventClass)) {
+      if (eType !== MC.S_CLICK && isPointerOrMouse(event)) {
         // Only events where the primary button is pressed (unless it's a
         // pointerup event, in which case no buttons should be pressed) are
         // considered, otherwise consider it terminated
@@ -66,6 +67,7 @@ export const getPointerGestureFragment = (
         // we don't handle touch pointer events
         return !MH.isTouchPointerEvent(event);
       }
+
       return false;
     },
   );

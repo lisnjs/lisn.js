@@ -13,10 +13,12 @@ import {
   IterableObject,
   Class,
   ClassInstance,
+  GlobalClassByName,
   MapBase,
   SetBase,
   Spread,
   EmptyLiteral,
+  DOMElement,
 } from "@lisn/globals/types";
 
 import { LisnUsageError, LisnBugError } from "@lisn/globals/errors";
@@ -45,9 +47,8 @@ export const prefixCssVar = (name: string) => "--" + prefixName(name);
 
 export const prefixCssJsVar = (name: string) => prefixCssVar("js--" + name);
 
-export const prefixData = (name: string) => `data-${camelToKebabCase(name)}`;
-
-export const prefixLisnData = (name: string) => prefixData(prefixName(name));
+export const toDataAttrName = (name: string) =>
+  `data-${camelToKebabCase(name)}`;
 
 export const toLowerCase = (s: string) => s.toLowerCase();
 
@@ -95,71 +96,129 @@ export const createButton = (label = "", tag = "button") => {
   return btn;
 };
 
-export const isNullish = (v: unknown): v is null | undefined =>
-  v === undefined || v === null;
+export const isNullish = (v: unknown) => v === undefined || v === null;
 
-export const isEmpty = (v: unknown): v is null | undefined | "" =>
-  isNullish(v) || v === "";
+export const isEmpty = (v: unknown) => isNullish(v) || v === "";
 
-export const isIterableObject = (v: unknown): v is IterableObject<unknown> =>
-  isNonPrimitive(v) && MC.SYMBOL.iterator in v;
+export const isOfType = <T extends keyof StringTagMap>(
+  v: unknown,
+  tag: T,
+  checkLevelsUp = 0,
+): v is StringTagMap[T] =>
+  isInstanceOfByClassName(v, tag) ||
+  MC.OBJECT.prototype.toString.call(v) === `[object ${tag}]` ||
+  (checkLevelsUp > 0 && isOfType(getPrototypeOf(v), tag, checkLevelsUp - 1));
 
-export const isArray = (v: unknown) => isInstanceOf(v, MC.ARRAY);
+// Not including function
+export const isObject = (v: unknown) => v !== null && typeof v === "object";
 
 export const isPlainObject = (
   v: unknown,
 ): v is Record<string | symbol, unknown> =>
-  isObject(v) && constructorOf(v) === MC.OBJECT;
+  isObject(v) &&
+  (getPrototypeOf(v) === null || getPrototypeOf(getPrototypeOf(v)) === null);
 
-export const isObject = (v: unknown) =>
-  isNonPrimitive(v) && isInstanceOf(v, MC.OBJECT);
+export const isIterableObject = (v: unknown): v is IterableObject<unknown> =>
+  isObject(v) && MC.SYMBOL.iterator in v;
 
-export const isNonPrimitive = (v: unknown): v is object =>
-  v !== null && typeOf(v) === "object";
+export const isArray = MC.ARRAY.isArray.bind(MC.ARRAY);
+
+export const isPrimitive = (v: unknown) =>
+  isLiteralString(v) ||
+  isSymbol(v) ||
+  isLiteralNumber(v) ||
+  isBoolean(v) ||
+  isNullish(v);
 
 // only primitive number
-export const isNumber = (v: unknown): v is number => typeOf(v) === "number";
+export const isLiteralNumber = (v: unknown) => typeof v === "number";
 
-/* eslint-disable-next-line @typescript-eslint/no-wrapper-object-types */
-export const isString = (v: unknown): v is string | String =>
-  typeOf(v) === "string" || isInstanceOf(v, MC.STRING);
+export const isNumber = (v: unknown) => isOfType(v, "Number");
 
-export const isLiteralString = (v: unknown): v is string =>
-  typeOf(v) === "string";
+export const isString = (v: unknown) => isOfType(v, "String");
 
-export const isBoolean = (v: unknown): v is boolean => typeOf(v) === "boolean";
+export const isLiteralString = (v: unknown) => typeof v === "string";
 
-/* eslint-disable-next-line @typescript-eslint/no-unsafe-function-type */
-export const isFunction = (v: unknown): v is Function =>
-  typeOf(v) === "function" || isInstanceOf(v, MC.FUNCTION);
+export const isSymbol = (v: unknown) => typeof v === "symbol";
 
-export const isDoc = (target: unknown): target is Document =>
-  target === getDoc();
+export const isBoolean = (v: unknown) => typeof v === "boolean";
 
-export const isMouseEvent = (event: Event): event is MouseEvent =>
-  isInstanceOf(event, MouseEvent);
+export const isFunction = (v: unknown) =>
+  typeof v === "function" || isOfType(v, "Function");
 
-export const isPointerEvent = (event: Event): event is PointerEvent =>
-  typeof PointerEvent !== "undefined" && isInstanceOf(event, PointerEvent);
+export const isMap = (v: unknown) => isOfType(v, "Map");
+
+export const isSet = (v: unknown) => isOfType(v, "Set");
+
+export const isMouseEvent = (event: Event) => isOfType(event, "MouseEvent");
+
+export const isPointerEvent = (event: Event) => isOfType(event, "PointerEvent");
 
 export const isTouchPointerEvent = (event: Event): event is PointerEvent =>
   isPointerEvent(event) && getPointerType(event) === MC.S_TOUCH;
 
-export const isWheelEvent = (event: Event): event is WheelEvent =>
-  isInstanceOf(event, WheelEvent);
+export const isWheelEvent = (event: Event) => isOfType(event, "WheelEvent");
 
-export const isKeyboardEvent = (event: Event): event is KeyboardEvent =>
-  isInstanceOf(event, KeyboardEvent);
+export const isKeyboardEvent = (event: Event) =>
+  isOfType(event, "KeyboardEvent");
 
-export const isTouchEvent = (event: Event): event is TouchEvent =>
-  typeof TouchEvent !== "undefined" && isInstanceOf(event, TouchEvent);
+export const isTouchEvent = (event: Event) => isOfType(event, "TouchEvent");
 
-export const isNode = (target: unknown) => isInstanceOf(target, Node);
+export const isDoc = (target: unknown) => isOfType(target, "HTMLDocument");
 
-export const isElement = (target: unknown) => isInstanceOf(target, Element);
+export const isNode = (target: unknown): target is Node =>
+  (typeof Node === "function" && isInstanceOf(target, Node)) ||
+  (target != null &&
+    typeof (target as Node).nodeType === "number" &&
+    typeof (target as Node).nodeName === "string");
+
+export const isElement = (target: unknown): target is Element =>
+  isNode(target) && target.nodeType === 1;
+
+export const isStyledElement = <
+  N extends keyof ElementNamespaceMap | undefined,
+>(
+  target: unknown,
+  namespace?: N,
+): target is N extends keyof ElementNamespaceMap
+  ? ElementNamespaceMap[N]
+  : DOMElement =>
+  isElement(target) &&
+  isObject((target as HTMLElement).style) &&
+  (!namespace || target.namespaceURI === namespace);
 
 export const isHTMLElement = (target: unknown) =>
-  isInstanceOf(target, HTMLElement);
+  (typeof HTMLElement === "function" && isInstanceOf(target, HTMLElement)) ||
+  isStyledElement(target, HTML_NS);
+
+export const isSVGElement = (target: unknown) =>
+  (typeof SVGElement === "function" && isInstanceOf(target, SVGElement)) ||
+  isStyledElement(target, SVG_NS);
+
+export const isMathMLElement = (target: unknown) =>
+  (typeof MathMLElement === "function" &&
+    isInstanceOf(target, MathMLElement)) ||
+  isStyledElement(target, MATHML_NS);
+
+export const isHTMLInputElement = (
+  target: unknown,
+): target is HTMLInputElement =>
+  (typeof HTMLInputElement === "function" &&
+    isInstanceOf(target, HTMLInputElement)) ||
+  (isHTMLElement(target) && hasTagName(target, "input"));
+
+export const isAnimation = (value: unknown) =>
+  (typeof Animation === "function" && isInstanceOf(value, Animation)) ||
+  isOfType(value, "Animation", 2);
+
+export const isCSSAnimation = (value: unknown) =>
+  (typeof CSSAnimation === "function" && isInstanceOf(value, CSSAnimation)) ||
+  isOfType(value, "CSSAnimation", 2);
+
+export const isKeyframeEffect = (value: unknown) =>
+  (typeof KeyframeEffect === "function" &&
+    isInstanceOf(value, KeyframeEffect)) ||
+  isOfType(value, "KeyframeEffect");
 
 export const isNodeBAfterA = (nodeA: Node, nodeB: Node) =>
   (nodeA.compareDocumentPosition(nodeB) & Node.DOCUMENT_POSITION_FOLLOWING) !==
@@ -278,8 +337,9 @@ export const firstOf = <A extends readonly unknown[]>(
 
 export const tagName = (element: Element) => element.tagName;
 
+// case-insensitive
 export const hasTagName = (element: Element, tag: string) =>
-  toLowerCase(tagName(element)) === toLowerCase(tag);
+  toUpperCase(tagName(element)) === toUpperCase(tag);
 
 export const preventDefault = (event: Event) => event.preventDefault();
 
@@ -288,8 +348,6 @@ export const arrayFrom = MC.ARRAY.from.bind(MC.ARRAY);
 export const keysOf = <T extends Record<string | symbol, unknown>>(
   obj: T,
 ): Array<keyof T & string> => MC.OBJECT.keys(obj);
-
-export const defineProperty = MC.OBJECT.defineProperty.bind(MC.OBJECT);
 
 // use it in place of object spread
 export const merge = <A extends readonly (object | null | undefined)[]>(
@@ -315,6 +373,10 @@ export const freezeObj = MC.OBJECT.freeze.bind(MC.OBJECT);
 
 export const hasOwnProp = (o: object, prop: string | symbol) =>
   MC.OBJECT.prototype.hasOwnProperty.call(o, prop);
+
+export const defineProperty = MC.OBJECT.defineProperty.bind(MC.OBJECT);
+
+export const getPrototypeOf = MC.OBJECT.getPrototypeOf.bind(MC.OBJECT);
 
 export const preventExtensions = MC.OBJECT.preventExtensions.bind(MC.OBJECT);
 
@@ -350,10 +412,18 @@ export const parseFloat = MC.NUMBER.parseFloat.bind(MC.NUMBER);
 
 export const isNaN = MC.NUMBER.isNaN.bind(MC.NUMBER);
 
-export const isInstanceOf = <C extends Class<unknown>>(
+export const isInstanceOf = <
+  C extends Class<unknown> | keyof typeof globalThis,
+>(
   value: unknown,
-  Class: C,
-): value is ClassInstance<C> => value instanceof Class;
+  classOrName: C,
+  checkLisnBrand = false,
+): value is C extends keyof typeof globalThis
+  ? GlobalClassByName<C>
+  : ClassInstance<C> =>
+  isLiteralString(classOrName)
+    ? isInstanceOfByClassName(value, classOrName)
+    : isInstanceOfByClass(value, classOrName, checkLisnBrand);
 
 export const constructorOf = (obj: object) => obj.constructor;
 
@@ -468,7 +538,67 @@ export const consoleWarn = CONSOLE.warn.bind(CONSOLE);
 
 export const consoleError = CONSOLE.error.bind(CONSOLE);
 
+export const brandClass = <C extends Class<T>, T>(
+  Class: C,
+  name: string,
+): C => {
+  const brandSym = MC.SYMBOL.for(`LISN.js/${name}`);
+
+  for (const [prop, value] of [
+    [MC.SYMBOL.toStringTag, name],
+    [LISN_BRAND_PROP, brandSym],
+  ]) {
+    defineProperty(Class.prototype, prop, {
+      value,
+      enumerable: false,
+      writable: false,
+      configurable: false,
+    });
+  }
+
+  return Class;
+};
+
 // --------------------
+
+type StringTagMap = {
+  /* eslint-disable-next-line @typescript-eslint/no-wrapper-object-types */
+  Number: Number | number;
+  /* eslint-disable-next-line @typescript-eslint/no-wrapper-object-types */
+  String: String | string;
+  /* eslint-disable-next-line @typescript-eslint/no-unsafe-function-type */
+  Function: Function;
+  Error: Error;
+  Date: Date;
+  RegExp: RegExp;
+
+  Array: unknown[];
+  Map: Map<unknown, unknown>;
+  Set: Set<unknown>;
+  ArrayBuffer: ArrayBuffer;
+  DataView: DataView;
+  DOMMatrix: DOMMatrix;
+  DOMMatrixReadOnly: DOMMatrixReadOnly;
+
+  MouseEvent: MouseEvent;
+  PointerEvent: PointerEvent;
+  WheelEvent: WheelEvent;
+  KeyboardEvent: KeyboardEvent;
+  TouchEvent: TouchEvent;
+  HTMLDocument: Document;
+
+  IntersectionObserverEntry: IntersectionObserverEntry;
+
+  Animation: Animation;
+  CSSAnimation: CSSAnimation;
+  KeyframeEffect: KeyframeEffect;
+};
+
+type ElementNamespaceMap = {
+  [HTML_NS]: HTMLElement;
+  [SVG_NS]: SVGElement;
+  [MATHML_NS]: MathMLElement;
+};
 
 type FirstElement<T extends readonly unknown[]> = T extends readonly [
   infer Head,
@@ -489,13 +619,71 @@ type ArrayCallbackFn<V> = (
   index: number,
   array: readonly V[],
 ) => unknown;
+
 type FilterFnTypeP<V, T extends V> = (
   value: V,
   index: number,
   array: readonly V[],
 ) => value is T;
+
 type FilteredType<
   C extends ArrayCallbackFn<V> | FilterFnTypeP<V, T>,
   V,
   T extends V,
 > = C extends FilterFnTypeP<V, infer T> ? T : V;
+
+const LISN_BRAND_PROP: unique symbol = MC.SYMBOL.for(
+  "__lisn.js:brand",
+) as typeof LISN_BRAND_PROP;
+
+const HTML_NS = "http://www.w3.org/1999/xhtml";
+const SVG_NS = "http://www.w3.org/2000/svg";
+const MATHML_NS = "http://www.w3.org/1998/Math/MathML";
+
+const isInstanceOfByClass = <C extends Class<unknown>>(
+  value: unknown,
+  Class: C,
+  checkLisnBrand = false,
+): value is ClassInstance<C> => {
+  if (!isFunction(Class) || !isObject(value)) {
+    return false;
+  }
+
+  if (value instanceof Class) {
+    return true;
+  }
+
+  return checkLisnBrand ? isInstanceOfLisnClass(value, Class) : false;
+};
+
+const isInstanceOfLisnClass = <C extends Class<unknown>>(
+  value: unknown,
+  Class: C,
+): value is ClassInstance<C> => {
+  if (!isFunction(Class) || !isObject(value)) {
+    return false;
+  }
+
+  const proto = Class.prototype;
+  const clsBrandSym = isObject(proto)
+    ? (proto as { [LISN_BRAND_PROP]: symbol })[LISN_BRAND_PROP]
+    : undefined;
+
+  if (!clsBrandSym) {
+    return false;
+  }
+
+  const valBrandSym = (value as { [LISN_BRAND_PROP]: symbol | undefined })[
+    LISN_BRAND_PROP
+  ];
+  return (
+    valBrandSym == clsBrandSym ||
+    isInstanceOfLisnClass(getPrototypeOf(value), Class)
+  );
+};
+
+const isInstanceOfByClassName = <C extends keyof typeof globalThis>(
+  value: unknown,
+  className: C,
+): value is GlobalClassByName<C> =>
+  isInstanceOfByClass(value, globalThis[className]);

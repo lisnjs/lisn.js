@@ -161,7 +161,7 @@ const setupAnimation = (
 
   // If the element is moved (including if wrapped, such as by the ViewTrigger),
   // this will cancel CSS animations and replace them with new running ones
-  if (MH.isInstanceOf(animation, CSSAnimation)) {
+  if (MH.isCSSAnimation(animation)) {
     const cancelHandler = (event: AnimationPlaybackEvent) =>
       onAnimationCancel(event, animation, direction, logger, isInitial);
 
@@ -183,18 +183,18 @@ const onAnimationCancel = (
   // setup again the new animation
   debug: logger?.debug9("Animation cancelled, re-setting up new one");
   const target = MH.targetOf(event);
-  if (!MH.isInstanceOf(target, Animation)) {
+  if (!MH.isAnimation(target)) {
     return;
   }
 
   const effect = target.effect;
-  if (!MH.isInstanceOf(effect, KeyframeEffect)) {
+  if (!MH.isKeyframeEffect(effect)) {
     return;
   }
 
   for (const newAnimation of MH.targetOf(effect)?.getAnimations() || []) {
     if (
-      MH.isInstanceOf(newAnimation, CSSAnimation) &&
+      MH.isCSSAnimation(newAnimation) &&
       newAnimation.animationName === animation.animationName
     ) {
       setupAnimation(newAnimation, direction, logger, isInitial);

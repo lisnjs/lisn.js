@@ -4,6 +4,7 @@
  * @internal
  */
 
+import * as MC from "@lisn/globals/minification-constants";
 import * as MH from "@lisn/globals/minification-helpers";
 
 import { NestedRecord } from "@lisn/globals/types";
@@ -11,28 +12,122 @@ import { NestedRecord } from "@lisn/globals/types";
 import { roundNumTo } from "@lisn/utils/math";
 
 /**
- * Copies object deeply including nested properties. Plain objects are recursed
- * into, arrays and sets are cloned, but other values are copied as is.
+ * Recursively copies the given value. Handles circular references.
+ *
+ * The following types are deeply copied:
+ * - Plain objects (i.e. with prototype Object or null)
+ * - Array
+ * - ArrayBuffer, DataView and TypedArray
+ * - Map
+ * - Set
+ * - Date
+ * - RegExp
+ *
+ * Other values are returned as is
  *
  * @since v1.3.0
  */
-export const deepCopy = <T extends NestedRecord<V>, V>(obj: T): T => {
-  // XXX TODO generalise it to work with arbitrary values and copy each iterable
-  // element
-  const clone = MH.copyObject(obj); // shallow copy
-
-  for (const key in clone) {
-    const value = obj[key];
-    if (MH.isPlainObject(value)) {
-      clone[key] = deepCopy(value) as T[typeof key];
-    } else if (MH.isArray(value)) {
-      clone[key] = [...value] as T[typeof key]; // TODO deep copy each element
-    } else if (MH.isInstanceOf(value, Set)) {
-      clone[key] = MH.newSet(value) as T[typeof key]; // TODO deep copy each element
-    }
+export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
+  if (!MH.isObject(value)) {
+    // Primitive or function
+    return value;
   }
 
-  return clone;
+  if (_seen.has(value)) {
+    // Circular reference
+    return _seen.get(value);
+  }
+
+  if (MH.isArray(value)) {
+    const out = new MC.ARRAY(value.length);
+    _seen.set(value, out);
+    for (let i = 0; i < value.length; i++) {
+      if (i in value) {
+        out[i] = deepCopy(value[i], _seen);
+      }
+    }
+    return out as T;
+  }
+
+  if (MH.isMap(value)) {
+    const out = MH.newMap();
+    _seen.set(value, out);
+    for (const [k, v] of value) {
+      const kCopy = deepCopy(k, _seen);
+      const vCopy = deepCopy(v, _seen);
+      out.set(kCopy, vCopy);
+    }
+    return out as T;
+  }
+
+  if (MH.isSet(value)) {
+    const out = MH.newSet();
+    _seen.set(value, out);
+    for (const v of value) {
+      out.add(deepCopy(v, _seen));
+    }
+    return out as T;
+  }
+
+  if (MH.isOfType(value, "ArrayBuffer")) {
+    return value.slice(0) as T;
+  }
+
+  if (MH.isOfType(value, "DataView")) {
+    const buf = deepCopy(value.buffer, _seen);
+    return new DataView(buf, value.byteOffset, value.byteLength) as T;
+  } else if (ArrayBuffer.isView(value)) {
+    // DataView already handled above, so this is TypedArray:
+    // Int8Array, Uint8Array, Float32Array, etc.
+    const Ctor = value.constructor as { new (t: T): T };
+    return new Ctor(value);
+  }
+
+  if (MH.isOfType(value, "Date")) {
+    return new Date(value.getTime()) as T;
+  }
+
+  if (MH.isOfType(value, "RegExp")) {
+    const flags =
+      value.flags !== undefined
+        ? value.flags
+        : (value.global ? "g" : "") +
+          (value.ignoreCase ? "i" : "") +
+          (value.multiline ? "m" : "") +
+          (value.unicode ? "u" : "") +
+          (value.sticky ? "y" : "") +
+          (value.dotAll ? "s" : "");
+    const copy = new RegExp(value.source, flags);
+    copy.lastIndex = value.lastIndex;
+    return copy as T;
+  }
+
+  if (!MH.isPlainObject(value)) {
+    // Non-clonable
+    return value;
+  }
+
+  // Plain object (preserve prototype, if it's null & property descriptors,
+  // including symbols)
+  const out = MC.OBJECT.create(MH.getPrototypeOf(value));
+  _seen.set(value, out);
+
+  for (const key of Reflect.ownKeys(value)) {
+    const desc = MC.OBJECT.getOwnPropertyDescriptor(value, key);
+    if (!desc) {
+      continue;
+    }
+
+    if ("value" in desc) {
+      // Data descriptor: deep copy the value
+      desc.value = deepCopy(desc.value, _seen);
+    }
+    // Otherwise it's accessor descriptor: keep same getter/setter references
+    // (cannot deep copy closures, so we redefine them as is)
+    MH.defineProperty(out, key, desc);
+  }
+
+  return out;
 };
 
 /**
@@ -130,7 +225,7 @@ export const compareValuesIn = <T extends NestedRecord<V>, V>(
       if (!compareValuesIn(valA, valB)) {
         return false;
       }
-    } else if (MH.isNumber(valA) && MH.isNumber(valB)) {
+    } else if (MH.isLiteralNumber(valA) && MH.isLiteralNumber(valB)) {
       if (roundNumTo(valA, roundTo) !== roundNumTo(valB, roundTo)) {
         return false;
       }
@@ -145,7 +240,7 @@ export const compareValuesIn = <T extends NestedRecord<V>, V>(
 export const keyExists = <T extends object>(
   obj: T,
   key: string | number | symbol,
-): key is keyof T => MH.isNonPrimitive(obj) && key in obj;
+): key is keyof T => MH.isObject(obj) && key in obj;
 
 export const toArrayIfSingle = <T>(value?: T | T[] | null | undefined): T[] =>
   MH.isArray(value) ? value : !MH.isNullish(value) ? [value] : [];

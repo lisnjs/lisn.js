@@ -473,6 +473,12 @@ export type ClassInstance<C> = C extends Class<infer T> ? T : never;
 /**
  * @category Utility
  */
+export type GlobalClassByName<N extends keyof typeof globalThis> =
+  (typeof globalThis)[N] extends Class<infer T> ? T : never;
+
+/**
+ * @category Utility
+ */
 export type MapBase<K, V> = {
   get: (key: K) => V | undefined;
   set: (key: K, value: V) => void;

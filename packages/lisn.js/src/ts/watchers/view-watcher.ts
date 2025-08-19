@@ -921,7 +921,7 @@ const fetchIntersectionData = async (
   let isIntersecting: boolean | null = null;
   let isCrossOrigin: boolean | null = null;
 
-  if (MH.isInstanceOf(entryOrTarget, IntersectionObserverEntry)) {
+  if (MH.isOfType(entryOrTarget, "IntersectionObserverEntry")) {
     target = entryOrTarget.target;
     targetBounds = entryOrTarget.boundingClientRect;
     rootBounds = entryOrTarget.rootBounds;

@@ -835,7 +835,7 @@ const getItemsFrom = (
     for (const item of inputItems) {
       addItem(item);
     }
-  } else if (MH.isInstanceOf(inputItems, Map)) {
+  } else if (MH.isMap(inputItems)) {
     for (const [item, itemType] of inputItems.entries()) {
       addItem(item, itemType);
     }

@@ -8,41 +8,196 @@ const roundDiff = (x, y) => {
   return Math.floor(Math.abs(x - y));
 };
 
-test("deepCopy", () => {
-  const obj = {
-    a: 1,
-    o: {
-      a: 1,
-      o: {
-        a: 1,
-        o: {},
-      },
-    },
-  };
+describe("deepCopy", () => {
+  test("primitives", () => {
+    expect(utils.deepCopy(42)).toBe(42);
+    expect(utils.deepCopy("hi")).toBe("hi");
+    expect(utils.deepCopy(true)).toBe(true);
+    expect(utils.deepCopy(null)).toBeNull();
+    expect(utils.deepCopy(undefined)).toBeUndefined();
+    const sym = Symbol("x");
+    expect(utils.deepCopy(sym)).toBe(sym);
+  });
 
-  const guard = {
-    a: obj.a,
-    o: obj.o,
-    oa: obj.o.a,
-    oo: obj.o.o,
-    ooa: obj.o.o.a,
-    ooo: obj.o.o.o,
-  };
+  test("functions, promises, weak collections", () => {
+    const fn = () => 1;
+    const p = Promise.resolve(1);
+    const wm = new WeakMap();
+    const ws = new WeakSet();
 
-  const clone = utils.deepCopy(obj);
-  expect(clone).toEqual(obj);
-  expect(clone).not.toBe(obj);
-  expect(clone.o).not.toBe(obj.o);
-  expect(clone.o.o).not.toBe(obj.o.o);
-  expect(clone.o.o.o).not.toBe(obj.o.o.o);
+    // Not copied, returned as is
+    expect(utils.deepCopy(fn)).toBe(fn);
+    expect(utils.deepCopy(p)).toBe(p);
+    expect(utils.deepCopy(wm)).toBe(wm);
+    expect(utils.deepCopy(ws)).toBe(ws);
+  });
 
-  // input not modified
-  expect(obj.a).toBe(guard.a);
-  expect(obj.o).toBe(guard.o);
-  expect(obj.o.a).toBe(guard.oa);
-  expect(obj.o.o).toBe(guard.oo);
-  expect(obj.o.o.a).toBe(guard.ooa);
-  expect(obj.o.o.o).toBe(guard.ooo);
+  test("plain objects with symbol keys", () => {
+    const sym = Symbol("k");
+    const src = { x: { y: 1 }, [sym]: "s" };
+
+    const copy = utils.deepCopy(src);
+    expect(copy).not.toBe(src);
+
+    expect(Object.getPrototypeOf(copy)).toBe(Object.prototype);
+    expect(copy.x).not.toBe(src.x);
+    expect(copy.x).toEqual(src.x);
+
+    expect(copy[sym]).toBe("s");
+
+    // Change copy, original not modified
+    copy.x.y = 99;
+    expect(src.x.y).toBe(1);
+  });
+
+  test("objects null prototype with symbol keys", () => {
+    const sym = Symbol("k");
+    const src = Object.create(null);
+    src.x = { y: 1 };
+    src[sym] = "s";
+
+    const copy = utils.deepCopy(src);
+    expect(copy).not.toBe(src);
+
+    expect(Object.getPrototypeOf(copy)).toBe(null);
+    expect(copy.x).not.toBe(src.x);
+    expect(copy.x).toEqual(src.x);
+
+    expect(copy[sym]).toBe("s");
+
+    // Change copy, original not modified
+    copy.x.y = 99;
+    expect(src.x.y).toBe(1);
+  });
+
+  test("objects with property descriptors", () => {
+    const obj = {};
+    Object.defineProperty(obj, "locked", {
+      value: { a: 1 },
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    });
+
+    const copy = utils.deepCopy(obj);
+    const desc = Object.getOwnPropertyDescriptor(copy, "locked");
+
+    expect(desc.writable).toBe(false);
+    expect(desc.enumerable).toBe(false);
+    expect(desc.configurable).toBe(false);
+
+    // value deeply copied
+    expect(copy.locked).not.toBe(obj.locked);
+    expect(copy.locked).toEqual(obj.locked);
+  });
+
+  test("arrays", () => {
+    const src = [1, { a: 2 }, [3]];
+    const copy = utils.deepCopy(src);
+
+    expect(copy).not.toBe(src);
+    expect(copy).toEqual(src);
+
+    expect(copy[1]).not.toBe(src[1]);
+    copy[1].a = 99;
+    expect(src[1].a).toBe(2);
+
+    expect(copy[2]).not.toBe(src[2]);
+
+    // Change copy, original not modified
+    copy[2][0] = 99;
+    expect(src[2][0]).toBe(3);
+  });
+
+  test("Map with object keys and values", () => {
+    const k = { id: 1 };
+    const v = { name: "Alice" };
+    const src = new Map([[k, v]]);
+    const copy = utils.deepCopy(src);
+
+    expect(copy).not.toBe(src);
+    const [[k2, v2]] = [...copy];
+    expect(k2).not.toBe(k);
+    expect(v2).not.toBe(v);
+    expect(k2).toEqual(k);
+    expect(v2).toEqual(v);
+
+    // Change copy, original not modified
+    v2.name = "Bob";
+    expect(v.name).toBe("Alice");
+
+    copy.set("foo", "bar");
+    expect(src.get("foo")).toBeUndefined();
+  });
+
+  test("Set with object values", () => {
+    const src = new Set([{ n: 1 }, { n: 2 }]);
+
+    const copy = utils.deepCopy(src);
+    expect(copy).not.toBe(src);
+
+    const sa = [...src];
+    const ca = [...copy];
+    expect(ca).toEqual(sa);
+
+    // Change copy, original not modified
+    ca[0].n = 99;
+    expect(sa[0].n).toBe(1);
+  });
+
+  test("ArrayBuffer, DataView, and TypedArrays", () => {
+    const buf = new ArrayBuffer(4);
+    const view = new DataView(buf);
+    view.setInt16(0, 1234, true);
+    const ta = new Int16Array(buf);
+
+    const bufCopy = utils.deepCopy(buf);
+    const viewCopy = utils.deepCopy(view);
+    const taCopy = utils.deepCopy(ta);
+
+    expect(bufCopy).not.toBe(buf);
+    expect(new Int16Array(bufCopy)[0]).toBe(1234);
+
+    expect(viewCopy).not.toBe(view);
+    expect(viewCopy.getInt16(0, true)).toBe(1234);
+
+    expect(taCopy).not.toBe(ta);
+    expect(taCopy[0]).toBe(1234);
+
+    // Change copy, original not modified
+    new Int16Array(bufCopy)[0] = 4321;
+    expect(new Int16Array(buf)[0]).toBe(1234);
+  });
+
+  test("Date", () => {
+    const d = new Date("2020-01-01T00:00:00Z");
+    const copy = utils.deepCopy(d);
+    expect(copy).not.toBe(d);
+    expect(copy.getTime()).toBe(d.getTime());
+  });
+
+  test("RegExp with flags and lastIndex", () => {
+    const r = /a.b/gi;
+    r.lastIndex = 2;
+
+    const copy = utils.deepCopy(r);
+    expect(copy).not.toBe(r);
+
+    expect(copy.source).toBe(r.source);
+    expect(copy.flags).toBe(r.flags);
+    expect(copy.lastIndex).toBe(2);
+  });
+
+  test("circular references", () => {
+    const obj = { name: "root" };
+    obj.self = obj;
+
+    const copy = utils.deepCopy(obj);
+    expect(copy).not.toBe(obj);
+    expect(copy).toEqual(obj);
+
+    expect(copy.self).toBe(copy);
+  });
 });
 
 test("copyExistingKeysTo", () => {

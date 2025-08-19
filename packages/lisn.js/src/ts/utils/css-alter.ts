@@ -450,7 +450,7 @@ export const replaceClass = asyncMutatorFor(replaceClassNow);
  * @category DOM: Querying (optimized)
  */
 export const getData = (element: Element, name: string) =>
-  MH.getAttr(element, MH.prefixData(name));
+  MH.getAttr(element, MH.toDataAttrName(name));
 
 /**
  * Returns the value of the given data attribute as a boolean. Its value is
@@ -486,7 +486,7 @@ export const getBoolData = getBooleanData;
  * @category Style: Altering
  */
 export const setDataNow = (element: Element, name: string, value: string) =>
-  MH.setAttr(element, MH.prefixData(name), value);
+  MH.setAttr(element, MH.toDataAttrName(name), value);
 
 /**
  * Like {@link setDataNow} except it will {@link waitForMutateTime}.
@@ -509,7 +509,7 @@ export const setBooleanDataNow = (
   element: Element,
   name: string,
   value = true,
-) => MH.setAttr(element, MH.prefixData(name), value + "");
+) => MH.setAttr(element, MH.toDataAttrName(name), value + "");
 
 /**
  * @ignore
@@ -547,7 +547,7 @@ export const setBoolData = setBooleanData;
  * @category Style: Altering
  */
 export const unsetBooleanDataNow = (element: Element, name: string) =>
-  MH.unsetAttr(element, MH.prefixData(name));
+  MH.unsetAttr(element, MH.toDataAttrName(name));
 
 /**
  * @ignore
@@ -583,7 +583,7 @@ export const unsetBoolData = unsetBooleanData;
  * @category Style: Altering
  */
 export const delDataNow = (element: Element, name: string) =>
-  MH.delAttr(element, MH.prefixData(name));
+  MH.delAttr(element, MH.toDataAttrName(name));
 
 /**
  * Like {@link delDataNow} except it will {@link waitForMutateTime}.

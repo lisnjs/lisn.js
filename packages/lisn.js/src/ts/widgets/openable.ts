@@ -1935,7 +1935,7 @@ const getTriggersFrom = (
         ),
       );
     }
-  } else if (MH.isInstanceOf(inputTriggers, Map)) {
+  } else if (MH.isMap(inputTriggers)) {
     for (const [trigger, triggerConfig] of inputTriggers.entries()) {
       addTrigger(trigger, triggerConfig ?? {});
     }

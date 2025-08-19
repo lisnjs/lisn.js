@@ -146,7 +146,7 @@ export const waitForReferenceElement = (
 // ----------------------------------------
 
 const PREFIX_REF = MH.prefixName("ref");
-const DATA_REF = MH.prefixData(PREFIX_REF);
+const DATA_REF = MH.toDataAttrName(PREFIX_REF);
 
 const getAllReferenceElements = (
   selector: string,

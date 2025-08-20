@@ -279,7 +279,7 @@ export const isInstanceOf = <
 >(
   value: unknown,
   classOrName: C,
-  checkLisnBrand = false,
+  checkLisnBrand = true,
 ): value is C extends keyof typeof globalThis
   ? GlobalClassByName<C>
   : ClassInstance<C> =>
@@ -369,7 +369,7 @@ export const isTouchEvent = (event: Event) => isOfType(event, "TouchEvent");
 export const isDoc = (target: unknown) => isOfType(target, "HTMLDocument");
 
 export const isNode = (target: unknown): target is Node =>
-  (typeof Node === "function" && isInstanceOf(target, Node)) ||
+  (typeof Node === "function" && isInstanceOf(target, Node, false)) ||
   (target != null &&
     typeof (target as Node).nodeType === "number" &&
     typeof (target as Node).nodeName === "string");
@@ -390,36 +390,39 @@ export const isStyledElement = <
   (!namespace || target.namespaceURI === namespace);
 
 export const isHTMLElement = (target: unknown) =>
-  (typeof HTMLElement === "function" && isInstanceOf(target, HTMLElement)) ||
+  (typeof HTMLElement === "function" &&
+    isInstanceOf(target, HTMLElement, false)) ||
   isStyledElement(target, HTML_NS);
 
 export const isSVGElement = (target: unknown) =>
-  (typeof SVGElement === "function" && isInstanceOf(target, SVGElement)) ||
+  (typeof SVGElement === "function" &&
+    isInstanceOf(target, SVGElement, false)) ||
   isStyledElement(target, SVG_NS);
 
 export const isMathMLElement = (target: unknown) =>
   (typeof MathMLElement === "function" &&
-    isInstanceOf(target, MathMLElement)) ||
+    isInstanceOf(target, MathMLElement, false)) ||
   isStyledElement(target, MATHML_NS);
 
 export const isHTMLInputElement = (
   target: unknown,
 ): target is HTMLInputElement =>
   (typeof HTMLInputElement === "function" &&
-    isInstanceOf(target, HTMLInputElement)) ||
+    isInstanceOf(target, HTMLInputElement, false)) ||
   (isHTMLElement(target) && M.hasTagName(target, "input"));
 
 export const isAnimation = (value: unknown) =>
-  (typeof Animation === "function" && isInstanceOf(value, Animation)) ||
+  (typeof Animation === "function" && isInstanceOf(value, Animation, false)) ||
   isOfType(value, "Animation", 2);
 
 export const isCSSAnimation = (value: unknown) =>
-  (typeof CSSAnimation === "function" && isInstanceOf(value, CSSAnimation)) ||
+  (typeof CSSAnimation === "function" &&
+    isInstanceOf(value, CSSAnimation, false)) ||
   isOfType(value, "CSSAnimation", 2);
 
 export const isKeyframeEffect = (value: unknown) =>
   (typeof KeyframeEffect === "function" &&
-    isInstanceOf(value, KeyframeEffect)) ||
+    isInstanceOf(value, KeyframeEffect, false)) ||
   isOfType(value, "KeyframeEffect");
 
 // ---------- Branding

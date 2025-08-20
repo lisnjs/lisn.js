@@ -14,21 +14,42 @@ import {
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
 
-import {
-  FXMatcher,
-  FXRelativeMatcher,
-  FX_MATCH,
-} from "@lisn/effects/fx-matcher";
+import { FXMatcher, FX_MATCH } from "@lisn/effects/fx-matcher";
+import { bugError } from "@lisn/globals";
 
 /**
- * {@link FXPin} can be associated with an {@link Effects.Effect | Effects} (for
- * each {@link Effects.FXComposer}) in order to "pin" or freeze them and stop
- * them from being updated.
+ * {@link FXPin} can be associated with an {@link Effects.Effect | Effects} (via
+ * {@link Effects.FXComposer.add | FXComposer.add}) in order to "pin" or freeze
+ * effects and stop them from being updated by the composer.
  *
- * It is activated or deactivated when one or more {@link FXMatcher}s match.
+ * It is activated or deactivated based on various conditions built by calling
+ * {@link when}, {@link until} or {@link while}.
  *
- * There are built-in matchers in {@link FX_MATCH}, or you can create your own
- * by extending {@link FXMatcher}.
+ * To understand how {@link when}, {@link until} and {@link while} work together,
+ * think of the following analogy. The pin itself is like a light (when it's
+ * active, the light is ON), and each call to {@link when}, {@link until} or
+ * {@link while} adds a single new condition which is like a "switch" for the
+ * light.
+ *
+ * - Calling {@link while} is like installing a stateful latching toggle switch:
+ *   push ON, push OFF. While the condition is fulfilled, the pin is active
+ *   **and stays active** no matter what. When **none** of the {@link while}
+ *   conditions are fulfilled anymore, the pin is deactivated.
+ *
+ * - Calling {@link when} is like installing a stateless one-way "tap to
+ *   activate" switch. When the condition is fulfilled, the pin is activated.
+ *
+ * - Calling {@link until} is like installing a stateless one-way "tap to
+ *   deactivate" switch. It works similarly to the {@link when} condition,
+ *   except that when the condition is fulfilled the pin will **only be
+ *   deactivated if no {@link while} conditions are currently fulfilled**.
+ *
+ * Conditions added in any of these ways are checked at the time of being added
+ * and the pin may be activated or deactivated as explained above.
+ *
+ * Each condition is a set of one or more matchers and/or other pins. For a
+ * condition to be fulfilled, **all** of the given matchers must match and
+ * **all** of the given pins must be active.
  */
 export class FXPin {
   /**
@@ -37,47 +58,32 @@ export class FXPin {
   readonly isActive: () => boolean;
 
   /**
-   * Activates the pin when **all** the given matchers match. If you want to pin
-   * when any one of a list of matchers match, call {@link} when multiple times,
-   * passing it one matcher at a time.
+   * The pin will be activated when all of the given matchers/pins match/are
+   * activated. This is a one-way "activate now" condition.
    *
-   * You can call {@link when} multiple times: each one adds an independent
-   * set of matchers to watch and when all matchers in a set match, the pin is
-   * activated.
-   *
-   * For any {@link FXRelativeMatcher | relative matchers}, their
-   * {@link FXMatcher.restart | restart} method will be called when the pin
-   * is **deactivated**. Therefore, it does not make sense to add a relative
-   * matcher with both {@link when} and {@link until}.
+   * If you are using any relative matchers here, you may want to
+   * {@link Effects.FXRelativeMatcher.restart | restart} them
+   * {@link onChange | when the pin is deactivated}.
    */
-  readonly when: (...matchers: FXMatcher[]) => this;
+  readonly when: (...matchers: Array<FXMatcher | FXPin>) => this;
 
   /**
-   * Like {@link when} but it deactivates the pin when **all** the given
-   * matchers match.
+   * The pin will be deactivated when all of the given matchers/pins match/are
+   * activated, unless there are {@link while} conditions that are currently
+   * fulfilled. This is a one-way "deactivate now if possible" condition.
    *
-   * For any {@link FXRelativeMatcher | relative matchers}, their
-   * {@link FXMatcher.restart | restart} method will be called when the pin
-   * is **activated**. Therefore, it does not make sense to add a relative
-   * matcher with both {@link when} and {@link until}.
+   * If you are using any relative matchers here, you may want to
+   * {@link Effects.FXRelativeMatcher.restart | restart} them
+   * {@link onChange | when the pin is activated}.
    */
-  readonly until: (...matchers: FXMatcher[]) => this;
+  readonly until: (...matchers: Array<FXMatcher | FXPin>) => this;
 
   /**
-   * Activates the pin when **all** the given matchers match and deactivates it
-   * when **none** of them match. It is equivalent to calling {@link when},
-   * followed by {@link until} with negated matchers.
-   *
-   * ```javascript
-   * pin.while(matcherA, matcherB, matcherC);
-   *
-   * // This is equivalent to:
-   *
-   * pin.when(matcherA, matcherB, matcherC);
-   * pin.until(...[matcherA, matcherB, matcherC].map(m => FX_MATCH.negate(m)));
-   * ```
+   * The pin will be activated when all of the given matchers/pins match/are
+   * activate. The pin will be deactivated when this and all other conditions
+   * added with {@link while} are no longer fulfilled.
    */
-  readonly while: (...matchers: FXMatcher[]) => this;
+  readonly while: (...matchers: Array<FXMatcher | FXPin>) => this;
 
   /**
    * Calls the given handler whenever the pin's state changes.
@@ -93,55 +99,97 @@ export class FXPin {
   readonly offChange: (handler: FXPinHandler) => void;
 
   constructor() {
-    let isActive = true;
+    let isActive = false;
+    let numFulfilledLocking = 0; // number of fulfilled while conditions
+    let numLocking = 0; // total number of while conditions; for testing
 
     const changeCallbacks = _.createMap<FXPinHandler, FXPinCallback>();
 
-    const matcherGroups = createXMap<
-      FXMatcher,
-      Array<{
-        _activate: boolean;
-        _group: FXMatcher[];
-      }>
-    >(() => []);
+    const conditions = createXMap<FXMatcher, Condition[]>(() => []);
+
+    const isLocked = () => numFulfilledLocking > 0;
+
+    const incrementLocking = () => {
+      if (numFulfilledLocking === numLocking) {
+        throw bugError("FXPin: number of locking conditions > maximum");
+      }
+
+      numFulfilledLocking++;
+      setState(true);
+    };
+
+    const decrementLocking = () => {
+      if (!isLocked()) {
+        throw bugError("FXPin: number of locking conditions < 0");
+      }
+
+      numFulfilledLocking--;
+
+      if (!isLocked()) {
+        setState(false); // deactivate
+      }
+    };
 
     const setState = (activate: boolean) => {
-      if (isActive !== activate) {
+      if (isActive !== activate && (activate || !isLocked())) {
         isActive = activate;
-
-        for (const [m, entries] of matcherGroups) {
-          if (_.isInstanceOf(m, FXRelativeMatcher)) {
-            for (const entry of entries) {
-              if (entry._activate !== activate) {
-                m.restart();
-              }
-            }
-          }
-        }
-
         invokeHandlers(changeCallbacks.values(), activate, this);
       }
     };
 
-    const addMatcherGroup = (activate: boolean, matchers: FXMatcher[]) => {
-      const entry = {
-        _activate: activate,
+    const addCondition = (
+      type: CONDITION_TYPE,
+      matchersOrPins: Array<FXMatcher | FXPin>,
+    ) => {
+      if (type === LOCK) {
+        numLocking++;
+      }
+
+      const matchers = matchersOrPins.map((e) =>
+        _.isInstanceOf(e, FXPin) ? FX_MATCH.pin(e) : e,
+      );
+
+      const condition: Condition = {
+        _type: type,
+        _fulfilled: false,
         _group: matchers,
       };
 
-      for (const m of matchers) {
-        const entries = matcherGroups.sGet(m);
-        entries.push(entry);
-        m.onChange(onMatcherChange);
+      for (const matcher of matchers) {
+        conditions.sGet(matcher).push(condition);
+        matcher.onChange(onMatcherChange);
+      }
+
+      // check the current state now
+      checkCondition(condition);
+
+      return this;
+    };
+
+    const checkCondition = (condition: Condition) => {
+      const isFulfilled = condition._group.every((m) => m.matches());
+
+      if (isFulfilled === condition._fulfilled) {
+        return; // no change
+      }
+
+      condition._fulfilled = isFulfilled;
+
+      if (condition._type === LOCK) {
+        if (isFulfilled) {
+          incrementLocking();
+        } else {
+          decrementLocking();
+        }
+      } else if (isFulfilled) {
+        setState(condition._type === ACTIVATE ? true : false); // will check if locked
       }
     };
 
     const onMatcherChange = (matches: boolean, matcher: FXMatcher) => {
-      const entries = matcherGroups.get(matcher) ?? [];
-      for (const entry of entries) {
-        if (entry._group.every((m) => m.matches())) {
-          setState(entry._activate);
-        }
+      const matcherConditions = conditions.get(matcher) ?? [];
+      for (const condition of matcherConditions) {
+        checkCondition(condition);
       }
     };
 
@@ -156,19 +204,9 @@ export class FXPin {
     };
 
     this.isActive = () => isActive;
-
-    this.when = (...matchers) => {
-      addMatcherGroup(true, matchers);
-      return this;
-    };
-
-    this.until = (...matchers) => {
-      addMatcherGroup(false, matchers);
-      return this;
-    };
-
-    this.while = (...matchers) =>
-      this.when(...matchers).until(...matchers.map((m) => FX_MATCH.negate(m)));
+    this.when = (...matchers) => addCondition(ACTIVATE, matchers);
+    this.until = (...matchers) => addCondition(DEACTIVATE, matchers);
+    this.while = (...matchers) => addCondition(LOCK, matchers);
   }
 }
 
@@ -183,3 +221,16 @@ export type FXPinCallback = Callback<FXPinHandlerArgs>;
 export type FXPinHandler = FXPinCallback | CallbackHandler<FXPinHandlerArgs>;
 
 _.brandClass(FXPin, "FXPin");
+
+// ------------------------------
+
+type Condition = {
+  _type: CONDITION_TYPE;
+  _fulfilled: boolean;
+  _group: FXMatcher[];
+};
+
+type CONDITION_TYPE = typeof ACTIVATE | typeof DEACTIVATE | typeof LOCK;
+const ACTIVATE = 0;
+const DEACTIVATE = 1;
+const LOCK = 2;

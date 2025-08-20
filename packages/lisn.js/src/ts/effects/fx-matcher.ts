@@ -28,9 +28,10 @@ import {
 } from "@lisn/modules/callback";
 
 import { FXState } from "@lisn/effects/effect";
-import { FXComposer, FXComposerHandler } from "@lisn/effects/fx-composer";
+import { FXComposer } from "@lisn/effects/fx-composer";
+import { FXPin } from "@lisn/effects/fx-pin";
 
-import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
+import { ScrollWatcher, ScrollData } from "@lisn/watchers/scroll-watcher";
 import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
 
 // -------------------------------------------------------------------------
@@ -51,6 +52,7 @@ export const FX_MATCH = {
     views: CommaSeparatedStr<View> | View[],
     config?: ViewWatcherConfig,
   ) => new FXViewMatcher(viewTarget, views, config),
+  pin: (pin: FXPin) => new FXPinMatcher(pin),
 } as const;
 
 // -------------------------------------------------------------------------
@@ -59,14 +61,16 @@ export const FX_MATCH = {
  * A pin matcher internally keeps track of certain conditions and has a binary
  * state (matches/does not match).
  *
- * This is a generic class that accepts a custom executor function. You want to
- * subclass it when defining your own matcher types.
+ * This is a generic class that accepts a custom executor function. You may want
+ * to subclass it when defining your own matcher types.
+ *
+ * There are built-in matchers in {@link FX_MATCH}.
  *
  * @param executor A function which accepts a {@link FXMatcherStore}. The
  *                 executor is responsible for calling
- *                 {@link FXMatcher.setState | store.setState} whenever it's
- *                 state changes. It will be called inside the class constructor
- *                 with `this` set to the newly created matcher.
+ *                 {@link FXMatcherStore.setState | store.setState} whenever
+ *                 it's state changes. It will be called inside the class
+ *                 constructor with `this` set to the newly created matcher.
  */
 export class FXMatcher {
   /**
@@ -93,6 +97,10 @@ export class FXMatcher {
     const store: FXMatcherStore = {
       getState: () => storeData.matches,
       setState: (m) => {
+        if (!_.isBoolean(m)) {
+          throw usageError("Matcher state must be a boolean");
+        }
+
         if (storeData.matches !== m) {
           storeData.matches = m;
           invokeHandlers(changeCallbacks.values(), m, this);
@@ -106,11 +114,11 @@ export class FXMatcher {
 
     this.matches = () => storeData.matches;
 
-    this.onChange = (handler: FXMatcherHandler) => {
+    this.onChange = (handler) => {
       addNewCallbackToMap(changeCallbacks, handler);
     };
 
-    this.offChange = (handler: FXMatcherHandler) => {
+    this.offChange = (handler) => {
       _.remove(changeCallbacks.get(handler));
     };
 
@@ -130,9 +138,12 @@ export class FXMatcher {
  *
  * @param executor A function which accepts a {@link FXMatcherStore}. The
  *                 executor is responsible for calling
- *                 {@link FXMatcher.setState | store.setState} and
- *                 {@link FXMatcher.setData | store.setData} whenever it's
- *                 state or data change. It will be called inside the class
+ *                 {@link FXRelativeMatcherStore.setState | store.setState} and
+ *                 {@link FXRelativeMatcherStore.setData | store.setData}
+ *                 whenever it's state or data change. It should also set
+ *                 {@link FXRelativeMatcherStore.restartCallback | store.restartCallback}
+ *                 to potentially update its state when the matcher is
+ *                 restarted. The executor will be called inside the class
  *                 constructor with `this` set to the newly created matcher.
  */
 export class FXRelativeMatcher<D = unknown> extends FXMatcher {
@@ -150,17 +161,20 @@ export class FXRelativeMatcher<D = unknown> extends FXMatcher {
     const store: FXRelativeMatcherStore<D> = {
       getState: () => baseStore.getState(),
       setState: (m) => baseStore.setState(m),
-      getData: () => storeData.data,
+      getData: () => _.deepCopy(storeData.data),
       setData: (data) => {
-        storeData.data = data;
+        storeData.data = _.deepCopy(data);
       },
-      getReferenceData: () => storeData.refData,
+      getReferenceData: () => _.deepCopy(storeData.refData),
     };
 
     // --------------------
 
     this.restart = () => {
       storeData.refData = storeData.data;
+      if (_.isFunction(store.restartCallback)) {
+        store.restartCallback();
+      }
     };
 
     // --------------------
@@ -223,6 +237,12 @@ export type FXRelativeMatcherStore<D = unknown> = FXMatcherStore & {
    * called on the matcher.
    */
   getReferenceData: () => D | undefined;
+
+  /**
+   * If you set this, it will be called when the matcher is restarted, after the
+   * reference data has been updated.
+   */
+  restartCallback?: () => void;
 };
 
 // ------------------------------------------------------------------------
@@ -232,8 +252,7 @@ export type FXRelativeMatcherStore<D = unknown> = FXMatcherStore & {
 // -------------------------------- NEGATE ---------------------------------
 
 /**
- * Negates the given matcher. {@link FXMatcher.restart | restarting} it
- * **won't** call the restart method on the original matcher.
+ * Negates the given matcher.
  */
 export class FXNegateMatcher extends FXMatcher {
   constructor(matcher: FXMatcher) {
@@ -251,7 +270,8 @@ export class FXNegateMatcher extends FXMatcher {
  * {@link FXComposerMatcher} matches when the given composer's parameters are
  * less than or greater than the given reference values. It supports
  * {@link RawOrRelativeNumber | relative} offsets as `"+<number>"` or
- * `"-<number>"` which will be relative to when it was last restarted.
+ * `"-<number>"` which will be relative to the parameters at the time it was
+ * last restarted.
  *
  * If the value is a percentage rather than an absolute number, it will be
  * treated as a fraction of the difference between the minimum and maximum
@@ -267,14 +287,24 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
     }
 
     const executor = (store: FXRelativeMatcherStore<FXState>) => {
-      const updateData: FXComposerHandler = (fxState) => {
-        store.setData(fxState);
-        store.setState(
-          axesAreWithinBounds(config, fxState, store.getReferenceData()),
-        );
+      const updateData = (fxState?: FXState) => {
+        if (fxState) {
+          store.setData(fxState);
+        } else {
+          fxState = store.getData();
+        }
+
+        if (fxState) {
+          store.setState(
+            axesAreWithinBounds(config, fxState, store.getReferenceData()),
+          );
+        }
       };
 
       composer.onTween(updateData);
+
+      // Recheck if within bounds
+      store.restartCallback = updateData;
     };
 
     super(executor);
@@ -285,7 +315,7 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
  * Minimum and/or maximum X, Y and/or Z composer state parameters.
  *
  * {@link RawOrRelativeNumber | Relative} offsets with `+` or `-` prefix are
- * relative to when the matcher was last restarted.
+ * relative to the values at the time the matcher was last restarted.
  *
  * If the value is a percentage, it will be treated as a fraction of the
  * difference between the maximum and minimum values for the respective axis.
@@ -333,7 +363,8 @@ export type FXComposerMatcherBounds = AtLeastOne<{
  * {@link FXScrollMatcher} matches when the scroll offset of the given
  * scrollable is less than or greater than the given reference. It supports
  * {@link RawOrRelativeNumber | relative} offsets as `"+<number>"` or
- * `"-<number>"` which will be relative to when it was last restarted.
+ * `"-<number>"` which will be relative to the parameters at the time it was
+ * last restarted.
  *
  * If the value is a percentage rather than an absolute number, it will be
  * treated as a fraction of the scroll width or height of the scrollable. See
@@ -362,27 +393,29 @@ export class FXScrollMatcher extends FXRelativeMatcher<
     const executor = (
       store: FXRelativeMatcherStore<FXPinAllAxesData<"top" | "left">>,
     ) => {
-      const updateData: OnScrollHandler = (e__ignored, scrollData) => {
-        const data: FXPinAllAxesData<"top" | "left"> = {
-          top: {
-            min: 0,
-            max: scrollData[_.S_SCROLL_HEIGHT],
-            current: scrollData[_.S_SCROLL_TOP],
-          },
-          left: {
-            min: 0,
-            max: scrollData[_.S_SCROLL_WIDTH],
-            current: scrollData[_.S_SCROLL_LEFT],
-          },
-        };
+      const updateData = (data?: FXPinAllAxesData<"top" | "left">) => {
+        if (data) {
+          store.setData(data);
+        } else {
+          data = store.getData();
+        }
 
-        store.setData(data);
-        store.setState(
-          axesAreWithinBounds(bounds, data, store.getReferenceData()),
-        );
+        if (data) {
+          store.setState(
+            axesAreWithinBounds(bounds, data, store.getReferenceData()),
+          );
+        }
       };
 
-      scrollWatcher.trackScroll(updateData, { scrollable });
+      scrollWatcher.trackScroll(
+        (e, scrollData) => updateData(scrollToAxesData(scrollData)),
+        {
+          scrollable,
+        },
+      );
+
+      // Recheck if within bounds
+      store.restartCallback = updateData;
     };
 
     super(executor);
@@ -393,7 +426,7 @@ export class FXScrollMatcher extends FXRelativeMatcher<
  * Minimum and/or maximum top and/or left scroll offsets.
  *
  * {@link RawOrRelativeNumber | Relative} offsets with `+` or `-` prefix are
- * relative to when the matcher was last restarted.
+ * relative to the values at the time the matcher was last restarted.
  *
  * If the value is a percentage, it will be treated as a fraction of the scroll
  * width or height of the scrollable.
@@ -469,6 +502,21 @@ export class FXViewMatcher extends FXMatcher {
       });
     };
 
+    super(executor);
+  }
+}
+
+// --------------------------------- PIN -----------------------------------
+
+/**
+ * Matches while the given pin is active.
+ */
+export class FXPinMatcher extends FXMatcher {
+  constructor(pin: FXPin) {
+    const executor = (store: FXMatcherStore) => {
+      store.setState(pin.isActive());
+      pin.onChange((state) => store.setState(state));
+    };
     super(executor);
   }
 }
@@ -558,6 +606,21 @@ const axesAreWithinBounds = <Keys extends string>(
 
   return result;
 };
+
+const scrollToAxesData = (
+  scrollData: ScrollData,
+): FXPinAllAxesData<"top" | "left"> => ({
+  top: {
+    min: 0,
+    max: scrollData[_.S_SCROLL_HEIGHT],
+    current: scrollData[_.S_SCROLL_TOP],
+  },
+  left: {
+    min: 0,
+    max: scrollData[_.S_SCROLL_WIDTH],
+    current: scrollData[_.S_SCROLL_LEFT],
+  },
+});
 
 _.brandClass(FXMatcher, "FXMatcher");
 _.brandClass(FXRelativeMatcher, "FXRelativeMatcher");

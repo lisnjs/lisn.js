@@ -37,8 +37,11 @@ export const FX_TRIGGER = {
 /**
  * A trigger is what the {@link FXComposer} can continually poll for new data.
  *
- * This is a generic class that accepts a custom executor function. You want to
- * subclass it when defining your own trigger types.
+ * It can be polled by multiple receivers, so you can reuse triggers across
+ * composers. XXX test
+ *
+ * This is a generic class that accepts a custom executor function. You may want
+ * to subclass it when defining your own trigger types.
  *
  * @param executor A function which accepts a `push` function. The executor
  *                 should call this function when it has new data to send to the
@@ -58,12 +61,12 @@ export class FXTrigger {
   readonly isActive: () => boolean;
 
   /**
-   * Pauses data collection.
+   * Pauses the trigger. It will not yield new data until resumed.
    */
   readonly pause: () => void;
 
   /**
-   * Resumes data collection
+   * Resumes the trigger.
    */
   readonly resume: () => void;
 

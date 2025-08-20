@@ -7,6 +7,8 @@ const {
   FXComposerMatcher,
   FXScrollMatcher,
   FXViewMatcher,
+  FXPinMatcher,
+  FXPin,
   FX_MATCH,
 } = window.LISN.effects;
 
@@ -62,41 +64,46 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
     });
 
     test(`${Class.name}: onChange/offChange`, async () => {
-      const changeCbk = jest.fn();
+      const cbk = jest.fn();
       const { matcher, store, executor } = newMatcher(Class);
 
-      matcher.onChange(changeCbk);
+      matcher.onChange(cbk);
       expect(executor).toHaveBeenCalledTimes(1);
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(0); // initial state change in executor has already happened
+      expect(cbk).toHaveBeenCalledTimes(0); // initial state change in executor has already happened
       expect(matcher.matches()).toBe(false);
 
       store.setState(false); // no-op
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(0);
+      expect(cbk).toHaveBeenCalledTimes(0);
 
       store.setState(true);
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(1);
-      expect(changeCbk).toHaveBeenNthCalledWith(1, true, matcher);
+      expect(cbk).toHaveBeenCalledTimes(1);
+      expect(cbk).toHaveBeenNthCalledWith(1, true, matcher);
       expect(matcher.matches()).toBe(true);
 
       store.setState(true); // no-op
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(1);
+      expect(cbk).toHaveBeenCalledTimes(1);
       expect(matcher.matches()).toBe(true);
 
       store.setState(false);
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(2);
-      expect(changeCbk).toHaveBeenNthCalledWith(2, false, matcher);
+      expect(cbk).toHaveBeenCalledTimes(2);
+      expect(cbk).toHaveBeenNthCalledWith(2, false, matcher);
       expect(matcher.matches()).toBe(false);
+
+      matcher.offChange(cbk);
+      store.setState(true);
+      await window.waitFor(0); // callbacks are async
+      expect(cbk).toHaveBeenCalledTimes(2); // no new calls
 
       expect(executor).toHaveBeenCalledTimes(1);
     });
 
     test(`${Class.name}: onChange/offChange modified in executor`, async () => {
-      const changeCbk = jest.fn();
+      const cbk = jest.fn();
       const { matcher, store, executor } = newMatcher(Class, (store) => {
         store.setState(true);
         setTimeout(() => store.setState(false), 100);
@@ -104,38 +111,38 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
         setTimeout(() => store.setState(false), 300);
       });
 
-      matcher.onChange(changeCbk);
+      matcher.onChange(cbk);
       await window.waitFor(0); // callbacks are async
       expect(executor).toHaveBeenCalledTimes(1);
-      expect(changeCbk).toHaveBeenCalledTimes(0); // initial state change in executor has already happened
+      expect(cbk).toHaveBeenCalledTimes(0); // initial state change in executor has already happened
       expect(matcher.matches()).toBe(true);
 
       store.setState(true); // no-op
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(0);
+      expect(cbk).toHaveBeenCalledTimes(0);
       expect(matcher.matches()).toBe(true);
 
       await window.waitFor(120);
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(1);
-      expect(changeCbk).toHaveBeenNthCalledWith(1, false, matcher);
+      expect(cbk).toHaveBeenCalledTimes(1);
+      expect(cbk).toHaveBeenNthCalledWith(1, false, matcher);
       expect(matcher.matches()).toBe(false);
 
       store.setState(false); // no-op
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(1);
+      expect(cbk).toHaveBeenCalledTimes(1);
       expect(matcher.matches()).toBe(false);
 
       await window.waitFor(120);
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(2);
-      expect(changeCbk).toHaveBeenNthCalledWith(2, true, matcher);
+      expect(cbk).toHaveBeenCalledTimes(2);
+      expect(cbk).toHaveBeenNthCalledWith(2, true, matcher);
       expect(matcher.matches()).toBe(true);
 
       await window.waitFor(120);
       await window.waitFor(0); // callbacks are async
-      expect(changeCbk).toHaveBeenCalledTimes(3);
-      expect(changeCbk).toHaveBeenNthCalledWith(3, false, matcher);
+      expect(cbk).toHaveBeenCalledTimes(3);
+      expect(cbk).toHaveBeenNthCalledWith(3, false, matcher);
       expect(matcher.matches()).toBe(false);
 
       expect(executor).toHaveBeenCalledTimes(1);
@@ -145,19 +152,30 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
 
 describe("FXRelativeMatcher", () => {
   test("executor + store data", async () => {
-    const changeCbk = jest.fn();
+    const cbk = jest.fn();
 
     const { matcher, store, executor } = newMatcher(FXRelativeMatcher);
-    matcher.onChange(changeCbk);
+    matcher.onChange(cbk);
 
     expect(executor).toHaveBeenCalledTimes(1);
     expect(store.getData()).toBeUndefined();
     expect(store.getReferenceData()).toBeUndefined();
 
-    const d = { a: 1, b: 2 };
-    store.setData(d);
-    expect(store.getData()).toBe(d); // not copied
+    const input = { a: 1, b: { c: 2 } };
+    const origInput = { a: 1, b: { c: 2 } };
+    store.setData(input);
+
+    const data = store.getData();
+
+    expect(data).toEqual(input);
+    expect(data).not.toBe(input); // copied
     expect(store.getReferenceData()).toBeUndefined();
+
+    input.b.c = 4;
+    expect(data).toEqual(origInput); // deeply copied when setting
+
+    data.b.c = 4;
+    expect(store.getData()).toEqual(origInput); // deeply copied when returned
 
     store.setData(2);
     expect(store.getData()).toBe(2);
@@ -172,7 +190,7 @@ describe("FXRelativeMatcher", () => {
     expect(store.getReferenceData()).toBeUndefined();
 
     await window.waitFor(0); // callbacks are async
-    expect(changeCbk).toHaveBeenCalledTimes(0); // not called for data change
+    expect(cbk).toHaveBeenCalledTimes(0); // not called for data change
 
     expect(executor).toHaveBeenCalledTimes(1);
   });
@@ -181,7 +199,7 @@ describe("FXRelativeMatcher", () => {
     const d = { a: 1, b: 2 };
     const d2 = "foo";
 
-    const changeCbk = jest.fn();
+    const cbk = jest.fn();
     const { matcher, store, executor } = newMatcher(
       FXRelativeMatcher,
       (store) => {
@@ -190,10 +208,10 @@ describe("FXRelativeMatcher", () => {
       },
     );
 
-    matcher.onChange(changeCbk);
+    matcher.onChange(cbk);
 
     expect(executor).toHaveBeenCalledTimes(1);
-    expect(store.getData()).toBe(d);
+    expect(store.getData()).toEqual(d);
     expect(store.getReferenceData()).toBeUndefined();
 
     await window.waitFor(120);
@@ -201,7 +219,7 @@ describe("FXRelativeMatcher", () => {
     expect(store.getReferenceData()).toBeUndefined();
 
     await window.waitFor(0); // callbacks are async
-    expect(changeCbk).toHaveBeenCalledTimes(0); // not called for data change
+    expect(cbk).toHaveBeenCalledTimes(0); // not called for data change
 
     expect(executor).toHaveBeenCalledTimes(1);
   });
@@ -209,15 +227,21 @@ describe("FXRelativeMatcher", () => {
   test("restart + reference data", async () => {
     const lastData = "foo";
 
-    const changeCbk = jest.fn();
+    const cbk = jest.fn();
     const { matcher, store, executor } = newMatcher(
       FXRelativeMatcher,
       (store) => {
-        setTimeout(() => expect(store.getReferenceData()).toBe(lastData), 100);
+        setTimeout(
+          () => expect(store.getReferenceData()).toEqual(lastData),
+          100,
+        );
       },
     );
 
-    matcher.onChange(changeCbk);
+    matcher.onChange(cbk);
+
+    expect(store.getData()).toBeUndefined();
+    expect(store.getReferenceData()).toBeUndefined();
 
     expect(executor).toHaveBeenCalledTimes(1);
 
@@ -229,29 +253,38 @@ describe("FXRelativeMatcher", () => {
     expect(store.getData()).toBe(2);
     expect(store.getReferenceData()).toBeUndefined();
 
-    const d = { a: 1, b: 2 };
-    store.setData(d);
-    expect(store.getData()).toBe(d); // not copied
+    const input = { a: 1, b: { c: 2 } };
+    const origInput = { a: 1, b: { c: 2 } };
+    store.setData(input);
+    expect(store.getData()).toEqual(input);
     expect(store.getReferenceData()).toBeUndefined();
 
     matcher.restart();
-    expect(store.getData()).toBe(d);
-    expect(store.getReferenceData()).toBe(d); // not copied
+
+    const data = store.getData();
+    const reference = store.getReferenceData();
+    expect(data).toEqual(input);
+    expect(reference).toEqual(input);
+    expect(reference).not.toBe(input); // copied
+    expect(reference).not.toBe(data);
+
+    reference.b.c = 4;
+    expect(store.getReferenceData()).toEqual(origInput);
 
     store.setData(null);
     expect(store.getData()).toBe(null);
-    expect(store.getReferenceData()).toBe(d);
+    expect(store.getReferenceData()).toEqual(origInput);
 
     store.setData(lastData);
-    expect(store.getData()).toBe(lastData);
-    expect(store.getReferenceData()).toBe(d);
+    expect(store.getData()).toEqual(lastData);
+    expect(store.getReferenceData()).toEqual(origInput);
 
     matcher.restart();
-    expect(store.getData()).toBe(lastData);
-    expect(store.getReferenceData()).toBe(lastData);
+    expect(store.getData()).toEqual(lastData);
+    expect(store.getReferenceData()).toEqual(lastData);
 
     await window.waitFor(0); // callbacks are async
-    expect(changeCbk).toHaveBeenCalledTimes(0); // not called for data change or restart
+    expect(cbk).toHaveBeenCalledTimes(0); // not called for data change or restart
 
     await window.waitFor(120);
 
@@ -260,7 +293,7 @@ describe("FXRelativeMatcher", () => {
 });
 
 describe("FXNegateMatcher", () => {
-  test("basic", () => {
+  test("basic", async () => {
     const { matcher, store } = newMatcher();
     const negated = new FXNegateMatcher(matcher);
 
@@ -269,80 +302,91 @@ describe("FXNegateMatcher", () => {
 
     store.setState(true);
     expect(matcher.matches()).toBe(true);
+    await window.waitFor(0); // callbacks are async
     expect(negated.matches()).toBe(false);
 
     store.setState(false);
     expect(matcher.matches()).toBe(false);
+    await window.waitFor(0); // callbacks are async
     expect(negated.matches()).toBe(true);
   });
 
-  test("basic v2", () => {
+  test("basic v2", async () => {
     const { matcher, store } = newMatcher();
     store.setState(true);
 
     const negated = new FXNegateMatcher(matcher);
     expect(matcher.matches()).toBe(true);
+    await window.waitFor(0); // callbacks are async
     expect(negated.matches()).toBe(false);
 
     store.setState(false);
     expect(matcher.matches()).toBe(false);
+    await window.waitFor(0); // callbacks are async
     expect(negated.matches()).toBe(true);
   });
 
   test("onChange/offChange", async () => {
-    const changeCbk = jest.fn();
-    const negatedChangeCbk = jest.fn();
+    const cbk = jest.fn();
+    const negatedCbk = jest.fn();
     const { matcher, store, executor } = newMatcher();
 
     const negated = new FXNegateMatcher(matcher);
 
-    matcher.onChange(changeCbk);
-    negated.onChange(negatedChangeCbk);
+    matcher.onChange(cbk);
+    negated.onChange(negatedCbk);
 
     expect(executor).toHaveBeenCalledTimes(1);
     // initial state change in executor has already happened
     await window.waitFor(0); // callbacks are async
-    expect(changeCbk).toHaveBeenCalledTimes(0);
-    expect(negatedChangeCbk).toHaveBeenCalledTimes(0);
+    expect(cbk).toHaveBeenCalledTimes(0);
+    expect(negatedCbk).toHaveBeenCalledTimes(0);
     expect(matcher.matches()).toBe(false);
     expect(negated.matches()).toBe(true);
 
     store.setState(false); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(changeCbk).toHaveBeenCalledTimes(0);
-    expect(negatedChangeCbk).toHaveBeenCalledTimes(0);
+    expect(cbk).toHaveBeenCalledTimes(0);
+    expect(negatedCbk).toHaveBeenCalledTimes(0);
     expect(matcher.matches()).toBe(false);
     expect(negated.matches()).toBe(true);
 
     store.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(changeCbk).toHaveBeenCalledTimes(1);
-    expect(changeCbk).toHaveBeenNthCalledWith(1, true, matcher);
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenNthCalledWith(1, true, matcher);
     expect(matcher.matches()).toBe(true);
 
-    expect(negatedChangeCbk).toHaveBeenCalledTimes(1);
-    expect(negatedChangeCbk).toHaveBeenNthCalledWith(1, false, negated);
+    expect(negatedCbk).toHaveBeenCalledTimes(1);
+    expect(negatedCbk).toHaveBeenNthCalledWith(1, false, negated);
     expect(negated.matches()).toBe(false);
 
     store.setState(true); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(changeCbk).toHaveBeenCalledTimes(1);
-    expect(changeCbk).toHaveBeenNthCalledWith(1, true, matcher);
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenNthCalledWith(1, true, matcher);
     expect(matcher.matches()).toBe(true);
 
-    expect(negatedChangeCbk).toHaveBeenCalledTimes(1);
-    expect(negatedChangeCbk).toHaveBeenNthCalledWith(1, false, negated);
+    expect(negatedCbk).toHaveBeenCalledTimes(1);
+    expect(negatedCbk).toHaveBeenNthCalledWith(1, false, negated);
     expect(negated.matches()).toBe(false);
 
     store.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(changeCbk).toHaveBeenCalledTimes(2);
-    expect(changeCbk).toHaveBeenNthCalledWith(2, false, matcher);
+    expect(cbk).toHaveBeenCalledTimes(2);
+    expect(cbk).toHaveBeenNthCalledWith(2, false, matcher);
     expect(matcher.matches()).toBe(false);
 
-    expect(negatedChangeCbk).toHaveBeenCalledTimes(2);
-    expect(negatedChangeCbk).toHaveBeenNthCalledWith(2, true, negated);
+    expect(negatedCbk).toHaveBeenCalledTimes(2);
+    expect(negatedCbk).toHaveBeenNthCalledWith(2, true, negated);
     expect(negated.matches()).toBe(true);
+
+    matcher.offChange(cbk);
+    negated.offChange(negatedCbk);
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(2); // no new calls
+    expect(negatedCbk).toHaveBeenCalledTimes(2); // no new calls
 
     expect(executor).toHaveBeenCalledTimes(1);
   });
@@ -353,3 +397,138 @@ describe("FXNegateMatcher", () => {
     expect(FX_MATCH.negate(matcher)).toBeInstanceOf(FXNegateMatcher);
   });
 });
+
+describe("FXPinMatcher", () => {
+  test("basic", async () => {
+    const { matcher: triggerMatcher, store } = newMatcher();
+    const pin = new FXPin();
+    pin.while(triggerMatcher);
+
+    const pinMatcher = new FXPinMatcher(pin);
+
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(false);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(true); // no-op
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(false);
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(false);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(false); // no-op
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(false);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+  });
+
+  test("basic v2", async () => {
+    const { matcher: triggerMatcher, store } = newMatcher();
+    store.setState(true);
+
+    const pin = new FXPin();
+    pin.while(triggerMatcher);
+
+    const pinMatcher = new FXPinMatcher(pin);
+
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(true); // no-op
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(false);
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(false);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(false); // no-op
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(false);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+  });
+
+  test("onChange/offChange", async () => {
+    const cbk = jest.fn();
+    const { matcher: triggerMatcher, store } = newMatcher();
+    const pin = new FXPin();
+    pin.while(triggerMatcher);
+
+    const pinMatcher = new FXPinMatcher(pin);
+    pinMatcher.onChange(cbk);
+
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(false);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+    expect(cbk).toHaveBeenCalledTimes(0);
+
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenNthCalledWith(1, true, pinMatcher);
+
+    store.setState(true); // no-op
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+    expect(cbk).toHaveBeenCalledTimes(1);
+
+    store.setState(false);
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(false);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+    expect(cbk).toHaveBeenCalledTimes(2);
+    expect(cbk).toHaveBeenNthCalledWith(2, false, pinMatcher);
+
+    store.setState(false); // no-op
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(false);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+    expect(cbk).toHaveBeenCalledTimes(2);
+
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+    expect(pin.isActive()).toBe(true);
+    expect(pinMatcher.matches()).toBe(pin.isActive());
+    expect(cbk).toHaveBeenCalledTimes(3);
+    expect(cbk).toHaveBeenNthCalledWith(3, true, pinMatcher);
+
+    pinMatcher.offChange(cbk);
+    store.setState(false);
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(3); // no new calls
+  });
+
+  test("in FX_MATCH", () => {
+    const pin = new FXPin();
+    expect(FX_MATCH.pin).not.toBeUndefined();
+    expect(FX_MATCH.pin(pin)).toBeInstanceOf(FXPinMatcher);
+  });
+});
+
+// TODO composer, scroll and view matchers including when the condition
+// matches initially and test with restarting that should make the state change

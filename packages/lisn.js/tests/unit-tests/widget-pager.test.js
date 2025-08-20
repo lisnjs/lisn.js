@@ -532,6 +532,12 @@ describe("transitioning pages", () => {
     expect(callback).toHaveBeenCalledTimes(2);
     expect(oldPage).toBe(3);
     expect(currPage).toBe(2);
+
+    // without awaiting
+    pager.goToPage(1); // +1 call
+    pager.goToPage(2); // +1 call
+    await window.waitForAF();
+    expect(callback).toHaveBeenCalledTimes(4);
   });
 
   test("offTransition", async () => {

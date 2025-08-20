@@ -303,6 +303,14 @@ describe("generic Openable", () => {
     expect(openFn).toHaveBeenCalledTimes(2);
     expect(closeFn).toHaveBeenCalledTimes(2);
     expect(closeFn).toHaveBeenNthCalledWith(2, widget);
+
+    // without awaiting
+    widget.open(); // +1 open
+    widget.close(); // +1 close
+    widget.toggle(); // +1 open
+    await window.waitForAF();
+    expect(openFn).toHaveBeenCalledTimes(4);
+    expect(closeFn).toHaveBeenCalledTimes(3);
   });
 
   test("offOpen/offClose", async () => {

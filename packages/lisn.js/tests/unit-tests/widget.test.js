@@ -95,6 +95,33 @@ describe("Widget", () => {
     expect(onDestroy).toHaveBeenCalledTimes(1);
   });
 
+  test("onEnable/onDisable/onDestroy without awaiting", async () => {
+    const onEnable = jest.fn();
+    const onDisable = jest.fn();
+    const onDestroy = jest.fn();
+
+    const widget = new Widget(document.body);
+    widget.onEnable(onEnable);
+    widget.onDisable(onDisable);
+    widget.onDestroy(onDestroy);
+    await window.waitFor(0); // callbacks is async
+
+    expect(onEnable).toHaveBeenCalledTimes(0);
+    expect(onDisable).toHaveBeenCalledTimes(0);
+    expect(onDestroy).toHaveBeenCalledTimes(0);
+
+    widget.disable(); // +1 disable
+    widget.enable(); // +1 enable
+    widget.disable(); // +1 disable
+    widget.enable(); // +1 enable
+    widget.destroy(); // +1 disable and destroy
+
+    await window.waitFor(0); // callbacks is async
+    expect(onEnable).toHaveBeenCalledTimes(2);
+    expect(onDisable).toHaveBeenCalledTimes(3);
+    expect(onDestroy).toHaveBeenCalledTimes(1);
+  });
+
   test("offEnable/offDisable/offDestroy", async () => {
     const onEnable = jest.fn();
     const onDisable = jest.fn();

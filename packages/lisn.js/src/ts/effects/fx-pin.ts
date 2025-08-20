@@ -171,7 +171,6 @@ export class FXPin {
       // have changed states since the callback was triggered, but we want to
       // operate on the state at the time the callback was triggered.
       const isFulfilled = condition._group.every((m) => m.matches());
-      console.warn("XXX checkCondition", condition, isFulfilled);
 
       if (isFulfilled === condition._fulfilled) {
         return; // no change
@@ -191,7 +190,6 @@ export class FXPin {
     };
 
     const onMatcherChange = (matches: boolean, matcher: FXMatcher) => {
-      console.warn("XXX onMatcherChange", matcher, matches);
       const matcherConditions = conditions.get(matcher) ?? [];
       for (const condition of matcherConditions) {
         checkCondition(condition);

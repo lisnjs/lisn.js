@@ -432,8 +432,6 @@ describe("multiple matchers (AND): when", () => {
     await window.waitFor(0); // callbacks are async
     expect(pin.isActive()).toBe(false);
 
-    matcherA.name = "matcherA"; // XXX
-    matcherB.name = "matcherB"; // XXX
     storeA.setState(true);
     storeA.setState(false);
     storeB.setState(true);
@@ -774,6 +772,8 @@ describe("mix", () => {
       storeB.setState(true); // OFF trigger
       await window.waitFor(0); // callbacks are async
       expect(pin.isActive()).toBe(false); // deactivated
+      storeA.setState(false); // reset
+      storeB.setState(false); // reset
 
       // ---------- multiple at a time v2
       storeA.setState(true); // ON trigger

@@ -145,8 +145,11 @@ export class FXPin {
         numLocking++;
       }
 
-      const matchers = matchersOrPins.map((e) =>
-        _.isInstanceOf(e, FXPin) ? FX_MATCH.pin(e) : e,
+      const matchers = matchersOrPins.map(
+        (e): { _matcher: FXMatcher; _state: boolean } => {
+          const matcher = _.isInstanceOf(e, FXPin) ? FX_MATCH.pin(e) : e;
+          return { _matcher: matcher, _state: matcher.matches() };
+        },
       );
 
       const condition: Condition = {
@@ -155,7 +158,7 @@ export class FXPin {
         _group: matchers,
       };
 
-      for (const matcher of matchers) {
+      for (const { _matcher: matcher } of matchers) {
         conditions.sGet(matcher).push(condition);
         matcher.onChange(onMatcherChange);
       }
@@ -167,7 +170,12 @@ export class FXPin {
     };
 
     const checkCondition = (condition: Condition) => {
-      const isFulfilled = condition._group.every((m) => m.matches());
+      // Check the previously saved state of the matcher and not its current
+      // one. This is because callbacks are async, and so the matchers could
+      // have changed states since the callback was triggered, but we want to
+      // operate on the state at the time the callback was triggered.
+      const isFulfilled = condition._group.every(({ _state }) => _state);
+      // console.warn("XXX checkCondition", condition, isFulfilled);
 
       if (isFulfilled === condition._fulfilled) {
         return; // no change
@@ -187,8 +195,22 @@ export class FXPin {
     };
 
     const onMatcherChange = (matches: boolean, matcher: FXMatcher) => {
+      // console.warn("XXX onMatcherChange", matcher, matches);
       const matcherConditions = conditions.get(matcher) ?? [];
       for (const condition of matcherConditions) {
+        // Save the state at this time
+        for (const e of condition._group) {
+          if (e._matcher === matcher) {
+            // console.warn(
+            //   "XXX onMatcherChange updated state from",
+            //   e._state,
+            //   matches,
+            // );
+            e._state = matches;
+            break;
+          }
+        }
+
         checkCondition(condition);
       }
     };
@@ -227,7 +249,7 @@ _.brandClass(FXPin, "FXPin");
 type Condition = {
   _type: CONDITION_TYPE;
   _fulfilled: boolean;
-  _group: FXMatcher[];
+  _group: Array<{ _matcher: FXMatcher; _state: boolean }>;
 };
 
 type CONDITION_TYPE = typeof ACTIVATE | typeof DEACTIVATE | typeof LOCK;

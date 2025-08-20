@@ -161,7 +161,7 @@ describe("basic", () => {
   });
 });
 
-describe("apply", () => {
+describe("update", () => {
   test("basic", () => {
     const dA = 10,
       dB = 20,
@@ -185,7 +185,7 @@ describe("apply", () => {
     t.perspective(() => p * 10);
     t.perspective(() => p); // discards above one
 
-    // not applied yet
+    // not updated yet
     expect(t).toBeCloseToArray(IDENTITY);
     expect(t.toPerspective()).toBeUndefined();
 
@@ -224,7 +224,7 @@ describe("apply", () => {
     t.perspective(() => p * 10);
     t.perspective(() => (nCalls === 1 ? p : p * 4)); // discards above
 
-    // not applied yet
+    // not updated yet
     expect(t).toBeCloseToArray(IDENTITY);
     expect(t.toPerspective()).toBeUndefined();
 
@@ -300,7 +300,7 @@ describe("apply", () => {
     t.perspective(() => p * 10);
     t.perspective(() => p); // discards above one
 
-    // not applied yet
+    // not updated yet
     expect(t).toBeCloseToArray(init);
     expect(t.toPerspective()).toBe(pI);
 
@@ -348,7 +348,7 @@ describe("apply", () => {
     t.perspective(() => p * 10);
     t.perspective(() => (nCalls === 1 ? p : p * 4)); // discards above
 
-    // not applied yet
+    // not updated yet
     expect(t).toBeCloseToArray(init);
     expect(t.toPerspective()).toBe(pI);
 
@@ -364,7 +364,7 @@ describe("apply", () => {
     expect(t.toPerspective()).toBe(p * 4);
   });
 
-  test("adding handlers after apply", () => {
+  test("adding handlers after update", () => {
     const dA = 10,
       dB = 20,
       p = 200;
@@ -385,7 +385,7 @@ describe("apply", () => {
     t.translate(() => ({ x: dA }));
     t.perspective(() => p * 10);
 
-    // not applied yet
+    // not updated yet
     expect(t).toBeCloseToArray(IDENTITY);
     expect(t.toPerspective()).toBeUndefined();
 
@@ -402,7 +402,7 @@ describe("apply", () => {
     expect(t.toPerspective()).toBe(p * 11);
   });
 
-  test("absolute: adding handlers after apply", () => {
+  test("absolute: adding handlers after update", () => {
     const dA = 10,
       dB = 20,
       p = 200;
@@ -423,7 +423,7 @@ describe("apply", () => {
     t.translate(() => ({ x: dA }));
     t.perspective(() => p * 10);
 
-    // not applied yet
+    // not updated yet
     expect(t).toBeCloseToArray(IDENTITY);
     expect(t.toPerspective()).toBeUndefined();
 
@@ -442,7 +442,7 @@ describe("apply", () => {
   });
 });
 
-describe("apply parameters", () => {
+describe("update parameters", () => {
   const state = {
     x: {
       min: -1000,
@@ -709,12 +709,12 @@ describe("export", () => {
     exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // static and detached from t's state and handlers
-    // and resets itself on apply
+    // and resets itself on update
     expect(exported).toBeCloseToArray(IDENTITY);
     expect(exported.toPerspective()).toBeUndefined();
   });
 
-  test("after apply", () => {
+  test("after update", () => {
     const dx = 100,
       dy = 200,
       dz = 300,
@@ -760,7 +760,7 @@ describe("export", () => {
     expect(exported.toPerspective()).toBe(p);
   });
 
-  test("absolute: after apply", () => {
+  test("absolute: after update", () => {
     const dx = 100,
       dy = 200,
       dz = 300,
@@ -813,7 +813,7 @@ describe("export", () => {
     exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
     // static and detached from t's state and handlers
-    // and resets itself on apply
+    // and resets itself on update
     expect(exported).toBeCloseToArray(IDENTITY);
     expect(exported.toPerspective()).toBeUndefined();
   });
@@ -856,7 +856,7 @@ describe("export", () => {
     expect(exported.isAbsolute()).toBe(true);
   });
 
-  test("negage: after apply", () => {
+  test("negage: after update", () => {
     const dx = 100,
       dy = 200,
       dz = 300,
@@ -1003,7 +1003,7 @@ describe("toComposition: single (clone)", () => {
     expect(t.toPerspective()).toBe(p);
   });
 
-  test("after apply", () => {
+  test("after update", () => {
     const dx = 100,
       dy = 200,
       dz = 300,
@@ -1034,7 +1034,7 @@ describe("toComposition: single (clone)", () => {
     expect(t).toBeCloseToArray(expected); // unchanged
     expect(t.toPerspective()).toBe(p);
 
-    // apply original
+    // update original
     t.update(DUMMY_STATE, DEFAULT_COMPOSER);
     expect(t).toBeCloseToArray(expectedFinal);
     expect(t.toPerspective()).toBe(p * 2);
@@ -1159,7 +1159,7 @@ describe("toComposition: multiple", () => {
 
     const expectedInit = IDENTITY.multiply(initC).multiply(initD);
 
-    // will be reset on apply, so init discarded
+    // will be reset on update, so init discarded
     const expectedFinal = IDENTITY.rotateAxisAngle(...ra, r)
       .skewY(sk)
       .scale(1, 1, sz);
@@ -1499,7 +1499,7 @@ describe("toFloat32Array", () => {
 });
 
 describe("perspective", () => {
-  test("apply", () => {
+  test("update", () => {
     const cbk = jest.fn(() => 2);
     const t = newTransform();
     t.perspective(cbk);
@@ -1732,7 +1732,7 @@ describe("perspective", () => {
     expect(t.toPerspective()).toBe(pB);
   });
 
-  test("override handler after apply", () => {
+  test("override handler after update", () => {
     const pA = 100,
       pB = 200;
     const t = newTransform();
@@ -1751,7 +1751,7 @@ describe("perspective", () => {
 });
 
 describe("translate", () => {
-  test("apply", () => {
+  test("update", () => {
     const cbk = jest.fn(() => ({ x: 10 }));
     const t = newTransform();
     t.translate(cbk);
@@ -1921,7 +1921,7 @@ describe("translate", () => {
 });
 
 describe("scale", () => {
-  test("apply", () => {
+  test("update", () => {
     const cbk = jest.fn(() => ({ s: 2 }));
     const t = newTransform();
     t.scale(cbk);
@@ -2209,7 +2209,7 @@ describe("skew", () => {
   const deg2 = 15;
   const tan2 = Math.tan((deg2 * Math.PI) / 180);
 
-  test("apply", () => {
+  test("update", () => {
     const cbk = jest.fn(() => ({ deg: 10 }));
     const t = newTransform();
     t.skew(cbk);
@@ -2338,7 +2338,7 @@ describe("rotate", () => {
   const cos = Math.cos((deg * Math.PI) / 180);
   const sin = Math.sin((deg * Math.PI) / 180);
 
-  test("apply", () => {
+  test("update", () => {
     const cbk = jest.fn(() => ({ deg: 10 }));
     const t = newTransform();
     t.rotate(cbk);

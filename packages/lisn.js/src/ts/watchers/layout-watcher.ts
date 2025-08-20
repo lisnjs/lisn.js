@@ -292,6 +292,7 @@ export class LayoutWatcher {
     };
 
     const deleteHandler = (handler: OnLayoutHandler) => {
+      debug: logger?.debug5("Removing handler", handler);
       _.deleteKey(allCallbacks, handler);
       // no need to unobserve the overlays
     };
@@ -349,7 +350,6 @@ export class LayoutWatcher {
     // ----------
 
     this.offLayout = (handler) => {
-      debug: logger?.debug5("Removing handler");
       _.remove(allCallbacks.get(handler)?._callback);
     };
   }

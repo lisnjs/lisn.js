@@ -310,6 +310,7 @@ export class SizeWatcher {
       const element = options._element;
       const currEntry = allCallbacks.get(element)?.get(handler);
       if (currEntry) {
+        debug: logger?.debug5("Removing handler", target, handler);
         _.remove(currEntry._callback);
 
         if (handler === setSizeCssProps) {

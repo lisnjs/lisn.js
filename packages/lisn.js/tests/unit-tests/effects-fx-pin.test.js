@@ -432,8 +432,8 @@ describe("multiple matchers (AND): when", () => {
     await window.waitFor(0); // callbacks are async
     expect(pin.isActive()).toBe(false);
 
-    matcherA.name = "matcherA";
-    matcherB.name = "matcherB";
+    matcherA.name = "matcherA"; // XXX
+    matcherB.name = "matcherB"; // XXX
     storeA.setState(true);
     storeA.setState(false);
     storeB.setState(true);

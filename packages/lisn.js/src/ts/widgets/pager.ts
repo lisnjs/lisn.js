@@ -42,7 +42,7 @@ import {
   validateBoolean,
 } from "@lisn/utils/validation";
 
-import { addNewCallbackToMap, invokeHandlers } from "@lisn/modules/callback";
+import { invokeHandlers } from "@lisn/modules/callback";
 
 import {
   GestureWatcher,
@@ -1175,7 +1175,7 @@ const getMethods = (
   const scrollWatcher = ScrollWatcher.reuse();
   const isFullscreen = config?.fullscreen;
   const disabledPages: Record<number, boolean> = {};
-  const callbacks = _.createMap<WidgetHandler, WidgetCallback>();
+  const callbacks = _.createSet<WidgetHandler>();
 
   const fetchScrollOptions = async (): Promise<ScrollOptions> => ({
     scrollable: await fetchClosestScrollable(element),
@@ -1243,7 +1243,7 @@ const getMethods = (
     lastPageNum = currPageNum > 0 ? currPageNum : pageNum;
     currPageNum = pageNum;
 
-    await invokeHandlers(callbacks.values(), widget);
+    await invokeHandlers(callbacks, widget);
 
     _.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
     for (
@@ -1346,11 +1346,11 @@ const getMethods = (
     isPageDisabled(pageNum) ? enablePage(pageNum) : disablePage(pageNum);
 
   const onTransition = (handler: WidgetHandler) => {
-    addNewCallbackToMap(callbacks, handler);
+    callbacks.add(handler);
   };
 
   const offTransition = (handler: WidgetHandler) => {
-    _.remove(callbacks.get(handler));
+    _.deleteKey(callbacks, handler);
   };
 
   return {

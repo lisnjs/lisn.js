@@ -23,7 +23,6 @@ import { getOppositeViews } from "@lisn/utils/views";
 import {
   CallbackHandler,
   Callback,
-  addNewCallbackToMap,
   invokeHandlers,
 } from "@lisn/modules/callback";
 
@@ -103,23 +102,23 @@ export class FXMatcher {
 
         if (storeData.matches !== m) {
           storeData.matches = m;
-          invokeHandlers(changeCallbacks.values(), m, this);
+          invokeHandlers(changeCallbacks, m, this);
         }
       },
     };
 
-    const changeCallbacks = _.createMap<FXMatcherHandler, FXMatcherCallback>();
+    const changeCallbacks = _.createSet<FXMatcherHandler>();
 
     // --------------------
 
     this.matches = () => storeData.matches;
 
     this.onChange = (handler) => {
-      addNewCallbackToMap(changeCallbacks, handler);
+      changeCallbacks.add(handler);
     };
 
     this.offChange = (handler) => {
-      _.remove(changeCallbacks.get(handler));
+      _.deleteKey(changeCallbacks, handler);
     };
 
     // --------------------
@@ -628,3 +627,4 @@ _.brandClass(FXNegateMatcher, "FXNegateMatcher");
 _.brandClass(FXComposerMatcher, "FXComposerMatcher");
 _.brandClass(FXScrollMatcher, "FXScrollMatcher");
 _.brandClass(FXViewMatcher, "FXViewMatcher");
+_.brandClass(FXPinMatcher, "FXPinMatcher");

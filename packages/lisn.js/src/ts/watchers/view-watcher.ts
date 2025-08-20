@@ -371,6 +371,7 @@ export class ViewWatcher {
 
       const currEntry = allCallbacks.get(element)?.get(handler);
       if (currEntry?._trackType === trackType) {
+        debug: logger?.debug5("Removing handler", target, handler, trackType);
         _.remove(currEntry._callback);
 
         if (handler === setViewCssProps) {

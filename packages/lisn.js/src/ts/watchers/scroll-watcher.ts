@@ -438,6 +438,7 @@ export class ScrollWatcher {
       const element = options._element;
       const currEntry = allCallbacks.get(element)?.get(handler);
       if (currEntry?._trackType === trackType) {
+        debug: logger?.debug5("Removing handler", element, handler, trackType);
         _.remove(currEntry._callback);
 
         if (handler === setScrollCssProps) {

@@ -63,7 +63,7 @@ import {
   validateString,
 } from "@lisn/utils/validation";
 
-import { addNewCallbackToMap, invokeHandlers } from "@lisn/modules/callback";
+import { invokeHandlers } from "@lisn/modules/callback";
 
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 import { ViewWatcher, ViewData } from "@lisn/watchers/view-watcher";
@@ -234,8 +234,8 @@ export abstract class Openable extends Widget {
 
     const { isModal, isOffcanvas } = config;
 
-    const openCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
-    const closeCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
+    const openCallbacks = _.createSet<WidgetHandler>();
+    const closeCallbacks = _.createSet<WidgetHandler>();
 
     let isOpen = false;
 
@@ -247,7 +247,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = true;
-      await invokeHandlers(openCallbacks.values(), this);
+      await invokeHandlers(openCallbacks, this);
 
       if (isModal) {
         setHasModal();
@@ -264,7 +264,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = false;
-      await invokeHandlers(closeCallbacks.values(), this);
+      await invokeHandlers(closeCallbacks, this);
 
       if (isModal) {
         delHasModal();
@@ -297,19 +297,19 @@ export abstract class Openable extends Widget {
     this[_.S_TOGGLE] = () => (isOpen ? close() : open());
 
     this.onOpen = (handler) => {
-      addNewCallbackToMap(openCallbacks, handler);
+      openCallbacks.add(handler);
     };
 
     this.offOpen = (handler) => {
-      _.remove(openCallbacks.get(handler));
+      _.deleteKey(openCallbacks, handler);
     };
 
     this.onClose = (handler) => {
-      addNewCallbackToMap(closeCallbacks, handler);
+      closeCallbacks.add(handler);
     };
 
     this.offClose = (handler) => {
-      _.remove(closeCallbacks.get(handler));
+      _.deleteKey(closeCallbacks, handler);
     };
 
     this.isOpen = () => isOpen;

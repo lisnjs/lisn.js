@@ -199,6 +199,7 @@ export class GestureWatcher {
       _.remove(allCallbacks.get(target)?.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler for", options);
+
       const { _callback, _wrapper } = getCallbackAndWrapper(
         handler,
         options,
@@ -262,6 +263,7 @@ export class GestureWatcher {
       handler: OnGestureHandler,
       options: OnGestureOptionsInternal,
     ) => {
+      debug: logger?.debug5("Removing handler", target, handler, options);
       _.deleteKey(allCallbacks.get(target), handler);
       allCallbacks.prune(target);
 
@@ -442,7 +444,6 @@ export class GestureWatcher {
     // ----------
 
     this.offGesture = (target, handler) => {
-      debug: logger?.debug5("Removing handler");
       _.remove(allCallbacks.get(target)?.get(handler)?._callback);
     };
   }

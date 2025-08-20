@@ -26,7 +26,7 @@ import {
 import {
   CallbackHandler,
   Callback,
-  addNewCallbackToMap,
+  invokeHandlers,
 } from "@lisn/modules/callback";
 
 import {
@@ -272,12 +272,9 @@ export class FXComposer {
       [];
     const currentComposition = new FXComposition();
 
-    const clearCallbacks = _.createMap<FXComposerHandler, FXComposerCallback>();
-    const triggerCallbacks = _.createMap<
-      FXComposerHandler,
-      FXComposerCallback
-    >();
-    const tweenCallbacks = _.createMap<FXComposerHandler, FXComposerCallback>();
+    const clearCallbacks = _.createSet<FXComposerHandler>();
+    const triggerCallbacks = _.createSet<FXComposerHandler>();
+    const tweenCallbacks = _.createSet<FXComposerHandler>();
 
     const animatedElements = _.createMap<
       Element,
@@ -314,36 +311,36 @@ export class FXComposer {
     // ----------
 
     const onClear = (handler: FXComposerHandler) => {
-      addNewCallbackToMap(clearCallbacks, handler);
+      clearCallbacks.add(handler);
       return this;
     };
 
     const offClear = (handler: FXComposerHandler) => {
-      _.remove(clearCallbacks.get(handler));
+      _.deleteKey(clearCallbacks, handler);
       return this;
     };
 
     // ----------
 
     const onTrigger = (handler: FXComposerHandler) => {
-      addNewCallbackToMap(triggerCallbacks, handler);
+      triggerCallbacks.add(handler);
       return this;
     };
 
     const offTrigger = (handler: FXComposerHandler) => {
-      _.remove(triggerCallbacks.get(handler));
+      _.deleteKey(triggerCallbacks, handler);
       return this;
     };
 
     // ----------
 
     const onTween = (handler: FXComposerHandler) => {
-      addNewCallbackToMap(tweenCallbacks, handler);
+      tweenCallbacks.add(handler);
       return this;
     };
 
     const offTween = (handler: FXComposerHandler) => {
-      _.remove(tweenCallbacks.get(handler));
+      _.deleteKey(tweenCallbacks, handler);
       return this;
     };
 
@@ -505,11 +502,9 @@ export class FXComposer {
 
     // ----------
 
-    const invokeCallbacks = (
-      callbacks: Map<FXComposerHandler, FXComposerCallback>,
-    ) => {
-      for (const cbk of callbacks.values()) {
-        cbk.invoke(_.deepCopy(currentFXState), this);
+    const invokeCallbacks = (callbacks: Set<FXComposerHandler>) => {
+      for (const cbk of callbacks) {
+        invokeHandlers([cbk], _.deepCopy(currentFXState), this);
       }
     };
 

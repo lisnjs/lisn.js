@@ -242,6 +242,7 @@ export class DOMWatcher {
       _.remove(allCallbacks.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", options);
+
       const callback = wrapCallback(handler);
       callback.onRemove(() => deleteHandler(handler));
 
@@ -328,6 +329,7 @@ export class DOMWatcher {
     // ----------
 
     const deleteHandler = (handler: OnMutationHandler) => {
+      debug: logger?.debug5("Removing handler", handler);
       _.deleteKey(allCallbacks, handler);
 
       let activeCategories = 0;
@@ -456,7 +458,6 @@ export class DOMWatcher {
     // ----------
 
     this.offMutation = (handler) => {
-      debug: logger?.debug5("Removing handler");
       _.remove(allCallbacks.get(handler)?._callback);
     };
   }

@@ -9,7 +9,6 @@ import * as _ from "@lisn/_internal";
 import {
   CallbackHandler,
   Callback,
-  addNewCallbackToMap,
   invokeHandlers,
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
@@ -65,7 +64,7 @@ export class FXPin {
    * {@link Effects.FXRelativeMatcher.restart | restart} them
    * {@link onChange | when the pin is deactivated}.
    */
-  readonly when: (...matchers: Array<FXMatcher | FXPin>) => this;
+  readonly when: (...matchersOrPins: Array<FXMatcher | FXPin>) => this;
 
   /**
    * The pin will be deactivated when all of the given matchers/pins match/are
@@ -76,14 +75,14 @@ export class FXPin {
    * {@link Effects.FXRelativeMatcher.restart | restart} them
    * {@link onChange | when the pin is activated}.
    */
-  readonly until: (...matchers: Array<FXMatcher | FXPin>) => this;
+  readonly until: (...matchersOrPins: Array<FXMatcher | FXPin>) => this;
 
   /**
    * The pin will be activated when all of the given matchers/pins match/are
    * activate. The pin will be deactivated when this and all other conditions
    * added with {@link while} are no longer fulfilled.
    */
-  readonly while: (...matchers: Array<FXMatcher | FXPin>) => this;
+  readonly while: (...matchersOrPins: Array<FXMatcher | FXPin>) => this;
 
   /**
    * Calls the given handler whenever the pin's state changes.
@@ -103,7 +102,7 @@ export class FXPin {
     let numFulfilledLocking = 0; // number of fulfilled while conditions
     let numLocking = 0; // total number of while conditions; for testing
 
-    const changeCallbacks = _.createMap<FXPinHandler, FXPinCallback>();
+    const changeCallbacks = _.createSet<FXPinHandler>();
 
     const conditions = createXMap<FXMatcher, Condition[]>(() => []);
 
@@ -133,7 +132,7 @@ export class FXPin {
     const setState = (activate: boolean) => {
       if (isActive !== activate && (activate || !isLocked())) {
         isActive = activate;
-        invokeHandlers(changeCallbacks.values(), activate, this);
+        invokeHandlers(changeCallbacks, activate, this);
       }
     };
 
@@ -145,11 +144,8 @@ export class FXPin {
         numLocking++;
       }
 
-      const matchers = matchersOrPins.map(
-        (e): { _matcher: FXMatcher; _state: boolean } => {
-          const matcher = _.isInstanceOf(e, FXPin) ? FX_MATCH.pin(e) : e;
-          return { _matcher: matcher, _state: matcher.matches() };
-        },
+      const matchers = matchersOrPins.map((e) =>
+        _.isInstanceOf(e, FXPin) ? FX_MATCH.pin(e) : e,
       );
 
       const condition: Condition = {
@@ -158,7 +154,7 @@ export class FXPin {
         _group: matchers,
       };
 
-      for (const { _matcher: matcher } of matchers) {
+      for (const matcher of matchers) {
         conditions.sGet(matcher).push(condition);
         matcher.onChange(onMatcherChange);
       }
@@ -174,8 +170,8 @@ export class FXPin {
       // one. This is because callbacks are async, and so the matchers could
       // have changed states since the callback was triggered, but we want to
       // operate on the state at the time the callback was triggered.
-      const isFulfilled = condition._group.every(({ _state }) => _state);
-      // console.warn("XXX checkCondition", condition, isFulfilled);
+      const isFulfilled = condition._group.every((m) => m.matches());
+      console.warn("XXX checkCondition", condition, isFulfilled);
 
       if (isFulfilled === condition._fulfilled) {
         return; // no change
@@ -195,22 +191,9 @@ export class FXPin {
     };
 
     const onMatcherChange = (matches: boolean, matcher: FXMatcher) => {
-      // console.warn("XXX onMatcherChange", matcher, matches);
+      console.warn("XXX onMatcherChange", matcher, matches);
       const matcherConditions = conditions.get(matcher) ?? [];
       for (const condition of matcherConditions) {
-        // Save the state at this time
-        for (const e of condition._group) {
-          if (e._matcher === matcher) {
-            // console.warn(
-            //   "XXX onMatcherChange updated state from",
-            //   e._state,
-            //   matches,
-            // );
-            e._state = matches;
-            break;
-          }
-        }
-
         checkCondition(condition);
       }
     };
@@ -218,17 +201,18 @@ export class FXPin {
     // --------------------
 
     this.onChange = (handler) => {
-      addNewCallbackToMap(changeCallbacks, handler);
+      changeCallbacks.add(handler);
     };
 
     this.offChange = (handler) => {
-      _.remove(changeCallbacks.get(handler));
+      _.deleteKey(changeCallbacks, handler);
     };
 
     this.isActive = () => isActive;
-    this.when = (...matchers) => addCondition(ACTIVATE, matchers);
-    this.until = (...matchers) => addCondition(DEACTIVATE, matchers);
-    this.while = (...matchers) => addCondition(LOCK, matchers);
+    this.when = (...matchersOrPins) => addCondition(ACTIVATE, matchersOrPins);
+    this.until = (...matchersOrPins) =>
+      addCondition(DEACTIVATE, matchersOrPins);
+    this.while = (...matchersOrPins) => addCondition(LOCK, matchersOrPins);
   }
 }
 
@@ -242,17 +226,17 @@ export type FXPinHandlerArgs = [boolean, FXPin];
 export type FXPinCallback = Callback<FXPinHandlerArgs>;
 export type FXPinHandler = FXPinCallback | CallbackHandler<FXPinHandlerArgs>;
 
-_.brandClass(FXPin, "FXPin");
-
 // ------------------------------
 
 type Condition = {
   _type: CONDITION_TYPE;
   _fulfilled: boolean;
-  _group: Array<{ _matcher: FXMatcher; _state: boolean }>;
+  _group: FXMatcher[];
 };
 
 type CONDITION_TYPE = typeof ACTIVATE | typeof DEACTIVATE | typeof LOCK;
 const ACTIVATE = 0;
 const DEACTIVATE = 1;
 const LOCK = 2;
+
+_.brandClass(FXPin, "FXPin");

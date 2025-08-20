@@ -126,6 +126,8 @@ export class PointerWatcher {
       return callback;
     };
 
+    // ----------
+
     // async for consistency with other watchers and future compatibility in
     // case of change needed
     const setupOnPointer = async (

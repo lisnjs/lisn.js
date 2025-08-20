@@ -82,7 +82,7 @@ export const wrapCallback = <Args extends readonly unknown[] = []>(
  * - calling custom {@link onRemove} hooks
  * - debouncing (via {@link wrap})
  * - awaiting on an asynchronous handler and ensuring that the handler does not
- *  run concurrently to itself, i.e. subsequent {@link invoke}s will be queued
+ *   run concurrently to itself, i.e. subsequent {@link invoke}s will be queued
  *
  * @typeParam Args The type of arguments that the callback expects.
  */
@@ -258,7 +258,7 @@ export class Callback<Args extends readonly unknown[] = []> {
 /**
  * Invokes the given callbacks or handlers with the given args.
  *
- * They are invoked concurrently, but if any return a Promise, it will be
+ * They are called concurrently, but if any return a Promise, it will be
  * awaited upon.
  *
  * @ignore
@@ -283,73 +283,6 @@ export const invokeHandlers = async <
 
   await Promise.all(promises);
 };
-
-export function addNewCallbackToMap<
-  Args extends readonly unknown[],
-  Handler extends CallbackHandler<Args> | Callback<Args>,
-  Data extends unknown[],
->(
-  map: Map<Handler, [Callback<Args>, ...Data]>,
-  handler: Handler,
-  data: Data,
-): Callback<Args>;
-
-export function addNewCallbackToMap<
-  Args extends readonly unknown[],
-  Handler extends CallbackHandler<Args> | Callback<Args>,
-  Data,
->(
-  map: Map<Handler, [Callback<Args>, Data]>,
-  handler: Handler,
-  data: Data,
-): Callback<Args>;
-
-export function addNewCallbackToMap<
-  Args extends readonly unknown[],
-  Handler extends CallbackHandler<Args> | Callback<Args>,
->(map: Map<Handler, Callback<Args>>, handler: Handler): Callback<Args>;
-
-/**
- * **Wraps** the given handler as a new callback and adds it to the given map.
- *
- * It also sets up an {@link Callback.onRemove | `onRemove`} handler on the
- * wrapper so that whenever it, or the original handler, are removed, the entry
- * is deleted from the map. Therefore, to remove the callback from the map you
- * can either just delete the key (handler), or call
- * {@link Callback.remove | `remove`} on the wrapper (which will not affect the
- * original handler, if it was a callback.
- *
- * The key in the map will be the original handler and the value:
- * - if `data` is `null` or `undefined`, the value set will be the newly wrapped
- *   callback.
- * - if `data` is an array, the value set will be an array with the newly
- *   wrapped callback prepended at the start
- * - otherwise, the value set will be a tuple of `[callback, data]`
- *
- * @ignore
- * @internal
- */
-export function addNewCallbackToMap(
-  map: Map<CallbackHandler<unknown[]> | Callback<unknown[]>, unknown>,
-  handler: CallbackHandler<unknown[]> | Callback<unknown[]>,
-  data?: unknown,
-) {
-  const callback = wrapCallback(handler);
-  let value: unknown = callback;
-
-  if (_.isArray(data)) {
-    value = [callback, ...data];
-  } else if (!_.isNullish(data)) {
-    value = [callback, data];
-  }
-
-  map.set(handler, value);
-  callback.onRemove(() => {
-    _.deleteKey(map, handler);
-  });
-
-  return callback;
-}
 
 // ----------------------------------------
 

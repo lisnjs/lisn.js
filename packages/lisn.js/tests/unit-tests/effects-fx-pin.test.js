@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const { FXPin, FXMatcher } = window.LISN.effects;
 
 const newMatcher = (executorBody) => {
@@ -1286,5 +1287,44 @@ describe("onChange/offChange", () => {
     storeC.setState(false);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(5); // no new calls
+  });
+
+  test("callback.remove", async () => {
+    const { matcher, store } = newMatcher();
+
+    const pin = new FXPin();
+    pin.while(matcher);
+
+    const cbkJ = jest.fn();
+    const cbk = Callback.wrap(cbkJ);
+
+    pin.onChange(cbk);
+    cbk.remove();
+
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+    expect(cbkJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("return Callback.REMOVE", async () => {
+    const { matcher, store } = newMatcher();
+
+    const pin = new FXPin();
+    pin.while(matcher);
+
+    const cbk = jest.fn(() => Callback.REMOVE);
+
+    pin.onChange(cbk);
+
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+
+    store.setState(false);
+    await window.waitFor(0); // callbacks are async
+
+    store.setState(true);
+    await window.waitFor(0); // callbacks are async
+
+    expect(cbk).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });

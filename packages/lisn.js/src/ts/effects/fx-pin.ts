@@ -9,6 +9,7 @@ import * as _ from "@lisn/_internal";
 import {
   CallbackHandler,
   Callback,
+  addHandlerToMap,
   invokeHandlers,
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
@@ -102,7 +103,7 @@ export class FXPin {
     let numFulfilledLocking = 0; // number of fulfilled while conditions
     let numLocking = 0; // total number of while conditions; for testing
 
-    const changeCallbacks = _.createSet<FXPinHandler>();
+    const changeCallbacks = _.createMap<FXPinHandler, FXPinCallback>();
 
     const conditions = createXMap<FXMatcher, Condition[]>(() => []);
 
@@ -132,7 +133,7 @@ export class FXPin {
     const setState = (activate: boolean) => {
       if (isActive !== activate && (activate || !isLocked())) {
         isActive = activate;
-        invokeHandlers(changeCallbacks, activate, this);
+        invokeHandlers(changeCallbacks.values(), activate, this);
       }
     };
 
@@ -199,11 +200,11 @@ export class FXPin {
     // --------------------
 
     this.onChange = (handler) => {
-      changeCallbacks.add(handler);
+      addHandlerToMap(handler, changeCallbacks);
     };
 
     this.offChange = (handler) => {
-      _.deleteKey(changeCallbacks, handler);
+      _.remove(changeCallbacks.get(handler));
     };
 
     this.isActive = () => isActive;

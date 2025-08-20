@@ -13,6 +13,7 @@ import { ScrollTarget } from "@lisn/globals/types";
 import {
   CallbackHandler,
   Callback,
+  addHandlerToMap,
   invokeHandlers,
 } from "@lisn/modules/callback";
 
@@ -85,7 +86,7 @@ export class FXTrigger {
   constructor(executor: (push: (update: FXStateUpdate) => void) => void) {
     let isActive = true;
 
-    const changeCallbacks = _.createSet<FXTriggerHandler>();
+    const changeCallbacks = _.createMap<FXTriggerHandler, FXTriggerCallback>();
 
     let resolve: (update: FXStateUpdate) => void;
     const nextPromise = () =>
@@ -95,7 +96,7 @@ export class FXTrigger {
 
     const setState = (activate: boolean) => {
       isActive = activate;
-      invokeHandlers(changeCallbacks, activate, this);
+      invokeHandlers(changeCallbacks.values(), activate, this);
     };
 
     // --------------------
@@ -114,11 +115,11 @@ export class FXTrigger {
     };
 
     this.onChange = (handler) => {
-      changeCallbacks.add(handler);
+      addHandlerToMap(handler, changeCallbacks);
     };
 
     this.offChange = (handler) => {
-      _.deleteKey(changeCallbacks, handler);
+      _.remove(changeCallbacks.get(handler));
     };
 
     // --------------------

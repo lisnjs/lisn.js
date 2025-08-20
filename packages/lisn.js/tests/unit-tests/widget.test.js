@@ -1,6 +1,7 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const settings = window.LISN.settings;
+const { Callback } = window.LISN.modules;
 const { Widget, registerWidget, getWidgetConfig } = window.LISN.widgets;
 const { randId, validateNumber, validateBoolean } = window.LISN.utils;
 
@@ -131,15 +132,10 @@ describe("Widget", () => {
     widget.onEnable(onEnable);
     widget.onDisable(onDisable);
     widget.onDestroy(onDestroy);
-    await window.waitFor(0); // callbacks is async
 
     widget.offEnable(onEnable);
     widget.offDisable(onDisable);
     widget.offDestroy(onDestroy);
-
-    expect(onEnable).toHaveBeenCalledTimes(0);
-    expect(onDisable).toHaveBeenCalledTimes(0);
-    expect(onDestroy).toHaveBeenCalledTimes(0);
 
     await widget.enable(); // no-op as it's enabled
     await widget.disable();
@@ -148,6 +144,55 @@ describe("Widget", () => {
     expect(onEnable).toHaveBeenCalledTimes(0);
     expect(onDisable).toHaveBeenCalledTimes(0);
     expect(onDestroy).toHaveBeenCalledTimes(0);
+  });
+
+  test("offEnable/offDisable/offDestroy: callback.remove", async () => {
+    const onEnableJ = jest.fn();
+    const onEnable = Callback.wrap(onEnableJ);
+    const onDisableJ = jest.fn();
+    const onDisable = Callback.wrap(onDisableJ);
+    const onDestroyJ = jest.fn();
+    const onDestroy = Callback.wrap(onDestroyJ);
+
+    const widget = new Widget(document.body);
+    widget.onEnable(onEnable);
+    widget.onDisable(onDisable);
+    widget.onDestroy(onDestroy);
+
+    onEnable.remove();
+    onDisable.remove();
+    onDestroy.remove();
+
+    await widget.enable(); // no-op as it's enabled
+    await widget.disable();
+    await widget.destroy();
+
+    expect(onEnableJ).toHaveBeenCalledTimes(0);
+    expect(onDisableJ).toHaveBeenCalledTimes(0);
+    expect(onDestroyJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("offEnable/offDisable/offDestroy: return Callback.REMOVE", async () => {
+    const onEnable = jest.fn(() => Callback.REMOVE);
+    const onDisable = jest.fn(() => Callback.REMOVE);
+    const onDestroy = jest.fn(() => Callback.REMOVE);
+
+    const widget = new Widget(document.body);
+    widget.onEnable(onEnable);
+    widget.onDisable(onDisable);
+    widget.onDestroy(onDestroy);
+
+    await widget.enable(); // no-op as it's enabled
+    await widget.disable();
+    await widget.enable();
+    await widget.disable();
+    await widget.enable();
+    await widget.destroy();
+
+    // removed after 1st time
+    expect(onEnable).toHaveBeenCalledTimes(1);
+    expect(onDisable).toHaveBeenCalledTimes(1);
+    expect(onDestroy).toHaveBeenCalledTimes(1);
   });
 });
 

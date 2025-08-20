@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const { Pager } = window.LISN.widgets;
 
 const newPager = async (numPages = 4, config = {}) => {
@@ -551,6 +552,34 @@ describe("transitioning pages", () => {
     await pager.goToPage(3);
 
     expect(callback).toHaveBeenCalledTimes(0);
+  });
+
+  test("offTransition: callback.remove", async () => {
+    const { pager } = await newPager(3);
+
+    const callbackJ = jest.fn();
+    const callback = Callback.wrap(callbackJ);
+
+    pager.onTransition(callback);
+    callback.remove();
+
+    await pager.goToPage(3);
+
+    expect(callbackJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("offTransition: return Callback.REMOVE", async () => {
+    const { pager } = await newPager(3);
+
+    const callback = jest.fn(() => Callback.REMOVE);
+
+    pager.onTransition(callback);
+
+    await pager.goToPage(3);
+    await pager.goToPage(2);
+    await pager.goToPage(1);
+
+    expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });
 

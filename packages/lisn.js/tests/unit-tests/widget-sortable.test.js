@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const { Sortable } = window.LISN.widgets;
 
 const newSortable = async (numItems = 4, config = {}) => {
@@ -234,6 +235,49 @@ describe("moving", () => {
     await window.waitForAF();
 
     expect(callback).toHaveBeenCalledTimes(0);
+  });
+
+  test("offMove: callback.remove", async () => {
+    const { sortable, items } = await newSortable(4);
+
+    const callbackJ = jest.fn();
+    const callback = Callback.wrap(callbackJ);
+
+    sortable.onMove(callback);
+    callback.remove();
+
+    // move item #2 to after item #4
+    items[1].dispatchEvent(new MouseEvent("mousedown"));
+    items[3].dispatchEvent(new Event("dragenter"));
+    items[1].dispatchEvent(new Event("dragend"));
+
+    await window.waitForAF();
+
+    expect(callbackJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("offMove: return Callback.REMOVE", async () => {
+    const { sortable, items } = await newSortable(4);
+
+    const callback = jest.fn(() => Callback.REMOVE);
+
+    sortable.onMove(callback);
+
+    // move item #2 to after item #4
+    items[1].dispatchEvent(new MouseEvent("mousedown"));
+    items[3].dispatchEvent(new Event("dragenter"));
+    items[1].dispatchEvent(new Event("dragend"));
+
+    await window.waitForAF();
+
+    // move item #4 to after item #2
+    items[3].dispatchEvent(new MouseEvent("mousedown"));
+    items[1].dispatchEvent(new Event("dragenter"));
+    items[3].dispatchEvent(new Event("dragend"));
+
+    await window.waitForAF();
+
+    expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });
 

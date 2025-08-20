@@ -256,6 +256,32 @@ export class Callback<Args extends readonly unknown[] = []> {
 // ----------
 
 /**
+ * Wraps the given handlers as callbacks, even if they're already callbacks,
+ * and adds them to the given map. The key is the original handler and the
+ * value is the newly wrapped callback.
+ *
+ * It sets up an {@link Callback.onRemove | onRemove} handler to delete the
+ * handler from the map when the callback is removed.
+ *
+ * @ignore
+ * @internal
+ */
+export const addHandlerToMap = <Args extends unknown[]>(
+  handler: CallbackHandler<Args> | Callback<Args>,
+  map: Map<CallbackHandler<Args> | Callback<Args>, Callback<Args>>,
+) => {
+  const callback = wrapCallback(handler);
+
+  map.set(handler, callback);
+
+  callback.onRemove(() => {
+    map.delete(handler);
+  });
+
+  return callback;
+};
+
+/**
  * Invokes the given callbacks or handlers with the given args.
  *
  * They are called concurrently, but if any return a Promise, it will be
@@ -264,11 +290,8 @@ export class Callback<Args extends readonly unknown[] = []> {
  * @ignore
  * @internal
  */
-export const invokeHandlers = async <
-  T extends CallbackHandler<Args> | Callback<Args>,
-  Args extends readonly unknown[],
->(
-  set: Iterable<T>,
+export const invokeHandlers = async <Args extends readonly unknown[]>(
+  set: Iterable<CallbackHandler<Args> | Callback<Args>>,
   ...args: Args
 ) => {
   const promises: unknown[] = [];

@@ -1,6 +1,7 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { randId } = window.LISN.utils;
+const { Callback } = window.LISN.modules;
 const { Openable, Collapsible, Popup, Modal } = window.LISN.widgets;
 
 const newElements = () => {
@@ -333,6 +334,53 @@ describe("generic Openable", () => {
 
     expect(openFn).toHaveBeenCalledTimes(0);
     expect(closeFn).toHaveBeenCalledTimes(0);
+  });
+
+  test("offOpen/offClose: callback.remove", async () => {
+    const { content } = newElements();
+
+    const widget = new Openable(content, { name: "openable" });
+    await window.waitForAF();
+
+    const openFnJ = jest.fn();
+    const openFn = Callback.wrap(openFnJ);
+    widget.onOpen(openFn);
+    openFn.remove();
+
+    const closeFnJ = jest.fn();
+    const closeFn = Callback.wrap(closeFnJ);
+    widget.onClose(closeFn);
+    closeFn.remove();
+
+    await widget.open();
+    await widget.close();
+    await widget.toggle();
+
+    expect(openFnJ).toHaveBeenCalledTimes(0);
+    expect(closeFnJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("offOpen/offClose: return Callback.REMOVE", async () => {
+    const { content } = newElements();
+
+    const widget = new Openable(content, { name: "openable" });
+    await window.waitForAF();
+
+    const openFn = jest.fn(() => Callback.REMOVE);
+    widget.onOpen(openFn);
+
+    const closeFn = jest.fn(() => Callback.REMOVE);
+    widget.onClose(closeFn);
+
+    await widget.open();
+    await widget.close();
+    await widget.open();
+    await widget.close();
+    await widget.toggle();
+    await widget.toggle();
+
+    expect(openFn).toHaveBeenCalledTimes(1); // removed after 1st time
+    expect(closeFn).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 
   test("destroy not offcanvas", async () => {

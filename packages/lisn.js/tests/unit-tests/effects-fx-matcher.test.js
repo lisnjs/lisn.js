@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const {
   FXMatcher,
   FXRelativeMatcher,
@@ -146,6 +147,37 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
       expect(matcher.matches()).toBe(false);
 
       expect(executor).toHaveBeenCalledTimes(1);
+    });
+
+    test(`${Class.name}: onChange/offChange: callback.remove`, async () => {
+      const cbkJ = jest.fn();
+      const cbk = Callback.wrap(cbkJ);
+      const { matcher, store } = newMatcher(Class);
+
+      matcher.onChange(cbk);
+      cbk.remove();
+
+      store.setState(true);
+      await window.waitFor(0); // callbacks are async
+      expect(cbkJ).toHaveBeenCalledTimes(0);
+    });
+
+    test(`${Class.name}: onChange/offChange: return Callback.REMOVE`, async () => {
+      const cbk = jest.fn(() => Callback.REMOVE);
+      const { matcher, store } = newMatcher(Class);
+
+      matcher.onChange(cbk);
+
+      store.setState(true);
+      await window.waitFor(0); // callbacks are async
+
+      store.setState(false);
+      await window.waitFor(0); // callbacks are async
+
+      store.setState(true);
+      await window.waitFor(0); // callbacks are async
+
+      expect(cbk).toHaveBeenCalledTimes(1); // removed after 1st time
     });
   }
 });

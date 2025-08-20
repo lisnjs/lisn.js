@@ -31,13 +31,13 @@ import {
 import { toInt } from "@lisn/utils/math";
 import { validateString } from "@lisn/utils/validation";
 
-import { invokeHandlers } from "@lisn/modules/callback";
+import { addHandlerToMap, invokeHandlers } from "@lisn/modules/callback";
 
 import {
   Widget,
   WidgetConfigValidatorObject,
-  WidgetCallback,
   WidgetHandler,
+  WidgetCallback,
   registerWidget,
   getDefaultWidgetSelector,
 } from "@lisn/widgets/widget";
@@ -495,7 +495,7 @@ const getMethods = (
   const doSwap = config?.mode === "swap";
 
   const disabledItems: Record<number, boolean> = {};
-  const callbacks = _.createSet<WidgetHandler>();
+  const callbacks = _.createMap<WidgetHandler, WidgetCallback>();
 
   const getSortedItems = () =>
     [...items].sort((a, b) => (isNodeBAfterA(a, b) ? -1 : 1));
@@ -534,11 +534,11 @@ const getMethods = (
       : disableItem(itemNum, currentOrder);
 
   const onMove = (handler: WidgetHandler) => {
-    callbacks.add(handler);
+    addHandlerToMap(handler, callbacks);
   };
 
   const offMove = (handler: WidgetHandler) => {
-    _.deleteKey(callbacks, handler);
+    _.remove(callbacks.get(handler));
   };
 
   // This is internal only for now...
@@ -553,7 +553,7 @@ const getMethods = (
       });
     }
 
-    await invokeHandlers(callbacks, widget);
+    await invokeHandlers(callbacks.values(), widget);
   };
 
   return {

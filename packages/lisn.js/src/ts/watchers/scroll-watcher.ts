@@ -531,7 +531,7 @@ export class ScrollWatcher {
           target,
           [_.S_DEBOUNCE_WINDOW]: options._debounceWindow,
           // TODO maybe accepts resizeThreshold option
-          threshold: options._threshold,
+          [_.S_THRESHOLD]: options._threshold,
         });
 
       if (element === docScrollingElement) {

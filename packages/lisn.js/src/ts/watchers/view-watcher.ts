@@ -524,7 +524,7 @@ export class ViewWatcher {
         sizeWatcher.onResize(trackCallback, {
           target: element,
           [_.S_DEBOUNCE_WINDOW]: options._debounceWindow,
-          threshold: options._resizeThreshold,
+          [_.S_THRESHOLD]: options._resizeThreshold,
           [_.S_SKIP_INITIAL]: true,
         });
 
@@ -532,7 +532,7 @@ export class ViewWatcher {
         sizeWatcher.onResize(trackCallback, {
           target: config._root ?? _.getWindow(),
           [_.S_DEBOUNCE_WINDOW]: options._debounceWindow,
-          threshold: options._resizeThreshold,
+          [_.S_THRESHOLD]: options._resizeThreshold,
           [_.S_SKIP_INITIAL]: true,
         });
 
@@ -542,7 +542,7 @@ export class ViewWatcher {
           scrollWatcher.onScroll(trackCallback, {
             scrollable: ancestor,
             [_.S_DEBOUNCE_WINDOW]: options._debounceWindow,
-            threshold: options._scrollThreshold,
+            [_.S_THRESHOLD]: options._scrollThreshold,
             [_.S_SKIP_INITIAL]: true,
           });
         }

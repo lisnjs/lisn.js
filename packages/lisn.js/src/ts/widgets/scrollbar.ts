@@ -863,17 +863,21 @@ const init = (
   const addWatchers = () => {
     // Track scroll in any direction as well as changes in border or content size
     // of the element and its contents.
-    scrollWatcher.trackScroll(updateProgress, {
-      threshold: 0,
-      scrollable,
-    });
+    scrollWatcher.trackScroll(
+      updateProgress,
+      _.realtimeWatcherConf({
+        scrollable,
+      }),
+    );
 
     // Track changes in content or border size of the container element which
     // would also detect changes in its padding.
-    sizeWatcher.onResize(updatePropsOnResize, {
-      target: containerElement,
-      threshold: 0,
-    });
+    sizeWatcher.onResize(
+      updatePropsOnResize,
+      _.realtimeWatcherConf({
+        target: containerElement,
+      }),
+    );
   };
 
   const removeWatchers = () => {
@@ -888,8 +892,8 @@ const init = (
     return;
   }
 
-  const scrollWatcher = ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
-  const sizeWatcher = SizeWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
+  const scrollWatcher = ScrollWatcher.reuse();
+  const sizeWatcher = SizeWatcher.reuse();
 
   if (!isMainScrollable && !isBody) {
     addClasses(containerElement, PREFIX_CONTAINER);

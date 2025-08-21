@@ -888,9 +888,7 @@ const init = (
   const preventDefault = config?.preventDefault ?? true;
 
   const scrollWatcher = ScrollWatcher.reuse();
-  const sizeWatcher = isCarousel
-    ? SizeWatcher.reuse({ resizeThreshold: 10 })
-    : null;
+  const sizeWatcher = isCarousel ? SizeWatcher.reuse() : null;
   const gestureWatcher = useGestures ? GestureWatcher.reuse() : null;
   const viewWatcher = isFullscreen
     ? ViewWatcher.reuse({ rootMargin: "0px", threshold: 0.3 })
@@ -1025,7 +1023,10 @@ const init = (
       ),
     );
 
-    sizeWatcher?.onResize(recalculateCarouselProps, { target: element });
+    sizeWatcher?.onResize(recalculateCarouselProps, {
+      target: element,
+      threshold: 10,
+    });
     viewWatcher?.onView(element, scrollToPager, { views: "at" });
   };
 

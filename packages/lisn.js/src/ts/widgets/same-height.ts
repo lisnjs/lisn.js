@@ -855,11 +855,9 @@ const init = (
 
   const diffTolerance = config._diffTolerance;
   const debounceWindow = config._debounceWindow;
+  const resizeThreshold = config._resizeThreshold;
 
-  const sizeWatcher = SizeWatcher.reuse({
-    [_.S_DEBOUNCE_WINDOW]: debounceWindow,
-    resizeThreshold: config._resizeThreshold,
-  });
+  const sizeWatcher = SizeWatcher.reuse();
 
   const allItems = _.createMap<Element, ItemProperties>();
 
@@ -947,7 +945,11 @@ const init = (
     isFirstTime = true;
 
     for (const element of allItems.keys()) {
-      sizeWatcher.onResize(resizeHandler, { target: element });
+      sizeWatcher.onResize(resizeHandler, {
+        target: element,
+        debounceWindow,
+        threshold: resizeThreshold,
+      });
     }
   };
 

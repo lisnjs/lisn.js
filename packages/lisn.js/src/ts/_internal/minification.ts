@@ -93,6 +93,7 @@ export const S_SCROLL_LEFT_FRACTION = `${S_SCROLL}LeftFraction`;
 export const S_HORIZONTAL = "horizontal";
 export const S_VERTICAL = "vertical";
 export const S_SKIP_INITIAL = "skipInitial";
+export const S_THRESHOLD = "threshold";
 export const S_DEBOUNCE_WINDOW = "debounceWindow";
 export const S_TOGGLE = "toggle";
 
@@ -487,6 +488,12 @@ export const createResizeObserver = (callback: ResizeObserverCallback) =>
 
 export const createMutationObserver = (callback: MutationCallback) =>
   new MutationObserver(callback);
+
+export const realtimeWatcherConf = <T extends object>(obj: T) =>
+  merge(obj, {
+    [S_DEBOUNCE_WINDOW]: 0,
+    [S_THRESHOLD]: 0,
+  });
 
 // ---------- Console
 

@@ -189,14 +189,19 @@ export class FXScrollTrigger extends FXTrigger {
    * default.
    */
   constructor(scrollable?: ScrollTarget) {
-    const scrollWatcher = ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
+    const scrollWatcher = ScrollWatcher.reuse();
     let scrollHandler: OnScrollHandler;
     let shouldSnap = true;
 
     const addOrRemoveWatcher = () => {
       shouldSnap = true;
       if (this.isActive()) {
-        scrollWatcher.trackScroll(scrollHandler, { scrollable });
+        scrollWatcher.trackScroll(
+          scrollHandler,
+          _.realtimeWatcherConf({
+            scrollable,
+          }),
+        );
       } else {
         scrollWatcher.noTrackScroll(scrollHandler, scrollable);
       }

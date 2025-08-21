@@ -4,6 +4,8 @@
  * @since v1.3.0
  */
 
+// XXX TODO ability to disable/pause matchers
+
 import * as _ from "@lisn/_internal";
 
 import { usageError } from "@lisn/globals/errors";
@@ -390,7 +392,7 @@ export class FXScrollMatcher extends FXRelativeMatcher<
       );
     }
 
-    const scrollWatcher = ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 });
+    const scrollWatcher = ScrollWatcher.reuse();
 
     const executor = (
       store: FXRelativeMatcherStore<FXPinAllAxesData<"top" | "left">>,
@@ -411,9 +413,9 @@ export class FXScrollMatcher extends FXRelativeMatcher<
 
       scrollWatcher.trackScroll(
         (e, scrollData) => updateData(scrollToAxesData(scrollData)),
-        {
+        _.realtimeWatcherConf({
           scrollable,
-        },
+        }),
       );
 
       // Recheck if within bounds

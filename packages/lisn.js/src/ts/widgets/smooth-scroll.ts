@@ -726,13 +726,8 @@ const init = async (
     throw bugError("No SmoothScroll state saved for the root");
   }
 
-  const scrollWatcher = anyIsAutoDepth
-    ? ScrollWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 })
-    : null;
-  const sizeWatcher =
-    anyIsAutoDepth || isBody
-      ? SizeWatcher.reuse({ [_.S_DEBOUNCE_WINDOW]: 0 })
-      : null;
+  const scrollWatcher = anyIsAutoDepth ? ScrollWatcher.reuse() : null;
+  const sizeWatcher = anyIsAutoDepth || isBody ? SizeWatcher.reuse() : null;
 
   const updateScrollData = (target: Element, scrollData: ScrollData) => {
     rootState._scrollData = scrollData;
@@ -761,17 +756,27 @@ const init = async (
   // ----------
 
   const addWatchers = () => {
-    scrollWatcher?.trackScroll(updateScrollData, { scrollable });
-    sizeWatcher?.onResize(updatePropsOnResize, {
-      target: innerWrapper,
-      threshold: 0,
-    });
+    scrollWatcher?.trackScroll(
+      updateScrollData,
+      _.realtimeWatcherConf({
+        scrollable,
+      }),
+    );
+    sizeWatcher?.onResize(
+      updatePropsOnResize,
+      _.realtimeWatcherConf({
+        target: innerWrapper,
+      }),
+    );
 
     trigger.resume();
 
     for (const [layer, state] of layers) {
       if (stateUsesAutoDepth(state)) {
-        sizeWatcher?.onResize(updateSizeData, { target: layer, threshold: 0 });
+        sizeWatcher?.onResize(
+          updateSizeData,
+          _.realtimeWatcherConf({ target: layer }),
+        );
       }
 
       state._composer.startAnimate(

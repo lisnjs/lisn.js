@@ -23,17 +23,6 @@ export const createXMap = <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
   new XMap(getDefaultV);
 
 /**
- * For minification optimization. Exposed through {@link XMap.newXMapGetter}.
- *
- * @ignore
- * @internal
- */
-export const createXMapGetter =
-  <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
-  () =>
-    createXMap(getDefaultV);
-
-/**
  * For minification optimization
  *
  * @ignore
@@ -42,17 +31,6 @@ export const createXMapGetter =
 export const createXWeakMap = <K extends WeakKey, V>(
   getDefaultV: DefaultValueGetter<K, V>,
 ) => new XWeakMap(getDefaultV);
-
-/**
- * For minification optimization. Exposed through {@link XMap.createXWeakMapGetter}.
- *
- * @ignore
- * @internal
- */
-export const createXWeakMapGetter =
-  <K extends WeakKey, V>(getDefaultV: DefaultValueGetter<K, V>) =>
-  () =>
-    createXWeakMap(getDefaultV);
 
 export abstract class XMapBase<K, V> {
   /**
@@ -172,7 +150,10 @@ export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
    * You can pass this to the constructor of an {@link XMap} or an
    * {@link XWeakMap}, whose values are {@link XMap}s.
    */
-  static readonly newXMapGetter = createXMapGetter;
+  static readonly newXMapGetter =
+    <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
+    () =>
+      createXMap(getDefaultV);
 
   /**
    * @param getDefaultV This function is called each time {@link sGet} is
@@ -208,7 +189,10 @@ export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
    * You can pass this to the constructor of an {@link XMap} or an
    * {@link XWeakMap}, whose values are {@link XWeakMap}s.
    */
-  static readonly newXWeakMapGetter = createXWeakMapGetter;
+  static readonly newXWeakMapGetter =
+    <K extends WeakKey, V>(getDefaultV: DefaultValueGetter<K, V>) =>
+    () =>
+      createXWeakMap(getDefaultV);
 
   /**
    * @param getDefaultV This function is called each time {@link sGet} is
@@ -220,6 +204,22 @@ export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
     super(root, getDefaultV);
   }
 }
+
+/**
+ * For minification optimization.
+ *
+ * @ignore
+ * @internal
+ */
+export const createXMapGetter = XMap.newXMapGetter;
+
+/**
+ * For minification optimization.
+ *
+ * @ignore
+ * @internal
+ */
+export const createXWeakMapGetter = XWeakMap.newXWeakMapGetter;
 
 _.brandClass(XMapBase, "XMapBase");
 _.brandClass(XMap, "XMap");

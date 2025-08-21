@@ -34,52 +34,6 @@ export type OnRemoveHandler =
   | CallbackHandler<OnRemoveHandlerArgs>;
 
 /**
- * For minification optimization. Exposed through Callback.wrap.
- *
- * @ignore
- * @internal
- */
-export const wrapCallback = <Args extends readonly unknown[] = []>(
-  handlerOrCallback: CallbackHandler<Args> | Callback<Args>,
-  debounceWindow = 0,
-): Callback<Args> => {
-  const isFunction = _.isFunction(handlerOrCallback);
-  let isConcurrent = false;
-  let isRemovedFn = () => false;
-
-  if (isFunction) {
-    // check if it's an invoke method
-    const callback = callablesMap.get(handlerOrCallback);
-    if (callback) {
-      return wrapCallback(callback);
-    }
-  } else {
-    // it's a callback
-    isRemovedFn = handlerOrCallback.isRemoved;
-    isConcurrent = handlerOrCallback.isConcurrent();
-  }
-
-  const handler: CallbackHandler<Args> = isFunction
-    ? handlerOrCallback
-    : (...args: Args) => handlerOrCallback.invoke(...args);
-
-  const wrapper = new Callback<Args>(
-    getDebouncedHandler(debounceWindow, (...args: Args) => {
-      if (!isRemovedFn()) {
-        return handler(...args);
-      }
-    }),
-    isConcurrent,
-  );
-
-  if (!isFunction) {
-    handlerOrCallback.onRemove(wrapper.remove);
-  }
-
-  return wrapper;
-};
-
-/**
  * {@link Callback} wraps user-supplied callbacks. Supports
  * - removing a callback either when calling {@link remove} or if the user
  *   handler returns {@link Callback.REMOVE}
@@ -198,7 +152,45 @@ export class Callback<Args extends readonly unknown[] = []> {
    *                       be called with will be the last arguments the
    *                       wrapper was called with.
    */
-  static readonly wrap = wrapCallback;
+  static wrap<Args extends readonly unknown[] = []>(
+    handlerOrCallback: CallbackHandler<Args> | Callback<Args>,
+    debounceWindow = 0,
+  ): Callback<Args> {
+    const isFunction = _.isFunction(handlerOrCallback);
+    let isConcurrent = false;
+    let isRemovedFn = () => false;
+
+    if (isFunction) {
+      // check if it's an invoke method
+      const callback = callablesMap.get(handlerOrCallback);
+      if (callback) {
+        return wrapCallback(callback);
+      }
+    } else {
+      // it's a callback
+      isRemovedFn = handlerOrCallback.isRemoved;
+      isConcurrent = handlerOrCallback.isConcurrent();
+    }
+
+    const handler: CallbackHandler<Args> = isFunction
+      ? handlerOrCallback
+      : (...args: Args) => handlerOrCallback.invoke(...args);
+
+    const wrapper = createCallback(
+      getDebouncedHandler(debounceWindow, (...args: Args) => {
+        if (!isRemovedFn()) {
+          return handler(...args);
+        }
+      }),
+      isConcurrent,
+    );
+
+    if (!isFunction) {
+      handlerOrCallback.onRemove(wrapper.remove);
+    }
+
+    return wrapper;
+  }
 
   /**
    * @param handler      The actual function to call. This should return one of
@@ -296,21 +288,45 @@ export class Callback<Args extends readonly unknown[] = []> {
 // ----------
 
 /**
- * Wraps the given handlers as callbacks, even if they're already callbacks,
- * and adds them to the given map. The key is the original handler and the
- * value is the newly wrapped callback.
- *
- * It sets up an {@link Callback.onRemove | onRemove} handler to delete the
- * handler from the map when the callback is removed.
+ * For minification optimization.
  *
  * @ignore
  * @internal
  */
-export const addHandlerToMap = <Args extends unknown[]>(
+export const wrapCallback = Callback.wrap;
+
+/**
+ * @ignore
+ * @internal
+ */
+export const createCallback = <Args extends readonly unknown[]>(
+  handler: CallbackHandler<Args>,
+  isConcurrent = false,
+) => new Callback(handler, isConcurrent);
+
+/**
+ * Wraps the given handler as a callback, even if it's already a callback,
+ * and adds it to the given map. The key is the original handler and the value
+ * is the newly wrapped callback.
+ *
+ * It sets up an {@link Callback.onRemove | onRemove} handler to delete the
+ * handler from the map when the callback is removed.
+ *
+ * @param defaultIsConcurrent If the handler is not a callback already, this
+ *                            sets it's isConcurrent. Otherwise the wrapper will
+ *                            inherit this setting.
+ *
+ * @ignore
+ * @internal
+ */
+export const addHandlerToMap = <Args extends readonly unknown[]>(
   handler: CallbackHandler<Args> | Callback<Args>,
   map: Map<CallbackHandler<Args> | Callback<Args>, Callback<Args>>,
+  defaultIsConcurrent = false,
 ) => {
-  const callback = wrapCallback(handler);
+  const callback = _.isFunction(handler)
+    ? createCallback(handler, defaultIsConcurrent)
+    : wrapCallback(handler);
 
   map.set(handler, callback);
 
@@ -336,11 +352,10 @@ export const invokeHandlers = async <Args extends readonly unknown[]>(
 ) => {
   const promises: unknown[] = [];
   for (const handler of set) {
-    if (_.isInstanceOf(handler, Callback)) {
-      promises.push(handler.invoke(...args));
-    } else if (_.isFunction(handler)) {
-      // TypeScript can't figure it out that it's a function otherwise
+    if (_.isFunction(handler)) {
       promises.push(handler(...args));
+    } else {
+      promises.push(handler.invoke(...args));
     }
   }
 

@@ -47,14 +47,14 @@ import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
 export const FX_MATCH = {
   negate: (matcher: FXMatcher) => new FXNegateMatcher(matcher),
   composer: (composer: FXComposer, bounds: FXComposerMatcherBounds) =>
-    new FXComposerMatcher(composer, bounds),
+    new FXComposerMatcher(bounds, composer),
   scroll: (bounds: FXScrollMatcherBounds, scrollable?: ScrollTarget) =>
     new FXScrollMatcher(bounds, scrollable),
   view: (
     viewTarget: ViewTarget,
     views: CommaSeparatedStr<View> | View[],
     config?: ViewWatcherConfig,
-  ) => new FXViewMatcher(viewTarget, views, config),
+  ) => new FXViewMatcher(views, viewTarget, config),
   pin: (pin: FXPin) => new FXPinMatcher(pin),
 } as const;
 

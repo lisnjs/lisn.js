@@ -1,7 +1,7 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { Callback } = window.LISN.modules;
-const { FXTrigger } = window.LISN.effects;
+const { FXTrigger, FXScrollTrigger } = window.LISN.effects;
 
 const diffTolerance = 20; // in percent
 
@@ -457,4 +457,54 @@ describe("FXTrigger", () => {
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(1); // removed after 1st time
   });
+});
+
+test("FXScrollTrigger", async () => {
+  const pollAndTestData = async (snap) => {
+    const data = (await poller.next()).value;
+    expect(data).toEqual({
+      x: {
+        min: 0,
+        max: window.SCROLL_WIDTH,
+        target: scrollLeft,
+        snap,
+      },
+      y: {
+        min: 0,
+        max: window.SCROLL_HEIGHT,
+        target: scrollTop,
+        snap,
+      },
+    });
+  };
+
+  const scrollable = document.createElement("div");
+  scrollable.enableScroll();
+
+  let scrollLeft = 20,
+    scrollTop = 50;
+  scrollable.scrollTo(scrollLeft, scrollTop);
+
+  const trigger = new FXScrollTrigger(scrollable);
+  const poller = trigger.poll();
+
+  // ---------- initial
+  await pollAndTestData(true);
+
+  // ---------- after scroll
+  scrollLeft += 5;
+  scrollTop += 5;
+  scrollable.scrollTo(scrollLeft, scrollTop);
+
+  await pollAndTestData(false);
+
+  // ---------- after pause/resume
+  trigger.pause();
+  trigger.resume();
+
+  scrollLeft += 5;
+  scrollTop += 5;
+  scrollable.scrollTo(scrollLeft, scrollTop);
+
+  await pollAndTestData(true);
 });

@@ -577,9 +577,6 @@ describe("FXPinMatcher", () => {
   });
 });
 
-// XXX TODO composer, scroll and view matchers including when the condition
-// matches initially and test with restarting that should make the state change
-
 describe("FXComposerMatcher", () => {
   const newComposer = (lag = 0) => {
     let push;
@@ -657,6 +654,9 @@ describe("FXComposerMatcher", () => {
   // XXX TODO max
 
   // XXX TODO min and max
+
+  // XXX relative bounds including restarting when it should make the state
+  // change
 
   // XXX TODO with lag
 });
@@ -824,5 +824,380 @@ describe("FXScrollMatcher", () => {
       await window.waitFor(50);
       expect(matcher.matches()).toBe(!useMax);
     });
+
+    for (const doRestart of [true, false]) {
+      test(`relative bounds: ${useMax ? "max" : "min"} top 10%${doRestart ? " (+restart)" : ""}`, async () => {
+        // 10% is not relative to any reference data, so restarting doesn't make
+        // a difference
+        const scrollable = newScrollable();
+        const top = 0.1 * window.SCROLL_HEIGHT;
+
+        const matcher = new FXScrollMatcher(
+          {
+            [useMax ? "max" : "min"]: { top: "10%" },
+          },
+          scrollable,
+        );
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        scrollable.scrollTo(0, top + 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        scrollable.scrollTo(0, top);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        scrollable.scrollTo(0, top - 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        scrollable.scrollTo(0, top + 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+      });
+
+      test(`relative bounds: ${useMax ? "max" : "min"} left 10%${doRestart ? " (+restart)" : ""}`, async () => {
+        // 10% is not relative to any reference data, so restarting doesn't make
+        // a difference
+        const scrollable = newScrollable();
+        const left = 0.1 * window.SCROLL_WIDTH;
+
+        const matcher = new FXScrollMatcher(
+          {
+            [useMax ? "max" : "min"]: { left: "10%" },
+          },
+          scrollable,
+        );
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        scrollable.scrollTo(left + 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        scrollable.scrollTo(left, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        scrollable.scrollTo(left - 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        if (doRestart) {
+          matcher.restart();
+        }
+        scrollable.scrollTo(left + 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+      });
+    }
+
+    test(`relative bounds: ${useMax ? "max" : "min"} top +10 + restart`, async () => {
+      const scrollable = newScrollable();
+
+      const matcher = new FXScrollMatcher(
+        {
+          [useMax ? "max" : "min"]: { top: "+10" },
+        },
+        scrollable,
+      );
+
+      let top = 10; // initial max/min; reference is 0
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(0, top + 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        scrollable.scrollTo(0, top);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        scrollable.scrollTo(0, top - 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        matcher.restart(); // reference is now (current top - 1)
+        top += 9; // new max/min
+      }
+    });
+
+    test(`relative bounds: ${useMax ? "max" : "min"} left +10 + restart`, async () => {
+      const scrollable = newScrollable();
+
+      const matcher = new FXScrollMatcher(
+        {
+          [useMax ? "max" : "min"]: { left: "+10" },
+        },
+        scrollable,
+      );
+
+      let left = 10; // initial max/min; reference is 0
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(left + 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        scrollable.scrollTo(left, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        scrollable.scrollTo(left - 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        matcher.restart(); // reference is now (current left - 1)
+        left += 9; // new max/min
+      }
+    });
+
+    test(`relative bounds: ${useMax ? "max" : "min"} top +10% + restart`, async () => {
+      const scrollable = newScrollable();
+
+      const matcher = new FXScrollMatcher(
+        {
+          [useMax ? "max" : "min"]: { top: "+10%" },
+        },
+        scrollable,
+      );
+
+      let top = 0.1 * window.SCROLL_HEIGHT; // initial max/min; reference is 0
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(0, top + 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        scrollable.scrollTo(0, top);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        scrollable.scrollTo(0, top - 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        matcher.restart(); // reference is now (current top - 1)
+        top += 0.1 * window.SCROLL_HEIGHT - 1; // new max/min
+      }
+    });
+
+    test(`relative bounds: ${useMax ? "max" : "min"} left +10% + restart`, async () => {
+      const scrollable = newScrollable();
+
+      const matcher = new FXScrollMatcher(
+        {
+          [useMax ? "max" : "min"]: { left: "+10%" },
+        },
+        scrollable,
+      );
+
+      let left = 0.1 * window.SCROLL_WIDTH; // initial max/min; reference is 0
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(left + 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        scrollable.scrollTo(left, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        scrollable.scrollTo(left - 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        matcher.restart(); // reference is now (current left - 1)
+        left += 0.1 * window.SCROLL_WIDTH - 1; // new max/min
+      }
+    });
+
+    test(`relative bounds: ${useMax ? "max" : "min"} top -10 + restart`, async () => {
+      const scrollable = newScrollable();
+
+      const matcher = new FXScrollMatcher(
+        {
+          [useMax ? "max" : "min"]: { top: "-10" },
+        },
+        scrollable,
+      );
+
+      // max/min is -10 since reference is 0
+      await window.waitFor(50);
+      expect(matcher.matches()).toBe(!useMax);
+
+      scrollable.scrollTo(0, 110);
+
+      await window.waitFor(50); // let the matcher update its data on scroll
+      matcher.restart(); // reference is now 110
+      let top = 100; // new max/min
+
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        scrollable.scrollTo(0, top - 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(0, top);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        scrollable.scrollTo(0, top + 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        matcher.restart(); // reference is now (current top + 1)
+        top -= 9; // new max/min
+      }
+    });
+
+    test(`relative bounds: ${useMax ? "max" : "min"} top -10% + restart`, async () => {
+      const scrollable = newScrollable();
+
+      const matcher = new FXScrollMatcher(
+        {
+          [useMax ? "max" : "min"]: { top: "-10%" },
+        },
+        scrollable,
+      );
+
+      // max/min is -0.1 * scroll height since reference is 0
+      await window.waitFor(50);
+      expect(matcher.matches()).toBe(!useMax);
+
+      scrollable.scrollTo(0, 0.5 * window.SCROLL_HEIGHT);
+
+      await window.waitFor(50); // let the matcher update its data on scroll
+      matcher.restart(); // reference is now 0.5 * scroll height
+      let top = 0.4 * window.SCROLL_HEIGHT; // new max/min (40% of scroll height)
+
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        scrollable.scrollTo(0, top - 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(0, top);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        scrollable.scrollTo(0, top + 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        matcher.restart(); // reference is now (current top + 1)
+        top -= 0.1 * window.SCROLL_HEIGHT - 1; // new max/min
+      }
+    });
+
+    test(`relative bounds: ${useMax ? "max" : "min"} left -10% + restart`, async () => {
+      const scrollable = newScrollable();
+
+      const matcher = new FXScrollMatcher(
+        {
+          [useMax ? "max" : "min"]: { left: "-10%" },
+        },
+        scrollable,
+      );
+
+      // max/min is -0.1 * scroll width since reference is 0
+      await window.waitFor(50);
+      expect(matcher.matches()).toBe(!useMax);
+
+      scrollable.scrollTo(0.5 * window.SCROLL_WIDTH, 0);
+
+      await window.waitFor(50); // let the matcher update its data on scroll
+      matcher.restart(); // reference is now 0.5 * scroll width
+      let left = 0.4 * window.SCROLL_WIDTH; // new max/min (40% of scroll width)
+
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        scrollable.scrollTo(left - 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(left, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        scrollable.scrollTo(left + 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        matcher.restart(); // reference is now (current left + 1)
+        left -= 0.1 * window.SCROLL_WIDTH - 1; // new max/min
+      }
+    });
+
+    test(`relative bounds: ${useMax ? "max" : "min"} selected test + restart => changes state`, async () => {
+      const scrollable = newScrollable();
+
+      const matcher = new FXScrollMatcher(
+        {
+          [useMax ? "max" : "min"]: { top: "+10" },
+        },
+        scrollable,
+      );
+
+      let top = 10; // initial max/min; reference is 0
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(0, top + 1);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        matcher.restart(); // reference is now (current top + 1)
+        top += 11; // new max/min
+      }
+    });
   }
 });
+
+// XXX TODO view matcher including when the condition matches initially

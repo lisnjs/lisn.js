@@ -137,8 +137,9 @@ describe("Widget", () => {
     widget.offDisable(onDisable);
     widget.offDestroy(onDestroy);
 
-    await widget.enable(); // no-op as it's enabled
-    await widget.disable();
+    widget.enable(); // no-op as it's enabled
+    widget.disable(); // concurrent
+    widget.enable(); // concurrent
     await widget.destroy();
 
     expect(onEnable).toHaveBeenCalledTimes(0);
@@ -163,8 +164,9 @@ describe("Widget", () => {
     onDisable.remove();
     onDestroy.remove();
 
-    await widget.enable(); // no-op as it's enabled
-    await widget.disable();
+    widget.enable(); // no-op as it's enabled
+    widget.disable(); // concurrent
+    widget.enable(); // concurrent
     await widget.destroy();
 
     expect(onEnableJ).toHaveBeenCalledTimes(0);
@@ -182,11 +184,9 @@ describe("Widget", () => {
     widget.onDisable(onDisable);
     widget.onDestroy(onDestroy);
 
-    await widget.enable(); // no-op as it's enabled
-    await widget.disable();
-    await widget.enable();
-    await widget.disable();
-    await widget.enable();
+    widget.enable(); // no-op as it's enabled
+    widget.disable(); // concurrent
+    widget.enable(); // concurrent
     await widget.destroy();
 
     // removed after 1st time

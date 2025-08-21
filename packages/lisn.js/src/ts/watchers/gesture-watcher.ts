@@ -53,6 +53,7 @@ import { validateStrList } from "@lisn/utils/validation";
 import {
   CallbackHandler,
   Callback,
+  invokeHandler,
   wrapCallback,
 } from "@lisn/modules/callback";
 import { createXWeakMap } from "@lisn/modules/x-map";
@@ -969,7 +970,7 @@ const getCallbackAndWrapper = (
   // window has passed. It's not necessary for the actual handler to be called
   // then (e.g. if the direction or intent doesn't match, it won't be).
   const eventQueue: Event[] = [];
-  const id = randId();
+  const id = randId(); // for debugging
 
   // Since handler could be a function or a callback (not callable), we wrap it
   // so that in case it's already a callback, its removal will result in
@@ -1062,7 +1063,9 @@ const getCallbackAndWrapper = (
         (!directions || _.includes(directions, direction)) &&
         (!intents || _.includes(intents, intent))
       ) {
-        callback.invoke(target, data, eventQueueCopy, watcher).catch(logError);
+        invokeHandler(callback, target, data, eventQueueCopy, watcher).catch(
+          logError,
+        );
       } else {
         debug: logger?.debug7(
           `[${id}] Directions or intents not matching for callback`,

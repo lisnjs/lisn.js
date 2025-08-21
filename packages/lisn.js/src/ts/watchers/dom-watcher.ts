@@ -27,6 +27,7 @@ import {
   CallbackHandler,
   Callback,
   wrapCallback,
+  invokeHandler,
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
 
@@ -733,18 +734,17 @@ const invokeCallback = (
   }
 
   for (const currentTarget of currentTargets) {
-    callback
-      .invoke(
-        {
-          target: operation._target,
-          currentTarget,
-          attributes: operation._attributes,
-          addedTo: operation._addedTo,
-          removedFrom: operation._removedFrom,
-        },
-        watcher,
-      )
-      .catch(logError);
+    invokeHandler(
+      callback,
+      {
+        target: operation._target,
+        currentTarget,
+        attributes: operation._attributes,
+        addedTo: operation._addedTo,
+        removedFrom: operation._removedFrom,
+      },
+      watcher,
+    ).catch(logError);
   }
 };
 

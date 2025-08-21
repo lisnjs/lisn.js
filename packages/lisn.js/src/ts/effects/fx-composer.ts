@@ -26,6 +26,7 @@ import {
 import {
   CallbackHandler,
   Callback,
+  invokeHandler,
   addHandlerToMap,
 } from "@lisn/modules/callback";
 
@@ -509,7 +510,7 @@ export class FXComposer {
       callbacks: Map<FXComposerHandler, FXComposerCallback>,
     ) => {
       for (const cbk of callbacks.values()) {
-        cbk.invoke(_.deepCopy(currentFXState), this);
+        invokeHandler(cbk, _.deepCopy(currentFXState), this);
       }
     };
 

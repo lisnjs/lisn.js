@@ -247,7 +247,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = true;
-      await invokeHandlers(openCallbacks.values(), this);
+      await invokeHandlers(openCallbacks, this);
 
       if (isModal) {
         setHasModal();
@@ -264,7 +264,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = false;
-      await invokeHandlers(closeCallbacks.values(), this);
+      await invokeHandlers(closeCallbacks, this);
 
       if (isModal) {
         delHasModal();

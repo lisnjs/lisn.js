@@ -1198,11 +1198,11 @@ describe("onChange/offChange", () => {
     expect(cbk).toHaveBeenNthCalledWith(3, true, pin);
 
     pin.offChange(cbk);
-    store.setState(false);
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(3); // no new calls
-
     store.setState(true);
+    store.setState(false);
+    store.setState(true);
+    store.setState(false);
+
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(3); // no new calls
   });
@@ -1285,6 +1285,7 @@ describe("onChange/offChange", () => {
     storeA.setState(false);
     storeB.setState(false);
     storeC.setState(false);
+
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(5); // no new calls
   });
@@ -1302,6 +1303,10 @@ describe("onChange/offChange", () => {
     cbk.remove();
 
     store.setState(true);
+    store.setState(false);
+    store.setState(true);
+    store.setState(false);
+
     await window.waitFor(0); // callbacks are async
     expect(cbkJ).toHaveBeenCalledTimes(0);
   });
@@ -1317,14 +1322,11 @@ describe("onChange/offChange", () => {
     pin.onChange(cbk);
 
     store.setState(true);
-    await window.waitFor(0); // callbacks are async
-
     store.setState(false);
-    await window.waitFor(0); // callbacks are async
-
     store.setState(true);
-    await window.waitFor(0); // callbacks are async
+    store.setState(false);
 
+    await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });

@@ -192,7 +192,7 @@ export abstract class Widget {
       if (!isDisabled) {
         debug: logger?.debug8("Disabling");
         isDisabled = true;
-        await invokeHandlers(disableCallbacks.values(), this);
+        await invokeHandlers(disableCallbacks, this);
       }
     };
 
@@ -200,7 +200,7 @@ export abstract class Widget {
       if (!isDestroyed && isDisabled) {
         debug: logger?.debug8("Enabling");
         isDisabled = false;
-        await invokeHandlers(enableCallbacks.values(), this);
+        await invokeHandlers(enableCallbacks, this);
       }
     };
 
@@ -235,7 +235,7 @@ export abstract class Widget {
           isDestroyed = true;
           await this.disable();
 
-          await invokeHandlers(destroyCallbacks.values(), this);
+          await invokeHandlers(destroyCallbacks, this);
 
           enableCallbacks.clear();
           disableCallbacks.clear();

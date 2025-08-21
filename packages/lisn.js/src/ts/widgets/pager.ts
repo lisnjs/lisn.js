@@ -1243,7 +1243,7 @@ const getMethods = (
     lastPageNum = currPageNum > 0 ? currPageNum : pageNum;
     currPageNum = pageNum;
 
-    await invokeHandlers(callbacks.values(), widget);
+    await invokeHandlers(callbacks, widget);
 
     _.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
     for (

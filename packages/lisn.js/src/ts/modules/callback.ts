@@ -86,11 +86,14 @@ export class Callback<Args extends readonly unknown[] = []> {
    * 2. Multiple calls to {@link invoke} will not be queued, but instead run
    *    concurrently.
    *
-   * The returned promise is rejected in two cases:
-   * - If the callback throws an error or returns a rejected Promise.
+   * The returned promise is rejected in three cases:
+   * - If the callback throws an error or returns a rejected Promise. The
+   *   rejection reason will be the error.
+   * - If the callback is removed _before you call {@link invoke}. The rejection
+   *   reason will be a {@link Errors.LisnUsageError | LisnUsageError}.
    * - If the callback is removed _after_ you call {@link invoke} but before the
-   *   handler is actually called (while it's waiting in the queue to be called)
-   *   In this case, the rejection reason is {@link Callback.REMOVE}.
+   *   handler is actually run (while it's waiting in the queue to be called).
+   *   The rejection reason is {@link Callback.REMOVE}.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
    *                If the callback is already removed.
@@ -217,7 +220,10 @@ export class Callback<Args extends readonly unknown[] = []> {
     ) => {
       let result;
       try {
-        result = await handler(...args);
+        result = handler(...args);
+        if (_.isInstanceOf(result, _.PROMISE)) {
+          result = await result;
+        }
       } catch (err) {
         reject(err);
       }
@@ -241,7 +247,6 @@ export class Callback<Args extends readonly unknown[] = []> {
         isRemoved = true;
 
         invokeHandlers(removeHandlers, this);
-
         removeHandlers.clear();
         CallbackScheduler._clear(id);
       }
@@ -338,7 +343,46 @@ export const addHandlerToMap = <Args extends readonly unknown[]>(
 };
 
 /**
- * Invokes the given callbacks or handlers with the given args.
+ * Invokes the given handler with the given args.
+ *
+ * If it is a callback that has been removed, it skip it.
+ *
+ * It will also catch and ignore Callback.REMOVE rejection (which happens when
+ * the callback is removed after calling invoke, but before the wrapped function
+ * is called).
+ *
+ * @returns The return value of the handler.
+ *
+ * @ignore
+ * @internal
+ */
+export const invokeHandler = async <Args extends readonly unknown[]>(
+  handler: CallbackHandler<Args> | Callback<Args>,
+  ...args: Args
+) => {
+  let result = undefined;
+
+  if (_.isFunction(handler)) {
+    result = handler(...args);
+  } else if (!handler.isRemoved()) {
+    try {
+      result = await handler.invoke(...args);
+    } catch (err) {
+      if (err !== Callback.REMOVE) {
+        throw err;
+      }
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Invokes the handlers that are the values of the given map or set with the
+ * given args.
+ *
+ * If any of them are callbacks that have been removed, it will skip calling it
+ * and  will delete the entry from the map/set.
  *
  * They are called concurrently, but if any return a Promise, it will be
  * awaited upon.
@@ -347,16 +391,19 @@ export const addHandlerToMap = <Args extends readonly unknown[]>(
  * @internal
  */
 export const invokeHandlers = async <Args extends readonly unknown[]>(
-  set: Iterable<CallbackHandler<Args> | Callback<Args>>,
+  mapOrSet:
+    | Map<CallbackHandler<Args> | Callback<Args>, Callback<Args>>
+    | Set<CallbackHandler<Args> | Callback<Args>>,
   ...args: Args
 ) => {
   const promises: unknown[] = [];
-  for (const handler of set) {
-    if (_.isFunction(handler)) {
-      promises.push(handler(...args));
-    } else {
-      promises.push(handler.invoke(...args));
+  for (const [key, handler] of mapOrSet.entries()) {
+    if (!_.isFunction(handler) && handler.isRemoved()) {
+      _.deleteKey(mapOrSet, key);
+      continue;
     }
+
+    promises.push(invokeHandler(handler, ...args));
   }
 
   await Promise.all(promises);
@@ -368,7 +415,7 @@ type CallbackSchedulerTask = () => Promise<void>;
 type CallbackSchedulerQueueItem = {
   _task: CallbackSchedulerTask;
   _running: boolean;
-  _onRemove: (reason: typeof Callback.REMOVE) => void;
+  _reject: (reason: typeof Callback.REMOVE) => void;
 };
 
 type CallableCallback<Args extends readonly unknown[] = []> = (
@@ -381,15 +428,15 @@ const CallbackScheduler = (() => {
   const queues = _.createMap<symbol, CallbackSchedulerQueueItem[]>();
 
   const flush = async (queue: CallbackSchedulerQueueItem[]) => {
-    // So that callbacks are always called asynchronously for consistency,
-    // await here before calling 1st
+    // So that callbacks are always called asynchronously, await here before
+    // calling 1st
     await null;
     while (_.lengthOf(queue)) {
       // shouldn't throw anything as Callback must catch errors
       queue[0]._running = true;
       await queue[0]._task();
 
-      // only remove when done
+      // only remove when task is done
       queue.shift();
     }
   };
@@ -401,7 +448,7 @@ const CallbackScheduler = (() => {
         let item: CallbackSchedulerQueueItem | undefined;
         while ((item = queue.shift())) {
           if (!item._running) {
-            item._onRemove(Callback.REMOVE);
+            item._reject(Callback.REMOVE);
           }
         }
 
@@ -409,14 +456,14 @@ const CallbackScheduler = (() => {
       }
     },
 
-    _push: (id: symbol, task: CallbackSchedulerTask, onRemove: () => void) => {
+    _push: (id: symbol, task: CallbackSchedulerTask, reject: () => void) => {
       let queue = queues.get(id);
       if (!queue) {
         queue = [];
         queues.set(id, queue);
       }
 
-      queue.push({ _task: task, _onRemove: onRemove, _running: false });
+      queue.push({ _task: task, _reject: reject, _running: false });
       if (_.lengthOf(queue) === 1) {
         flush(queue);
       }

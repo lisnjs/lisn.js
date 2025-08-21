@@ -34,6 +34,7 @@ import {
 import {
   CallbackHandler,
   Callback,
+  invokeHandler,
   wrapCallback,
 } from "@lisn/modules/callback";
 import { createXMap, createXWeakMap } from "@lisn/modules/x-map";
@@ -1188,13 +1189,12 @@ const invokeCallback = (
   lastViewData: ViewData | undefined,
   watcher: ViewWatcher,
 ) =>
-  callback
-    .invoke(
-      element,
-      _.deepCopy(viewData),
-      lastViewData, // no need to copy that one as it's not used again
-      watcher,
-    )
-    .catch(logError);
+  invokeHandler(
+    callback,
+    element,
+    _.deepCopy(viewData),
+    lastViewData, // no need to copy that one as it's not used again
+    watcher,
+  ).catch(logError);
 
 _.brandClass(ViewWatcher, "ViewWatcher");

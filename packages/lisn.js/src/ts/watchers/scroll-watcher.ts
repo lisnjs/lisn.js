@@ -43,6 +43,7 @@ import { validateStrList } from "@lisn/utils/validation";
 import {
   CallbackHandler,
   Callback,
+  invokeHandler,
   wrapCallback,
 } from "@lisn/modules/callback";
 import { createXWeakMap } from "@lisn/modules/x-map";
@@ -1206,13 +1207,12 @@ const invokeCallback = (
   lastScrollData: ScrollData | undefined,
   watcher: ScrollWatcher,
 ) =>
-  callback
-    .invoke(
-      element,
-      _.deepCopy(scrollData),
-      lastScrollData, // no need to copy that one as it's not used again
-      watcher,
-    )
-    .catch(logError);
+  invokeHandler(
+    callback,
+    element,
+    _.deepCopy(scrollData),
+    lastScrollData, // no need to copy that one as it's not used again
+    watcher,
+  ).catch(logError);
 
 _.brandClass(ScrollWatcher, "ScrollWatcher");

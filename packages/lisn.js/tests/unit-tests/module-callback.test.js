@@ -97,6 +97,17 @@ describe("sync callbacks", () => {
     await expect(cbk.invoke).rejects.toThrow(/Callback has been removed/);
   });
 
+  test("onRemove invoked synchronously", () => {
+    const cbk = new Callback(() => {});
+
+    const onRemove = jest.fn();
+    cbk.onRemove(onRemove);
+    cbk.remove();
+    cbk.remove(); // no-op
+
+    expect(onRemove).toHaveBeenCalledTimes(1);
+  });
+
   test("call removed callbacks", async () => {
     const cbk = new Callback(() => {});
     expect(cbk.isRemoved()).toBe(false);

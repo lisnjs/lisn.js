@@ -22,6 +22,7 @@ import { validateStrList } from "@lisn/utils/validation";
 import {
   CallbackHandler,
   Callback,
+  invokeHandler,
   wrapCallback,
 } from "@lisn/modules/callback";
 import { createXWeakMap } from "@lisn/modules/x-map";
@@ -414,8 +415,8 @@ const invokeCallback = (
   event: Event,
   watcher: PointerWatcher,
 ) =>
-  callback
-    .invoke(target, _.deepCopy(actionData), event, watcher)
-    .catch(logError);
+  invokeHandler(callback, target, _.deepCopy(actionData), event, watcher).catch(
+    logError,
+  );
 
 _.brandClass(PointerWatcher, "PointerWatcher");

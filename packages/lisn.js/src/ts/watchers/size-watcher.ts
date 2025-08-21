@@ -24,6 +24,7 @@ import { objToStrKey } from "@lisn/utils/text";
 import {
   CallbackHandler,
   Callback,
+  invokeHandler,
   wrapCallback,
 } from "@lisn/modules/callback";
 import { createXWeakMap } from "@lisn/modules/x-map";
@@ -643,13 +644,12 @@ const invokeCallback = (
   lastSizeData: SizeData | undefined,
   watcher: SizeWatcher,
 ) =>
-  callback
-    .invoke(
-      element,
-      _.deepCopy(sizeData),
-      lastSizeData, // no need to copy that one as it's not used again
-      watcher,
-    )
-    .catch(logError);
+  invokeHandler(
+    callback,
+    element,
+    _.deepCopy(sizeData),
+    lastSizeData, // no need to copy that one as it's not used again
+    watcher,
+  ).catch(logError);
 
 _.brandClass(SizeWatcher, "SizeWatcher");

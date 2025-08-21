@@ -80,7 +80,8 @@ export class FXMatcher {
   matches: () => boolean;
 
   /**
-   * Calls the given handler whenever the matcher's state changes.
+   * Calls the given handler whenever the matcher's {@link isActive | state}
+   * changes.
    *
    * The handler is called after updating the state, such that calling
    * {@link matches} from the handler will reflect the latest state.
@@ -104,7 +105,7 @@ export class FXMatcher {
 
         if (storeData.matches !== m) {
           storeData.matches = m;
-          invokeHandlers(changeCallbacks.values(), m, this);
+          invokeHandlers(changeCallbacks, m, this);
         }
       },
     };

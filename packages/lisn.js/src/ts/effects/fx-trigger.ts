@@ -38,7 +38,7 @@ export const FX_TRIGGER = {
  * A trigger is what the {@link FXComposer} can continually poll for new data.
  *
  * It can be polled by multiple receivers, so you can reuse triggers across
- * composers. XXX test
+ * composers.
  *
  * This is a generic class that accepts a custom executor function. You may want
  * to subclass it when defining your own trigger types.
@@ -52,6 +52,11 @@ export const FX_TRIGGER = {
 export class FXTrigger {
   /**
    * An infinite async generator that continually yields new data.
+   *
+   * **NOTE:** The trigger does not queue or buffer data while it's paused or if
+   * there are no active pollers, and therefore multiple pushes of new data
+   * before the first call to {@link poll} or while the trigger is paused, will
+   * only yield the last data that was pushed.
    */
   readonly poll: () => AsyncGenerator<FXStateUpdate, never, undefined>;
 
@@ -71,10 +76,11 @@ export class FXTrigger {
   readonly resume: () => void;
 
   /**
-   * Calls the given handler whenever the trigger's state changes.
+   * Calls the given handler whenever the trigger's {@link isActive | state}
+   * changes.
    *
-   * The handler is called after updating the state, such that calling
-   * {@link isActive} from the handler will reflect the latest state.
+   * The handler is called after pausing or resuming the trigger, such that
+   * calling {@link isActive} from the handler will reflect the latest state.
    */
   readonly onChange: (handler: FXTriggerHandler) => void;
 
@@ -87,16 +93,36 @@ export class FXTrigger {
     let isActive = true;
 
     const changeCallbacks = _.createMap<FXTriggerHandler, FXTriggerCallback>();
+    const pollers = _.createSet<Poller>();
 
-    let resolve: (update: FXStateUpdate) => void;
-    const nextPromise = () =>
-      _.createPromise<FXStateUpdate>((r) => (resolve = r));
+    // Save it in an object in order to allow pushing `null` and
+    // distinguishing it from no pushing.
+    let lastPush: PollUpdate | null = null;
+    let pushedWhilePaused = false;
 
-    const push = (update: FXStateUpdate) => resolve(update);
+    const updateState = (state: PollUpdate | null) => {
+      lastPush = state;
+      pushedWhilePaused = !isActive;
+
+      if (state && isActive) {
+        for (const poller of pollers) {
+          poller._push(state._update);
+        }
+      }
+    };
+
+    // ----------
 
     const setState = (activate: boolean) => {
-      isActive = activate;
-      invokeHandlers(changeCallbacks.values(), activate, this);
+      if (isActive !== activate) {
+        isActive = activate;
+        invokeHandlers(changeCallbacks, activate, this);
+
+        if (activate && pushedWhilePaused) {
+          // wake up pollers with the last data pushed while paused
+          updateState(lastPush);
+        }
+      }
     };
 
     // --------------------
@@ -106,11 +132,20 @@ export class FXTrigger {
     this.resume = () => setState(true);
 
     this.poll = async function* () {
-      while (true) {
-        const data = await nextPromise();
-        if (isActive) {
-          yield data;
+      const poller = createPoller();
+      pollers.add(poller);
+
+      if (lastPush && isActive) {
+        // there's been a push already
+        yield lastPush._update;
+      }
+
+      try {
+        while (true) {
+          yield await poller._pull();
         }
+      } finally {
+        _.deleteKey(pollers, poller);
       }
     };
 
@@ -124,7 +159,9 @@ export class FXTrigger {
 
     // --------------------
 
-    executor.call(this, push);
+    executor.call(this, (update: FXStateUpdate) =>
+      updateState({ _update: update }),
+    );
   }
 }
 
@@ -194,6 +231,44 @@ export class FXScrollTrigger extends FXTrigger {
     addOrRemoveWatcher();
   }
 }
+
+// ------------------------------
+
+type Poller = {
+  _pull: () => Promise<FXStateUpdate>;
+  _push: (update: FXStateUpdate) => void;
+};
+
+type PollUpdate = { _update: FXStateUpdate };
+
+const createPoller = (): Poller => {
+  const queue: PollUpdate[] = [];
+
+  let wakeUp: (() => void) | null = null;
+
+  const push = (update: FXStateUpdate) => {
+    queue.push({ _update: _.deepCopy(update) });
+
+    if (wakeUp) {
+      wakeUp();
+    }
+  };
+
+  const pull = async () => {
+    const entry = queue.shift();
+    if (entry) {
+      return entry._update;
+    }
+
+    // Wait for push
+    await _.createPromise<void>((r) => (wakeUp = r));
+    wakeUp = null;
+
+    return pull();
+  };
+
+  return { _push: push, _pull: pull };
+};
 
 _.brandClass(FXTrigger, "FXTrigger");
 _.brandClass(FXScrollTrigger, "FXScrollTrigger");

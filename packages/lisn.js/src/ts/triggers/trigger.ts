@@ -175,7 +175,7 @@ export class Trigger extends Widget {
     const doDelay = config.doDelay ?? delay;
     const undoDelay = config.undoDelay ?? delay;
 
-    let lastCallId: string;
+    let lastCallId: symbol;
     // false if next should be do; true if next should be undo.
     // Used for determining delays only.
     let toggleState = false;
@@ -189,10 +189,11 @@ export class Trigger extends Widget {
         return;
       }
 
-      const myCallId = randId();
+      const myCallIdDesc = randId(); // for debugging
+      const myCallId = _.SYMBOL(myCallIdDesc);
       lastCallId = myCallId;
       debug: logger?.debug10(
-        `callActions [${myCallId}] (new toggle state ${newToggleState})`,
+        `callActions [${myCallIdDesc}] (new toggle state ${newToggleState})`,
         callFn,
       );
 
@@ -201,14 +202,14 @@ export class Trigger extends Widget {
         if (lastCallId !== myCallId) {
           // overriden by subsequent call
           debug: logger?.debug10(
-            `callActions [${myCallId}]: overriden by ${lastCallId}`,
+            `callActions [${myCallIdDesc}]: overriden by ${lastCallId.description}`,
           );
           return;
         }
       }
 
       for (const action of actions) {
-        debug: logger?.debug10(`callActions [${myCallId}]`, action);
+        debug: logger?.debug10(`callActions [${myCallIdDesc}]`, action);
         callFn(action);
       }
 

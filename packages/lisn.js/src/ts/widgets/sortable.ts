@@ -553,7 +553,7 @@ const getMethods = (
       });
     }
 
-    await invokeHandlers(callbacks.values(), widget);
+    await invokeHandlers(callbacks, widget);
   };
 
   return {

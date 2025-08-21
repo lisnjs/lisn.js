@@ -81,6 +81,7 @@ import { objToStrKey } from "@lisn/utils/text";
 import {
   CallbackHandler,
   Callback,
+  invokeHandler,
   wrapCallback,
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
@@ -675,6 +676,6 @@ const invokeCallback = (
   callback: OnLayoutCallback,
   layoutData: LayoutData,
   watcher: LayoutWatcher,
-) => callback.invoke(_.deepCopy(layoutData), watcher).catch(logError);
+) => invokeHandler(callback, _.deepCopy(layoutData), watcher).catch(logError);
 
 _.brandClass(LayoutWatcher, "LayoutWatcher");

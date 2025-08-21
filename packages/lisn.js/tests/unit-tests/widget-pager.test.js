@@ -549,7 +549,9 @@ describe("transitioning pages", () => {
     pager.onTransition(callback);
     pager.offTransition(callback);
 
-    await pager.goToPage(3);
+    pager.goToPage(3); // concurrent
+    pager.goToPage(2); // concurrent
+    await pager.goToPage(1);
 
     expect(callback).toHaveBeenCalledTimes(0);
   });
@@ -563,7 +565,9 @@ describe("transitioning pages", () => {
     pager.onTransition(callback);
     callback.remove();
 
-    await pager.goToPage(3);
+    pager.goToPage(3); // concurrent
+    pager.goToPage(2); // concurrent
+    await pager.goToPage(1);
 
     expect(callbackJ).toHaveBeenCalledTimes(0);
   });
@@ -575,8 +579,8 @@ describe("transitioning pages", () => {
 
     pager.onTransition(callback);
 
-    await pager.goToPage(3);
-    await pager.goToPage(2);
+    pager.goToPage(3); // concurrent
+    pager.goToPage(2); // concurrent
     await pager.goToPage(1);
 
     expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time

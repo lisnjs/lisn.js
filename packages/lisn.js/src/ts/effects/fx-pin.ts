@@ -87,7 +87,8 @@ export class FXPin {
   readonly while: (...matchersOrPins: Array<FXMatcher | FXPin>) => this;
 
   /**
-   * Calls the given handler whenever the pin's state changes.
+   * Calls the given handler whenever the pin's {@link isActive | state}
+   * changes.
    *
    * The handler is called after updating the state, such that calling
    * {@link isActive} from the handler will reflect the latest state.
@@ -134,7 +135,7 @@ export class FXPin {
     const setState = (activate: boolean) => {
       if (isActive !== activate && (activate || !isLocked())) {
         isActive = activate;
-        invokeHandlers(changeCallbacks.values(), activate, this);
+        invokeHandlers(changeCallbacks, activate, this);
       }
     };
 

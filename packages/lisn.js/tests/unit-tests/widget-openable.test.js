@@ -328,8 +328,9 @@ describe("generic Openable", () => {
     widget.onClose(closeFn);
     widget.offClose(closeFn);
 
-    await widget.open();
-    await widget.close();
+    widget.open(); // concurrent
+    widget.close(); // concurrent
+    widget.toggle(); // concurrent
     await widget.toggle();
 
     expect(openFn).toHaveBeenCalledTimes(0);
@@ -352,8 +353,9 @@ describe("generic Openable", () => {
     widget.onClose(closeFn);
     closeFn.remove();
 
-    await widget.open();
-    await widget.close();
+    widget.open(); // concurrent
+    widget.close(); // concurrent
+    widget.toggle(); // concurrent
     await widget.toggle();
 
     expect(openFnJ).toHaveBeenCalledTimes(0);
@@ -372,11 +374,9 @@ describe("generic Openable", () => {
     const closeFn = jest.fn(() => Callback.REMOVE);
     widget.onClose(closeFn);
 
-    await widget.open();
-    await widget.close();
-    await widget.open();
-    await widget.close();
-    await widget.toggle();
+    widget.open(); // concurrent
+    widget.close(); // concurrent
+    widget.toggle(); // concurrent
     await widget.toggle();
 
     expect(openFn).toHaveBeenCalledTimes(1); // removed after 1st time

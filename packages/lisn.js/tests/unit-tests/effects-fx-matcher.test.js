@@ -95,10 +95,22 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
       expect(cbk).toHaveBeenNthCalledWith(2, false, matcher);
       expect(matcher.matches()).toBe(false);
 
+      // multiple changes at a time
+      store.setState(true); // +1
+      store.setState(false); // +1
+      await window.waitFor(0); // callbacks are async
+      expect(cbk).toHaveBeenCalledTimes(4);
+      expect(cbk).toHaveBeenNthCalledWith(3, true, matcher);
+      expect(cbk).toHaveBeenNthCalledWith(4, false, matcher);
+
       matcher.offChange(cbk);
       store.setState(true);
+      store.setState(false);
+      store.setState(true);
+      store.setState(false);
+
       await window.waitFor(0); // callbacks are async
-      expect(cbk).toHaveBeenCalledTimes(2); // no new calls
+      expect(cbk).toHaveBeenCalledTimes(4); // no new calls
 
       expect(executor).toHaveBeenCalledTimes(1);
     });
@@ -158,6 +170,10 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
       cbk.remove();
 
       store.setState(true);
+      store.setState(false);
+      store.setState(true);
+      store.setState(false);
+
       await window.waitFor(0); // callbacks are async
       expect(cbkJ).toHaveBeenCalledTimes(0);
     });
@@ -169,14 +185,11 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
       matcher.onChange(cbk);
 
       store.setState(true);
-      await window.waitFor(0); // callbacks are async
-
       store.setState(false);
-      await window.waitFor(0); // callbacks are async
-
       store.setState(true);
-      await window.waitFor(0); // callbacks are async
+      store.setState(false);
 
+      await window.waitFor(0); // callbacks are async
       expect(cbk).toHaveBeenCalledTimes(1); // removed after 1st time
     });
   }

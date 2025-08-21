@@ -23,6 +23,7 @@ import { getOppositeViews } from "@lisn/utils/views";
 import {
   CallbackHandler,
   Callback,
+  createCallback,
   addHandlerToMap,
   invokeHandlers,
 } from "@lisn/modules/callback";
@@ -258,7 +259,7 @@ export class FXNegateMatcher extends FXMatcher {
   constructor(matcher: FXMatcher) {
     const executor = (store: FXMatcherStore) => {
       store.setState(!matcher.matches());
-      matcher.onChange((state) => store.setState(!state));
+      matcher.onChange(createCallback((state) => store.setState(!state), true));
     };
     super(executor);
   }
@@ -301,7 +302,7 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
         }
       };
 
-      composer.onTween(updateData);
+      composer.onTween(createCallback(updateData, true));
 
       // Recheck if within bounds
       store.restartCallback = updateData;
@@ -515,7 +516,7 @@ export class FXPinMatcher extends FXMatcher {
   constructor(pin: FXPin) {
     const executor = (store: FXMatcherStore) => {
       store.setState(pin.isActive());
-      pin.onChange((state) => store.setState(state));
+      pin.onChange(createCallback((state) => store.setState(state), true));
     };
     super(executor);
   }

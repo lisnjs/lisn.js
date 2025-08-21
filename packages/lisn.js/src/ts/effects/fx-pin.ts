@@ -11,6 +11,7 @@ import {
   Callback,
   addHandlerToMap,
   invokeHandlers,
+  createCallback,
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
 
@@ -190,12 +191,15 @@ export class FXPin {
       }
     };
 
-    const onMatcherChange = (matches: boolean, matcher: FXMatcher) => {
-      const matcherConditions = conditions.get(matcher) ?? [];
-      for (const condition of matcherConditions) {
-        checkCondition(condition);
-      }
-    };
+    const onMatcherChange = createCallback(
+      (matches: boolean, matcher: FXMatcher) => {
+        const matcherConditions = conditions.get(matcher) ?? [];
+        for (const condition of matcherConditions) {
+          checkCondition(condition);
+        }
+      },
+      true,
+    );
 
     // --------------------
 

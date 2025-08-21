@@ -3,15 +3,29 @@ const { jest, describe, test, expect } = require("@jest/globals");
 const { Callback } = window.LISN.modules;
 
 describe("sync callbacks", () => {
-  test("call", async () => {
+  test("call: non-concurrent (default)", async () => {
     const fn = jest.fn();
     const cbk = new Callback(fn);
+    expect(cbk.isConcurrent()).toBe(false);
+
     const p1 = cbk.invoke("a");
     const p2 = cbk.invoke("b");
     expect(fn).toHaveBeenCalledTimes(0); // ensure it's async
     await p1;
     await p2;
     expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenNthCalledWith(1, "a");
+    expect(fn).toHaveBeenNthCalledWith(2, "b");
+  });
+
+  test("call: concurrent", () => {
+    const fn = jest.fn();
+    const cbk = new Callback(fn, true);
+    expect(cbk.isConcurrent()).toBe(true);
+
+    cbk.invoke("a");
+    cbk.invoke("b");
+    expect(fn).toHaveBeenCalledTimes(2); // ensure it's not async
     expect(fn).toHaveBeenNthCalledWith(1, "a");
     expect(fn).toHaveBeenNthCalledWith(2, "b");
   });
@@ -94,6 +108,19 @@ describe("sync callbacks", () => {
   test("wrap", () => {
     const cbkA = Callback.wrap(() => {});
     const cbkB = Callback.wrap(cbkA);
+    expect(cbkA.isConcurrent()).toBe(false);
+    expect(cbkB.isConcurrent()).toBe(false);
+
+    expect(cbkA).toBeInstanceOf(Callback);
+    expect(cbkA).not.toBe(cbkB);
+  });
+
+  test("wrap: concurrent", () => {
+    const cbkA = new Callback(() => {}, true);
+    const cbkB = Callback.wrap(cbkA);
+    expect(cbkA.isConcurrent()).toBe(true);
+    expect(cbkB.isConcurrent()).toBe(true);
+
     expect(cbkA).toBeInstanceOf(Callback);
     expect(cbkA).not.toBe(cbkB);
   });
@@ -208,7 +235,7 @@ describe("sync callbacks", () => {
 });
 
 describe("async callbacks (selected tests)", () => {
-  test("call", async () => {
+  test("call: non-concurrent (default)", async () => {
     const x = [];
     const cbk = new Callback(
       (n) =>
@@ -226,6 +253,39 @@ describe("async callbacks (selected tests)", () => {
     cbk.invoke(1);
     await cbk.invoke(2);
     expect(x).toEqual(["start1", "end1", "start2", "end2"]);
+  });
+
+  test("call: concurrent", async () => {
+    const x = [];
+    const cbk = new Callback(
+      (n) =>
+        new Promise((resolve) => {
+          window.setTimeout(() => {
+            x.push("start" + n);
+            window.setTimeout(() => {
+              x.push("end" + n);
+              resolve();
+            }, 100);
+          }, 10);
+        }),
+      true,
+    );
+
+    cbk.invoke(1);
+    await cbk.invoke(2);
+    expect(x).toEqual(["start1", "start2", "end1", "end2"]);
+  });
+
+  test("call: concurrent v2", () => {
+    const x = [];
+    const cbkA = new Callback((n) => x.push("A" + n), true);
+    const cbkB = new Callback((n) => x.push("B" + n), true);
+
+    cbkA.invoke(1);
+    cbkA.invoke(2);
+    cbkB.invoke(1);
+    cbkB.invoke(2);
+    expect(x).toEqual(["A1", "A2", "B1", "B2"]);
   });
 
   test("throw err", async () => {

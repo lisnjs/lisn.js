@@ -44,7 +44,8 @@ export const wrapCallback = <Args extends readonly unknown[] = []>(
   debounceWindow = 0,
 ): Callback<Args> => {
   const isFunction = _.isFunction(handlerOrCallback);
-  let isRemoved = () => false;
+  let isConcurrent = false;
+  let isRemovedFn = () => false;
 
   if (isFunction) {
     // check if it's an invoke method
@@ -53,7 +54,9 @@ export const wrapCallback = <Args extends readonly unknown[] = []>(
       return wrapCallback(callback);
     }
   } else {
-    isRemoved = handlerOrCallback.isRemoved;
+    // it's a callback
+    isRemovedFn = handlerOrCallback.isRemoved;
+    isConcurrent = handlerOrCallback.isConcurrent();
   }
 
   const handler: CallbackHandler<Args> = isFunction
@@ -62,10 +65,11 @@ export const wrapCallback = <Args extends readonly unknown[] = []>(
 
   const wrapper = new Callback<Args>(
     getDebouncedHandler(debounceWindow, (...args: Args) => {
-      if (!isRemoved()) {
+      if (!isRemovedFn()) {
         return handler(...args);
       }
     }),
+    isConcurrent,
   );
 
   if (!isFunction) {
@@ -81,8 +85,9 @@ export const wrapCallback = <Args extends readonly unknown[] = []>(
  *   handler returns {@link Callback.REMOVE}
  * - calling custom {@link onRemove} hooks
  * - debouncing (via {@link wrap})
- * - awaiting on an asynchronous handler and ensuring that the handler does not
- *   run concurrently to itself, i.e. subsequent {@link invoke}s will be queued
+ * - awaiting on an asynchronous handler
+ * - ensuring that the handler does not run concurrently to itself, i.e.
+ *   subsequent {@link invoke}s will be queued; this can be disabled
  *
  * @typeParam Args The type of arguments that the callback expects.
  */
@@ -106,13 +111,26 @@ export class Callback<Args extends readonly unknown[] = []> {
   ) as typeof Callback.REMOVE;
 
   /**
-   * Call the handler with the given arguments.
+   * Returns true if the handler can run concurrently to itself, i.e. if
+   * `isConcurrent = true` was passed to the constructor.
    *
-   * If the handler is asynchronous, it awaits on it. Furthermore, calls will
-   * always wait for previous calls to this handler to complete first, i.e. it
-   * never runs concurrently to itself. If you need multiple calls to the async
-   * handler to run concurrently, then wrap it in a non-async function that
-   * does not await it.
+   * @since v1.3.0
+   */
+  readonly isConcurrent: () => boolean;
+
+  /**
+   * Call the handler with the given arguments. It will await on the handler.
+   *
+   * If the handler is not {@link isConcurrent | concurrent}, then:
+   * 1. It will be invoked asynchronously, and
+   * 2. Calls will always wait for previous calls to this handler to complete
+   *    first, i.e. it never runs concurrently to itself.
+   *
+   * Otherwise:
+   * 1. The handler will be invoked synchronously (though invoke will still
+   *    await on its return value) and
+   * 2. Multiple calls to {@link invoke} will not be queued, but instead run
+   *    concurrently.
    *
    * The returned promise is rejected in two cases:
    * - If the callback throws an error or returns a rejected Promise.
@@ -162,11 +180,15 @@ export class Callback<Args extends readonly unknown[] = []> {
    *
    * If the argument is already a callback _or an invoke method of a callback_,
    * then the wrapper will call that callback and return the same value as it.
+   *
    * It will also set up the returned wrapper callback so that it is removed
    * when the original (given) callback is removed. However, removing the
    * returned wrapper callback will _not_ cause the original callback (being
    * wrapped) to be removed. If you want to do this, then do
    * `wrapper.onRemove(original.remove)`.
+   *
+   * If the handler is {@link Callback.isConcurrent | isConcurrent}, so will the
+   * wrapper be.
    *
    * Note that if the argument is a callback that's already debounced by a
    * _larger_ window, then `debounceWindow` will have no effect.
@@ -179,10 +201,13 @@ export class Callback<Args extends readonly unknown[] = []> {
   static readonly wrap = wrapCallback;
 
   /**
-   * @param handler The actual function to call. This should return one of
-   *                the known {@link CallbackReturnType} values.
+   * @param handler      The actual function to call. This should return one of
+   *                     the known {@link CallbackReturnType} values.
+   * @param isConcurrent See {@link invoke}.
+   *
+   * @since The `isConcurrent` option was added in v1.3.0
    */
-  constructor(handler: CallbackHandler<Args>) {
+  constructor(handler: CallbackHandler<Args>, isConcurrent = false) {
     const logger = debug
       ? new debug.Logger({ name: "Callback", logAtCreation: handler })
       : null;
@@ -191,6 +216,30 @@ export class Callback<Args extends readonly unknown[] = []> {
     const id = _.SYMBOL();
 
     const removeHandlers = _.createSet<OnRemoveHandler>();
+
+    const executor = async (
+      resolve: () => void,
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      reject: (reason?: any) => void,
+      args: Args,
+    ) => {
+      let result;
+      try {
+        result = await handler(...args);
+      } catch (err) {
+        reject(err);
+      }
+
+      if (result === Callback.REMOVE) {
+        this.remove();
+      }
+
+      resolve();
+    };
+
+    // --------------------
+
+    this.isConcurrent = () => isConcurrent;
 
     this.isRemoved = () => isRemoved;
 
@@ -229,24 +278,15 @@ export class Callback<Args extends readonly unknown[] = []> {
           return;
         }
 
-        CallbackScheduler._push(
-          id,
-          async () => {
-            let result;
-            try {
-              result = await handler(...args);
-            } catch (err) {
-              reject(err);
-            }
-
-            if (result === Callback.REMOVE) {
-              this.remove();
-            }
-
-            resolve();
-          },
-          reject,
-        );
+        if (isConcurrent) {
+          executor(resolve, reject, args);
+        } else {
+          CallbackScheduler._push(
+            id,
+            () => executor(resolve, reject, args),
+            reject,
+          );
+        }
       });
 
     callablesMap.set(this.invoke, this);

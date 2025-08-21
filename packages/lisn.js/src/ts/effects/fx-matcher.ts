@@ -283,8 +283,9 @@ export class FXNegateMatcher extends FXMatcher {
  * an example.
  */
 export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
-  constructor(composer: FXComposer, config: FXComposerMatcherBounds) {
-    if (!config) {
+  constructor(bounds: FXComposerMatcherBounds, composer: FXComposer) {
+    if (!bounds) {
+      // TODO check if there's at least one if bounds is an object
       throw usageError(
         "At least one parameter bounding value is required for FXComposerMatcher",
       );
@@ -300,7 +301,7 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
 
         if (fxState) {
           store.setState(
-            axesAreWithinBounds(config, fxState, store.getReferenceData()),
+            areAxesWithinBounds(bounds, fxState, store.getReferenceData()),
           );
         }
       };
@@ -387,6 +388,7 @@ export class FXScrollMatcher extends FXRelativeMatcher<
    */
   constructor(bounds: FXScrollMatcherBounds, scrollable?: ScrollTarget) {
     if (!bounds) {
+      // TODO check if there's at least one if bounds is an object
       throw usageError(
         "At least one scroll offset bounding value is required for FXScrollMatcher",
       );
@@ -406,7 +408,7 @@ export class FXScrollMatcher extends FXRelativeMatcher<
 
         if (data) {
           store.setState(
-            axesAreWithinBounds(bounds, data, store.getReferenceData()),
+            areAxesWithinBounds(bounds, data, store.getReferenceData()),
           );
         }
       };
@@ -482,8 +484,8 @@ export type FXScrollMatcherBounds = AtLeastOne<{
  */
 export class FXViewMatcher extends FXMatcher {
   constructor(
-    viewTarget: ViewTarget,
     views: CommaSeparatedStr<View> | View[],
+    viewTarget: ViewTarget,
     config?: ViewWatcherConfig,
   ) {
     if (!viewTarget || !views) {
@@ -567,30 +569,30 @@ const toRawAxisValue = (
  * {@link toRawAxisValue}, then compares it to `values.current`.
  *
  * @returns `true` if `minValue` does not resolve to a valid number (i.e. no
- * constraint) **or** the `values.current` is greater than `minValue`, `false`
- * otherwise.
+ * constraint) **or** the `values.current` is greater than or equal to
+ * `minValue`, `false` otherwise.
  */
-const axisIsGreaterThan = (
+const isAxisGE = (
   minValue: RawOrRelativeNumber | undefined,
   values: FXPinAxisData,
   reference: FXPinAxisData | undefined,
-) => values.current > toRawAxisValue(minValue, values, reference, -_.INFINITY);
+) => values.current >= toRawAxisValue(minValue, values, reference, -_.INFINITY);
 
 /**
  * Converts the given `maxValue` raw or relative number with
  * {@link toRawAxisValue}, then compares it to `values.current`.
  *
  * @returns `true` if `minValue` does not resolve to a valid number (i.e. no
- * constraint) **or** the `values.current` is less than `minValue`, `false`
- * otherwise.
+ * constraint) **or** the `values.current` is less than or equal to `minValue`,
+ * `false` otherwise.
  */
-const axisIsLessThan = (
+const isAxisLE = (
   maxValue: RawOrRelativeNumber | undefined,
   values: FXPinAxisData,
   reference: FXPinAxisData | undefined,
-) => values.current < toRawAxisValue(maxValue, values, reference, _.INFINITY);
+) => values.current <= toRawAxisValue(maxValue, values, reference, _.INFINITY);
 
-const axesAreWithinBounds = <Keys extends string>(
+const areAxesWithinBounds = <Keys extends string>(
   bounds: { [B in "min" | "max"]?: { [K in Keys]?: RawOrRelativeNumber } },
   data: FXPinAllAxesData<Keys>,
   referenceData: FXPinAllAxesData<Keys> | undefined,
@@ -603,9 +605,9 @@ const axesAreWithinBounds = <Keys extends string>(
     const axisMax = max ? max[a] : NaN;
     const axisMin = min ? min[a] : NaN;
 
-    result ||=
-      axisIsGreaterThan(axisMin, data[a], axisRef) &&
-      axisIsLessThan(axisMax, data[a], axisRef);
+    result &&=
+      isAxisGE(axisMin, data[a], axisRef) &&
+      isAxisLE(axisMax, data[a], axisRef);
   }
 
   return result;

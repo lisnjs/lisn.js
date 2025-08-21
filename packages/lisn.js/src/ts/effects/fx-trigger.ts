@@ -137,12 +137,12 @@ export class FXTrigger {
 
       if (lastPush && isActive) {
         // there's been a push already
-        yield lastPush._update;
+        yield _.deepCopy(lastPush._update);
       }
 
       try {
         while (true) {
-          yield await poller._pull();
+          yield _.deepCopy(await poller._pull());
         }
       } finally {
         _.deleteKey(pollers, poller);
@@ -247,7 +247,7 @@ const createPoller = (): Poller => {
   let wakeUp: (() => void) | null = null;
 
   const push = (update: FXStateUpdate) => {
-    queue.push({ _update: _.deepCopy(update) });
+    queue.push({ _update: update });
 
     if (wakeUp) {
       wakeUp();

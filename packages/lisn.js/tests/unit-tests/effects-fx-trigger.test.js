@@ -194,20 +194,39 @@ describe("FXTrigger", () => {
   test("modifying polled data", async () => {
     const { trigger, push } = newTrigger();
 
-    const data = { a: 1, b: { c: 2 } };
-    push(data);
+    const dataA = { a: 1, b: { c: "a" } };
+    push(dataA);
 
     const p = trigger.poll();
-    const result = (await p.next()).value;
-    expect(result).toEqual(data);
-    expect(result).not.toBe(data); // copied
 
-    result.b.c = 4;
-    expect(data.b.c).toBe(2); // deeply copied
+    // ---------- initial (pre-poll) data
+
+    let result = (await p.next()).value;
+    expect(result).toEqual(dataA);
+    expect(result).not.toBe(dataA); // copied
+
+    result.b.c = "z";
+    expect(dataA.b.c).toBe("a"); // deeply copied
+
+    const dataB = { a: 2, b: { c: "b" } };
 
     const p2 = trigger.poll();
-    const result2 = (await p2.next()).value;
-    expect(result2).toEqual(data);
+    let result2 = (await p2.next()).value;
+    expect(result2).toEqual(dataA);
+
+    // ---------- new data
+
+    push(dataB);
+
+    result = (await p.next()).value;
+    expect(result).toEqual(dataB);
+    expect(result).not.toBe(dataB); // copied
+
+    result.b.c = "z";
+    expect(dataB.b.c).toBe("b"); // deeply copied
+
+    result2 = (await p2.next()).value;
+    expect(result2).toEqual(dataB);
   });
 
   test("multiple pollers: push while paused + resume", async () => {

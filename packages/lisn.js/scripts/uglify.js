@@ -19,7 +19,7 @@ const uglify = (build, useESM = false) => {
   execSync(
     `npx uglify-js ${input} ` +
       `--webkit ` +
-      `--compress keep_infinity=true,passes=3 ` +
+      `--compress keep_infinity=true,passes=3,objects=false ` +
       `${useESM ? "--module" : ""} ` +
       `--mangle reserved=${reserved} ` +
       `--mangle-props regex='/^_./' ` +

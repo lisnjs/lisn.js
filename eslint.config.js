@@ -68,6 +68,7 @@ export default tseslint.config(
       "no-this-before-super": "error",
       "no-unreachable": "error",
       "no-unsafe-negation": "error",
+      "@typescript-eslint/await-thenable": "off",
       // "no-undef": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",

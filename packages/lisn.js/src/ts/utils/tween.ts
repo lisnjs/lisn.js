@@ -64,17 +64,18 @@ export type TweenerInput = {
   target: number;
 
   /**
-   * The lag setting.
+   * The lag setting in **milliseconds**.
    */
   lag: number;
 
   /**
-   * The current velocity returned by the last call to the tweener.
+   * The current velocity in distance / time in **seconds**, returned by the
+   * last call to the tweener.
    */
   velocity: number;
 
   /**
-   * The time in milliseconds since the last call to the tweener.
+   * The time in **milliseconds** since the last call to the tweener.
    */
   deltaTime: number;
 };

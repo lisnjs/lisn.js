@@ -655,7 +655,7 @@ describe("FXComposerMatcher", () => {
 
   // XXX TODO min and max
 
-  // XXX relative bounds including restarting when it should make the state
+  // XXX TODO relative bounds including restarting when it should make the state
   // change
 
   // XXX TODO with lag

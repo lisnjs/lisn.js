@@ -4,6 +4,10 @@
  * @internal
  */
 
+// XXX TODO
+// - check type of all user input parameters and log/throw descriptive error
+// - check if setting debounce window 1 for widgets that currently use 0 is ok
+
 export * from "@lisn/actions/index";
 export * from "@lisn/debug/index";
 export * from "@lisn/globals/index";

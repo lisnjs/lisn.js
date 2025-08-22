@@ -354,7 +354,7 @@ export const scaleParameters = (
  * - If the input state has snap: true and there is no update given for this
  *   axis (`update` or `update[axis]` is `undefined`), snap is preserved.
  *   Otherwise, if there's an update given for the axis, snap is reset to
- *   `false`, unless the update explicitly sets it to `true`
+ *   `false`, unless the update explicitly sets it to `true`.
  */
 export const getUpdatedState = (
   state: Partial<FXState> | undefined,

@@ -11,7 +11,7 @@ describe("springTweener", () => {
     let current = 100,
       velocity = 0,
       i;
-    for (i = 0; i < 50; i++) {
+    for (i = 0; i <= 1 + lag / deltaTime; i++) {
       ({ current, velocity } = springTweener({
         current,
         velocity,
@@ -20,16 +20,13 @@ describe("springTweener", () => {
         deltaTime,
       }));
 
-      if (i == Math.round(lag / deltaTime) - 1) {
-        expect(Math.round(Math.abs(current - target))).toBeLessThan(5);
-      }
-
       if (current === target) {
         break;
       }
     }
 
-    expect(i).toBeLessThan((lag * 1.3) / deltaTime);
+    expect(i).toBeGreaterThan(lag / deltaTime - 2);
+    expect(Math.round(Math.abs(current - target))).toBeLessThan(5);
   });
 
   test("to smaller", () => {
@@ -39,7 +36,7 @@ describe("springTweener", () => {
     let current = 200,
       velocity = 0,
       i;
-    for (i = 0; i < 50; i++) {
+    for (i = 0; i <= 1 + lag / deltaTime; i++) {
       ({ current, velocity } = springTweener({
         current,
         velocity,
@@ -48,16 +45,13 @@ describe("springTweener", () => {
         deltaTime,
       }));
 
-      if (i == Math.round(lag / deltaTime) - 1) {
-        expect(Math.round(Math.abs(current - target))).toBeLessThan(5);
-      }
-
       if (current === target) {
         break;
       }
     }
 
-    expect(i).toBeLessThan(10);
+    expect(i).toBeGreaterThan(lag / deltaTime - 2);
+    expect(Math.round(Math.abs(current - target))).toBeLessThan(5);
   });
 });
 
@@ -578,3 +572,5 @@ describe("tween3DAnimationGenerator: spring", () => {
     expect(i.y).toBeLessThan((input.y.lag * 1.3) / deltaTime);
   });
 });
+
+// XXX TODO remaining tweeners test

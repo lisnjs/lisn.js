@@ -25,9 +25,7 @@ import { compareValuesIn } from "@lisn/utils/misc";
  *
  * @category Tweening
  */
-export type Tweener<Input extends Partial<TweenerInput> = TweenerInput> =
-  | TweenerFn<Input>
-  | TweenerName;
+export type Tweener<S = unknown> = TweenerFn<S> | TweenerName;
 
 /**
  * @since v1.3.0
@@ -41,18 +39,18 @@ export type TweenerName = keyof typeof TWEENERS;
  *
  * @category Tweening
  */
-export type TweenerFn<Input extends Partial<TweenerInput> = TweenerInput> = (
-  input: Input,
-) => TweenerOutput;
+export type TweenerFn<S = unknown> = (
+  input: TweenerInput<S>,
+) => TweenerOutput<S>;
 
 /**
- * Possible inputs to tweener functions. Not all may be required.
+ * Input passed to {@link Tweener}s.
  *
  * @since v1.3.0
  *
  * @category Tweening
  */
-export type TweenerInput = {
+export type TweenerInput<S = unknown> = {
   /**
    * The current value to interpolate towards the target.
    */
@@ -69,15 +67,15 @@ export type TweenerInput = {
   lag: number;
 
   /**
-   * The current velocity in distance / time in **seconds**, returned by the
-   * last call to the tweener.
-   */
-  velocity: number;
-
-  /**
    * The time in **milliseconds** since the last call to the tweener.
    */
   deltaTime: number;
+
+  /**
+   * The state of the tweener that it returned during the last call. Will be
+   * `undefined` on the first call.
+   */
+  state?: S;
 };
 
 /**
@@ -85,7 +83,7 @@ export type TweenerInput = {
  *
  * @category Tweening
  */
-export type TweenerOutput = {
+export type TweenerOutput<S> = {
   /**
    * The updated value after interpolation. Pass this as the
    * {@link TweenerInput.current} on the next call.
@@ -93,10 +91,9 @@ export type TweenerOutput = {
   current: number;
 
   /**
-   * The updated velocity after interpolation. Pass this as the
-   * {@link TweenerInput.velocity} on the next call.
+   * The tweener's state that it wants to receive on the next call.
    */
-  velocity: number;
+  state: S;
 };
 
 // -------------------------------------------------------------------------
@@ -112,15 +109,17 @@ export type TweenerOutput = {
  *
  * @category Tweening
  */
-export const springTweener: TweenerFn = ({
+export const springTweener: TweenerFn<{ velocity: number }> = ({
   current,
   target,
   lag = 0,
-  velocity = 0,
   deltaTime = 0,
+  state,
 }) => {
+  let { velocity = 0 } = state ?? {};
+
   lag = toNum(lag) / 1000; // in seconds
-  if (lag <= 0) {
+  if (current === target || lag <= 0) {
     current = target;
     velocity = 0;
   } else if (deltaTime > 0) {
@@ -140,10 +139,85 @@ export const springTweener: TweenerFn = ({
     velocity = (B - w0 * (A + B * deltaTime)) * e;
   }
 
-  return { current, velocity };
+  return { current, state: { velocity } };
 };
 
-// --------------------------------- LINEAR --------------------------------
+// ------------------------------ EASING-BASED -----------------------------
+
+export type EasingTweenerState = {
+  initial: number;
+  target: number;
+  elapsed: number;
+  duration: number;
+};
+
+/**
+ * Creates a new {@link TweenerFn} based on an easing function.
+ *
+ * @param easingFn Accepts a single argument, the progress from 0 to 1, and
+ * should return the normalised value from 0 to 1.
+ *
+ * @see https://easings.net/
+ *
+ * @since v1.3.0
+ *
+ * @category Tweening
+ */
+export const createEasingTweener = (easingFn: (progress: number) => number) => {
+  const polyTweener: TweenerFn<EasingTweenerState> = ({
+    current,
+    target,
+    lag = 0,
+    deltaTime = 0,
+    state,
+  }) => {
+    if (!state) {
+      state = {
+        initial: current,
+        target,
+        elapsed: 0,
+        duration: lag,
+      };
+    }
+
+    lag = toNum(lag);
+    if (current === target || lag <= 0) {
+      current = target;
+    } else {
+      if (state.target !== target) {
+        // The difference between the current position and where we would have been
+        // had this target been set from the start.
+        const idealState = polyTweener({
+          current: state.initial,
+          target,
+          lag,
+          deltaTime: lag - (state.duration - state.elapsed), // lag - remaining time
+        });
+        const deviation = idealState.current - current;
+
+        // Increase the target duration proportionately
+        state.duration += lag * (deviation / target);
+        state.target = target;
+      }
+
+      state.elapsed += deltaTime;
+
+      const progress =
+        1 -
+        toNumWithBounds((state.duration - state.elapsed) / lag, {
+          min: 0,
+          max: 1,
+        });
+
+      const eased = easingFn(progress);
+      current = state.initial + (state.target - state.initial) * eased;
+    }
+
+    return { current, state };
+  };
+
+  return polyTweener;
+};
 
 /**
  * A tweener that interpolates linearly (constant velocity).
@@ -152,37 +226,7 @@ export const springTweener: TweenerFn = ({
  *
  * @category Tweening
  */
-export const linearTweener: TweenerFn = ({
-  current,
-  target,
-  lag = 0,
-  velocity = 0,
-  deltaTime = 0,
-}) => {
-  lag = toNum(lag) / 1000; // in seconds
-  if (lag <= 0) {
-    current = target;
-    velocity = 0;
-  } else if (deltaTime > 0) {
-    deltaTime /= 1000; // in seconds
-    const distance = target - current;
-
-    if (velocity === 0) {
-      // Initial call
-      velocity = distance / lag;
-    }
-
-    current += velocity * deltaTime;
-    if (current > target == velocity > 0) {
-      // overshot target
-      current = target;
-    }
-  }
-
-  return { current, velocity };
-};
-
-// ------------------------------- QUADRATIC -------------------------------
+export const linearTweener = createEasingTweener((p) => p);
 
 /**
  * A tweener that interpolates based on a quadratic function.
@@ -191,84 +235,20 @@ export const linearTweener: TweenerFn = ({
  *
  * @category Tweening
  */
-export const quadraticTweener: TweenerFn = ({
-  current,
-  target,
-  lag = 0,
-  velocity = 0,
-  deltaTime = 0,
-}) => {
-  // XXX
-  lag = toNum(lag) / 1000; // in seconds
-  if (lag <= 0) {
-    current = target;
-    velocity = 0;
-  } else if (deltaTime > 0) {
-    deltaTime = deltaTime / 1000; // in seconds
-    const distance = target - current;
-
-    // estimate normalized progress from velocity & distance
-    let p = 0;
-    const ratio = (velocity * lag) / (2 * distance);
-    if (ratio > 0 && ratio <= 1) {
-      p = 1 - ratio;
-    }
-
-    // update progress
-    p = toNumWithBounds(p + deltaTime / lag, { min: 0, max: 1 });
-
-    const eased = 1 - _.pow(1 - p, 2);
-
-    current = target - distance * (1 - eased);
-    velocity = 2 * (1 - p) * (distance / lag);
-  }
-
-  return { current, velocity };
-};
-
-// --------------------------------- CUBIC ---------------------------------
+export const quadraticTweener = createEasingTweener((p) =>
+  p < 0.5 ? 2 * _.pow(p, 2) : 1 - _.pow(-2 * p + 2, 2) / 2,
+);
 
 /**
- * A tweener that interpolates based on a cubic function.
+ * A tweener that interpolates based on a ease in, ease out cubic function.
  *
  * @since v1.3.0
  *
  * @category Tweening
  */
-export const cubicTweener: TweenerFn = ({
-  current,
-  target,
-  lag = 0,
-  velocity = 0,
-  deltaTime = 0,
-}) => {
-  // XXX
-  lag = toNum(lag) / 1000; // in seconds
-  if (lag <= 0) {
-    current = target;
-    velocity = 0;
-  } else if (deltaTime > 0) {
-    deltaTime = deltaTime / 1000; // in seconds
-    const distance = target - current;
-
-    // estimate normalized progress from velocity & distance
-    let p = 0;
-    const ratio = (velocity * lag) / (3 * distance);
-    if (ratio > 0 && ratio <= 1) {
-      p = 1 - _.sqrt(ratio);
-    }
-
-    // update progress
-    p = toNumWithBounds(p + deltaTime / lag, { min: 0, max: 1 });
-
-    const eased = 1 - _.pow(1 - p, 3);
-
-    current = target - distance * (1 - eased);
-    velocity = 3 * _.pow(1 - p, 2) * (distance / lag);
-  }
-
-  return { current, velocity };
-};
+export const cubicTweener = createEasingTweener((p) =>
+  p < 0.5 ? 4 * _.pow(p, 3) : 1 - _.pow(-2 * p + 2, 3) / 2,
+);
 
 // -------------------------------------------------------------------------
 // -------------------- BUILT-IN TWEENERS SINGLE EXPORT --------------------
@@ -427,12 +407,12 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
   const motion: {
     [K in "x" | "y" | "z"]: {
       _done: boolean;
-      _velocity: number;
+      _state?: unknown;
     };
   } = {
-    x: { _done: true, _velocity: 0 },
-    y: { _done: true, _velocity: 0 },
-    z: { _done: true, _velocity: 0 },
+    x: { _done: true },
+    y: { _done: true },
+    z: { _done: true },
   };
 
   const isTweening = () =>
@@ -444,10 +424,10 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
   };
 
   // We'll be updating the state object. "previous" updated in every loop
-  const state = _.deepCopy(init) as Tween3DGeneratorOutput<Axes>;
+  const output = _.deepCopy(init) as Tween3DGeneratorOutput<Axes>;
   for (const a in init) {
-    state[a].initial = state[a].previous = state[a].current;
-    state[a].precision ??= 1;
+    output[a].initial = output[a].previous = output[a].current;
+    output[a].precision ??= 1;
   }
 
   let updateData: Tween3DUpdate<Axes> = {};
@@ -458,8 +438,8 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
     }
 
     let a: Axes;
-    for (a in state) {
-      const params = state[a];
+    for (a in output) {
+      const params = output[a];
       const motionParams = motion[a];
 
       // Apply update
@@ -480,14 +460,17 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
         const tweenerFn = tweenerFns[a] ?? getTweenerFn(tweener, a);
         tweenerFns[a] = tweenerFn;
 
-        let { current, velocity } = tweenerFn({
-          current: params.current,
+        let current = params.current;
+        let state = motionParams._state;
+        ({ current, state } = tweenerFn({
+          current,
           target: params.target,
           lag: params.lag,
-          velocity: motionParams._velocity,
           deltaTime,
-        });
+          state,
+        }));
 
+        // XXX TODO this won't work with tweeners that bounce
         if (
           isCloseToTarget({
             current,
@@ -496,17 +479,16 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
           })
         ) {
           current = params.target;
-          velocity = 0;
         }
 
         params.current = current;
-        motionParams._velocity = velocity;
+        motionParams._state = state;
       }
 
       motionParams._done = params.current === params.target;
     }
 
-    const newUpdateData = yield _.deepCopy(state);
+    const newUpdateData = yield _.deepCopy(output);
     const done = !isTweening() && !isUpdated(newUpdateData);
 
     if (done) {
@@ -541,12 +523,15 @@ export const criticallyDamped = (settings: {
   v: number;
 } => {
   const { lTarget, dt, lag, l = 0, v = 0, precision = 1 } = settings;
-  let { current, velocity } = springTweener({
+  let {
+    current,
+    state: { velocity },
+  } = springTweener({
     current: l,
     target: lTarget,
-    velocity: v,
     lag,
     deltaTime: dt,
+    state: { velocity: v },
   });
 
   if (isCloseToTarget({ target: lTarget, current, precision })) {
@@ -617,7 +602,7 @@ export async function* newCriticallyDampedAnimationIterator(settings: {
 const getTweenerFn = <Axes extends "x" | "y" | "z">(
   tweener: Tweener | { [K in Axes]: Tweener },
   axis: Axes,
-) => {
+): TweenerFn => {
   if (_.isFunction(tweener)) {
     return tweener;
   }
@@ -634,7 +619,7 @@ const getTweenerFn = <Axes extends "x" | "y" | "z">(
     throw usageError("Unknown tweener name");
   }
 
-  return TWEENERS[tweener];
+  return TWEENERS[tweener] as TweenerFn;
 };
 
 const isCloseToTarget = ({

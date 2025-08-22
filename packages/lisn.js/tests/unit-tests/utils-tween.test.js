@@ -1,7 +1,13 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { deepCopy } = window.LISN._;
-const { springTweener, tween3DAnimationGenerator } = window.LISN.utils;
+const {
+  springTweener,
+  linearTweener,
+  quadraticTweener,
+  cubicTweener,
+  tween3DAnimationGenerator,
+} = window.LISN.utils;
 
 describe("springTweener", () => {
   test("to larger", () => {
@@ -9,15 +15,15 @@ describe("springTweener", () => {
     const lag = 1000;
     const deltaTime = 200;
     let current = 100,
-      velocity = 0,
+      state = null,
       i;
     for (i = 0; i <= 1 + lag / deltaTime; i++) {
-      ({ current, velocity } = springTweener({
+      ({ current, state } = springTweener({
         current,
-        velocity,
         target,
         lag,
         deltaTime,
+        state,
       }));
 
       if (current === target) {
@@ -27,6 +33,7 @@ describe("springTweener", () => {
 
     expect(i).toBeGreaterThan(lag / deltaTime - 2);
     expect(Math.round(Math.abs(current - target))).toBeLessThan(5);
+    expect(state.velocity).toBeLessThan(1);
   });
 
   test("to smaller", () => {
@@ -34,15 +41,15 @@ describe("springTweener", () => {
     const lag = 1000;
     const deltaTime = 200;
     let current = 200,
-      velocity = 0,
+      state = null,
       i;
     for (i = 0; i <= 1 + lag / deltaTime; i++) {
-      ({ current, velocity } = springTweener({
+      ({ current, state } = springTweener({
         current,
-        velocity,
         target,
         lag,
         deltaTime,
+        state,
       }));
 
       if (current === target) {
@@ -52,6 +59,67 @@ describe("springTweener", () => {
 
     expect(i).toBeGreaterThan(lag / deltaTime - 2);
     expect(Math.round(Math.abs(current - target))).toBeLessThan(5);
+    expect(state.velocity).toBeLessThan(1);
+  });
+});
+
+describe("linearTweener", () => {
+  test("to larger", () => {
+    const target = 200;
+    const lag = 1000;
+    const deltaTime = 200;
+    let current = 100,
+      state = null,
+      i;
+    const initial = current;
+    const fixedVelocity = (target - initial) / lag;
+
+    for (i = 1; i <= lag / deltaTime; i++) {
+      ({ current, state } = linearTweener({
+        current,
+        target,
+        lag,
+        deltaTime,
+        state,
+      }));
+
+      expect(current).toBe(initial + fixedVelocity * i * deltaTime);
+      if (current === target) {
+        break;
+      }
+    }
+
+    expect(i).toBe(lag / deltaTime);
+    expect(current).toBe(target);
+  });
+
+  test("to smaller", () => {
+    const target = 100;
+    const lag = 1000;
+    const deltaTime = 200;
+    let current = 200,
+      state = null,
+      i;
+    const initial = current;
+    const fixedVelocity = (target - initial) / lag;
+
+    for (i = 1; i <= lag / deltaTime; i++) {
+      ({ current, state } = linearTweener({
+        current,
+        target,
+        lag,
+        deltaTime,
+        state,
+      }));
+
+      expect(current).toBe(initial + fixedVelocity * i * deltaTime);
+      if (current === target) {
+        break;
+      }
+    }
+
+    expect(i).toBe(lag / deltaTime);
+    expect(current).toBe(target);
   });
 });
 
@@ -60,8 +128,7 @@ describe("tween3DAnimationGenerator: custom", () => {
     const step = 10;
     const cbk = jest.fn(({ current }) => ({
       current: current + step,
-      velocity: 1,
-    })); // plain linear
+    }));
 
     const input = {
       x: {
@@ -111,8 +178,7 @@ describe("tween3DAnimationGenerator: custom", () => {
     const step = 10;
     const cbk = jest.fn(({ current }) => ({
       current: current + step,
-      velocity: 1,
-    })); // plain linear
+    }));
 
     const targetX = 200;
     const lagX = 100;
@@ -215,7 +281,6 @@ describe("tween3DAnimationGenerator: custom", () => {
 
   test("already at x target + per-axis tweener", async () => {
     const step = 10;
-    let velocity = 1;
     const times = [];
 
     const cbk = {
@@ -226,7 +291,6 @@ describe("tween3DAnimationGenerator: custom", () => {
         times.push(deltaTime);
         return {
           current: current + step,
-          velocity: velocity++, // dummy
         };
       }),
     };
@@ -282,7 +346,6 @@ describe("tween3DAnimationGenerator: custom", () => {
         current: input.y.current + c * step,
         target: input.y.target,
         lag: input.y.lag,
-        velocity: c,
         deltaTime: times[c],
       });
     }
@@ -290,7 +353,6 @@ describe("tween3DAnimationGenerator: custom", () => {
 
   test("snap x in init + per-axis tweener", async () => {
     const step = 10;
-    let velocity = 0;
     const times = [];
 
     const cbk = {
@@ -301,7 +363,6 @@ describe("tween3DAnimationGenerator: custom", () => {
         times.push(deltaTime);
         return {
           current: current + step,
-          velocity: ++velocity, // dummy
         };
       }),
     };
@@ -363,7 +424,6 @@ describe("tween3DAnimationGenerator: custom", () => {
         current: input.y.current + c * step,
         target: input.y.target,
         lag: input.y.lag,
-        velocity: c,
         deltaTime: times[c],
       });
     }
@@ -371,21 +431,18 @@ describe("tween3DAnimationGenerator: custom", () => {
 
   test("snap x in update + per-axis tweener", async () => {
     const step = 10;
-    let velocity = 0;
     const times = [];
 
     const cbk = {
       x: jest.fn(({ current }) => {
         return {
           current: current + step,
-          velocity: 1,
         };
       }),
       y: jest.fn(({ current, deltaTime }) => {
         times.push(deltaTime);
         return {
           current: current + step,
-          velocity: ++velocity, // dummy
         };
       }),
     };
@@ -456,7 +513,6 @@ describe("tween3DAnimationGenerator: custom", () => {
         current: input.y.current + c * step,
         target: input.y.target,
         lag: input.y.lag,
-        velocity: c,
         deltaTime: times[c],
       });
     }

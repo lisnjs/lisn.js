@@ -1,7 +1,7 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { deepCopy } = window.LISN._;
-const { springTweener, tween3DAnimationGenerator, sum } = window.LISN.utils;
+const { springTweener, tween3DAnimationGenerator } = window.LISN.utils;
 
 describe("springTweener", () => {
   test("to larger", () => {
@@ -228,8 +228,8 @@ describe("tween3DAnimationGenerator: custom", () => {
       x: jest.fn(() => {
         throw "Shouldn't be called";
       }),
-      y: jest.fn(({ current, deltaTime, totalTime }) => {
-        times.push({ deltaTime, totalTime });
+      y: jest.fn(({ current, deltaTime }) => {
+        times.push(deltaTime);
         return {
           current: current + step,
           velocity: velocity++, // dummy
@@ -282,18 +282,14 @@ describe("tween3DAnimationGenerator: custom", () => {
     expect(cbk.y).toHaveBeenCalledTimes(nCalls);
 
     for (let c = 0; c++; c < nCalls) {
-      expect(times[c].deltaTime).toBeLessThan(20);
-      expect(times[c].totalTime).toBe(
-        sum(...times.slice(0, c + 1).map((t) => t.deltaTime)),
-      );
+      expect(times[c]).toBeLessThan(20);
 
       expect(cbk.y).toHaveBeenNthCalledWith(c + 1, {
         current: input.y.current + c * step,
         target: input.y.target,
         lag: input.y.lag,
         velocity: c,
-        deltaTime: times[c].deltaTime,
-        totalTime: times[c].totalTime,
+        deltaTime: times[c],
       });
     }
   });
@@ -307,8 +303,8 @@ describe("tween3DAnimationGenerator: custom", () => {
       x: jest.fn(() => {
         throw "Shouldn't be called";
       }),
-      y: jest.fn(({ current, deltaTime, totalTime }) => {
-        times.push({ deltaTime, totalTime });
+      y: jest.fn(({ current, deltaTime }) => {
+        times.push(deltaTime);
         return {
           current: current + step,
           velocity: ++velocity, // dummy
@@ -367,18 +363,14 @@ describe("tween3DAnimationGenerator: custom", () => {
     expect(cbk.y).toHaveBeenCalledTimes(nCalls);
 
     for (let c = 0; c++; c < nCalls) {
-      expect(times[c].deltaTime).toBeLessThan(20);
-      expect(times[c].totalTime).toBe(
-        sum(...times.slice(0, c + 1).map((t) => t.deltaTime)),
-      );
+      expect(times[c]).toBeLessThan(20);
 
       expect(cbk.y).toHaveBeenNthCalledWith(c + 1, {
         current: input.y.current + c * step,
         target: input.y.target,
         lag: input.y.lag,
         velocity: c,
-        deltaTime: times[c].deltaTime,
-        totalTime: times[c].totalTime,
+        deltaTime: times[c],
       });
     }
   });
@@ -395,8 +387,8 @@ describe("tween3DAnimationGenerator: custom", () => {
           velocity: 1,
         };
       }),
-      y: jest.fn(({ current, deltaTime, totalTime }) => {
-        times.push({ deltaTime, totalTime });
+      y: jest.fn(({ current, deltaTime }) => {
+        times.push(deltaTime);
         return {
           current: current + step,
           velocity: ++velocity, // dummy
@@ -464,18 +456,14 @@ describe("tween3DAnimationGenerator: custom", () => {
     expect(cbk.y).toHaveBeenCalledTimes(nCalls);
 
     for (let c = 0; c++; c < nCalls) {
-      expect(times[c].deltaTime).toBeLessThan(20);
-      expect(times[c].totalTime).toBe(
-        sum(...times.slice(0, c + 1).map((t) => t.deltaTime)),
-      );
+      expect(times[c]).toBeLessThan(20);
 
       expect(cbk.y).toHaveBeenNthCalledWith(c + 1, {
         current: input.y.current + c * step,
         target: input.y.target,
         lag: input.y.lag,
         velocity: c,
-        deltaTime: times[c].deltaTime,
-        totalTime: times[c].totalTime,
+        deltaTime: times[c],
       });
     }
   });
@@ -497,8 +485,7 @@ describe("tween3DAnimationGenerator: spring", () => {
     };
 
     const deltaTime = 10; // mock requestAnimationFrame uses 10ms timer
-    let i = { x: 0, y: 0 },
-      totalTime = { x: 0, y: 0 };
+    let i = { x: 0, y: 0 };
 
     const generator = tween3DAnimationGenerator("spring", input);
 
@@ -517,7 +504,6 @@ describe("tween3DAnimationGenerator: spring", () => {
           numAxesDone++;
         } else {
           i[a]++;
-          totalTime[a] += deltaTime;
         }
       }
 
@@ -529,8 +515,6 @@ describe("tween3DAnimationGenerator: spring", () => {
     expect(done).toBe(1);
     expect(i.x).toBeLessThan((input.x.lag * 1.3) / deltaTime);
     expect(i.y).toBeLessThan((input.y.lag * 1.3) / deltaTime);
-    expect(totalTime.x).toBeLessThan(input.x.lag * 1.3);
-    expect(totalTime.y).toBeLessThan(input.y.lag * 1.3);
   });
 
   test("with updating target", async () => {
@@ -552,8 +536,7 @@ describe("tween3DAnimationGenerator: spring", () => {
     const update = { x: { target: targetXB } };
 
     const deltaTime = 10; // mock requestAnimationFrame uses 10ms timer
-    let i = { x: 0, y: 0 },
-      totalTime = { x: 0, y: 0 };
+    let i = { x: 0, y: 0 };
 
     const generator = tween3DAnimationGenerator("spring", input);
 
@@ -582,7 +565,6 @@ describe("tween3DAnimationGenerator: spring", () => {
           numAxesDone++;
         } else {
           i[a]++;
-          totalTime[a] += deltaTime;
         }
       }
 
@@ -594,7 +576,5 @@ describe("tween3DAnimationGenerator: spring", () => {
     expect(done).toBe(1);
     expect(i.x).toBeLessThan((input.x.lag * 1.3) / deltaTime);
     expect(i.y).toBeLessThan((input.y.lag * 1.3) / deltaTime);
-    expect(totalTime.x).toBeLessThan(input.x.lag * 1.3);
-    expect(totalTime.y).toBeLessThan(input.y.lag * 1.3);
   });
 });

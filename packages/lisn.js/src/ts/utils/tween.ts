@@ -72,11 +72,6 @@ export type TweenerInput = {
    * The time in milliseconds since the last call to the tweener.
    */
   deltaTime: number;
-
-  /**
-   * The total time elapsed since the start of the tweening.
-   */
-  totalTime: number;
 };
 
 /**
@@ -98,18 +93,11 @@ export type TweenerOutput = {
   velocity: number;
 };
 
-/**
- * @since v1.3.0
- *
- * @category Tweening
- */
-export type SpringTweenerInput = {
-  current: number;
-  target: number;
-  lag: number;
-  velocity: number;
-  deltaTime: number;
-};
+// -------------------------------------------------------------------------
+// --------------------------- BUILT-IN TWEENERS ---------------------------
+// -------------------------------------------------------------------------
+
+// --------------------------------- SPRING --------------------------------
 
 /**
  * A tweener based on the motion of a critically damped user-driven spring.
@@ -122,8 +110,8 @@ export type SpringTweenerInput = {
  *
  * @category Tweening
  */
-export const springTweener = (
-  { current, target, lag, velocity, deltaTime }: SpringTweenerInput,
+export const springTweener: TweenerFn = (
+  { current, target, lag, velocity, deltaTime },
   conf?: { precision?: number },
 ) => {
   const { precision = 1 } = conf ?? {};
@@ -152,6 +140,22 @@ export const springTweener = (
 
   return { current, velocity };
 };
+
+// --------------------------------- LINEAR --------------------------------
+
+// XXX TODO
+
+// ------------------------------- QUADRATIC -------------------------------
+
+// XXX TODO
+
+// --------------------------------- CUBIC ---------------------------------
+
+// XXX TODO
+
+// -------------------------------------------------------------------------
+// -------------------- BUILT-IN TWEENERS SINGLE EXPORT --------------------
+// -------------------------------------------------------------------------
 
 /**
  * @since v1.3.0
@@ -287,13 +291,12 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
   const motion: {
     [K in "x" | "y" | "z"]: {
       _done: boolean;
-      _totalTime: number;
       _velocity: number;
     };
   } = {
-    x: { _done: true, _totalTime: 0, _velocity: 0 },
-    y: { _done: true, _totalTime: 0, _velocity: 0 },
-    z: { _done: true, _totalTime: 0, _velocity: 0 },
+    x: { _done: true, _velocity: 0 },
+    y: { _done: true, _velocity: 0 },
+    z: { _done: true, _velocity: 0 },
   };
 
   const isTweening = () =>
@@ -312,10 +315,7 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
 
   let updateData: Tween3DUpdate<Axes> = {};
 
-  for await (const {
-    total: totalTime,
-    sinceLast: deltaTime,
-  } of animationFrameGenerator()) {
+  for await (const { sinceLast: deltaTime } of animationFrameGenerator()) {
     if (deltaTime === 0) {
       continue;
     }
@@ -324,7 +324,6 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
     for (a in init) {
       const params = state[a];
       const motionParams = motion[a];
-      motionParams._totalTime = totalTime;
 
       // Apply update
       const newParams = updateData[a] ?? {};
@@ -350,7 +349,6 @@ export async function* tween3DAnimationGenerator<Axes extends "x" | "y" | "z">(
           lag: params.lag,
           velocity: motionParams._velocity,
           deltaTime,
-          totalTime: motionParams._totalTime,
         });
 
         params.current = result.current;

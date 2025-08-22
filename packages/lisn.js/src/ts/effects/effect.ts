@@ -150,6 +150,9 @@ export type FXAxisStateUpdate = {
   /**
    * If set to true, it tells the composer not to tween, but instead jump
    * straight to the target value.
+   *
+   * This gets defaulted back to false during each update unless you explicitly
+   * set it to `true`.
    */
   snap?: boolean;
 };
@@ -207,7 +210,8 @@ export type FXAxisState = {
 
   /**
    * If true, it means the composer was told to
-   * {@link FXAxisStateUpdate.snap | snap} straight to the target value.
+   * {@link FXAxisStateUpdate.snap | snap} straight to the target value during
+   * the last update.
    */
   snap: boolean;
 };
@@ -345,7 +349,12 @@ export const scaleParameters = (
  * Returns a new updated state as per the update data if any while enforcing
  * valid values for all properties.
  *
- * Lag and depth are set from the composer's configuration.
+ * **NOTE:** For any axis:
+ * - lag and depth are always set from the composer's configuration.
+ * - If the input state has snap: true and there is no update given for this
+ *   axis (`update` or `update[axis]` is `undefined`), snap is preserved.
+ *   Otherwise, if there's an update given for the axis, snap is reset to
+ *   `false`, unless the update explicitly sets it to `true`
  */
 export const getUpdatedState = (
   state: Partial<FXState> | undefined,
@@ -357,8 +366,7 @@ export const getUpdatedState = (
 
   const composerConfig = composer.getConfig();
 
-  const toBool = (input: unknown, defaultValue: boolean) =>
-    _.isBoolean(input) ? input : defaultValue;
+  const toBool = (input: unknown) => (_.isBoolean(input) ? input : false);
 
   const validateAxis = (
     axisState: Partial<FXAxisState> | undefined,
@@ -382,7 +390,7 @@ export const getUpdatedState = (
       max,
       lag,
       depth,
-      snap: toBool(axisState.snap, false),
+      snap: toBool(axisState.snap),
       // updated below
       initial: 0,
       previous: 0,
@@ -403,11 +411,11 @@ export const getUpdatedState = (
   const updateAxis = (axis: "x" | "y" | "z") => {
     const axisState = validateAxis(state[axis], axis); // validate input state
 
-    const axisUpdate = update[axis] ?? {};
+    const axisUpdate = update[axis] ?? { snap: axisState.snap };
     for (const prop of ["min", "max", "target"] as const) {
       axisState[prop] = toNum(axisUpdate[prop], axisState[prop]);
     }
-    axisState.snap = toBool(axisUpdate.snap, axisState.snap);
+    axisState.snap = toBool(axisUpdate.snap);
 
     return validateAxis(axisState, axis); // validate final state
   };

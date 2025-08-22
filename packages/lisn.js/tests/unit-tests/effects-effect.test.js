@@ -78,7 +78,7 @@ const DUMMY_STATE = {
     target: 5,
     lag: 0,
     depth: 1,
-    snap: true,
+    snap: false,
   },
 };
 
@@ -759,6 +759,13 @@ describe("getUpdatedState: validate current", () => {
       expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
+    test(`${axis}: snap: true`, () => {
+      const state = deepCopy(dummyState);
+      state[axis].snap = true;
+
+      expect(getUpdatedState(state, composer)).toEqual(state); // preserved
+    });
+
     test(`${axis}: multiple invalid v1`, () => {
       const min = 100;
       const state = deepCopy(dummyState);
@@ -931,6 +938,25 @@ describe("getUpdatedState: with update data", () => {
       update[axis].lag = 1000;
       update[axis].depth = 10;
       expect(getUpdatedState(state, composer, update)).toEqual(expected);
+    });
+
+    test(`${axis}: input snap: true and missing update for axis`, () => {
+      const state = deepCopy(dummyState);
+      state[axis].snap = true;
+
+      const update = {};
+      expect(getUpdatedState(state, composer, update)).toEqual(state); // preserved
+    });
+
+    test(`${axis}: input snap: true and present update for axis`, () => {
+      const state = deepCopy(dummyState);
+      state[axis].snap = true;
+
+      const expected = deepCopy(state);
+      expected[axis].snap = false;
+
+      const update = { [axis]: {} };
+      expect(getUpdatedState(state, composer, update)).toEqual(expected); // reset to false
     });
   }
 });

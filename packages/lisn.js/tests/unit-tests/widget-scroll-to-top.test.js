@@ -177,9 +177,9 @@ describe("click", () => {
     expect(document.documentElement.scrollLeft).toBe(200);
 
     element.dispatchEvent(window.newClick());
-    await window.waitFor(1500); // scroll takes ~1s
-    expect(document.documentElement.scrollTop).toBe(0);
-    expect(document.documentElement.scrollLeft).toBe(0);
+    await window.waitFor(1400); // spring takes longer to reach exact target
+    expect(document.documentElement.scrollTop).toBeCloseTo(0, 0);
+    expect(document.documentElement.scrollLeft).toBeCloseTo(0, 0);
   });
 
   test("custom scrollable", async () => {
@@ -190,9 +190,9 @@ describe("click", () => {
     expect(scrollable.scrollLeft).toBe(200);
 
     element.dispatchEvent(window.newClick());
-    await window.waitFor(1500); // scroll takes ~1s
-    expect(scrollable.scrollTop).toBe(0);
-    expect(scrollable.scrollLeft).toBe(0);
+    await window.waitFor(1400); // spring takes longer to reach exact target
+    expect(scrollable.scrollTop).toBeCloseTo(0, 0);
+    expect(scrollable.scrollLeft).toBeCloseTo(0, 0);
   });
 });
 

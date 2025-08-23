@@ -124,7 +124,7 @@ export class DOMWatcher {
    */
   static reuse(config?: DOMWatcherConfig) {
     const myConfig = getConfig(config);
-    const configStrKey = objToStrKey(_.omitKeys(myConfig, { _root: null }));
+    const configStrKey = objToStrKey(_.omitKeys(myConfig, { _root: 1 }));
 
     const root = myConfig._root === _.getBody() ? null : myConfig._root;
     let instance = instances.get(root)?.get(configStrKey);

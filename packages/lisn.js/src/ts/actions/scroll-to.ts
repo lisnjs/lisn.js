@@ -156,7 +156,7 @@ export class ScrollTo implements Action {
             top: prevScrollTop,
             left: prevScrollLeft,
           },
-          _.omitKeys(config ?? {}, { offset: true }), // no offset when undoing
+          _.omitKeys(config ?? {}, { offset: 1 }), // no offset when undoing
         );
         await action?.waitFor();
       }

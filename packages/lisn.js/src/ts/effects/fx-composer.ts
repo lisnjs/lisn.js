@@ -18,9 +18,9 @@ import { setStyleProp, delStyleProp } from "@lisn/utils/css-alter";
 import { toRawNum } from "@lisn/utils/math";
 import { compareValuesIn } from "@lisn/utils/misc";
 import {
-  tween3DAnimationGenerator,
+  animation3DTweener,
   Tweener,
-  Tween3DUpdate,
+  Animation3DTweenerUpdate,
 } from "@lisn/utils/tween";
 
 import {
@@ -495,6 +495,7 @@ export class FXComposer {
       );
 
       let didUpdate: boolean | undefined = void 0;
+
       if (checkIfChanged) {
         didUpdate = !compareValuesIn(currentFXState, newState, 5);
       }
@@ -524,9 +525,9 @@ export class FXComposer {
 
       isTweening = true;
 
-      const tweenGenerator = tween3DAnimationGenerator(tweener, currentFXState);
+      const tweenGenerator = animation3DTweener(tweener, currentFXState);
       while (true) {
-        const tweenUpdate: Tween3DUpdate<keyof FXState> = {};
+        const tweenUpdate: Animation3DTweenerUpdate<keyof FXState> = {};
         for (const a of ["x", "y", "z"] as const) {
           tweenUpdate[a] = { snap: currentFXState[a].snap };
           for (const p of ["target", "lag"] as const) {

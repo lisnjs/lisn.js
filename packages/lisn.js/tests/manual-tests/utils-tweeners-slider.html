@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="assets/js/lisn.link.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/lisn/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style>
+      #box {
+        width: 200px;
+        height: 200px;
+        background: blue;
+        margin: 30px 0;
+      }
+
+      #sliders {
+        white-space: nowrap;
+      }
+
+      #sliders td:last-child,
+      #sliders td:last-child input {
+        width: 100%;
+      }
+
+      div {
+        margin: 5px 0;
+      }
+
+      label {
+        margin: 0 7px 0 0;
+        display: inline-flex;
+      }
+    </style>
+  </head>
+  <body>
+    <table id="sliders">
+      <tbody>
+        <tr>
+          <td>
+            <label>Target position </label>
+          </td>
+
+          <td>
+            <input
+              type="range"
+              name="target"
+              value="0"
+              min="0"
+              max="100"
+              step="5"
+            />
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <label>Lag </label>
+          </td>
+
+          <td>
+            <input
+              type="range"
+              name="lag"
+              value="1500"
+              min="100"
+              max="5000"
+              step="100"
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div>
+      Easing:
+      <label
+        ><input type="radio" name="tween" value="spring" checked />spring</label
+      >
+      <label><input type="radio" name="tween" value="linear" />linear</label>
+      <label
+        ><input type="radio" name="tween" value="quadratic" />quadratic</label
+      >
+      <label><input type="radio" name="tween" value="cubic" />cubic</label>
+    </div>
+
+    <div id="box"></div>
+
+    <script>
+      const box = document.getElementById("box");
+
+      const targetInput = document.querySelector("input[name=target]");
+      targetInput.addEventListener("input", () => updateValues());
+
+      const lagInput = document.querySelector("input[name=lag]");
+      lagInput.addEventListener("input", () => updateValues());
+
+      const tweenInputs = document.querySelectorAll("input[name=tween]");
+
+      // --------------------
+
+      let generator = null;
+      let current = 0; // position
+      let elapsedSinceChange = 0;
+      let target, lag;
+
+      updateValues(true);
+
+      // --------------------
+
+      function updateValues(isInitial = false) {
+        target = Number.parseInt(targetInput.value);
+        lag = Number.parseInt(lagInput.value);
+        elapsedSinceChange = 0;
+
+        if (!isInitial) {
+          tweenBox();
+        }
+      }
+
+      async function tweenBox() {
+        if (generator) {
+          return;
+        }
+
+        const tween = document.querySelector("input[name=tween]:checked").value;
+
+        for (const input of tweenInputs) {
+          input.disabled = true;
+        }
+
+        console.log("tweening", tween, {
+          current,
+          target,
+          lag,
+        });
+
+        for await (const {
+          sinceLast: deltaTime,
+        } of LISN.utils.animationFrameGenerator()) {
+          if (!deltaTime) {
+            continue;
+          }
+
+          if (!generator) {
+            generator = LISN.utils.TWEENERS[tween]({
+              current,
+              target,
+              lag,
+              deltaTime,
+            });
+          }
+
+          if (elapsedSinceChange > 1.5 * lag) {
+            console.error(`tweener ${tween} is not converging`, {
+              elapsedSinceChange,
+              lag,
+            });
+            break;
+          }
+
+          elapsedSinceChange += deltaTime;
+
+          const next = generator.next({
+            target,
+            lag,
+            deltaTime,
+          });
+
+          if (next.done) {
+            break;
+          }
+
+          current = next.value.current;
+
+          box.style.setProperty(
+            "transform",
+            // progress % of the viewport width - box width
+            `translateX(calc((0.98vw - 1%) * ${current}))`,
+          );
+        }
+
+        console.log("done tweening", tween, {
+          current,
+          target,
+          lag,
+        });
+
+        generator = null;
+        for (const input of tweenInputs) {
+          input.disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>

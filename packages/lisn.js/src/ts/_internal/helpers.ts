@@ -250,12 +250,19 @@ export const copySelectKeysTo = <
   fromObj: T,
   toObj: T,
   keysToSelect: R,
-) => {
+): boolean => {
+  let didUpdate = false;
+
   for (const key in fromObj) {
     if (key in keysToSelect) {
-      toObj[key] = fromObj[key];
+      if (toObj[key] !== fromObj[key]) {
+        didUpdate = true;
+        toObj[key] = fromObj[key];
+      }
     }
   }
+
+  return didUpdate;
 };
 
 export const keyExists = <T extends object>(

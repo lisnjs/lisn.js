@@ -440,7 +440,7 @@ const setupWatcher = (
       {
         actions: action,
       },
-      _.omitKeys(config, { target: null }),
+      _.omitKeys(config, { target: 1 }),
     ),
   );
 };

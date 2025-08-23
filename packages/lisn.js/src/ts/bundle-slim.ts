@@ -14,12 +14,12 @@ export * from "@lisn/bundle-essentials";
 
 // --- remove widget specific actions
 export const actions = _.omitKeys(_actions, {
-  Open: true,
-  NextPage: true,
-  PrevPage: true,
-  GoToPage: true,
-  EnablePage: true,
-  DisablePage: true,
+  Open: 1,
+  NextPage: 1,
+  PrevPage: 1,
+  GoToPage: 1,
+  EnablePage: 1,
+  DisablePage: 1,
 } as const);
 
 export * as triggers from "@lisn/triggers/index";

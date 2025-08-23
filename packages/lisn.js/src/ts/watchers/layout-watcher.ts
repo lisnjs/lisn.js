@@ -146,7 +146,7 @@ export class LayoutWatcher {
    */
   static reuse(config?: LayoutWatcherConfig) {
     const myConfig = getConfig(config);
-    const configStrKey = objToStrKey(_.omitKeys(myConfig, { _root: null }));
+    const configStrKey = objToStrKey(_.omitKeys(myConfig, { _root: 1 }));
 
     let instance = instances.get(myConfig._root)?.get(configStrKey);
     if (!instance) {

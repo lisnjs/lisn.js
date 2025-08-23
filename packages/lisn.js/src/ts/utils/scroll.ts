@@ -28,7 +28,7 @@ import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
 import { maxAbs } from "@lisn/utils/math";
 import { randId, formatAsString } from "@lisn/utils/text";
-import { tween3DAnimationGenerator, Tweener } from "@lisn/utils/tween";
+import { animation3DTweener, Tweener } from "@lisn/utils/tween";
 import { isValidStrList } from "@lisn/utils/validation";
 
 import { createXMap } from "@lisn/modules/x-map";
@@ -493,10 +493,10 @@ type ScrollToOptionsInternal = {
 
 type ScrollInfo = {
   _action?: ScrollAction;
-  // _generator is the current ongoing tween3DAnimationGenerator
+  // _generator is the current ongoing animation3DTweener
   // If a scroll action is cancelled by another scroll action, it will re-use
   // the same generator to avoid interruption in the scroll animation
-  _generator?: ReturnType<typeof tween3DAnimationGenerator<"x" | "y">>;
+  _generator?: ReturnType<typeof animation3DTweener<"x" | "y">>;
 };
 
 const IS_SCROLLABLE_CACHE_TIMEOUT = 1000;
@@ -708,7 +708,7 @@ const initiateScroll = async (
   // If we cancelled another action, pick up from where it had left
   let generator = currentScrollInfos.get(scrollable)?._generator;
   if (!generator) {
-    generator = tween3DAnimationGenerator(options._tweener, {
+    generator = animation3DTweener(options._tweener, {
       x: {
         current: position._start.left,
         target: position._end.left,

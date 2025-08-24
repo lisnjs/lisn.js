@@ -36,6 +36,9 @@ export type TweenerName = keyof typeof TWEENERS;
  * A tweener function should be a generator that accepts updates to target and
  * lag and keeps whatever state it needs to.
  *
+ * Notice that because of how generators work, updates sent on the first call to
+ * `next()` are not received.
+ *
  * @since v1.3.0
  *
  * @category Tweening
@@ -267,7 +270,7 @@ export const createEaseInOutTweener = (
             const x = _.abs(current - reference) / _.abs(target - reference);
             const oldX = _.abs(old - reference) / _.abs(target - reference);
             const isIncreasing = x > oldX;
-            progress = invert(x, isIncreasing);
+            progress = invert(x, isIncreasing); // XXX can we figure it out without invert?
           }
         }
 
@@ -460,6 +463,9 @@ export type Animation3DTweenerUpdate<Axes extends "x" | "y" | "z"> = {
     /**
      * If set to true, it tells the tween generator not to tween, but instead jump
      * straight to the target values.
+     *
+     * This gets defaulted back to false during each update unless you explicitly
+     * set it to `true`.
      */
     snap?: boolean;
   };
@@ -501,7 +507,7 @@ export type Animation3DTweenerOutput<Axes extends "x" | "y" | "z"> = {
 
     /**
      * If set to true, it means the tweener was told to snap straight to the
-     * target value.
+     * target value during the last update.
      */
     snap: boolean;
 
@@ -519,6 +525,9 @@ export type Animation3DTweenerOutput<Axes extends "x" | "y" | "z"> = {
  *
  * Its `next` method accepts update to the target and lag settings as well as an
  * option to make it snap instantly to the target.
+ *
+ * Notice that because of how generators work, updates sent on the first call to
+ * `next()` are not received.
  *
  * The generator is guaranteed to yield at least once and accept an
  * {@link Animation3DTweenerUpdate | update}, even if the input position is
@@ -564,8 +573,13 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
 
   const applyUpdate = (updateData: Animation3DTweenerUpdate<Axes>) => {
     for (const axis in output) {
+      const newParams = updateData[axis];
+      if (!newParams) {
+        continue;
+      }
+
       const params = output[axis];
-      const newParams = updateData[axis] ?? {};
+      params.snap = false; // default
 
       // Copy only target, lag and snap over
       _.copySelectKeysTo(newParams, params, { target: 1, lag: 1, snap: 1 });
@@ -621,6 +635,8 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
   const output = _.deepCopy(init) as Animation3DTweenerOutput<Axes>;
   for (const axis in init) {
     output[axis].initial = output[axis].previous = output[axis].current;
+    output[axis].precision ??= 1;
+    output[axis].snap ??= false;
   }
 
   let skipYield = false,

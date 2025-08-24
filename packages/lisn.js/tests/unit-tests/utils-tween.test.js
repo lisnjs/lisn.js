@@ -161,7 +161,7 @@ describe("tweeners", () => {
 
         let expectedApproxTime = tweenerName === "spring" ? 1.7 * lag : lag;
 
-        test(`${tweenerName}: with updating target ${initial} -> ${firstTarget} -> ${finalTarget}`, () => {
+        test(`${tweenerName}: updating target ${initial} -> ${firstTarget} -> ${finalTarget}`, () => {
           let currentTarget = firstTarget,
             current = initial,
             switchedAtElapsed = 0,
@@ -240,121 +240,6 @@ describe("tweeners", () => {
 });
 
 describe("animation3DTweener: custom", () => {
-  test("for loop", async () => {
-    const step = 10;
-    const cbk = jest.fn(({ current }) => current + step);
-    const tweener = newTweener(cbk);
-
-    const input = {
-      x: {
-        current: 100,
-        target: 200,
-        lag: 100,
-      },
-      y: {
-        current: 0,
-        target: 40,
-        lag: 50,
-      },
-      // omit z
-    };
-    const inputCopy = deepCopy(input);
-
-    const generator = animation3DTweener(tweener, input);
-    let i = 0;
-    for await (const state of generator) {
-      i++;
-      expect(input).toEqual(inputCopy); // not modified
-
-      for (const a of ["x", "y"]) {
-        expect(state[a].initial).toBe(input[a].current);
-        expect(state[a].previous).toBe(
-          Math.min(input[a].target - step, input[a].current + (i - 1) * step),
-        );
-        expect(state[a].current).toBe(
-          Math.min(input[a].target, input[a].current + i * step),
-        );
-        expect(state[a].target).toBe(input[a].target);
-        expect(state[a].lag).toBe(input[a].lag);
-      }
-
-      expect(state.z).toBeUndefined();
-    }
-
-    expect(i).toBe(
-      Math.max(
-        (input.x.target - input.x.current) / step,
-        (input.y.target - input.y.current) / step,
-      ),
-    );
-  });
-
-  test("with updating target and lag", async () => {
-    const step = 10;
-    const cbk = jest.fn(({ current }) => current + step);
-    const tweener = newTweener(cbk);
-
-    const targetX = 200;
-    const lagX = 100;
-    const input = {
-      x: {
-        current: targetX / 4,
-        target: targetX / 2,
-        lag: lagX / 2,
-      },
-      y: {
-        current: 0,
-        target: 40,
-        lag: 50,
-      },
-      // omit z
-    };
-    const inputCopy = deepCopy(input);
-
-    const update = { x: { target: targetX, lag: lagX } };
-
-    const generator = animation3DTweener(tweener, input);
-    let i = 0;
-    while (true) {
-      const { value: state, done: genDone } = await generator.next(
-        i > 0 ? update : undefined,
-      );
-
-      if (genDone) {
-        break;
-      }
-
-      i++;
-      expect(input).toEqual(inputCopy); // not modified
-
-      for (const a of ["x", "y"]) {
-        const target =
-          a === "x" ? (i > 1 ? targetX : targetX / 2) : input.y.target;
-        const lag = a === "x" ? (i > 1 ? lagX : lagX / 2) : input.y.lag;
-
-        expect(state[a].target).toBe(target);
-        expect(state[a].lag).toBe(lag);
-
-        expect(state[a].initial).toBe(input[a].current);
-        expect(state[a].previous).toBe(
-          Math.min(target - step, input[a].current + (i - 1) * step),
-        );
-        expect(state[a].current).toBe(
-          Math.min(target, input[a].current + i * step),
-        );
-      }
-
-      expect(state.z).toBeUndefined();
-    }
-
-    expect(i).toBe(
-      Math.max(
-        (targetX - input.x.current) / step,
-        (input.y.target - input.y.current) / step,
-      ),
-    );
-  });
-
   test("no input", async () => {
     const cbk = jest.fn(() => {
       throw "Shouldn't be called";
@@ -369,368 +254,33 @@ describe("animation3DTweener: custom", () => {
       i++;
     }
 
-    expect(i).toBe(1);
+    expect(i).toBe(1); // yielded once
     expect(cbk).toHaveBeenCalledTimes(0);
   });
 
-  test("already at target", async () => {
-    const cbk = jest.fn(({ current }) => current);
-    const tweener = newTweener(cbk);
-
-    const input = {
-      x: {
-        current: 200,
-        target: 200,
-        lag: 100,
-      },
-      y: {
-        current: 40,
-        target: 40,
-        lag: 50,
-      },
-      // omit z
-    };
-
-    const generator = animation3DTweener(tweener, input);
-    let i = 0;
-    for await (const state of generator) {
-      i++;
-      expect(state.x.current).toBe(input.x.target);
-      expect(state.y.current).toBe(input.y.target);
-    }
-
-    expect(i).toBe(1);
-    expect(cbk).toHaveBeenCalledTimes(2); // one for each axis
-  });
-
-  test("already at target, but updated at i=1", async () => {
-    const step = 10;
-    const cbk = jest.fn(({ current }) => current + step);
-    const tweener = newTweener(cbk);
-
-    const targetX = 200;
-    const input = {
-      x: {
-        current: targetX / 2,
-        target: targetX / 2,
-        lag: 100,
-      },
-      y: {
-        current: 0,
-        target: 40,
-        lag: 50,
-      },
-      // omit z
-    };
-    const inputCopy = deepCopy(input);
-
-    const update = { x: { target: targetX } };
-
-    const generator = animation3DTweener(tweener, input);
-    let i = 0;
-    while (true) {
-      const { value: state, done: genDone } = await generator.next(
-        i > 0 ? update : undefined,
-      );
-
-      if (genDone) {
-        break;
-      }
-
-      i++;
-      expect(input).toEqual(inputCopy); // not modified
-
-      for (const a of ["x", "y"]) {
-        const target =
-          a === "x" ? (i > 1 ? targetX : input.x.target) : input.y.target;
-
-        expect(state[a].target).toBe(target);
-        expect(state[a].lag).toBe(input[a].lag);
-
-        expect(state[a].initial).toBe(input[a].current);
-
-        if (a === "x" && i === 1) {
-          expect(state.x.previous).toBe(input[a].current);
-        } else {
-          // x has skipped one step
-          expect(state[a].previous).toBe(
-            Math.min(
-              target - step,
-              input[a].current + (i - (a === "x" ? 2 : 1)) * step,
-            ),
-          );
-        }
-
-        expect(state[a].current).toBe(
-          Math.min(target, input[a].current + (i - (a === "x" ? 1 : 0)) * step),
-        );
-      }
-
-      expect(state.z).toBeUndefined();
-    }
-
-    expect(i).toBe(
-      Math.max(
-        1 + (targetX - input.x.current) / step,
-        (input.y.target - input.y.current) / step,
-      ),
-    );
-  });
-
-  test("with updating x target after reaching it", async () => {
-    const step = 10;
-    const cbk = jest.fn(({ current }) => current + step);
-    const tweener = newTweener(cbk);
-
-    const targetX = 50;
-    const input = {
-      x: {
-        current: 0,
-        target: 10, // reached in 1 iteration
-        lag: 100,
-      },
-      y: {
-        current: 0,
-        target: 400,
-        lag: 50,
-      },
-      // omit z
-    };
-    const inputCopy = deepCopy(input);
-
-    const update = { x: { target: targetX } };
-
-    const generator = animation3DTweener(tweener, input);
-    let i = 0;
-    while (true) {
-      const { value: state, done: genDone } = await generator.next(
-        i === 2 ? update : undefined,
-      );
-
-      if (genDone) {
-        break;
-      }
-
-      i++;
-      if (i == 1) {
-        expect(state.x.current).toBe(state.x.target);
-      }
-
-      expect(input).toEqual(inputCopy); // not modified
-
-      for (const a of ["x", "y"]) {
-        const target =
-          a === "x" ? (i > 2 ? targetX : input.x.target) : input.y.target;
-
-        expect(state[a].target).toBe(target);
-        expect(state[a].lag).toBe(input[a].lag);
-
-        expect(state[a].initial).toBe(input[a].current);
-
-        if (a === "x" && i <= 2) {
-          expect(state.x.previous).toBe(input[a].current);
-        } else {
-          // x has skipped one step
-          expect(state[a].previous).toBe(
-            Math.min(
-              target - step,
-              input[a].current + (i - (a === "x" ? 2 : 1)) * step,
-            ),
-          );
-        }
-
-        if (a === "x" && i <= 2) {
-          expect(state.x.current).toBe(
-            Math.min(target, input.x.current + step),
-          );
-        } else {
-          expect(state[a].current).toBe(
-            Math.min(
-              target,
-              input[a].current + (i - (a === "x" ? 1 : 0)) * step,
-            ),
-          );
-        }
-      }
-
-      expect(state.z).toBeUndefined();
-    }
-
-    expect(i).toBe(
-      Math.max(
-        1 + (targetX - input.x.current) / step,
-        (input.y.target - input.y.current) / step,
-      ),
-    );
-  });
-
-  test("already at x target + per-axis tweener", async () => {
-    const step = 10;
-    const times = [];
-
-    const cbk = {
-      x: jest.fn(({ current }) => current),
-      y: jest.fn(({ current, deltaTime }) => {
-        times.push(deltaTime);
-        return current + step;
-      }),
-    };
-
-    const tweeners = { x: newTweener(cbk.x), y: newTweener(cbk.y) };
-
-    const input = {
-      x: {
-        current: 200,
-        target: 200,
-        lag: 100,
-      },
-      y: {
-        current: 0,
-        target: 40,
-        lag: 50,
-      },
-      // omit z
-    };
-    const inputCopy = deepCopy(input);
-
-    const generator = animation3DTweener(tweeners, input);
-    let i = 0;
-    for await (const state of generator) {
-      i++;
-      expect(input).toEqual(inputCopy); // not modified
-
-      for (const a of ["x", "y"]) {
-        expect(state[a].initial).toBe(input[a].current);
-        expect(state[a].previous).toBe(
-          a === "x"
-            ? input.x.current
-            : Math.min(input.y.target - step, input.y.current + (i - 1) * step),
-        );
-        expect(state[a].current).toBe(
-          Math.min(input[a].target, input[a].current + i * step),
-        );
-        expect(state[a].target).toBe(input[a].target);
-        expect(state[a].lag).toBe(input[a].lag);
-      }
-
-      expect(state.z).toBeUndefined();
-    }
-
-    const nCalls = (input.y.target - input.y.current) / step;
-    expect(i).toBe(nCalls);
-
-    expect(cbk.x).toHaveBeenCalledTimes(1);
-    expect(cbk.y).toHaveBeenCalledTimes(nCalls);
-
-    for (let c = 0; c++; c < nCalls) {
-      expect(times[c]).toBeLessThan(20);
-
-      expect(cbk.y).toHaveBeenNthCalledWith(c + 1, {
-        current: input.y.current + c * step,
-        target: input.y.target,
-        lag: input.y.lag,
-        deltaTime: times[c],
-        precision: 1,
-      });
-    }
-  });
-
-  for (const snapWithLag of [true, false]) {
-    test(`${snapWithLag ? "lag x = 0" : "snap x"} in init + per-axis tweener`, async () => {
+  for (const perAxisCbk of [true, false]) {
+    test(`basic: for loop${perAxisCbk ? " + per-axis tweener" : ""}`, async () => {
       const step = 10;
-      const times = [];
+      const times = { x: [], y: [] };
+      const cbk = perAxisCbk
+        ? {
+            x: jest.fn(({ current, deltaTime }) => {
+              times.x.push(deltaTime);
+              return current + step;
+            }),
+            y: jest.fn(({ current, deltaTime }) => {
+              times.y.push(deltaTime);
+              return current + step;
+            }),
+          }
+        : jest.fn(({ current }) => current + step);
 
-      const cbk = {
-        x: jest.fn(() => {
-          throw "Shouldn't be called";
-        }),
-        y: jest.fn(({ current, deltaTime }) => {
-          times.push(deltaTime);
-          return current + step;
-        }),
-      };
-
-      const tweeners = { x: newTweener(cbk.x), y: newTweener(cbk.y) };
-
-      const input = {
-        x: {
-          current: 100,
-          target: 200,
-          lag: snapWithLag ? 0 : 100,
-          snap: !snapWithLag,
-        },
-        y: {
-          current: 0,
-          target: 40,
-          lag: 50,
-        },
-        // omit z
-      };
-      const inputCopy = deepCopy(input);
-
-      const generator = animation3DTweener(tweeners, input);
-      let i = 0;
-      for await (const state of generator) {
-        i++;
-        expect(input).toEqual(inputCopy); // not modified
-
-        for (const a of ["x", "y"]) {
-          const current =
-            a === "x"
-              ? input.x.target
-              : Math.min(input.y.target, input.y.current + i * step);
-
-          const previous =
-            a === "x"
-              ? input.x.current
-              : Math.min(
-                  input.y.target - step,
-                  input.y.current + (i - 1) * step,
-                );
-
-          expect(state[a].initial).toBe(input[a].current);
-          expect(state[a].current).toBe(current);
-          expect(state[a].previous).toBe(previous);
-
-          expect(state[a].target).toBe(input[a].target);
-          expect(state[a].lag).toBe(input[a].lag);
-        }
-
-        expect(state.z).toBeUndefined();
-      }
-
-      const nCalls = (input.y.target - input.y.current) / step;
-      expect(i).toBe(nCalls);
-
-      expect(cbk.x).toHaveBeenCalledTimes(0);
-      expect(cbk.y).toHaveBeenCalledTimes(nCalls);
-
-      for (let c = 0; c++; c < nCalls) {
-        expect(times[c]).toBeLessThan(20);
-
-        expect(cbk.y).toHaveBeenNthCalledWith(c + 1, {
-          current: input.y.current + c * step,
-          target: input.y.target,
-          lag: input.y.lag,
-          deltaTime: times[c],
-          precision: 1,
-        });
-      }
-    });
-
-    test(`${snapWithLag ? "lag x = 0" : "snap x"} in update + per-axis tweener`, async () => {
-      const step = 10;
-      const times = [];
-
-      const cbk = {
-        x: jest.fn(({ current }) => current + step),
-        y: jest.fn(({ current, deltaTime }) => {
-          times.push(deltaTime);
-          return current + step;
-        }),
-      };
-
-      const tweeners = { x: newTweener(cbk.x), y: newTweener(cbk.y) };
+      const tweener = perAxisCbk
+        ? {
+            x: newTweener(cbk.x),
+            y: newTweener(cbk.y),
+          }
+        : newTweener(cbk);
 
       const input = {
         x: {
@@ -747,216 +297,767 @@ describe("animation3DTweener: custom", () => {
       };
       const inputCopy = deepCopy(input);
 
-      const update = { x: { lag: snapWithLag ? 0 : 100, snap: !snapWithLag } };
-
-      const generator = animation3DTweener(tweeners, input);
+      const generator = animation3DTweener(tweener, input);
       let i = 0;
-
-      while (true) {
-        const { value: state, done: genDone } = await generator.next(update);
-        if (genDone) {
-          break;
-        }
-
+      for await (const state of generator) {
         i++;
         expect(input).toEqual(inputCopy); // not modified
 
         for (const a of ["x", "y"]) {
-          const current =
-            a === "x"
-              ? i > 1
-                ? input.x.target
-                : input.x.current + step
-              : Math.min(input.y.target, input.y.current + i * step);
-
-          const previous =
-            a === "x"
-              ? input.x.current
-              : Math.min(
-                  input.y.target - step,
-                  input.y.current + (i - 1) * step,
-                );
+          expect(state[a].target).toBe(input[a].target);
+          expect(state[a].lag).toBe(input[a].lag);
+          expect(state[a].snap).toBe(false);
 
           expect(state[a].initial).toBe(input[a].current);
-          expect(state[a].current).toBe(current);
-          expect(state[a].previous).toBe(previous);
 
-          expect(state[a].target).toBe(input[a].target);
+          expect(state[a].current).toBe(
+            Math.min(input[a].target, input[a].current + i * step),
+          );
+
+          expect(state[a].previous).toBe(state[a].current - step);
+        }
+
+        expect(state.z).toBeUndefined();
+      }
+
+      const nCalls = {
+        x: Math.ceil((input.x.target - input.x.current) / step),
+        y: Math.ceil((input.y.target - input.y.current) / step),
+      };
+
+      expect(i).toBe(Math.max(nCalls.x, nCalls.y));
+
+      if (perAxisCbk) {
+        for (const a of ["x", "y"]) {
+          expect(cbk[a]).toHaveBeenCalledTimes(nCalls[a]);
+
+          for (let c = 0; c++; c < nCalls[a]) {
+            expect(times[a][c]).toBeLessThan(20);
+
+            expect(cbk[a]).toHaveBeenNthCalledWith(c + 1, {
+              current: input[a].current + c * step,
+              target: input[a].target,
+              lag: input[a].lag,
+              deltaTime: times[a][c],
+              precision: 1,
+            });
+          }
+        }
+      } else {
+        expect(cbk).toHaveBeenCalledTimes(nCalls.x + nCalls.y);
+      }
+    });
+
+    test(`basic: updating X target and lag at i=3${perAxisCbk ? " + per-axis tweener" : ""}`, async () => {
+      const step = 10;
+      const cbk = perAxisCbk
+        ? {
+            x: jest.fn(({ current }) => current + step),
+            y: jest.fn(({ current }) => current + step),
+          }
+        : jest.fn(({ current }) => current + step);
+
+      const tweener = perAxisCbk
+        ? {
+            x: newTweener(cbk.x),
+            y: newTweener(cbk.y),
+          }
+        : newTweener(cbk);
+
+      const targetX = 200;
+      const lagX = 100;
+      const input = {
+        x: {
+          current: targetX / 10,
+          target: targetX / 2,
+          lag: lagX / 2,
+        },
+        y: {
+          current: 0,
+          target: 40,
+          lag: 50,
+        },
+        // omit z
+      };
+      const inputCopy = deepCopy(input);
+
+      const update = { x: { target: targetX, lag: lagX } };
+
+      const generator = animation3DTweener(tweener, input);
+      let i = 0;
+      while (true) {
+        i++;
+
+        const { value: state, done: genDone } = await generator.next(
+          i === 3 ? update : undefined,
+        );
+
+        if (genDone) {
+          i--;
+          break;
+        }
+
+        expect(input).toEqual(inputCopy); // not modified
+
+        for (const a of ["x", "y"]) {
+          const target =
+            a === "x" && i > 2 ? update[a].target : input[a].target;
+
+          expect(state[a].target).toBe(target);
           expect(state[a].lag).toBe(
-            a === "x" && i > 1 && snapWithLag ? 0 : input[a].lag,
+            a === "x" && i > 2 ? update[a].lag : input[a].lag,
+          );
+          expect(state[a].snap).toBe(false);
+
+          expect(state[a].initial).toBe(input[a].current);
+
+          expect(state[a].current).toBe(
+            Math.min(target, input[a].current + i * step),
+          );
+
+          expect(state[a].previous).toBe(state[a].current - step);
+        }
+
+        expect(state.z).toBeUndefined();
+      }
+
+      const nCallsX = Math.ceil((targetX - input.x.current) / step);
+      const nCallsY = Math.ceil((input.y.target - input.y.current) / step);
+      expect(i).toBe(Math.max(nCallsX, nCallsY));
+
+      if (perAxisCbk) {
+        expect(cbk.x).toHaveBeenCalledTimes(nCallsX);
+        expect(cbk.y).toHaveBeenCalledTimes(nCallsY);
+      } else {
+        expect(cbk).toHaveBeenCalledTimes(nCallsX + nCallsY);
+      }
+    });
+  }
+
+  test("already at target (X only)", async () => {
+    const cbk = jest.fn(({ current }) => current);
+    const tweener = newTweener(cbk);
+
+    const input = {
+      x: {
+        current: 200,
+        target: 200,
+        lag: 100,
+      },
+      // omit y and z
+    };
+
+    const generator = animation3DTweener(tweener, input);
+    let i = 0;
+    for await (const state of generator) {
+      i++;
+
+      expect(state.x.target).toBe(input.x.target);
+      expect(state.x.lag).toBe(input.x.lag);
+      expect(state.x.snap).toBe(false);
+
+      expect(state.x.initial).toBe(input.x.current);
+      expect(state.x.current).toBe(input.x.target);
+      expect(state.x.previous).toBe(input.x.target);
+
+      expect(state.y).toBeUndefined();
+      expect(state.z).toBeUndefined();
+    }
+
+    expect(i).toBe(1);
+    expect(cbk).toHaveBeenCalledTimes(1); // should be called even if at target
+  });
+
+  for (const perAxisCbk of [true, false]) {
+    test(`already at target (XY)${perAxisCbk ? " + per-axis tweener" : ""}`, async () => {
+      const cbk = perAxisCbk
+        ? {
+            x: jest.fn(({ current }) => current),
+            y: jest.fn(({ current }) => current),
+          }
+        : jest.fn(({ current }) => current);
+
+      const tweener = perAxisCbk
+        ? {
+            x: newTweener(cbk.x),
+            y: newTweener(cbk.y),
+          }
+        : newTweener(cbk);
+
+      const input = {
+        x: {
+          current: 200,
+          target: 200,
+          lag: 100,
+        },
+        y: {
+          current: 40,
+          target: 40,
+          lag: 50,
+        },
+        // omit z
+      };
+
+      const generator = animation3DTweener(tweener, input);
+      let i = 0;
+      for await (const state of generator) {
+        i++;
+
+        for (const a of ["x", "y"]) {
+          expect(state[a].target).toBe(input[a].target);
+          expect(state[a].lag).toBe(input[a].lag);
+          expect(state[a].snap).toBe(false);
+
+          expect(state[a].initial).toBe(input[a].current);
+          expect(state[a].current).toBe(input[a].target);
+          expect(state[a].previous).toBe(input[a].target);
+        }
+
+        expect(state.z).toBeUndefined();
+      }
+
+      expect(i).toBe(1);
+
+      // should be called even if at target
+      if (perAxisCbk) {
+        expect(cbk.x).toHaveBeenCalledTimes(1);
+        expect(cbk.y).toHaveBeenCalledTimes(1);
+      } else {
+        expect(cbk).toHaveBeenCalledTimes(2);
+      }
+    });
+
+    test(`already at X target${perAxisCbk ? " + per-axis tweener" : ""}`, async () => {
+      const step = 10;
+      const cbk = perAxisCbk
+        ? {
+            x: jest.fn(({ current }) => current),
+            y: jest.fn(({ current }) => current + step),
+          }
+        : jest.fn(({ current }) => current + step);
+
+      const tweener = perAxisCbk
+        ? {
+            x: newTweener(cbk.x),
+            y: newTweener(cbk.y),
+          }
+        : newTweener(cbk);
+
+      const input = {
+        x: {
+          current: 200,
+          target: 200,
+          lag: 100,
+        },
+        y: {
+          current: 0,
+          target: 40,
+          lag: 50,
+        },
+        // omit z
+      };
+
+      const generator = animation3DTweener(tweener, input);
+      let i = 0;
+      for await (const state of generator) {
+        i++;
+
+        for (const a of ["x", "y"]) {
+          expect(state[a].target).toBe(input[a].target);
+          expect(state[a].lag).toBe(input[a].lag);
+          expect(state[a].snap).toBe(false);
+
+          expect(state[a].initial).toBe(input[a].current);
+
+          expect(state[a].current).toBe(
+            Math.min(input[a].target, input[a].current + i * step),
+          );
+
+          expect(state[a].previous).toBe(
+            a === "x" ? input[a].target : state[a].current - step,
           );
         }
 
         expect(state.z).toBeUndefined();
       }
 
-      const nCalls = (input.y.target - input.y.current) / step;
+      const nCallsY = Math.ceil((input.y.target - input.y.current) / step);
+      expect(i).toBe(nCallsY);
+
+      if (perAxisCbk) {
+        // should be called even if at target
+        expect(cbk.x).toHaveBeenCalledTimes(1);
+        expect(cbk.y).toHaveBeenCalledTimes(nCallsY);
+      } else {
+        expect(cbk).toHaveBeenCalledTimes(1 + nCallsY);
+      }
+    });
+  }
+
+  for (const sendUpdateOnce of [true, false]) {
+    test(`already at target, but updated at i${sendUpdateOnce ? "=" : ">"}2 (X only)`, async () => {
+      const step = 10;
+      const cbk = jest.fn(({ current }) => current + step);
+
+      const tweener = newTweener(cbk);
+
+      const target = 200;
+      const firstTarget = target / 2;
+      const input = {
+        x: {
+          current: firstTarget,
+          target: firstTarget,
+          lag: 100,
+        },
+        // omit y and z
+      };
+
+      const update = { x: { target: target } };
+
+      const generator = animation3DTweener(tweener, input);
+      let i = 0;
+      while (true) {
+        i++;
+
+        const { value: state, done: genDone } = await generator.next(
+          !sendUpdateOnce || i === 2 ? update : undefined,
+        );
+
+        if (genDone) {
+          i--;
+          break;
+        }
+
+        expect(state.x.target).toBe(i > 1 ? target : input.x.target);
+        expect(state.x.lag).toBe(input.x.lag);
+        expect(state.x.snap).toBe(false);
+
+        expect(state.x.initial).toBe(input.x.current);
+
+        // on the first iteration, current is not updated
+        expect(state.x.current).toBe(
+          Math.min(target, input.x.current + (i - 1) * step),
+        );
+
+        expect(state.x.previous).toBe(
+          i === 1 ? input.x.current : state.x.current - step,
+        );
+
+        expect(state.y).toBeUndefined();
+        expect(state.z).toBeUndefined();
+      }
+
+      // on the first iteration, current is not updated, so 1 extra call
+      expect(i).toBe(Math.ceil(1 + (target - input.x.current) / step));
+      expect(cbk).toHaveBeenCalledTimes(i);
+    });
+
+    for (const perAxisCbk of [true, false]) {
+      test(`already at X target, but updated at i${sendUpdateOnce ? "=" : ">"}3 (XY)${perAxisCbk ? " + per-axis tweener" : ""}`, async () => {
+        const step = 10;
+        const cbk = perAxisCbk
+          ? {
+              x: jest.fn(({ current }) => current + step),
+              y: jest.fn(({ current }) => current + step),
+            }
+          : jest.fn(({ current }) => current + step);
+
+        const tweener = perAxisCbk
+          ? {
+              x: newTweener(cbk.x),
+              y: newTweener(cbk.y),
+            }
+          : newTweener(cbk);
+
+        const targetX = 200;
+        const firstTargetX = targetX / 2;
+        const input = {
+          x: {
+            current: firstTargetX,
+            target: firstTargetX,
+            lag: 100,
+          },
+          y: {
+            current: 0,
+            target: 40,
+            lag: 50,
+          },
+          // omit z
+        };
+
+        const update = { x: { target: targetX } };
+
+        const generator = animation3DTweener(tweener, input);
+        let i = 0;
+        while (true) {
+          i++;
+
+          const { value: state, done: genDone } = await generator.next(
+            i > 2 && (!sendUpdateOnce || i === 3) ? update : undefined,
+          );
+
+          if (genDone) {
+            i--;
+            break;
+          }
+
+          for (const a of ["x", "y"]) {
+            const target =
+              a === "x" && i > 2 ? update[a].target : input[a].target;
+
+            expect(state[a].target).toBe(target);
+            expect(state[a].lag).toBe(input[a].lag);
+            expect(state[a].snap).toBe(false);
+
+            expect(state[a].initial).toBe(input[a].current);
+
+            // on the first two iterations, current for X is not updated
+            expect(state[a].current).toBe(
+              a === "x" && i <= 2
+                ? input[a].current
+                : Math.min(
+                    target,
+                    input[a].current + (i - (a === "x" ? 2 : 0)) * step,
+                  ),
+            );
+
+            expect(state[a].previous).toBe(
+              a === "x" && i <= 2 ? input[a].current : state[a].current - step,
+            );
+          }
+
+          expect(state.z).toBeUndefined();
+        }
+
+        // on the first iteration, current is not updated, so 1 extra call
+        const nCallsX = Math.ceil(1 + (targetX - input.x.current) / step);
+        const nCallsY = Math.ceil((input.y.target - input.y.current) / step);
+
+        // at i = 2 the X callback is not called, because its generator finishes,
+        // so number of iterations is 1 extra
+        expect(i).toBe(Math.max(1 + nCallsX, nCallsY));
+
+        if (perAxisCbk) {
+          expect(cbk.x).toHaveBeenCalledTimes(nCallsX);
+          expect(cbk.y).toHaveBeenCalledTimes(nCallsY);
+        } else {
+          expect(cbk).toHaveBeenCalledTimes(nCallsX + nCallsY);
+        }
+      });
+    }
+  }
+
+  for (const perAxisCbk of [true, false]) {
+    for (const waitExtraTurn of [true, false]) {
+      test(`updating X target ${waitExtraTurn ? "2" : "1"} iterations after reaching it${perAxisCbk ? " + per-axis tweener" : ""}`, async () => {
+        const step = 10;
+        const cbk = perAxisCbk
+          ? {
+              x: jest.fn(({ current }) => current + step),
+              y: jest.fn(({ current }) => current + step),
+            }
+          : jest.fn(({ current }) => current + step);
+
+        const tweener = perAxisCbk
+          ? {
+              x: newTweener(cbk.x),
+              y: newTweener(cbk.y),
+            }
+          : newTweener(cbk);
+
+        const targetX = 50;
+        const input = {
+          x: {
+            current: 0,
+            target: step, // reached in 1 iteration, but its generator will finish at i=2
+            lag: 100,
+          },
+          y: {
+            current: 0,
+            target: 400,
+            lag: 50,
+          },
+          // omit z
+        };
+
+        const update = { x: { target: targetX } };
+
+        const generator = animation3DTweener(tweener, input);
+        let i = 0;
+        const updatedAtIter = 2 + (waitExtraTurn ? 1 : 0);
+
+        while (true) {
+          i++;
+
+          const { value: state, done: genDone } = await generator.next(
+            i === updatedAtIter ? update : undefined,
+          );
+
+          if (genDone) {
+            i--;
+            break;
+          }
+
+          for (const a of ["x", "y"]) {
+            const target =
+              a === "x" && i >= updatedAtIter
+                ? update[a].target
+                : input[a].target;
+
+            expect(state[a].target).toBe(target);
+            expect(state[a].lag).toBe(input[a].lag);
+            expect(state[a].snap).toBe(false);
+
+            expect(state[a].initial).toBe(input[a].current);
+
+            expect(state[a].previous).toBe(state[a].current - step);
+          }
+
+          // On the first iteration, current for X is step (its first target)
+          // Then if waitExtraTurn is false, update is applied on the second
+          // iteration and incrementing continues
+          // Otherwise, its generator finishes (state is same) and
+          // incrementing continues from iteration 3
+          expect(state.x.current).toBe(
+            Math.min(
+              update.x.target,
+              input.x.current + (i - (i > 1 && waitExtraTurn ? 1 : 0)) * step,
+            ),
+          );
+
+          expect(state.y.current).toBe(
+            Math.min(input.y.target, input.y.current + i * step),
+          );
+
+          expect(state.z).toBeUndefined();
+        }
+
+        const nCallsX = Math.ceil((targetX - input.x.current) / step);
+        const nCallsY = Math.ceil((input.y.target - input.y.current) / step);
+
+        // if waitExtraTurn is true at i = 2, the X callback is
+        // not called, because its generator has finished, so number of
+        // iterations is 1 extra
+        expect(i).toBe(Math.max((waitExtraTurn ? 1 : 0) + nCallsX, nCallsY));
+
+        if (perAxisCbk) {
+          expect(cbk.x).toHaveBeenCalledTimes(nCallsX);
+          expect(cbk.y).toHaveBeenCalledTimes(nCallsY);
+        } else {
+          expect(cbk).toHaveBeenCalledTimes(nCallsX + nCallsY);
+        }
+      });
+    }
+  }
+
+  for (const snapWithLag of [true, false]) {
+    test(`X ${snapWithLag ? "lag = 0" : "snap"} in init`, async () => {
+      const step = 10;
+
+      const cbk = {
+        x: jest.fn(() => {
+          throw "Shouldn't be called";
+        }),
+        y: jest.fn(({ current }) => current + step),
+      };
+
+      const tweener = { x: newTweener(cbk.x), y: newTweener(cbk.y) };
+
+      const input = {
+        x: {
+          current: 100,
+          target: 200,
+          lag: snapWithLag ? 0 : 100,
+          snap: !snapWithLag,
+        },
+        y: {
+          current: 0,
+          target: 40,
+          lag: 50,
+        },
+        // omit z
+      };
+
+      const generator = animation3DTweener(tweener, input);
+      let i = 0;
+      for await (const state of generator) {
+        i++;
+
+        for (const a of ["x", "y"]) {
+          expect(state[a].target).toBe(input[a].target);
+          expect(state[a].lag).toBe(input[a].lag);
+          expect(state[a].snap).toBe(a === "x" && !snapWithLag);
+
+          expect(state[a].initial).toBe(input[a].current);
+
+          expect(state[a].current).toBe(
+            a === "x"
+              ? input[a].target
+              : Math.min(input[a].target, input[a].current + i * step),
+          );
+
+          expect(state[a].previous).toBe(
+            a === "x" ? input[a].current : state[a].current - step,
+          );
+        }
+
+        expect(state.z).toBeUndefined();
+      }
+
+      const nCalls = Math.ceil((input.y.target - input.y.current) / step);
+      expect(i).toBe(nCalls);
+
+      expect(cbk.x).toHaveBeenCalledTimes(0);
+      expect(cbk.y).toHaveBeenCalledTimes(nCalls);
+    });
+
+    test(`X ${snapWithLag ? "lag = 0" : "snap"} in update`, async () => {
+      const step = 10;
+
+      const cbk = {
+        x: jest.fn(({ current }) => current + step),
+        y: jest.fn(({ current }) => current + step),
+      };
+
+      const tweener = { x: newTweener(cbk.x), y: newTweener(cbk.y) };
+
+      const input = {
+        x: {
+          current: 100,
+          target: 200,
+          lag: 100,
+        },
+        y: {
+          current: 0,
+          target: 40,
+          lag: 50,
+        },
+        // omit z
+      };
+
+      const update = { x: snapWithLag ? { lag: 0 } : { snap: true } };
+
+      const generator = animation3DTweener(tweener, input);
+      let i = 0;
+
+      while (true) {
+        i++;
+
+        const { value: state, done: genDone } = await generator.next(update);
+
+        if (genDone) {
+          i--;
+          break;
+        }
+
+        for (const a of ["x", "y"]) {
+          expect(state[a].target).toBe(input[a].target);
+          expect(state[a].lag).toBe(
+            a === "x" && i > 1 && snapWithLag ? 0 : input[a].lag,
+          );
+          expect(state[a].snap).toBe(a === "x" && i > 1 && !snapWithLag);
+
+          expect(state[a].initial).toBe(input[a].current);
+
+          expect(state[a].current).toBe(
+            a === "x" && i > 1 ? input[a].target : input[a].current + i * step,
+          );
+
+          expect(state[a].previous).toBe(
+            a === "x" && i > 1 ? input[a].current : state[a].current - step,
+          );
+        }
+
+        expect(state.z).toBeUndefined();
+      }
+
+      const nCalls = Math.ceil((input.y.target - input.y.current) / step);
       expect(i).toBe(nCalls);
 
       expect(cbk.x).toHaveBeenCalledTimes(1);
       expect(cbk.y).toHaveBeenCalledTimes(nCalls);
+    });
 
-      for (let c = 0; c++; c < nCalls) {
-        expect(times[c]).toBeLessThan(20);
+    test(`XY ${snapWithLag ? "lag = 0" : "snap"} in init but updated + target for X at i=1`, async () => {
+      const step = 10;
 
-        expect(cbk.y).toHaveBeenNthCalledWith(c + 1, {
-          current: input.y.current + c * step,
-          target: input.y.target,
-          lag: input.y.lag,
-          deltaTime: times[c],
-          precision: 1,
-        });
+      const cbk = {
+        x: jest.fn(({ current }) => current + step),
+        y: jest.fn(() => {
+          throw "Shouldn't be called";
+        }),
+      };
+
+      const tweener = { x: newTweener(cbk.x), y: newTweener(cbk.y) };
+
+      const lag = 100;
+      const targetX = 200;
+      const input = {
+        x: {
+          current: targetX / 10,
+          target: targetX / 2, // snap to this target first
+          lag: snapWithLag ? 0 : lag,
+          snap: !snapWithLag,
+        },
+        y: {
+          current: 0,
+          target: 40,
+          lag: snapWithLag ? 0 : lag,
+          snap: !snapWithLag,
+        },
+        // omit z
+      };
+
+      const update = { x: { lag, target: targetX } }; // omit snap
+
+      const generator = animation3DTweener(tweener, input);
+      let i = 0;
+
+      while (true) {
+        i++;
+
+        const { value: state, done: genDone } = await generator.next(update);
+
+        if (genDone) {
+          i--;
+          break;
+        }
+
+        for (const a of ["x", "y"]) {
+          const target =
+            a === "x" && i > 1 ? update[a].target : input[a].target;
+
+          expect(state[a].target).toBe(target);
+          expect(state[a].lag).toBe(
+            a === "x" && i > 1 ? update[a].lag : input[a].lag,
+          );
+          expect(state[a].snap).toBe(
+            a === "y" || i === 1 ? input[a].snap : false,
+          );
+
+          expect(state[a].current).toBe(
+            // X and Y snapped to initial targets, but for i > 1 X is further
+            // incremented to another target
+            a === "y" || i === 1
+              ? input[a].target
+              : input[a].target + (i - 1) * step,
+          );
+
+          expect(state[a].previous).toBe(
+            a === "y" || i === 1 ? input[a].current : state[a].current - step,
+          );
+        }
+
+        expect(state.z).toBeUndefined();
       }
+
+      // snapping doesn't result in the callback being called, but it does
+      // result in 1 extra iteration at the start
+      const nCalls = Math.ceil((targetX - input.x.target) / step);
+      expect(i).toBe(nCalls + 1);
+
+      expect(cbk.x).toHaveBeenCalledTimes(nCalls);
+      expect(cbk.y).toHaveBeenCalledTimes(0);
     });
   }
-});
-
-describe("animation3DTweener: spring", () => {
-  test("for loop", async () => {
-    const input = {
-      x: {
-        current: 100,
-        target: 200,
-        lag: 1000,
-      },
-      y: {
-        current: 0,
-        target: 80,
-        lag: 500,
-      },
-    };
-
-    const deltaTime = 10; // mock requestAnimationFrame uses 10ms timer
-    let i = { x: 0, y: 0 };
-
-    const generator = animation3DTweener("spring", input);
-
-    let done = 0;
-    let closeEnoughAt = { x: 0, y: 0 };
-    for await (const state of generator) {
-      expect(done).toBeLessThan(2); // generator should have finished otherwise
-
-      let numAxesDone = 0;
-      for (const a of ["x", "y"]) {
-        const { current, target, lag } = state[a];
-        if (i[a] >= Math.round(lag / deltaTime) - 1) {
-          expect(Math.round(Math.abs(current - target))).toBeLessThan(5);
-        }
-
-        if (closeEnoughAt[a] === 0 && Math.abs(current - target) < 2) {
-          closeEnoughAt[a] = i[a];
-        }
-
-        if (current === target) {
-          numAxesDone++;
-        } else {
-          i[a]++;
-        }
-      }
-
-      if (numAxesDone == 2) {
-        done++;
-      }
-    }
-
-    expect(done).toBe(1);
-    expect(i.x).toBeGreaterThanOrEqual(input.x.lag / deltaTime);
-    expect(i.y).toBeGreaterThanOrEqual(input.y.lag / deltaTime);
-    expect(i.x).toBeLessThanOrEqual((input.x.lag * 1.7) / deltaTime);
-    expect(i.y).toBeLessThanOrEqual((input.y.lag * 1.7) / deltaTime);
-
-    expect(closeEnoughAt.x).toBeGreaterThanOrEqual(
-      (input.x.lag * 0.6) / deltaTime,
-    );
-    expect(closeEnoughAt.y).toBeGreaterThanOrEqual(
-      (input.y.lag * 0.6) / deltaTime,
-    );
-    expect(closeEnoughAt.x).toBeLessThanOrEqual(
-      (input.x.lag * 1.3) / deltaTime,
-    );
-    expect(closeEnoughAt.y).toBeLessThanOrEqual(
-      (input.y.lag * 1.3) / deltaTime,
-    );
-  });
-
-  test("with updating target", async () => {
-    const targetXA = 150;
-    const targetXB = 200;
-    const input = {
-      x: {
-        current: 100,
-        target: targetXA,
-        lag: 1000,
-      },
-      y: {
-        current: 0,
-        target: 200,
-        lag: 500,
-      },
-    };
-
-    const update = { x: { target: targetXB } };
-
-    const deltaTime = 10; // mock requestAnimationFrame uses 10ms timer
-    let i = { x: 0, y: 0 };
-
-    const generator = animation3DTweener("spring", input);
-
-    let done = 0;
-    let closeEnoughAt = { x: 0, y: 0 };
-    while (true) {
-      expect(done).toBeLessThan(2); // generator should have finished otherwise
-
-      const { value: state, done: genDone } = await generator.next(
-        i.x > 0 ? update : undefined,
-      );
-
-      if (genDone) {
-        break;
-      }
-
-      expect(state.x.target).toBe(i.x > 0 ? targetXB : targetXA);
-
-      let numAxesDone = 0;
-      for (const a of ["x", "y"]) {
-        const { current, target, lag } = state[a];
-        if (i[a] >= Math.round(lag / deltaTime) - 1) {
-          expect(Math.round(Math.abs(current - target))).toBeLessThan(5);
-        }
-
-        if (closeEnoughAt[a] === 0 && Math.abs(current - target) < 2) {
-          closeEnoughAt[a] = i[a];
-        }
-
-        if (current === target) {
-          numAxesDone++;
-        } else {
-          i[a]++;
-        }
-      }
-
-      if (numAxesDone == 2) {
-        done++;
-      }
-    }
-
-    expect(done).toBe(1);
-    expect(i.x).toBeGreaterThanOrEqual(input.x.lag / deltaTime);
-    expect(i.y).toBeGreaterThanOrEqual(input.y.lag / deltaTime);
-    expect(i.x).toBeLessThanOrEqual((input.x.lag * 1.7) / deltaTime);
-    expect(i.y).toBeLessThanOrEqual((input.y.lag * 1.7) / deltaTime);
-
-    expect(closeEnoughAt.x).toBeGreaterThanOrEqual(
-      (input.x.lag * 0.6) / deltaTime,
-    );
-    expect(closeEnoughAt.y).toBeGreaterThanOrEqual(
-      (input.y.lag * 0.6) / deltaTime,
-    );
-    expect(closeEnoughAt.x).toBeLessThanOrEqual(
-      (input.x.lag * 1.3) / deltaTime,
-    );
-    expect(closeEnoughAt.y).toBeLessThanOrEqual(
-      (input.y.lag * 1.3) / deltaTime,
-    );
-  });
 });

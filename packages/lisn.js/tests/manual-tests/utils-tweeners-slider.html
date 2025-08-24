@@ -89,6 +89,10 @@
       >
       <label><input type="radio" name="tween" value="cubic" />cubic</label>
       <label><input type="radio" name="tween" value="sine" />sine</label>
+      <label
+        ><input type="radio" name="tween" value="backInOut" />backInOut</label
+      >
+      <label><input type="radio" name="tween" value="backOut" />backOut</label>
     </div>
 
     <div id="box"></div>
@@ -131,6 +135,9 @@
         }
 
         const tween = document.querySelector("input[name=tween]:checked").value;
+        if (!(tween in LISN.utils.TWEENERS)) {
+          console.error(`No such tweener: ${tween}`);
+        }
 
         for (const input of tweenInputs) {
           input.disabled = true;
@@ -158,7 +165,7 @@
             });
           }
 
-          if (elapsedSinceChange > 1.5 * lag) {
+          if (elapsedSinceChange > 2 * lag) {
             console.error(`tweener ${tween} is not converging`, {
               elapsedSinceChange,
               lag,

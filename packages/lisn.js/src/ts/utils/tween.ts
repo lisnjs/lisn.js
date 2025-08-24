@@ -8,7 +8,6 @@
  */
 
 // TODO in future (maybe)
-// - bouncing easeOutBack and easeInOutBack
 // - spring with controllable damping parameter
 
 import * as _ from "@lisn/_internal";
@@ -197,24 +196,23 @@ export const springTweener: TweenerFn = function* ({
 // ------------------------------ EASING-BASED -----------------------------
 
 /**
- * @ignore
- * @internnal
+ * Creates a new {@link TweenerFn} based on an easing function.
  *
- * Creates a new {@link TweenerFn} based on an ease in/ease out function.
- *
- * @param easeInOut Accepts as a single argument the progress p from 0 to 1, and
- *                  should return the normalised value x(p) from 0 to 1 (though
- *                  for bouncing easings, x may go outside 0 to 1 range).
- *                  See https://easings.net/
- * @param invert    A function that's the inverse of easeInOut. Accepts two
- *                  arguments:
- *                  - the normalised value x(p)
- *                  - true if x was increasing and false if it was decreasing;
- *                    this is required by bouncing easings that may reach the
- *                    same x value at two different values for p
- *                  It should return the progress p from 0 to 1 at which
- *                  easeInOut's result equals that. Used for re-computing the
- *                  progress whenever the target or lag change.
+ * @param easeFn Accepts as a single argument the progress p from 0 to 1, and
+ *               should return the normalised value x(p) from 0 to 1 (though for
+ *               some easings, x may go outside 0 to 1 range).
+ *               See https://easings.net/
+ * @param invert A function that's the inverse of easeFn. Accepts two
+ *               arguments:
+ *               - the normalised value x(p)
+ *               - true if x was increasing and false if it was decreasing;
+ *                 this is required by bouncing easings that may reach the
+ *                 same x value at two different values for p
+ *               It should return the progress p from 0 to 1 at which
+ *               easeFn's result equals that. Used for re-computing the progress
+ *               whenever the target or lag change.
+ *               If not given, an internal numerical search function is used,
+ *               but this introduces unnecessary computational expense.
  *
  * Default {@link TweenerInput.precision | precision} is 1.
  *
@@ -226,10 +224,12 @@ export const springTweener: TweenerFn = function* ({
  *
  * @category Tweening
  */
-export const createEaseInOutTweener = (
-  easeInOut: (progress: number) => number,
-  invert: (value: number, isIncreasing: boolean) => number,
+export const createEasingTweener = (
+  easeFn: (progress: number) => number,
+  invert?: (value: number, isIncreasing: boolean) => number,
 ) => {
+  invert ??= (value, isIncreasing) => invertEase(value, easeFn, isIncreasing);
+
   const tweener: TweenerFn = function* ({
     current,
     target,
@@ -266,18 +266,23 @@ export const createEaseInOutTweener = (
             // progress to what it should be on the new curve to keep the
             // current position.
 
-            // Fractional x(p).
+            // New fractional x(p).
             const x = _.abs(current - reference) / _.abs(target - reference);
             const oldX = _.abs(old - reference) / _.abs(target - reference);
             const isIncreasing = x > oldX;
-            progress = invert(x, isIncreasing); // XXX can we figure it out without invert?
+            progress = invert(x, isIncreasing);
+            if (_.isNaN(progress)) {
+              // We couldn't invert => start a new easing from here.
+              reference = current;
+              progress = 0;
+            }
           }
         }
 
         progress = toNumWithBounds(progress + deltaTime / lag, {
           max: 1,
         });
-        eased = easeInOut(progress);
+        eased = easeFn(progress);
 
         old = current;
         current = reference + (target - reference) * eased;
@@ -315,13 +320,13 @@ export const createEaseInOutTweener = (
  *
  * @category Tweening
  */
-export const linearTweener = createEaseInOutTweener(
+export const linearTweener = createEasingTweener(
   (p) => p,
   (p) => p,
 );
 
 /**
- * A tweener that interpolates based on a quadratic function.
+ * A tweener that interpolates based on a quadratic ease in/out function.
  *
  * Default {@link TweenerInput.precision | precision} is 1.
  *
@@ -335,13 +340,13 @@ export const linearTweener = createEaseInOutTweener(
  *
  * @category Tweening
  */
-export const quadraticTweener = createEaseInOutTweener(
+export const quadraticTweener = createEasingTweener(
   (p) => (p < 0.5 ? 2 * _.pow(p, 2) : 1 - _.pow(-2 * p + 2, 2) / 2),
   (x) => (x < 0.5 ? _.sqrt(x / 2) : (_.sqrt(2 * (1 - x)) - 2) / -2),
 );
 
 /**
- * A tweener that interpolates based on a ease in, ease out cubic function.
+ * A tweener that interpolates based on a cubic ease in/out function.
  *
  * Default {@link TweenerInput.precision | precision} is 1.
  *
@@ -355,13 +360,13 @@ export const quadraticTweener = createEaseInOutTweener(
  *
  * @category Tweening
  */
-export const cubicTweener = createEaseInOutTweener(
+export const cubicTweener = createEasingTweener(
   (p) => (p < 0.5 ? 4 * _.pow(p, 3) : 1 - _.pow(-2 * p + 2, 3) / 2),
   (x) => (x < 0.5 ? _.pow(x / 4, 1 / 3) : (_.pow(2 * (1 - x), 1 / 3) - 2) / -2),
 );
 
 /**
- * A tweener that interpolates based on a ease in, ease out sine function.
+ * A tweener that interpolates based on a sine ease in/out function.
  *
  * Default {@link TweenerInput.precision | precision} is 1.
  *
@@ -375,10 +380,58 @@ export const cubicTweener = createEaseInOutTweener(
  *
  * @category Tweening
  */
-export const sineTweener = createEaseInOutTweener(
+export const sineTweener = createEasingTweener(
   (p) => -(_.cos(_.MATH.PI * p) - 1) / 2,
   (x) => _.MATH.acos(1 - x * 2) / _.MATH.PI,
 );
+
+/**
+ * A tweener that interpolates based on backing ease in/out function.
+ *
+ * Default {@link TweenerInput.precision | precision} is 1.
+ *
+ * The generator is guaranteed to yield at least once and accept an
+ * {@link TweenerUpdate | update}, even if the input position is already at the
+ * target.
+ *
+ * @see https://easings.net/#easeInOutBack
+ *
+ * @since v1.3.0
+ *
+ * @category Tweening
+ */
+export const backInOutTweener = createEasingTweener((p) => {
+  const c1 = 1.70158;
+  const c2 = c1 * 1.525;
+
+  return p < 0.5
+    ? (_.pow(2 * p, 2) * ((c2 + 1) * 2 * p - c2)) / 2
+    : (_.pow(2 * p - 2, 2) * ((c2 + 1) * (p * 2 - 2) + c2) + 2) / 2;
+});
+// inverse too challenging, use invertEase
+
+/**
+ * A tweener that interpolates based on backing ease out function.
+ *
+ * Default {@link TweenerInput.precision | precision} is 1.
+ *
+ * The generator is guaranteed to yield at least once and accept an
+ * {@link TweenerUpdate | update}, even if the input position is already at the
+ * target.
+ *
+ * @see https://easings.net/#easeOutBack
+ *
+ * @since v1.3.0
+ *
+ * @category Tweening
+ */
+export const backOutTweener = createEasingTweener((p) => {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+
+  return 1 + c3 * _.pow(p - 1, 3) + c1 * _.pow(p - 1, 2);
+});
+// inverse too challenging, use invertEase
 
 // -------------------------------------------------------------------------
 // -------------------- BUILT-IN TWEENERS SINGLE EXPORT --------------------
@@ -395,6 +448,8 @@ export const TWEENERS = {
   quadratic: quadraticTweener,
   cubic: cubicTweener,
   sine: sineTweener,
+  backInOut: backInOutTweener,
+  backOut: backOutTweener,
 } as const;
 
 // ------------------------------
@@ -823,3 +878,90 @@ const validateInput = <I extends Partial<TweenerInput>>(input: I) => {
 
 const isCloseTo = (value: number, ref: number, precision: number) =>
   roundNumTo(value - ref, precision) === 0;
+
+const invertEaseCache = _.createWeakMap<
+  (p: number) => number,
+  Map<string, number>
+>();
+
+// These values seem to be optimal
+const INVERSE_PRECISION = 4;
+const INVERSE_NEGLIGIBLE = 1 / _.pow(10, INVERSE_PRECISION);
+const INVERSE_STARTING_RESOLUTION = 100;
+
+export const invertEase = (
+  x: number,
+  easeFn: (p: number) => number,
+  isIncreasing?: boolean,
+) => {
+  const matches = (eased: number, p: number) => {
+    if (_.abs(eased - x) > INVERSE_NEGLIGIBLE) {
+      return false;
+    }
+
+    const prev = easeFn(p - INVERSE_NEGLIGIBLE);
+    const next = easeFn(p + INVERSE_NEGLIGIBLE);
+    if (_.isNullish(isIncreasing) || prev < eased !== eased < next) {
+      // we don't care about sign or we're at a local minimum/maximum
+      return true;
+    }
+
+    return prev < eased === isIncreasing;
+  };
+
+  const tryInverse = (
+    pMin = 0,
+    pMax = 1,
+    resolution = INVERSE_STARTING_RESOLUTION,
+  ): number => {
+    const fullRange = pMax - pMin;
+    if (pMin > 1 || (100 * fullRange) / resolution < INVERSE_NEGLIGIBLE) {
+      // give up
+      return NaN;
+    }
+
+    const pVals = _.arrayFrom(
+      { length: resolution + 1 },
+      (_, i) => pMin + (fullRange * i) / resolution,
+    );
+    const easedVals = pVals.map((p) => easeFn(p));
+
+    if (matches(easedVals[resolution], pMax)) {
+      return pMax;
+    }
+
+    for (let i = 0; i < resolution; i++) {
+      if (matches(easedVals[i], pVals[i])) {
+        return pVals[i];
+      }
+      if (easedVals[i] < x !== easedVals[i + 1] < x) {
+        // we may have found the range...
+        const result = tryInverse(pVals[i], pVals[i + 1], resolution);
+        if (!_.isNaN(result)) {
+          return result;
+        }
+      }
+    }
+
+    // We didn't find a range of p's that definitely contained the p we're
+    // seeking, so increase resolution.
+    return tryInverse(pMin, pMax, resolution * 2);
+  };
+
+  // --------------------
+
+  let thisCache = invertEaseCache.get(easeFn);
+  if (!thisCache) {
+    thisCache = _.createMap<string, number>();
+    invertEaseCache.set(easeFn, thisCache);
+  }
+
+  const cacheKey = x.toFixed(INVERSE_PRECISION) + _.STRING(isIncreasing ?? "");
+  let result = thisCache.get(cacheKey);
+  if (_.isUndefined(result)) {
+    result = tryInverse();
+    thisCache.set(cacheKey, result);
+  }
+
+  return result;
+};

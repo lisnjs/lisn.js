@@ -9,6 +9,11 @@ import { Point, Vector, AtLeastOne } from "@lisn/globals/types";
 /**
  * Round a number to the given decimal precision.
  *
+ * If `numDecimal` is 0, the value is rounded to an integer.
+ *
+ * If `numDecimal` is negative, the value is rounded to a multiple of 10
+ * (for -1), 100 (for -2), etc.
+ *
  * @category Math
  */
 export const roundNumTo = (value: number, numDecimal = 0) => {

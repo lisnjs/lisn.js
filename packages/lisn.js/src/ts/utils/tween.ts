@@ -155,8 +155,13 @@ export const springTweener: TweenerFn = function* ({
   while (true) {
     validateInput({ current, target, lag, deltaTime, precision });
 
-    if (lag < 1) {
-      yield { current: target }; // we're done
+    if (
+      lag < 1 ||
+      // allow less precision for velocity
+      (isCloseTo(velocity, 0, precision - 1) &&
+        isCloseTo(current, target, precision))
+    ) {
+      yield { current: target }; // we're done, snap to target
       return;
     }
 
@@ -182,14 +187,6 @@ export const springTweener: TweenerFn = function* ({
     target = update?.target ?? target;
     lag = update?.lag ?? lag;
     deltaTime = update?.deltaTime ?? deltaTime;
-
-    if (
-      isCloseTo(velocity / 10, 0, precision) &&
-      isCloseTo(current, target, precision)
-    ) {
-      yield { current: target }; // snap exactly to target
-      return;
-    }
   }
 };
 
@@ -246,8 +243,14 @@ export const createEasingTweener = (
     while (true) {
       validateInput({ current, target, lag, deltaTime, precision });
 
-      if (lag < 1) {
-        yield { current: target }; // we're done
+      if (
+        lag < 1 ||
+        isCloseTo(100 * progress, 100, precision) ||
+        // allow less precision for velocity
+        (isCloseTo(old - current / deltaTime, 0, precision - 1) &&
+          isCloseTo(current, target, precision))
+      ) {
+        yield { current: target }; // we're done, snap to target
         return;
       }
 

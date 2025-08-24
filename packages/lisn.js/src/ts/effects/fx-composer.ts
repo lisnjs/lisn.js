@@ -15,7 +15,7 @@ import {
 } from "@lisn/globals/types";
 
 import { setStyleProp, delStyleProp } from "@lisn/utils/css-alter";
-import { toRawNum } from "@lisn/utils/math";
+import { isValidNum, toNumWithBounds, toRawNum } from "@lisn/utils/math";
 import { compareValuesIn } from "@lisn/utils/misc";
 import {
   animation3DTweener,
@@ -125,9 +125,14 @@ export class FXComposer {
    * while interpolating the effects towards the
    * {@link FXAxisState.target | target} parameters.
    *
-   * The handler is called during an animation frame **after** all effects have
-   * been updated and applied, such that calling {@link toCss} or
-   * {@link getComposition} will reflect the latest effect states.
+   * Changing {@link setDepth | the depth} also triggers tweening since the
+   * effects states may need to change.
+   *
+   * The handler is called once before starting to interpolate (same as the
+   * {@link onTrigger} handlers, and then it is called during an animation frame
+   * **after** all effects have been updated and applied, such that calling
+   * {@link toCss} or {@link getComposition} will reflect the latest effect
+   * states.
    */
   readonly onTween: (handler: FXComposerHandler) => this;
 
@@ -227,7 +232,7 @@ export class FXComposer {
    * Updates the composer's {@link FXComposerConfig.depth | parallax depth}
    *
    * Note that this will result in the effects being re-applied for this new
-   * depth.
+   * depth and the {@link onTween} handlers being called.
    *
    * @param depth If a single number is given, it is set for all three axes.
    */
@@ -294,8 +299,11 @@ export class FXComposer {
       if (_.isInstanceOf(link, FXComposer)) {
         compositionChain.push([link, void 0]);
       } else {
-        compositionChain.push([link.toComposition(), pin]);
+        link = link.toComposition(); // clone
+        compositionChain.push([link, pin]);
       }
+
+      addToComposition(link, false);
 
       return this;
     };
@@ -427,16 +435,21 @@ export class FXComposer {
     const setLag = (
       input: RawOrRelativeNumber | Partial<FXComposerConfig> | undefined,
     ) => {
-      updateConf(input, "lag", settings.effectLag);
+      updateConf(input, "lag", settings.effectLag, { min: 0 });
+      // Update the current state. No need to re-tween. If it's currently
+      // tweening, it will automatically pick up the new lag. Otherwise, effects
+      // don't need updating.
+      updateState(); // re-apply lag from config
+
       return this;
     };
 
     const setDepth = (
       input: RawOrRelativeNumber | Partial<FXComposerConfig> | undefined,
     ) => {
-      const didUpdate = updateConf(input, "depth", 1);
+      const didUpdate = updateConf(input, "depth", 1, { min: 0.01 });
       if (didUpdate) {
-        tween(); // update the effects and call callbacks
+        tween(); // Update the effects and call callbacks
       }
 
       return this;
@@ -448,6 +461,7 @@ export class FXComposer {
       input: RawOrRelativeNumber | Partial<FXComposerConfig> | undefined,
       prop: P,
       defaultValue: number,
+      bounds?: AtLeastOne<{ min: number; max: number }>,
     ) => {
       const parentConfig: Partial<FXComposerEffectiveConfig> =
         parent?.getConfig() ?? {};
@@ -466,11 +480,19 @@ export class FXComposer {
         ["z", "Z"],
       ] as const) {
         const parentVal = parentConfig[`${prop}${A}`] ?? defaultValue;
-        const newVal = toRawNum(
+        let newVal = toRawNum(
           values[`${prop}${A}`] ?? values[prop],
           parentVal,
-          parentVal,
+          NaN,
         );
+
+        if (!isValidNum(newVal)) {
+          continue;
+        }
+
+        if (bounds) {
+          newVal = toNumWithBounds(newVal, bounds);
+        }
 
         didUpdate ||= effectiveConfig[`${prop}${A}`] !== newVal;
 
@@ -484,7 +506,7 @@ export class FXComposer {
     // ----------
 
     const updateState = <T extends boolean | undefined>(
-      newState: DeepPartial<FXState> | null,
+      newState?: DeepPartial<FXState> | null,
       updateData?: FXStateUpdate,
       checkIfChanged?: T,
     ) => {
@@ -551,21 +573,25 @@ export class FXComposer {
 
     // ----------
 
+    const addToComposition = (link: Effect | FXComposer, update: boolean) => {
+      if (_.isInstanceOf(link, FXComposer)) {
+        for (const effect of link.getComposition().values()) {
+          currentComposition.add(effect);
+        }
+      } else {
+        currentComposition.add(
+          update ? link.update(_.deepCopy(currentFXState), this) : link,
+        );
+      }
+    };
+
+    // ----------
+
     const recompose = () => {
       currentComposition.clear();
 
       for (const [link, pin] of compositionChain) {
-        if (_.isInstanceOf(link, FXComposer)) {
-          for (const effect of link.getComposition().values()) {
-            currentComposition.add(effect);
-          }
-        } else {
-          currentComposition.add(
-            pin?.isActive()
-              ? link
-              : link.update(_.deepCopy(currentFXState), this),
-          );
-        }
+        addToComposition(link, !pin?.isActive());
       }
 
       return this;
@@ -579,8 +605,9 @@ export class FXComposer {
         logger?.debug9("Got trigger data", { updateData, didUpdate });
 
         if (didUpdate) {
-          tween();
           invokeCallbacks(triggerCallbacks);
+          invokeCallbacks(tweenCallbacks);
+          tween();
         }
       }
     };
@@ -633,6 +660,10 @@ export class FXComposer {
 
     // --------------------
 
+    // Set default lag now, since if it's not supplied in the config, it won't
+    // update it. Depth is already at default of 1.
+    setLag(settings.effectLag);
+
     setLag(config);
     setDepth(config);
 
@@ -682,7 +713,8 @@ export type FXComposerConfig = {
   /**
    * The time in milliseconds it takes for effect states to catch up to the
    * {@link FXState | target parameters}. It can be relative to the parent's
-   * lag. It must result in a positive number.
+   * lag. It must result in a non-negative number, otherwise it will be forced
+   * to 0.
    *
    * @defaultValue undefined
    */
@@ -714,7 +746,7 @@ export type FXComposerConfig = {
 
   /**
    * Parallax depth. It can be relative to the parent's depth. It must result in
-   * a positive number.
+   * a positive number; minimum allowed is 0.01.
    *
    * Refer to each specific {@link Effect} to see whether and how it is used.
    *

@@ -9,6 +9,15 @@ test("roundNumTo", () => {
   expect(utils.roundNumTo(1.123, 1)).toBe(1.1);
   expect(utils.roundNumTo(1.123, 0)).toBe(1);
   expect(utils.roundNumTo(1.123)).toBe(1);
+
+  expect(utils.roundNumTo(1.123, -1)).toBe(0);
+  expect(utils.roundNumTo(1123, -1)).toBe(1120);
+  expect(utils.roundNumTo(1123, -2)).toBe(1100);
+  expect(utils.roundNumTo(1123, -3)).toBe(1000);
+
+  // round to nearest?
+  expect(utils.roundNumTo(1.126, 2)).toBe(1.13);
+  expect(utils.roundNumTo(1150, -2)).toBe(1200);
 });
 
 test("isValidNum", () => {

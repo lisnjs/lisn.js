@@ -14,9 +14,10 @@ import {
   DeepPartial,
 } from "@lisn/globals/types";
 
-import { setStyleProp, delStyleProp } from "@lisn/utils/css-alter";
+import { setStylePropNow, delStylePropNow } from "@lisn/utils/css-alter";
+import { waitForMutateTime } from "@lisn/utils/dom-optimize";
 import { isValidNum, toNumWithBounds, toRawNum } from "@lisn/utils/math";
-import { compareValuesIn } from "@lisn/utils/misc";
+import { compareValuesIn, toArrayIfSingle } from "@lisn/utils/misc";
 import {
   animation3DTweener,
   Tweener,
@@ -144,7 +145,9 @@ export class FXComposer {
 
   /**
    * Calls the given handler whenever the composer updates its
-   * {@link getComposition | composition}. This happens as a result of:
+   * {@link getComposition | composition}. This happens **as long as there are
+   * effects or composers {@link add | added}** and then one of these occurs:
+   * - new effects or composers are {@link add | added}
    * - the composer triggered with new data and tweens
    * - any other composers {@link add | added} update their composition
    * - the composer's {@link setDepth | depth is updated} and subsequently the
@@ -178,7 +181,10 @@ export class FXComposer {
    *
    * @param negate See {@link toCss}.
    */
-  readonly animate: (elements: Element[], negate?: FXComposer) => Promise<this>;
+  readonly animate: (
+    elements: Element | Element[],
+    negate?: FXComposer,
+  ) => Promise<this>;
 
   /**
    * Will clear the relevant {@link toCss | CSS} properties from the given
@@ -187,7 +193,7 @@ export class FXComposer {
    * It will {@link Utils.waitForMutateTime | waitForMutateTime} before
    * modifying the style.
    */
-  readonly deanimate: (elements: Element[]) => Promise<this>;
+  readonly deanimate: (elements: Element | Element[]) => Promise<this>;
 
   /**
    * Will continually apply the latest {@link toCss | CSS} to the given
@@ -195,7 +201,10 @@ export class FXComposer {
    *
    * @param negate See {@link toCss}.
    */
-  readonly startAnimate: (elements: Element[], negate?: FXComposer) => this;
+  readonly startAnimate: (
+    elements: Element | Element[],
+    negate?: FXComposer,
+  ) => this;
 
   /**
    * Will stop animating the given elements.
@@ -203,7 +212,10 @@ export class FXComposer {
    * @param clearCss If true, the {@link toCss | CSS} properties will be cleared
    *                 from the elements now.
    */
-  readonly stopAnimate: (elements: Element[], clearCss?: boolean) => this;
+  readonly stopAnimate: (
+    elements: Element | Element[],
+    clearCss?: boolean,
+  ) => this;
 
   /**
    * Returns an object with the CSS properties and their values to be set on
@@ -342,6 +354,8 @@ export class FXComposer {
 
       addToComposition(link, false);
 
+      invokeCallbacks(composeCallbacks);
+
       return this;
     };
 
@@ -357,6 +371,8 @@ export class FXComposer {
         }
 
         compositionChain.length = 0; // clear
+        currentComposition.clear();
+
         invokeCallbacks(clearCallbacks);
       }
 
@@ -413,19 +429,29 @@ export class FXComposer {
 
     // ----------
 
-    const animate = async (elements: Element[], negate?: FXComposer) => {
+    const animate = async (
+      elements: Element | Element[],
+      negate?: FXComposer,
+    ) => {
+      elements = toArrayIfSingle(elements);
       await applyCss(elements, false, negate);
       return this;
     };
 
-    const deanimate = async (elements: Element[]) => {
+    const deanimate = async (elements: Element | Element[]) => {
+      elements = toArrayIfSingle(elements);
       await applyCss(elements, true);
       return this;
     };
 
     // ----------
 
-    const startAnimate = (elements: Element[], negate?: FXComposer) => {
+    const startAnimate = (
+      elements: Element | Element[],
+      negate?: FXComposer,
+    ) => {
+      elements = toArrayIfSingle(elements);
+
       logger?.debug5("Starting animating ", elements, negate);
       // Use a single handler for all elements for performance gain.
       // Clean it up when all have been called with stopAnimate.
@@ -452,7 +478,9 @@ export class FXComposer {
 
     // ----------
 
-    const stopAnimate = (elements: Element[], clearCss?: boolean) => {
+    const stopAnimate = (elements: Element | Element[], clearCss?: boolean) => {
+      elements = toArrayIfSingle(elements);
+
       logger?.debug5("Stopping animating ", elements, clearCss);
       if (clearCss) {
         applyCss(elements, true); // no need to await
@@ -652,13 +680,15 @@ export class FXComposer {
     // ----------
 
     const recompose = (updateMode: false | UPDATE_MODE = UPDATE_ALL) => {
-      currentComposition.clear();
+      if (currentComposition.size > 0) {
+        currentComposition.clear();
 
-      for (const [link, pin] of compositionChain) {
-        addToComposition(link, pin?.isActive() ? false : updateMode);
+        for (const [link, pin] of compositionChain) {
+          addToComposition(link, pin?.isActive() ? false : updateMode);
+        }
+
+        invokeCallbacks(composeCallbacks);
       }
-
-      invokeCallbacks(composeCallbacks);
 
       return this;
     };
@@ -687,12 +717,13 @@ export class FXComposer {
     ) => {
       const css = toCss(negate);
       logger?.debug10("Applying CSS ", elements, css, clearCss);
+      await waitForMutateTime();
       for (const prop in css) {
         for (const element of elements) {
           if (clearCss) {
-            await delStyleProp(element, prop);
+            delStylePropNow(element, prop);
           } else {
-            await setStyleProp(element, prop, css[prop]);
+            setStylePropNow(element, prop, css[prop]);
           }
         }
       }

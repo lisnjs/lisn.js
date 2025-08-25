@@ -114,7 +114,7 @@ const PARTIAL_UPDATE = {
 class DummyEffect {
   type = "effect";
 
-  constructor(state, isAbsolute = true) {
+  constructor(state, { isAbsolute = true, addCssUnits = false } = {}) {
     const invertOn = (negate) => {
       const s = deepCopy(state);
       const ns = negate?.getState() ?? {};
@@ -146,20 +146,28 @@ class DummyEffect {
     this.update = jest.fn((fx, composer) => {
       const d = composer.getConfig().depthX;
       for (const p in state) {
+        const a = p === "height" ? "y" : p === "opacity" ? "z" : "x";
+
         state[p] =
-          (isAbsolute ? 0 : state[p] - fx.x.previous / d) + fx.x.current / d;
+          (isAbsolute ? 0 : state[p] - fx[a].previous / d) + fx[a].current / d;
       }
       return this;
     });
 
     this.export = jest.fn((negate) => {
-      const e = new this.constructor(invertOn(negate), isAbsolute);
+      const e = new this.constructor(invertOn(negate), {
+        isAbsolute,
+        addCssUnits,
+      });
       e._exportedFrom = this;
       return e;
     });
 
     this.toComposition = jest.fn((...others) => {
-      const c = new this.constructor(joinWith(others), isAbsolute);
+      const c = new this.constructor(joinWith(others), {
+        isAbsolute,
+        addCssUnits,
+      });
       if (others.length) {
         c._composedFrom = [this, ...others];
       } else {
@@ -168,7 +176,15 @@ class DummyEffect {
       return c;
     });
 
-    this.toCss = jest.fn((negate) => invertOn(negate));
+    this.toCss = jest.fn((negate) => {
+      const s = invertOn(negate);
+      if (addCssUnits) {
+        for (const p in s) {
+          s[p] += "px";
+        }
+      }
+      return s;
+    });
   }
 }
 
@@ -283,11 +299,17 @@ const newComposer = ({
   triggerBody,
   lag,
   tweener = linearTweener,
+  addEffect = false,
   ...rest
 } = {}) => {
   const { trigger, push } = newTrigger(triggerBody);
   const effectiveLag = lag ?? DEFAULT_LAG;
   const composer = new FXComposer({ trigger, lag, tweener, ...rest });
+
+  if (addEffect) {
+    composer.add(new DummyEffect());
+  }
+
   return { push, lag: effectiveLag, composer };
 };
 
@@ -592,14 +614,131 @@ describe("trigger / tween", () => {
     }
   });
 
+  test("with pinned effects + no-op updates", async () => {
+    const { setPinState: setPinAState, pin: pinA } = newPin();
+    const { setPinState: setPinDState, pin: pinD } = newPin();
+
+    const effectAOrig = new DummyEffectA({ a: -1 }, { isAbsolute: false });
+    const effectBOrig = new DummyEffectB({ b: -2 }, { isAbsolute: false });
+    const effectCOrig = new DummyEffectC({ c: -3 }, { isAbsolute: false });
+    const effectDOrig = new DummyEffectD({ d: -4 }, { isAbsolute: false });
+
+    const lag = 50;
+    const { push, composer } = newComposer({ lag });
+    const { push: pushX, composer: composerX } = newComposer({ lag });
+
+    composer
+      .add(effectAOrig, pinA)
+      .add(effectBOrig)
+      .add(composerX.add(effectCOrig), pinA) // pin does not apply when adding composers
+      .add(effectDOrig, pinD);
+
+    const effectA = getComposerEffectObj(effectAOrig, composer);
+    const effectB = getComposerEffectObj(effectBOrig, composer);
+    const effectC = getComposerEffectObj(effectCOrig, composerX);
+    const effectD = getComposerEffectObj(effectDOrig, composer);
+
+    // ---------- update composer
+
+    push(DUMMY_UPDATE);
+    const x = DUMMY_UPDATE.x.target;
+
+    await window.waitFor(lag + 50);
+    expect(effectA.getState()).toEqual({ a: x - 1 });
+    expect(effectB.getState()).toEqual({ b: x - 2 });
+    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
+    expect(effectD.getState()).toEqual({ d: x - 4 });
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+
+    // ---------- no-op update
+
+    push(DUMMY_UPDATE);
+
+    await window.waitFor(lag + 50);
+    // not updated (incremented)
+    expect(effectA.getState()).toEqual({ a: x - 1 });
+    expect(effectB.getState()).toEqual({ b: x - 2 });
+    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
+    expect(effectD.getState()).toEqual({ d: x - 4 });
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+
+    // ---------- pin A + update composer
+
+    setPinAState(true); // freeze effectA
+    push(DUMMY_UPDATE2);
+    const x2 = DUMMY_UPDATE2.x.target;
+
+    await window.waitFor(lag + 50);
+    expect(effectA.getState()).toEqual({ a: x - 1 }); // pinned
+    expect(effectB.getState()).toEqual({ b: x2 - 2 });
+    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
+    expect(effectD.getState()).toEqual({ d: x2 - 4 });
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+
+    // ---------- update composerX
+
+    pushX(DUMMY_UPDATE);
+
+    await window.waitFor(lag + 50);
+    expect(effectA.getState()).toEqual({ a: x - 1 }); // unchanged as it's on composer
+    expect(effectB.getState()).toEqual({ b: x2 - 2 }); // --"--
+    expect(effectC.getState()).toEqual({ c: x - 3 }); // updated, pin is not set on composerX
+    expect(effectD.getState()).toEqual({ d: x2 - 4 }); // unchanged
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+
+    // ---------- unpin A + pin D + update composer
+
+    setPinAState(false); // unfreeze effectA
+    setPinDState(true); // freeze effectD
+    push(DUMMY_UPDATE3);
+    const x3 = DUMMY_UPDATE3.x.target;
+
+    await window.waitFor(lag + 50);
+    expect(effectA.getState()).toEqual({ a: x + x3 - x2 - 1 });
+    expect(effectB.getState()).toEqual({ b: x3 - 2 });
+    expect(effectC.getState()).toEqual({ c: x - 3 }); // unchanged as it's on composerX
+    expect(effectD.getState()).toEqual({ d: x2 - 4 }); // pinned
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+  });
   for (const snap of [true, false]) {
     for (const trySetLagInUpdate of [true, false]) {
       for (const lag of [0, 200]) {
         test(`onTrigger/offTrigger | onTween/offTween | onCompose/offCompose; lag = ${lag}${trySetLagInUpdate ? " try in update" : ""}; snap = ${snap}`, async () => {
           // use non-0 lag to ensure callback only called once and not on tween
-          const { push, composer } = newComposer(
-            trySetLagInUpdate ? {} : { lag },
-          );
+          const { push, composer } = newComposer({
+            ...(trySetLagInUpdate ? {} : { lag }),
+            addEffect: true, // required for onCompose handlers
+          });
           // composer does not accept lag updates via trigger data; only via
           // setLag, so it should use its default lag
           const expectedLag = trySetLagInUpdate ? DEFAULT_LAG : lag;
@@ -837,7 +976,10 @@ describe("trigger / tween", () => {
 
   test("onTrigger/offTrigger | onTween/offTween | onCompose/offCompose: callback.remove", async () => {
     // use non-0 lag to ensure callback only called once and not on tween
-    const { lag, push, composer } = newComposer({ lag: 200 });
+    const { lag, push, composer } = newComposer({
+      lag: 200,
+      addEffect: true, // required for onCompose handlers
+    });
 
     const triggerCbkJ = jest.fn();
     const triggerCbk = Callback.wrap(triggerCbkJ);
@@ -869,7 +1011,10 @@ describe("trigger / tween", () => {
 
   test("onTrigger/offTrigger | onTween/offTween | onCompose/offCompose: return Callback.REMOVE", async () => {
     // use non-0 lag to ensure callback only called once and not on tween
-    const { lag, push, composer } = newComposer({ lag: 200 });
+    const { lag, push, composer } = newComposer({
+      lag: 200,
+      addEffect: true, // required for onCompose handlers
+    });
 
     const triggerCbk = jest.fn(() => Callback.REMOVE);
     const tweenCbk = jest.fn(() => Callback.REMOVE);
@@ -901,121 +1046,44 @@ describe("trigger / tween", () => {
     expect(composeCbk).toHaveBeenCalledTimes(1);
   });
 
-  test("with pinned effects + no-op updates", async () => {
-    const { setPinState: setPinAState, pin: pinA } = newPin();
-    const { setPinState: setPinDState, pin: pinD } = newPin();
+  test("onCompose when no links present", async () => {
+    const { push, composer } = newComposer({ lag: 0 });
 
-    const effectAOrig = new DummyEffectA({ a: -1 }, false);
-    const effectBOrig = new DummyEffectB({ b: -2 }, false);
-    const effectCOrig = new DummyEffectC({ c: -3 }, false);
-    const effectDOrig = new DummyEffectD({ d: -4 }, false);
+    const cbk = jest.fn();
+    composer.onCompose(cbk);
 
-    const lag = 50;
-    const { push, composer } = newComposer({ lag });
-    const { push: pushX, composer: composerX } = newComposer({ lag });
-
-    composer
-      .add(effectAOrig, pinA)
-      .add(effectBOrig)
-      .add(composerX.add(effectCOrig), pinA) // pin does not apply when adding composers
-      .add(effectDOrig, pinD);
-
-    const effectA = getComposerEffectObj(effectAOrig, composer);
-    const effectB = getComposerEffectObj(effectBOrig, composer);
-    const effectC = getComposerEffectObj(effectCOrig, composerX);
-    const effectD = getComposerEffectObj(effectDOrig, composer);
-
-    // ---------- update composer
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(0);
 
     push(DUMMY_UPDATE);
-    const x = DUMMY_UPDATE.x.target;
+    await window.waitFor(50);
+    expect(cbk).toHaveBeenCalledTimes(0);
+  });
 
-    await window.waitFor(lag + 50);
-    expect(effectA.getState()).toEqual({ a: x - 1 });
-    expect(effectB.getState()).toEqual({ b: x - 2 });
-    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
-    expect(effectD.getState()).toEqual({ d: x - 4 });
+  test("onCompose when adding links", async () => {
+    const effectA = new DummyEffectA({ a: 1 });
+    const effectB = new DummyEffectB({ b: 2 });
 
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
+    const { push, composer } = newComposer({ lag: 0 });
+    const { composer: composerX } = newComposer({ lag: 0 });
 
-    // ---------- no-op update
+    const cbk = jest.fn();
+    composer.onCompose(cbk);
+
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(0);
+
+    composer.add(effectA).add(effectB);
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(2); // once per add
+
+    composer.add(composerX);
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(3);
 
     push(DUMMY_UPDATE);
-
-    await window.waitFor(lag + 50);
-    // not updated (incremented)
-    expect(effectA.getState()).toEqual({ a: x - 1 });
-    expect(effectB.getState()).toEqual({ b: x - 2 });
-    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
-    expect(effectD.getState()).toEqual({ d: x - 4 });
-
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
-
-    // ---------- pin A + update composer
-
-    setPinAState(true); // freeze effectA
-    push(DUMMY_UPDATE2);
-    const x2 = DUMMY_UPDATE2.x.target;
-
-    await window.waitFor(lag + 50);
-    expect(effectA.getState()).toEqual({ a: x - 1 }); // pinned
-    expect(effectB.getState()).toEqual({ b: x2 - 2 });
-    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
-    expect(effectD.getState()).toEqual({ d: x2 - 4 });
-
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
-
-    // ---------- update composerX
-
-    pushX(DUMMY_UPDATE);
-
-    await window.waitFor(lag + 50);
-    expect(effectA.getState()).toEqual({ a: x - 1 }); // unchanged as it's on composer
-    expect(effectB.getState()).toEqual({ b: x2 - 2 }); // --"--
-    expect(effectC.getState()).toEqual({ c: x - 3 }); // updated, pin is not set on composerX
-    expect(effectD.getState()).toEqual({ d: x2 - 4 }); // unchanged
-
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
-
-    // ---------- unpin A + pin D + update composer
-
-    setPinAState(false); // unfreeze effectA
-    setPinDState(true); // freeze effectD
-    push(DUMMY_UPDATE3);
-    const x3 = DUMMY_UPDATE3.x.target;
-
-    await window.waitFor(lag + 50);
-    expect(effectA.getState()).toEqual({ a: x + x3 - x2 - 1 });
-    expect(effectB.getState()).toEqual({ b: x3 - 2 });
-    expect(effectC.getState()).toEqual({ c: x - 3 }); // unchanged as it's on composerX
-    expect(effectD.getState()).toEqual({ d: x2 - 4 }); // pinned
-
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
+    await window.waitFor(50);
+    expect(cbk).toHaveBeenCalledTimes(4); // once per trigger
   });
 });
 
@@ -1057,7 +1125,7 @@ describe("setLag", () => {
   });
 
   test("set all lag to same value (> 0) + ensure it does not trigger tween or compose handlers", async () => {
-    const { composer } = newComposer();
+    const { composer } = newComposer({ addEffect: true });
 
     const triggerCbk = jest.fn();
     const tweenCbk = jest.fn();
@@ -1155,7 +1223,7 @@ describe("setLag", () => {
 
 describe("setDepth", () => {
   test("set all depth to same value + ensure it triggers compose handlers", async () => {
-    const { composer } = newComposer();
+    const { composer } = newComposer({ addEffect: true });
 
     // check default
     expect(composer.getConfig().depthX).toBe(1);
@@ -1186,6 +1254,13 @@ describe("setDepth", () => {
 
     expect(triggerCbk).toHaveBeenCalledTimes(0); // not called on setDepth
     expect(tweenCbk).toHaveBeenCalledTimes(0); // not called on setDepth
+    expect(composeCbk).toHaveBeenCalledTimes(1);
+
+    composer.setDepth(depth); // no-op
+    await window.waitFor(50);
+
+    expect(triggerCbk).toHaveBeenCalledTimes(0);
+    expect(tweenCbk).toHaveBeenCalledTimes(0);
     expect(composeCbk).toHaveBeenCalledTimes(1);
   });
 
@@ -1253,13 +1328,13 @@ describe("setDepth", () => {
     setPinAState(true);
     // leave B unpinned
 
-    const effectAIncOrig = new DummyEffectA({ a1: -1 }, false); // incremental
-    const effectBIncOrig = new DummyEffectB({ b1: -2 }, false); // incremental
-    const effectCIncOrig = new DummyEffectC({ c1: -3 }, false); // incremental
+    const effectAIncOrig = new DummyEffectA({ a1: -1 }, { isAbsolute: false });
+    const effectBIncOrig = new DummyEffectB({ b1: -2 }, { isAbsolute: false });
+    const effectCIncOrig = new DummyEffectC({ c1: -3 }, { isAbsolute: false });
 
-    const effectAAbsOrig = new DummyEffectA({ a2: -1 }, true); // absolute
-    const effectBAbsOrig = new DummyEffectB({ b2: -2 }, true); // absolute
-    const effectCAbsOrig = new DummyEffectC({ c2: -3 }, true); // absolute
+    const effectAAbsOrig = new DummyEffectA({ a2: -1 }, { isAbsolute: true });
+    const effectBAbsOrig = new DummyEffectB({ b2: -2 }, { isAbsolute: true });
+    const effectCAbsOrig = new DummyEffectC({ c2: -3 }, { isAbsolute: true });
 
     const { lag, push, composer } = newComposer({ lag: 50 });
 
@@ -1516,7 +1591,7 @@ describe("add/getComposition/toCss", () => {
   });
 
   for (const useExplicit of [true, false]) {
-    test("toCss with negated (default)", async () => {
+    test(`toCss with negate (${useExplicit ? "explicit" : "default"})`, async () => {
       const effectIgnored = new DummyEffectA({ a: 10 });
       const { composer: negatedIgnored } = newComposer();
       negatedIgnored.add(effectIgnored);
@@ -1530,9 +1605,9 @@ describe("add/getComposition/toCss", () => {
 
       expect(negated.toCss()).toEqual({ a: 1, b: 2, c: 3 });
 
-      const { composer } = useExplicit
-        ? newComposer({ negate: negatedIgnored })
-        : newComposer({ negate: negated });
+      const { composer } = newComposer(
+        useExplicit ? { negate: negatedIgnored } : { negate: negated },
+      );
 
       expect(composer.toCss()).toEqual({}); // no effects yet
 
@@ -1568,8 +1643,460 @@ describe("add/getComposition/toCss", () => {
   });
 });
 
-// XXX
-// clear + onClear / offClear
-//
-// animate / deanimate
-// startAnimate / stopAnimate
+describe("clear + onClear/offClear", () => {
+  test("basic", async () => {
+    const { composer } = newComposer({ lag: 0, addEffect: true });
+
+    const cbk = jest.fn();
+    composer.onClear(cbk);
+
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(0);
+
+    composer.clear();
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(1);
+
+    composer.clear(); // no-op
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(1);
+
+    composer.add(new DummyEffect());
+
+    composer.clear(); // cleared again
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(2);
+  });
+
+  test("onClear/offClear + push updates to this and added composers", async () => {
+    const effectAOrig = new DummyEffectA({ a: 1 });
+    const effectBOrig = new DummyEffectB({ b: 2 });
+
+    const { push, composer } = newComposer({ lag: 0 });
+    const { push: pushX, composer: composerX } = newComposer({ lag: 0 });
+
+    composer.add(effectAOrig).add(composerX.add(effectBOrig));
+    expect(composer.toCss()).toEqual({ a: 1, b: 2 });
+
+    const composeCbk = jest.fn();
+    const clearCbk = jest.fn();
+    composer.onCompose(composeCbk);
+    composer.onClear(clearCbk);
+
+    await window.waitFor(0); // callbacks are async
+
+    push(DUMMY_UPDATE);
+
+    await window.waitFor(50);
+    expect(composeCbk).toHaveBeenCalledTimes(1);
+
+    pushX(DUMMY_UPDATE2);
+
+    await window.waitFor(50);
+    expect(composeCbk).toHaveBeenCalledTimes(2);
+
+    expect(composer.toCss()).toEqual({
+      a: DUMMY_UPDATE.x.target,
+      b: DUMMY_UPDATE2.x.target,
+    });
+
+    expect(clearCbk).toHaveBeenCalledTimes(0);
+    composer.clear();
+
+    await window.waitFor(0); // callbacks are async
+    expect(clearCbk).toHaveBeenCalledTimes(1);
+
+    composer.clear(); // no-op
+
+    await window.waitFor(0); // callbacks are async
+    expect(clearCbk).toHaveBeenCalledTimes(1); // no new calls
+
+    expect(composer.toCss()).toEqual({});
+
+    push(DUMMY_UPDATE);
+    await window.waitFor(50);
+
+    pushX(DUMMY_UPDATE2);
+    await window.waitFor(50);
+
+    // no new calls
+    expect(composeCbk).toHaveBeenCalledTimes(2);
+    expect(clearCbk).toHaveBeenCalledTimes(1);
+
+    expect(composer.toCss()).toEqual({});
+  });
+
+  test("onClear/offClear when no links present", async () => {
+    const { composer } = newComposer({ lag: 0 });
+
+    const cbk = jest.fn();
+    composer.onClear(cbk);
+
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(0);
+
+    composer.clear();
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(0);
+  });
+
+  test("onClear/offClear: callback.remove", async () => {
+    const { composer } = newComposer({ lag: 0, addEffect: true });
+
+    const cbkJ = jest.fn();
+    const cbk = Callback.wrap(cbkJ);
+
+    composer.onClear(cbk);
+    cbk.remove();
+
+    await window.waitFor(0); // callbacks are async
+    expect(cbkJ).toHaveBeenCalledTimes(0);
+
+    composer.clear();
+    await window.waitFor(0); // callbacks are async
+    expect(cbkJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("onClear/offClear: return Callback.REMOVE", async () => {
+    const { composer } = newComposer({ lag: 0, addEffect: true });
+
+    const cbk = jest.fn(() => Callback.REMOVE);
+
+    composer.onClear(cbk);
+
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(0);
+
+    composer.clear();
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(1);
+
+    composer.add(new DummyEffect());
+
+    composer.clear(); // cleared again
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(1); // removed after 1st time
+  });
+});
+
+describe("animating elements", () => {
+  test("animate & startAnimate", async () => {
+    const width = 200,
+      height = 100;
+
+    const elementA = document.createElement("div");
+    const elementB = document.createElement("div");
+    const elementC = document.createElement("div");
+    const elementD = document.createElement("div");
+
+    const { push: pushX, composer: composerX } = newComposer({ lag: 0 });
+    const { lag, push, composer } = newComposer({ lag: 500 });
+
+    const effectX = new DummyEffectA({ opacity: 1 });
+    composerX.add(effectX);
+
+    const effect = new DummyEffectB(
+      { width: 0, height: 0 },
+      { addCssUnits: true },
+    );
+    composer.add(effect).add(composerX);
+
+    composer.startAnimate(elementA);
+    composer.startAnimate([elementB]);
+    composer.animate([elementC, elementD]); // one-time
+
+    expect(composer.toCss()).toEqual({
+      width: "0px",
+      height: "0px",
+      opacity: 1,
+    });
+
+    await window.waitFor(50);
+
+    for (const e of [elementA, elementB, elementC, elementD]) {
+      expect(e.style.getPropertyValue("width")).toBe("0px");
+      expect(e.style.getPropertyValue("height")).toBe("0px");
+      expect(e.style.getPropertyValue("opacity")).toBe("1");
+    }
+
+    // update composer ----------
+
+    push({ x: { target: width, max: 1000 }, y: { target: height, max: 1000 } });
+
+    await window.waitFor(10 + lag / 2);
+
+    for (const e of [elementA, elementB]) {
+      expect(
+        Math.abs(
+          Number.parseInt(e.style.getPropertyValue("width")) - width / 2,
+        ),
+      ).toBeLessThanOrEqual(
+        0.2 * width, // 20% error
+      );
+
+      expect(
+        Math.abs(
+          Number.parseInt(e.style.getPropertyValue("height")) - height / 2,
+        ),
+      ).toBeLessThanOrEqual(
+        0.2 * height, // 20% error
+      );
+
+      expect(e.style.getPropertyValue("opacity")).toBe("1");
+    }
+
+    await window.waitFor(100 + lag / 2);
+
+    for (const e of [elementA, elementB]) {
+      expect(e.style.getPropertyValue("width")).toBe(`${width}px`);
+      expect(e.style.getPropertyValue("height")).toBe(`${height}px`);
+      expect(e.style.getPropertyValue("opacity")).toBe("1");
+    }
+
+    for (const e of [elementC, elementD]) {
+      // unchanged
+      expect(e.style.getPropertyValue("width")).toBe("0px");
+      expect(e.style.getPropertyValue("height")).toBe("0px");
+      expect(e.style.getPropertyValue("opacity")).toBe("1");
+    }
+
+    composer.animate(elementC);
+
+    await window.waitFor(50);
+
+    expect(elementC.style.getPropertyValue("width")).toBe(`${width}px`);
+    expect(elementC.style.getPropertyValue("height")).toBe(`${height}px`);
+    expect(elementC.style.getPropertyValue("opacity")).toBe("1");
+
+    // unchanged
+    expect(elementD.style.getPropertyValue("width")).toBe("0px");
+    expect(elementD.style.getPropertyValue("height")).toBe("0px");
+    expect(elementD.style.getPropertyValue("opacity")).toBe("1");
+
+    // update composerX ----------
+
+    pushX({ z: { target: 0.5, max: 1 } });
+
+    await window.waitFor(50);
+    for (const e of [elementA, elementB]) {
+      expect(e.style.getPropertyValue("width")).toBe(`${width}px`);
+      expect(e.style.getPropertyValue("height")).toBe(`${height}px`);
+      expect(e.style.getPropertyValue("opacity")).toBe("0.5");
+    }
+
+    // unchanged
+    expect(elementC.style.getPropertyValue("width")).toBe(`${width}px`);
+    expect(elementC.style.getPropertyValue("height")).toBe(`${height}px`);
+    expect(elementC.style.getPropertyValue("opacity")).toBe("1");
+    expect(elementD.style.getPropertyValue("width")).toBe("0px");
+    expect(elementD.style.getPropertyValue("height")).toBe("0px");
+    expect(elementD.style.getPropertyValue("opacity")).toBe("1");
+
+    // update composerX depth ----------
+
+    composerX.setDepth(2);
+
+    await window.waitFor(50);
+    for (const e of [elementA, elementB]) {
+      expect(e.style.getPropertyValue("width")).toBe(`${width}px`); // unscaled
+      expect(e.style.getPropertyValue("height")).toBe(`${height}px`); // unscaled
+      expect(e.style.getPropertyValue("opacity")).toBe("0.25");
+    }
+
+    // unchanged
+    expect(elementC.style.getPropertyValue("width")).toBe(`${width}px`);
+    expect(elementC.style.getPropertyValue("height")).toBe(`${height}px`);
+    expect(elementC.style.getPropertyValue("opacity")).toBe("1");
+    expect(elementD.style.getPropertyValue("width")).toBe("0px");
+    expect(elementD.style.getPropertyValue("height")).toBe("0px");
+    expect(elementD.style.getPropertyValue("opacity")).toBe("1");
+
+    // update composer depth ----------
+
+    composer.setDepth(4);
+
+    await window.waitFor(50);
+    for (const e of [elementA, elementB]) {
+      expect(e.style.getPropertyValue("width")).toBe(`${width / 4}px`);
+      expect(e.style.getPropertyValue("height")).toBe(`${height / 4}px`);
+      expect(e.style.getPropertyValue("opacity")).toBe("0.25"); // unscaled
+    }
+
+    // unchanged
+    expect(elementC.style.getPropertyValue("width")).toBe(`${width}px`);
+    expect(elementC.style.getPropertyValue("height")).toBe(`${height}px`);
+    expect(elementC.style.getPropertyValue("opacity")).toBe("1");
+    expect(elementD.style.getPropertyValue("width")).toBe("0px");
+    expect(elementD.style.getPropertyValue("height")).toBe("0px");
+    expect(elementD.style.getPropertyValue("opacity")).toBe("1");
+
+    // add new effects ----------
+
+    composer.add(new DummyEffect());
+    composerX.add(new DummyEffect());
+
+    await window.waitFor(50);
+    // unchanged
+    for (const e of [elementA, elementB]) {
+      expect(e.style.getPropertyValue("width")).toBe(`${width / 4}px`);
+      expect(e.style.getPropertyValue("height")).toBe(`${height / 4}px`);
+      expect(e.style.getPropertyValue("opacity")).toBe("0.25"); // unscaled
+    }
+
+    expect(elementC.style.getPropertyValue("width")).toBe(`${width}px`);
+    expect(elementC.style.getPropertyValue("height")).toBe(`${height}px`);
+    expect(elementC.style.getPropertyValue("opacity")).toBe("1");
+    expect(elementD.style.getPropertyValue("width")).toBe("0px");
+    expect(elementD.style.getPropertyValue("height")).toBe("0px");
+    expect(elementD.style.getPropertyValue("opacity")).toBe("1");
+  });
+
+  for (const useExplicit of [true, false]) {
+    test(`animate & startAnimate with negate (${useExplicit ? "explicit" : "default"})`, async () => {
+      const width = 200,
+        widthN = 50,
+        height = 100,
+        heightN = 20;
+
+      const elementA = document.createElement("div");
+      const elementB = document.createElement("div");
+
+      const { composer: composerN } = newComposer({ lag: 0 });
+      const { composer: composerX } = newComposer({ lag: 0 }); // doesn't have negate
+
+      const { push, composer } = newComposer({
+        lag: 0,
+        ...(useExplicit ? {} : { negate: composerN }),
+      });
+
+      const effect = new DummyEffect({ width }, { addCssUnits: true });
+      const effectX = new DummyEffect({ height }, { addCssUnits: true });
+      const effectN = new DummyEffect(
+        { width: widthN, height: heightN },
+        { addCssUnits: true },
+      );
+
+      composerN.add(effectN);
+      composerX.add(effectX);
+      composer.add(effect).add(composerX);
+
+      let defaultNegatedCss = composer.toCss();
+      expect(defaultNegatedCss).toEqual({
+        width: width - (useExplicit ? 0 : widthN) + "px",
+        height: height - (useExplicit ? 0 : heightN) + "px",
+      });
+
+      let explicitNegatedCss = composer.toCss(composerN);
+      expect(explicitNegatedCss).toEqual({
+        width: width - widthN + "px",
+        height: height - heightN + "px",
+      });
+
+      composer.startAnimate(elementA, useExplicit ? composerN : undefined);
+      composer.animate(elementB, useExplicit ? composerN : undefined);
+
+      await window.waitFor(50);
+
+      for (const e of [elementA, elementB]) {
+        for (const p of ["width", "height"]) {
+          expect(e.style.getPropertyValue(p)).toBe(
+            (useExplicit ? explicitNegatedCss : defaultNegatedCss)[p],
+          );
+        }
+      }
+
+      // update composer ----------
+      push({
+        x: { target: width * 2, max: 1000 },
+        y: { target: height * 2, max: 1000 },
+      });
+
+      await window.waitFor(50);
+
+      defaultNegatedCss = composer.toCss();
+      expect(defaultNegatedCss).toEqual({
+        width: width * 2 - (useExplicit ? 0 : widthN) + "px",
+        height: height - (useExplicit ? 0 : heightN) + "px", // composerX not updated
+      });
+
+      explicitNegatedCss = composer.toCss(composerN);
+      expect(explicitNegatedCss).toEqual({
+        width: width * 2 - widthN + "px",
+        height: height - heightN + "px", // composerX not updated
+      });
+
+      for (const p of ["width", "height"]) {
+        expect(elementA.style.getPropertyValue(p)).toBe(
+          (useExplicit ? explicitNegatedCss : defaultNegatedCss)[p],
+        );
+      }
+    });
+  }
+
+  test("deanimate & stopAnimate", async () => {
+    const width = 200,
+      height = 100;
+
+    const elementA = document.createElement("div");
+    const elementB = document.createElement("div");
+    const elementC = document.createElement("div");
+
+    const { push, composer } = newComposer({ lag: 0 });
+
+    const effect = new DummyEffectB(
+      { width: 0, height: 0 },
+      { addCssUnits: true },
+    );
+
+    composer.add(effect);
+
+    push({ x: { target: width, max: 1000 }, y: { target: height, max: 1000 } });
+
+    await window.waitFor(50);
+
+    composer.startAnimate([elementA, elementB]);
+    composer.animate(elementC); // one-time
+
+    await window.waitFor(50);
+
+    for (const e of [elementA, elementB, elementC]) {
+      expect(e.style.getPropertyValue("width")).toBe(`${width}px`);
+      expect(e.style.getPropertyValue("height")).toBe(`${height}px`);
+    }
+
+    composer.stopAnimate(elementA); // don't clear
+    composer.stopAnimate(elementB, true); // clear
+    composer.deanimate(elementC);
+
+    await window.waitForAF();
+
+    expect(elementA.style.getPropertyValue("width")).toBe(`${width}px`);
+    expect(elementA.style.getPropertyValue("height")).toBe(`${height}px`);
+
+    for (const e of [elementB, elementC]) {
+      expect(e.style.getPropertyValue("width")).toBe("");
+      expect(e.style.getPropertyValue("height")).toBe("");
+    }
+
+    push({
+      x: { target: width * 4, max: 1000 },
+      y: { target: height * 4, max: 1000 },
+    });
+
+    await window.waitFor(50);
+
+    composer.setDepth(1.5);
+
+    await window.waitFor(50);
+
+    // unchanged
+
+    expect(elementA.style.getPropertyValue("width")).toBe(`${width}px`);
+    expect(elementA.style.getPropertyValue("height")).toBe(`${height}px`);
+
+    for (const e of [elementB, elementC]) {
+      expect(e.style.getPropertyValue("width")).toBe("");
+      expect(e.style.getPropertyValue("height")).toBe("");
+    }
+  });
+});

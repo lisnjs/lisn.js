@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const { isValidMutationCategory, isValidMutationCategoryList } =
   window.LISN.utils;
 const { DOMWatcher } = window.LISN.watchers;
@@ -552,6 +553,39 @@ describe("offMutation: immediate", () => {
     rootEl.append(parentEl);
     await window.waitForMO();
     expect(callback).toHaveBeenCalledTimes(0);
+  });
+
+  test("callback.remove", async () => {
+    const {
+      callback: callbackJ,
+      watcher,
+      rootEl,
+      parentEl,
+    } = newWatcherElement();
+
+    const callback = Callback.wrap(callbackJ);
+    await watcher.onMutation(callback);
+    callback.remove();
+
+    rootEl.append(parentEl);
+    await window.waitForMO();
+    expect(callbackJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("return Callback.REMOVE", async () => {
+    const callback = jest.fn(() => Callback.REMOVE);
+    const { watcher, rootEl, parentEl, parentElB } = newWatcherElement();
+
+    await watcher.onMutation(callback);
+
+    rootEl.append(parentEl);
+    await window.waitForMO();
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    rootEl.append(parentElB);
+    await window.waitForMO();
+    // no new calls
+    expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });
 

@@ -6,6 +6,7 @@ const {
 
 expect.extend({ toBeDeepCloseTo, toMatchCloseTo });
 
+const { Callback } = window.LISN.modules;
 const {
   isValidIntent,
   isValidInputDevice,
@@ -225,6 +226,34 @@ describe("offGesture", () => {
     element.dispatchEvent(window.newWheel(0, 100));
     await window.waitFor(0); // call is async
     expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  test("callback.remove", async () => {
+    const { watcher, callback: callbackJ, element } = newWatcherElement();
+
+    const callback = Callback.wrap(callbackJ);
+    await watcher.onGesture(element, callback);
+    callback.remove();
+
+    element.dispatchEvent(window.newWheel(0, 100));
+    await window.waitFor(0); // call is async
+    expect(callbackJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("return Callback.REMOVE", async () => {
+    const callback = jest.fn(() => Callback.REMOVE);
+    const { watcher, element } = newWatcherElement();
+
+    await watcher.onGesture(element, callback);
+
+    element.dispatchEvent(window.newWheel(100, 0));
+    await window.waitFor(0); // call is async
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    element.dispatchEvent(window.newWheel(0, 100));
+    await window.waitFor(0); // call is async
+    // no new calls
+    expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });
 

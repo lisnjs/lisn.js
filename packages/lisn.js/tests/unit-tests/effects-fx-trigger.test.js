@@ -364,6 +364,7 @@ describe("FXTrigger", () => {
     const { trigger, push } = newTrigger();
 
     trigger.onChange(cbk);
+    trigger.onChange(cbk); // no-op
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(0);
 
@@ -432,6 +433,7 @@ describe("FXTrigger", () => {
     const { trigger } = newTrigger();
 
     trigger.onChange(cbk);
+    trigger.onChange(cbk); // no-op
     cbk.remove();
 
     trigger.pause();
@@ -448,6 +450,7 @@ describe("FXTrigger", () => {
     const { trigger } = newTrigger();
 
     trigger.onChange(cbk);
+    trigger.onChange(cbk); // no-op
 
     trigger.pause();
     trigger.resume();

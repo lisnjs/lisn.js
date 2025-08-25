@@ -148,7 +148,7 @@ export class FXComposer {
    * - the composer triggered with new data and tweens
    * - any other composers {@link add | added} update their composition
    * - the composer's {@link setDepth | depth is updated} and subsequently the
-   *   effects are updated
+   *   {@link Effect.isAbsolute | absolute} effects are updated
    *
    * The handler is called after updating its composition, such that calling
    * {@link toCss} or {@link getComposition} from the handler will reflect the
@@ -327,7 +327,7 @@ export class FXComposer {
     // ----------
 
     const onOtherCompose = () => {
-      recompose();
+      recompose(false);
     };
 
     const add = (link: Effect | FXComposer, pin?: FXPin) => {
@@ -504,7 +504,7 @@ export class FXComposer {
     ) => {
       const didUpdate = updateConf(input, "depth", 1, { min: 0.01 });
       if (didUpdate) {
-        recompose();
+        recompose(UPDATE_ABSOLUTE);
       }
 
       return this;
@@ -629,13 +629,19 @@ export class FXComposer {
 
     // ----------
 
-    const addToComposition = (link: Effect | FXComposer, update: boolean) => {
+    const addToComposition = (
+      link: Effect | FXComposer,
+      updateMode: false | UPDATE_MODE = UPDATE_ALL,
+    ) => {
       if (_.isInstanceOf(link, FXComposer)) {
         for (const effect of link.getComposition().values()) {
           currentComposition.add(effect);
         }
       } else {
-        if (update) {
+        if (
+          updateMode === UPDATE_ALL ||
+          (updateMode === UPDATE_ABSOLUTE && link.isAbsolute())
+        ) {
           link.update(_.deepCopy(currentFXState), this);
         }
 
@@ -645,11 +651,11 @@ export class FXComposer {
 
     // ----------
 
-    const recompose = () => {
+    const recompose = (updateMode: false | UPDATE_MODE = UPDATE_ALL) => {
       currentComposition.clear();
 
       for (const [link, pin] of compositionChain) {
-        addToComposition(link, !pin?.isActive());
+        addToComposition(link, pin?.isActive() ? false : updateMode);
       }
 
       invokeCallbacks(composeCallbacks);
@@ -867,6 +873,11 @@ export type FXComposerHandler =
   | CallbackHandler<FXComposerHandlerArgs>;
 
 // ------------------------------
+
+type UPDATE_MODE = typeof UPDATE_ALL | typeof UPDATE_ABSOLUTE;
+
+const UPDATE_ALL = 0;
+const UPDATE_ABSOLUTE = 1;
 
 const createState = (): FXState => {
   const axisState: FXAxisState = {

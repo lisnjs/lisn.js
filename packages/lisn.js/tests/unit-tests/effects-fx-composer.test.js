@@ -85,6 +85,26 @@ const DUMMY_UPDATE2 = {
   },
 };
 
+const DUMMY_UPDATE3 = {
+  x: {
+    min: -2500,
+    max: 2500,
+    target: 300,
+    snap: false,
+  },
+  y: {
+    min: -800,
+    max: 800,
+    target: 40,
+  },
+  z: {
+    min: -200,
+    max: 200,
+    target: 2,
+    snap: false,
+  },
+};
+
 const PARTIAL_UPDATE = {
   x: {
     max: 5000,
@@ -94,11 +114,7 @@ const PARTIAL_UPDATE = {
 class DummyEffect {
   type = "effect";
 
-  isAbsolute() {
-    return false;
-  }
-
-  constructor(state) {
+  constructor(state, isAbsolute = true) {
     const invertOn = (negate) => {
       const s = deepCopy(state);
       const ns = negate?.getState() ?? {};
@@ -125,21 +141,25 @@ class DummyEffect {
 
     this.setState = (s) => (state = deepCopy(s));
 
-    this.update = jest.fn((fx) => {
+    this.isAbsolute = () => isAbsolute;
+
+    this.update = jest.fn((fx, composer) => {
+      const d = composer.getConfig().depthX;
       for (const p in state) {
-        state[p] = fx.x.current;
+        state[p] =
+          (isAbsolute ? 0 : state[p] - fx.x.previous / d) + fx.x.current / d;
       }
       return this;
     });
 
     this.export = jest.fn((negate) => {
-      const e = new this.constructor(invertOn(negate));
+      const e = new this.constructor(invertOn(negate), isAbsolute);
       e._exportedFrom = this;
       return e;
     });
 
     this.toComposition = jest.fn((...others) => {
-      const c = new this.constructor(joinWith(others));
+      const c = new this.constructor(joinWith(others), isAbsolute);
       if (others.length) {
         c._composedFrom = [this, ...others];
       } else {
@@ -612,8 +632,11 @@ describe("trigger / tween", () => {
           const composeCbk = jest.fn((c) => composeStates.push(c.getState()));
 
           composer.onTrigger(triggerCbk);
+          composer.onTrigger(triggerCbk); // no-op
           composer.onTween(tweenCbk);
+          composer.onTween(tweenCbk); // no-op
           composer.onCompose(composeCbk);
+          composer.onCompose(composeCbk); // no-op
           push(update);
 
           await window.waitFor(effectiveLag + 50);
@@ -826,8 +849,11 @@ describe("trigger / tween", () => {
     const composeCbk = Callback.wrap(composeCbkJ);
 
     composer.onTrigger(triggerCbk);
+    composer.onTrigger(triggerCbk); // no-op
     composer.onTween(tweenCbk);
+    composer.onTween(tweenCbk); // no-op
     composer.onCompose(composeCbk);
+    composer.onCompose(composeCbk); // no-op
 
     triggerCbk.remove();
     tweenCbk.remove();
@@ -850,8 +876,11 @@ describe("trigger / tween", () => {
     const composeCbk = jest.fn(() => Callback.REMOVE);
 
     composer.onTrigger(triggerCbk);
+    composer.onTrigger(triggerCbk); // no-op
     composer.onTween(tweenCbk);
+    composer.onTween(tweenCbk); // no-op
     composer.onCompose(composeCbk);
+    composer.onCompose(composeCbk); // no-op
 
     push(DUMMY_UPDATE);
     await window.waitFor(lag + 50);
@@ -870,6 +899,123 @@ describe("trigger / tween", () => {
     expect(triggerCbk).toHaveBeenCalledTimes(1);
     expect(tweenCbk).toHaveBeenCalledTimes(1);
     expect(composeCbk).toHaveBeenCalledTimes(1);
+  });
+
+  test("with pinned effects + no-op updates", async () => {
+    const { setPinState: setPinAState, pin: pinA } = newPin();
+    const { setPinState: setPinDState, pin: pinD } = newPin();
+
+    const effectAOrig = new DummyEffectA({ a: -1 }, false);
+    const effectBOrig = new DummyEffectB({ b: -2 }, false);
+    const effectCOrig = new DummyEffectC({ c: -3 }, false);
+    const effectDOrig = new DummyEffectD({ d: -4 }, false);
+
+    const lag = 50;
+    const { push, composer } = newComposer({ lag });
+    const { push: pushX, composer: composerX } = newComposer({ lag });
+
+    composer
+      .add(effectAOrig, pinA)
+      .add(effectBOrig)
+      .add(composerX.add(effectCOrig), pinA) // pin does not apply when adding composers
+      .add(effectDOrig, pinD);
+
+    const effectA = getComposerEffectObj(effectAOrig, composer);
+    const effectB = getComposerEffectObj(effectBOrig, composer);
+    const effectC = getComposerEffectObj(effectCOrig, composerX);
+    const effectD = getComposerEffectObj(effectDOrig, composer);
+
+    // ---------- update composer
+
+    push(DUMMY_UPDATE);
+    const x = DUMMY_UPDATE.x.target;
+
+    await window.waitFor(lag + 50);
+    expect(effectA.getState()).toEqual({ a: x - 1 });
+    expect(effectB.getState()).toEqual({ b: x - 2 });
+    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
+    expect(effectD.getState()).toEqual({ d: x - 4 });
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+
+    // ---------- no-op update
+
+    push(DUMMY_UPDATE);
+
+    await window.waitFor(lag + 50);
+    // not updated (incremented)
+    expect(effectA.getState()).toEqual({ a: x - 1 });
+    expect(effectB.getState()).toEqual({ b: x - 2 });
+    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
+    expect(effectD.getState()).toEqual({ d: x - 4 });
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+
+    // ---------- pin A + update composer
+
+    setPinAState(true); // freeze effectA
+    push(DUMMY_UPDATE2);
+    const x2 = DUMMY_UPDATE2.x.target;
+
+    await window.waitFor(lag + 50);
+    expect(effectA.getState()).toEqual({ a: x - 1 }); // pinned
+    expect(effectB.getState()).toEqual({ b: x2 - 2 });
+    expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
+    expect(effectD.getState()).toEqual({ d: x2 - 4 });
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+
+    // ---------- update composerX
+
+    pushX(DUMMY_UPDATE);
+
+    await window.waitFor(lag + 50);
+    expect(effectA.getState()).toEqual({ a: x - 1 }); // unchanged as it's on composer
+    expect(effectB.getState()).toEqual({ b: x2 - 2 }); // --"--
+    expect(effectC.getState()).toEqual({ c: x - 3 }); // updated, pin is not set on composerX
+    expect(effectD.getState()).toEqual({ d: x2 - 4 }); // unchanged
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
+
+    // ---------- unpin A + pin D + update composer
+
+    setPinAState(false); // unfreeze effectA
+    setPinDState(true); // freeze effectD
+    push(DUMMY_UPDATE3);
+    const x3 = DUMMY_UPDATE3.x.target;
+
+    await window.waitFor(lag + 50);
+    expect(effectA.getState()).toEqual({ a: x + x3 - x2 - 1 });
+    expect(effectB.getState()).toEqual({ b: x3 - 2 });
+    expect(effectC.getState()).toEqual({ c: x - 3 }); // unchanged as it's on composerX
+    expect(effectD.getState()).toEqual({ d: x2 - 4 }); // pinned
+
+    expect(composer.toCss()).toEqual({
+      ...effectA.getState(),
+      ...effectB.getState(),
+      ...effectC.getState(),
+      ...effectD.getState(),
+    });
   });
 });
 
@@ -1100,6 +1246,85 @@ describe("setDepth", () => {
       expect(composer.getConfig().depthZ).toBe(depthZ);
     });
   }
+
+  test("with pinned, absolute and incremental effects", async () => {
+    const { setPinState: setPinAState, pin: pinA } = newPin();
+    const { pin: pinB } = newPin();
+    setPinAState(true);
+    // leave B unpinned
+
+    const effectAIncOrig = new DummyEffectA({ a1: -1 }, false); // incremental
+    const effectBIncOrig = new DummyEffectB({ b1: -2 }, false); // incremental
+    const effectCIncOrig = new DummyEffectC({ c1: -3 }, false); // incremental
+
+    const effectAAbsOrig = new DummyEffectA({ a2: -1 }, true); // absolute
+    const effectBAbsOrig = new DummyEffectB({ b2: -2 }, true); // absolute
+    const effectCAbsOrig = new DummyEffectC({ c2: -3 }, true); // absolute
+
+    const { lag, push, composer } = newComposer({ lag: 50 });
+
+    composer
+      .add(effectAIncOrig, pinA)
+      .add(effectBIncOrig, pinB)
+      .add(effectCIncOrig)
+      .add(effectAAbsOrig, pinA)
+      .add(effectBAbsOrig, pinB)
+      .add(effectCAbsOrig);
+
+    const effectAInc = getComposerEffectObj(effectAIncOrig, composer);
+    const effectBInc = getComposerEffectObj(effectBIncOrig, composer);
+    const effectCInc = getComposerEffectObj(effectCIncOrig, composer);
+    const effectAAbs = getComposerEffectObj(effectAAbsOrig, composer);
+    const effectBAbs = getComposerEffectObj(effectBAbsOrig, composer);
+    const effectCAbs = getComposerEffectObj(effectCAbsOrig, composer);
+
+    // ---------- update composer
+
+    push(DUMMY_UPDATE);
+    const x = DUMMY_UPDATE.x.target;
+
+    await window.waitFor(lag + 50);
+    expect(effectAInc.getState()).toEqual({ a1: -1 }); // pinned
+    expect(effectBInc.getState()).toEqual({ b1: x - 2 });
+    expect(effectCInc.getState()).toEqual({ c1: x - 3 });
+    expect(effectAAbs.getState()).toEqual({ a2: -1 }); // pinned
+    expect(effectBAbs.getState()).toEqual({ b2: x });
+    expect(effectCAbs.getState()).toEqual({ c2: x });
+
+    expect(composer.toCss()).toEqual({
+      ...effectAInc.getState(),
+      ...effectBInc.getState(),
+      ...effectCInc.getState(),
+      ...effectAAbs.getState(),
+      ...effectBAbs.getState(),
+      ...effectCAbs.getState(),
+    });
+
+    const nCallsAInc = effectAInc.update.mock.calls.length;
+    const nCallsBInc = effectBInc.update.mock.calls.length;
+    const nCallsCInc = effectCInc.update.mock.calls.length;
+    const nCallsAAbs = effectAAbs.update.mock.calls.length;
+    const nCallsBAbs = effectBAbs.update.mock.calls.length;
+    const nCallsCAbs = effectCAbs.update.mock.calls.length;
+
+    composer.setDepth(2);
+    await window.waitFor(lag + 50);
+
+    expect(effectAInc.getState()).toEqual({ a1: -1 }); // pinned
+    expect(effectBInc.getState()).toEqual({ b1: x - 2 }); // unchanged as it's incremental
+    expect(effectCInc.getState()).toEqual({ c1: x - 3 }); // --"--
+
+    expect(effectAAbs.getState()).toEqual({ a2: -1 }); // pinned
+    expect(effectBAbs.getState()).toEqual({ b2: x / 2 }); // re-scaled
+    expect(effectCAbs.getState()).toEqual({ c2: x / 2 }); // --"--
+
+    expect(effectAInc.update).toHaveBeenCalledTimes(nCallsAInc); // pinned
+    expect(effectBInc.update).toHaveBeenCalledTimes(nCallsBInc); // incremental
+    expect(effectCInc.update).toHaveBeenCalledTimes(nCallsCInc); // incremental
+    expect(effectAAbs.update).toHaveBeenCalledTimes(nCallsAAbs); // pinned
+    expect(effectBAbs.update).toHaveBeenCalledTimes(nCallsBAbs + 1);
+    expect(effectCAbs.update).toHaveBeenCalledTimes(nCallsCAbs + 1);
+  });
 });
 
 describe("add/getComposition/toCss", () => {
@@ -1273,7 +1498,7 @@ describe("add/getComposition/toCss", () => {
     }
 
     expect(effectBIntX.update).toHaveBeenCalledTimes(1);
-    expect(effectAInt.update).toHaveBeenCalledTimes(2); // updated also when composerX recomposes
+    expect(effectAInt.update).toHaveBeenCalledTimes(1); // not updated when composerX recomposes
   });
 
   test("toCss with no negated", async () => {
@@ -1344,8 +1569,6 @@ describe("add/getComposition/toCss", () => {
 });
 
 // XXX
-// pinned effects with trigger
-//
 // clear + onClear / offClear
 //
 // animate / deanimate

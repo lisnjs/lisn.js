@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const settings = window.LISN.settings;
 const {
   isValidDevice,
@@ -303,6 +304,44 @@ describe("offLayout", () => {
     await window.waitForIO();
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callbackB).toHaveBeenCalledTimes(0);
+  });
+
+  test("callback.remove", async () => {
+    const {
+      callback: callbackJ,
+      watcher,
+      overlays,
+      observer,
+    } = await newWatcher();
+
+    const callback = Callback.wrap(callbackJ);
+    watcher.onLayout(callback);
+    watcher.onLayout(callback); // no-op
+    callback.remove();
+
+    await window.waitForIO();
+    expect(callbackJ).toHaveBeenCalledTimes(0);
+
+    observer.trigger(overlays.desktop, ["at"]);
+
+    await window.waitForIO();
+    expect(callbackJ).toHaveBeenCalledTimes(0);
+  });
+
+  test("return Callback.REMOVE", async () => {
+    const callback = jest.fn(() => Callback.REMOVE);
+    const { watcher, overlays, observer } = await newWatcher();
+
+    watcher.onLayout(callback);
+    watcher.onLayout(callback); // no-op
+
+    await window.waitForIO();
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    observer.trigger(overlays.desktop, ["at"]);
+
+    await window.waitForIO();
+    expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });
 

@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const { isValidBox, isValidDimension } = window.LISN.utils;
 const { SizeWatcher } = window.LISN.watchers;
 
@@ -393,6 +394,49 @@ describe("offResize", () => {
     await window.waitForRO();
     expect(callback).toHaveBeenCalledTimes(1); // no new calls
     expect(callbackB).toHaveBeenCalledTimes(0); // no new calls
+  });
+
+  test("callback.remove", async () => {
+    const {
+      callback: callbackJ,
+      watcher,
+      elements,
+      resizeAll,
+    } = newWatcherElement({
+      numEls: 1,
+    });
+    const element = elements[0];
+
+    const callback = Callback.wrap(callbackJ);
+
+    await watcher.onResize(callback, { target: element });
+
+    expect(callbackJ).toHaveBeenCalledTimes(1); // initial
+
+    callback.remove();
+
+    resizeAll();
+    await window.waitForRO();
+    expect(callbackJ).toHaveBeenCalledTimes(1); // no new calls
+  });
+
+  test("return Callback.REMOVE", async () => {
+    const callback = jest.fn(() => Callback.REMOVE);
+    const { watcher, elements, resizeAll } = newWatcherElement({
+      numEls: 1,
+    });
+    const element = elements[0];
+
+    await watcher.onResize(callback, { target: element });
+
+    await window.waitForRO();
+    expect(callback).toHaveBeenCalledTimes(1); // initial
+
+    await window.waitForRO();
+
+    resizeAll();
+    await window.waitForRO();
+    expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });
 

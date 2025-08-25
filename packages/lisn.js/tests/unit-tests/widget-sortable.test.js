@@ -200,6 +200,7 @@ describe("moving", () => {
     });
 
     sortable.onMove(callback);
+    sortable.onMove(callback); // no-op
     expect(callback).toHaveBeenCalledTimes(0);
 
     // move item #2 to after item #4
@@ -225,6 +226,7 @@ describe("moving", () => {
     const callback = jest.fn();
 
     sortable.onMove(callback);
+    sortable.onMove(callback); // no-op
     sortable.offMove(callback);
 
     // move item #2 to after item #4
@@ -244,6 +246,7 @@ describe("moving", () => {
     const callback = Callback.wrap(callbackJ);
 
     sortable.onMove(callback);
+    sortable.onMove(callback); // no-op
     callback.remove();
 
     // move item #2 to after item #4
@@ -262,6 +265,7 @@ describe("moving", () => {
     const callback = jest.fn(() => Callback.REMOVE);
 
     sortable.onMove(callback);
+    sortable.onMove(callback); // no-op
 
     // move item #2 to after item #4
     items[1].dispatchEvent(new MouseEvent("mousedown"));

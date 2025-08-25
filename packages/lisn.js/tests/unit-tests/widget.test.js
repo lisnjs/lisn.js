@@ -45,8 +45,11 @@ describe("Widget", () => {
 
     const widget = new Widget(document.body);
     widget.onEnable(onEnable);
+    widget.onEnable(onEnable); // no-op
     widget.onDisable(onDisable);
+    widget.onDisable(onDisable); // no-op
     widget.onDestroy(onDestroy);
+    widget.onDestroy(onDestroy); // no-op
     await window.waitFor(0); // callbacks is async
 
     expect(onEnable).toHaveBeenCalledTimes(0);
@@ -103,8 +106,11 @@ describe("Widget", () => {
 
     const widget = new Widget(document.body);
     widget.onEnable(onEnable);
+    widget.onEnable(onEnable); // no-op
     widget.onDisable(onDisable);
+    widget.onDisable(onDisable); // no-op
     widget.onDestroy(onDestroy);
+    widget.onDestroy(onDestroy); // no-op
     await window.waitFor(0); // callbacks is async
 
     expect(onEnable).toHaveBeenCalledTimes(0);
@@ -130,8 +136,11 @@ describe("Widget", () => {
 
     const widget = new Widget(document.body);
     widget.onEnable(onEnable);
+    widget.onEnable(onEnable); // no-op
     widget.onDisable(onDisable);
+    widget.onDisable(onDisable); // no-op
     widget.onDestroy(onDestroy);
+    widget.onDestroy(onDestroy); // no-op
 
     widget.offEnable(onEnable);
     widget.offDisable(onDisable);
@@ -157,8 +166,11 @@ describe("Widget", () => {
 
     const widget = new Widget(document.body);
     widget.onEnable(onEnable);
+    widget.onEnable(onEnable); // no-op
     widget.onDisable(onDisable);
+    widget.onDisable(onDisable); // no-op
     widget.onDestroy(onDestroy);
+    widget.onDestroy(onDestroy); // no-op
 
     onEnable.remove();
     onDisable.remove();
@@ -181,8 +193,11 @@ describe("Widget", () => {
 
     const widget = new Widget(document.body);
     widget.onEnable(onEnable);
+    widget.onEnable(onEnable); // no-op
     widget.onDisable(onDisable);
+    widget.onDisable(onDisable); // no-op
     widget.onDestroy(onDestroy);
+    widget.onDestroy(onDestroy); // no-op
 
     widget.enable(); // no-op as it's enabled
     widget.disable(); // concurrent

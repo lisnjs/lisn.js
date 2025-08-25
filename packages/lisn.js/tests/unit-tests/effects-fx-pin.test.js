@@ -1170,6 +1170,7 @@ describe("onChange/offChange", () => {
 
     const cbk = jest.fn();
     pin.onChange(cbk);
+    pin.onChange(cbk); // no-op
 
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(0);
@@ -1300,6 +1301,7 @@ describe("onChange/offChange", () => {
     const cbk = Callback.wrap(cbkJ);
 
     pin.onChange(cbk);
+    pin.onChange(cbk); // no-op
     cbk.remove();
 
     store.setState(true);
@@ -1320,6 +1322,7 @@ describe("onChange/offChange", () => {
     const cbk = jest.fn(() => Callback.REMOVE);
 
     pin.onChange(cbk);
+    pin.onChange(cbk); // no-op
 
     store.setState(true);
     store.setState(false);

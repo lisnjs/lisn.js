@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const { isValidPointerAction, isValidPointerActionList } = window.LISN.utils;
 
 const { PointerWatcher } = window.LISN.watchers;
@@ -253,6 +254,61 @@ describe("offPointer", () => {
     expect(startCallback).toHaveBeenCalledTimes(1);
     expect(endCallback).toHaveBeenCalledTimes(1);
   });
+
+  for (const removeStart of [true, false]) {
+    // removing either of them removes them as a pair
+    test("callback.remove", async () => {
+      const {
+        startCallback: startCallbackJ,
+        endCallback: endCallbackJ,
+        watcher,
+        element,
+      } = newWatcherElement();
+
+      const startCallback = Callback.wrap(startCallbackJ);
+      const endCallback = Callback.wrap(endCallbackJ);
+
+      await watcher.onPointer(element, startCallback, endCallback);
+      (removeStart ? startCallback : endCallback).remove();
+
+      element.dispatchEvent(window.newClick());
+      await window.waitFor(0); // call is async
+      expect(startCallbackJ).toHaveBeenCalledTimes(0);
+      expect(endCallbackJ).toHaveBeenCalledTimes(0);
+    });
+
+    test("return Callback.REMOVE", async () => {
+      const startCallback = jest.fn(() =>
+        removeStart ? Callback.REMOVE : null,
+      );
+      const endCallback = jest.fn(() =>
+        !removeStart ? Callback.REMOVE : null,
+      );
+      const { watcher, element } = newWatcherElement();
+
+      await watcher.onPointer(element, startCallback, endCallback);
+
+      element.dispatchEvent(window.newClick()); // ON
+      await window.waitFor(0); // call is async
+
+      expect(startCallback).toHaveBeenCalledTimes(1);
+
+      element.dispatchEvent(window.newClick()); // OFF
+      await window.waitFor(0); // call is async
+
+      expect(endCallback).toHaveBeenCalledTimes(removeStart ? 0 : 1);
+
+      element.dispatchEvent(window.newClick()); // ON
+      await window.waitFor(0); // call is async
+
+      element.dispatchEvent(window.newClick()); // OFF
+      await window.waitFor(0); // call is async
+
+      // no new calls
+      expect(startCallback).toHaveBeenCalledTimes(1);
+      expect(endCallback).toHaveBeenCalledTimes(removeStart ? 0 : 1);
+    });
+  }
 });
 
 describe("actions", () => {

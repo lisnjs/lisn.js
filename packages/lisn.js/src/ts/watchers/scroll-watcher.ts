@@ -417,9 +417,15 @@ export class ScrollWatcher {
         directionMatches(directions, scrollData.direction)
       ) {
         debug: logger?.debug5("Calling initially with", element, scrollData);
+
         // Use a one-off callback that's not debounced for the initial call.
+        // If it gets removed on the first call (by the handler returning
+        // Callback.REMOVE for example), the debounced one should also be removed.
+        const initialCallback = wrapCallback(handler);
+        initialCallback.onRemove(() => deleteHandler(handler, options));
+
         await invokeCallback(
-          wrapCallback(handler),
+          initialCallback,
           element,
           scrollData,
           void 0,
@@ -439,7 +445,6 @@ export class ScrollWatcher {
       const element = options._element;
       const currEntry = allCallbacks.get(element)?.get(handler);
       if (currEntry?._trackType === trackType) {
-        debug: logger?.debug5("Removing handler", element, handler, trackType);
         _.remove(currEntry._callback);
 
         if (handler === setScrollCssProps) {
@@ -457,6 +462,7 @@ export class ScrollWatcher {
     ) => {
       const element = options._element;
       const eventTarget = options._eventTarget;
+      debug: logger?.debug5("Removing handler", element, handler);
 
       _.deleteKey(allCallbacks.get(element), handler);
       allCallbacks.prune(element);

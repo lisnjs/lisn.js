@@ -290,14 +290,14 @@ export class SizeWatcher {
 
       if (!userOptions?.skipInitial) {
         debug: logger?.debug5("Calling initially with", element, sizeData);
+
         // Use a one-off callback that's not debounced for the initial call.
-        await invokeCallback(
-          wrapCallback(handler),
-          element,
-          sizeData,
-          void 0,
-          this,
-        );
+        // If it gets removed on the first call (by the handler returning
+        // Callback.REMOVE for example), the debounced one should also be removed.
+        const initialCallback = wrapCallback(handler);
+        initialCallback.onRemove(() => deleteHandler(handler, options));
+
+        await invokeCallback(initialCallback, element, sizeData, void 0, this);
       }
     };
 
@@ -311,7 +311,6 @@ export class SizeWatcher {
       const element = options._element;
       const currEntry = allCallbacks.get(element)?.get(handler);
       if (currEntry) {
-        debug: logger?.debug5("Removing handler", target, handler);
         _.remove(currEntry._callback);
 
         if (handler === setSizeCssProps) {
@@ -328,6 +327,8 @@ export class SizeWatcher {
       options: OnResizeOptionsInternal,
     ) => {
       const element = options._element;
+      debug: logger?.debug5("Removing handler", element, handler);
+
       _.deleteKey(allCallbacks.get(element), handler);
       allCallbacks.prune(element);
 

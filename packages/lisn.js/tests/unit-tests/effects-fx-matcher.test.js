@@ -7,7 +7,7 @@ const {
   FXNegateMatcher,
   FXComposerMatcher,
   FXScrollMatcher,
-  FXViewMatcher,
+  // FXViewMatcher,
   FXPinMatcher,
   FXPin,
   FXComposer,
@@ -71,6 +71,7 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
       const { matcher, store, executor } = newMatcher(Class);
 
       matcher.onChange(cbk);
+      matcher.onChange(cbk); // no-op
       expect(executor).toHaveBeenCalledTimes(1);
       await window.waitFor(0); // callbacks are async
       expect(cbk).toHaveBeenCalledTimes(0); // initial state change in executor has already happened
@@ -169,6 +170,7 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
       const { matcher, store } = newMatcher(Class);
 
       matcher.onChange(cbk);
+      matcher.onChange(cbk); // no-op
       cbk.remove();
 
       store.setState(true);
@@ -185,6 +187,7 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
       const { matcher, store } = newMatcher(Class);
 
       matcher.onChange(cbk);
+      matcher.onChange(cbk); // no-op
 
       store.setState(true);
       store.setState(false);

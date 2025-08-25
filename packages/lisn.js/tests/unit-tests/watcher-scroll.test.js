@@ -1,5 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
+const { Callback } = window.LISN.modules;
 const { isValidScrollDirection, isValidScrollDirectionList } =
   window.LISN.utils;
 const { ScrollWatcher } = window.LISN.watchers;
@@ -425,7 +426,7 @@ describe("offScroll", () => {
     await window.waitForAF();
     expect(callback).toHaveBeenCalledTimes(0);
 
-    element.scrollTo(0, 0);
+    element.scrollTo(10, 10);
     await window.waitForAF();
     expect(callback).toHaveBeenCalledTimes(0);
   });
@@ -454,6 +455,39 @@ describe("offScroll", () => {
     await window.waitForAF();
     expect(callback).toHaveBeenCalledTimes(1); // no new calls
     expect(callbackB).toHaveBeenCalledTimes(0); // no new calls
+  });
+
+  test("callback.remove", async () => {
+    const { watcher, callback: callbackJ, element } = newWatcherElement();
+
+    const callback = Callback.wrap(callbackJ);
+
+    await watcher.onScroll(callback, { scrollable: element });
+
+    await window.waitForAF();
+    expect(callbackJ).toHaveBeenCalledTimes(1); // initial
+
+    callback.remove();
+
+    element.scrollTo(10, 10);
+    await window.waitForAF();
+    expect(callbackJ).toHaveBeenCalledTimes(1); // no new calls
+  });
+
+  test("return Callback.REMOVE", async () => {
+    const callback = jest.fn(() => Callback.REMOVE);
+    const { watcher, element } = newWatcherElement();
+
+    await watcher.onScroll(callback, { scrollable: element });
+
+    await window.waitForAF();
+    expect(callback).toHaveBeenCalledTimes(1); // initial
+
+    await window.waitForAF();
+
+    element.scrollTo(10, 10);
+    await window.waitForAF();
+    expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time
   });
 });
 

@@ -311,6 +311,43 @@ describe("offView", () => {
     expect(callback).toHaveBeenCalledTimes(1); // no new calls
     expect(callbackB).toHaveBeenCalledTimes(0); // no new calls
   });
+
+  test("callback.remove", async () => {
+    const {
+      watcher,
+      callback: callbackJ,
+      element,
+      observer,
+    } = await newWatcherElement();
+
+    const callback = Callback.wrap(callbackJ);
+    await watcher.onView(element, callback);
+
+    await window.waitForVW();
+    expect(callbackJ).toHaveBeenCalledTimes(1); // initial
+
+    callback.remove();
+
+    element.resize();
+    observer.trigger(element);
+    await window.waitForVW();
+    expect(callbackJ).toHaveBeenCalledTimes(1); // no new calls
+  });
+
+  test("return Callback.REMOVE", async () => {
+    const callback = jest.fn(() => Callback.REMOVE);
+    const { watcher, element, observer } = await newWatcherElement();
+
+    await watcher.onView(element, callback);
+
+    await window.waitForVW();
+    expect(callback).toHaveBeenCalledTimes(1); // initial
+
+    element.resize();
+    observer.trigger(element);
+    await window.waitForVW();
+    expect(callback).toHaveBeenCalledTimes(1); // removed after 1st time
+  });
 });
 
 describe("views", () => {

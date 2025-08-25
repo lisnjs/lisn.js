@@ -519,6 +519,7 @@ describe("transitioning pages", () => {
     });
 
     pager.onTransition(callback);
+    pager.onTransition(callback); // no-op
     expect(callback).toHaveBeenCalledTimes(0);
 
     await pager.goToPage(3);
@@ -547,6 +548,7 @@ describe("transitioning pages", () => {
     const callback = jest.fn();
 
     pager.onTransition(callback);
+    pager.onTransition(callback); // no-op
     pager.offTransition(callback);
 
     pager.goToPage(3); // concurrent
@@ -563,6 +565,7 @@ describe("transitioning pages", () => {
     const callback = Callback.wrap(callbackJ);
 
     pager.onTransition(callback);
+    pager.onTransition(callback); // no-op
     callback.remove();
 
     pager.goToPage(3); // concurrent
@@ -578,6 +581,7 @@ describe("transitioning pages", () => {
     const callback = jest.fn(() => Callback.REMOVE);
 
     pager.onTransition(callback);
+    pager.onTransition(callback); // no-op
 
     pager.goToPage(3); // concurrent
     pager.goToPage(2); // concurrent

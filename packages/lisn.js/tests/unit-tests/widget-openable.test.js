@@ -273,9 +273,11 @@ describe("generic Openable", () => {
 
     const openFn = jest.fn();
     widget.onOpen(openFn);
+    widget.onOpen(openFn); // no-op
 
     const closeFn = jest.fn();
     widget.onClose(closeFn);
+    widget.onClose(closeFn); // no-op
 
     await widget.close(); // no-op as it's closed
     expect(openFn).toHaveBeenCalledTimes(0);
@@ -322,10 +324,12 @@ describe("generic Openable", () => {
 
     const openFn = jest.fn();
     widget.onOpen(openFn);
+    widget.onOpen(openFn); // no-op
     widget.offOpen(openFn);
 
     const closeFn = jest.fn();
     widget.onClose(closeFn);
+    widget.onClose(closeFn); // no-op
     widget.offClose(closeFn);
 
     widget.open(); // concurrent
@@ -346,11 +350,13 @@ describe("generic Openable", () => {
     const openFnJ = jest.fn();
     const openFn = Callback.wrap(openFnJ);
     widget.onOpen(openFn);
+    widget.onOpen(openFn); // no-op
     openFn.remove();
 
     const closeFnJ = jest.fn();
     const closeFn = Callback.wrap(closeFnJ);
     widget.onClose(closeFn);
+    widget.onClose(closeFn); // no-op
     closeFn.remove();
 
     widget.open(); // concurrent
@@ -370,9 +376,11 @@ describe("generic Openable", () => {
 
     const openFn = jest.fn(() => Callback.REMOVE);
     widget.onOpen(openFn);
+    widget.onOpen(openFn); // no-op
 
     const closeFn = jest.fn(() => Callback.REMOVE);
     widget.onClose(closeFn);
+    widget.onClose(closeFn); // no-op
 
     widget.open(); // concurrent
     widget.close(); // concurrent

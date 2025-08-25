@@ -300,6 +300,7 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
         );
       };
 
+      updateData(); // check initial state
       composer.onTween(createCallback(updateData, true));
 
       // Recheck if within bounds

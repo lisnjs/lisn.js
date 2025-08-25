@@ -579,9 +579,11 @@ export class FXComposer {
           currentComposition.add(effect);
         }
       } else {
-        currentComposition.add(
-          update ? link.update(_.deepCopy(currentFXState), this) : link,
-        );
+        if (update) {
+          link.update(_.deepCopy(currentFXState), this);
+        }
+
+        currentComposition.add(link);
       }
     };
 

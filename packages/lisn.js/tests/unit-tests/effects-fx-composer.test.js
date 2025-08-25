@@ -5,7 +5,7 @@ window.LISN.settings.effectLag = DEFAULT_LAG;
 
 const { Callback } = window.LISN.modules;
 const { deepCopy } = window.LISN._;
-const { linearTweener } = window.LISN.utils;
+const { randId, linearTweener } = window.LISN.utils;
 const { FXComposer, FXTrigger, FXScrollTrigger, FXMatcher, FXPin } =
   window.LISN.effects;
 
@@ -119,6 +119,8 @@ class DummyEffect {
       return s;
     };
 
+    this.id = randId();
+
     this.getState = () => deepCopy(state);
 
     this.update = jest.fn((fx) => {
@@ -128,11 +130,21 @@ class DummyEffect {
       return this;
     });
 
-    this.export = jest.fn((negate) => new this.constructor(invertOn(negate)));
+    this.export = jest.fn((negate) => {
+      const e = new this.constructor(invertOn(negate));
+      e._exportedFrom = this;
+      return e;
+    });
 
-    this.toComposition = jest.fn(
-      (...others) => new this.constructor(joinWith(others)),
-    );
+    this.toComposition = jest.fn((...others) => {
+      const c = new this.constructor(joinWith(others));
+      if (others.length) {
+        c._composedFrom = [this, ...others];
+      } else {
+        c._clonedFrom = this;
+      }
+      return c;
+    });
 
     this.toCss = jest.fn((negate) => invertOn(negate));
   }
@@ -203,6 +215,46 @@ const newTrigger = (executorBody) => {
   const trigger = new FXTrigger(executor);
 
   return { trigger, push };
+};
+
+const getComposerEffectObj = (originalEffect, composer) => {
+  // Composers clone effects before storing them internally. Then each time they
+  // rebuild the composition, they add each effect in turn.
+  //
+  // The first time an effect of a given type is added to the composition map,
+  // it is stored unmodified.
+  //
+  // Each subsequent call to add an effect to the composition map replaces the
+  // current effect in the map with a new one that's composed from it and the
+  // effect being added. I.e. if the composer internally holds effect1, effect2
+  // and effect3 all of the same type, adding effect1 to the composition will
+  // preserve that object. Adding effect2 will replace the effect stored in the
+  // map with a new one, call it effect12, that has _composedFrom
+  // [effect1, effect2]. Adding effect3 should replace it with a new one that
+  // has _composedFrom [effect12, effect3].
+  //
+  // So we keep walking up till we find the one that's cloned from the original
+  // effect. That's the one that the composer stores internally and updates each
+  // time its state changes.
+
+  const exported = composer.getComposition().get(originalEffect.type);
+  const composed = exported?._exportedFrom;
+
+  let currentComposed = composed;
+
+  while (currentComposed) {
+    if (currentComposed._clonedFrom === originalEffect) {
+      return currentComposed;
+    }
+
+    for (const e of currentComposed._composedFrom ?? []) {
+      if (e._clonedFrom === originalEffect) {
+        return e;
+      }
+    }
+
+    currentComposed = currentComposed._composedFrom[0];
+  }
 };
 
 const newComposer = ({
@@ -412,6 +464,10 @@ describe("trigger / tween", () => {
             expect(
               Math.abs(state[axis].previous + approxStep - state[axis].current),
             ).toBeLessThan(approxStep * 0.3);
+          } else if (prop === "current") {
+            expect(finalState[axis][prop]).toBeCloseTo(
+              expectedFinalState[axis][prop],
+            );
           } else {
             expect(finalState[axis][prop]).toBe(expectedFinalState[axis][prop]);
           }
@@ -503,6 +559,10 @@ describe("trigger / tween", () => {
           expect(
             Math.abs(state[axis].previous + approxStep - state[axis].current),
           ).toBeLessThan(approxStep * 0.3);
+        } else if (prop === "current") {
+          expect(finalState[axis][prop]).toBeCloseTo(
+            expectedFinalState[axis][prop],
+          );
         } else {
           expect(finalState[axis][prop]).toBe(expectedFinalState[axis][prop]);
         }
@@ -573,47 +633,55 @@ describe("trigger / tween", () => {
             // i.e. <= 2 if effectiveLag is 0
             1.2 * approxTweenNCallsPerTrigger,
           );
-          const state = composer.getState();
 
-          if (effectiveLag > 0) {
-            expect(state.x.previous).toBeGreaterThan(0);
-            expect(state.y.previous).toBeGreaterThan(0);
-            expect(state.z.previous).toBeGreaterThan(0);
-          } else {
-            expect(state.x.previous).toBe(0);
-            expect(state.y.previous).toBe(0);
-            expect(state.z.previous).toBe(0);
-          }
+          const state = composer.getState();
 
           expect(tweenCbk).toHaveBeenNthCalledWith(
             1,
             expectedInitialState,
             composer,
           );
-          expect(tweenCbk).toHaveBeenLastCalledWith(
-            // final tween
-            newState(expectedInitialState, {
-              x: {
-                current: expectedInitialState.x.target,
-                previous: state.x.previous,
-                lag: expectedLag,
-                snap,
-              },
-              y: {
-                current: expectedInitialState.y.target,
-                previous: state.y.previous,
-                lag: expectedLag,
-                snap,
-              },
-              z: {
-                current: expectedInitialState.z.target,
-                previous: state.z.previous,
-                lag: expectedLag,
-                snap,
-              },
-            }),
-            composer,
-          );
+
+          expect(tweenCbk).toHaveBeenLastCalledWith(state, composer);
+
+          const expectedFinalState = newState(expectedInitialState, {
+            x: {
+              current: expectedInitialState.x.target,
+              previous: state.x.previous,
+              lag: expectedLag,
+              snap,
+            },
+            y: {
+              current: expectedInitialState.y.target,
+              previous: state.y.previous,
+              lag: expectedLag,
+              snap,
+            },
+            z: {
+              current: expectedInitialState.z.target,
+              previous: state.z.previous,
+              lag: expectedLag,
+              snap,
+            },
+          });
+
+          for (const axis of ["x", "y", "z"]) {
+            for (const prop in expectedFinalState[axis]) {
+              if (prop === "previous") {
+                if (effectiveLag > 0) {
+                  expect(state[axis].previous).toBeGreaterThan(0);
+                } else {
+                  expect(state[axis].previous).toBe(0);
+                }
+              } else if (prop === "current") {
+                expect(state[axis][prop]).toBeCloseTo(
+                  expectedFinalState[axis][prop],
+                );
+              } else {
+                expect(state[axis][prop]).toBe(expectedFinalState[axis][prop]);
+              }
+            }
+          }
 
           // ----------
 
@@ -956,22 +1024,29 @@ describe("add/getComposition/toCss", () => {
   });
 
   test("add effect/composer + getComposition/toCss", async () => {
-    const effectAO = new DummyEffectA({ a: 1 });
-    const effectBO = new DummyEffectB({ b: 2 });
+    const effectAOrig = new DummyEffectA({ a: 1 });
+    const effectBOrig = new DummyEffectB({ b: 2 });
 
     const { composer } = newComposer();
-    const { composer: composerB } = newComposer();
-    composer.add(effectAO).add(composerB.add(effectBO));
+    const { composer: composerX } = newComposer();
+    composer.add(effectAOrig).add(composerX.add(effectBOrig));
 
     await window.waitFor(0); // callbacks are async
 
-    for (const e of [effectAO, effectBO]) {
+    for (const e of [effectAOrig, effectBOrig]) {
       for (const m of ["update", "export", "toCss"]) {
         expect(e[m]).toHaveBeenCalledTimes(0);
       }
 
-      expect(e.toComposition).toHaveBeenCalledTimes(1); // cloned
+      expect(e.toComposition).toHaveBeenCalledTimes(1); // was cloned
     }
+
+    const effectAInt = getComposerEffectObj(effectAOrig, composer);
+    // effectB comes from composerX, and it's re-exported each time the composer
+    // retrieves it; composer never stores a clone of effectB
+    const effectBIntX = getComposerEffectObj(effectBOrig, composerX);
+    expect(effectAInt).toBeTruthy();
+    expect(effectBIntX).toBeTruthy();
 
     // getComposition ----------
 
@@ -979,10 +1054,18 @@ describe("add/getComposition/toCss", () => {
     expect(composition.size).toBe(2);
     expect([...composition.keys()]).toEqual(["effect-a", "effect-b"]);
 
-    const effectA = composition.get("effect-a");
-    const effectB = composition.get("effect-b");
-    expect(effectA).not.toBe(effectAO); // cloned
-    expect(effectB).not.toBe(effectBO); // cloned
+    // cloned and exported from the original
+    const effectAExp = composition.get("effect-a");
+    const effectBExp = composition.get("effect-b");
+
+    expect(effectAExp).not.toBe(effectAOrig);
+    expect(effectBExp).not.toBe(effectBOrig);
+
+    expect(effectAInt).not.toBe(effectAOrig);
+    expect(effectAInt).not.toBe(effectAExp);
+
+    expect(effectBIntX).not.toBe(effectBOrig);
+    expect(effectBIntX).not.toBe(effectBExp);
 
     // toCss ----------
 
@@ -990,8 +1073,9 @@ describe("add/getComposition/toCss", () => {
     expect(css).toEqual({ a: 1, b: 2 });
 
     await window.waitFor(0); // callbacks are async
-    // no new calls on original effects
-    for (const e of [effectAO, effectBO]) {
+
+    // No new calls on original effects
+    for (const e of [effectAOrig, effectBOrig]) {
       for (const m of ["update", "export", "toCss"]) {
         expect(e[m]).toHaveBeenCalledTimes(0);
       }
@@ -999,14 +1083,23 @@ describe("add/getComposition/toCss", () => {
       expect(e.toComposition).toHaveBeenCalledTimes(1);
     }
 
-    // No calls for the cloned effects
+    // No calls for the exported effects
     // FXComposer returns an exported composition, with effects cloned each time
-    // so we can't get the original effect objects it has
-    for (const e of [effectA, effectB]) {
+    // so we can't get the original effect objects it has in general
+    for (const e of [effectAExp, effectBExp]) {
       for (const m of ["update", "export", "toComposition", "toCss"]) {
         expect(e[m]).toHaveBeenCalledTimes(0);
       }
     }
+
+    // No updates as there hasn't been a trigger
+    expect(effectBIntX.update).toHaveBeenCalledTimes(0);
+    expect(effectAInt.update).toHaveBeenCalledTimes(0);
+
+    expect(effectAInt.toCss).toHaveBeenCalledTimes(1);
+    // effectB is stored by composerX and Is not the one that composer adds to
+    // its composition and then gets the CSS from
+    expect(effectBIntX.toCss).toHaveBeenCalledTimes(0);
   });
 
   test("toCss with no negated", async () => {

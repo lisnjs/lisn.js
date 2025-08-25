@@ -49,6 +49,9 @@
   },
   "type": "module",
   "files": [
+    "README.md",
+    "LICENSE",
+    "CHANGELOG",
     "dist/",
     "src/styles"
   ],

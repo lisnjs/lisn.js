@@ -54,6 +54,9 @@
   },
   "type": "module",
   "files": [
+    "README.md",
+    "LICENSE",
+    "CHANGELOG",
     "dist/"
   ],
   "main": "./dist/cjs/index.cjs",

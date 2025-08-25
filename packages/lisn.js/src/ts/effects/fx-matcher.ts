@@ -292,18 +292,12 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
     }
 
     const executor = (store: FXRelativeMatcherStore<FXState>) => {
-      const updateData = (fxState?: FXState) => {
-        if (fxState) {
-          store.setData(fxState);
-        } else {
-          fxState = store.getData();
-        }
-
-        if (fxState) {
-          store.setState(
-            areAxesWithinBounds(bounds, fxState, store.getReferenceData()),
-          );
-        }
+      const updateData = () => {
+        const fxState = composer.getState();
+        store.setData(fxState);
+        store.setState(
+          areAxesWithinBounds(bounds, fxState, store.getReferenceData()),
+        );
       };
 
       composer.onTween(createCallback(updateData, true));

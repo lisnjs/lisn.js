@@ -123,6 +123,8 @@ class DummyEffect {
 
     this.getState = () => deepCopy(state);
 
+    this.setState = (s) => (state = deepCopy(s));
+
     this.update = jest.fn((fx) => {
       for (const p in state) {
         state[p] = fx.x.current;
@@ -465,8 +467,8 @@ describe("trigger / tween", () => {
               Math.abs(state[axis].previous + approxStep - state[axis].current),
             ).toBeLessThan(approxStep * 0.3);
           } else if (prop === "current") {
-            expect(finalState[axis][prop]).toBeCloseTo(
-              expectedFinalState[axis][prop],
+            expect(finalState[axis].current).toBeCloseTo(
+              expectedFinalState[axis].current,
             );
           } else {
             expect(finalState[axis][prop]).toBe(expectedFinalState[axis][prop]);
@@ -560,8 +562,8 @@ describe("trigger / tween", () => {
             Math.abs(state[axis].previous + approxStep - state[axis].current),
           ).toBeLessThan(approxStep * 0.3);
         } else if (prop === "current") {
-          expect(finalState[axis][prop]).toBeCloseTo(
-            expectedFinalState[axis][prop],
+          expect(finalState[axis].current).toBeCloseTo(
+            expectedFinalState[axis].current,
           );
         } else {
           expect(finalState[axis][prop]).toBe(expectedFinalState[axis][prop]);
@@ -573,7 +575,7 @@ describe("trigger / tween", () => {
   for (const snap of [true, false]) {
     for (const trySetLagInUpdate of [true, false]) {
       for (const lag of [0, 200]) {
-        test(`onTrigger/offTrigger & onTween/offTween; lag = ${lag}${trySetLagInUpdate ? " try in update" : ""}; snap = ${snap}`, async () => {
+        test(`onTrigger/offTrigger | onTween/offTween | onCompose/offCompose; lag = ${lag}${trySetLagInUpdate ? " try in update" : ""}; snap = ${snap}`, async () => {
           // use non-0 lag to ensure callback only called once and not on tween
           const { push, composer } = newComposer(
             trySetLagInUpdate ? {} : { lag },
@@ -601,11 +603,17 @@ describe("trigger / tween", () => {
             z: { lag: trySetLagInUpdate ? DEFAULT_LAG : lag },
           });
 
-          const triggerCbk = jest.fn();
-          const tweenCbk = jest.fn();
+          const triggerStates = [];
+          const tweenStates = [];
+          const composeStates = [];
+
+          const triggerCbk = jest.fn((c) => triggerStates.push(c.getState()));
+          const tweenCbk = jest.fn((c) => tweenStates.push(c.getState()));
+          const composeCbk = jest.fn((c) => composeStates.push(c.getState()));
 
           composer.onTrigger(triggerCbk);
           composer.onTween(tweenCbk);
+          composer.onCompose(composeCbk);
           push(update);
 
           await window.waitFor(effectiveLag + 50);
@@ -614,19 +622,35 @@ describe("trigger / tween", () => {
           expect(composer.getConfig().lagZ).toBe(expectedLag);
 
           expect(triggerCbk).toHaveBeenCalledTimes(1);
-          expect(triggerCbk).toHaveBeenCalledWith(
+          expect(triggerCbk).toHaveBeenNthCalledWith(1, composer);
+          expect(triggerStates[0]).toEqual(
             // min/max updated, but current is still at 0
             expectedInitialState,
-            composer,
           );
 
-          // exactly 2 if effectiveLag is 0
-          const approxTweenNCallsPerTrigger = effectiveLag
-            ? 1 + effectiveLag / 10
-            : 2;
+          // ----------
+
+          // exactly 1 if effectiveLag is 0
+          const approxComposeNCallsPerTrigger = effectiveLag
+            ? effectiveLag / 10
+            : 1;
+
+          // onTween handlers called before tween as well
+          const approxTweenNCallsPerTrigger = approxComposeNCallsPerTrigger + 1;
+
+          let lastComposeNCalls = composeCbk.mock.calls.length;
+          expect(lastComposeNCalls).toBeGreaterThanOrEqual(
+            // i.e. > 0 if effectiveLag is > 0
+            0.8 * approxComposeNCallsPerTrigger,
+          );
+          expect(lastComposeNCalls).toBeLessThanOrEqual(
+            // i.e. <= 1 if effectiveLag is 0
+            1.2 * approxComposeNCallsPerTrigger,
+          );
+
           let lastTweenNCalls = tweenCbk.mock.calls.length;
           expect(lastTweenNCalls).toBeGreaterThanOrEqual(
-            // i.e. > 1 if effectiveLag is 0
+            // i.e. > 1 if effectiveLag is > 0
             0.8 * approxTweenNCallsPerTrigger,
           );
           expect(lastTweenNCalls).toBeLessThanOrEqual(
@@ -634,32 +658,25 @@ describe("trigger / tween", () => {
             1.2 * approxTweenNCallsPerTrigger,
           );
 
-          const state = composer.getState();
+          // ----------
 
-          expect(tweenCbk).toHaveBeenNthCalledWith(
-            1,
-            expectedInitialState,
-            composer,
-          );
-
-          expect(tweenCbk).toHaveBeenLastCalledWith(state, composer);
-
+          const finalState = composer.getState();
           const expectedFinalState = newState(expectedInitialState, {
             x: {
               current: expectedInitialState.x.target,
-              previous: state.x.previous,
+              previous: finalState.x.previous,
               lag: expectedLag,
               snap,
             },
             y: {
               current: expectedInitialState.y.target,
-              previous: state.y.previous,
+              previous: finalState.y.previous,
               lag: expectedLag,
               snap,
             },
             z: {
               current: expectedInitialState.z.target,
-              previous: state.z.previous,
+              previous: finalState.z.previous,
               lag: expectedLag,
               snap,
             },
@@ -669,19 +686,60 @@ describe("trigger / tween", () => {
             for (const prop in expectedFinalState[axis]) {
               if (prop === "previous") {
                 if (effectiveLag > 0) {
-                  expect(state[axis].previous).toBeGreaterThan(0);
+                  expect(finalState[axis].previous).toBeGreaterThan(0);
                 } else {
-                  expect(state[axis].previous).toBe(0);
+                  expect(finalState[axis].previous).toBe(0);
                 }
               } else if (prop === "current") {
-                expect(state[axis][prop]).toBeCloseTo(
-                  expectedFinalState[axis][prop],
+                expect(finalState[axis].current).toBeCloseTo(
+                  expectedFinalState[axis].current,
                 );
               } else {
-                expect(state[axis][prop]).toBe(expectedFinalState[axis][prop]);
+                expect(finalState[axis][prop]).toBe(
+                  expectedFinalState[axis][prop],
+                );
               }
             }
           }
+
+          // initial calls to tween/compose ----------
+          expect(tweenCbk).toHaveBeenNthCalledWith(1, composer);
+          expect(tweenStates[0]).toEqual(expectedInitialState);
+
+          expect(composeCbk).toHaveBeenNthCalledWith(1, composer);
+          const firstComposeState = composeStates[0];
+          for (const axis of ["x", "y", "z"]) {
+            // mock animation frame takes approx 10ms
+            const approxStep =
+              (expectedInitialState[axis].target -
+                expectedInitialState[axis].initial) *
+              (effectiveLag > 0 ? 10 / effectiveLag : 1);
+
+            for (const prop in expectedInitialState[axis]) {
+              if (prop === "current") {
+                expect(
+                  Math.abs(
+                    firstComposeState[axis].current -
+                      approxStep -
+                      expectedInitialState[axis].initial,
+                  ),
+                ).toBeLessThan(approxStep * 0.3);
+                // accept 30% variation in each step so far due to mock animation
+                // frame using setTimeout
+              } else {
+                expect(firstComposeState[axis][prop]).toBe(
+                  expectedInitialState[axis][prop],
+                );
+              }
+            }
+          }
+
+          // final calls to tween/compose ----------
+          expect(tweenCbk).toHaveBeenLastCalledWith(composer);
+          expect(composeCbk).toHaveBeenLastCalledWith(composer);
+
+          expect(tweenStates[tweenStates.length - 1]).toEqual(finalState);
+          expect(composeStates[composeStates.length - 1]).toEqual(finalState);
 
           // ----------
 
@@ -691,6 +749,9 @@ describe("trigger / tween", () => {
           // no new calls
           expect(triggerCbk).toHaveBeenCalledTimes(1);
           expect(tweenCbk).toHaveBeenCalledTimes(lastTweenNCalls);
+          expect(composeCbk).toHaveBeenCalledTimes(lastComposeNCalls);
+
+          // ----------
 
           push(update2);
 
@@ -705,10 +766,21 @@ describe("trigger / tween", () => {
           );
           lastTweenNCalls = tweenCbk.mock.calls.length;
 
+          expect(composeCbk.mock.calls.length).toBeGreaterThanOrEqual(
+            lastComposeNCalls + 0.8 * approxComposeNCallsPerTrigger,
+          );
+          expect(composeCbk.mock.calls.length).toBeLessThanOrEqual(
+            lastComposeNCalls + 1.2 * approxComposeNCallsPerTrigger,
+          );
+          lastComposeNCalls = composeCbk.mock.calls.length;
+
+          // ----------
+
           push(update);
 
           await window.waitFor(effectiveLag + 50);
           expect(triggerCbk).toHaveBeenCalledTimes(3);
+
           expect(tweenCbk.mock.calls.length).toBeGreaterThanOrEqual(
             lastTweenNCalls + 0.8 * approxTweenNCallsPerTrigger,
           );
@@ -717,20 +789,30 @@ describe("trigger / tween", () => {
           );
           lastTweenNCalls = tweenCbk.mock.calls.length;
 
+          expect(composeCbk.mock.calls.length).toBeGreaterThanOrEqual(
+            lastComposeNCalls + 0.8 * approxComposeNCallsPerTrigger,
+          );
+          expect(composeCbk.mock.calls.length).toBeLessThanOrEqual(
+            lastComposeNCalls + 1.2 * approxComposeNCallsPerTrigger,
+          );
+          lastComposeNCalls = composeCbk.mock.calls.length;
+
           composer.offTrigger(triggerCbk);
           composer.offTween(tweenCbk);
+          composer.offCompose(composeCbk);
           push(update2);
 
           await window.waitFor(effectiveLag + 50);
           // no new calls
           expect(triggerCbk).toHaveBeenCalledTimes(3);
           expect(tweenCbk.mock.calls.length).toBe(lastTweenNCalls);
+          expect(composeCbk.mock.calls.length).toBe(lastComposeNCalls);
         });
       }
     }
   }
 
-  test("onTrigger/offTrigger & onTween/offTween: callback.remove", async () => {
+  test("onTrigger/offTrigger | onTween/offTween | onCompose/offCompose: callback.remove", async () => {
     // use non-0 lag to ensure callback only called once and not on tween
     const { lag, push, composer } = newComposer({ lag: 200 });
 
@@ -740,34 +822,43 @@ describe("trigger / tween", () => {
     const tweenCbkJ = jest.fn();
     const tweenCbk = Callback.wrap(tweenCbkJ);
 
+    const composeCbkJ = jest.fn();
+    const composeCbk = Callback.wrap(composeCbkJ);
+
     composer.onTrigger(triggerCbk);
     composer.onTween(tweenCbk);
+    composer.onCompose(composeCbk);
 
     triggerCbk.remove();
     tweenCbk.remove();
+    composeCbk.remove();
 
     push(DUMMY_UPDATE);
 
     await window.waitFor(lag + 50);
     expect(triggerCbkJ).toHaveBeenCalledTimes(0);
     expect(tweenCbkJ).toHaveBeenCalledTimes(0);
+    expect(composeCbkJ).toHaveBeenCalledTimes(0);
   });
 
-  test("onTrigger/offTrigger & onTween/offTween: return Callback.REMOVE", async () => {
+  test("onTrigger/offTrigger | onTween/offTween | onCompose/offCompose: return Callback.REMOVE", async () => {
     // use non-0 lag to ensure callback only called once and not on tween
     const { lag, push, composer } = newComposer({ lag: 200 });
 
     const triggerCbk = jest.fn(() => Callback.REMOVE);
     const tweenCbk = jest.fn(() => Callback.REMOVE);
+    const composeCbk = jest.fn(() => Callback.REMOVE);
 
     composer.onTrigger(triggerCbk);
     composer.onTween(tweenCbk);
+    composer.onCompose(composeCbk);
 
     push(DUMMY_UPDATE);
     await window.waitFor(lag + 50);
 
     expect(triggerCbk).toHaveBeenCalledTimes(1); // removed now
     expect(tweenCbk).toHaveBeenCalledTimes(1); // removed now
+    expect(composeCbk).toHaveBeenCalledTimes(1); // removed now
 
     push(DUMMY_UPDATE2);
     await window.waitFor(lag + 50);
@@ -778,6 +869,7 @@ describe("trigger / tween", () => {
     // no new calls
     expect(triggerCbk).toHaveBeenCalledTimes(1);
     expect(tweenCbk).toHaveBeenCalledTimes(1);
+    expect(composeCbk).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -818,14 +910,16 @@ describe("setLag", () => {
     expect(state.z.current).toBe(state.z.target);
   });
 
-  test("set all lag to same value (> 0) + ensure it does not trigger tween", async () => {
+  test("set all lag to same value (> 0) + ensure it does not trigger tween or compose handlers", async () => {
     const { composer } = newComposer();
 
     const triggerCbk = jest.fn();
     const tweenCbk = jest.fn();
+    const composeCbk = jest.fn();
 
     composer.onTrigger(triggerCbk);
     composer.onTween(tweenCbk);
+    composer.onCompose(composeCbk);
 
     const lag = 100;
     composer.setLag(lag);
@@ -840,6 +934,7 @@ describe("setLag", () => {
     await window.waitFor(50);
     expect(triggerCbk).toHaveBeenCalledTimes(0);
     expect(tweenCbk).toHaveBeenCalledTimes(0);
+    expect(composeCbk).toHaveBeenCalledTimes(0);
   });
 
   test("set all lag to negative", () => {
@@ -913,7 +1008,7 @@ describe("setLag", () => {
 });
 
 describe("setDepth", () => {
-  test("set all depth to same value + ensure it triggers tween", async () => {
+  test("set all depth to same value + ensure it triggers compose handlers", async () => {
     const { composer } = newComposer();
 
     // check default
@@ -923,13 +1018,16 @@ describe("setDepth", () => {
 
     const triggerCbk = jest.fn();
     const tweenCbk = jest.fn();
+    const composeCbk = jest.fn();
 
     composer.onTrigger(triggerCbk);
     composer.onTween(tweenCbk);
+    composer.onCompose(composeCbk);
 
     await window.waitFor(50);
     expect(triggerCbk).toHaveBeenCalledTimes(0);
     expect(tweenCbk).toHaveBeenCalledTimes(0);
+    expect(composeCbk).toHaveBeenCalledTimes(0);
 
     const depth = 2;
     composer.setDepth(depth);
@@ -941,7 +1039,8 @@ describe("setDepth", () => {
     await window.waitFor(50);
 
     expect(triggerCbk).toHaveBeenCalledTimes(0); // not called on setDepth
-    expect(tweenCbk).toHaveBeenCalledTimes(1);
+    expect(tweenCbk).toHaveBeenCalledTimes(0); // not called on setDepth
+    expect(composeCbk).toHaveBeenCalledTimes(1);
   });
 
   for (const depth of [0, -1]) {
@@ -1004,34 +1103,28 @@ describe("setDepth", () => {
 });
 
 describe("add/getComposition/toCss", () => {
-  test("getComposition/toCss: returned copy", () => {
-    const effect = new DummyEffect();
-
-    const { composer } = newComposer();
-
-    const composition = composer.getComposition();
-    const css = composer.toCss();
-
-    expect(composition.size).toBe(0);
-    expect(css).toEqual({});
-
-    composition.add(effect);
-    expect(composition.size).toBe(1);
-    css.a = "foo";
-
-    expect(composer.getComposition().size).toBe(0);
-    expect(composer.toCss()).toEqual({});
-  });
-
-  test("add effect/composer + getComposition/toCss", async () => {
+  test("add effect/composer: check cloning", async () => {
     const effectAOrig = new DummyEffectA({ a: 1 });
     const effectBOrig = new DummyEffectB({ b: 2 });
 
-    const { composer } = newComposer();
-    const { composer: composerX } = newComposer();
+    const { push, composer } = newComposer({ lag: 0 });
+    const { push: pushX, composer: composerX } = newComposer({ lag: 0 });
+
     composer.add(effectAOrig).add(composerX.add(effectBOrig));
 
+    const triggerCbk = jest.fn();
+    const tweenCbk = jest.fn();
+    const composeCbk = jest.fn();
+
+    composer.onTrigger(triggerCbk);
+    composer.onTween(tweenCbk);
+    composer.onCompose(composeCbk);
+
     await window.waitFor(0); // callbacks are async
+
+    for (const c of [triggerCbk, tweenCbk, composeCbk]) {
+      expect(c).toHaveBeenCalledTimes(0);
+    }
 
     for (const e of [effectAOrig, effectBOrig]) {
       for (const m of ["update", "export", "toCss"]) {
@@ -1057,20 +1150,107 @@ describe("add/getComposition/toCss", () => {
     // cloned and exported from the original
     const effectAExp = composition.get("effect-a");
     const effectBExp = composition.get("effect-b");
+    const effectBExpX = composerX.getComposition().get("effect-b");
 
     expect(effectAExp).not.toBe(effectAOrig);
-    expect(effectBExp).not.toBe(effectBOrig);
-
     expect(effectAInt).not.toBe(effectAOrig);
     expect(effectAInt).not.toBe(effectAExp);
 
+    expect(effectBExp).not.toBe(effectBOrig);
     expect(effectBIntX).not.toBe(effectBOrig);
     expect(effectBIntX).not.toBe(effectBExp);
+    expect(effectBIntX).not.toBe(effectBExpX);
+    expect(effectBExp).not.toBe(effectBExpX);
 
-    // toCss ----------
+    expect(composer.toCss()).toEqual({ a: 1, b: 2 });
 
-    const css = composer.toCss();
-    expect(css).toEqual({ a: 1, b: 2 });
+    // modify original ----------
+    effectAOrig.setState({ a: 100 });
+    expect(effectAOrig.getState()).toEqual({ a: 100 });
+    expect(effectAInt.getState()).toEqual({ a: 1 }); // unchanged
+    expect(effectAExp.getState()).toEqual({ a: 1 }); // unchanged
+
+    effectBOrig.setState({ b: 200 });
+    expect(effectBOrig.getState()).toEqual({ b: 200 });
+    expect(effectBIntX.getState()).toEqual({ b: 2 }); // unchanged
+    expect(effectBExp.getState()).toEqual({ b: 2 }); // unchanged
+    expect(effectBExpX.getState()).toEqual({ b: 2 }); // unchanged
+
+    // modify exported ----------
+    effectAExp.setState({ a: 1000 });
+    expect(effectAExp.getState()).toEqual({ a: 1000 });
+    expect(effectAOrig.getState()).toEqual({ a: 100 }); // unchanged
+    expect(effectAInt.getState()).toEqual({ a: 1 }); // unchanged
+
+    effectBExp.setState({ b: 2000 });
+    expect(effectBExp.getState()).toEqual({ b: 2000 });
+    expect(effectBOrig.getState()).toEqual({ b: 200 }); // unchanged
+    expect(effectBExpX.getState()).toEqual({ b: 2 }); // unchanged
+    expect(effectBIntX.getState()).toEqual({ b: 2 }); // unchanged
+
+    effectBExpX.setState({ b: -20 });
+    expect(effectBExpX.getState()).toEqual({ b: -20 });
+    expect(effectBExp.getState()).toEqual({ b: 2000 }); // unchanged
+    expect(effectBOrig.getState()).toEqual({ b: 200 }); // unchanged
+    expect(effectBIntX.getState()).toEqual({ b: 2 }); // unchanged
+
+    expect(composer.toCss()).toEqual({ a: 1, b: 2 }); // unchanged
+
+    // trigger composer ----------
+
+    push({ x: { target: 70, max: 100 } });
+    await window.waitFor(50);
+
+    expect(triggerCbk).toHaveBeenCalledTimes(1); // at start of tween
+    expect(tweenCbk).toHaveBeenCalledTimes(2); // at start and end of tween
+    expect(composeCbk).toHaveBeenCalledTimes(1); // at end of tween
+
+    expect(composer.getComposition().get("effect-a").toCss()).toEqual({
+      a: 70,
+    });
+    expect(composer.getComposition().get("effect-b").toCss()).toEqual({
+      b: 2,
+    });
+    expect(composer.toCss()).toEqual({ a: 70, b: 2 });
+
+    expect(composerX.getComposition().get("effect-b").toCss()).toEqual({
+      b: 2,
+    }); // unchanged
+    expect(composerX.toCss()).toEqual({ b: 2 }); // unchanged
+
+    // original not modified ----------
+
+    expect(effectAOrig.getState()).toEqual({ a: 100 });
+    expect(effectBOrig.getState()).toEqual({ b: 200 });
+
+    // trigger composerX ----------
+
+    pushX({ x: { target: 400, max: 1000 } });
+    await window.waitFor(50);
+
+    expect(triggerCbk).toHaveBeenCalledTimes(1); // no new calls
+    expect(tweenCbk).toHaveBeenCalledTimes(2); // no new calls
+    expect(composeCbk).toHaveBeenCalledTimes(2); // +1 on recompose
+
+    expect(composerX.getComposition().get("effect-b").toCss()).toEqual({
+      b: 400,
+    });
+    expect(composerX.toCss()).toEqual({ b: 400 });
+
+    expect(composer.getComposition().get("effect-a").toCss()).toEqual({
+      a: 70,
+    }); // unchanged
+    expect(composer.getComposition().get("effect-b").toCss()).toEqual({
+      b: 400,
+    });
+    expect(composer.toCss()).toEqual({ a: 70, b: 400 });
+
+    // original not modified ----------
+
+    expect(effectAOrig.getState()).toEqual({ a: 100 });
+    expect(effectBOrig.getState()).toEqual({ b: 200 });
+
+    // check calls ----------
 
     await window.waitFor(0); // callbacks are async
 
@@ -1086,20 +1266,14 @@ describe("add/getComposition/toCss", () => {
     // No calls for the exported effects
     // FXComposer returns an exported composition, with effects cloned each time
     // so we can't get the original effect objects it has in general
-    for (const e of [effectAExp, effectBExp]) {
+    for (const e of [effectAExp, effectBExp, effectBExpX]) {
       for (const m of ["update", "export", "toComposition", "toCss"]) {
         expect(e[m]).toHaveBeenCalledTimes(0);
       }
     }
 
-    // No updates as there hasn't been a trigger
-    expect(effectBIntX.update).toHaveBeenCalledTimes(0);
-    expect(effectAInt.update).toHaveBeenCalledTimes(0);
-
-    expect(effectAInt.toCss).toHaveBeenCalledTimes(1);
-    // effectB is stored by composerX and Is not the one that composer adds to
-    // its composition and then gets the CSS from
-    expect(effectBIntX.toCss).toHaveBeenCalledTimes(0);
+    expect(effectBIntX.update).toHaveBeenCalledTimes(1);
+    expect(effectAInt.update).toHaveBeenCalledTimes(2); // updated also when composerX recomposes
   });
 
   test("toCss with no negated", async () => {

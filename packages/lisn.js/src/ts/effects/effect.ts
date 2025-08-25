@@ -101,7 +101,7 @@ export type FXParams = {
    * this will be set to 1.
    *
    * If the effect is not absolute, it is the change in the absolute normalized
-   * value since the last animation frame.
+   * value since the last animation frame (from -1 to 1).
    *
    * It is always independent of parallax depth.
    */

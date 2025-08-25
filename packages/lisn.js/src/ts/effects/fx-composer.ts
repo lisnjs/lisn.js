@@ -47,11 +47,16 @@ import debug from "@lisn/debug/debug";
 /**
  * {@link FXComposer} links together multiple effects or other composers. It
  * works with {@link FXTrigger}s and each time it is triggered, it updates its
- * effects.
+ * state and {@link FXComposition | effect composition}.
  */
 export class FXComposer {
   /**
-   * Adds an effect or another composer to the current chain of composition.
+   * Adds an link, which can be either an effect or another composer, to the
+   * current chain of composition.
+   *
+   * Effects added here are {@link Effect.toComposition | cloned} beforehand, so
+   * you can add the same effect instance to multiple composers, or multiple
+   * times to the same composer.
    *
    * Adding the same link multiple times will result in it being applied
    * multiple times when the composer updates its
@@ -61,20 +66,14 @@ export class FXComposer {
    * composer and will be {@link Effect.update | updated} with the composer's
    * state at each frame while it is tweening.
    *
-   * Otherwise, if the link is another {@link FXComposer}, it will simply be
-   * queried for its current {@link getComposition | composition} each time this
-   * composer tweens and the returned composed effects will be used as is in the
-   * state of this composer's composition.
+   * Otherwise, if the link is another {@link FXComposer}, its composition will
+   * be used as is in this composer's composition.
    *
    * This allows you to animate a single property of an element (e.g. transform)
    * by multiple composers, each one with different triggers, lag or depth.
    *
    * However, you should call {@link startAnimate} with the element only on this
    * composer, to which you add all other relevant composers.
-   *
-   * **NOTE:** Effects added here are {@link Effect.toComposition | cloned}
-   * beforehand, so you can add the same effect instance to multiple composers,
-   * or multiple times to the same composer.
    *
    * **IMPORTANT:** If you add an {@link Effect.isAbsolute | absolute} effect,
    * or a composer that has absolute effects it essentially discards all
@@ -110,7 +109,11 @@ export class FXComposer {
   /**
    * Calls the given handler whenever the composer is triggered.
    *
-   * The handler is called after updating the state.
+   * If the state remains unchanged, the handlers are not called.
+   *
+   * The handler is called after updating the state but before starting to tween
+   * such that calling {@link getState} from the handler will reflect the latest
+   * state with the new targets, but with the old current values.
    */
   readonly onTrigger: (handler: FXComposerHandler) => this;
 
@@ -121,18 +124,16 @@ export class FXComposer {
 
   /**
    * Calls the given handler whenever the composer tweens (i.e. interpolates)
-   * the current {@link FXParams}. This happens on every animation frame
-   * while interpolating the effects towards the
-   * {@link FXAxisState.target | target} parameters.
+   * the current {@link FXState}. This happens on every animation frame while
+   * interpolating the effects towards the {@link FXAxisState.target | target}
+   * parameters following a trigger update.
    *
-   * Changing {@link setDepth | the depth} also triggers tweening since the
-   * effects states may need to change.
-   *
-   * The handler is called once before starting to interpolate (same as the
-   * {@link onTrigger} handlers, and then it is called during an animation frame
-   * **after** all effects have been updated and applied, such that calling
-   * {@link toCss} or {@link getComposition} will reflect the latest effect
-   * states.
+   * The handler is called once before starting to interpolate following a
+   * trigger (same as the {@link onTrigger} handlers, and then it is called
+   * during an animation frame after the state has been updated and all effects
+   * have been updated and applied, such that calling {@link getState},
+   * {@link toCss} or {@link getComposition} from the handler will reflect the
+   * latest state or effect composition.
    */
   readonly onTween: (handler: FXComposerHandler) => this;
 
@@ -140,6 +141,25 @@ export class FXComposer {
    * Removes a previously added {@link onTween} handler.
    */
   readonly offTween: (handler: FXComposerHandler) => this;
+
+  /**
+   * Calls the given handler whenever the composer updates its
+   * {@link getComposition | composition}. This happens as a result of:
+   * - the composer triggered with new data and tweens
+   * - any other composers {@link add | added} update their composition
+   * - the composer's {@link setDepth | depth is updated} and subsequently the
+   *   effects are updated
+   *
+   * The handler is called after updating its composition, such that calling
+   * {@link toCss} or {@link getComposition} from the handler will reflect the
+   * latest effect composition.
+   */
+  readonly onCompose: (handler: FXComposerHandler) => this;
+
+  /**
+   * Removes a previously added {@link onCompose} handler.
+   */
+  readonly offCompose: (handler: FXComposerHandler) => this;
 
   /**
    * Will apply the latest {@link toCss | CSS} to the given elements once.
@@ -231,8 +251,16 @@ export class FXComposer {
   /**
    * Updates the composer's {@link FXComposerConfig.depth | parallax depth}
    *
-   * Note that this will result in the effects being re-applied for this new
-   * depth and the {@link onTween} handlers being called.
+   * Note that this will result in the effects managed by this composer being
+   * updated for this new depth and the {@link onCompose} handlers being called.
+   *
+   * **NOTE:** Any effects that are {@link Effect.isAbsolute | absolute}, will
+   * update their values as per the new depth. Their handlers will receive the
+   * current parameters re-scaled at the new depth. Effects that are **not**
+   * {@link Effect.isAbsolute | absolute} will remain unchanged, since there is
+   * no change to the target values of the {@link FXState | state}. Further
+   * tweening will result in the delta values received by the handlers of these
+   * non-absolute effects being re-scaled at the new depth.
    *
    * @param depth If a single number is given, it is set for all three axes.
    */
@@ -284,6 +312,10 @@ export class FXComposer {
       FXComposerCallback
     >();
     const tweenCallbacks = _.createMap<FXComposerHandler, FXComposerCallback>();
+    const composeCallbacks = _.createMap<
+      FXComposerHandler,
+      FXComposerCallback
+    >();
 
     const animatedElements = _.createMap<
       Element,
@@ -294,10 +326,15 @@ export class FXComposer {
 
     // ----------
 
+    const onOtherCompose = () => {
+      recompose();
+    };
+
     const add = (link: Effect | FXComposer, pin?: FXPin) => {
       logger?.debug7("Adding link ", link, pin);
       if (_.isInstanceOf(link, FXComposer)) {
         compositionChain.push([link, void 0]);
+        link.onCompose(onOtherCompose);
       } else {
         link = link.toComposition(); // clone
         compositionChain.push([link, pin]);
@@ -313,6 +350,12 @@ export class FXComposer {
     const clear = () => {
       logger?.debug5("Clearing");
       if (_.lengthOf(compositionChain) > 0) {
+        for (const [link] of compositionChain) {
+          if (_.isInstanceOf(link, FXComposer)) {
+            link.offCompose(onOtherCompose);
+          }
+        }
+
         compositionChain.length = 0; // clear
         invokeCallbacks(clearCallbacks);
       }
@@ -358,6 +401,18 @@ export class FXComposer {
 
     // ----------
 
+    const onCompose = (handler: FXComposerHandler) => {
+      addHandlerToMap(handler, composeCallbacks);
+      return this;
+    };
+
+    const offCompose = (handler: FXComposerHandler) => {
+      _.remove(composeCallbacks.get(handler));
+      return this;
+    };
+
+    // ----------
+
     const animate = async (elements: Element[], negate?: FXComposer) => {
       await applyCss(elements, false, negate);
       return this;
@@ -390,7 +445,7 @@ export class FXComposer {
       }
 
       handler(); // set the CSS now
-      onTween(handler);
+      onCompose(handler);
 
       return this;
     };
@@ -438,8 +493,8 @@ export class FXComposer {
       updateConf(input, "lag", settings.effectLag, { min: 0 });
       // Update the current state. No need to re-tween. If it's currently
       // tweening, it will automatically pick up the new lag. Otherwise, effects
-      // don't need updating.
-      updateState(); // re-apply lag from config
+      // don't need updating and no need to call onTween handlers.
+      updateState(); // will re-apply lag from config
 
       return this;
     };
@@ -449,7 +504,7 @@ export class FXComposer {
     ) => {
       const didUpdate = updateConf(input, "depth", 1, { min: 0.01 });
       if (didUpdate) {
-        tween(); // Update the effects and call callbacks
+        recompose();
       }
 
       return this;
@@ -533,7 +588,7 @@ export class FXComposer {
       callbacks: Map<FXComposerHandler, FXComposerCallback>,
     ) => {
       for (const cbk of callbacks.values()) {
-        invokeHandler(cbk, _.deepCopy(currentFXState), this);
+        invokeHandler(cbk, this);
       }
     };
 
@@ -547,6 +602,7 @@ export class FXComposer {
 
       isTweening = true;
 
+      logger?.debug9("Starting tween", _.deepCopy(currentFXState));
       const tweenGenerator = animation3DTweener(tweener, currentFXState);
       while (true) {
         const tweenUpdate: Animation3DTweenerUpdate<keyof FXState> = {};
@@ -595,6 +651,8 @@ export class FXComposer {
       for (const [link, pin] of compositionChain) {
         addToComposition(link, !pin?.isActive());
       }
+
+      invokeCallbacks(composeCallbacks);
 
       return this;
     };
@@ -647,6 +705,9 @@ export class FXComposer {
 
     this.onTween = onTween;
     this.offTween = offTween;
+
+    this.onCompose = onCompose;
+    this.offCompose = offCompose;
 
     this.animate = animate;
     this.deanimate = deanimate;
@@ -795,12 +856,11 @@ export type FXComposerEffectiveConfig = {
 };
 
 /**
- * The handler is invoked with two arguments:
+ * The handler is invoked with one argument:
  *
- * - The current {@link FXState}
  * - The {@link FXComposer} instance.
  */
-export type FXComposerHandlerArgs = [FXState, FXComposer];
+export type FXComposerHandlerArgs = [FXComposer];
 export type FXComposerCallback = Callback<FXComposerHandlerArgs>;
 export type FXComposerHandler =
   | FXComposerCallback

@@ -216,6 +216,14 @@ class DummyEffectD extends DummyEffect {
   type = "effect-d";
 }
 
+const toStringVals = (css) => {
+  const res = {};
+  for (const p in css) {
+    res[p] = css[p] + "";
+  }
+  return res;
+};
+
 const newState = (...partials) => {
   const result = deepCopy(DEFAULT_STATE);
   for (const partial of partials) {
@@ -661,12 +669,14 @@ describe("trigger / tween", () => {
     expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
     expect(effectD.getState()).toEqual({ d: x - 4 });
 
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
+    expect(composer.toCss()).toEqual(
+      toStringVals({
+        ...effectA.getState(),
+        ...effectB.getState(),
+        ...effectC.getState(),
+        ...effectD.getState(),
+      }),
+    );
 
     // ---------- no-op update
 
@@ -679,12 +689,14 @@ describe("trigger / tween", () => {
     expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
     expect(effectD.getState()).toEqual({ d: x - 4 });
 
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
+    expect(composer.toCss()).toEqual(
+      toStringVals({
+        ...effectA.getState(),
+        ...effectB.getState(),
+        ...effectC.getState(),
+        ...effectD.getState(),
+      }),
+    );
 
     // ---------- pin A + update composer
 
@@ -698,12 +710,14 @@ describe("trigger / tween", () => {
     expect(effectC.getState()).toEqual({ c: -3 }); // unchanged as it's on composerX
     expect(effectD.getState()).toEqual({ d: x2 - 4 });
 
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
+    expect(composer.toCss()).toEqual(
+      toStringVals({
+        ...effectA.getState(),
+        ...effectB.getState(),
+        ...effectC.getState(),
+        ...effectD.getState(),
+      }),
+    );
 
     // ---------- update composerX
 
@@ -715,12 +729,14 @@ describe("trigger / tween", () => {
     expect(effectC.getState()).toEqual({ c: x - 3 }); // updated, pin is not set on composerX
     expect(effectD.getState()).toEqual({ d: x2 - 4 }); // unchanged
 
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
+    expect(composer.toCss()).toEqual(
+      toStringVals({
+        ...effectA.getState(),
+        ...effectB.getState(),
+        ...effectC.getState(),
+        ...effectD.getState(),
+      }),
+    );
 
     // ---------- unpin A + pin D + update composer
 
@@ -735,12 +751,14 @@ describe("trigger / tween", () => {
     expect(effectC.getState()).toEqual({ c: x - 3 }); // unchanged as it's on composerX
     expect(effectD.getState()).toEqual({ d: x2 - 4 }); // pinned
 
-    expect(composer.toCss()).toEqual({
-      ...effectA.getState(),
-      ...effectB.getState(),
-      ...effectC.getState(),
-      ...effectD.getState(),
-    });
+    expect(composer.toCss()).toEqual(
+      toStringVals({
+        ...effectA.getState(),
+        ...effectB.getState(),
+        ...effectC.getState(),
+        ...effectD.getState(),
+      }),
+    );
   });
 
   test("updating target while tweening", async () => {
@@ -1542,14 +1560,16 @@ describe("setDepth", () => {
     expect(effectBAbs.getState()).toEqual({ b2: x });
     expect(effectCAbs.getState()).toEqual({ c2: x });
 
-    expect(composer.toCss()).toEqual({
-      ...effectAInc.getState(),
-      ...effectBInc.getState(),
-      ...effectCInc.getState(),
-      ...effectAAbs.getState(),
-      ...effectBAbs.getState(),
-      ...effectCAbs.getState(),
-    });
+    expect(composer.toCss()).toEqual(
+      toStringVals({
+        ...effectAInc.getState(),
+        ...effectBInc.getState(),
+        ...effectCInc.getState(),
+        ...effectAAbs.getState(),
+        ...effectBAbs.getState(),
+        ...effectCAbs.getState(),
+      }),
+    );
 
     const nCallsAInc = effectAInc.update.mock.calls.length;
     const nCallsBInc = effectBInc.update.mock.calls.length;
@@ -1638,7 +1658,7 @@ describe("add/getComposition/toCss", () => {
     expect(effectBIntX).not.toBe(effectBExpX);
     expect(effectBExp).not.toBe(effectBExpX);
 
-    expect(composer.toCss()).toEqual({ a: 1, b: 2 });
+    expect(composer.toCss()).toEqual({ a: "1", b: "2" });
 
     // modify original ----------
     effectAOrig.setState({ a: 100 });
@@ -1670,7 +1690,7 @@ describe("add/getComposition/toCss", () => {
     expect(effectBOrig.getState()).toEqual({ b: 200 }); // unchanged
     expect(effectBIntX.getState()).toEqual({ b: 2 }); // unchanged
 
-    expect(composer.toCss()).toEqual({ a: 1, b: 2 }); // unchanged
+    expect(composer.toCss()).toEqual({ a: "1", b: "2" }); // unchanged
 
     // trigger composer ----------
 
@@ -1687,12 +1707,12 @@ describe("add/getComposition/toCss", () => {
     expect(composer.getComposition().get("effect-b").toCss()).toEqual({
       b: 2,
     });
-    expect(composer.toCss()).toEqual({ a: 70, b: 2 });
+    expect(composer.toCss()).toEqual({ a: "70", b: "2" });
 
     expect(composerX.getComposition().get("effect-b").toCss()).toEqual({
       b: 2,
     }); // unchanged
-    expect(composerX.toCss()).toEqual({ b: 2 }); // unchanged
+    expect(composerX.toCss()).toEqual({ b: "2" }); // unchanged
 
     // original not modified ----------
 
@@ -1711,7 +1731,7 @@ describe("add/getComposition/toCss", () => {
     expect(composerX.getComposition().get("effect-b").toCss()).toEqual({
       b: 400,
     });
-    expect(composerX.toCss()).toEqual({ b: 400 });
+    expect(composerX.toCss()).toEqual({ b: "400" });
 
     expect(composer.getComposition().get("effect-a").toCss()).toEqual({
       a: 70,
@@ -1719,7 +1739,7 @@ describe("add/getComposition/toCss", () => {
     expect(composer.getComposition().get("effect-b").toCss()).toEqual({
       b: 400,
     });
-    expect(composer.toCss()).toEqual({ a: 70, b: 400 });
+    expect(composer.toCss()).toEqual({ a: "70", b: "400" });
 
     // original not modified ----------
 
@@ -1763,7 +1783,7 @@ describe("add/getComposition/toCss", () => {
     composer.add(effectA).add(effectB).add(effectC);
 
     const css = composer.toCss();
-    expect(css).toEqual({ a: 1, b: 2, c: 3 });
+    expect(css).toEqual({ a: "1", b: "2", c: "3" });
   });
 
   for (const useExplicit of [true, false]) {
@@ -1779,7 +1799,7 @@ describe("add/getComposition/toCss", () => {
       const { composer: negated } = newComposer();
       negated.add(effectAN).add(effectBN).add(effectCN);
 
-      expect(negated.toCss()).toEqual({ a: 1, b: 2, c: 3 });
+      expect(negated.toCss()).toEqual({ a: "1", b: "2", c: "3" });
 
       const { composer } = newComposer(
         useExplicit ? { negate: negatedIgnored } : { negate: negated },
@@ -1800,7 +1820,12 @@ describe("add/getComposition/toCss", () => {
       });
 
       const css = composer.toCss(useExplicit ? negated : undefined);
-      expect(css).toEqual({ a: 9 /* 10 - 1 */, a2: 5, b: 1 /* 3 - 2 */, d: 1 });
+      expect(css).toEqual({
+        a: "9" /* 10 - 1 */,
+        a2: "5",
+        b: "1" /* 3 - 2 */,
+        d: "1",
+      });
     });
   }
 
@@ -1815,7 +1840,47 @@ describe("add/getComposition/toCss", () => {
     composer.add(effectA, pinA).add(effectB).add(effectC);
 
     const css = composer.toCss();
-    expect(css).toEqual({ a: 1, b: 2, c: 3 });
+    expect(css).toEqual({ a: "1", b: "2", c: "3" });
+  });
+
+  test("toCss with duplicate properties", async () => {
+    const allCss = [
+      ["opacity", "1"],
+      ["opacity", "0.5"], // overrides above
+      ["transition", "transform 0.05s linear"],
+      ["transition", "opacity 0.5s ease-in"],
+      ["animation", "3s linear slide-in"],
+      ["animation", "3s ease-out 5s slide-out"],
+      ["will-change", "transform"],
+      ["will-change", "width"],
+      ["background", "url(stars.png) repeat"],
+      ["background", "linear-gradient(blue, black)"],
+      ["filter", "blur(5px)"],
+      ["filter", "contrast(200%)"],
+      ["transform", "translateX(10px)"],
+      ["transform", "translateY(20px)"],
+    ];
+
+    const { composer } = newComposer();
+
+    for (const [prop, val] of allCss) {
+      const DummyEffectX = class extends DummyEffect {
+        type = randId();
+      };
+      const effect = new DummyEffectX({ [prop]: val });
+      composer.add(effect);
+    }
+
+    const css = composer.toCss();
+    expect(css).toEqual({
+      opacity: "0.5",
+      transition: "transform 0.05s linear,opacity 0.5s ease-in",
+      animation: "3s linear slide-in,3s ease-out 5s slide-out",
+      "will-change": "transform,width",
+      background: "url(stars.png) repeat,linear-gradient(blue, black)",
+      filter: "blur(5px) contrast(200%)",
+      transform: "translateX(10px) translateY(20px)",
+    });
   });
 });
 
@@ -1859,7 +1924,7 @@ describe("clear + onClear/offClear", () => {
     const { push: pushX, composer: composerX } = newComposer({ lag: 0 });
 
     composer.add(effectAOrig).add(composerX.add(effectBOrig));
-    expect(composer.toCss()).toEqual({ a: 1, b: 2 });
+    expect(composer.toCss()).toEqual({ a: "1", b: "2" });
 
     const composeCbk = jest.fn();
     const clearCbk = jest.fn();
@@ -1879,8 +1944,8 @@ describe("clear + onClear/offClear", () => {
     expect(composeCbk).toHaveBeenCalledTimes(2);
 
     expect(composer.toCss()).toEqual({
-      a: DUMMY_UPDATE.x.target,
-      b: DUMMY_UPDATE2.x.target,
+      a: DUMMY_UPDATE.x.target + "",
+      b: DUMMY_UPDATE2.x.target + "",
     });
 
     expect(clearCbk).toHaveBeenCalledTimes(0);
@@ -1991,7 +2056,7 @@ describe("animating elements", () => {
     expect(composer.toCss()).toEqual({
       width: "0px",
       height: "0px",
-      opacity: 1,
+      opacity: "1",
     });
 
     await window.waitFor(50);

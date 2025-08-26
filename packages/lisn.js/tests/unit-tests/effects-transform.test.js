@@ -1354,6 +1354,7 @@ describe("toCss", () => {
     const t = newTransform(init);
     expect(t.toCss()).toEqual({
       transform: init.toString(),
+      transition: "transform 0.05s linear",
     });
   });
 
@@ -1371,6 +1372,7 @@ describe("toCss", () => {
     const t = newTransform(init);
     expect(t.toCss(ref)).toEqual({
       transform: expected.toString(),
+      transition: "transform 0.05s linear",
     });
 
     // not modified

@@ -4,10 +4,6 @@
  * @since v1.3.0
  */
 
-// XXX should we set this:
-// will-change: transform;
-// transition: transform 0.05s linear;
-
 import * as _ from "@lisn/_internal";
 
 import { bugError } from "@lisn/globals/errors";
@@ -108,8 +104,12 @@ export class Transform implements EffectInterface<"transform"> {
   readonly toComposition: (...others: Transform[]) => Transform;
 
   /**
-   * Returns an object with the `transform` property and value equal to
-   * {@link toString | the transform's state as a CSS string}.
+   * Returns an object with the following properties:
+   * - `transform`: {@link toString | the transform's state as a CSS string}
+   * - `transition`: transform 0.05s linear
+   *
+   * The `transition` property is needed to smooth out the animation. It does
+   * not introduce lag.
    *
    * @param negate See {@link export}
    */
@@ -320,7 +320,10 @@ export class Transform implements EffectInterface<"transform"> {
       return composed;
     };
 
-    this.toCss = (negate) => ({ transform: this.toString(negate) });
+    this.toCss = (negate) => ({
+      transform: this.toString(negate),
+      transition: "transform 0.05s linear",
+    });
 
     this.toString = (negate) =>
       (_.isNullish(currentPerspective)

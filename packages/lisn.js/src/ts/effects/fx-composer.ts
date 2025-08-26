@@ -218,8 +218,21 @@ export class FXComposer {
   ) => this;
 
   /**
-   * Returns an object with the CSS properties and their values to be set on
-   * an element.
+   * Returns an object with the combined CSS properties and their values from
+   * all the effects in the composition.
+   *
+   * Note that effects of the same type (or class) are composed together, so in
+   * general there will likely not be any conflicting values whereby more than
+   * one effect returns the same property from their {@link Effect.toCss | toCss}
+   * method. If there are such cases, then by default subsequent values will
+   * override previous ones for the property. However, certain properties are
+   * handled as a list and the values are joined. These are:
+   * - `transition`
+   * - `animation`
+   * - `filter`
+   * - `transform`
+   * - `will-change`
+   * - `background`
    *
    * @param negate If given, then all effects added on this composer that
    *               support negation (see {@link Effect.export}) will receive the
@@ -511,7 +524,18 @@ export class FXComposer {
 
       for (const [type, effect] of currentComposition) {
         const negatedEffect = negatedComposition?.get(type);
-        _.assign(css, effect.toCss(negatedEffect));
+
+        const thisCss = effect.toCss(negatedEffect);
+        for (const p in thisCss) {
+          const val = _.STRING(thisCss[p]);
+
+          if (p in LIST_PROPERTIES && p in css) {
+            const listSep = LIST_PROPERTIES[p];
+            css[p] += listSep + val;
+          } else {
+            css[p] = val;
+          }
+        }
       }
 
       return css;
@@ -918,6 +942,15 @@ type UPDATE_MODE = typeof UPDATE_ALL | typeof UPDATE_ABSOLUTE;
 
 const UPDATE_ALL = 0;
 const UPDATE_ABSOLUTE = 1;
+
+const LIST_PROPERTIES: Record<string, string> = {
+  transition: ",",
+  animation: ",",
+  "will-change": ",",
+  background: ",",
+  filter: " ",
+  transform: " ",
+};
 
 const createState = (): FXState => {
   const axisState: FXAxisState = {

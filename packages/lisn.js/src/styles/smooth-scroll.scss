@@ -9,13 +9,12 @@
     overflow: visible;
     top: 0;
     left: 0;
-    max-height: 100%;
-    max-width: 100%;
     will-change: transform; /* force GPU acceleration */
     transition: transform 0.05s linear; /* smooth it out */
   }
 
-  &:is(body) {
+  &:is(body),
+  & .lisn-smooth-scroll__overflow {
     width: var(--lisn-js--width); /* content (scroll) width */
     height: var(--lisn-js--height); /* content (scroll) height */
   }
@@ -23,8 +22,21 @@
   &[data-lisn-uses-sticky="true"] {
     position: relative;
 
-    & .lisn-smooth-scroll__content {
+    & .lisn-smooth-scroll__pin {
       position: sticky;
+      overflow: visible;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+    }
+
+    & .lisn-smooth-scroll__content {
+      position: absolute;
+    }
+
+    & .lisn-smooth-scroll__overflow {
+      z-index: -1;
     }
   }
 }

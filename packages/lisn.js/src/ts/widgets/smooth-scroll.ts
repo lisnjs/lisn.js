@@ -29,6 +29,7 @@ import {
 } from "@lisn/utils/css-alter";
 import {
   getContentWrapper,
+  moveElementNow,
   tryWrapContentNow,
   unwrapContentNow,
 } from "@lisn/utils/dom-alter";
@@ -88,9 +89,7 @@ import debug from "@lisn/debug/debug";
  * <!-- If using the document as the scrollable -->
  * <body><!-- Element you instantiate as SmoothScroll, or you can pass documentElement -->
  *   <div class="lisn-smooth-scroll__content"><!-- Required wrapper; will be created if missing -->
- *     <div class="lisn-smooth-scroll__inner"><!-- Required inner wrapper; will be created if missing -->
- *       <!-- YOUR CONTENT -->
- *     </div>
+ *     <!-- YOUR CONTENT -->
  *   </div>
  * </body>
  * ```
@@ -98,8 +97,8 @@ import debug from "@lisn/debug/debug";
  * ```html
  * <!-- If using a custom scrollable -->
  * <div class="scrollable"><!-- Element you instantiate as SmoothScroll -->
- *   <div class="lisn-smooth-scroll__content"><!-- Required outer wrapper; will be created if missing -->
- *     <div class="lisn-smooth-scroll__inner"><!-- Required inner wrapper; will be created if missing -->
+ *   <div class="lisn-smooth-scroll__pin"><!-- Required outer wrapper; will be created if missing -->
+ *     <div class="lisn-smooth-scroll__content"><!-- Required inner wrapper; will be created if missing -->
  *       <!-- YOUR CONTENT -->
  *     </div>
  *   </div>
@@ -272,7 +271,7 @@ export class SmoothScroll extends Widget {
     this.getComposer = (layer) => layers?.get(layer ?? scrollable)?._composer;
 
     // TODO Fallback to using scroll gestures:
-    // Position the outerWrapper as fixed, listen for gestures and initiate
+    // Position the contentWrapper as fixed, listen for gestures and initiate
     // scrolling on the scrollable
     if (!isBody && !supportsSticky()) {
       logError(
@@ -441,8 +440,9 @@ const PREFIXED_NAME = _.prefixName(WIDGET_NAME);
 // non-blank ID.
 const DUMMY_ID = PREFIXED_NAME;
 const PREFIX_ROOT = `${PREFIXED_NAME}__root`;
-const PREFIX_OUTER_WRAPPER = `${PREFIXED_NAME}__content`;
-const PREFIX_INNER_WRAPPER = `${PREFIXED_NAME}__inner`;
+const PREFIX_OVERFLOW = `${PREFIXED_NAME}__overflow`;
+const PREFIX_PIN_WRAPPER = `${PREFIXED_NAME}__pin`;
+const PREFIX_CONTENT_WRAPPER = `${PREFIXED_NAME}__content`;
 const PREFIX_USES_STICKY = _.prefixName("uses-sticky");
 
 const PREFIX_LAYER = `${PREFIXED_NAME}-layer`;
@@ -713,24 +713,34 @@ const init = async (
   layers: Map<Element, SmoothScrollLayerState>,
   logger: LoggerInterface | null,
 ) => {
-  const isBody = scrollable === getDefaultScrollingElement();
-  const root = isBody ? _.getBody() : scrollable;
-  const anyIsAutoDepth = !![...layers].find(([__ignored, state]) =>
+  const isDoc = scrollable === getDefaultScrollingElement();
+  const root = isDoc ? _.getBody() : scrollable;
+
+  const anyUseAutoDepth = !![...layers].find(([__ignored, state]) =>
     stateUsesAutoDepth(state),
   );
+
   const rootState = layers.get(scrollable);
   /* istanbul ignore next */
   if (!rootState) {
     throw bugError("No SmoothScroll state saved for the root");
   }
 
-  const scrollWatcher = anyIsAutoDepth ? ScrollWatcher.reuse() : null;
-  const sizeWatcher = anyIsAutoDepth || isBody ? SizeWatcher.reuse() : null;
+  const sizeWatcher = SizeWatcher.reuse();
+  // we need scroll width/height measurements for "auto" parallax
+  const scrollWatcher = anyUseAutoDepth ? ScrollWatcher.reuse() : null;
 
-  const updateScrollData = (target: Element, scrollData: ScrollData) => {
-    rootState._scrollData = scrollData;
-    resetAutoDepth();
+  // ----------
+
+  // If the content is resized, update the size of body or the dummy overflow to
+  // match its size.
+  // Only applies when using the document scrolling element.
+  const updatePropsOnResize = (target: Element, sizeData: SizeData) => {
+    setSizeVars(root, sizeData.border[_.S_WIDTH], sizeData.border[_.S_HEIGHT]);
   };
+
+  // ----------
+  // For "auto" parallax
 
   const updateSizeData = (target: Element, sizeData: SizeData) => {
     const state = layers.get(target);
@@ -742,14 +752,9 @@ const init = async (
     resetAutoDepth(state);
   };
 
-  // If the content is resized, update the body size to match its size.
-  // Only applies when using the document scrolling element.
-  const updatePropsOnResize = (target: Element, sizeData: SizeData) => {
-    setSizeVars(
-      root, // document.body
-      sizeData.border[_.S_WIDTH],
-      sizeData.border[_.S_HEIGHT],
-    );
+  const updateScrollData = (target: Element, scrollData: ScrollData) => {
+    rootState._scrollData = scrollData;
+    resetAutoDepth();
   };
 
   // ----------
@@ -761,10 +766,10 @@ const init = async (
         scrollable,
       }),
     );
-    sizeWatcher?.onResize(
+    sizeWatcher.onResize(
       updatePropsOnResize,
       _.fastWatcherConf({
-        target: innerWrapper,
+        target: contentWrapper,
       }),
     );
 
@@ -772,14 +777,14 @@ const init = async (
 
     for (const [layer, state] of layers) {
       if (stateUsesAutoDepth(state)) {
-        sizeWatcher?.onResize(
+        sizeWatcher.onResize(
           updateSizeData,
           _.fastWatcherConf({ target: layer }),
         );
       }
 
       state._composer.startAnimate(
-        [layer === scrollable ? outerWrapper : layer],
+        [layer === scrollable ? contentWrapper : layer],
         state._parentState?._composer,
       );
     }
@@ -787,13 +792,13 @@ const init = async (
 
   const removeWatchers = () => {
     scrollWatcher?.noTrackScroll(updateScrollData, scrollable);
-    sizeWatcher?.offResize(updatePropsOnResize, innerWrapper);
+    sizeWatcher.offResize(updatePropsOnResize, contentWrapper);
 
     trigger.pause();
 
     for (const [layer, state] of layers) {
       if (stateUsesAutoDepth(state)) {
-        sizeWatcher?.offResize(updateSizeData, layer);
+        sizeWatcher.offResize(updateSizeData, layer);
       }
 
       state._composer.stopAnimate([layer], true);
@@ -825,7 +830,8 @@ const init = async (
   let initialContentWidth = 0,
     initialContentHeight = 0;
   const propsToCopy: Record<string, string> = {};
-  if (isBody) {
+
+  if (isDoc) {
     await waitForMeasureTime();
     initialContentWidth = scrollable[_.S_SCROLL_WIDTH];
     initialContentHeight = scrollable[_.S_SCROLL_HEIGHT];
@@ -847,25 +853,43 @@ const init = async (
   }
 
   await waitForMutateTime();
-  // Wrap the contents in a fixed/sticky positioned wrapper.
+  // Wrap the contents in a fixed/sticky positioned content wrapper.
+  // If we're using a custom scrollable, the content wrapper also needs to be
+  // inside a sticky "pin" wrapper.
   // [TODO v2]: Better way to centrally manage wrapping and wrapping of elements
-  const { wrappers, unwrapFn } = createWrappersNow(root, [
-    ["o", [PREFIX_OUTER_WRAPPER], [_.PREFIX_WRAPPER]],
-    ["i", [PREFIX_INNER_WRAPPER], [_.PREFIX_WRAPPER_INLINE]],
-  ]);
+  const {
+    wrappers,
+    unwrapFn,
+  }: {
+    wrappers: { c: HTMLElement };
+    unwrapFn: () => void;
+  } = createWrappersNow(
+    root,
+    isDoc
+      ? [["c", [PREFIX_CONTENT_WRAPPER], [_.PREFIX_WRAPPER]]]
+      : [
+          ["p", [PREFIX_PIN_WRAPPER], [_.PREFIX_WRAPPER]],
+          ["c", [PREFIX_CONTENT_WRAPPER], [_.PREFIX_WRAPPER]],
+        ],
+  );
 
-  const outerWrapper = wrappers.o;
-  const innerWrapper = wrappers.i;
+  const contentWrapper = wrappers.c;
 
-  if (isBody) {
+  if (isDoc) {
     // Set its size now to prevent initial layout shifts
     setSizeVars(root, initialContentWidth, initialContentHeight, true);
 
     for (const prop in propsToCopy) {
-      setStylePropNow(outerWrapper, prop, propsToCopy[prop]);
+      setStylePropNow(contentWrapper, prop, propsToCopy[prop]);
     }
   } else {
     setBooleanDataNow(root, PREFIX_USES_STICKY);
+    const overflowEl = _.createElement("div");
+    addClassesNow(overflowEl, PREFIX_OVERFLOW);
+    moveElementNow(overflowEl, { to: root });
+
+    // don't let ScrollWatcher wrap its children, the pin wrapper and the dummy overflow
+    setBooleanDataNow(root, _.PREFIX_NO_WRAP);
   }
 
   addClassesNow(root, PREFIX_ROOT);

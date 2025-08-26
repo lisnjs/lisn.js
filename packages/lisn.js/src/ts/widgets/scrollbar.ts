@@ -865,7 +865,7 @@ const init = (
     // of the element and its contents.
     scrollWatcher.trackScroll(
       updateProgress,
-      _.realtimeWatcherConf({
+      _.fastWatcherConf({
         scrollable,
       }),
     );
@@ -874,7 +874,7 @@ const init = (
     // would also detect changes in its padding.
     sizeWatcher.onResize(
       updatePropsOnResize,
-      _.realtimeWatcherConf({
+      _.fastWatcherConf({
         target: containerElement,
       }),
     );

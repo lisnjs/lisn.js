@@ -198,7 +198,7 @@ export class FXScrollTrigger extends FXTrigger {
       if (this.isActive()) {
         scrollWatcher.trackScroll(
           scrollHandler,
-          _.realtimeWatcherConf({
+          _.fastWatcherConf({
             scrollable,
           }),
         );

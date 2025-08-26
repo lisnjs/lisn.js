@@ -489,6 +489,12 @@ export const createResizeObserver = (callback: ResizeObserverCallback) =>
 export const createMutationObserver = (callback: MutationCallback) =>
   new MutationObserver(callback);
 
+export const fastWatcherConf = <T extends object>(obj: T) =>
+  merge(obj, {
+    [S_DEBOUNCE_WINDOW]: 1, // allow for optimized measurements
+    [S_THRESHOLD]: 0,
+  });
+
 export const realtimeWatcherConf = <T extends object>(obj: T) =>
   merge(obj, {
     [S_DEBOUNCE_WINDOW]: 0,

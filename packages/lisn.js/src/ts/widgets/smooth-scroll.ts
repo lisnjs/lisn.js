@@ -755,13 +755,13 @@ const init = async (
   const addWatchers = () => {
     scrollWatcher?.trackScroll(
       updateScrollData,
-      _.realtimeWatcherConf({
+      _.fastWatcherConf({
         scrollable,
       }),
     );
     sizeWatcher?.onResize(
       updatePropsOnResize,
-      _.realtimeWatcherConf({
+      _.fastWatcherConf({
         target: innerWrapper,
       }),
     );
@@ -772,7 +772,7 @@ const init = async (
       if (stateUsesAutoDepth(state)) {
         sizeWatcher?.onResize(
           updateSizeData,
-          _.realtimeWatcherConf({ target: layer }),
+          _.fastWatcherConf({ target: layer }),
         );
       }
 

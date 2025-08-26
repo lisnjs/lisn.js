@@ -421,7 +421,7 @@ export class FXScrollMatcher extends FXRelativeMatcher<
 
       scrollWatcher.trackScroll(
         (e, scrollData) => updateData(scrollToAxesData(scrollData)),
-        _.realtimeWatcherConf({
+        _.fastWatcherConf({
           scrollable,
         }),
       );

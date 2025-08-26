@@ -56,7 +56,6 @@
     transition-duration: var(--lisn_t-dur);
     /* force GPU acceleration */
     transform: translate3d(0px, 0px, 0px);
-    will-change: transform;
   }
 
   &[data-lisn-orientation="vertical"][data-lisn-is-open="true"]

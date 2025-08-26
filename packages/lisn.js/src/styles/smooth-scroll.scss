@@ -9,8 +9,6 @@
     overflow: visible;
     top: 0;
     left: 0;
-    will-change: transform; /* force GPU acceleration */
-    transition: transform 0.05s linear; /* smooth it out */
   }
 
   &:is(body),

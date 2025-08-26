@@ -12,8 +12,8 @@ const DEFAULT_COMPOSER = new FXComposer();
 
 const DEFAULT_STATE = {
   x: {
-    min: 0,
-    max: 0,
+    low: 0,
+    high: 0,
     initial: 0,
     previous: 0,
     current: 0,
@@ -23,8 +23,8 @@ const DEFAULT_STATE = {
     snap: false,
   },
   y: {
-    min: 0,
-    max: 0,
+    low: 0,
+    high: 0,
     initial: 0,
     previous: 0,
     current: 0,
@@ -34,8 +34,8 @@ const DEFAULT_STATE = {
     snap: false,
   },
   z: {
-    min: 0,
-    max: 0,
+    low: 0,
+    high: 0,
     initial: 0,
     previous: 0,
     current: 0,
@@ -48,33 +48,33 @@ const DEFAULT_STATE = {
 
 const DUMMY_STATE = {
   x: {
-    min: -1000,
-    max: 1000,
-    initial: 0,
-    previous: 0,
-    current: 0,
+    low: -1000,
+    high: 1000,
+    initial: 50,
+    previous: 100,
+    current: 200,
     target: 500,
     lag: 0,
     depth: 1,
     snap: false,
   },
   y: {
-    min: -100,
-    max: 100,
-    initial: 0,
-    previous: 0,
-    current: 0,
+    low: -100,
+    high: 100,
+    initial: 5,
+    previous: 10,
+    current: 20,
     target: 50,
     lag: 0,
     depth: 1,
     snap: false,
   },
   z: {
-    min: -10,
-    max: 10,
-    initial: 0,
-    previous: 0,
-    current: 0,
+    low: -10,
+    high: 10,
+    initial: 1,
+    previous: 2,
+    current: 3,
     target: 5,
     lag: 0,
     depth: 1,
@@ -84,19 +84,19 @@ const DUMMY_STATE = {
 
 const DUMMY_UPDATE = {
   x: {
-    min: -2000,
-    max: 2000,
+    low: -2000,
+    high: 2000,
     target: 700,
     snap: true,
   },
   y: {
-    min: -200,
-    max: 200,
+    low: -200,
+    high: 200,
     target: 50,
   },
   z: {
-    min: -20,
-    max: 20,
+    low: -20,
+    high: 20,
     target: 5,
     snap: false,
   },
@@ -116,17 +116,17 @@ describe("toParameters", () => {
 
     const state = newState({
       x: {
-        max: x * 2,
+        high: x * 2,
         current: x,
         target: x,
       },
       y: {
-        max: y * 2,
+        high: y * 2,
         current: y,
         target: y,
       },
       z: {
-        max: z * 2,
+        high: z * 2,
         current: z,
         target: z,
       },
@@ -142,39 +142,39 @@ describe("toParameters", () => {
       nz: 0.5,
     });
 
-    // previous is 0 and min is 0, so the absolute parameters are the same
+    // previous is 0 and low is 0, so the absolute parameters are the same
     expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
       parameters,
     );
   });
 
-  test("with positive min", () => {
+  test("with positive low", () => {
     const x = 1000,
       y = 100,
       z = 10;
 
     const state = newState({
       x: {
-        min: x / 4,
-        max: x * 2,
+        low: x / 4,
+        high: x * 2,
         initial: x / 4,
-        previous: x / 4, // must be at least min
+        previous: x / 4,
         current: x,
         target: x,
       },
       y: {
-        min: y / 4,
-        max: y * 2,
+        low: y / 4,
+        high: y * 2,
         initial: y / 4,
-        previous: y / 4, // must be at least min
+        previous: y / 4,
         current: y,
         target: y,
       },
       z: {
-        min: z / 4,
-        max: z * 2,
+        low: z / 4,
+        high: z * 2,
         initial: z / 4,
-        previous: z / 4, // must be at least min
+        previous: z / 4,
         current: z,
         target: z,
       },
@@ -193,7 +193,7 @@ describe("toParameters", () => {
     expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
       {
         x: x,
-        nx: 3 / 7, // (curr - min) / (max - min)
+        nx: 3 / 7, // (curr - low) / (high - low)
         y: y,
         ny: 3 / 7,
         z: z,
@@ -202,27 +202,27 @@ describe("toParameters", () => {
     );
   });
 
-  test("with negative min", () => {
+  test("with negative low", () => {
     const x = 1000,
       y = 100,
       z = 10;
 
     const state = newState({
       x: {
-        min: -x * 2,
-        max: x * 2,
+        low: -x * 2,
+        high: x * 2,
         current: x,
         target: x,
       },
       y: {
-        min: -y * 2,
-        max: y * 2,
+        low: -y * 2,
+        high: y * 2,
         current: y,
         target: y,
       },
       z: {
-        min: -z * 2,
-        max: z * 2,
+        low: -z * 2,
+        high: z * 2,
         current: z,
         target: z,
       },
@@ -257,20 +257,20 @@ describe("toParameters", () => {
 
     const state = newState({
       x: {
-        min: -x * 2,
-        max: x * 2,
+        low: -x * 2,
+        high: x * 2,
         current: -x,
         target: x,
       },
       y: {
-        min: -y * 2,
-        max: y * 2,
+        low: -y * 2,
+        high: y * 2,
         current: -y,
         target: y,
       },
       z: {
-        min: -z * 2,
-        max: z * 2,
+        low: -z * 2,
+        high: z * 2,
         current: -z,
         target: z,
       },
@@ -305,19 +305,19 @@ describe("toParameters", () => {
 
     const state = newState({
       x: {
-        max: x * 2,
+        high: x * 2,
         previous: x / 4,
         current: x,
         target: x,
       },
       y: {
-        max: y * 2,
+        high: y * 2,
         previous: y / 4,
         current: y,
         target: y,
       },
       z: {
-        max: z * 2,
+        high: z * 2,
         previous: z / 4,
         current: z,
         target: z,
@@ -346,6 +346,60 @@ describe("toParameters", () => {
     );
   });
 
+  test("outside low/high", () => {
+    const x = 1000,
+      y = 100,
+      z = 10;
+
+    const state = newState({
+      x: {
+        low: x,
+        high: 3 * x,
+        initial: 0,
+        previous: 0.25 * x, // < low
+        current: 0.5 * x, // < low
+        target: x, // must be >= low to avoid updating it
+      },
+      y: {
+        low: 0,
+        high: 0.5 * y,
+        initial: y, // > high
+        previous: 1.5 * y, // > high
+        current: 2 * y, // > high
+        target: 0, // must be <= high to avoid updating it
+      },
+      z: {
+        low: 0,
+        high: 0,
+        initial: 0.25 * z,
+        previous: 0.25 * z,
+        current: z,
+        target: 0, // avoid updating low/high
+      },
+    });
+
+    // incremental
+    expect(toParameters(state, DEFAULT_COMPOSER)).toEqual({
+      x: 0.25 * x,
+      nx: -0.25 + 0.75 / 2, // curr nx (which is -0.25) - prev nx (which is -0.75 / 2)
+      y: 0.5 * y,
+      ny: 4 - 3,
+      z: 0.75 * z,
+      nz: 1, // low === high
+    });
+
+    expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
+      {
+        x: 0.5 * x,
+        nx: -0.25, // (curr - low) / (high - low)
+        y: 2 * y,
+        ny: 4,
+        z: z,
+        nz: 1, // low === high
+      },
+    );
+  });
+
   test("invalid state", () => {
     const x = 1000,
       y = 100,
@@ -356,41 +410,42 @@ describe("toParameters", () => {
     const state = {
       // incomplete
       x: {
-        min: x,
-        max: x * 2,
-        previous: x * 4, // enforced to max of x * 2
-        current: x / 2, // enforced to min of x
+        low: x,
+        high: 2 * x,
+        previous: NaN, // set to low
+        current: 1.5 * x,
       },
       y: {
-        min: 0,
-        max: y / 2,
-        previous: -y, // enforced to min of 0
-        current: y, // enforced to max of y/2
+        low: 0,
+        high: y,
+        initial: 0.2 * y,
+        previous: 0.5 * y,
+        current: Infinity, // set to initial
       },
       z: {
-        min: z / 2,
-        max: z * 2,
-        // missing current and previous: both enforced to min of z / 2
+        low: 0.5 * z,
+        high: 2 * z,
+        // missing current and previous: both set to low
       },
     };
 
     // incremental
     expect(toParameters(state, DEFAULT_COMPOSER)).toEqual({
-      x: -x, // x - x * 2
-      nx: -1, // curr abs nx (which is 0) - prev abs nx (which is 1)
-      y: y / 2, // y / 2 - 0
-      ny: 1, // curr abs ny (which is 1) - prev abs ny (which is 0)
-      z: 0, // current and previous forced to z/2
+      x: 0.5 * x, // 1.5 * x - x
+      nx: 0.5, // curr abs nx (which is 0.5) - prev abs nx (which is 0)
+      y: (0.2 - 0.5) * y, // 0.25 * y - 0.5 * y / 2
+      ny: 0.2 - 0.5,
+      z: 0, // current and previous set to low
       nz: 0,
     });
 
     expect(toParameters(state, DEFAULT_COMPOSER, { isAbsolute: true })).toEqual(
       {
-        x,
-        nx: 0,
-        y: y / 2,
-        ny: 1,
-        z: z / 2,
+        x: 1.5 * x,
+        nx: 0.5,
+        y: 0.2 * y,
+        ny: 0.2,
+        z: 0.5 * z,
         nz: 0,
       },
     );
@@ -404,19 +459,19 @@ describe("toParameters", () => {
     const x = 10,
       y = 20,
       z = 30,
-      max = 1000;
+      high = 1000;
 
     const state = newState({
       x: {
-        max,
+        high,
         current: x,
       },
       y: {
-        max,
+        high,
         current: y,
       },
       z: {
-        max,
+        high,
         current: z,
       },
     });
@@ -428,11 +483,11 @@ describe("toParameters", () => {
       }),
     ).toEqual({
       x: x / depthX,
-      nx: x / max,
+      nx: x / high,
       y: y / depthY,
-      ny: y / max,
+      ny: y / high,
       z: z / depthZ,
-      nz: z / max,
+      nz: z / high,
     });
   });
 });
@@ -611,153 +666,197 @@ describe("getUpdatedState: validate current", () => {
       });
     }
 
-    test(`${axis}: min > max`, () => {
+    test(`${axis}: low > high`, () => {
       const state = deepCopy(dummyState);
       const expected = deepCopy(state);
 
-      [state[axis].min, state[axis].max] = [state[axis].max, state[axis].min];
+      [state[axis].low, state[axis].high] = [state[axis].high, state[axis].low];
       expect(getUpdatedState(state, composer)).toEqual(expected);
     });
 
-    test(`${axis}: missing min`, () => {
-      const state = deepCopy(dummyState);
-      const expected = deepCopy(state);
-      expected[axis].min = 0;
-
-      delete state[axis].min;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
-
-    test(`${axis}: invalid min`, () => {
-      const state = deepCopy(dummyState);
-      const expected = deepCopy(state);
-      expected[axis].min = 0;
-
-      state[axis].min = NaN;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
-
-    test(`${axis}: missing max (min < 0)`, () => {
-      const state = deepCopy(dummyState);
-      state[axis].min = -100;
-
-      const expected = deepCopy(state);
-      expected[axis].max =
-        expected[axis].initial =
-        expected[axis].previous =
-        expected[axis].current =
-        expected[axis].target =
-          0;
-
-      delete state[axis].max;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
-
-    test(`${axis}: invalid max (min < 0)`, () => {
-      const state = deepCopy(dummyState);
-      state[axis].min = -100;
-
-      const expected = deepCopy(state);
-      expected[axis].max =
-        expected[axis].initial =
-        expected[axis].previous =
-        expected[axis].current =
-        expected[axis].target =
-          0;
-
-      state[axis].max = NaN;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
-
-    test(`${axis}: missing max (min > 0)`, () => {
-      const min = 10000;
-      const state = deepCopy(dummyState);
-      state[axis].min = min;
-
-      const expected = deepCopy(state);
-      expected[axis].max =
-        expected[axis].initial =
-        expected[axis].previous =
-        expected[axis].current =
-        expected[axis].target =
-          min;
-
-      delete state[axis].max;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
-
-    test(`${axis}: invalid max (min > 0)`, () => {
-      const min = 10000;
-      const state = deepCopy(dummyState);
-      state[axis].min = min;
-
-      const expected = deepCopy(state);
-      expected[axis].max =
-        expected[axis].initial =
-        expected[axis].previous =
-        expected[axis].current =
-        expected[axis].target =
-          min;
-
-      state[axis].max = NaN;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
-
-    for (const prop of ["initial", "previous", "current", "target"]) {
-      test(`${axis}: ${prop} < min`, () => {
+    // low/high --------------------
+    for (const useInvalid of [true, false]) {
+      test(`${axis}: ${useInvalid ? "invalid" : "missing"} low`, () => {
         const state = deepCopy(dummyState);
         const expected = deepCopy(state);
-        expected[axis][prop] = expected[axis].min;
+        expected[axis].low = 0;
 
-        state[axis][prop] = state[axis].min - 10;
+        if (useInvalid) {
+          state[axis].low = Infinity;
+        } else {
+          delete state[axis].low;
+        }
         expect(getUpdatedState(state, composer)).toEqual(expected);
       });
 
-      test(`${axis}: ${prop} > max`, () => {
+      test(`${axis}: ${useInvalid ? "invalid" : "missing"} low (target === high < 0)`, () => {
+        const val = -10000;
         const state = deepCopy(dummyState);
-        const expected = deepCopy(state);
-        expected[axis][prop] = expected[axis].max;
+        state[axis].high = val;
+        state[axis].target = val; // otherwise high will be set to target
 
-        state[axis][prop] = state[axis].max + 10;
+        const expected = deepCopy(state);
+        expected[axis].low = val; // swapped
+        expected[axis].high = 0; // default low
+
+        if (useInvalid) {
+          state[axis].low = Infinity;
+        } else {
+          delete state[axis].low;
+        }
         expect(getUpdatedState(state, composer)).toEqual(expected);
       });
 
-      test(`${axis}: missing ${prop}`, () => {
+      test(`${axis}: ${useInvalid ? "invalid" : "missing"} low (high < 0 < target)`, () => {
+        const val = -10000;
         const state = deepCopy(dummyState);
-        const expected = deepCopy(state);
-        expected[axis][prop] = expected[axis].min;
+        state[axis].high = val;
 
-        delete state[axis][prop];
+        const expected = deepCopy(state);
+        expected[axis].low = val; // swapped
+        expected[axis].high = expected[axis].target; // bumped up
+
+        if (useInvalid) {
+          state[axis].low = Infinity;
+        } else {
+          delete state[axis].low;
+        }
         expect(getUpdatedState(state, composer)).toEqual(expected);
       });
 
-      test(`${axis}: invalid ${prop}`, () => {
+      test(`${axis}: ${useInvalid ? "invalid" : "missing"} high (target === low < 0)`, () => {
         const state = deepCopy(dummyState);
-        const expected = deepCopy(state);
-        expected[axis][prop] = expected[axis].min;
+        state[axis].target = state[axis].low; // otherwise high will be set to target
 
-        state[axis][prop] = NaN;
+        const expected = deepCopy(state);
+        expected[axis].high = 0;
+
+        if (useInvalid) {
+          state[axis].high = -Infinity;
+        } else {
+          delete state[axis].high;
+        }
+        expect(getUpdatedState(state, composer)).toEqual(expected);
+      });
+
+      test(`${axis}: ${useInvalid ? "invalid" : "missing"} high (target > 0 > low)`, () => {
+        const state = deepCopy(dummyState);
+
+        const expected = deepCopy(state);
+        expected[axis].high = expected[axis].target;
+
+        if (useInvalid) {
+          state[axis].high = -Infinity;
+        } else {
+          delete state[axis].high;
+        }
+        expect(getUpdatedState(state, composer)).toEqual(expected);
+      });
+
+      test(`${axis}: ${useInvalid ? "invalid" : "missing"} high (low > target > 0)`, () => {
+        const val = 10000;
+        const state = deepCopy(dummyState);
+        state[axis].low = val;
+        state[axis].target = val - 100;
+
+        const expected = deepCopy(state);
+        expected[axis].high = val; // swapped first, so target doesn't bring down the initial value of low
+        expected[axis].low = 0;
+
+        if (useInvalid) {
+          state[axis].high = -Infinity;
+        } else {
+          delete state[axis].high;
+        }
+        expect(getUpdatedState(state, composer)).toEqual(expected);
+      });
+
+      test(`${axis}: ${useInvalid ? "invalid" : "missing"} high (target > low > 0)`, () => {
+        const val = 10000;
+        const state = deepCopy(dummyState);
+        state[axis].low = val;
+        state[axis].target = val + 100;
+
+        const expected = deepCopy(state);
+        expected[axis].high = expected[axis].target; // bumped up
+        expected[axis].low = 0; // default high
+
+        if (useInvalid) {
+          state[axis].high = -Infinity;
+        } else {
+          delete state[axis].high;
+        }
         expect(getUpdatedState(state, composer)).toEqual(expected);
       });
     }
 
-    test(`${axis}: missing snap`, () => {
-      const state = deepCopy(dummyState);
-      const expected = deepCopy(state);
-      expected[axis].snap = false;
+    // initial/prev/current/target --------------------
+    for (const prop of ["initial", "previous", "current", "target"]) {
+      test(`${axis}: ${prop} < low`, () => {
+        const state = deepCopy(dummyState);
+        state[axis][prop] = state[axis].low - 10;
 
-      delete state[axis].snap;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
+        const expected = deepCopy(state);
+        if (prop === "target") {
+          expected[axis].low = expected[axis].target;
+        }
 
-    test(`${axis}: invalid snap`, () => {
-      const state = deepCopy(dummyState);
-      const expected = deepCopy(state);
-      expected[axis].snap = false;
+        expect(getUpdatedState(state, composer)).toEqual(expected);
+      });
 
-      state[axis].snap = 1;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
+      test(`${axis}: ${prop} > high`, () => {
+        const state = deepCopy(dummyState);
+        state[axis][prop] = state[axis].high + 10;
+
+        const expected = deepCopy(state);
+        if (prop === "target") {
+          expected[axis].high = expected[axis].target;
+        }
+
+        expect(getUpdatedState(state, composer)).toEqual(expected);
+      });
+
+      for (const useInvalid of [true, false]) {
+        test(`${axis}: ${useInvalid ? "invalid" : "missing"} ${prop}`, () => {
+          const state = deepCopy(dummyState);
+          const expected = deepCopy(state);
+
+          let expectedVal;
+          if (prop === "initial") {
+            expectedVal = expected[axis].low;
+          } else if (prop === "target") {
+            expectedVal = expected[axis].current;
+          } else {
+            expectedVal = expected[axis].initial;
+          }
+
+          expected[axis][prop] = expectedVal;
+
+          if (useInvalid) {
+            state[axis][prop] = NaN;
+          } else {
+            delete state[axis][prop];
+          }
+          expect(getUpdatedState(state, composer)).toEqual(expected);
+        });
+      }
+    }
+
+    // snap --------------------
+    for (const useInvalid of [true, false]) {
+      test(`${axis}: ${useInvalid ? "invalid" : "missing"} snap`, () => {
+        const state = deepCopy(dummyState);
+        const expected = deepCopy(state);
+        expected[axis].snap = false;
+
+        if (useInvalid) {
+          state[axis].snap = 1;
+        } else {
+          delete state[axis].snap;
+        }
+        expect(getUpdatedState(state, composer)).toEqual(expected);
+      });
+    }
 
     test(`${axis}: snap: true`, () => {
       const state = deepCopy(dummyState);
@@ -766,45 +865,23 @@ describe("getUpdatedState: validate current", () => {
       expect(getUpdatedState(state, composer)).toEqual(state); // preserved
     });
 
-    test(`${axis}: multiple invalid v1`, () => {
-      const min = 100;
+    test(`${axis}: multiple invalid`, () => {
       const state = deepCopy(dummyState);
-      state[axis].min = min;
+      const max = 10000;
+      state[axis].low = max;
+      state[axis].target = max * 2;
 
       const expected = deepCopy(state);
-      expected[axis].max = min;
-      expected[axis].initial = min;
-      expected[axis].previous = min;
-      expected[axis].current = min;
-      expected[axis].target = min;
+      expected[axis].high = expected[axis].target; // bumped from target
+      expected[axis].low = 0; // default high applied, then swapped
+      expected[axis].previous = expected[axis].initial;
+      expected[axis].current = expected[axis].initial;
       expected[axis].snap = false;
 
-      state[axis].max = NaN;
+      state[axis].high = NaN;
       delete state[axis].previous;
-      state[axis].current = 0; // < min
-      state[axis].target = min * 2; // > new max
+      state[axis].current = Infinity;
       state[axis].snap = 1;
-      expect(getUpdatedState(state, composer)).toEqual(expected);
-    });
-
-    test(`${axis}: multiple invalid v2`, () => {
-      const max = 100;
-      const state = deepCopy(dummyState);
-      state[axis].max = max;
-
-      const expected = deepCopy(state);
-      expected[axis].min = 0;
-      expected[axis].initial = 0;
-      expected[axis].previous = 0;
-      expected[axis].current = 0;
-      expected[axis].target = max;
-      expected[axis].snap = false;
-
-      state[axis].min = NaN;
-      delete state[axis].previous;
-      state[axis].current = -100; // < new min
-      state[axis].target = max * 2; // > max
-      state[axis].snap = null;
       expect(getUpdatedState(state, composer)).toEqual(expected);
     });
   }
@@ -824,102 +901,96 @@ describe("getUpdatedState: with update data", () => {
     expect(getUpdatedState(dummyState, composer)).toEqual(dummyState);
   });
 
-  test("basic", () => {
+  test("basic + ensure not modifying input", () => {
     const state = deepCopy(dummyState);
+    const copy = deepCopy(state);
+
     const update = deepCopy(DUMMY_UPDATE);
+    const copyU = deepCopy(update);
+
     const expected = deepCopy(state);
     copyExistingKeysTo(update, expected);
 
     expect(getUpdatedState(state, composer, update)).toEqual(expected);
+    expect(state).toEqual(copy); // not modified
+    expect(update).toEqual(copyU); // not modified
   });
 
-  test("not modifying input state", () => {
+  test("ensure not modifying input v2", () => {
     const state = deepCopy(dummyState);
-    const copy = deepCopy(dummyState);
-    const update = deepCopy(DUMMY_UPDATE);
-    const expected = deepCopy(state);
-    copyExistingKeysTo(update, expected);
+    const copy = deepCopy(state);
 
-    expect(getUpdatedState(state, composer, update)).toEqual(expected);
-    expect(state).toEqual(copy);
-  });
-
-  test("not modifying input update", () => {
-    const state = deepCopy(dummyState);
     const update = deepCopy(DUMMY_UPDATE);
 
-    [update.x.min, update.x.max] = [update.x.max, update.x.min];
+    [update.x.low, update.x.high] = [update.x.high, update.x.low];
 
-    delete update.y.min;
+    delete update.y.low;
     update.y.target = NaN;
     delete update.z.target;
 
-    const copy = deepCopy(update);
+    const copyU = deepCopy(update);
     getUpdatedState(state, composer, update);
-    expect(update).toEqual(copy);
+    expect(state).toEqual(copy); // not modified
+    expect(update).toEqual(copyU); // not modified
   });
 
   for (const axis of ["x", "y", "z"]) {
-    test(`${axis}: min > max`, () => {
+    test(`${axis}: low > high`, () => {
       const state = deepCopy(dummyState);
       const update = deepCopy(DUMMY_UPDATE);
       const expected = deepCopy(state);
       copyExistingKeysTo(update, expected);
 
-      [update[axis].min, update[axis].max] = [
-        update[axis].max,
-        update[axis].min,
+      [update[axis].low, update[axis].high] = [
+        update[axis].high,
+        update[axis].low,
       ];
       expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
 
-    for (const prop of ["min", "max", "target", "snap"]) {
-      test(`${axis}: missing ${prop}`, () => {
-        const state = deepCopy(dummyState);
+    for (const prop of ["low", "high", "target", "snap"]) {
+      for (const useInvalid of [true, false]) {
+        test(`${axis}: ${useInvalid ? "invalid" : "missing"} ${prop}`, () => {
+          const state = deepCopy(dummyState);
 
-        const update = deepCopy(DUMMY_UPDATE);
-        const expected = deepCopy(state);
-        copyExistingKeysTo(update, expected);
-        expected[axis][prop] = state[axis][prop]; // preserved
+          const update = deepCopy(DUMMY_UPDATE);
+          const expected = deepCopy(state);
+          copyExistingKeysTo(update, expected);
+          expected[axis][prop] = state[axis][prop]; // preserved from state
 
-        delete update[axis][prop];
-        expect(getUpdatedState(state, composer, update)).toEqual(expected);
-      });
-
-      test(`${axis}: invalid ${prop}`, () => {
-        const state = deepCopy(dummyState);
-
-        const update = deepCopy(DUMMY_UPDATE);
-        const expected = deepCopy(state);
-        copyExistingKeysTo(update, expected);
-        expected[axis][prop] = state[axis][prop]; // preserved
-
-        update[axis][prop] = prop === "snap" ? 0 : NaN;
-        expect(getUpdatedState(state, composer, update)).toEqual(expected);
-      });
+          if (useInvalid) {
+            update[axis][prop] = prop === "snap" ? 0 : NaN;
+          } else {
+            delete update[axis][prop];
+          }
+          expect(getUpdatedState(state, composer, update)).toEqual(expected);
+        });
+      }
     }
 
-    test(`${axis}: target < min`, () => {
+    test(`${axis}: target < low`, () => {
       const state = deepCopy(dummyState);
 
       const update = deepCopy(DUMMY_UPDATE);
+      update[axis].target = update[axis].low - 10;
+
       const expected = deepCopy(state);
       copyExistingKeysTo(update, expected);
-      expected[axis].target = expected[axis].min;
+      expected[axis].low = expected[axis].target;
 
-      update[axis].target = update[axis].min - 10;
       expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
 
-    test(`${axis}: target > max`, () => {
+    test(`${axis}: target > high`, () => {
       const state = deepCopy(dummyState);
 
       const update = deepCopy(DUMMY_UPDATE);
+      update[axis].target = update[axis].high + 10;
+
       const expected = deepCopy(state);
       copyExistingKeysTo(update, expected);
-      expected[axis].target = expected[axis].max;
+      expected[axis].high = expected[axis].target;
 
-      update[axis].target = update[axis].max + 10;
       expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
 
@@ -933,14 +1004,22 @@ describe("getUpdatedState: with update data", () => {
       update[axis].initial =
         update[axis].previous =
         update[axis].current =
-          state[axis].max;
+          state[axis].low;
 
       update[axis].lag = 1000;
       update[axis].depth = 10;
       expect(getUpdatedState(state, composer, update)).toEqual(expected);
     });
 
-    test(`${axis}: input snap: true and missing update for axis`, () => {
+    test(`${axis}: input snap: true and missing update for axis v1`, () => {
+      const state = deepCopy(dummyState);
+      state[axis].snap = true;
+
+      const update = null;
+      expect(getUpdatedState(state, composer, update)).toEqual(state); // preserved
+    });
+
+    test(`${axis}: input snap: true and missing update for axis v2`, () => {
       const state = deepCopy(dummyState);
       state[axis].snap = true;
 

@@ -25,8 +25,8 @@ const DEFAULT_TWEEN_STATE = {
 
 const DUMMY_STATE = {
   x: {
-    min: -Number.MAX_SAFE_INTEGER,
-    max: Number.MAX_SAFE_INTEGER,
+    low: -1000,
+    high: 1000,
     initial: 0,
     previous: 0,
     current: 0,
@@ -36,8 +36,8 @@ const DUMMY_STATE = {
     snap: false,
   },
   y: {
-    min: -Number.MAX_SAFE_INTEGER,
-    max: Number.MAX_SAFE_INTEGER,
+    low: -100,
+    high: 100,
     initial: 0,
     previous: 0,
     current: 0,
@@ -47,8 +47,8 @@ const DUMMY_STATE = {
     snap: false,
   },
   z: {
-    min: -Number.MAX_SAFE_INTEGER,
-    max: Number.MAX_SAFE_INTEGER,
+    low: -10,
+    high: 10,
     initial: 0,
     previous: 0,
     current: 0,
@@ -445,8 +445,8 @@ describe("update", () => {
 describe("update parameters", () => {
   const state = {
     x: {
-      min: -1000,
-      max: 1000,
+      low: -1000,
+      high: 1000,
       initial: 0,
       previous: 0,
       current: 100,
@@ -455,8 +455,8 @@ describe("update parameters", () => {
       depth: 1,
     },
     y: {
-      min: -100,
-      max: 100,
+      low: -100,
+      high: 100,
       initial: 0,
       previous: 0,
       current: 10,
@@ -465,8 +465,8 @@ describe("update parameters", () => {
       depth: 1,
     },
     z: {
-      min: -10,
-      max: 10,
+      low: -10,
+      high: 10,
       initial: 0,
       previous: 0,
       current: 1,
@@ -478,8 +478,8 @@ describe("update parameters", () => {
 
   const state2 = {
     x: {
-      min: -2000,
-      max: 2000,
+      low: -2000,
+      high: 2000,
       initial: 0,
       previous: 100,
       current: 150,
@@ -488,8 +488,8 @@ describe("update parameters", () => {
       depth: 1,
     },
     y: {
-      min: -100,
-      max: 100,
+      low: -100,
+      high: 100,
       initial: 0,
       previous: 10,
       current: 15,
@@ -498,8 +498,8 @@ describe("update parameters", () => {
       depth: 1,
     },
     z: {
-      min: -10,
-      max: 10,
+      low: -10,
+      high: 10,
       initial: 0,
       previous: 1,
       current: 2,

@@ -278,9 +278,10 @@ export class FXNegateMatcher extends FXMatcher {
  * last restarted.
  *
  * If the value is a percentage rather than an absolute number, it will be
- * treated as a fraction of the difference between the minimum and maximum
- * values of each axis' parameters. See {@link FXComposerMatcherBounds} for
- * an example.
+ * treated as a fraction of the difference between the
+ * {@link Effects.FXAxisState.low | low} and
+ * {@link Effects.FXAxisState.high | high} values of each axis' parameters. See
+ * {@link FXComposerMatcherBounds} for an example.
  */
 export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
   constructor(bounds: FXComposerMatcherBounds, composer: FXComposer) {
@@ -318,12 +319,13 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
  * relative to the values at the time the matcher was last restarted.
  *
  * If the value is a percentage, it will be treated as a fraction of the
- * difference between the maximum and minimum values for the respective axis.
+ * difference between the {@link Effects.FXAxisState.low | low} and
+ * {@link Effects.FXAxisState.high | high} values of each axis' parameters.
  *
  * @example
  * - `10` or `"10"` is treated as an absolute value of 10 ignoring the reference
  *   value (at the time of last restart).
- * - `"10%"` is treated as an absolute value of "min + 10% of the (max - min)",
+ * - `"10%"` is treated as an absolute value of "low + 10% of the (high - low)",
  *   ignoring the reference value (at the time of last restart).
  *
  * - `"+10"` is treated as 10 more than the value since the matcher was last
@@ -524,7 +526,7 @@ export class FXPinMatcher extends FXMatcher {
 
 // ------------------------------
 
-type FXPinAxisData = { min: number; max: number; current: number };
+type FXPinAxisData = { low: number; high: number; current: number };
 
 type FXPinAllAxesData<Keys extends string> = { [K in Keys]: FXPinAxisData };
 
@@ -546,11 +548,11 @@ const toRawAxisValue = (
     numerical,
   }) => {
     let result = isPercent
-      ? values.min + (numerical * (values.max - values.min)) / 100
+      ? values.low + (numerical * (values.high - values.low)) / 100
       : numerical;
 
     if (isAdditive) {
-      result += reference?.current ?? values.min;
+      result += reference?.current ?? values.low;
     }
 
     return result;
@@ -612,13 +614,13 @@ const scrollToAxesData = (
   scrollData: ScrollData,
 ): FXPinAllAxesData<"top" | "left"> => ({
   top: {
-    min: 0,
-    max: scrollData[_.S_SCROLL_HEIGHT],
+    low: 0,
+    high: scrollData[_.S_SCROLL_HEIGHT],
     current: scrollData[_.S_SCROLL_TOP],
   },
   left: {
-    min: 0,
-    max: scrollData[_.S_SCROLL_WIDTH],
+    low: 0,
+    high: scrollData[_.S_SCROLL_WIDTH],
     current: scrollData[_.S_SCROLL_LEFT],
   },
 });

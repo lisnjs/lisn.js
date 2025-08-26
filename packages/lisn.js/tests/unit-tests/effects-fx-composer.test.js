@@ -11,8 +11,8 @@ const { FXComposer, FXTrigger, FXScrollTrigger, FXMatcher, FXPin } =
 
 const DEFAULT_STATE = {
   x: {
-    min: 0,
-    max: 0,
+    low: 0,
+    high: 0,
     initial: 0,
     previous: 0,
     current: 0,
@@ -22,8 +22,8 @@ const DEFAULT_STATE = {
     snap: false,
   },
   y: {
-    min: 0,
-    max: 0,
+    low: 0,
+    high: 0,
     initial: 0,
     previous: 0,
     current: 0,
@@ -33,8 +33,8 @@ const DEFAULT_STATE = {
     snap: false,
   },
   z: {
-    min: 0,
-    max: 0,
+    low: 0,
+    high: 0,
     initial: 0,
     previous: 0,
     current: 0,
@@ -47,19 +47,19 @@ const DEFAULT_STATE = {
 
 const DUMMY_UPDATE = {
   x: {
-    min: -2000,
-    max: 2000,
+    low: -2000,
+    high: 2000,
     target: 700,
     snap: false,
   },
   y: {
-    min: -200,
-    max: 200,
+    low: -200,
+    high: 200,
     target: 50,
   },
   z: {
-    min: -20,
-    max: 20,
+    low: -20,
+    high: 20,
     target: 5,
     snap: false,
   },
@@ -67,19 +67,19 @@ const DUMMY_UPDATE = {
 
 const DUMMY_UPDATE2 = {
   x: {
-    min: -1500,
-    max: 1500,
+    low: -1500,
+    high: 1500,
     target: 600,
     snap: false,
   },
   y: {
-    min: -180,
-    max: 180,
+    low: -180,
+    high: 180,
     target: 60,
   },
   z: {
-    min: -10,
-    max: 10,
+    low: -10,
+    high: 10,
     target: 7,
     snap: false,
   },
@@ -87,19 +87,19 @@ const DUMMY_UPDATE2 = {
 
 const DUMMY_UPDATE3 = {
   x: {
-    min: -2500,
-    max: 2500,
+    low: -2500,
+    high: 2500,
     target: 300,
     snap: false,
   },
   y: {
-    min: -800,
-    max: 800,
+    low: -800,
+    high: 800,
     target: 40,
   },
   z: {
-    min: -200,
-    max: 200,
+    low: -200,
+    high: 200,
     target: 2,
     snap: false,
   },
@@ -107,7 +107,7 @@ const DUMMY_UPDATE3 = {
 
 const PARTIAL_UPDATE = {
   x: {
-    max: 5000,
+    high: 5000,
   },
 };
 
@@ -786,7 +786,7 @@ describe("trigger / tween", () => {
           expect(triggerCbk).toHaveBeenCalledTimes(1);
           expect(triggerCbk).toHaveBeenNthCalledWith(1, composer);
           expect(triggerStates[0]).toEqual(
-            // min/max updated, but current is still at 0
+            // low/high/target updated, but current is still at 0
             expectedInitialState,
           );
 
@@ -1498,7 +1498,7 @@ describe("add/getComposition/toCss", () => {
 
     // trigger composer ----------
 
-    push({ x: { target: 70, max: 100 } });
+    push({ x: { target: 70 } });
     await window.waitFor(50);
 
     expect(triggerCbk).toHaveBeenCalledTimes(1); // at start of tween
@@ -1525,7 +1525,7 @@ describe("add/getComposition/toCss", () => {
 
     // trigger composerX ----------
 
-    pushX({ x: { target: 400, max: 1000 } });
+    pushX({ x: { target: 400 } });
     await window.waitFor(50);
 
     expect(triggerCbk).toHaveBeenCalledTimes(1); // no new calls
@@ -1821,7 +1821,7 @@ describe("animating elements", () => {
 
     // update composer ----------
 
-    push({ x: { target: width, max: 1000 }, y: { target: height, max: 1000 } });
+    push({ x: { target: width }, y: { target: height } });
 
     await window.waitFor(10 + lag / 2);
 
@@ -1875,7 +1875,7 @@ describe("animating elements", () => {
 
     // update composerX ----------
 
-    pushX({ z: { target: 0.5, max: 1 } });
+    pushX({ z: { target: 0.5 } });
 
     await window.waitFor(50);
     for (const e of [elementA, elementB]) {
@@ -2007,8 +2007,8 @@ describe("animating elements", () => {
 
       // update composer ----------
       push({
-        x: { target: width * 2, max: 1000 },
-        y: { target: height * 2, max: 1000 },
+        x: { target: width * 2 },
+        y: { target: height * 2 },
       });
 
       await window.waitFor(50);
@@ -2050,7 +2050,7 @@ describe("animating elements", () => {
 
     composer.add(effect);
 
-    push({ x: { target: width, max: 1000 }, y: { target: height, max: 1000 } });
+    push({ x: { target: width }, y: { target: height } });
 
     await window.waitFor(50);
 
@@ -2079,8 +2079,8 @@ describe("animating elements", () => {
     }
 
     push({
-      x: { target: width * 4, max: 1000 },
-      y: { target: height * 4, max: 1000 },
+      x: { target: width * 4 },
+      y: { target: height * 4 },
     });
 
     await window.waitFor(50);

@@ -6,9 +6,9 @@
 
 import * as _ from "@lisn/_internal";
 
-import { usageError, bugError } from "@lisn/globals/errors";
+import { usageError } from "@lisn/globals/errors";
 
-import { toNum, toNumWithBounds, isValidNum } from "@lisn/utils/math";
+import { toNum, isValidNum } from "@lisn/utils/math";
 
 import { FXComposer } from "@lisn/effects/fx-composer";
 
@@ -96,12 +96,17 @@ export type FXParams = {
 
   /**
    * If the effect is {@link Effect.isAbsolute | absolute}, it is the normalized
-   * {@link x}: from 0 ({@link FXState.x.min}) to 1 ({@link FXState.x.max})
-   * value for this axis. If {@link FXState.x.min} equals {@link FXState.x.max},
-   * this will be set to 1.
+   * {@link x} relative to the difference between {@link FXState.x.low}
+   * (`nx = 0`) to {@link FXState.x.high} (`nx = 1`). It may be below 0 or above
+   * 1 since {@link FXAxisState.low | low} and {@link FXAxisState.high | high}
+   * are only reference values used for computing this normalized parameter, and
+   * not strictly enforced.
+   *
+   * If {@link FXState.x.low} equals {@link FXState.x.high}, this will always be
+   * set to 1.
    *
    * If the effect is not absolute, it is the change in the absolute normalized
-   * value since the last animation frame (from -1 to 1).
+   * value since the last animation frame.
    *
    * It is always independent of parallax depth.
    */
@@ -129,21 +134,27 @@ export type FXParams = {
 };
 
 /**
- * The update for an axis (minimum, maximum and target) values.
+ * The update for an axis (low, high and target) values.
  */
 export type FXAxisStateUpdate = {
   /**
-   * The minimum value.
+   * The new low value. If it is greater than {@link high}, they are swapped.
    */
-  min?: number;
+  low?: number;
 
   /**
-   * The maximum value.
+   * The new high value. If it is less than {@link low}, they are swapped.
    */
-  max?: number;
+  high?: number;
 
   /**
-   * The target value which we're interpolating towards.
+   * The new target value which we're interpolating towards.
+   *
+   * If it exceeds the current {@link FXAxisState.high} value, the high will be
+   * updated to this target value.
+   *
+   * If it is below the current {@link FXAxisState.low} value, the low will be
+   * updated to this target value.
    */
   target?: number;
 
@@ -168,33 +179,47 @@ export type FXStateUpdate = {
  */
 export type FXAxisState = {
   /**
-   * The minimum value.
+   * The low value. Used for computing {@link FXParams.nx | normalized}
+   * parameters.
+   *
+   * Initial value is 0.
    */
-  min: number;
+  low: number;
 
   /**
-   * The maximum value.
+   * The high value. Used for computing {@link FXParams.nx | normalized}
+   * parameters.
+   *
+   * Initial value is 0.
    */
-  max: number;
+  high: number;
 
   /**
    * The initial value at which the composer started interpolating (since the
    * last trigger).
+   *
+   * Initial value is 0.
    */
   initial: number;
 
   /**
    * The value at the last animation frame.
+   *
+   * Initial value is 0.
    */
   previous: number;
 
   /**
    * The current value.
+   *
+   * Initial value is 0.
    */
   current: number;
 
   /**
    * The target value which the composer is interpolating towards.
+   *
+   * Initial value is 0.
    */
   target: number;
 
@@ -212,6 +237,8 @@ export type FXAxisState = {
    * If true, it means the composer was told to
    * {@link FXAxisStateUpdate.snap | snap} straight to the target value during
    * the last update.
+   *
+   * Initial value is `false`.
    */
   snap: boolean;
 };
@@ -280,31 +307,19 @@ export const toParameters = (
   const { isAbsolute, scalerFn } = options ?? {};
 
   const getAxisParam = (axisState: FXAxisState, normalized = false) => {
-    const { current, previous, max, min } = axisState;
+    const { current, previous, low, high } = axisState;
     let result = isAbsolute ? current : current - previous;
-    let maxResult = isAbsolute ? max : max - min;
-    let minResult = isAbsolute ? min : min - max;
 
     if (normalized) {
-      maxResult = 1;
-      minResult = isAbsolute ? 0 : -1;
-
-      if (max === min) {
+      if (low === high) {
         result = 1;
       } else {
         if (isAbsolute) {
-          result -= min;
+          result -= low;
         }
 
-        result /= max - min;
+        result /= high - low;
       }
-    }
-
-    if (!isValidNum(result) || result < minResult || result > maxResult) {
-      // getUpdatedState should have ensured values are in range.
-      throw bugError(
-        "FX: Calculated invalid value for normalized axis parameter",
-      );
     }
 
     return result;
@@ -371,48 +386,53 @@ export const getUpdatedState = (
   const validateAxis = (
     axisState: Partial<FXAxisState> | undefined,
     axis: "x" | "y" | "z",
-  ) => {
+  ): FXAxisState => {
     const axisC = axis === "x" ? "X" : axis === "y" ? "Y" : "Z";
 
     axisState ??= {};
-    let { min, max } = axisState;
-    min = toNum(min, 0);
-    max = toNum(max, min > 0 ? min : 0);
-    if (min > max) {
-      [min, max] = [max, min]; // swap
+    let { low, high } = axisState;
+    low = toNum(low, 0);
+    high = toNum(high, 0);
+    if (low > high) {
+      [low, high] = [high, low]; // swap
     }
 
     const lag = composerConfig[`lag${axisC}`];
     const depth = composerConfig[`depth${axisC}`];
-    const filteredState: FXAxisState = {
+
+    // default initial is low
+    // default previous and current are initial
+    // default target is current
+    const initial = toNum(axisState.initial, low);
+    const previous = toNum(axisState.previous, initial);
+    const current = toNum(axisState.current, initial);
+    const target = toNum(axisState.target, current);
+
+    if (target > high) {
+      high = target;
+    } else if (target < low) {
+      low = target;
+    }
+
+    return {
       // known properties only
-      min,
-      max,
+      low,
+      high,
       lag,
       depth,
       snap: toBool(axisState.snap),
-      // updated below
-      initial: 0,
-      previous: 0,
-      current: 0,
-      target: 0,
+      initial: initial,
+      previous: previous,
+      current: current,
+      target: target,
     };
-
-    for (const prop of ["initial", "previous", "current", "target"] as const) {
-      filteredState[prop] = toNumWithBounds(axisState[prop], {
-        min,
-        max,
-      });
-    }
-
-    return filteredState;
   };
 
   const updateAxis = (axis: "x" | "y" | "z") => {
     const axisState = validateAxis(state[axis], axis); // validate input state
 
-    const axisUpdate = update[axis] ?? { snap: axisState.snap };
-    for (const prop of ["min", "max", "target"] as const) {
+    const axisUpdate = update[axis] ?? axisState;
+    for (const prop of ["low", "high", "target"] as const) {
       axisState[prop] = toNum(axisUpdate[prop], axisState[prop]);
     }
     axisState.snap = toBool(axisUpdate.snap);

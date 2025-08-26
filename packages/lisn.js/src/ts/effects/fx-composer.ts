@@ -912,8 +912,8 @@ const UPDATE_ABSOLUTE = 1;
 
 const createState = (): FXState => {
   const axisState: FXAxisState = {
-    min: 0,
-    max: 0,
+    low: 0,
+    high: 0,
     initial: 0,
     previous: 0,
     current: 0,

@@ -33,8 +33,8 @@ const DEFAULT_COMPOSER = new FXComposer();
 
 const DUMMY_STATE = {
   x: {
-    min: -Number.MAX_SAFE_INTEGER,
-    max: Number.MAX_SAFE_INTEGER,
+    low: 1000,
+    high: -1000,
     initial: 0,
     previous: 0,
     current: 0,
@@ -44,8 +44,8 @@ const DUMMY_STATE = {
     snap: false,
   },
   y: {
-    min: -Number.MAX_SAFE_INTEGER,
-    max: Number.MAX_SAFE_INTEGER,
+    low: 100,
+    high: -100,
     initial: 0,
     previous: 0,
     current: 0,
@@ -55,8 +55,8 @@ const DUMMY_STATE = {
     snap: false,
   },
   z: {
-    min: -Number.MAX_SAFE_INTEGER,
-    max: Number.MAX_SAFE_INTEGER,
+    low: 10,
+    high: -10,
     initial: 0,
     previous: 0,
     current: 0,

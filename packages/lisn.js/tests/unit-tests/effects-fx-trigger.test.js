@@ -467,14 +467,14 @@ test("FXScrollTrigger", async () => {
     const data = (await poller.next()).value;
     expect(data).toEqual({
       x: {
-        min: 0,
-        max: window.SCROLL_WIDTH,
+        low: 0,
+        high: window.SCROLL_WIDTH,
         target: scrollLeft,
         snap,
       },
       y: {
-        min: 0,
-        max: window.SCROLL_HEIGHT,
+        low: 0,
+        high: window.SCROLL_HEIGHT,
         target: scrollTop,
         snap,
       },

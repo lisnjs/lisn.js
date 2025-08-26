@@ -144,9 +144,21 @@ class DummyEffect {
     this.isAbsolute = () => isAbsolute;
 
     this.update = jest.fn((fx, composer) => {
-      const d = composer.getConfig().depthX;
+      const dX = composer.getConfig().depthX;
+      const dY = composer.getConfig().depthY;
+      const dZ = composer.getConfig().depthZ;
       for (const p in state) {
-        const a = p === "height" ? "y" : p === "opacity" ? "z" : "x";
+        let a, d;
+        if (p === "y" || p === "height") {
+          a = "y";
+          d = dY;
+        } else if (p === "z" || p === "opacity") {
+          a = "z";
+          d = dZ;
+        } else {
+          a = "x";
+          d = dX;
+        }
 
         state[p] =
           (isAbsolute ? 0 : state[p] - fx[a].previous / d) + fx[a].current / d;
@@ -1104,6 +1116,10 @@ describe("setLag", () => {
     push(DUMMY_UPDATE);
     await window.waitFor(lag / 2);
     let state = composer.getState();
+    expect(state.x.current).toBeGreaterThan(state.x.target * 0.4);
+    expect(state.y.current).toBeGreaterThan(state.y.target * 0.4);
+    expect(state.z.current).toBeGreaterThan(state.z.target * 0.4);
+
     expect(state.x.current).toBeLessThan(state.x.target * 0.6);
     expect(state.y.current).toBeLessThan(state.y.target * 0.6);
     expect(state.z.current).toBeLessThan(state.z.target * 0.6);
@@ -1222,6 +1238,93 @@ describe("setLag", () => {
 });
 
 describe("setDepth", () => {
+  test("during tween: update all depth", async () => {
+    const effectAbsOrig = new DummyEffectA(
+      { x: 0, y: 0, z: 0 },
+      { isAbsolute: true },
+    );
+    const effectIncOrig = new DummyEffectB(
+      { x: 0, y: 0, z: 0 },
+      { isAbsolute: false },
+    );
+
+    const { lag, push, composer } = newComposer();
+
+    composer.add(effectAbsOrig).add(effectIncOrig);
+
+    const effectAbs = getComposerEffectObj(effectAbsOrig, composer);
+    const effectInc = getComposerEffectObj(effectIncOrig, composer);
+
+    const depthX = 2,
+      depthY = 4,
+      depthZ = 8;
+
+    // check default
+    expect(composer.getConfig().depthX).toBe(1);
+    expect(composer.getConfig().depthY).toBe(1);
+    expect(composer.getConfig().depthZ).toBe(1);
+
+    expect(composer.getState().x.depth).toBe(1);
+    expect(composer.getState().y.depth).toBe(1);
+    expect(composer.getState().z.depth).toBe(1);
+
+    push({ x: { target: 8000 }, y: { target: 800 }, z: { target: 80 } });
+    await window.waitFor(lag / 2);
+    let state = composer.getState();
+
+    const checkpointX = state.x.current;
+    const checkpointY = state.y.current;
+    const checkpointZ = state.z.current;
+
+    expect(checkpointX).toBeGreaterThan(state.x.target * 0.4);
+    expect(checkpointY).toBeGreaterThan(state.y.target * 0.4);
+    expect(checkpointZ).toBeGreaterThan(state.z.target * 0.4);
+
+    expect(checkpointX).toBeLessThan(state.x.target * 0.6);
+    expect(checkpointY).toBeLessThan(state.y.target * 0.6);
+    expect(checkpointZ).toBeLessThan(state.z.target * 0.6);
+
+    expect(effectAbs.toCss()).toEqual({
+      x: checkpointX,
+      y: checkpointY,
+      z: checkpointZ,
+    });
+    expect(effectInc.toCss()).toEqual({
+      x: checkpointX,
+      y: checkpointY,
+      z: checkpointZ,
+    });
+
+    // update depth
+    composer.setDepth({ depthX, depthY, depthZ });
+    expect(composer.getConfig().depthX).toBe(depthX);
+    expect(composer.getConfig().depthY).toBe(depthY);
+    expect(composer.getConfig().depthZ).toBe(depthZ);
+
+    expect(composer.getState().x.depth).toBe(depthX);
+    expect(composer.getState().y.depth).toBe(depthY);
+    expect(composer.getState().z.depth).toBe(depthZ);
+
+    await window.waitFor(100 + lag / 2);
+    state = composer.getState();
+    const finalX = state.x.current;
+    const finalY = state.y.current;
+    const finalZ = state.z.current;
+    expect(finalX).toBe(state.x.target);
+    expect(finalY).toBe(state.y.target);
+    expect(finalZ).toBe(state.z.target);
+
+    const absCss = effectAbs.toCss();
+    expect(absCss.x).toBeCloseTo(finalX / depthX);
+    expect(absCss.y).toBeCloseTo(finalY / depthY);
+    expect(absCss.z).toBeCloseTo(finalZ / depthZ);
+
+    const incCss = effectInc.toCss();
+    expect(incCss.x).toBeCloseTo(checkpointX + (finalX - checkpointX) / depthX);
+    expect(incCss.y).toBeCloseTo(checkpointY + (finalY - checkpointY) / depthY);
+    expect(incCss.z).toBeCloseTo(checkpointZ + (finalZ - checkpointZ) / depthZ);
+  });
+
   test("set all depth to same value + ensure it triggers compose handlers", async () => {
     const { composer } = newComposer({ addEffect: true });
 
@@ -1229,6 +1332,10 @@ describe("setDepth", () => {
     expect(composer.getConfig().depthX).toBe(1);
     expect(composer.getConfig().depthY).toBe(1);
     expect(composer.getConfig().depthZ).toBe(1);
+
+    expect(composer.getState().x.depth).toBe(1);
+    expect(composer.getState().y.depth).toBe(1);
+    expect(composer.getState().z.depth).toBe(1);
 
     const triggerCbk = jest.fn();
     const tweenCbk = jest.fn();
@@ -1249,6 +1356,10 @@ describe("setDepth", () => {
     expect(composer.getConfig().depthX).toBe(depth);
     expect(composer.getConfig().depthY).toBe(depth);
     expect(composer.getConfig().depthZ).toBe(depth);
+
+    expect(composer.getState().x.depth).toBe(depth);
+    expect(composer.getState().y.depth).toBe(depth);
+    expect(composer.getState().z.depth).toBe(depth);
 
     await window.waitFor(50);
 
@@ -1273,6 +1384,10 @@ describe("setDepth", () => {
       expect(composer.getConfig().depthX).toBe(minDepth);
       expect(composer.getConfig().depthY).toBe(minDepth);
       expect(composer.getConfig().depthZ).toBe(minDepth);
+
+      expect(composer.getState().x.depth).toBe(minDepth);
+      expect(composer.getState().y.depth).toBe(minDepth);
+      expect(composer.getState().z.depth).toBe(minDepth);
     });
   }
 
@@ -1285,10 +1400,14 @@ describe("setDepth", () => {
     for (const invalid of [NaN, Infinity, null]) {
       composer.setDepth(invalid);
 
-      // reset to default
+      // preserved old
       expect(composer.getConfig().depthX).toBe(depth);
       expect(composer.getConfig().depthY).toBe(depth);
       expect(composer.getConfig().depthZ).toBe(depth);
+
+      expect(composer.getState().x.depth).toBe(depth);
+      expect(composer.getState().y.depth).toBe(depth);
+      expect(composer.getState().z.depth).toBe(depth);
     }
   });
 
@@ -1301,6 +1420,10 @@ describe("setDepth", () => {
     expect(composer.getConfig().depthX).toBe(depth);
     expect(composer.getConfig().depthY).toBe(depth);
     expect(composer.getConfig().depthZ).toBe(depthZ);
+
+    expect(composer.getState().x.depth).toBe(depth);
+    expect(composer.getState().y.depth).toBe(depth);
+    expect(composer.getState().z.depth).toBe(depthZ);
   });
 
   for (const includeDefault of [true, false]) {
@@ -1319,6 +1442,10 @@ describe("setDepth", () => {
       expect(composer.getConfig().depthX).toBe(depthX);
       expect(composer.getConfig().depthY).toBe(depthY);
       expect(composer.getConfig().depthZ).toBe(depthZ);
+
+      expect(composer.getState().x.depth).toBe(depthX);
+      expect(composer.getState().y.depth).toBe(depthY);
+      expect(composer.getState().z.depth).toBe(depthZ);
     });
   }
 

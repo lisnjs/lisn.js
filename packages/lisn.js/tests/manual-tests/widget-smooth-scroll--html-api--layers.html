@@ -6,7 +6,7 @@
     <script src="assets/js/lisn.link.js" charset="utf-8"></script>
     <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
     <script charset="utf-8">
-      LISN.widgets.SmoothScroll.enableMain();
+      LISN.widgets.SmoothScroll.enableMain({ lag: 300 });
     </script>
     <link
       rel="stylesheet"
@@ -17,7 +17,7 @@
     />
     <style type="text/css" media="screen">
       .overflow {
-        min-width: 350vw;
+        min-width: 200vw;
         min-height: 200vh;
       }
 
@@ -26,19 +26,19 @@
         display: flex;
         align-items: center;
         justify-content: space-evently;
-        margin: 30vh 0;
-        gap: 30vw;
+        margin: 10vh 0;
+        gap: 10vw;
       }
 
       .box {
         background: blue;
         flex-grow: 1;
-        height: 200px;
+        height: 100px;
       }
 
       .box:nth-child(odd) {
         background: yellow;
-        height: 300px;
+        height: 200px;
       }
     </style>
   </head>
@@ -49,16 +49,19 @@
         <span class="box"></span>
         <span class="box"></span>
         <span class="box"></span>
-      </div>
-
-      <div class="section">
-        <span class="box"></span>
-        <span class="box"></span>
         <span class="box"></span>
         <span class="box"></span>
       </div>
 
       <div class="section">
+        <span
+          class="box"
+          data-lisn-smooth-scroll-layer="lag=0 | depth=0.8"
+        ></span>
+        <span
+          class="box"
+          data-lisn-smooth-scroll-layer="lag=1200 | depth=1.3"
+        ></span>
         <span class="box"></span>
         <span class="box"></span>
         <span class="box"></span>
@@ -66,6 +69,21 @@
       </div>
 
       <div class="section">
+        <span
+          class="box"
+          data-lisn-smooth-scroll-layer="lag=0 | depth=0.8"
+        ></span>
+        <span
+          class="box"
+          data-lisn-smooth-scroll-layer="lag=1200 | depth=1.3"
+        ></span>
+        <span class="box"></span>
+        <span class="box"></span>
+      </div>
+
+      <div class="section">
+        <span class="box"></span>
+        <span class="box"></span>
         <span class="box"></span>
         <span class="box"></span>
         <span class="box"></span>

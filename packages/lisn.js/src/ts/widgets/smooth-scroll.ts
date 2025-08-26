@@ -46,7 +46,7 @@ import {
   validateRawOrRelativeNumber,
 } from "@lisn/utils/validation";
 
-import { FXComposer } from "@lisn/effects/fx-composer";
+import { FXComposer, FXComposerConfig } from "@lisn/effects/fx-composer";
 import { FXScrollTrigger } from "@lisn/effects/fx-trigger";
 import { Transform } from "@lisn/effects/transform";
 
@@ -507,12 +507,20 @@ const toDepth = (depth: unknown, parentDepth: number | "auto") => {
 };
 
 const getParentLayer = (scrollable: Element, layer: Element) => {
-  let closest = _.closestParent(layer, SELECTOR_LAYER) ?? scrollable;
-  if (!scrollable.contains(closest)) {
-    closest = scrollable;
+  if (layer === scrollable) {
+    return null;
   }
 
-  return closest !== layer ? closest : null;
+  let closestLayer: Element | null = null;
+  const parent = layer.parentElement;
+  if (parent) {
+    closestLayer = _.closestParent(parent, SELECTOR_LAYER);
+    if (!closestLayer || !scrollable.contains(closestLayer)) {
+      closestLayer = scrollable;
+    }
+  }
+
+  return closestLayer ?? scrollable;
 };
 
 const getLayersFrom = (
@@ -528,13 +536,7 @@ const getLayersFrom = (
 
   const createComposer = (
     useDefaultEffects: boolean,
-    config: {
-      lagX: number;
-      lagY: number;
-      depthX: number;
-      depthY: number;
-      parent?: FXComposer;
-    },
+    config: FXComposerConfig,
   ) => {
     const composer = new FXComposer(_.merge(config, { trigger }));
     if (useDefaultEffects) {
@@ -613,6 +615,7 @@ const getLayersFrom = (
           depthX: depthX === _.S_AUTO ? 1 : depthX,
           depthY: depthY === _.S_AUTO ? 1 : depthY,
           parent: parentState?._composer,
+          negate: parentState?._composer,
         }),
         _children: _.createSet(),
         _parentState: parentState,

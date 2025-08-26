@@ -451,7 +451,6 @@ export const getUpdatedState = (
  * @ignore
  * @internal
  */
-
 export const validateOutputParameters = (
   name: string,
   outputs: number[],

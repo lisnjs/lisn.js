@@ -168,6 +168,10 @@ export class FXRelativeMatcher<D = unknown> extends FXMatcher {
       getData: () => _.deepCopy(storeData.data),
       setData: (data) => {
         storeData.data = _.deepCopy(data);
+        if (_.isUndefined(storeData.refData)) {
+          // set initial reference
+          storeData.refData = storeData.data;
+        }
       },
       getReferenceData: () => _.deepCopy(storeData.refData),
     };
@@ -238,7 +242,8 @@ export type FXRelativeMatcherStore<D = unknown> = FXMatcherStore & {
 
   /**
    * Returns the data at the time {@link FXMatcher.restart | restart} was last
-   * called on the matcher.
+   * called on the matcher, or the initial data {@link setData | data} if the
+   * matcher had never been restarted).
    */
   getReferenceData: () => D | undefined;
 
@@ -296,15 +301,17 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
       const updateData = () => {
         const fxState = composer.getState();
         store.setData(fxState);
-        store.setState(
-          areAxesWithinBounds(bounds, fxState, store.getReferenceData()),
-        );
+
+        // getReferenceData here won't return undefined since the first call to
+        // setData also sets the reference, but TypeScript doesn't know that
+        const refData = store.getReferenceData() ?? fxState;
+        store.setState(areAxesWithinBounds(bounds, fxState, refData));
       };
 
       updateData(); // check initial state
       composer.onTween(createCallback(updateData, true));
 
-      // Recheck if within bounds
+      // Recheck if within bounds on restart
       store.restartCallback = updateData;
     };
 
@@ -316,7 +323,8 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
  * Minimum and/or maximum X, Y and/or Z composer state parameters.
  *
  * {@link RawOrRelativeNumber | Relative} offsets with `+` or `-` prefix are
- * relative to the values at the time the matcher was last restarted.
+ * relative to the values at the time the matcher was last restarted (or the
+ * initial value).
  *
  * If the value is a percentage, it will be treated as a fraction of the
  * difference between the {@link Effects.FXAxisState.low | low} and
@@ -325,17 +333,17 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
  * @example
  * - `10` or `"10"` is treated as an absolute value of 10 ignoring the reference
  *   value (at the time of last restart).
- * - `"10%"` is treated as an absolute value of "low + 10% of the (high - low)",
+ * - `"10%"` is treated as an absolute value of "low + 10% * (high - low)",
  *   ignoring the reference value (at the time of last restart).
  *
  * - `"+10"` is treated as 10 more than the value since the matcher was last
  *   restarted.
  * - `"-10"` is treated as 10 less than the value since the matcher was last
  *   restarted.
- * - `"+10%"` is treated as 10% more than the value since the matcher was last
- *   restarted.
- * - `"-10%"` is treated as 10% less than the value since the matcher was last
- *   restarted.
+ * - `"+10%"` is treated as "10% * (high - low)" more than the value since the
+ *   matcher was last restarted or the initial value.
+ * - `"-10%"` is treated as "10% * (high - low)" less than the value since the
+ *   matcher was last restarted or the initial value.
  */
 export type FXComposerMatcherBounds = AtLeastOne<{
   /**
@@ -404,9 +412,10 @@ export class FXScrollMatcher extends FXRelativeMatcher<
         }
 
         if (data) {
-          store.setState(
-            areAxesWithinBounds(bounds, data, store.getReferenceData()),
-          );
+          // getReferenceData here won't return undefined since the first call
+          // to setData also sets the reference, but TypeScript doesn't know that
+          const refData = store.getReferenceData() ?? data;
+          store.setState(areAxesWithinBounds(bounds, data, refData));
         }
       };
 
@@ -417,7 +426,9 @@ export class FXScrollMatcher extends FXRelativeMatcher<
         }),
       );
 
-      // Recheck if within bounds
+      // ScrollWatcher will soon call us with initial state, asynchronously
+
+      // Recheck if within bounds on restart
       store.restartCallback = updateData;
     };
 
@@ -429,7 +440,8 @@ export class FXScrollMatcher extends FXRelativeMatcher<
  * Minimum and/or maximum top and/or left scroll offsets.
  *
  * {@link RawOrRelativeNumber | Relative} offsets with `+` or `-` prefix are
- * relative to the values at the time the matcher was last restarted.
+ * relative to the values at the time the matcher was last restarted (or the
+ * initial value).
  *
  * If the value is a percentage, it will be treated as a fraction of the scroll
  * width or height of the scrollable.
@@ -446,9 +458,9 @@ export class FXScrollMatcher extends FXRelativeMatcher<
  * - `"-10"` is treated as 10 pixels back up/left since the matcher was last
  *   restarted.
  * - `"+10%"` is treated as 10% the scroll height/width further down/right since
- *   the matcher was last restarted.
+ *   the matcher was last restarted or the initial value.
  * - `"-10%"` is treated as 10% the scroll height/width back up/left since the
- *   matcher was last restarted.
+ *   matcher was last restarted or the initial value.
  */
 export type FXScrollMatcherBounds = AtLeastOne<{
   /**
@@ -539,7 +551,7 @@ type FXPinAllAxesData<Keys extends string> = { [K in Keys]: FXPinAxisData };
 const toRawAxisValue = (
   input: RawOrRelativeNumber | undefined,
   values: FXPinAxisData,
-  reference: FXPinAxisData | undefined,
+  reference: FXPinAxisData,
   defaultValue: number,
 ): number => {
   const calculator: RawNumberCalculator = ({
@@ -547,12 +559,14 @@ const toRawAxisValue = (
     isPercent,
     numerical,
   }) => {
-    let result = isPercent
-      ? values.low + (numerical * (values.high - values.low)) / 100
-      : numerical;
+    let result;
 
-    if (isAdditive) {
-      result += reference?.current ?? values.low;
+    if (isPercent) {
+      result =
+        (isAdditive ? reference.current : values.low) +
+        (numerical * (values.high - values.low)) / 100;
+    } else {
+      result = numerical + (isAdditive ? reference.current : 0);
     }
 
     return result;
@@ -572,7 +586,7 @@ const toRawAxisValue = (
 const isAxisGE = (
   minValue: RawOrRelativeNumber | undefined,
   values: FXPinAxisData,
-  reference: FXPinAxisData | undefined,
+  reference: FXPinAxisData,
 ) => values.current >= toRawAxisValue(minValue, values, reference, -_.INFINITY);
 
 /**
@@ -586,19 +600,19 @@ const isAxisGE = (
 const isAxisLE = (
   maxValue: RawOrRelativeNumber | undefined,
   values: FXPinAxisData,
-  reference: FXPinAxisData | undefined,
+  reference: FXPinAxisData,
 ) => values.current <= toRawAxisValue(maxValue, values, reference, _.INFINITY);
 
 const areAxesWithinBounds = <Keys extends string>(
   bounds: { [B in "min" | "max"]?: { [K in Keys]?: RawOrRelativeNumber } },
   data: FXPinAllAxesData<Keys>,
-  referenceData: FXPinAllAxesData<Keys> | undefined,
+  referenceData: FXPinAllAxesData<Keys>,
 ) => {
   const { min, max } = bounds;
 
   let result = true;
   for (const a in data) {
-    const axisRef = referenceData ? referenceData[a] : void 0;
+    const axisRef = referenceData[a];
     const axisMax = max ? max[a] : NaN;
     const axisMin = min ? min[a] : NaN;
 

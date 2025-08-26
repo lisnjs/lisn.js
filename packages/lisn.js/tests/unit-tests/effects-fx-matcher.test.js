@@ -220,25 +220,26 @@ describe("FXRelativeMatcher", () => {
 
     expect(data).toEqual(input);
     expect(data).not.toBe(input); // copied
-    expect(store.getReferenceData()).toBeUndefined();
+    expect(store.getReferenceData()).toEqual(input); // initial
 
     input.b.c = 4;
     expect(data).toEqual(origInput); // deeply copied when setting
 
     data.b.c = 4;
     expect(store.getData()).toEqual(origInput); // deeply copied when returned
+    expect(store.getReferenceData()).toEqual(origInput);
 
     store.setData(2);
     expect(store.getData()).toBe(2);
-    expect(store.getReferenceData()).toBeUndefined();
+    expect(store.getReferenceData()).toEqual(origInput); // still initial
 
     store.setData(null);
     expect(store.getData()).toBe(null);
-    expect(store.getReferenceData()).toBeUndefined();
+    expect(store.getReferenceData()).toEqual(origInput); // still initial
 
     store.setData(false);
     expect(store.getData()).toBe(false);
-    expect(store.getReferenceData()).toBeUndefined();
+    expect(store.getReferenceData()).toEqual(origInput); // still initial
 
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(0); // not called for data change
@@ -263,11 +264,11 @@ describe("FXRelativeMatcher", () => {
 
     expect(executor).toHaveBeenCalledTimes(1);
     expect(store.getData()).toEqual(d);
-    expect(store.getReferenceData()).toBeUndefined();
+    expect(store.getReferenceData()).toEqual(d); // initial
 
     await window.waitFor(120);
     expect(store.getData()).toEqual(d2);
-    expect(store.getReferenceData()).toBeUndefined();
+    expect(store.getReferenceData()).toEqual(d); // still initial
 
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(0); // not called for data change
@@ -279,15 +280,7 @@ describe("FXRelativeMatcher", () => {
     const lastData = "foo";
 
     const cbk = jest.fn();
-    const { matcher, store, executor } = newMatcher(
-      FXRelativeMatcher,
-      (store) => {
-        setTimeout(
-          () => expect(store.getReferenceData()).toEqual(lastData),
-          100,
-        );
-      },
-    );
+    const { matcher, store, executor } = newMatcher(FXRelativeMatcher);
 
     matcher.onChange(cbk);
 
@@ -302,13 +295,13 @@ describe("FXRelativeMatcher", () => {
 
     store.setData(2);
     expect(store.getData()).toBe(2);
-    expect(store.getReferenceData()).toBeUndefined();
+    expect(store.getReferenceData()).toBe(2); // initial
 
     const input = { a: 1, b: { c: 2 } };
     const origInput = { a: 1, b: { c: 2 } };
     store.setData(input);
     expect(store.getData()).toEqual(input);
-    expect(store.getReferenceData()).toBeUndefined();
+    expect(store.getReferenceData()).toBe(2); // still initial
 
     matcher.restart();
 
@@ -336,8 +329,6 @@ describe("FXRelativeMatcher", () => {
 
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(0); // not called for data change or restart
-
-    await window.waitFor(120);
 
     expect(executor).toHaveBeenCalledTimes(1);
   });
@@ -615,7 +606,7 @@ describe("FXComposerMatcher", () => {
         await window.waitFor(50);
         expect(matcher.matches()).toBe(useMax);
 
-        push({ [axis]: { target: target + 1, max: target * 2 } });
+        push({ [axis]: { target: target + 1 } });
         await window.waitFor(50);
         expect(matcher.matches()).toBe(!useMax);
 
@@ -635,7 +626,7 @@ describe("FXComposerMatcher", () => {
       test(`raw bounds: ${limit} ${axis} after push to > ${limit}`, async () => {
         const { push, composer } = newComposer();
 
-        push({ [axis]: { target: target + 1, max: target * 2 } });
+        push({ [axis]: { target: target + 1 } });
         await window.waitFor(50);
         expect(composer.getState()[axis].current).toBe(target + 1);
 
@@ -668,8 +659,8 @@ describe("FXComposerMatcher", () => {
       expect(matcher.matches()).toBe(useMax);
 
       push({
-        x: { target: targets.x + 1, max: targets.x * 2 },
-        y: { target: 0, max: targets.y * 2 },
+        x: { target: targets.x + 1 },
+        y: { target: 0 },
         // only one matches
       });
       await window.waitFor(50);
@@ -725,8 +716,8 @@ describe("FXComposerMatcher", () => {
       const { push, composer } = newComposer();
 
       push({
-        x: { target: targets.x + 1, max: targets.x * 2 },
-        y: { target: targets.y + 1, max: targets.y * 2 },
+        x: { target: targets.x + 1 },
+        y: { target: targets.y + 1 },
       });
       await window.waitFor(50);
       expect(composer.getState().x.current).toBe(targets.x + 1);
@@ -748,6 +739,7 @@ describe("FXComposerMatcher", () => {
 
       expect(composer.getState().x.current).toBe(0);
       expect(composer.getState().y.current).toBe(0);
+      expect(composer.getState().z.current).toBe(0);
 
       const matcher = new FXComposerMatcher(
         {
@@ -760,9 +752,9 @@ describe("FXComposerMatcher", () => {
       expect(matcher.matches()).toBe(useMax);
 
       push({
-        x: { target: targets.x + 1, max: targets.x * 2 },
-        y: { target: 0, max: targets.y * 2 },
-        z: { target: 0, max: targets.z * 2 },
+        x: { target: targets.x + 1 },
+        y: { target: 0 },
+        z: { target: 0 },
         // only one or two match
       });
       await window.waitFor(50);
@@ -819,12 +811,315 @@ describe("FXComposerMatcher", () => {
       await window.waitFor(50);
       expect(matcher.matches()).toBe(useMax);
     });
+
+    for (const axis in targets) {
+      const high = targets[axis];
+
+      for (const low of [-high, 0, high / 2]) {
+        const tenPc = 0.1 * (high - low);
+        const tenPcAbs = low + tenPc;
+
+        for (const doRestart of [true, false]) {
+          test(`relative bounds: ${limit} ${axis} 10%${doRestart ? " (+restart)" : ""} (low = ${low})`, async () => {
+            // 10% is not relative to any reference data, so restarting doesn't make
+            // a difference
+            const { push, composer } = newComposer();
+
+            // start at some value other than low
+            const initial = low + 2 * tenPc; // > low + 10%
+            push({ [axis]: { target: initial, low, high } });
+            await window.waitFor(50);
+
+            expect(composer.getState()[axis].current).toBe(initial);
+
+            const matcher = new FXComposerMatcher(
+              {
+                [limit]: { [axis]: "10%" },
+              },
+              composer,
+            );
+
+            if (doRestart) {
+              matcher.restart();
+            }
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+
+            if (doRestart) {
+              matcher.restart();
+            }
+            push({ [axis]: { target: tenPcAbs + 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+
+            if (doRestart) {
+              matcher.restart();
+            }
+            push({ [axis]: { target: tenPcAbs } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(true);
+
+            if (doRestart) {
+              matcher.restart();
+            }
+            push({ [axis]: { target: tenPcAbs - 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(useMax);
+
+            if (doRestart) {
+              matcher.restart();
+            }
+            push({ [axis]: { target: tenPcAbs + 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+          });
+        }
+
+        test(`relative bounds: ${limit} ${axis} +10 + restart (low = ${low})`, async () => {
+          const { push, composer } = newComposer();
+
+          // start at some value other than low
+          const initial = low + 50; // > low + 10
+          push({ [axis]: { target: initial, low, high } });
+          await window.waitFor(50);
+
+          expect(composer.getState()[axis].current).toBe(initial);
+
+          const matcher = new FXComposerMatcher(
+            {
+              [limit]: { [axis]: "+10" },
+            },
+            composer,
+          );
+
+          let target = composer.getState()[axis].current + 10; // initial max/min
+          for (let i = 0; i < 3; i++) {
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(useMax);
+
+            push({ [axis]: { target: target + 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+
+            push({ [axis]: { target } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(true);
+
+            push({ [axis]: { target: target - 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(useMax);
+
+            matcher.restart();
+            target += 9; // new max/min
+          }
+        });
+
+        test(`relative bounds: ${limit} ${axis} +10% + restart (low = ${low})`, async () => {
+          const { push, composer } = newComposer();
+
+          // start at some value other than low
+          const initial = low + tenPc * 2; // > low + 10%
+          push({ [axis]: { target: initial, low, high } });
+          await window.waitFor(50);
+
+          expect(composer.getState()[axis].current).toBe(initial);
+
+          const matcher = new FXComposerMatcher(
+            {
+              [limit]: { [axis]: "+10%" },
+            },
+            composer,
+          );
+
+          let target = composer.getState()[axis].current + tenPc; // initial max/min
+          for (let i = 0; i < 3; i++) {
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(useMax);
+
+            push({ [axis]: { target: target + 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+
+            push({ [axis]: { target } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(true);
+
+            push({ [axis]: { target: target - 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(useMax);
+
+            matcher.restart();
+            target += tenPc - 1; // new max/min
+          }
+        });
+
+        test(`relative bounds: ${limit} ${axis} -10 + restart (low = ${low})`, async () => {
+          const { push, composer } = newComposer();
+
+          // start at some value other than low
+          const initial = low + 100;
+          push({ [axis]: { target: initial, low, high } });
+          await window.waitFor(50);
+
+          expect(composer.getState()[axis].current).toBe(initial);
+
+          const matcher = new FXComposerMatcher(
+            {
+              [limit]: { [axis]: "-10" },
+            },
+            composer,
+          );
+
+          // max/min is initial - 10
+          await window.waitFor(50);
+          expect(matcher.matches()).toBe(!useMax);
+
+          push({ [axis]: { target: high } });
+          await window.waitFor(50);
+          expect(composer.getState()[axis].current).toBe(high);
+
+          matcher.restart(); // reference is now "high"
+
+          let target = composer.getState()[axis].current - 10; // new max/min
+          for (let i = 0; i < 3; i++) {
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+
+            push({ [axis]: { target: target - 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(useMax);
+
+            push({ [axis]: { target } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(true);
+
+            push({ [axis]: { target: target + 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+
+            matcher.restart(); // reference is now (current target + 1)
+            target -= 9; // new max/min
+          }
+        });
+
+        test(`relative bounds: ${limit} ${axis} -10% + restart (low = ${low})`, async () => {
+          const { push, composer } = newComposer();
+
+          // start at some value other than low
+          const initial = low + 5 * tenPc;
+          push({ [axis]: { target: initial, low, high } });
+          await window.waitFor(50);
+
+          expect(composer.getState()[axis].current).toBe(initial);
+
+          const matcher = new FXComposerMatcher(
+            {
+              [limit]: { [axis]: "-10%" },
+            },
+            composer,
+          );
+
+          // max/min is initial - 10%
+          await window.waitFor(50);
+          expect(matcher.matches()).toBe(!useMax);
+
+          push({ [axis]: { target: high } });
+          await window.waitFor(50);
+          expect(composer.getState()[axis].current).toBe(high);
+
+          matcher.restart(); // reference is now "high"
+
+          let target = composer.getState()[axis].current - tenPc; // new max/min
+          for (let i = 0; i < 3; i++) {
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+
+            push({ [axis]: { target: target - 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(useMax);
+
+            push({ [axis]: { target } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(true);
+
+            push({ [axis]: { target: target + 1 } });
+            await window.waitFor(50);
+            expect(matcher.matches()).toBe(!useMax);
+
+            matcher.restart(); // reference is now (current target + 1)
+            target -= tenPc - 1; // new max/min
+          }
+        });
+      }
+    }
+
+    test(`relative bounds: ${limit} selected test + restart => changes state`, async () => {
+      const { push, composer } = newComposer();
+
+      push({ x: { target: 0 } });
+      await window.waitFor(50);
+
+      expect(composer.getState().x.current).toBe(0);
+
+      const matcher = new FXComposerMatcher(
+        {
+          [limit]: { x: "+10" },
+        },
+        composer,
+      );
+
+      let target = 10; // initial max/min; reference is 0
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        push({ x: { target: target + 1 } });
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        matcher.restart(); // reference is not (current target + 1);
+        target += 11; // new max/min
+      }
+    });
+
+    test(`raw bounds with lag: ${limit} x`, async () => {
+      const lag = 500;
+      const { push, composer } = newComposer(lag);
+
+      expect(composer.getState().x.current).toBe(0);
+
+      const target = targets.x;
+      const matcher = new FXComposerMatcher(
+        {
+          [limit]: { x: target },
+        },
+        composer,
+      );
+
+      push({ x: { target: target * 2 } });
+
+      await window.waitFor(50); // still close to 0
+      expect(matcher.matches()).toBe(useMax);
+
+      await window.waitFor(lag / 4); // close to target / 2
+      expect(matcher.matches()).toBe(useMax);
+
+      await window.waitFor(50 + lag / 4); // just above target
+      expect(matcher.matches()).toBe(!useMax);
+
+      await window.waitFor(lag / 2); // should have reached "target * 2"
+      expect(matcher.matches()).toBe(!useMax);
+
+      expect(composer.getState().x.current).toBe(target * 2);
+      push({ x: { target: target } });
+
+      await window.waitFor(lag / 2); // close to 1.5 * target
+      expect(matcher.matches()).toBe(!useMax);
+
+      await window.waitFor(50 + lag / 2); // should have reached "target"
+      expect(matcher.matches()).toBe(true);
+    });
   }
-
-  // XXX TODO relative bounds including restarting when it should make the state
-  // change
-
-  // XXX TODO with lag
 });
 
 describe("FXScrollMatcher", () => {
@@ -997,6 +1292,11 @@ describe("FXScrollMatcher", () => {
         // 10% is not relative to any reference data, so restarting doesn't make
         // a difference
         const scrollable = newScrollable();
+
+        // start at some value other than 0
+        const initial = 0.8 * window.SCROLL_HEIGHT; // > 10%
+        scrollable.scrollTo(0, initial);
+
         const top = 0.1 * window.SCROLL_HEIGHT;
 
         const matcher = new FXScrollMatcher(
@@ -1010,7 +1310,7 @@ describe("FXScrollMatcher", () => {
           matcher.restart();
         }
         await window.waitFor(50);
-        expect(matcher.matches()).toBe(useMax);
+        expect(matcher.matches()).toBe(!useMax);
 
         if (doRestart) {
           matcher.restart();
@@ -1045,6 +1345,11 @@ describe("FXScrollMatcher", () => {
         // 10% is not relative to any reference data, so restarting doesn't make
         // a difference
         const scrollable = newScrollable();
+
+        // start at some value other than 0
+        const initial = 0.8 * window.SCROLL_WIDTH; // > 10%
+        scrollable.scrollTo(initial, 0);
+
         const left = 0.1 * window.SCROLL_WIDTH;
 
         const matcher = new FXScrollMatcher(
@@ -1058,7 +1363,7 @@ describe("FXScrollMatcher", () => {
           matcher.restart();
         }
         await window.waitFor(50);
-        expect(matcher.matches()).toBe(useMax);
+        expect(matcher.matches()).toBe(!useMax);
 
         if (doRestart) {
           matcher.restart();
@@ -1093,6 +1398,11 @@ describe("FXScrollMatcher", () => {
     test(`relative bounds: ${limit} top +10 + restart`, async () => {
       const scrollable = newScrollable();
 
+      // start at some value other than 0
+      const initial = 50; // > 10
+      scrollable.scrollTo(0, initial);
+      expect(scrollable.scrollTop).toBe(initial);
+
       const matcher = new FXScrollMatcher(
         {
           [limit]: { top: "+10" },
@@ -1100,7 +1410,7 @@ describe("FXScrollMatcher", () => {
         scrollable,
       );
 
-      let top = 10; // initial max/min; reference is 0
+      let top = scrollable.scrollTop + 10; // initial max/min
       for (let i = 0; i < 3; i++) {
         await window.waitFor(50);
         expect(matcher.matches()).toBe(useMax);
@@ -1125,6 +1435,11 @@ describe("FXScrollMatcher", () => {
     test(`relative bounds: ${limit} left +10 + restart`, async () => {
       const scrollable = newScrollable();
 
+      // start at some value other than 0
+      const initial = 50;
+      scrollable.scrollTo(initial, 0);
+      expect(scrollable.scrollLeft).toBe(initial);
+
       const matcher = new FXScrollMatcher(
         {
           [limit]: { left: "+10" },
@@ -1132,7 +1447,7 @@ describe("FXScrollMatcher", () => {
         scrollable,
       );
 
-      let left = 10; // initial max/min; reference is 0
+      let left = scrollable.scrollLeft + 10; // initial max/min
       for (let i = 0; i < 3; i++) {
         await window.waitFor(50);
         expect(matcher.matches()).toBe(useMax);
@@ -1157,6 +1472,11 @@ describe("FXScrollMatcher", () => {
     test(`relative bounds: ${limit} top +10% + restart`, async () => {
       const scrollable = newScrollable();
 
+      // start at some value other than 0
+      const initial = 0.3 * window.SCROLL_HEIGHT;
+      scrollable.scrollTo(0, initial);
+      expect(scrollable.scrollTop).toBe(initial);
+
       const matcher = new FXScrollMatcher(
         {
           [limit]: { top: "+10%" },
@@ -1164,7 +1484,7 @@ describe("FXScrollMatcher", () => {
         scrollable,
       );
 
-      let top = 0.1 * window.SCROLL_HEIGHT; // initial max/min; reference is 0
+      let top = scrollable.scrollTop + 0.1 * window.SCROLL_HEIGHT; // initial max/min
       for (let i = 0; i < 3; i++) {
         await window.waitFor(50);
         expect(matcher.matches()).toBe(useMax);
@@ -1189,6 +1509,11 @@ describe("FXScrollMatcher", () => {
     test(`relative bounds: ${limit} left +10% + restart`, async () => {
       const scrollable = newScrollable();
 
+      // start at some value other than 0
+      const initial = 0.3 * window.SCROLL_WIDTH;
+      scrollable.scrollTo(initial, 0);
+      expect(scrollable.scrollLeft).toBe(initial);
+
       const matcher = new FXScrollMatcher(
         {
           [limit]: { left: "+10%" },
@@ -1196,7 +1521,7 @@ describe("FXScrollMatcher", () => {
         scrollable,
       );
 
-      let left = 0.1 * window.SCROLL_WIDTH; // initial max/min; reference is 0
+      let left = scrollable.scrollLeft + 0.1 * window.SCROLL_WIDTH; // initial max/min
       for (let i = 0; i < 3; i++) {
         await window.waitFor(50);
         expect(matcher.matches()).toBe(useMax);
@@ -1221,6 +1546,11 @@ describe("FXScrollMatcher", () => {
     test(`relative bounds: ${limit} top -10 + restart`, async () => {
       const scrollable = newScrollable();
 
+      // start at some value other than 0
+      const initial = 100;
+      scrollable.scrollTo(0, initial);
+      expect(scrollable.scrollTop).toBe(initial);
+
       const matcher = new FXScrollMatcher(
         {
           [limit]: { top: "-10" },
@@ -1228,16 +1558,16 @@ describe("FXScrollMatcher", () => {
         scrollable,
       );
 
-      // max/min is -10 since reference is 0
+      // max/min is initial - 10
       await window.waitFor(50);
       expect(matcher.matches()).toBe(!useMax);
 
-      scrollable.scrollTo(0, 110);
+      scrollable.scrollTo(0, 200);
 
       await window.waitFor(50); // let the matcher update its data on scroll
-      matcher.restart(); // reference is now 110
-      let top = 100; // new max/min
+      matcher.restart(); // reference is now 200
 
+      let top = scrollable.scrollTop - 10; // new max/min
       for (let i = 0; i < 3; i++) {
         await window.waitFor(50);
         expect(matcher.matches()).toBe(!useMax);
@@ -1259,8 +1589,59 @@ describe("FXScrollMatcher", () => {
       }
     });
 
+    test(`relative bounds: ${limit} left -10 + restart`, async () => {
+      const scrollable = newScrollable();
+
+      // start at some value other than 0
+      const initial = 100;
+      scrollable.scrollTo(initial, 0);
+      expect(scrollable.scrollLeft).toBe(initial);
+
+      const matcher = new FXScrollMatcher(
+        {
+          [limit]: { left: "-10" },
+        },
+        scrollable,
+      );
+
+      // max/min is initial - 10
+      await window.waitFor(50);
+      expect(matcher.matches()).toBe(!useMax);
+
+      scrollable.scrollTo(0, 200);
+
+      await window.waitFor(50); // let the matcher update its data on scroll
+      matcher.restart(); // reference is now 200
+
+      let left = scrollable.scrollLeft - 10; // new max/min
+      for (let i = 0; i < 3; i++) {
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        scrollable.scrollTo(left - 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(useMax);
+
+        scrollable.scrollTo(left, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(true);
+
+        scrollable.scrollTo(left + 1, 0);
+        await window.waitFor(50);
+        expect(matcher.matches()).toBe(!useMax);
+
+        matcher.restart(); // reference is now (current left + 1)
+        left -= 9; // new max/min
+      }
+    });
+
     test(`relative bounds: ${limit} top -10% + restart`, async () => {
       const scrollable = newScrollable();
+
+      // start at some value other than 0
+      const initial = window.SCROLL_HEIGHT / 2;
+      scrollable.scrollTo(0, initial);
+      expect(scrollable.scrollTop).toBe(initial);
 
       const matcher = new FXScrollMatcher(
         {
@@ -1269,16 +1650,16 @@ describe("FXScrollMatcher", () => {
         scrollable,
       );
 
-      // max/min is -0.1 * scroll height since reference is 0
+      // max/min is initial - 10%
       await window.waitFor(50);
       expect(matcher.matches()).toBe(!useMax);
 
-      scrollable.scrollTo(0, 0.5 * window.SCROLL_HEIGHT);
+      scrollable.scrollTo(0, 0.8 * window.SCROLL_HEIGHT);
 
       await window.waitFor(50); // let the matcher update its data on scroll
-      matcher.restart(); // reference is now 0.5 * scroll height
-      let top = 0.4 * window.SCROLL_HEIGHT; // new max/min (40% of scroll height)
+      matcher.restart(); // reference is now 0.8 * scroll height
 
+      let top = scrollable.scrollTop - 0.1 * window.SCROLL_HEIGHT; // new max/min
       for (let i = 0; i < 3; i++) {
         await window.waitFor(50);
         expect(matcher.matches()).toBe(!useMax);
@@ -1303,6 +1684,11 @@ describe("FXScrollMatcher", () => {
     test(`relative bounds: ${limit} left -10% + restart`, async () => {
       const scrollable = newScrollable();
 
+      // start at some value other than 0
+      const initial = window.SCROLL_WIDTH / 2;
+      scrollable.scrollTo(initial, 0);
+      expect(scrollable.scrollLeft).toBe(initial);
+
       const matcher = new FXScrollMatcher(
         {
           [limit]: { left: "-10%" },
@@ -1310,16 +1696,16 @@ describe("FXScrollMatcher", () => {
         scrollable,
       );
 
-      // max/min is -0.1 * scroll width since reference is 0
+      // max/min is initial - 10%
       await window.waitFor(50);
       expect(matcher.matches()).toBe(!useMax);
 
-      scrollable.scrollTo(0.5 * window.SCROLL_WIDTH, 0);
+      scrollable.scrollTo(0.8 * window.SCROLL_WIDTH, 0);
 
       await window.waitFor(50); // let the matcher update its data on scroll
-      matcher.restart(); // reference is now 0.5 * scroll width
-      let left = 0.4 * window.SCROLL_WIDTH; // new max/min (40% of scroll width)
+      matcher.restart(); // reference is now 0.8 * scroll width
 
+      let left = scrollable.scrollLeft - 0.1 * window.SCROLL_WIDTH; // new max/min
       for (let i = 0; i < 3; i++) {
         await window.waitFor(50);
         expect(matcher.matches()).toBe(!useMax);

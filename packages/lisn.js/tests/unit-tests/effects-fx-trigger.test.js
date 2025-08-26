@@ -1,7 +1,7 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { Callback } = window.LISN.modules;
-const { FXTrigger, FXScrollTrigger } = window.LISN.effects;
+const { FXTrigger, FXScrollTrigger, FX_TRIGGER } = window.LISN.effects;
 
 const diffTolerance = 20; // in percent
 
@@ -462,52 +462,65 @@ describe("FXTrigger", () => {
   });
 });
 
-test("FXScrollTrigger", async () => {
-  const pollAndTestData = async (snap) => {
-    const data = (await poller.next()).value;
-    expect(data).toEqual({
-      x: {
-        low: 0,
-        high: window.SCROLL_WIDTH,
-        target: scrollLeft,
-        snap,
-      },
-      y: {
-        low: 0,
-        high: window.SCROLL_HEIGHT,
-        target: scrollTop,
-        snap,
-      },
-    });
-  };
+describe("FXScrollTrigger", () => {
+  test("basic", async () => {
+    const pollAndTestData = async (snap) => {
+      const data = (await poller.next()).value;
+      expect(data).toEqual({
+        x: {
+          low: 0,
+          high: window.SCROLL_WIDTH,
+          target: scrollLeft,
+          snap,
+        },
+        y: {
+          low: 0,
+          high: window.SCROLL_HEIGHT,
+          target: scrollTop,
+          snap,
+        },
+      });
+    };
 
-  const scrollable = document.createElement("div");
-  scrollable.enableScroll();
+    const scrollable = document.createElement("div");
+    scrollable.enableScroll();
 
-  let scrollLeft = 20,
-    scrollTop = 50;
-  scrollable.scrollTo(scrollLeft, scrollTop);
+    let scrollLeft = 20,
+      scrollTop = 50;
+    scrollable.scrollTo(scrollLeft, scrollTop);
 
-  const trigger = new FXScrollTrigger(scrollable);
-  const poller = trigger.poll();
+    const trigger = new FXScrollTrigger(scrollable);
+    const poller = trigger.poll();
 
-  // ---------- initial
-  await pollAndTestData(true);
+    // ---------- initial
+    await pollAndTestData(true);
+    expect(window.numEventListeners.get(scrollable) || 0).toBeGreaterThan(0);
 
-  // ---------- after scroll
-  scrollLeft += 5;
-  scrollTop += 5;
-  scrollable.scrollTo(scrollLeft, scrollTop);
+    // ---------- after scroll
+    scrollLeft += 5;
+    scrollTop += 5;
+    scrollable.scrollTo(scrollLeft, scrollTop);
 
-  await pollAndTestData(false);
+    await pollAndTestData(false);
 
-  // ---------- after pause/resume
-  trigger.pause();
-  trigger.resume();
+    // ---------- after pause/resume
+    trigger.pause();
+    trigger.resume();
 
-  scrollLeft += 5;
-  scrollTop += 5;
-  scrollable.scrollTo(scrollLeft, scrollTop);
+    scrollLeft += 5;
+    scrollTop += 5;
+    scrollable.scrollTo(scrollLeft, scrollTop);
 
-  await pollAndTestData(true);
+    await pollAndTestData(true);
+
+    // ---------- stop watcher on pause
+    trigger.pause();
+    await window.waitFor(0);
+    expect(window.numEventListeners.get(scrollable) || 0).toBe(0);
+  });
+
+  test("in FX_TRIGGER", () => {
+    expect(FX_TRIGGER.scroll).not.toBeUndefined();
+    expect(FX_TRIGGER.scroll()).toBeInstanceOf(FXScrollTrigger);
+  });
 });

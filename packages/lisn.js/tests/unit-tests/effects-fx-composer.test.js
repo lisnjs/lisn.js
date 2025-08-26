@@ -1842,6 +1842,13 @@ describe("clear + onClear/offClear", () => {
     composer.clear(); // cleared again
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(2);
+
+    composer.offClear(cbk);
+    composer.add(new DummyEffect());
+
+    composer.clear(); // cleared again
+    await window.waitFor(0); // callbacks are async
+    expect(cbk).toHaveBeenCalledTimes(2); // no new calls
   });
 
   test("onClear/offClear + push updates to this and added composers", async () => {

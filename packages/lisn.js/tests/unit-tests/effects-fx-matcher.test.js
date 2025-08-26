@@ -8,7 +8,7 @@ const {
   FXNegateMatcher,
   FXComposerMatcher,
   FXScrollMatcher,
-  // FXViewMatcher,
+  FXViewMatcher,
   FXPinMatcher,
   FXPin,
   FXComposer,
@@ -32,6 +32,22 @@ const newMatcher = (Class = FXMatcher, executorBody) => {
 
 describe("FXMatcher/FXRelativeMatcher common", () => {
   for (const Class of [FXMatcher, FXRelativeMatcher]) {
+    test("setting invalid state", () => {
+      const { store } = newMatcher(Class);
+
+      store.setState(true);
+      expect(() => store.setState(0)).toThrow(
+        /Matcher state must be a boolean/,
+      );
+      expect(store.getState()).toBe(true); // preserved
+
+      store.setState(false);
+      expect(() => store.setState(1)).toThrow(
+        /Matcher state must be a boolean/,
+      );
+      expect(store.getState()).toBe(false); // preserved
+    });
+
     test(`${Class.name}: executor + store`, () => {
       const { matcher, store, executor } = newMatcher(Class);
 
@@ -434,9 +450,10 @@ describe("FXNegateMatcher", () => {
   });
 
   test("in FX_MATCH", () => {
-    const { matcher } = newMatcher();
     expect(FX_MATCH.negate).not.toBeUndefined();
-    expect(FX_MATCH.negate(matcher)).toBeInstanceOf(FXNegateMatcher);
+    expect(FX_MATCH.negate(newMatcher().matcher)).toBeInstanceOf(
+      FXNegateMatcher,
+    );
   });
 });
 
@@ -566,9 +583,8 @@ describe("FXPinMatcher", () => {
   });
 
   test("in FX_MATCH", () => {
-    const pin = new FXPin();
     expect(FX_MATCH.pin).not.toBeUndefined();
-    expect(FX_MATCH.pin(pin)).toBeInstanceOf(FXPinMatcher);
+    expect(FX_MATCH.pin(new FXPin())).toBeInstanceOf(FXPinMatcher);
   });
 });
 
@@ -584,6 +600,12 @@ describe("FXComposerMatcher", () => {
   };
 
   const targets = { x: 100, y: 200, z: 300 };
+
+  test("no bounds", () => {
+    expect(() => new FXComposerMatcher()).toThrow(
+      /At least one parameter bounding value is required/,
+    );
+  });
 
   for (const useMax of [true, false]) {
     const limit = useMax ? "max" : "min";
@@ -1120,6 +1142,13 @@ describe("FXComposerMatcher", () => {
       expect(matcher.matches()).toBe(true);
     });
   }
+
+  test("in FX_MATCH", () => {
+    expect(FX_MATCH.composer).not.toBeUndefined();
+    expect(
+      FX_MATCH.composer({ max: { x: 10 } }, new FXComposer()),
+    ).toBeInstanceOf(FXComposerMatcher);
+  });
 });
 
 describe("FXScrollMatcher", () => {
@@ -1131,6 +1160,12 @@ describe("FXScrollMatcher", () => {
 
   const top = 100,
     left = 200;
+
+  test("no bounds", () => {
+    expect(() => new FXScrollMatcher()).toThrow(
+      /At least one parameter bounding value is required/,
+    );
+  });
 
   for (const useMax of [true, false]) {
     const limit = useMax ? "max" : "min";
@@ -1751,6 +1786,46 @@ describe("FXScrollMatcher", () => {
       }
     });
   }
+
+  test("in FX_MATCH", () => {
+    expect(FX_MATCH.scroll).not.toBeUndefined();
+    expect(FX_MATCH.scroll({ max: { top: 10 } })).toBeInstanceOf(
+      FXScrollMatcher,
+    );
+  });
 });
 
-// XXX TODO view matcher including when the condition matches initially
+describe("FXViewMatcher", () => {
+  test("no views or target", () => {
+    expect(() => new FXViewMatcher()).toThrow(
+      /View target and views are required/,
+    );
+
+    expect(() => new FXViewMatcher("at")).toThrow(
+      /View target and views are required/,
+    );
+
+    expect(() => new FXViewMatcher(null, "top: 100px")).toThrow(
+      /View target and views are required/,
+    );
+
+    expect(
+      () => new FXViewMatcher("at,above,below,left,right", "top: 100px"),
+    ).toThrow(/cannot include all possible views/);
+
+    expect(
+      () =>
+        new FXViewMatcher(
+          ["at", "above", "below", "left", "right"],
+          "top: 100px",
+        ),
+    ).toThrow(/cannot include all possible views/);
+  });
+
+  // TODO more tests
+
+  test("in FX_MATCH", () => {
+    expect(FX_MATCH.view).not.toBeUndefined();
+    expect(FX_MATCH.view("at", "top: 100px")).toBeInstanceOf(FXViewMatcher);
+  });
+});

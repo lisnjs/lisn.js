@@ -719,6 +719,7 @@ const init = async (
     stateUsesAutoDepth(state),
   );
   const rootState = layers.get(scrollable);
+  /* istanbul ignore next */
   if (!rootState) {
     throw bugError("No SmoothScroll state saved for the root");
   }
@@ -733,6 +734,7 @@ const init = async (
 
   const updateSizeData = (target: Element, sizeData: SizeData) => {
     const state = layers.get(target);
+    /* istanbul ignore next */
     if (!state) {
       throw bugError("No SmoothScroll state saved for layer");
     }
@@ -808,6 +810,7 @@ const init = async (
 
     const rootScrollData = rootState._scrollData;
     const layerSize = state._sizeData;
+    /* istanbul ignore next */
     if (!rootScrollData || !layerSize) {
       throw bugError("No size data saved for root or layer");
     }

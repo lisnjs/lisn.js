@@ -668,6 +668,7 @@ const addAndSaveHandlerFor = <T extends HandlerTuple>(
       transform.rotate(handler);
       break;
     default:
+      /* istanbul ignore next */
       throw bugError("Unhandled transform effect category");
   }
 };

@@ -1092,8 +1092,8 @@ const hasExceededThreshold = (
 ): boolean => {
   const directions = options._directions;
   const threshold = options._threshold;
+  /* istanbul ignore next */
   if (!lastThresholdData) {
-    /* istanbul ignore */
     return false;
   }
 

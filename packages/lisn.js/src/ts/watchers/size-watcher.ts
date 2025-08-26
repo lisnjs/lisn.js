@@ -564,8 +564,8 @@ const hasExceededThreshold = (
   latestData: SizeData,
   lastThresholdData: SizeData | undefined,
 ): boolean => {
+  /* istanbul ignore next */
   if (!lastThresholdData) {
-    /* istanbul ignore */
     return false;
   }
 

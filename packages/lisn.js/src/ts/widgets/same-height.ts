@@ -926,6 +926,7 @@ const init = (
 
     // Save the size of the item
     const properties = allItems.get(element);
+    /* istanbul ignore next */
     if (!properties) {
       logError(bugError("Got SizeWatcher call for unknown element"));
       return;
@@ -1087,6 +1088,7 @@ const calculateMeasurements = (
       if (_.lengthOf(components)) {
         for (const component of properties._components) {
           const cmpProps = allItems.get(component);
+          /* istanbul ignore else */
           if (cmpProps) {
             thisTxtArea += cmpProps._width * cmpProps._height;
           } else {
@@ -1300,6 +1302,7 @@ const getOptimalHeight = (
     }
   }
 
+  /* istanbul ignore next */
   logError(bugError("Invalid SameHeight calculations"), measurements, config);
   return NaN; // sanity checks failed
 };

@@ -112,6 +112,7 @@ export class FXPin {
     const isLocked = () => numFulfilledLocking > 0;
 
     const incrementLocking = () => {
+      /* istanbul ignore next */
       if (numFulfilledLocking === numLocking) {
         throw bugError("FXPin: number of locking conditions > maximum");
       }
@@ -121,6 +122,7 @@ export class FXPin {
     };
 
     const decrementLocking = () => {
+      /* istanbul ignore next */
       if (!isLocked()) {
         throw bugError("FXPin: number of locking conditions < 0");
       }

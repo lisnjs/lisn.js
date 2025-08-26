@@ -742,6 +742,55 @@ describe("trigger / tween", () => {
       ...effectD.getState(),
     });
   });
+
+  test("updating target while tweening", async () => {
+    const { lag, push, composer } = newComposer();
+
+    const expectedInitialState = newState({
+      x: { lag },
+      y: { lag },
+      z: { lag },
+    });
+
+    const expectedFinalState = newState(
+      expectedInitialState,
+      DUMMY_UPDATE,
+      DUMMY_UPDATE2,
+      {
+        x: { current: DUMMY_UPDATE2.x.target },
+        y: { current: DUMMY_UPDATE2.y.target },
+        z: { current: DUMMY_UPDATE2.z.target },
+      },
+    );
+
+    await window.waitFor(50);
+    expect(composer.getState()).toEqual(expectedInitialState);
+
+    push(DUMMY_UPDATE);
+    await window.waitFor(lag / 2);
+    const state = composer.getState();
+
+    for (const axis of ["x", "y", "z"]) {
+      expect(state[axis].target).toBe(DUMMY_UPDATE[axis].target);
+
+      expect(state[axis].current).toBeGreaterThan(
+        expectedInitialState[axis].current,
+      );
+      expect(state[axis].current).toBeLessThan(state[axis].target);
+    }
+
+    push(DUMMY_UPDATE2);
+    await window.waitFor(50 + lag);
+
+    // Should have reached the final state
+    const finalState = composer.getState();
+
+    for (const axis of ["x", "y", "z"]) {
+      expect(finalState[axis].target).toBe(expectedFinalState[axis].target);
+      expect(finalState[axis].current).toBeCloseTo(finalState[axis].target);
+    }
+  });
+
   for (const snap of [true, false]) {
     for (const trySetLagInUpdate of [true, false]) {
       for (const lag of [0, 200]) {

@@ -292,6 +292,10 @@ export class FXComposer {
    * whenever the returned helper callback is called.
    */
   constructor(config?: FXComposerConfig) {
+    const logger = debug
+      ? new debug.Logger({ name: "FXComposer", logAtCreation: config })
+      : null;
+
     const {
       parent,
       negate: defaultNegate,
@@ -593,19 +597,19 @@ export class FXComposer {
       updateData?: FXStateUpdate,
       checkIfChanged?: T,
     ) => {
-      newState = getUpdatedState(
-        _.merge(currentFXState, newState),
-        this,
-        updateData,
-      );
+      if (newState) {
+        _.copyExistingKeysTo(newState, currentFXState);
+      }
+      const validated = getUpdatedState(currentFXState, this, updateData);
 
       let didUpdate: boolean | undefined = void 0;
 
       if (checkIfChanged) {
-        didUpdate = !compareValuesIn(currentFXState, newState, 5);
+        didUpdate = !compareValuesIn(currentFXState, validated, 5);
       }
 
-      _.assign(currentFXState, newState); // override current state object
+      logger?.debug10("New state", validated);
+      _.assign(currentFXState, validated); // override current state object
 
       return didUpdate as T extends boolean ? boolean : void;
     };
@@ -630,7 +634,7 @@ export class FXComposer {
 
       isTweening = true;
 
-      logger?.debug9("Starting tween", _.deepCopy(currentFXState));
+      logger?.debug7("Starting tween", _.deepCopy(currentFXState));
       const tweenGenerator = animation3DTweener(tweener, currentFXState);
       while (true) {
         const tweenUpdate: Animation3DTweenerUpdate<keyof FXState> = {};
@@ -649,7 +653,16 @@ export class FXComposer {
           break;
         }
 
-        updateState(newState);
+        const partial: DeepPartial<FXState> = {};
+        for (const a of ["x", "y", "z"] as const) {
+          // target, lag and snap are set by us on each frame, ignore
+          for (const p of ["initial", "previous", "current"] as const) {
+            partial[a] ??= {};
+            partial[a][p] = newState[a][p];
+          }
+        }
+
+        updateState(partial);
         recompose();
         invokeCallbacks(tweenCallbacks);
       }
@@ -766,10 +779,6 @@ export class FXComposer {
 
     setLag(config);
     setDepth(config);
-
-    const logger = debug
-      ? new debug.Logger({ name: "FXComposer", logAtCreation: effectiveConfig })
-      : null;
 
     pollTrigger();
   }

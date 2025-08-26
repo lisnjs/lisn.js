@@ -539,13 +539,10 @@ const getLayersFrom = (
     const composer = new FXComposer(_.merge(config, { trigger }));
     if (useDefaultEffects) {
       composer.add(
-        new Transform({ isAbsolute: true }).translate((data) => {
-          console.log("XXX", data);
-          return {
-            x: -data.x,
-            y: -data.y,
-          };
-        }),
+        new Transform({ isAbsolute: true }).translate((data) => ({
+          x: -data.x,
+          y: -data.y,
+        })),
       );
     }
 

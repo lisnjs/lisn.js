@@ -7,8 +7,10 @@
   & .lisn-smooth-scroll__content {
     position: fixed;
     overflow: visible;
-    top: 0;
-    left: 0;
+    top: var(--lisn-js--top, 0);
+    left: var(--lisn-js--left, 0);
+    padding-right: var(--lisn-js--right, 0);
+    padding-bottom: var(--lisn-js--bottom, 0);
   }
 
   &:is(body),

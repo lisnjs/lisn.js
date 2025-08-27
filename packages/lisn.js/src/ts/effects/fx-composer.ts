@@ -792,7 +792,7 @@ export class FXComposer {
 
     const pollTrigger = async () => {
       for await (const updateData of trigger.poll()) {
-        const didUpdate = updateState(null, updateData, true);
+        const didUpdate = updateState(null, updateData);
         logger?.debug9("Got trigger data", { updateData, didUpdate });
 
         if (didUpdate) {

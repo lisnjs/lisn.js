@@ -1,0 +1,188 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.link.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <script charset="utf-8">
+      LISN.settings.mainScrollableElementSelector = "#main";
+      LISN.widgets.SmoothScroll.enableMain({
+        lag: 600,
+        defaultEffects: false,
+      }).then((w) => {
+        for (const layer of [
+          undefined,
+          ...document.querySelectorAll("[data-lisn-smooth-scroll-layer]"),
+        ]) {
+          w.getComposer(layer).add(
+            new LISN.effects.Transform({ isAbsolute: false }).translate(
+              (data) => ({
+                x: -data.x,
+                y: -data.y,
+              }),
+            ),
+          );
+        }
+      });
+    </script>
+    <link
+      rel="stylesheet"
+      href="assets/lisn/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      #main {
+        width: 90vw;
+        height: 90vh;
+        overflow: scroll;
+        border: solid 1px grey;
+        margin: 5vh 5vw;
+      }
+
+      .overflow {
+        min-width: 150vw;
+        min-height: 150vh;
+      }
+
+      .section {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        margin: 10vh 0;
+        gap: 5vw;
+      }
+
+      .box {
+        background: blue;
+        flex-grow: 1;
+        display: inline-block;
+        text-align: center;
+        height: 50px;
+        line-height: 25px;
+      }
+
+      .box:nth-child(odd) {
+        background: yellow;
+        height: 100px;
+        line-height: 50px;
+      }
+
+      .box[data-lisn-smooth-scroll-layer] {
+        border: solid 2px gray;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main">
+      <div class="overflow">
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
+
+        <div class="section">
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=0 | depth=1"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=1 | depth=1"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=600 | depth=1"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=1200 | depth=1"
+          ></span>
+          <span class="box"></span>
+        </div>
+
+        <div class="section">
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=0 | depth=0.8"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=1 | depth=0.8"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=600 | depth=0.8"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=1200 | depth=0.8"
+          ></span>
+          <span class="box"></span>
+        </div>
+
+        <div class="section">
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=0 | depth=1.3"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=1 | depth=1.3"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=600 | depth=1.3"
+          ></span>
+          <span class="box"></span>
+          <span
+            class="box"
+            data-lisn-smooth-scroll-layer="lag=1200 | depth=1.3"
+          ></span>
+          <span class="box"></span>
+        </div>
+
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
+
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      for (const b of document.querySelectorAll(
+        ".box[data-lisn-smooth-scroll-layer]",
+      )) {
+        b.innerText = b.dataset.lisnSmoothScrollLayer;
+      }
+    </script>
+  </body>
+</html>

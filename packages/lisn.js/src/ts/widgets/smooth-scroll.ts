@@ -22,7 +22,6 @@ import {
   getData,
   setBooleanDataNow,
   delDataNow,
-  setStylePropNow,
   getComputedStylePropNow,
   setNumericStyleJsVars,
   setNumericStyleJsVarsNow,
@@ -38,7 +37,7 @@ import {
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
 import { logError } from "@lisn/utils/log";
-import { toNumWithBounds, toRawNum } from "@lisn/utils/math";
+import { isValidNum, toNumWithBounds, toRawNum } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { formatAsString } from "@lisn/utils/text";
 import {
@@ -296,7 +295,7 @@ export class SmoothScroll extends Widget {
         return;
       }
 
-      init(this, scrollable, config, trigger, layers, logger);
+      init(this, scrollable, config, trigger, layers);
     });
   }
 }
@@ -727,7 +726,6 @@ const init = async (
   config: SmoothScrollConfig | undefined,
   trigger: FXScrollTrigger,
   layers: Map<Element, SmoothScrollLayerState>,
-  logger: LoggerInterface | null,
 ) => {
   const isDoc = scrollable === getDefaultScrollingElement();
   const root = isDoc ? _.getBody() : scrollable;
@@ -817,7 +815,10 @@ const init = async (
         sizeWatcher.offResize(updateSizeData, layer);
       }
 
-      state._composer.stopAnimate([layer], true);
+      state._composer.stopAnimate(
+        [layer === scrollable ? contentWrapper : layer],
+        true,
+      );
     }
   };
 
@@ -845,7 +846,7 @@ const init = async (
 
   let initialContentWidth = 0,
     initialContentHeight = 0;
-  const propsToCopy: Record<string, string> = {};
+  const spacings = { top: 0, left: 0, bottom: 0, right: 0 };
 
   if (isDoc) {
     await waitForMeasureTime();
@@ -854,18 +855,14 @@ const init = async (
 
     // Copy over the margins and paddings from body to match since the container
     // will be positioned as fixed.
-    for (const side of [_.S_TOP, _.S_RIGHT, _.S_BOTTOM, _.S_LEFT]) {
+    for (const side of [_.S_TOP, _.S_RIGHT, _.S_BOTTOM, _.S_LEFT] as const) {
       for (const key of [`margin-${side}`, `padding-${side}`]) {
-        propsToCopy[key] = getComputedStylePropNow(root, key);
+        const value = _.parseFloat(getComputedStylePropNow(root, key));
+        if (isValidNum(value)) {
+          spacings[side] += value;
+        }
       }
     }
-
-    debug: logger?.debug5({
-      clientWidth: scrollable.clientWidth,
-      clientHeight: scrollable.clientHeight,
-      scrollWidth: initialContentWidth,
-      scrollHeight: initialContentHeight,
-    });
   }
 
   await waitForMutateTime();
@@ -894,10 +891,10 @@ const init = async (
   if (isDoc) {
     // Set its size now to prevent initial layout shifts
     setSizeVars(root, initialContentWidth, initialContentHeight, true);
-
-    for (const prop in propsToCopy) {
-      setStylePropNow(contentWrapper, prop, propsToCopy[prop]);
-    }
+    setNumericStyleJsVarsNow(contentWrapper, spacings, {
+      _units: "px",
+      _numDecimal: 2,
+    });
   } else {
     setBooleanDataNow(root, PREFIX_USES_STICKY);
     const overflowEl = _.createElement("div");

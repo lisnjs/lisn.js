@@ -125,7 +125,7 @@ describe("FXComposition", () => {
     expect(c.size).toBe(0);
   });
 
-  test("add", () => {
+  test("add incremental", () => {
     const c = new FXComposition();
 
     const eA1 = new EffectA({ init: initA1 });
@@ -155,6 +155,19 @@ describe("FXComposition", () => {
     expect(composedA).toBeCloseToArray(eA1.toComposition(eA2));
 
     expect(c.get("effect-b")).toBe(composedB); // unchanged
+  });
+
+  test("add absolute", () => {
+    const c = new FXComposition();
+
+    const eA1 = new EffectA({ init: initA1, isAbsolute: true });
+    const eA2 = new EffectA({ init: initA2, isAbsolute: true });
+
+    expect(c.add(eA1)).toBe(c); // first one of type, it will be saved as is
+    expect(c.get("effect-a")).toBe(eA1);
+
+    c.add(eA2); // second one of type but absolute, overrides
+    expect(c.get("effect-a")).toBe(eA2);
   });
 
   test("clone", () => {

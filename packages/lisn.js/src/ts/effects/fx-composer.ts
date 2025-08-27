@@ -84,8 +84,8 @@ export class FXComposer {
    * as the links to add.
    *
    * **IMPORTANT:** If you add an {@link Effect.isAbsolute | absolute} effect,
-   * or a composer that has absolute effects it essentially discards all
-   * previous effects of the respective {@link Effect.type | type}.
+   * or a composer that has absolute effects it discards all previous effects of
+   * the respective {@link Effect.type | type}.
    *
    * @param pin If given, then when the pin is active, the given effect won't be
    *            updated, but simply added to the composition with its current
@@ -569,28 +569,8 @@ export class FXComposer {
 
       for (const [type, effect] of currentComposition) {
         const negatedEffect = negatedComposition?.get(type);
-        if (negatedEffect && negatedComposer) {
-          // snap the effect to the final target state, otherwise if the
-          // composer to negate has a larger lag than we do and is tweening now,
-          // we won't get the correct final state
-          const finalState = negatedComposer.getState();
-          let needsUpdate = false;
-
-          for (const a of ["x", "y", "z"] as const) {
-            const s = finalState[a];
-            if (s.current !== s.target) {
-              s.previous = s.current;
-              s.current = s.target;
-              needsUpdate = true;
-            }
-          }
-
-          if (needsUpdate) {
-            negatedEffect.update(finalState, negatedComposer);
-          }
-        }
-
         const thisCss = effect.toCss(negatedEffect);
+
         for (const p in thisCss) {
           const val = _.STRING(thisCss[p]);
 
@@ -734,9 +714,11 @@ export class FXComposer {
           }
         }
 
+        logger?.debug10("Tweening", tweenUpdate);
         const { value: newState, done } =
           await tweenGenerator.next(tweenUpdate);
 
+        logger?.debug10("Tween result", done, newState);
         if (done) {
           isTweening = false;
           break;
@@ -784,6 +766,7 @@ export class FXComposer {
     const recompose = (updateMode: false | UPDATE_MODE = UPDATE_ALL) => {
       if (currentComposition.size > 0) {
         currentComposition.clear();
+        logger?.debug10("Recomposing", _.deepCopy(currentFXState));
 
         for (const [link, pin] of compositionChain) {
           addToComposition(link, pin?.isActive() ? false : updateMode);

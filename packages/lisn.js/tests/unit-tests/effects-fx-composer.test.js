@@ -114,7 +114,7 @@ const PARTIAL_UPDATE = {
 class DummyEffect {
   type = "effect";
 
-  constructor(state, { isAbsolute = true, addCssUnits = false } = {}) {
+  constructor(state, { isAbsolute = false, addCssUnits = false } = {}) {
     const invertOn = (negate) => {
       const s = deepCopy(state);
       const ns = negate?.getState() ?? {};
@@ -172,6 +172,7 @@ class DummyEffect {
         addCssUnits,
       });
       e._exportedFrom = this;
+      e.type = this.type;
       return e;
     });
 
@@ -185,6 +186,8 @@ class DummyEffect {
       } else {
         c._clonedFrom = this;
       }
+
+      c.type = this.type;
       return c;
     });
 
@@ -214,6 +217,10 @@ class DummyEffectC extends DummyEffect {
 
 class DummyEffectD extends DummyEffect {
   type = "effect-d";
+}
+
+class DummyEffectX extends DummyEffect {
+  type = "effect-" + randId();
 }
 
 const toStringVals = (css) => {
@@ -311,7 +318,7 @@ const getComposerEffectObj = (originalEffect, composer) => {
       }
     }
 
-    currentComposed = currentComposed._composedFrom[0];
+    currentComposed = (currentComposed._composedFrom ?? [])[0];
   }
 };
 
@@ -327,7 +334,7 @@ const newComposer = ({
   const composer = new FXComposer({ trigger, lag, tweener, ...rest });
 
   if (addEffect) {
-    composer.add(new DummyEffect());
+    composer.add(new DummyEffectX());
   }
 
   return { push, lag: effectiveLag, composer };
@@ -660,10 +667,10 @@ describe("trigger / tween", () => {
     const { setPinState: setPinAState, pin: pinA } = newPin();
     const { setPinState: setPinDState, pin: pinD } = newPin();
 
-    const effectAOrig = new DummyEffectA({ a: -1 }, { isAbsolute: false });
-    const effectBOrig = new DummyEffectB({ b: -2 }, { isAbsolute: false });
-    const effectCOrig = new DummyEffectC({ c: -3 }, { isAbsolute: false });
-    const effectDOrig = new DummyEffectD({ d: -4 }, { isAbsolute: false });
+    const effectAOrig = new DummyEffectX({ a: -1 });
+    const effectBOrig = new DummyEffectX({ b: -2 });
+    const effectCOrig = new DummyEffectX({ c: -3 });
+    const effectDOrig = new DummyEffectX({ d: -4 });
 
     const lag = 50;
     const { push, composer } = newComposer({ lag });
@@ -1162,10 +1169,10 @@ describe("trigger / tween", () => {
   });
 
   test("onCompose when adding links", async () => {
-    const effectA = new DummyEffectA({ a: 1 });
-    const effectB = new DummyEffectB({ b: 2 });
-    const effectC = new DummyEffectC({ c: 3 });
-    const effectD = new DummyEffectD({ d: 4 });
+    const effectA = new DummyEffectX({ a: 1 });
+    const effectB = new DummyEffectX({ b: 2 });
+    const effectC = new DummyEffectX({ c: 3 });
+    const effectD = new DummyEffectX({ d: 4 });
 
     const { push, composer } = newComposer({ lag: 0 });
     const { composer: composerX } = newComposer({ lag: 0 });
@@ -1396,11 +1403,11 @@ describe("setDepth", () => {
   });
 
   test("during tween: update all depth", async () => {
-    const effectAbsOrig = new DummyEffectA(
+    const effectAbsOrig = new DummyEffectX(
       { x: 0, y: 0, z: 0 },
       { isAbsolute: true },
     );
-    const effectIncOrig = new DummyEffectB(
+    const effectIncOrig = new DummyEffectX(
       { x: 0, y: 0, z: 0 },
       { isAbsolute: false },
     );
@@ -1612,13 +1619,13 @@ describe("setDepth", () => {
     setPinAState(true);
     // leave B unpinned
 
-    const effectAIncOrig = new DummyEffectA({ a1: -1 }, { isAbsolute: false });
-    const effectBIncOrig = new DummyEffectB({ b1: -2 }, { isAbsolute: false });
-    const effectCIncOrig = new DummyEffectC({ c1: -3 }, { isAbsolute: false });
+    const effectAIncOrig = new DummyEffectX({ a1: -1 }, { isAbsolute: false });
+    const effectBIncOrig = new DummyEffectX({ b1: -2 }, { isAbsolute: false });
+    const effectCIncOrig = new DummyEffectX({ c1: -3 }, { isAbsolute: false });
 
-    const effectAAbsOrig = new DummyEffectA({ a2: -1 }, { isAbsolute: true });
-    const effectBAbsOrig = new DummyEffectB({ b2: -2 }, { isAbsolute: true });
-    const effectCAbsOrig = new DummyEffectC({ c2: -3 }, { isAbsolute: true });
+    const effectAAbsOrig = new DummyEffectX({ a2: -1 }, { isAbsolute: true });
+    const effectBAbsOrig = new DummyEffectX({ b2: -2 }, { isAbsolute: true });
+    const effectCAbsOrig = new DummyEffectX({ c2: -3 }, { isAbsolute: true });
 
     const { lag, push, composer } = newComposer({ lag: 50 });
 
@@ -1701,7 +1708,7 @@ describe("add/getComposition/toCss", () => {
 
   test("basic add: the same one, one by one", () => {
     const { composer } = newComposer({ lag: 0 });
-    const effect = new DummyEffect({ a: 1 }, { isAbsolute: false });
+    const effect = new DummyEffect({ a: 1 });
     composer.add(effect).add(effect);
 
     const composition = composer.getComposition();
@@ -1712,7 +1719,7 @@ describe("add/getComposition/toCss", () => {
 
   test("basic add: the same one as array", () => {
     const { composer } = newComposer({ lag: 0 });
-    const effect = new DummyEffect({ a: 1 }, { isAbsolute: false });
+    const effect = new DummyEffect({ a: 1 });
     composer.add([effect, effect]);
 
     const composition = composer.getComposition();
@@ -1721,11 +1728,9 @@ describe("add/getComposition/toCss", () => {
     expect(composer.toCss()).toEqual({ a: "2" });
   });
 
-  test("basic add: two of same type, one by one", () => {
+  test("basic add: two incremental of same type, one by one", () => {
     const { composer } = newComposer({ lag: 0 });
-    composer
-      .add(new DummyEffect({ a: 1 }, { isAbsolute: false }))
-      .add(new DummyEffect({ a: 2 }, { isAbsolute: false }));
+    composer.add(new DummyEffect({ a: 1 })).add(new DummyEffect({ a: 2 }));
 
     const composition = composer.getComposition();
     expect(composition.size).toBe(1);
@@ -1733,24 +1738,44 @@ describe("add/getComposition/toCss", () => {
     expect(composer.toCss()).toEqual({ a: "3" });
   });
 
-  test("basic add: two of same type as array", () => {
+  test("basic add: two incremental of same type as array", () => {
+    const { composer } = newComposer({ lag: 0 });
+    composer.add([new DummyEffect({ a: 1 }), new DummyEffect({ a: 2 })]);
+
+    const composition = composer.getComposition();
+    expect(composition.size).toBe(1);
+    expect([...composition.keys()]).toEqual(["effect"]);
+    expect(composer.toCss()).toEqual({ a: "3" });
+  });
+
+  test("basic add: two absolute of same type, one by one", () => {
+    const { composer } = newComposer({ lag: 0 });
+    composer
+      .add(new DummyEffect({ a: 1 }, { isAbsolute: true }))
+      .add(new DummyEffect({ a: 2 }, { isAbsolute: true }));
+
+    const composition = composer.getComposition();
+    expect(composition.size).toBe(1);
+    expect([...composition.keys()]).toEqual(["effect"]);
+    expect(composer.toCss()).toEqual({ a: "2" });
+  });
+
+  test("basic add: two absolute of same type as array", () => {
     const { composer } = newComposer({ lag: 0 });
     composer.add([
-      new DummyEffect({ a: 1 }, { isAbsolute: false }),
-      new DummyEffect({ a: 2 }, { isAbsolute: false }),
+      new DummyEffect({ a: 1 }, { isAbsolute: true }),
+      new DummyEffect({ a: 2 }, { isAbsolute: true }),
     ]);
 
     const composition = composer.getComposition();
     expect(composition.size).toBe(1);
     expect([...composition.keys()]).toEqual(["effect"]);
-    expect(composer.toCss()).toEqual({ a: "3" });
+    expect(composer.toCss()).toEqual({ a: "2" });
   });
 
   test("basic add: two of diff type, one by one", () => {
     const { composer } = newComposer({ lag: 0 });
-    composer
-      .add(new DummyEffectA({ a: 1 }, { isAbsolute: false }))
-      .add(new DummyEffectB({ b: 2 }, { isAbsolute: false }));
+    composer.add(new DummyEffectA({ a: 1 })).add(new DummyEffectB({ b: 2 }));
 
     const composition = composer.getComposition();
     expect(composition.size).toBe(2);
@@ -1760,10 +1785,7 @@ describe("add/getComposition/toCss", () => {
 
   test("basic add: two of diff type as array", () => {
     const { composer } = newComposer({ lag: 0 });
-    composer.add([
-      new DummyEffectA({ a: 1 }, { isAbsolute: false }),
-      new DummyEffectB({ b: 2 }, { isAbsolute: false }),
-    ]);
+    composer.add([new DummyEffectA({ a: 1 }), new DummyEffectB({ b: 2 })]);
 
     const composition = composer.getComposition();
     expect(composition.size).toBe(2);
@@ -1773,10 +1795,7 @@ describe("add/getComposition/toCss", () => {
 
   test("basic add: from another composer's composition", () => {
     const { composer: composerX } = newComposer({ lag: 0 });
-    composerX.add([
-      new DummyEffectA({ a: 1 }, { isAbsolute: false }),
-      new DummyEffectB({ b: 2 }, { isAbsolute: false }),
-    ]);
+    composerX.add([new DummyEffectA({ a: 1 }), new DummyEffectB({ b: 2 })]);
 
     const { composer } = newComposer({ lag: 0 });
     composer.add(composerX.getComposition().values());
@@ -1788,8 +1807,8 @@ describe("add/getComposition/toCss", () => {
   });
 
   test("add effect/composer: check cloning", async () => {
-    const effectAOrig = new DummyEffectA({ a: 1 });
-    const effectBOrig = new DummyEffectB({ b: 2 });
+    const effectAOrig = new DummyEffectA({ a: 1 }, { isAbsolute: true });
+    const effectBOrig = new DummyEffectB({ b: 2 }, { isAbsolute: true });
 
     const { push, composer } = newComposer({ lag: 0 });
     const { push: pushX, composer: composerX } = newComposer({ lag: 0 });
@@ -2006,9 +2025,9 @@ describe("add/getComposition/toCss", () => {
   });
 
   test("toCss with no negated", async () => {
-    const effectA = new DummyEffectA({ a: 1 });
-    const effectB = new DummyEffectB({ b: 2 });
-    const effectC = new DummyEffectC({ c: 3 });
+    const effectA = new DummyEffectX({ a: 1 });
+    const effectB = new DummyEffectX({ b: 2 });
+    const effectC = new DummyEffectX({ c: 3 });
 
     const { composer } = newComposer();
     expect(composer.toCss()).toEqual({}); // no effects yet
@@ -2027,10 +2046,10 @@ describe("add/getComposition/toCss", () => {
 
       const effectAN = new DummyEffectA({ a: 1 });
       const effectBN = new DummyEffectB({ b: 2 });
-      const effectCN = new DummyEffectC({ c: 3 });
+      const effectCNIgnored = new DummyEffectC({ c: 3 });
 
       const { composer: negated } = newComposer();
-      negated.add([effectAN, effectBN, effectCN]);
+      negated.add([effectAN, effectBN, effectCNIgnored]);
 
       expect(negated.toCss()).toEqual({ a: "1", b: "2", c: "3" });
 
@@ -2040,12 +2059,11 @@ describe("add/getComposition/toCss", () => {
 
       expect(composer.toCss()).toEqual({}); // no effects yet
 
-      const effectA = new DummyEffectA({ a: 10 });
-      const effectA2 = new DummyEffectA({ a2: 5 });
+      const effectA = new DummyEffectA({ a: 10, a2: 5 });
       const effectB = new DummyEffectB({ b: 3 });
       const effectD = new DummyEffectD({ d: 1 });
 
-      composer.add([effectA, effectA2, effectB, effectD]);
+      composer.add([effectA, effectB, effectD]);
 
       expect(composer.getComposition().get("effect-a").getState()).toEqual({
         a: 10,
@@ -2090,10 +2108,11 @@ describe("add/getComposition/toCss", () => {
     pushN({ x: { target: negateTargetB } });
 
     await window.waitFor(50);
-    expect(Number.parseFloat(negated.toCss().a)).toBeLessThan(
-      negateTargetB / 2,
+    const currNegatedVal = Number.parseFloat(negated.toCss().a);
+    expect(currNegatedVal).toBeLessThan(negateTargetB / 2);
+    expect(Number.parseFloat(composer.toCss().a)).toBe(
+      initial - currNegatedVal,
     );
-    expect(Number.parseFloat(composer.toCss().a)).toBe(initial - negateTargetB);
 
     await window.waitFor(lag);
     expect(Number.parseFloat(negated.toCss().a)).toBe(negateTargetB);
@@ -2103,9 +2122,9 @@ describe("add/getComposition/toCss", () => {
   test("toCss with pinned effects", async () => {
     const { setPinState, pin: pinA } = newPin();
     setPinState(true); // shouldn't matter
-    const effectA = new DummyEffectA({ a: 1 });
-    const effectB = new DummyEffectB({ b: 2 });
-    const effectC = new DummyEffectC({ c: 3 });
+    const effectA = new DummyEffectX({ a: 1 });
+    const effectB = new DummyEffectX({ b: 2 });
+    const effectC = new DummyEffectX({ c: 3 });
 
     const { composer } = newComposer();
     composer.add(effectA, pinA).add([effectB, effectC]);
@@ -2135,9 +2154,6 @@ describe("add/getComposition/toCss", () => {
     const { composer } = newComposer();
 
     for (const [prop, val] of allCss) {
-      const DummyEffectX = class extends DummyEffect {
-        type = randId();
-      };
       const effect = new DummyEffectX({ [prop]: val });
       composer.add(effect);
     }
@@ -2173,14 +2189,14 @@ describe("clear + onClear/offClear", () => {
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(1);
 
-    composer.add(new DummyEffect());
+    composer.add(new DummyEffectX());
 
     composer.clear(); // cleared again
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(2);
 
     composer.offClear(cbk);
-    composer.add(new DummyEffect());
+    composer.add(new DummyEffectX());
 
     composer.clear(); // cleared again
     await window.waitFor(0); // callbacks are async
@@ -2188,14 +2204,14 @@ describe("clear + onClear/offClear", () => {
   });
 
   test("onClear/offClear + push updates to this and added composers", async () => {
-    const effectAOrig = new DummyEffectA({ a: 1 });
-    const effectBOrig = new DummyEffectB({ b: 2 });
+    const effectAOrig = new DummyEffectX({ a: 0 });
+    const effectBOrig = new DummyEffectX({ b: 0 });
 
     const { push, composer } = newComposer({ lag: 0 });
     const { push: pushX, composer: composerX } = newComposer({ lag: 0 });
 
     composer.add([effectAOrig, composerX.add(effectBOrig)]);
-    expect(composer.toCss()).toEqual({ a: "1", b: "2" });
+    expect(composer.toCss()).toEqual({ a: "0", b: "0" });
 
     const composeCbk = jest.fn();
     const clearCbk = jest.fn();
@@ -2290,7 +2306,7 @@ describe("clear + onClear/offClear", () => {
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(1);
 
-    composer.add(new DummyEffect());
+    composer.add(new DummyEffectX());
 
     composer.clear(); // cleared again
     await window.waitFor(0); // callbacks are async
@@ -2311,12 +2327,12 @@ describe("animating elements", () => {
     const { push: pushX, composer: composerX } = newComposer({ lag: 0 });
     const { lag, push, composer } = newComposer({ lag: 500 });
 
-    const effectX = new DummyEffectA({ opacity: 1 });
+    const effectX = new DummyEffectX({ opacity: 1 }, { isAbsolute: true });
     composerX.add(effectX);
 
-    const effect = new DummyEffectB(
+    const effect = new DummyEffectX(
       { width: 0, height: 0 },
-      { addCssUnits: true },
+      { addCssUnits: true, isAbsolute: true },
     );
     composer.add([effect, composerX]);
 
@@ -2451,8 +2467,8 @@ describe("animating elements", () => {
 
     // add new effects ----------
 
-    composer.add(new DummyEffect());
-    composerX.add(new DummyEffect());
+    composer.add(new DummyEffectX());
+    composerX.add(new DummyEffectX());
 
     await window.waitFor(50);
     // unchanged
@@ -2470,139 +2486,245 @@ describe("animating elements", () => {
     expect(elementD.style.getPropertyValue("opacity")).toBe("1");
   });
 
-  for (const isAbsolute of [true, false]) {
-    for (const useExplicit of [true, false]) {
-      test(`animate & startAnimate with negated (${useExplicit ? "explicit" : "default"}) and ${isAbsolute ? "absolute" : "incremental"} effects`, async () => {
-        const width = 200,
-          widthN = 50,
-          height = 100,
-          heightN = 20;
+  for (const useExplicit of [true, false]) {
+    test(`animate & startAnimate with negated (${useExplicit ? "explicit" : "default"}) and absolute effects`, async () => {
+      const width = 200,
+        widthN = 50,
+        height = 100,
+        heightN = 20;
 
-        const elementA = document.createElement("div");
-        const elementB = document.createElement("div");
+      const elementA = document.createElement("div");
+      const elementB = document.createElement("div");
 
-        const { push: pushN, composer: composerN } = newComposer({ lag: 0 });
-        const { push: pushX, composer: composerX } = newComposer({ lag: 0 }); // doesn't have negate
+      const { push: pushN, composer: composerN } = newComposer({ lag: 0 });
 
-        const { push, composer } = newComposer({
-          lag: 0,
-          ...(useExplicit ? {} : { negate: composerN }),
-        });
-
-        const effect = new DummyEffect(
-          { width: 0 },
-          { addCssUnits: true, isAbsolute },
-        );
-        const effectX = new DummyEffect(
-          { height: 0 },
-          { addCssUnits: true, isAbsolute },
-        );
-        const effectN = new DummyEffect(
-          { width: 0, height: 0 },
-          { addCssUnits: true, isAbsolute },
-        );
-
-        composerN.add(effectN);
-        composerX.add(effectX);
-        composer.add([effect, composerX]);
-
-        // set initial states
-        push({
-          x: { target: width },
-        });
-
-        pushX({
-          y: { target: height },
-        });
-
-        pushN({
-          x: { target: widthN },
-          y: { target: heightN },
-        });
-
-        await window.waitFor(50);
-
-        let defaultNegatedCss = composer.toCss();
-        expect(defaultNegatedCss).toEqual({
-          width: width - (useExplicit ? 0 : widthN) + "px",
-          height: height - (useExplicit ? 0 : heightN) + "px",
-        });
-
-        let explicitNegatedCss = composer.toCss(composerN);
-        expect(explicitNegatedCss).toEqual({
-          width: width - widthN + "px",
-          height: height - heightN + "px",
-        });
-
-        composer.startAnimate(elementA, useExplicit ? composerN : undefined);
-        composer.animate(elementB, useExplicit ? composerN : undefined);
-
-        await window.waitFor(50);
-
-        for (const e of [elementA, elementB]) {
-          for (const p of ["width", "height"]) {
-            expect(e.style.getPropertyValue(p)).toBe(explicitNegatedCss[p]);
-          }
-        }
-
-        // update composer ----------
-        push({
-          x: { target: width * 2 },
-          y: { target: height * 2 },
-        });
-
-        await window.waitFor(50);
-
-        defaultNegatedCss = composer.toCss();
-        expect(defaultNegatedCss).toEqual({
-          width: width * 2 - (useExplicit ? 0 : widthN) + "px",
-          height: height - (useExplicit ? 0 : heightN) + "px", // composerX not updated
-        });
-
-        explicitNegatedCss = composer.toCss(composerN);
-        expect(explicitNegatedCss).toEqual({
-          width: width * 2 - widthN + "px",
-          height: height - heightN + "px", // composerX not updated
-        });
-
-        for (const p of ["width", "height"]) {
-          expect(elementA.style.getPropertyValue(p)).toBe(
-            explicitNegatedCss[p],
-          );
-        }
-
-        // update negated composer ----------
-        pushN({
-          x: { target: widthN * 2 },
-          y: { target: heightN * 2 },
-        });
-
-        await window.waitFor(50);
-        expect(composerN.toCss()).toEqual({
-          width: widthN * 2 + "px",
-          height: heightN * 2 + "px",
-        });
-
-        defaultNegatedCss = composer.toCss();
-        expect(defaultNegatedCss).toEqual({
-          width: width * 2 - (useExplicit ? 0 : widthN * 2) + "px",
-          height: height - (useExplicit ? 0 : heightN * 2) + "px",
-        });
-
-        explicitNegatedCss = composer.toCss(composerN);
-        expect(explicitNegatedCss).toEqual({
-          width: width * 2 - widthN * 2 + "px",
-          height: height - heightN * 2 + "px", // composerX not updated
-        });
-
-        // should have triggered re-animation
-        for (const p of ["width", "height"]) {
-          expect(elementA.style.getPropertyValue(p)).toBe(
-            explicitNegatedCss[p],
-          );
-        }
+      const { push, composer } = newComposer({
+        lag: 0,
+        ...(useExplicit ? {} : { negate: composerN }),
       });
-    }
+
+      const effect = new DummyEffect(
+        { width: 0, height: 0 },
+        { addCssUnits: true, isAbsolute: true },
+      );
+      const effectN = new DummyEffect(
+        { width: 0, height: 0 },
+        { addCssUnits: true, isAbsolute: true },
+      );
+
+      composerN.add(effectN);
+      composer.add(effect);
+
+      // set initial states
+      push({
+        x: { target: width },
+        y: { target: height },
+      });
+
+      pushN({
+        x: { target: widthN },
+        y: { target: heightN },
+      });
+
+      await window.waitFor(50);
+
+      let defaultNegatedCss = composer.toCss();
+      expect(defaultNegatedCss).toEqual({
+        width: width - (useExplicit ? 0 : widthN) + "px",
+        height: height - (useExplicit ? 0 : heightN) + "px",
+      });
+
+      let explicitNegatedCss = composer.toCss(composerN);
+      expect(explicitNegatedCss).toEqual({
+        width: width - widthN + "px",
+        height: height - heightN + "px",
+      });
+
+      composer.startAnimate(elementA, useExplicit ? composerN : undefined);
+      composer.animate(elementB, useExplicit ? composerN : undefined);
+
+      await window.waitFor(50);
+
+      for (const e of [elementA, elementB]) {
+        for (const p of ["width", "height"]) {
+          expect(e.style.getPropertyValue(p)).toBe(explicitNegatedCss[p]);
+        }
+      }
+
+      // update composer ----------
+      push({
+        x: { target: width * 2 },
+        y: { target: height * 2 },
+      });
+
+      await window.waitFor(50);
+
+      defaultNegatedCss = composer.toCss();
+      expect(defaultNegatedCss).toEqual({
+        width: width * 2 - (useExplicit ? 0 : widthN) + "px",
+        height: height * 2 - (useExplicit ? 0 : heightN) + "px",
+      });
+
+      explicitNegatedCss = composer.toCss(composerN);
+      expect(explicitNegatedCss).toEqual({
+        width: width * 2 - widthN + "px",
+        height: height * 2 - heightN + "px",
+      });
+
+      for (const p of ["width", "height"]) {
+        expect(elementA.style.getPropertyValue(p)).toBe(explicitNegatedCss[p]);
+      }
+
+      // update negated composer ----------
+      pushN({
+        x: { target: widthN * 2 },
+        y: { target: heightN * 2 },
+      });
+
+      await window.waitFor(50);
+      expect(composerN.toCss()).toEqual({
+        width: widthN * 2 + "px",
+        height: heightN * 2 + "px",
+      });
+
+      defaultNegatedCss = composer.toCss();
+      expect(defaultNegatedCss).toEqual({
+        width: width * 2 - (useExplicit ? 0 : widthN * 2) + "px",
+        height: height * 2 - (useExplicit ? 0 : heightN * 2) + "px",
+      });
+
+      explicitNegatedCss = composer.toCss(composerN);
+      expect(explicitNegatedCss).toEqual({
+        width: width * 2 - widthN * 2 + "px",
+        height: height * 2 - heightN * 2 + "px",
+      });
+
+      // should have triggered re-animation
+      for (const p of ["width", "height"]) {
+        expect(elementA.style.getPropertyValue(p)).toBe(explicitNegatedCss[p]);
+      }
+    });
+
+    test(`animate & startAnimate with negated (${useExplicit ? "explicit" : "default"}) and incremental effects`, async () => {
+      const width = 200,
+        widthN = 50,
+        height = 100,
+        heightN = 20;
+
+      const elementA = document.createElement("div");
+      const elementB = document.createElement("div");
+
+      const { push: pushN, composer: composerN } = newComposer({ lag: 0 });
+      const { push: pushX, composer: composerX } = newComposer({ lag: 0 }); // doesn't have negate
+
+      const { push, composer } = newComposer({
+        lag: 0,
+        ...(useExplicit ? {} : { negate: composerN }),
+      });
+
+      const effect = new DummyEffect({ width: 0 }, { addCssUnits: true });
+      const effectX = new DummyEffect({ height: 0 }, { addCssUnits: true });
+      const effectN = new DummyEffect(
+        { width: 0, height: 0 },
+        { addCssUnits: true },
+      );
+
+      composerN.add(effectN);
+      composerX.add(effectX);
+      composer.add([effect, composerX]);
+
+      // set initial states
+      push({
+        x: { target: width },
+      });
+
+      pushX({
+        y: { target: height },
+      });
+
+      pushN({
+        x: { target: widthN },
+        y: { target: heightN },
+      });
+
+      await window.waitFor(50);
+
+      let defaultNegatedCss = composer.toCss();
+      expect(defaultNegatedCss).toEqual({
+        width: width - (useExplicit ? 0 : widthN) + "px",
+        height: height - (useExplicit ? 0 : heightN) + "px",
+      });
+
+      let explicitNegatedCss = composer.toCss(composerN);
+      expect(explicitNegatedCss).toEqual({
+        width: width - widthN + "px",
+        height: height - heightN + "px",
+      });
+
+      composer.startAnimate(elementA, useExplicit ? composerN : undefined);
+      composer.animate(elementB, useExplicit ? composerN : undefined);
+
+      await window.waitFor(50);
+
+      for (const e of [elementA, elementB]) {
+        for (const p of ["width", "height"]) {
+          expect(e.style.getPropertyValue(p)).toBe(explicitNegatedCss[p]);
+        }
+      }
+
+      // update composer ----------
+      push({
+        x: { target: width * 2 },
+        y: { target: height * 2 },
+      });
+
+      await window.waitFor(50);
+
+      defaultNegatedCss = composer.toCss();
+      expect(defaultNegatedCss).toEqual({
+        width: width * 2 - (useExplicit ? 0 : widthN) + "px",
+        height: height - (useExplicit ? 0 : heightN) + "px", // composerX not updated
+      });
+
+      explicitNegatedCss = composer.toCss(composerN);
+      expect(explicitNegatedCss).toEqual({
+        width: width * 2 - widthN + "px",
+        height: height - heightN + "px", // composerX not updated
+      });
+
+      for (const p of ["width", "height"]) {
+        expect(elementA.style.getPropertyValue(p)).toBe(explicitNegatedCss[p]);
+      }
+
+      // update negated composer ----------
+      pushN({
+        x: { target: widthN * 2 },
+        y: { target: heightN * 2 },
+      });
+
+      await window.waitFor(50);
+      expect(composerN.toCss()).toEqual({
+        width: widthN * 2 + "px",
+        height: heightN * 2 + "px",
+      });
+
+      defaultNegatedCss = composer.toCss();
+      expect(defaultNegatedCss).toEqual({
+        width: width * 2 - (useExplicit ? 0 : widthN * 2) + "px",
+        height: height - (useExplicit ? 0 : heightN * 2) + "px",
+      });
+
+      explicitNegatedCss = composer.toCss(composerN);
+      expect(explicitNegatedCss).toEqual({
+        width: width * 2 - widthN * 2 + "px",
+        height: height - heightN * 2 + "px", // composerX not updated
+      });
+
+      // should have triggered re-animation
+      for (const p of ["width", "height"]) {
+        expect(elementA.style.getPropertyValue(p)).toBe(explicitNegatedCss[p]);
+      }
+    });
   }
 
   test("deanimate & stopAnimate", async () => {
@@ -2615,7 +2737,7 @@ describe("animating elements", () => {
 
     const { push, composer } = newComposer({ lag: 0 });
 
-    const effect = new DummyEffectB(
+    const effect = new DummyEffectX(
       { width: 0, height: 0 },
       { addCssUnits: true },
     );

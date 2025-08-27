@@ -18,6 +18,10 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
   /**
    * Adds a new effect to the composition. Will use the current effect for the
    * relevant type, if any, and compose it with the given.
+   *
+   * **IMPORTANT:** If you add an {@link Effect.isAbsolute | absolute} effect,
+   * it discards all previous effects of the respective
+   * {@link Effect.type | type}.
    */
   readonly add: <T extends keyof EffectRegistry>(effect: Effect<T>) => this;
 
@@ -64,10 +68,13 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
     _.defineProperty(this, "size", { get: () => map.size });
 
     this.add = (effect) => {
-      map.set(
-        effect.type,
-        map.get(effect.type)?.toComposition(effect) ?? effect,
-      );
+      const current = map.get(effect.type);
+      const composed =
+        !current || effect.isAbsolute()
+          ? effect
+          : current.toComposition(effect);
+
+      map.set(effect.type, composed);
 
       return this;
     };

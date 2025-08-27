@@ -268,7 +268,13 @@ export class SmoothScroll extends Widget {
       : null;
 
     let layers: Map<Element, SmoothScrollLayerState> | null = null;
-    this.getComposer = (layer) => layers?.get(layer ?? scrollable)?._composer;
+    this.getComposer = (layer) => {
+      let key: Element = scrollable;
+      if (layer && !isRootLayer(scrollable, layer)) {
+        key = layer;
+      }
+      return layers?.get(key)?._composer;
+    };
 
     // TODO Fallback to using scroll gestures:
     // Position the contentWrapper as fixed, listen for gestures and initiate
@@ -506,7 +512,12 @@ const toDepth = (depth: unknown, parentDepth: number | "auto") => {
   );
 };
 
-const getParentLayer = (scrollable: Element, layer: Element) => {
+const isRootLayer = (scrollable: HTMLElement, layer: Element) =>
+  layer === _.getDocElement() || layer === _.getBody()
+    ? scrollable === getDefaultScrollingElement()
+    : layer === scrollable;
+
+const getParentLayer = (scrollable: HTMLElement, layer: Element) => {
   if (layer === scrollable) {
     return null;
   }
@@ -524,7 +535,7 @@ const getParentLayer = (scrollable: Element, layer: Element) => {
 };
 
 const getLayersFrom = (
-  scrollable: Element,
+  scrollable: HTMLElement,
   rootConfig: SmoothScrollConfig | undefined,
   trigger: FXScrollTrigger,
 ) => {

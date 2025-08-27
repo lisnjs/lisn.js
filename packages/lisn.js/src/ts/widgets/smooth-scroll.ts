@@ -433,7 +433,8 @@ export type SmoothScrollLayerConfig = {
    * {@link Transform | translation effect} to
    * {@link SmoothScroll.getComposer | this layer's composer}.
    *
-   * @defaultValue true
+   * @defaultValue The main widget's
+   * {@link SmoothScrollConfig.defaultEffects | defaultEffects} setting
    */
   defaultEffects?: boolean;
 };
@@ -549,7 +550,7 @@ const getLayersFrom = (
     useDefaultEffects: boolean,
     config: FXComposerConfig,
   ) => {
-    const composer = new FXComposer(_.merge(config, { trigger })); // XXX lagZ of 0?
+    const composer = new FXComposer(_.merge(config, { trigger }));
     if (useDefaultEffects) {
       composer.add(
         new Transform({ isAbsolute: true }).translate((data) => ({
@@ -613,7 +614,8 @@ const getLayersFrom = (
       );
       const depthX = toDepth(config?.depthX ?? config?.depth, parentDepthX);
       const depthY = toDepth(config?.depthY ?? config?.depth, parentDepthY);
-      const useDefaultEffects = config?.defaultEffects ?? true;
+      const useDefaultEffects =
+        config?.defaultEffects ?? rootConfig?.defaultEffects ?? true;
 
       state = {
         _lagX: lagX,

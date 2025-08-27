@@ -396,7 +396,7 @@ export class FXComposer {
       links: Effect | FXComposer | Iterable<Effect | FXComposer>,
       pin?: FXPin,
     ) => {
-      logger?.debug7("Adding link ", links, pin);
+      logger?.debug7("Adding links", links, pin);
 
       const linksIter = toIterableIfNot(links);
 

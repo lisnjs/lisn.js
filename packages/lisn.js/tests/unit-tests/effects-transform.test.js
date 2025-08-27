@@ -902,13 +902,16 @@ describe("toComposition: single (clone)", () => {
     const expected = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
 
     const composed = t.toComposition();
-    expect(composed.isAbsolute()).toBe(false);
-    expect(composed).toBeCloseToArray(IDENTITY);
-    expect(composed.toPerspective()).toBeUndefined();
+    const composed2 = composed.toComposition();
+    for (const c of [composed, composed2]) {
+      expect(c.isAbsolute()).toBe(false);
+      expect(c).toBeCloseToArray(IDENTITY);
+      expect(c.toPerspective()).toBeUndefined();
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
-    expect(composed).toBeCloseToArray(expected); // preserved handlers
-    expect(composed.toPerspective()).toBe(p);
+      c.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(c).toBeCloseToArray(expected); // preserved handlers
+      expect(c.toPerspective()).toBe(p);
+    }
 
     expect(t).toBeCloseToArray(IDENTITY); // unchanged
     expect(t.toPerspective()).toBeUndefined();

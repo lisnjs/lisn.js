@@ -602,8 +602,14 @@ describe("FXComposerMatcher", () => {
   const targets = { x: 100, y: 200, z: 300 };
 
   test("no bounds", () => {
-    expect(() => new FXComposerMatcher()).toThrow(
+    expect(() => new FXComposerMatcher(null, new FXComposer())).toThrow(
       /At least one parameter bounding value is required/,
+    );
+  });
+
+  test("no composer", () => {
+    expect(() => new FXComposerMatcher({ x: { max: 10 } })).toThrow(
+      /A composer is required/,
     );
   });
 
@@ -1163,7 +1169,7 @@ describe("FXScrollMatcher", () => {
 
   test("no bounds", () => {
     expect(() => new FXScrollMatcher()).toThrow(
-      /At least one parameter bounding value is required/,
+      /At least one scroll offset bounding value is required/,
     );
   });
 

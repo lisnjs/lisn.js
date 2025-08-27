@@ -52,6 +52,15 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
   constructor() {
     const map: EffectsMap = new Map();
 
+    const cloneOrExport = (asExport: boolean) => {
+      const copy = new FXComposition();
+      for (const effect of map.values()) {
+        copy.add((asExport ? effect.export : effect.toComposition)());
+      }
+
+      return copy;
+    };
+
     _.defineProperty(this, "size", { get: () => map.size });
 
     this.add = (effect) => {
@@ -63,23 +72,8 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
       return this;
     };
 
-    this.clone = () => {
-      const copy = new FXComposition();
-      for (const effect of map.values()) {
-        copy.add(effect.toComposition());
-      }
-
-      return copy;
-    };
-
-    this.export = () => {
-      const copy = new FXComposition();
-      for (const effect of map.values()) {
-        copy.add(effect.export());
-      }
-
-      return copy;
-    };
+    this.clone = () => cloneOrExport(false);
+    this.export = () => cloneOrExport(true);
 
     this.get = (key) => map.get(key);
     this.delete = (key) => map.delete(key);

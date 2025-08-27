@@ -314,7 +314,7 @@ export class Transform implements EffectInterface<"transform"> {
       });
 
       for (const h of resultHandlers) {
-        addAndSaveHandlerFor(composed, h);
+        addHandlerFor(composed, h);
       }
 
       return composed;
@@ -648,11 +648,10 @@ const saveHandlerFor = <T extends HandlerTuple>(
   handlers.push(tuple);
 };
 
-const addAndSaveHandlerFor = <T extends HandlerTuple>(
+const addHandlerFor = <T extends HandlerTuple>(
   transform: Transform,
   tuple: T,
 ) => {
-  saveHandlerFor(transform, tuple);
   const [type, handler] = tuple;
   switch (type) {
     case PERSPECTIVE:

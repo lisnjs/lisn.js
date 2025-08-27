@@ -6,7 +6,7 @@ window.LISN.settings.effectLag = DEFAULT_LAG;
 const { Callback } = window.LISN.modules;
 const { deepCopy } = window.LISN._;
 const { randId, linearTweener } = window.LISN.utils;
-const { FXComposer, FXTrigger, FXScrollTrigger, FXMatcher, FXPin } =
+const { FXComposer, FXTrigger, FXScrollTrigger, FXMatcher, FXPin, Transform } =
   window.LISN.effects;
 
 const DEFAULT_STATE = {
@@ -295,8 +295,8 @@ const getComposerEffectObj = (originalEffect, composer) => {
   // effect. That's the one that the composer stores internally and updates each
   // time its state changes.
 
-  const exported = composer.getComposition().get(originalEffect.type);
-  const composed = exported?._exportedFrom;
+  const cloned = composer.getComposition().get(originalEffect.type);
+  const composed = cloned?._clonedFrom;
 
   let currentComposed = composed;
 
@@ -1711,7 +1711,7 @@ describe("add/getComposition/toCss", () => {
     }
 
     const effectAInt = getComposerEffectObj(effectAOrig, composer);
-    // effectB comes from composerX, and it's re-exported each time the composer
+    // effectB comes from composerX, and it's re-cloned each time the composer
     // retrieves it; composer never stores a clone of effectB
     const effectBIntX = getComposerEffectObj(effectBOrig, composerX);
     expect(effectAInt).toBeTruthy();
@@ -1723,20 +1723,21 @@ describe("add/getComposition/toCss", () => {
     expect(composition.size).toBe(2);
     expect([...composition.keys()]).toEqual(["effect-a", "effect-b"]);
 
-    // cloned and exported from the original
-    const effectAExp = composition.get("effect-a");
-    const effectBExp = composition.get("effect-b");
-    const effectBExpX = composerX.getComposition().get("effect-b");
+    // original is cloned before being stored in the composer's composition, and
+    // then it's cloned again when getComposition is called
+    const effectACln = composition.get("effect-a");
+    const effectBCln = composition.get("effect-b");
+    const effectBClnX = composerX.getComposition().get("effect-b");
 
-    expect(effectAExp).not.toBe(effectAOrig);
+    expect(effectACln).not.toBe(effectAOrig);
     expect(effectAInt).not.toBe(effectAOrig);
-    expect(effectAInt).not.toBe(effectAExp);
+    expect(effectAInt).not.toBe(effectACln);
 
-    expect(effectBExp).not.toBe(effectBOrig);
+    expect(effectBCln).not.toBe(effectBOrig);
     expect(effectBIntX).not.toBe(effectBOrig);
-    expect(effectBIntX).not.toBe(effectBExp);
-    expect(effectBIntX).not.toBe(effectBExpX);
-    expect(effectBExp).not.toBe(effectBExpX);
+    expect(effectBIntX).not.toBe(effectBCln);
+    expect(effectBIntX).not.toBe(effectBClnX);
+    expect(effectBCln).not.toBe(effectBClnX);
 
     expect(composer.toCss()).toEqual({ a: "1", b: "2" });
 
@@ -1744,29 +1745,29 @@ describe("add/getComposition/toCss", () => {
     effectAOrig.setState({ a: 100 });
     expect(effectAOrig.getState()).toEqual({ a: 100 });
     expect(effectAInt.getState()).toEqual({ a: 1 }); // unchanged
-    expect(effectAExp.getState()).toEqual({ a: 1 }); // unchanged
+    expect(effectACln.getState()).toEqual({ a: 1 }); // unchanged
 
     effectBOrig.setState({ b: 200 });
     expect(effectBOrig.getState()).toEqual({ b: 200 });
     expect(effectBIntX.getState()).toEqual({ b: 2 }); // unchanged
-    expect(effectBExp.getState()).toEqual({ b: 2 }); // unchanged
-    expect(effectBExpX.getState()).toEqual({ b: 2 }); // unchanged
+    expect(effectBCln.getState()).toEqual({ b: 2 }); // unchanged
+    expect(effectBClnX.getState()).toEqual({ b: 2 }); // unchanged
 
-    // modify exported ----------
-    effectAExp.setState({ a: 1000 });
-    expect(effectAExp.getState()).toEqual({ a: 1000 });
+    // modify cloned ----------
+    effectACln.setState({ a: 1000 });
+    expect(effectACln.getState()).toEqual({ a: 1000 });
     expect(effectAOrig.getState()).toEqual({ a: 100 }); // unchanged
     expect(effectAInt.getState()).toEqual({ a: 1 }); // unchanged
 
-    effectBExp.setState({ b: 2000 });
-    expect(effectBExp.getState()).toEqual({ b: 2000 });
+    effectBCln.setState({ b: 2000 });
+    expect(effectBCln.getState()).toEqual({ b: 2000 });
     expect(effectBOrig.getState()).toEqual({ b: 200 }); // unchanged
-    expect(effectBExpX.getState()).toEqual({ b: 2 }); // unchanged
+    expect(effectBClnX.getState()).toEqual({ b: 2 }); // unchanged
     expect(effectBIntX.getState()).toEqual({ b: 2 }); // unchanged
 
-    effectBExpX.setState({ b: -20 });
-    expect(effectBExpX.getState()).toEqual({ b: -20 });
-    expect(effectBExp.getState()).toEqual({ b: 2000 }); // unchanged
+    effectBClnX.setState({ b: -20 });
+    expect(effectBClnX.getState()).toEqual({ b: -20 });
+    expect(effectBCln.getState()).toEqual({ b: 2000 }); // unchanged
     expect(effectBOrig.getState()).toEqual({ b: 200 }); // unchanged
     expect(effectBIntX.getState()).toEqual({ b: 2 }); // unchanged
 
@@ -1839,10 +1840,13 @@ describe("add/getComposition/toCss", () => {
       expect(e.toComposition).toHaveBeenCalledTimes(1);
     }
 
-    // No calls for the exported effects
-    // FXComposer returns an exported composition, with effects cloned each time
-    // so we can't get the original effect objects it has in general
-    for (const e of [effectAExp, effectBExp, effectBExpX]) {
+    for (const e of [effectAInt, effectBIntX]) {
+      expect(e.export).toHaveBeenCalledTimes(0);
+      expect(e.toComposition.mock.calls.length).toBeGreaterThan(0);
+    }
+
+    // No calls for the cloned effects
+    for (const e of [effectACln, effectBCln, effectBClnX]) {
       for (const m of ["update", "export", "toComposition", "toCss"]) {
         expect(e[m]).toHaveBeenCalledTimes(0);
       }
@@ -1850,6 +1854,47 @@ describe("add/getComposition/toCss", () => {
 
     expect(effectBIntX.update).toHaveBeenCalledTimes(1);
     expect(effectAInt.update).toHaveBeenCalledTimes(1); // not updated when composerX recomposes
+  });
+
+  test("getComposition is a live clone", async () => {
+    const transform = new Transform();
+    const cbk = jest.fn((params) => params);
+    // transform.translate(({ x }) => ({ x }));
+    transform.translate(cbk);
+
+    const { push, composer } = newComposer({ lag: 0 });
+    composer.add(transform);
+
+    push({ x: { target: 100 } });
+    await window.waitFor(50);
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+
+    const expectedInitialMatrix = new DOMMatrixReadOnly().translate(100);
+    expect(composer.toCss().transform).toBe(expectedInitialMatrix.toString());
+
+    const transformClone = composer.getComposition().get("transform");
+    expect(transformClone).not.toBeUndefined();
+    expect(transformClone.toCss().transform).toBe(
+      expectedInitialMatrix.toString(),
+    );
+
+    push({ x: { target: 200 } });
+    await window.waitFor(50);
+
+    expect(cbk).toHaveBeenCalledTimes(2);
+
+    const expectedFinalMatrix = new DOMMatrixReadOnly().translate(200);
+    expect(composer.toCss().transform).toBe(expectedFinalMatrix.toString());
+    expect(transformClone.toCss().transform).toBe(
+      expectedInitialMatrix.toString(),
+    ); // unchanged
+
+    transformClone.update(composer.getState(), composer);
+    expect(cbk).toHaveBeenCalledTimes(3);
+    expect(transformClone.toCss().transform).toBe(
+      expectedFinalMatrix.toString(),
+    ); // it's live; has the handler
   });
 
   test("toCss with no negated", async () => {
@@ -1908,6 +1953,44 @@ describe("add/getComposition/toCss", () => {
       });
     });
   }
+
+  test("toCss with negate while still tweening", async () => {
+    const effectN = new DummyEffect({ a: 0 }, { isAbsolute: false });
+    const { lag, push: pushN, composer: negated } = newComposer();
+    negated.add(effectN);
+
+    const initial = 300,
+      negateTargetA = 30,
+      negateTargetB = 100;
+    const effect = new DummyEffect({ a: 0 }, { isAbsolute: false });
+    const { push, composer } = newComposer({ lag: 0, negate: negated });
+    composer.add(effect);
+
+    // set initial states ----------
+    push({ x: { target: initial } });
+    await window.waitFor(50);
+    expect(Number.parseFloat(composer.toCss().a)).toBe(initial);
+
+    pushN({ x: { target: negateTargetA } });
+
+    await window.waitFor(100 + lag);
+    expect(Number.parseFloat(negated.toCss().a)).toBe(negateTargetA);
+    expect(Number.parseFloat(composer.toCss().a)).toBe(initial - negateTargetA);
+
+    // start tween on negated ----------
+
+    pushN({ x: { target: negateTargetB } });
+
+    await window.waitFor(50);
+    expect(Number.parseFloat(negated.toCss().a)).toBeLessThan(
+      negateTargetB / 2,
+    );
+    expect(Number.parseFloat(composer.toCss().a)).toBe(initial - negateTargetB);
+
+    await window.waitFor(lag);
+    expect(Number.parseFloat(negated.toCss().a)).toBe(negateTargetB);
+    expect(Number.parseFloat(composer.toCss().a)).toBe(initial - negateTargetB);
+  });
 
   test("toCss with pinned effects", async () => {
     const { setPinState, pin: pinA } = newPin();

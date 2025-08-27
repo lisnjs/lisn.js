@@ -46,13 +46,13 @@ import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
  */
 export const FX_MATCH = {
   negate: (matcher: FXMatcher) => new FXNegateMatcher(matcher),
-  composer: (composer: FXComposer, bounds: FXComposerMatcherBounds) =>
+  composer: (bounds: FXComposerMatcherBounds, composer: FXComposer) =>
     new FXComposerMatcher(bounds, composer),
   scroll: (bounds: FXScrollMatcherBounds, scrollable?: ScrollTarget) =>
     new FXScrollMatcher(bounds, scrollable),
   view: (
-    viewTarget: ViewTarget,
     views: CommaSeparatedStr<View> | View[],
+    viewTarget: ViewTarget,
     config?: ViewWatcherConfig,
   ) => new FXViewMatcher(views, viewTarget, config),
   pin: (pin: FXPin) => new FXPinMatcher(pin),
@@ -290,6 +290,10 @@ export class FXNegateMatcher extends FXMatcher {
  */
 export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
   constructor(bounds: FXComposerMatcherBounds, composer: FXComposer) {
+    if (!composer) {
+      throw usageError("A composer is required for FXComposerMatcher");
+    }
+
     if (!bounds) {
       // TODO check if there's at least one if bounds is an object
       throw usageError(

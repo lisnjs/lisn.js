@@ -245,6 +245,9 @@ export class FXComposer {
   /**
    * Returns the current state of the composition, i.e. the combined state of
    * all effects for each effect type.
+   *
+   * It is a **live** copy of the composition, where each effect is
+   * {@link Effect.toComposition | cloned} while preserving its handlers.
    */
   readonly getComposition: () => FXComposition;
 
@@ -528,11 +531,32 @@ export class FXComposer {
     // ----------
 
     const toCss = (negate?: FXComposer) => {
-      const negatedComposition = (negate ?? defaultNegate)?.getComposition();
+      const negateComposer = negate ?? defaultNegate;
+      const negatedComposition = negateComposer?.getComposition();
       const css: Record<string, string> = {};
 
       for (const [type, effect] of currentComposition) {
         const negatedEffect = negatedComposition?.get(type);
+        if (negatedEffect && negateComposer) {
+          // snap the effect to the final target state, otherwise if the
+          // composer to negate has a larger lag than we do and is tweening now,
+          // we won't get the correct final state
+          const finalState = negateComposer.getState();
+          let needsUpdate = false;
+
+          for (const a of ["x", "y", "z"] as const) {
+            const s = finalState[a];
+            if (s.current !== s.target) {
+              s.previous = s.current;
+              s.current = s.target;
+              needsUpdate = true;
+            }
+          }
+
+          if (needsUpdate) {
+            negatedEffect.update(finalState, negateComposer);
+          }
+        }
 
         const thisCss = effect.toCss(negatedEffect);
         for (const p in thisCss) {
@@ -798,7 +822,7 @@ export class FXComposer {
     this.stopAnimate = stopAnimate;
 
     this.toCss = toCss;
-    this.getComposition = () => currentComposition.export();
+    this.getComposition = () => currentComposition.clone();
     this.getState = () => _.deepCopy(currentFXState);
     this.getConfig = () => _.deepCopy(effectiveConfig);
     this.setLag = setLag;

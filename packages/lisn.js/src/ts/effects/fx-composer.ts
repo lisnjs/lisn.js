@@ -27,6 +27,7 @@ import {
 import {
   CallbackHandler,
   Callback,
+  createCallback,
   invokeHandler,
   addHandlerToMap,
 } from "@lisn/modules/callback";
@@ -260,6 +261,10 @@ export class FXComposer {
   /**
    * Updates the composer's {@link FXComposerConfig.lag | lag}
    *
+   * Note that if the value is relative to the parent's lag, it is resolved at
+   * the time of this call to {@link setLag} and not updated when the parent's
+   * lag changes.
+   *
    * @param lag If a single number is given, it is set for all three axes.
    */
   readonly setLag: (
@@ -275,6 +280,10 @@ export class FXComposer {
 
   /**
    * Updates the composer's {@link FXComposerConfig.depth | parallax depth}
+   *
+   * Note that if the value is relative to the parent's depth, it is resolved at
+   * the time of this call to {@link setDepth} and not updated when the parent's
+   * depth changes.
    *
    * Note that this will result in the effects managed by this composer being
    * updated for this new depth and the {@link onCompose} handlers being called.
@@ -355,9 +364,9 @@ export class FXComposer {
 
     // ----------
 
-    const onOtherCompose = () => {
+    const onOtherCompose = createCallback(() => {
       recompose(false);
-    };
+    }, true);
 
     const add = (link: Effect | FXComposer, pin?: FXPin) => {
       logger?.debug7("Adding link ", link, pin);
@@ -488,7 +497,7 @@ export class FXComposer {
       }
 
       handler(); // set the CSS now
-      onCompose(handler);
+      onCompose(createCallback(handler, true));
 
       return this;
     };
@@ -846,8 +855,10 @@ export type FXComposerConfig = {
   /**
    * The time in milliseconds it takes for effect states to catch up to the
    * {@link FXState | target parameters}. It can be relative to the parent's
-   * lag. It must result in a non-negative number, otherwise it will be forced
-   * to 0.
+   * lag. Note however, that the value is resolved at the time the composer is
+   * created and not updated when the parent's lag changes.
+   *
+   * It must result in a non-negative number, otherwise it will be forced to 0.
    *
    * @defaultValue undefined
    */
@@ -878,8 +889,11 @@ export type FXComposerConfig = {
   lagZ?: RawOrRelativeNumber;
 
   /**
-   * Parallax depth. It can be relative to the parent's depth. It must result in
-   * a positive number; minimum allowed is 0.01.
+   * Parallax depth. It can be relative to the parent's depth. Note however,
+   * that the value is resolved at the time the composer is created and not
+   * updated when the parent's depth changes.
+   *
+   * It must result in a positive number; minimum allowed is 0.01.
    *
    * Refer to each specific {@link Effect} to see whether and how it is used.
    *

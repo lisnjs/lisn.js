@@ -383,6 +383,28 @@ describe("getConfig", () => {
       depthZ: 1,
     });
   });
+
+  test("with relative lag/depth", () => {
+    const parent = new FXComposer({ lag: 100, lagY: 200, depth: 2, depthX: 3 });
+    const parentConfig = parent.getConfig();
+
+    const composer = new FXComposer({
+      parent,
+      lagX: "120%",
+      lagY: "+10",
+      lagZ: "-5%",
+      depth: "-20%",
+      depthZ: "-0.2",
+    });
+
+    expect(composer.getConfig().lagX).toBeCloseTo(1.2 * parentConfig.lagX);
+    expect(composer.getConfig().lagY).toBeCloseTo(10 + parentConfig.lagY);
+    expect(composer.getConfig().lagZ).toBeCloseTo(0.95 * parentConfig.lagZ);
+
+    expect(composer.getConfig().depthX).toBeCloseTo(0.8 * parentConfig.depthX);
+    expect(composer.getConfig().depthY).toBeCloseTo(0.8 * parentConfig.depthY);
+    expect(composer.getConfig().depthZ).toBeCloseTo(-0.2 + parentConfig.depthZ);
+  });
 });
 
 describe("trigger / tween", () => {
@@ -1167,6 +1189,35 @@ describe("trigger / tween", () => {
 });
 
 describe("setLag", () => {
+  test("with relative and absolute lag", () => {
+    const parent = new FXComposer({ lag: 100, lagY: 200 });
+    let parentConfig = parent.getConfig();
+
+    const composer = new FXComposer({ parent });
+    composer.setLag({
+      lagX: "120%",
+      lagY: "+10",
+      lagZ: "-5%",
+    });
+
+    expect(composer.getConfig().lagX).toBeCloseTo(1.2 * parentConfig.lagX);
+    expect(composer.getConfig().lagY).toBeCloseTo(10 + parentConfig.lagY);
+    expect(composer.getConfig().lagZ).toBeCloseTo(0.95 * parentConfig.lagZ);
+
+    parent.setLag(500); // updates all
+    parentConfig = parent.getConfig();
+
+    composer.setLag({
+      lagX: "200", // absolute
+      lagY: "+10",
+      lagZ: "-5%",
+    });
+
+    expect(composer.getConfig().lagX).toBeCloseTo(200);
+    expect(composer.getConfig().lagY).toBeCloseTo(10 + parentConfig.lagY);
+    expect(composer.getConfig().lagZ).toBeCloseTo(0.95 * parentConfig.lagZ);
+  });
+
   test("during tween: set all lag to 0", async () => {
     const { lag, push, composer } = newComposer();
     expect(lag).toBe(DEFAULT_LAG);
@@ -1305,6 +1356,35 @@ describe("setLag", () => {
 });
 
 describe("setDepth", () => {
+  test("with relative and absolute depth", () => {
+    const parent = new FXComposer({ depth: 2, depthY: 3 });
+    let parentConfig = parent.getConfig();
+
+    const composer = new FXComposer({ parent });
+    composer.setDepth({
+      depthX: "120%",
+      depthY: "+1",
+      depthZ: "-10%",
+    });
+
+    expect(composer.getConfig().depthX).toBeCloseTo(1.2 * parentConfig.depthX);
+    expect(composer.getConfig().depthY).toBeCloseTo(1 + parentConfig.depthY);
+    expect(composer.getConfig().depthZ).toBeCloseTo(0.9 * parentConfig.depthZ);
+
+    parent.setDepth(5); // updates all
+    parentConfig = parent.getConfig();
+
+    composer.setDepth({
+      depthX: "2", // absolute
+      depthY: "+1",
+      depthZ: "-10%",
+    });
+
+    expect(composer.getConfig().depthX).toBeCloseTo(2);
+    expect(composer.getConfig().depthY).toBeCloseTo(1 + parentConfig.depthY);
+    expect(composer.getConfig().depthZ).toBeCloseTo(0.9 * parentConfig.depthZ);
+  });
+
   test("during tween: update all depth", async () => {
     const effectAbsOrig = new DummyEffectA(
       { x: 0, y: 0, z: 0 },

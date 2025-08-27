@@ -549,7 +549,7 @@ const getLayersFrom = (
     useDefaultEffects: boolean,
     config: FXComposerConfig,
   ) => {
-    const composer = new FXComposer(_.merge(config, { trigger }));
+    const composer = new FXComposer(_.merge(config, { trigger })); // XXX lagZ of 0?
     if (useDefaultEffects) {
       composer.add(
         new Transform({ isAbsolute: true }).translate((data) => ({

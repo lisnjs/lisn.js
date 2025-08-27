@@ -637,8 +637,8 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
       _.copySelectKeysTo(newParams, params, { target: 1, lag: 1, snap: 1 });
 
       // After applying update check if we should mark the axis as done. It's
-      // done only if it's generator has finished running (i.e. axis is
-      // currently marked as done) **and** current is at target.
+      // done only if it's generator has finished running or we've snapped to
+      // the target **and** current is at target.
       setAxisDone(
         axis,
         isDone(axis) &&
@@ -691,44 +691,47 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
     output[axis].snap ??= false;
   }
 
-  let skipYield = false,
-    hasYielded = false;
+  let hasYielded = false;
   for await (const { sinceLast: deltaTime } of animationFrameGenerator()) {
     if (deltaTime === 0) {
       continue;
     }
 
+    let isStale = false;
     for (const axis in output) {
       if (isDone(axis)) {
         continue;
       }
 
       const params = output[axis];
-      const previous = params.current;
 
-      if (params.snap || params.lag < 1) {
+      if (params.snap || params.lag <= 0) {
+        params.previous = params.current;
         params.current = params.target;
         setAxisDone(axis);
+        isStale = true;
       } else {
         const next = getNextValue(axis, deltaTime);
         if (next.done) {
           setAxisDone(axis);
-          // This was the last generator to finish and it's done, so
-          // there's no update to the state
-          skipYield = hasYielded && isDone();
         } else {
-          params.previous = previous;
+          isStale = true;
+          params.previous = params.current;
           params.current = next.value.current;
         }
       }
     }
 
-    if (!skipYield) {
-      const updateData = yield _.deepCopy(output);
-      hasYielded = true;
-      if (updateData) {
-        applyUpdate(updateData);
-      }
+    if (hasYielded && !isStale) {
+      // all generators have finished with no new state
+      return;
+    }
+
+    const updateData = yield _.deepCopy(output);
+    hasYielded = true;
+
+    if (updateData) {
+      applyUpdate(updateData);
     }
 
     if (isDone()) {

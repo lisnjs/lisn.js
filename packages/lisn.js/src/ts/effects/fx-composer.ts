@@ -375,6 +375,7 @@ export class FXComposer {
     );
 
     const currentFXState = createState();
+    let updatePending = false;
 
     // ----------
 
@@ -661,26 +662,23 @@ export class FXComposer {
 
     // ----------
 
-    const updateState = <T extends boolean | undefined>(
+    const updateState = (
       newState?: DeepPartial<FXState> | null,
       updateData?: FXStateUpdate,
-      checkIfChanged?: T,
-    ) => {
+    ): boolean => {
       if (newState) {
         _.copyExistingKeysTo(newState, currentFXState);
       }
       const validated = getUpdatedState(currentFXState, this, updateData);
 
-      let didUpdate: boolean | undefined = void 0;
+      const didUpdate = !compareValuesIn(currentFXState, validated, 5);
 
-      if (checkIfChanged) {
-        didUpdate = !compareValuesIn(currentFXState, validated, 5);
-      }
-
-      logger?.debug10("New state", validated);
+      logger?.debug10("New state", validated, { didUpdate });
       _.assign(currentFXState, validated); // override current state object
 
-      return didUpdate as T extends boolean ? boolean : void;
+      updatePending ||= didUpdate;
+
+      return didUpdate;
     };
 
     // ----------
@@ -715,10 +713,11 @@ export class FXComposer {
         }
 
         logger?.debug10("Tweening", tweenUpdate);
+        updatePending = false;
         const { value: newState, done } =
           await tweenGenerator.next(tweenUpdate);
 
-        logger?.debug10("Tween result", done, newState);
+        logger?.debug10("Tween result", newState, { done, updatePending });
         if (done) {
           isTweening = false;
           break;
@@ -731,11 +730,18 @@ export class FXComposer {
             partial[a] ??= {};
             partial[a][p] = newState[a][p];
           }
+
+          updatePending ||= newState[a].target !== currentFXState[a].target;
         }
 
         updateState(partial);
         recompose();
         invokeCallbacks(tweenCallbacks);
+      }
+
+      if (updatePending) {
+        // restart
+        tween();
       }
     };
 

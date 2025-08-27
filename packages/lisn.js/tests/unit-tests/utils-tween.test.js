@@ -280,7 +280,7 @@ describe("tweeners", () => {
   }
 });
 
-describe("animation3DTweener: custom", () => {
+describe("animation3DTweener", () => {
   test("no input", async () => {
     const cbk = jest.fn(() => {
       throw "Shouldn't be called";
@@ -1005,7 +1005,9 @@ describe("animation3DTweener: custom", () => {
           );
 
           expect(state[a].previous).toBe(
-            a === "x" && i > 1 ? input[a].current : state[a].current - step,
+            a === "x" && i > 1
+              ? input[a].current + step
+              : state[a].current - step,
           );
         }
 
@@ -1019,7 +1021,7 @@ describe("animation3DTweener: custom", () => {
       expect(cbk.y).toHaveBeenCalledTimes(nCalls);
     });
 
-    test(`XY ${snapWithLag ? "lag = 0" : "snap"} in init but updated + target for X at i=1`, async () => {
+    test(`XY ${snapWithLag ? "lag = 0" : "snap"} in init but updated target for X at i=1`, async () => {
       const step = 10;
 
       const cbk = {
@@ -1100,5 +1102,102 @@ describe("animation3DTweener: custom", () => {
       expect(cbk.x).toHaveBeenCalledTimes(nCalls);
       expect(cbk.y).toHaveBeenCalledTimes(0);
     });
+
+    for (const yAtTarget of [true, false]) {
+      test(`XY ${snapWithLag ? "lag = 0" : "snap"} in init and update but new target for X at i=1 and at i=2 (${yAtTarget ? "Y at target" : "snap Y"})`, async () => {
+        const cbk = {
+          x: jest.fn(() => {
+            throw "Shouldn't be called";
+          }),
+          y: jest.fn(({ current }) => {
+            if (yAtTarget) {
+              return current;
+            } else {
+              throw "Shouldn't be called";
+            }
+          }),
+        };
+
+        const tweener = { x: newTweener(cbk.x), y: newTweener(cbk.y) };
+
+        const lag = 100;
+        const targetX1 = 200,
+          targetX2 = 300,
+          targetX3 = 400;
+        const lagSnapUpdate = {
+          lag: snapWithLag ? 0 : lag,
+          snap: !snapWithLag,
+        };
+
+        const input = {
+          x: {
+            current: 0,
+            target: targetX1, // snap to this target first
+            ...lagSnapUpdate,
+          },
+          y: {
+            current: yAtTarget ? 40 : 0,
+            target: 40,
+            ...(yAtTarget ? { lag: 100, snap: false } : lagSnapUpdate),
+          },
+          // omit z
+        };
+
+        const updates = [
+          { x: { target: targetX2, ...lagSnapUpdate } },
+          { x: { target: targetX3, ...lagSnapUpdate } },
+        ];
+
+        const generator = animation3DTweener(tweener, input);
+        let i = 0;
+
+        while (true) {
+          i++;
+
+          // update provided at i=1 is not received, so do it on 2 and 3
+          const { value: state, done: genDone } = await generator.next(
+            updates[i - 2],
+          );
+
+          if (genDone) {
+            i--;
+            break;
+          }
+
+          for (const a of ["x", "y"]) {
+            expect(state[a].lag).toBe(input[a].lag);
+            expect(state[a].snap).toBe(input[a].snap);
+          }
+
+          if (i === 1) {
+            expect(state.x.previous).toBe(input.x.current);
+            expect(state.x.current).toBe(targetX1);
+            expect(state.x.target).toBe(targetX1);
+          } else if (i === 2) {
+            expect(state.x.previous).toBe(targetX1);
+            expect(state.x.current).toBe(targetX2);
+            expect(state.x.target).toBe(targetX2);
+          } else if (i === 3) {
+            expect(state.x.previous).toBe(targetX2);
+            expect(state.x.current).toBe(targetX3);
+            expect(state.x.target).toBe(targetX3);
+          }
+
+          expect(state.y.previous).toBe(input.y.current);
+          expect(state.y.current).toBe(input.y.target);
+          expect(state.y.target).toBe(input.y.target);
+
+          expect(state.z).toBeUndefined();
+        }
+
+        // i = 1: snapped to targetX1
+        // i = 2: received targetX2 and snapped to it
+        // i = 3: received targetX3 and snapped to it
+        expect(i).toBe(3);
+
+        expect(cbk.x).toHaveBeenCalledTimes(0);
+        expect(cbk.y).toHaveBeenCalledTimes(yAtTarget ? 1 : 0);
+      });
+    }
   }
 });

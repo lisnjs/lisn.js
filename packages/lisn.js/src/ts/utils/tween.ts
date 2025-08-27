@@ -155,16 +155,6 @@ export const springTweener: TweenerFn = function* ({
   while (true) {
     validateInput({ current, target, lag, deltaTime, precision });
 
-    if (
-      lag < 1 ||
-      // allow less precision for velocity
-      (isCloseTo(velocity, 0, precision - 1) &&
-        isCloseTo(current, target, precision))
-    ) {
-      yield { current: target }; // we're done, snap to target
-      return;
-    }
-
     if (deltaTime > 1) {
       const dtSec = deltaTime / 1000;
       const lagSec = lag / 1000;
@@ -182,11 +172,24 @@ export const springTweener: TweenerFn = function* ({
       velocity = (B - w0 * (A + B * dtSec)) * e;
     }
 
+    if (
+      // allow less precision for velocity
+      isCloseTo(velocity, 0, precision - 1) &&
+      isCloseTo(current, target, precision)
+    ) {
+      current = target; // snap exactly to target
+    }
+
     const update = yield { current };
 
+    const oldTarget = target;
     target = update?.target ?? target;
     lag = update?.lag ?? lag;
     deltaTime = update?.deltaTime ?? deltaTime;
+
+    if (current === target && target === oldTarget) {
+      return;
+    }
   }
 };
 
@@ -243,17 +246,6 @@ export const createEasingTweener = (
     while (true) {
       validateInput({ current, target, lag, deltaTime, precision });
 
-      if (
-        lag < 1 ||
-        isCloseTo(100 * progress, 100, precision) ||
-        // allow less precision for velocity
-        (isCloseTo(old - current / deltaTime, 0, precision - 1) &&
-          isCloseTo(current, target, precision))
-      ) {
-        yield { current: target }; // we're done, snap to target
-        return;
-      }
-
       if (deltaTime > 1) {
         if (target !== oldTarget) {
           if (
@@ -291,6 +283,11 @@ export const createEasingTweener = (
         current = reference + (target - reference) * eased;
       }
 
+      if (isCloseTo(100 * progress, 100, precision)) {
+        progress = 1;
+        current = target; // snap exactly to target
+      }
+
       const update = yield { current };
 
       oldTarget = target;
@@ -298,10 +295,7 @@ export const createEasingTweener = (
       lag = update?.lag ?? lag;
       deltaTime = update?.deltaTime ?? deltaTime;
 
-      if (
-        isCloseTo(100 * progress, 100, precision) &&
-        isCloseTo(current, target, precision)
-      ) {
+      if (progress === 1 && target === oldTarget) {
         return;
       }
     }

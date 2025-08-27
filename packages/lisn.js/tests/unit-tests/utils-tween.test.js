@@ -4,6 +4,7 @@ const { deepCopy, copyExistingKeysTo } = window.LISN._;
 const { animation3DTweener, TWEENERS } = window.LISN.utils;
 
 const newTweener = (cbk) => {
+  // a dummy one, doesn't allow overshooting target
   return function* (input) {
     const state = deepCopy(input);
     const initial = state.current;
@@ -16,11 +17,12 @@ const newTweener = (cbk) => {
         current = state.target;
       }
 
+      const oldTarget = state.target;
       state.current = current;
       const update = yield { current: state.current };
       copyExistingKeysTo(update ?? {}, state);
 
-      if (state.current === state.target) {
+      if (state.current === state.target && oldTarget === state.target) {
         return;
       }
     }
@@ -244,6 +246,34 @@ describe("tweeners", () => {
               : 0.8 * expectedApproxTime;
           expect(elapsed).toBeGreaterThanOrEqual(minTime); // didn't finish too early
           expect(Math.abs(current - finalTarget)).toBeLessThan(5); // reached close to target in lag time
+        });
+
+        test(`${tweenerName}: updating target on the last step`, () => {
+          let currentTarget = firstTarget,
+            current = initial;
+
+          const generator = tweener({
+            current,
+            target: firstTarget,
+            lag,
+            deltaTime,
+          });
+
+          while (true) {
+            const next = generator.next({ target: currentTarget });
+            if (next.done) {
+              break;
+            }
+
+            current = next.value.current;
+
+            if (currentTarget !== finalTarget && current === currentTarget) {
+              currentTarget = finalTarget;
+            }
+          }
+
+          expect(currentTarget).toBe(finalTarget);
+          expect(current).toBe(finalTarget);
         });
       }
     }

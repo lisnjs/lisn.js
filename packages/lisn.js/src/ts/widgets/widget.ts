@@ -47,7 +47,7 @@ import { settings } from "@lisn/globals/settings";
 import { hasClass, getData } from "@lisn/utils/css-alter";
 import { waitForInteractive } from "@lisn/utils/dom-events";
 import { logWarn } from "@lisn/utils/log";
-import { toArrayIfSingle } from "@lisn/utils/misc";
+import { toIterableIfNot } from "@lisn/utils/misc";
 import { waitForDelay } from "@lisn/utils/tasks";
 import { formatAsString, kebabToCamelCase, splitOn } from "@lisn/utils/text";
 
@@ -410,7 +410,7 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
 
           const theseWidgets = await createWidget(element, config);
           if (theseWidgets) {
-            widgets.push(...toArrayIfSingle(theseWidgets));
+            widgets.push(...toIterableIfNot(theseWidgets));
           }
         }
 

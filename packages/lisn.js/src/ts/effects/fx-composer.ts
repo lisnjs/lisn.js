@@ -17,7 +17,7 @@ import {
 import { setStylePropNow, delStylePropNow } from "@lisn/utils/css-alter";
 import { waitForMutateTime } from "@lisn/utils/dom-optimize";
 import { isValidNum, toNumWithBounds, toRawNum } from "@lisn/utils/math";
-import { compareValuesIn, toArrayIfSingle } from "@lisn/utils/misc";
+import { compareValuesIn, toIterableIfNot } from "@lisn/utils/misc";
 import {
   animation3DTweener,
   Tweener,
@@ -31,6 +31,7 @@ import {
   invokeHandler,
   addHandlerToMap,
 } from "@lisn/modules/callback";
+import { createXMap } from "@lisn/modules/x-map";
 
 import {
   Effect,
@@ -53,8 +54,8 @@ import debug from "@lisn/debug/debug";
  */
 export class FXComposer {
   /**
-   * Adds an link, which can be either an effect or another composer, to the
-   * current chain of composition.
+   * Adds one or more links, which can be either an effect or another composer,
+   * to the current chain of composition.
    *
    * Effects added here are {@link Effect.toComposition | cloned} beforehand, so
    * you can add the same effect instance to multiple composers, or multiple
@@ -69,13 +70,18 @@ export class FXComposer {
    * state at each frame while it is tweening.
    *
    * Otherwise, if the link is another {@link FXComposer}, its composition will
-   * be used as is in this composer's composition.
+   * be used as is in this composer's composition and not updated with the state
+   * of this composer.
    *
    * This allows you to animate a single property of an element (e.g. transform)
    * by multiple composers, each one with different triggers, lag or depth.
    *
    * However, you should call {@link startAnimate} with the element only on this
    * composer, to which you add all other relevant composers.
+   *
+   * If you want to clone and use all effects from another composer for this one
+   * to manage and update, simply pass `otherComposer.getComposition().values()`
+   * as the links to add.
    *
    * **IMPORTANT:** If you add an {@link Effect.isAbsolute | absolute} effect,
    * or a composer that has absolute effects it essentially discards all
@@ -86,7 +92,10 @@ export class FXComposer {
    *            state. Only relevant when adding an {@link Effect}, otherwise it
    *            is ignored.
    */
-  readonly add: (link: Effect | FXComposer, pin?: FXPin) => this;
+  readonly add: (
+    links: Effect | FXComposer | Iterable<Effect | FXComposer>,
+    pin?: FXPin,
+  ) => this;
 
   /**
    * Removes all previously added effects.
@@ -200,7 +209,9 @@ export class FXComposer {
    * Will continually apply the latest {@link toCss | CSS} to the given
    * elements.
    *
-   * @param negate See {@link toCss}.
+   * @param negate See {@link toCss}. The given negated composer will be watched
+   *               for any changes in its composition, and this will result in
+   *               updating the CSS on the elements.
    */
   readonly startAnimate: (
     elements: Element | Element[],
@@ -235,10 +246,10 @@ export class FXComposer {
    * - `will-change`
    * - `background`
    *
-   * @param negate If given, then all effects added on this composer that
-   *               support negation (see {@link Effect.export}) will receive the
-   *               combined effect of their respective type as the one to
-   *               negate.
+   * @param negate If given, then for every effect in the composition, the
+   *               corresponding effect (of the same type) in the given negated
+   *               composer's composition will be queried, and used for
+   *               negation. See {@link Effect.export}
    */
   readonly toCss: (negate?: FXComposer) => Record<string, string>;
 
@@ -358,30 +369,47 @@ export class FXComposer {
       FXComposerCallback
     >();
 
-    const animatedElements = _.createMap<
-      Element,
-      [FXComposerHandler, Set<Element>]
-    >();
+    const animatedElements = _.createMap<Element, FXComposer | undefined>();
+    const animatedElementsByNegated = createXMap<FXComposer, Set<Element>>(() =>
+      _.createSet(),
+    );
 
     const currentFXState = createState();
 
     // ----------
 
-    const onOtherCompose = createCallback(() => {
+    const recomposeOnOtherCompose = createCallback(() => {
       recompose(false);
     }, true);
 
-    const add = (link: Effect | FXComposer, pin?: FXPin) => {
-      logger?.debug7("Adding link ", link, pin);
-      if (_.isInstanceOf(link, FXComposer)) {
-        compositionChain.push([link, void 0]);
-        link.onCompose(onOtherCompose);
-      } else {
-        link = link.toComposition(); // clone
-        compositionChain.push([link, pin]);
+    const reanimateOnNegatedCompose = createCallback((negate: FXComposer) => {
+      const elements = animatedElementsByNegated.get(negate);
+      if (elements) {
+        applyCss(elements, false, negate); // no need to await
       }
+    }, true);
 
-      addToComposition(link, false);
+    // ----------
+
+    const add = (
+      links: Effect | FXComposer | Iterable<Effect | FXComposer>,
+      pin?: FXPin,
+    ) => {
+      logger?.debug7("Adding link ", links, pin);
+
+      const linksIter = toIterableIfNot(links);
+
+      for (let link of linksIter) {
+        if (_.isInstanceOf(link, FXComposer)) {
+          compositionChain.push([link, void 0]);
+          link.onCompose(recomposeOnOtherCompose);
+        } else {
+          link = link.toComposition(); // clone
+          compositionChain.push([link, pin]);
+        }
+
+        addToComposition(link, false);
+      }
 
       invokeCallbacks(composeCallbacks);
 
@@ -395,7 +423,7 @@ export class FXComposer {
       if (_.lengthOf(compositionChain) > 0) {
         for (const [link] of compositionChain) {
           if (_.isInstanceOf(link, FXComposer)) {
-            link.offCompose(onOtherCompose);
+            link.offCompose(recomposeOnOtherCompose);
           }
         }
 
@@ -462,14 +490,12 @@ export class FXComposer {
       elements: Element | Element[],
       negate?: FXComposer,
     ) => {
-      elements = toArrayIfSingle(elements);
-      await applyCss(elements, false, negate);
+      await applyCss(toIterableIfNot(elements), false, negate);
       return this;
     };
 
     const deanimate = async (elements: Element | Element[]) => {
-      elements = toArrayIfSingle(elements);
-      await applyCss(elements, true);
+      await applyCss(toIterableIfNot(elements), true);
       return this;
     };
 
@@ -479,28 +505,25 @@ export class FXComposer {
       elements: Element | Element[],
       negate?: FXComposer,
     ) => {
-      elements = toArrayIfSingle(elements);
-
       logger?.debug5("Starting animating ", elements, negate);
-      // Use a single handler for all elements for performance gain.
-      // Clean it up when all have been called with stopAnimate.
-      const relatedElements = _.createSet(elements);
 
-      const handler = () => {
-        applyCss(relatedElements, false, negate);
-      };
+      const elementsIter = toIterableIfNot(elements);
+      const negatedComposer = negate ?? defaultNegate;
 
-      const data: [FXComposerHandler, Set<Element>] = [
-        handler,
-        relatedElements,
-      ];
+      for (const element of elementsIter) {
+        // clean up previous entry if there was one using another composer to negate
+        stopAnimate(element);
 
-      for (const element of elements) {
-        animatedElements.set(element, data);
+        if (negatedComposer) {
+          animatedElementsByNegated.sGet(negatedComposer).add(element);
+          negatedComposer.onCompose(reanimateOnNegatedCompose);
+        }
+
+        animatedElements.set(element, negatedComposer);
       }
 
-      handler(); // set the CSS now
-      onCompose(createCallback(handler, true));
+      // apply the CSS now
+      applyCss(elementsIter, false, negate); // no need to await
 
       return this;
     };
@@ -508,20 +531,29 @@ export class FXComposer {
     // ----------
 
     const stopAnimate = (elements: Element | Element[], clearCss?: boolean) => {
-      elements = toArrayIfSingle(elements);
-
       logger?.debug5("Stopping animating ", elements, clearCss);
+
+      const elementsIter = toIterableIfNot(elements);
+
       if (clearCss) {
-        applyCss(elements, true); // no need to await
+        applyCss(elementsIter, true); // no need to await
       }
 
-      for (const element of elements) {
-        const [handler, relatedElements] = animatedElements.get(element) ?? [];
-
+      for (const element of elementsIter) {
+        const negatedComposer = animatedElements.get(element);
         _.deleteKey(animatedElements, element);
-        _.deleteKey(relatedElements, element);
-        if (handler && _.sizeOf(relatedElements) === 0) {
-          offTween(handler);
+
+        if (negatedComposer) {
+          const relatedElements =
+            animatedElementsByNegated.get(negatedComposer);
+
+          _.deleteKey(relatedElements, element);
+
+          if (_.sizeOf(relatedElements) === 0) {
+            // no more elements using the old negated composer
+            negatedComposer.offCompose(reanimateOnNegatedCompose);
+            _.deleteKey(animatedElementsByNegated, negatedComposer);
+          }
         }
       }
 
@@ -531,17 +563,17 @@ export class FXComposer {
     // ----------
 
     const toCss = (negate?: FXComposer) => {
-      const negateComposer = negate ?? defaultNegate;
-      const negatedComposition = negateComposer?.getComposition();
+      const negatedComposer = negate ?? defaultNegate;
+      const negatedComposition = negatedComposer?.getComposition();
       const css: Record<string, string> = {};
 
       for (const [type, effect] of currentComposition) {
         const negatedEffect = negatedComposition?.get(type);
-        if (negatedEffect && negateComposer) {
+        if (negatedEffect && negatedComposer) {
           // snap the effect to the final target state, otherwise if the
           // composer to negate has a larger lag than we do and is tweening now,
           // we won't get the correct final state
-          const finalState = negateComposer.getState();
+          const finalState = negatedComposer.getState();
           let needsUpdate = false;
 
           for (const a of ["x", "y", "z"] as const) {
@@ -554,7 +586,7 @@ export class FXComposer {
           }
 
           if (needsUpdate) {
-            negatedEffect.update(finalState, negateComposer);
+            negatedEffect.update(finalState, negatedComposer);
           }
         }
 
@@ -757,6 +789,10 @@ export class FXComposer {
           addToComposition(link, pin?.isActive() ? false : updateMode);
         }
 
+        for (const [element, negatedComposer] of animatedElements) {
+          applyCss([element], false, negatedComposer); // no need to await
+        }
+
         invokeCallbacks(composeCallbacks);
       }
 
@@ -781,7 +817,7 @@ export class FXComposer {
     // ----------
 
     const applyCss = async (
-      elements: Element[] | Set<Element>,
+      elements: Iterable<Element>,
       clearCss: boolean,
       negate?: FXComposer,
     ) => {

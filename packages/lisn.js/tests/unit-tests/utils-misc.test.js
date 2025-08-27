@@ -33,15 +33,20 @@ test("toBoolean", () => {
   expect(utils.toBoolean({})).toBe(null);
 });
 
-test("toArrayIfSingle", () => {
-  expect(utils.toArrayIfSingle(1)).toEqual([1]);
-  expect(utils.toArrayIfSingle(false)).toEqual([false]);
-  expect(utils.toArrayIfSingle([1])).toEqual([1]);
-  expect(utils.toArrayIfSingle([1, 2])).toEqual([1, 2]);
+test("toIterableIfNot", () => {
+  expect(utils.toIterableIfNot(1)).toEqual([1]);
+  expect(utils.toIterableIfNot(false)).toEqual([false]);
+  expect(utils.toIterableIfNot([1])).toEqual([1]);
+  expect(utils.toIterableIfNot([1, 2])).toEqual([1, 2]);
 
-  expect(utils.toArrayIfSingle([])).toEqual([]);
-  expect(utils.toArrayIfSingle(null)).toEqual([]);
-  expect(utils.toArrayIfSingle()).toEqual([]);
+  expect(utils.toIterableIfNot([])).toEqual([]);
+  expect(utils.toIterableIfNot(null)).toEqual([]);
+  expect(utils.toIterableIfNot()).toEqual([]);
+
+  const s = new Set([1]);
+  const m = new Map([[1, 1]]);
+  expect(utils.toIterableIfNot(s)).toBe(s);
+  expect(utils.toIterableIfNot(m)).toBe(m);
 });
 
 describe("compareValuesIn", () => {

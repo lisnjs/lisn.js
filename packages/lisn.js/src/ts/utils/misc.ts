@@ -45,10 +45,16 @@ export const toBoolean = (value: unknown, emptyStr = true) => {
 export const toBool = toBoolean;
 
 /**
- * If the given value is not an array, it returns `[value]`.
+ * If the given value is an iterable it returns it as is.
+ *
+ * If given value is `null` or `undefined` it returns an empty array.
+ *
+ * Otherwise it returns an array with the value as the only element.
  */
-export const toArrayIfSingle = <T>(value?: T | T[] | null | undefined): T[] =>
-  _.isArray(value) ? value : !_.isNullish(value) ? [value] : [];
+export const toIterableIfNot = <T>(
+  value?: T | Iterable<T> | null | undefined,
+): Iterable<T> =>
+  _.isIterableObject(value) ? value : !_.isNullish(value) ? [value] : [];
 
 /**
  * Returns true if the two objects are equal. If values are numeric, it will

@@ -57,7 +57,7 @@ import {
   preventSelect,
 } from "@lisn/utils/event";
 import { logError, logWarn } from "@lisn/utils/log";
-import { toArrayIfSingle } from "@lisn/utils/misc";
+import { toIterableIfNot } from "@lisn/utils/misc";
 import {
   isScrollable,
   getDefaultScrollingElement,
@@ -924,7 +924,7 @@ const init = (
   }
 
   if (config?.className) {
-    addClasses(scrollable, ...toArrayIfSingle(config.className));
+    addClasses(scrollable, ...toIterableIfNot(config.className));
   }
 
   const scrollDomID = // for ARIA
@@ -992,7 +992,7 @@ const init = (
 
     scrollable.id = origDomID;
     if (config?.className) {
-      removeClasses(scrollable, ...toArrayIfSingle(config.className));
+      removeClasses(scrollable, ...toIterableIfNot(config.className));
     }
 
     await waitForMutateTime();

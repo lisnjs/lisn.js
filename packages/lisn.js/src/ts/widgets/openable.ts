@@ -52,7 +52,7 @@ import {
 import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
 import { logError } from "@lisn/utils/log";
 import { keyWithMaxVal } from "@lisn/utils/math";
-import { toBoolean, toArrayIfSingle } from "@lisn/utils/misc";
+import { toBoolean, toIterableIfNot } from "@lisn/utils/misc";
 import { waitForDelay } from "@lisn/utils/tasks";
 import { isValidPosition, isValidTwoFoldPosition } from "@lisn/utils/position";
 import { fetchViewportSize } from "@lisn/utils/size";
@@ -1993,7 +1993,7 @@ const init = (
   }
 
   if (config.className) {
-    addClassesNow(root, ...toArrayIfSingle(config.className));
+    addClassesNow(root, ...toIterableIfNot(config.className));
   }
 
   unsetBooleanData(root, PREFIX_IS_OPEN);

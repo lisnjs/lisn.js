@@ -1,7 +1,8 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { Callback } = window.LISN.modules;
-const { FXTrigger, FXScrollTrigger, FX_TRIGGER } = window.LISN.effects;
+const { FXTrigger, FXScrollTrigger, FXProxyTrigger, FX_TRIGGER } =
+  window.LISN.effects;
 
 const diffTolerance = 20; // in percent
 
@@ -522,5 +523,81 @@ describe("FXScrollTrigger", () => {
   test("in FX_TRIGGER", () => {
     expect(FX_TRIGGER.scroll).not.toBeUndefined();
     expect(FX_TRIGGER.scroll()).toBeInstanceOf(FXScrollTrigger);
+  });
+});
+
+describe("FXProxyTrigger", () => {
+  test("no proxied", () => {
+    expect(() => new FXProxyTrigger()).toThrow(/A trigger is required/);
+  });
+
+  test("basic", async () => {
+    const { trigger: proxied, push } = newTrigger();
+    const proxy = new FXProxyTrigger(proxied);
+
+    const received = [];
+    startReceiver(proxy, received);
+
+    push("A");
+    await window.waitFor(0); // callbacks are async
+    expect(received).toEqual(["A"]);
+  });
+
+  test("with delay", async () => {
+    const { trigger: proxied, push } = newTrigger();
+    const delay = 100;
+    const proxy = new FXProxyTrigger(proxied, { delay });
+
+    const received = [];
+    startReceiver(proxy, received);
+
+    push("A");
+    await window.waitFor(delay - 10);
+    expect(received).toEqual([]);
+
+    await window.waitFor(delay + 10);
+    expect(received).toEqual(["A"]);
+  });
+
+  test("with transformFn", async () => {
+    const { trigger: proxied, push } = newTrigger();
+    const transformFn = jest.fn(() => "B");
+    const proxy = new FXProxyTrigger(proxied, { transformFn });
+
+    const received = [];
+    startReceiver(proxy, received);
+
+    push("A");
+    expect(transformFn).toHaveBeenCalledTimes(0); // not yet
+    await window.waitFor(0); // callbacks are async
+    expect(transformFn).toHaveBeenCalledTimes(1);
+    expect(transformFn).toHaveBeenCalledWith("A");
+    expect(received).toEqual(["B"]);
+  });
+
+  test("with delay and transformFn", async () => {
+    const { trigger: proxied, push } = newTrigger();
+    const delay = 100;
+    const transformFn = jest.fn(() => "B");
+    const proxy = new FXProxyTrigger(proxied, { delay, transformFn });
+
+    const received = [];
+    startReceiver(proxy, received);
+
+    push("A");
+    await window.waitFor(delay - 10);
+    expect(transformFn).toHaveBeenCalledTimes(0); // not yet
+    expect(received).toEqual([]);
+
+    await window.waitFor(delay + 10);
+    expect(transformFn).toHaveBeenCalledTimes(1);
+    expect(transformFn).toHaveBeenCalledWith("A");
+    expect(received).toEqual(["B"]);
+  });
+
+  test("in FX_TRIGGER", () => {
+    const { trigger: proxied } = newTrigger();
+    expect(FX_TRIGGER.proxy).not.toBeUndefined();
+    expect(FX_TRIGGER.proxy(proxied)).toBeInstanceOf(FXProxyTrigger);
   });
 });

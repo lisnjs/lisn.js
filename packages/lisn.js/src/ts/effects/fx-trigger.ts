@@ -4,11 +4,13 @@
  * @since v1.3.0
  */
 
-// XXX TODO support delay and offsets
-
 import * as _ from "@lisn/_internal";
 
+import { usageError } from "@lisn/globals/errors";
+
 import { ScrollTarget } from "@lisn/globals/types";
+
+import { waitForDelay } from "@lisn/utils/tasks";
 
 import {
   CallbackHandler,
@@ -30,6 +32,8 @@ import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
  */
 export const FX_TRIGGER = {
   scroll: (scrollable?: ScrollTarget) => new FXScrollTrigger(scrollable),
+  proxy: (trigger: FXTrigger, config: FXProxyTriggerConfig) =>
+    new FXProxyTrigger(trigger, config),
 } as const;
 
 // -------------------------------------------------------------------------
@@ -183,6 +187,11 @@ export type FXTriggerHandler =
 
 // -------------------------------- SCROLL ---------------------------------
 
+/**
+ * {@link FXScrollTrigger} is triggered by scroll events and sends an
+ * {@link FXStateUpdate} based on the top/left scroll offsets and scroll
+ * width/height.
+ */
 export class FXScrollTrigger extends FXTrigger {
   /**
    * @param scrollable If not given, then it will use {@link ScrollWatcher}
@@ -236,6 +245,65 @@ export class FXScrollTrigger extends FXTrigger {
     addOrRemoveWatcher();
   }
 }
+
+// --------------------------------- PROXY ---------------------------------
+
+/**
+ * {@link FXProxyTrigger} is triggered by another trigger and uses its
+ * {@link FXStateUpdate} but can transform the values or introduce delay before
+ * it fires.
+ */
+export class FXProxyTrigger extends FXTrigger {
+  constructor(trigger: FXTrigger, config: FXProxyTriggerConfig) {
+    if (!trigger) {
+      throw usageError("A trigger is required for FXProxyTrigger");
+    }
+
+    const { delay = 0, transformFn } = config ?? {};
+
+    const executor = (push: (update: FXStateUpdate) => void) => {
+      (async () => {
+        const relayUpdate = async (update: FXStateUpdate) => {
+          if (delay > 0) {
+            await waitForDelay(delay);
+          }
+
+          push(transformFn ? transformFn(update) : update);
+        };
+
+        for await (const update of trigger.poll()) {
+          relayUpdate(update); // don't await, just queue
+        }
+      })();
+    };
+
+    // --------------------
+
+    super(executor);
+  }
+}
+
+export type FXProxyTriggerConfig = {
+  /**
+   * A delay in milliseconds before this trigger fires following an update from
+   * the original, proxied trigger.
+   *
+   * If the trigger fires again before delay has passed, the new data will
+   * simply be queued. No updates are dropped.
+   *
+   * @defaultValue 0
+   */
+  delay?: number;
+
+  /**
+   * If given, it will be called with the update data from the proxied trigger
+   * and must return new values. The function is called after the {@link delay}
+   * has passed.
+   *
+   * @defaultValue undefined
+   */
+  transformFn?: (update: FXStateUpdate) => FXStateUpdate;
+};
 
 // ------------------------------
 

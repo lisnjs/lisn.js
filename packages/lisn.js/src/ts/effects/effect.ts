@@ -15,7 +15,7 @@ import { FXComposer } from "@lisn/effects/fx-composer";
 /**
  * @interface
  */
-export interface EffectInterface<T extends keyof EffectRegistry> {
+export interface EffectInterface<T extends EffectType> {
   /**
    * Unique type for the effect
    */
@@ -46,7 +46,7 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
    *               before adding the current effect's state. Not all effects may
    *               implement this.
    */
-  export: (negate?: Effect<T>) => Effect<T>;
+  export: (negate?: EffectOf<T>) => EffectOf<T>;
 
   /**
    * Returns a **new live** effect that has all the handlers from this one and
@@ -59,7 +59,7 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
    * {@link Effect.isAbsolute | absolute}, all previous ones are discarded and
    * the resulting effect becomes absolute.
    */
-  toComposition: (...others: Effect<T>[]) => Effect<T>;
+  toComposition: (...others: EffectOf<T>[]) => EffectOf<T>;
 
   /**
    * Returns an object with CSS properties and their values that represent the
@@ -67,11 +67,16 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
    *
    * @param negate See {@link export}.
    */
-  toCss: (negate?: Effect<T>) => Record<string, string>;
+  toCss: (negate?: EffectOf<T>) => Record<string, string>;
 }
 
-export type Effect<T extends keyof EffectRegistry = keyof EffectRegistry> =
-  EffectRegistry[T] & EffectInterface<T>;
+export type EffectType = keyof EffectRegistry;
+
+export type EffectOf<T extends EffectType> = EffectInterface<T> &
+  EffectRegistry[T]; // specific
+export type Effect<T = unknown> = T extends EffectType
+  ? EffectOf<T>
+  : { [K in EffectType]: EffectOf<K> }[EffectType]; // any effect
 
 /**
  * An effect handler that should return a value specific to each effect and
@@ -459,10 +464,10 @@ export const getUpdatedState = (
  * @ignore
  * @internal
  */
-export type HandlerMethodMap<T extends keyof EffectRegistry> = {
-  [M in keyof Effect<T> & string]: Effect<T>[M] extends (
+export type HandlerMethodMap<T extends EffectType> = {
+  [M in keyof EffectOf<T> & string]: EffectOf<T>[M] extends (
     ...args: infer A
-  ) => Effect<T>
+  ) => EffectOf<T>
     ? A extends [FXHandler<infer R>]
       ? FXHandler<R>
       : never
@@ -473,22 +478,22 @@ export type HandlerMethodMap<T extends keyof EffectRegistry> = {
  * @ignore
  * @internal
  */
-export type HandlerMethodName<T extends keyof EffectRegistry> = {
-  [M in keyof Effect<T> & string]: Effect<T>[M] extends (
+export type HandlerMethodName<T extends EffectType> = {
+  [M in keyof EffectOf<T> & string]: EffectOf<T>[M] extends (
     ...args: infer A
-  ) => Effect<T>
+  ) => EffectOf<T>
     ? A extends [FXHandler<infer R__ignored>]
       ? M
       : never
     : never;
-}[keyof Effect<T> & string];
+}[keyof EffectOf<T> & string];
 
 /**
  * @ignore
  * @internal
  */
 export type HandlerForMethod<
-  T extends keyof EffectRegistry,
+  T extends EffectType,
   M extends keyof HandlerMethodMap<T>,
 > = HandlerMethodMap<T>[M];
 
@@ -497,29 +502,29 @@ export type HandlerForMethod<
  * @internal
  */
 export type HandlerMethodTuple<
-  T extends keyof EffectRegistry = keyof EffectRegistry,
+  T extends EffectType = EffectType,
   M extends keyof HandlerMethodMap<T> = keyof HandlerMethodMap<T>,
 > = [M, HandlerForMethod<T, M>];
 
 interface HandlersMap {
   size: number;
-  get<T extends keyof EffectRegistry>(
-    effect: Effect<T>,
+  get<T extends EffectType>(
+    effect: EffectOf<T>,
   ): HandlerMethodTuple<T>[] | undefined;
-  set<T extends keyof EffectRegistry>(
-    effect: Effect<T>,
+  set<T extends EffectType>(
+    effect: EffectOf<T>,
     handlers: HandlerMethodTuple<T>[],
   ): this;
-  has<T extends keyof EffectRegistry>(effect: Effect<T>): boolean;
-  delete<T extends keyof EffectRegistry>(effect: Effect<T>): boolean;
+  has<T extends EffectType>(effect: EffectOf<T>): boolean;
+  delete<T extends EffectType>(effect: EffectOf<T>): boolean;
   clear(): void;
-  keys(): IterableIterator<Effect>;
+  keys(): IterableIterator<EffectOf<EffectType>>;
   values(): IterableIterator<HandlerMethodTuple[]>;
-  entries<T extends keyof EffectRegistry>(): IterableIterator<
-    [Effect<T>, HandlerMethodTuple<T>[]]
+  entries<T extends EffectType>(): IterableIterator<
+    [EffectOf<T>, HandlerMethodTuple<T>[]]
   >;
-  [Symbol.iterator]<T extends keyof EffectRegistry>(): IterableIterator<
-    [Effect<T>, HandlerMethodTuple<T>[]]
+  [Symbol.iterator]<T extends EffectType>(): IterableIterator<
+    [EffectOf<T>, HandlerMethodTuple<T>[]]
   >;
 }
 
@@ -529,9 +534,7 @@ const allUserHandlersMap: HandlersMap = new Map();
  * @ignore
  * @internal
  */
-export const getHandlersFor = <T extends keyof EffectRegistry>(
-  effect: Effect<T>,
-) => {
+export const getHandlersFor = <T extends EffectType>(effect: EffectOf<T>) => {
   let handlers = allUserHandlersMap.get(effect);
   if (!handlers) {
     handlers = [];
@@ -546,10 +549,10 @@ export const getHandlersFor = <T extends keyof EffectRegistry>(
  * @internal
  */
 export const saveHandlerFor = <
-  T extends keyof EffectRegistry,
+  T extends EffectType,
   M extends keyof HandlerMethodMap<T>,
 >(
-  effect: Effect<T>,
+  effect: EffectOf<T>,
   methodName: M,
   handler: HandlerForMethod<T, M>,
 ) => {
@@ -562,10 +565,10 @@ export const saveHandlerFor = <
  * @internal
  */
 export const addHandlerTo = <
-  T extends keyof EffectRegistry,
+  T extends EffectType,
   M extends keyof HandlerMethodMap<T>,
 >(
-  effect: Effect<T>,
+  effect: EffectOf<T>,
   methodName: M,
   handler: HandlerForMethod<T, M>,
 ) => {

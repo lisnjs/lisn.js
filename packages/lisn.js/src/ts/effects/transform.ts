@@ -11,8 +11,7 @@ import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 import { sum } from "@lisn/utils/math";
 
 import {
-  Effect,
-  EffectInterface,
+  EffectOf,
   FXHandler,
   FXState,
   HandlerMethodName,
@@ -53,7 +52,7 @@ export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
  *   them to the handlers.
  * - {@link scale} and {@link skew} do not alter the parameters, ignoring depth.
  */
-export class Transform implements EffectInterface<"transform"> {
+export class Transform implements EffectOf<"transform"> {
   readonly type = "transform";
 
   /**
@@ -610,4 +609,3 @@ function createMatrix(readonly: boolean, init?: TransformLike) {
 }
 
 _.brandClass(Transform, "Transform");
-const XXX: Effect = new Transform();

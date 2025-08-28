@@ -35,6 +35,8 @@ import { createXMap } from "@lisn/modules/x-map";
 
 import {
   Effect,
+  EffectOf,
+  EffectType,
   FXAxisState,
   FXState,
   FXStateUpdate,
@@ -91,6 +93,7 @@ export class FXComposer {
    *            updated, but simply added to the composition with its current
    *            state. Only relevant when adding an {@link Effect}, otherwise it
    *            is ignored.
+   * @interface
    */
   readonly add: (
     links: Effect | FXComposer | Iterable<Effect | FXComposer>,
@@ -401,29 +404,16 @@ export class FXComposer {
 
     // ----------
 
-    const add = (
-      links: Effect | FXComposer | Iterable<Effect | FXComposer>,
-      pin?: FXPin,
-    ) => {
-      logger?.debug7("Adding links", links, pin);
-
-      const linksIter = toIterableIfNot(links);
-
-      for (let link of linksIter) {
-        if (_.isInstanceOf(link, FXComposer)) {
-          compositionChain.push([link, void 0]);
-          link.onCompose(recomposeOnOtherCompose);
-        } else {
-          link = link.toComposition(); // clone
-          compositionChain.push([link, pin]);
-        }
-
-        addToComposition(link, false);
+    const add = (link: EffectOf<EffectType> | FXComposer, pin?: FXPin) => {
+      if (_.isInstanceOf(link, FXComposer)) {
+        compositionChain.push([link, void 0]);
+        link.onCompose(recomposeOnOtherCompose);
+      } else {
+        link = link.toComposition(); // clone
+        compositionChain.push([link, pin]);
       }
 
-      invokeCallbacks(composeCallbacks);
-
-      return this;
+      addToComposition(link, false);
     };
 
     // ----------
@@ -768,7 +758,8 @@ export class FXComposer {
           link.update(_.deepCopy(currentFXState), this);
         }
 
-        currentComposition.add(link);
+        // TODO Why...
+        (currentComposition.add as (e: EffectOf<EffectType>) => void)(link);
       }
     };
 
@@ -831,7 +822,16 @@ export class FXComposer {
 
     // --------------------
 
-    this.add = add;
+    this.add = (links, pin) => {
+      logger?.debug7("Adding links", links, pin);
+
+      for (const link of toIterableIfNot(links)) {
+        add(link, pin);
+      }
+      invokeCallbacks(composeCallbacks);
+
+      return this;
+    };
 
     this.clear = clear;
     this.onClear = onClear;

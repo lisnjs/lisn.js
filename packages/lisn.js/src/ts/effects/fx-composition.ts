@@ -6,13 +6,13 @@
 
 import * as _ from "@lisn/_internal";
 
-import { Effect, EffectRegistry } from "@lisn/effects/effect";
+import { Effect, EffectOf, EffectType } from "@lisn/effects/effect";
 
 /**
  * Represents a map of effects, one per {@link Effect.type | type} that are
  * {@link Effect.toComposition | composed} together.
  */
-export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
+export class FXComposition implements Iterable<[EffectType, Effect]> {
   readonly size!: number;
 
   /**
@@ -23,7 +23,7 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
    * it discards all previous effects of the respective
    * {@link Effect.type | type}.
    */
-  readonly add: <T extends keyof EffectRegistry>(effect: Effect<T>) => this;
+  readonly add: <T extends EffectType>(effect: EffectOf<T>) => this;
 
   /**
    * Returns a new **live** copy of the composition, where each effect is
@@ -37,21 +37,19 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
    */
   readonly export: () => FXComposition;
 
-  readonly get: <T extends keyof EffectRegistry>(
-    key: T,
-  ) => Effect<T> | undefined;
+  readonly get: <T extends EffectType>(key: T) => EffectOf<T> | undefined;
 
-  readonly delete: <T extends keyof EffectRegistry>(key: T) => boolean;
+  readonly delete: <T extends EffectType>(key: T) => boolean;
   readonly clear: () => void;
 
-  readonly keys: () => IterableIterator<keyof EffectRegistry>;
-  readonly values: () => IterableIterator<Effect>;
-  readonly entries: <T extends keyof EffectRegistry>() => IterableIterator<
-    [T, Effect<T>]
+  readonly keys: () => IterableIterator<EffectType>;
+  readonly values: () => IterableIterator<EffectOf<EffectType>>;
+  readonly entries: <T extends EffectType>() => IterableIterator<
+    [T, EffectOf<T>]
   >;
-  readonly [Symbol.iterator]!: <
-    T extends keyof EffectRegistry,
-  >() => IterableIterator<[T, Effect<T>]>;
+  readonly [Symbol.iterator]!: <T extends EffectType>() => IterableIterator<
+    [T, EffectOf<T>]
+  >;
 
   constructor() {
     const map: EffectsMap = new Map();
@@ -97,17 +95,15 @@ export class FXComposition implements Iterable<[keyof EffectRegistry, Effect]> {
 
 interface EffectsMap {
   size: number;
-  get<T extends keyof EffectRegistry>(key: T): Effect<T> | undefined;
-  set<T extends keyof EffectRegistry>(key: T, value: Effect<T>): this;
-  has<T extends keyof EffectRegistry>(key: T): boolean;
-  delete<T extends keyof EffectRegistry>(key: T): boolean;
+  get<T extends EffectType>(key: T): EffectOf<T> | undefined;
+  set<T extends EffectType>(key: T, value: EffectOf<T>): this;
+  has<T extends EffectType>(key: T): boolean;
+  delete<T extends EffectType>(key: T): boolean;
   clear(): void;
-  keys(): IterableIterator<keyof EffectRegistry>;
-  values(): IterableIterator<Effect<keyof EffectRegistry>>;
-  entries<T extends keyof EffectRegistry>(): IterableIterator<[T, Effect<T>]>;
-  [Symbol.iterator]<T extends keyof EffectRegistry>(): IterableIterator<
-    [T, Effect<T>]
-  >;
+  keys(): IterableIterator<EffectType>;
+  values(): IterableIterator<EffectOf<EffectType>>;
+  entries<T extends EffectType>(): IterableIterator<[T, EffectOf<T>]>;
+  [Symbol.iterator]<T extends EffectType>(): IterableIterator<[T, EffectOf<T>]>;
 }
 
 _.brandClass(FXComposition, "FXComposition");

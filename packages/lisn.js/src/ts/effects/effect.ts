@@ -453,6 +453,130 @@ export const getUpdatedState = (
   };
 };
 
+// ----------
+
+/**
+ * @ignore
+ * @internal
+ */
+export type HandlerMethodMap<T extends keyof EffectRegistry> = {
+  [M in keyof Effect<T> & string]: Effect<T>[M] extends (
+    ...args: infer A
+  ) => Effect<T>
+    ? A extends [FXHandler<infer R>]
+      ? FXHandler<R>
+      : never
+    : never;
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export type HandlerMethodName<T extends keyof EffectRegistry> = {
+  [M in keyof Effect<T> & string]: Effect<T>[M] extends (
+    ...args: infer A
+  ) => Effect<T>
+    ? A extends [FXHandler<infer R__ignored>]
+      ? M
+      : never
+    : never;
+}[keyof Effect<T> & string];
+
+/**
+ * @ignore
+ * @internal
+ */
+export type HandlerForMethod<
+  T extends keyof EffectRegistry,
+  M extends keyof HandlerMethodMap<T>,
+> = HandlerMethodMap<T>[M];
+
+/**
+ * @ignore
+ * @internal
+ */
+export type HandlerMethodTuple<
+  T extends keyof EffectRegistry = keyof EffectRegistry,
+  M extends keyof HandlerMethodMap<T> = keyof HandlerMethodMap<T>,
+> = [M, HandlerForMethod<T, M>];
+
+interface HandlersMap {
+  size: number;
+  get<T extends keyof EffectRegistry>(
+    effect: Effect<T>,
+  ): HandlerMethodTuple<T>[] | undefined;
+  set<T extends keyof EffectRegistry>(
+    effect: Effect<T>,
+    handlers: HandlerMethodTuple<T>[],
+  ): this;
+  has<T extends keyof EffectRegistry>(effect: Effect<T>): boolean;
+  delete<T extends keyof EffectRegistry>(effect: Effect<T>): boolean;
+  clear(): void;
+  keys(): IterableIterator<Effect>;
+  values(): IterableIterator<HandlerMethodTuple[]>;
+  entries<T extends keyof EffectRegistry>(): IterableIterator<
+    [Effect<T>, HandlerMethodTuple<T>[]]
+  >;
+  [Symbol.iterator]<T extends keyof EffectRegistry>(): IterableIterator<
+    [Effect<T>, HandlerMethodTuple<T>[]]
+  >;
+}
+
+const allUserHandlersMap: HandlersMap = new Map();
+
+/**
+ * @ignore
+ * @internal
+ */
+export const getHandlersFor = <T extends keyof EffectRegistry>(
+  effect: Effect<T>,
+) => {
+  let handlers = allUserHandlersMap.get(effect);
+  if (!handlers) {
+    handlers = [];
+
+    allUserHandlersMap.set(effect, handlers);
+  }
+  return handlers;
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const saveHandlerFor = <
+  T extends keyof EffectRegistry,
+  M extends keyof HandlerMethodMap<T>,
+>(
+  effect: Effect<T>,
+  methodName: M,
+  handler: HandlerForMethod<T, M>,
+) => {
+  const handlers = getHandlersFor(effect);
+  handlers.push([methodName, handler]);
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const addHandlerTo = <
+  T extends keyof EffectRegistry,
+  M extends keyof HandlerMethodMap<T>,
+>(
+  effect: Effect<T>,
+  methodName: M,
+  handler: HandlerForMethod<T, M>,
+) => {
+  const method = effect[methodName];
+  if (_.isFunction(method)) {
+    method(handler);
+  } else {
+    throw usageError(`Method '${methodName}' is not a function.`);
+  }
+};
+
 /**
  * @ignore
  * @internal

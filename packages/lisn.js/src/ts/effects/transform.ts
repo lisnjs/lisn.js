@@ -6,21 +6,24 @@
 
 import * as _ from "@lisn/_internal";
 
-import { bugError } from "@lisn/globals/errors";
-
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
 import { sum } from "@lisn/utils/math";
 
-import { createXWeakMap } from "@lisn/modules/x-map";
-
 import {
+  Effect,
   EffectInterface,
   FXHandler,
   FXState,
+  HandlerMethodName,
+  HandlerForMethod,
+  HandlerMethodTuple,
   toParameters,
   scaleParameters,
   validateOutputParameters,
+  saveHandlerFor,
+  addHandlerTo,
+  getHandlersFor,
 } from "@lisn/effects/effect";
 
 import { FXComposer } from "@lisn/effects/fx-composer";
@@ -202,30 +205,32 @@ export class Transform implements EffectInterface<"transform"> {
       init,
       perspective: initPerspective,
     } = config ?? {};
+
     const transformers: FXHandler<void>[] = []; // not including perspective
     let perspectiveFn: FXHandler<void> | null = null;
 
     let currentPerspective: number | null | undefined = initPerspective;
-    const stateMatrix = createMatrix(false, init);
+    const matrix = createMatrix(false, init);
 
     // ----------
 
-    const addOwnHandler = <T extends HandlerTuple>(
-      original: T,
+    const addOwnHandler = <M extends HandlerMethodName<"transform">>(
+      methodName: M,
+      handler: HandlerForMethod<"transform", M>,
       fn: FXHandler<void>,
     ) => {
-      if (original[0] === PERSPECTIVE) {
+      if (methodName === "perspective") {
         perspectiveFn = fn;
       } else {
         transformers.push(fn);
       }
-      saveHandlerFor(this, original);
+      saveHandlerFor(this, methodName, handler);
     };
 
     // ----------
 
     const toMatrix = (negate?: TransformLike) => {
-      const m = createMatrix(true, stateMatrix);
+      const m = createMatrix(true, matrix);
       const relM = negate ? createMatrix(true, negate) : null;
       return relM ? relM.inverse().multiply(m) : m;
     };
@@ -235,20 +240,20 @@ export class Transform implements EffectInterface<"transform"> {
     const reset = () => {
       currentPerspective = void 0;
 
-      stateMatrix.m12 =
-        stateMatrix.m13 =
-        stateMatrix.m14 =
-        stateMatrix.m21 =
-        stateMatrix.m23 =
-        stateMatrix.m24 =
-        stateMatrix.m31 =
-        stateMatrix.m32 =
-        stateMatrix.m34 =
-        stateMatrix.m41 =
-        stateMatrix.m42 =
-        stateMatrix.m43 =
+      matrix.m12 =
+        matrix.m13 =
+        matrix.m14 =
+        matrix.m21 =
+        matrix.m23 =
+        matrix.m24 =
+        matrix.m31 =
+        matrix.m32 =
+        matrix.m34 =
+        matrix.m41 =
+        matrix.m42 =
+        matrix.m43 =
           0;
-      stateMatrix.m11 = stateMatrix.m22 = stateMatrix.m33 = stateMatrix.m44 = 1;
+      matrix.m11 = matrix.m22 = matrix.m33 = matrix.m44 = 1;
 
       return this;
     };
@@ -295,7 +300,7 @@ export class Transform implements EffectInterface<"transform"> {
       }
 
       const resultInit = new DOMMatrix();
-      const resultHandlers: HandlerTuple[] = [];
+      const resultHandlers: HandlerMethodTuple<"transform">[] = [];
       let resultPerspective: number | null | undefined = void 0;
       for (const t of toCombine) {
         const thisPerspective = t.toPerspective();
@@ -314,7 +319,7 @@ export class Transform implements EffectInterface<"transform"> {
       });
 
       for (const h of resultHandlers) {
-        addHandlerFor(composed, h);
+        addHandlerTo(composed, ...h);
       }
 
       return composed;
@@ -337,7 +342,7 @@ export class Transform implements EffectInterface<"transform"> {
     this.toFloat32Array = (negate) => toMatrix(negate).toFloat32Array();
 
     this.perspective = (handler) => {
-      addOwnHandler([PERSPECTIVE, handler], (parameters, state, composer) => {
+      addOwnHandler("perspective", handler, (parameters, state, composer) => {
         const perspective = handler(parameters, state, composer);
         if (!_.isUndefined(perspective)) {
           validateOutputParameters("Perspective", [perspective ?? 0]);
@@ -356,7 +361,7 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.translate = (handler) => {
-      addOwnHandler([TRANSLATE, handler], (parameters, state, composer) => {
+      addOwnHandler("translate", handler, (parameters, state, composer) => {
         parameters = scaleParameters(parameters, composer, (v, d) => v / d);
         const result: Partial<TranslateHandlerReturn> =
           handler(parameters, state, composer) ?? {};
@@ -365,7 +370,7 @@ export class Transform implements EffectInterface<"transform"> {
           const { x = 0, y = 0, z = 0 } = result;
 
           validateOutputParameters("Translate distance", [x, y, z]);
-          stateMatrix.translateSelf(x, y, z);
+          matrix.translateSelf(x, y, z);
         }
       });
 
@@ -373,7 +378,7 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.scale = (handler) => {
-      addOwnHandler([SCALE, handler], (parameters, state, composer) => {
+      addOwnHandler("scale", handler, (parameters, state, composer) => {
         const result: Partial<ScaleHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
@@ -382,7 +387,7 @@ export class Transform implements EffectInterface<"transform"> {
 
           validateOutputParameters("Scale factor", [sx, sy, sz], true);
           validateOutputParameters("Origin", origin);
-          stateMatrix.scaleSelf(sx, sy, sz, ...origin);
+          matrix.scaleSelf(sx, sy, sz, ...origin);
         }
       });
 
@@ -390,7 +395,7 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.skew = (handler) => {
-      addOwnHandler([SKEW, handler], (parameters, state, composer) => {
+      addOwnHandler("skew", handler, (parameters, state, composer) => {
         const result: Partial<SkewHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
@@ -398,7 +403,7 @@ export class Transform implements EffectInterface<"transform"> {
           const { deg = 0, degX = deg, degY = deg } = result;
 
           validateOutputParameters("Skew angle", [degX, degY]);
-          stateMatrix.skewXSelf(degX).skewYSelf(degY);
+          matrix.skewXSelf(degX).skewYSelf(degY);
         }
       });
 
@@ -406,7 +411,7 @@ export class Transform implements EffectInterface<"transform"> {
     };
 
     this.rotate = (handler) => {
-      addOwnHandler([ROTATE, handler], (parameters, state, composer) => {
+      addOwnHandler("rotate", handler, (parameters, state, composer) => {
         parameters = scaleParameters(parameters, composer, (v, d) => v * d);
         const result: Partial<RotateHandlerReturn> =
           handler(parameters, state, composer) ?? {};
@@ -416,12 +421,7 @@ export class Transform implements EffectInterface<"transform"> {
 
           validateOutputParameters("Rotation angle", [deg]);
           validateOutputParameters("Rotation axis", [sum(...axis)], true);
-          stateMatrix.rotateAxisAngleSelf(
-            axis[0],
-            axis[1] ?? 0,
-            axis[2] ?? 0,
-            deg,
-          );
+          matrix.rotateAxisAngleSelf(axis[0], axis[1] ?? 0, axis[2] ?? 0, deg);
         }
       });
 
@@ -594,63 +594,6 @@ declare module "@lisn/effects/effect" {
 
 // ----------------------------------------
 
-const PERSPECTIVE: unique symbol = _.SYMBOL() as typeof PERSPECTIVE;
-const TRANSLATE: unique symbol = _.SYMBOL() as typeof TRANSLATE;
-const SCALE: unique symbol = _.SYMBOL() as typeof SCALE;
-const SKEW: unique symbol = _.SYMBOL() as typeof SKEW;
-const ROTATE: unique symbol = _.SYMBOL() as typeof ROTATE;
-
-type HandlersMap = {
-  [PERSPECTIVE]: FXHandler<PerspectiveHandlerReturn>;
-  [TRANSLATE]: FXHandler<TranslateHandlerReturn>;
-  [SCALE]: FXHandler<ScaleHandlerReturn>;
-  [SKEW]: FXHandler<SkewHandlerReturn>;
-  [ROTATE]: FXHandler<RotateHandlerReturn>;
-};
-
-type HandlerTuple = {
-  [K in keyof HandlersMap]: [K, HandlersMap[K]];
-}[keyof HandlersMap];
-
-const allUserHandlersMap = createXWeakMap<Transform, HandlerTuple[]>(() => []);
-
-const getHandlersFor = (t: Transform) => allUserHandlersMap.sGet(t);
-
-const saveHandlerFor = <T extends HandlerTuple>(
-  transform: Transform,
-  tuple: T,
-) => {
-  const handlers = getHandlersFor(transform);
-  handlers.push(tuple);
-};
-
-const addHandlerFor = <T extends HandlerTuple>(
-  transform: Transform,
-  tuple: T,
-) => {
-  const [type, handler] = tuple;
-  switch (type) {
-    case PERSPECTIVE:
-      transform.perspective(handler);
-      break;
-    case TRANSLATE:
-      transform.translate(handler);
-      break;
-    case SCALE:
-      transform.scale(handler);
-      break;
-    case SKEW:
-      transform.skew(handler);
-      break;
-    case ROTATE:
-      transform.rotate(handler);
-      break;
-    default:
-      /* istanbul ignore next */
-      throw bugError("Unhandled transform effect category");
-  }
-};
-
 function createMatrix(readonly: true, init?: TransformLike): DOMMatrixReadOnly;
 function createMatrix(readonly: false, init?: TransformLike): DOMMatrix;
 function createMatrix(readonly: boolean, init?: TransformLike) {
@@ -667,3 +610,4 @@ function createMatrix(readonly: boolean, init?: TransformLike) {
 }
 
 _.brandClass(Transform, "Transform");
+const XXX: Effect = new Transform();

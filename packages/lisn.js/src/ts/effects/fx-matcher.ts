@@ -79,21 +79,21 @@ export class FXMatcher {
   /**
    * Returns true if the matcher has matched.
    */
-  matches: () => boolean;
+  readonly matches: () => boolean;
 
   /**
-   * Calls the given handler whenever the matcher's {@link isActive | state}
+   * Calls the given handler whenever the matcher's {@link matches | state}
    * changes.
    *
    * The handler is called after updating the state, such that calling
    * {@link matches} from the handler will reflect the latest state.
    */
-  onChange: (handler: FXMatcherHandler) => void;
+  readonly onChange: (handler: FXMatcherHandler) => void;
 
   /**
    * Removes a previously added {@link offChange} handler.
    */
-  offChange: (handler: FXMatcherHandler) => void;
+  readonly offChange: (handler: FXMatcherHandler) => void;
 
   constructor(executor: (store: FXMatcherStore) => void) {
     const storeData = { matches: false };
@@ -154,7 +154,7 @@ export class FXRelativeMatcher<D = unknown> extends FXMatcher {
   /**
    * Updates the matcher's internal reference data to be its current data.
    */
-  restart: () => void;
+  readonly restart: () => void;
 
   constructor(executor: (store: FXRelativeMatcherStore<D>) => void) {
     let baseStore: FXMatcherStore;

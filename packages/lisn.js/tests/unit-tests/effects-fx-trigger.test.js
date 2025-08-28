@@ -290,6 +290,7 @@ describe("FXTrigger", () => {
 
   test("pause/resume + first push after paused", async () => {
     const { trigger, push, executor } = newTrigger();
+    expect(trigger.isRunning()).toBe(true);
     expect(executor).toHaveBeenCalledTimes(1);
 
     const receivedA = [];
@@ -298,6 +299,7 @@ describe("FXTrigger", () => {
 
     startReceiver(trigger, receivedA); // before pause
     trigger.pause();
+    expect(trigger.isRunning()).toBe(false);
     startReceiver(trigger, receivedB); // after pause
 
     push("P1");
@@ -313,6 +315,7 @@ describe("FXTrigger", () => {
     }
 
     trigger.resume();
+    expect(trigger.isRunning()).toBe(true);
     startReceiver(trigger, receivedC); // after resume
 
     await window.waitFor(0);
@@ -332,6 +335,7 @@ describe("FXTrigger", () => {
 
   test("pause/resume + first push after resumed", async () => {
     const { trigger, push, executor } = newTrigger();
+    expect(trigger.isRunning()).toBe(true);
     expect(executor).toHaveBeenCalledTimes(1);
 
     const receivedA = [];
@@ -340,9 +344,11 @@ describe("FXTrigger", () => {
 
     startReceiver(trigger, receivedA); // before pause
     trigger.pause();
+    expect(trigger.isRunning()).toBe(false);
     startReceiver(trigger, receivedB); // after pause
 
     trigger.resume();
+    expect(trigger.isRunning()).toBe(true);
     startReceiver(trigger, receivedC); // after resume
 
     await window.waitFor(0);
@@ -360,12 +366,13 @@ describe("FXTrigger", () => {
     expect(executor).toHaveBeenCalledTimes(1);
   });
 
-  test("onChange/offChange", async () => {
+  test("onToggle/offToggle", async () => {
     const cbk = jest.fn();
     const { trigger, push } = newTrigger();
+    expect(trigger.isRunning()).toBe(true);
 
-    trigger.onChange(cbk);
-    trigger.onChange(cbk); // no-op
+    trigger.onToggle(cbk);
+    trigger.onToggle(cbk); // no-op
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(0);
 
@@ -378,11 +385,13 @@ describe("FXTrigger", () => {
     expect(cbk).toHaveBeenCalledTimes(0); // not called on push
 
     trigger.pause();
+    expect(trigger.isRunning()).toBe(false);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, false, trigger);
+    expect(cbk).toHaveBeenNthCalledWith(1, trigger, { isRunning: false });
 
     trigger.pause(); // no-op
+    expect(trigger.isRunning()).toBe(false);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(1);
 
@@ -395,11 +404,13 @@ describe("FXTrigger", () => {
     expect(cbk).toHaveBeenCalledTimes(1); // no new calls
 
     trigger.resume();
+    expect(trigger.isRunning()).toBe(true);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, true, trigger);
+    expect(cbk).toHaveBeenNthCalledWith(2, trigger, { isRunning: true });
 
     trigger.resume(); // no-op
+    expect(trigger.isRunning()).toBe(true);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(2);
 
@@ -415,26 +426,27 @@ describe("FXTrigger", () => {
     trigger.resume(); // +1
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(4);
-    expect(cbk).toHaveBeenNthCalledWith(3, false, trigger);
-    expect(cbk).toHaveBeenNthCalledWith(4, true, trigger);
+    expect(cbk).toHaveBeenNthCalledWith(3, trigger, { isRunning: false });
+    expect(cbk).toHaveBeenNthCalledWith(4, trigger, { isRunning: true });
 
-    trigger.offChange(cbk);
+    trigger.offToggle(cbk);
     trigger.pause();
     trigger.resume();
     trigger.pause();
     trigger.resume();
+    expect(trigger.isRunning()).toBe(true);
 
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(4); // no new calls
   });
 
-  test("onChange/offChange: callback.remove", async () => {
+  test("onToggle/offToggle: callback.remove", async () => {
     const cbkJ = jest.fn();
     const cbk = Callback.wrap(cbkJ);
     const { trigger } = newTrigger();
 
-    trigger.onChange(cbk);
-    trigger.onChange(cbk); // no-op
+    trigger.onToggle(cbk);
+    trigger.onToggle(cbk); // no-op
     cbk.remove();
 
     trigger.pause();
@@ -446,12 +458,12 @@ describe("FXTrigger", () => {
     expect(cbkJ).toHaveBeenCalledTimes(0);
   });
 
-  test("onChange/offChange: return Callback.REMOVE", async () => {
+  test("onToggle/offToggle: return Callback.REMOVE", async () => {
     const cbk = jest.fn(() => Callback.REMOVE);
     const { trigger } = newTrigger();
 
-    trigger.onChange(cbk);
-    trigger.onChange(cbk); // no-op
+    trigger.onToggle(cbk);
+    trigger.onToggle(cbk); // no-op
 
     trigger.pause();
     trigger.resume();
@@ -516,8 +528,13 @@ describe("FXScrollTrigger", () => {
 
     // ---------- stop watcher on pause
     trigger.pause();
-    await window.waitFor(0);
+    await window.waitFor(50);
     expect(window.numEventListeners.get(scrollable) || 0).toBe(0);
+
+    // ---------- restart watcher on resume
+    trigger.resume();
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(scrollable) || 0).toBeGreaterThan(0);
   });
 
   test("in FX_TRIGGER", () => {

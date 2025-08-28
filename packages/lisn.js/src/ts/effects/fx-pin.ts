@@ -56,7 +56,7 @@ export class FXPin {
   /**
    * Returns true if the pin is active.
    */
-  readonly isActive: () => boolean;
+  readonly isPinned: () => boolean;
 
   /**
    * The pin will be activated when all of the given matchers/pins match/are
@@ -87,11 +87,11 @@ export class FXPin {
   readonly while: (...matchersOrPins: Array<FXMatcher | FXPin>) => this;
 
   /**
-   * Calls the given handler whenever the pin's {@link isActive | state}
+   * Calls the given handler whenever the pin's {@link isPinned | state}
    * changes.
    *
    * The handler is called after updating the state, such that calling
-   * {@link isActive} from the handler will reflect the latest state.
+   * {@link isPinned} from the handler will reflect the latest state.
    */
   readonly onChange: (handler: FXPinHandler) => void;
 
@@ -101,7 +101,7 @@ export class FXPin {
   readonly offChange: (handler: FXPinHandler) => void;
 
   constructor() {
-    let isActive = false;
+    let isPinned = false;
     let numFulfilledLocking = 0; // number of fulfilled while conditions
     let numLocking = 0; // total number of while conditions; for testing
 
@@ -135,9 +135,9 @@ export class FXPin {
     };
 
     const setState = (activate: boolean) => {
-      if (isActive !== activate && (activate || !isLocked())) {
-        isActive = activate;
-        invokeHandlers(changeCallbacks, activate, this);
+      if (isPinned !== activate && (activate || !isLocked())) {
+        isPinned = activate;
+        invokeHandlers(changeCallbacks, this, { isPinned });
       }
     };
 
@@ -194,15 +194,12 @@ export class FXPin {
       }
     };
 
-    const onMatcherChange = createCallback(
-      (matches: boolean, matcher: FXMatcher) => {
-        const matcherConditions = conditions.get(matcher) ?? [];
-        for (const condition of matcherConditions) {
-          checkCondition(condition);
-        }
-      },
-      true,
-    );
+    const onMatcherChange = createCallback((matcher: FXMatcher) => {
+      const matcherConditions = conditions.get(matcher) ?? [];
+      for (const condition of matcherConditions) {
+        checkCondition(condition);
+      }
+    }, true);
 
     // --------------------
 
@@ -214,7 +211,7 @@ export class FXPin {
       _.remove(changeCallbacks.get(handler));
     };
 
-    this.isActive = () => isActive;
+    this.isPinned = () => isPinned;
     this.when = (...matchersOrPins) => addCondition(ACTIVATE, matchersOrPins);
     this.until = (...matchersOrPins) =>
       addCondition(DEACTIVATE, matchersOrPins);
@@ -225,10 +222,15 @@ export class FXPin {
 /**
  * The handler is invoked with two arguments:
  *
- * - `true` if the pin is now active, `false` if it's inactive.
  * - The {@link FXPin} instance.
+ * - An object containing `isPinned` boolean property, indicating the state of
+ *   the pin at the time the callback was invoked. Note that by default, unless
+ *   you pass a concurrent {@link Callback}, the handler will be invoked
+ *   asynchronously, and so the state of the pin may have changed by the
+ *   time the handler runs. If you need the know the latest state, call
+ *   {@link FXPin.isPinned | isPinned} on the pin instance.
  */
-export type FXPinHandlerArgs = [boolean, FXPin];
+export type FXPinHandlerArgs = [FXPin, { isPinned: boolean }];
 export type FXPinCallback = Callback<FXPinHandlerArgs>;
 export type FXPinHandler = FXPinCallback | CallbackHandler<FXPinHandlerArgs>;
 

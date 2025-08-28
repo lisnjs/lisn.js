@@ -28,7 +28,7 @@ import {
   CallbackHandler,
   Callback,
   createCallback,
-  invokeHandler,
+  invokeHandlers,
   addHandlerToMap,
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
@@ -685,11 +685,7 @@ export class FXComposer {
 
     const invokeCallbacks = (
       callbacks: Map<FXComposerHandler, FXComposerCallback>,
-    ) => {
-      for (const cbk of callbacks.values()) {
-        invokeHandler(cbk, this);
-      }
-    };
+    ) => invokeHandlers(callbacks, this);
 
     // ----------
 
@@ -775,7 +771,7 @@ export class FXComposer {
         logger?.debug10("Recomposing", _.deepCopy(currentFXState));
 
         for (const [link, pin] of compositionChain) {
-          addToComposition(link, pin?.isActive() ? false : updateMode);
+          addToComposition(link, pin?.isPinned() ? false : updateMode);
         }
 
         for (const [element, negatedComposer] of animatedElements) {

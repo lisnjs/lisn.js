@@ -318,8 +318,8 @@ export const createCallback = <Args extends readonly unknown[]>(
  * handler from the map when the callback is removed.
  *
  * @param defaultIsConcurrent If the handler is not a callback already, this
- *                            sets it's isConcurrent. Otherwise the wrapper will
- *                            inherit this setting.
+ *                            sets its isConcurrent. Otherwise the wrapper will
+ *                            inherit the callback's setting.
  *
  * @ignore
  * @internal

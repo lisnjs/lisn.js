@@ -19,7 +19,7 @@ const newMatcher = (executorBody) => {
 
 test("default state: no matcher", () => {
   const pin = new FXPin();
-  expect(pin.isActive()).toBe(false);
+  expect(pin.isPinned()).toBe(false);
 });
 
 describe("single matcher: when", () => {
@@ -28,42 +28,42 @@ describe("single matcher: when", () => {
     expect(matcher.matches()).toBe(false);
 
     const pin = new FXPin();
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     expect(pin.when(matcher)).toBe(pin);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(false); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true);
     expect(matcher.matches()).toBe(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     store.setState(false);
     expect(matcher.matches()).toBe(false);
     await window.waitFor(0); // callbacks are async
     // pin is still active, since the condition was one-way (turn ON)
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
   });
 
   test("match, then unmatch immediately", async () => {
     const { matcher, store } = newMatcher();
 
     const pin = new FXPin();
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     pin.when(matcher);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true);
     store.setState(false); // ignored
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
   });
 
   test("already matching", async () => {
@@ -72,21 +72,21 @@ describe("single matcher: when", () => {
     expect(matcher.matches()).toBe(true);
 
     const pin = new FXPin();
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     pin.when(matcher);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     store.setState(true); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
 
     store.setState(false);
     expect(matcher.matches()).toBe(false);
     await window.waitFor(0); // callbacks are async
     // pin is still active, since the condition was one-way (turn ON)
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
   });
 });
 
@@ -96,26 +96,26 @@ describe("single matcher: until", () => {
     expect(matcher.matches()).toBe(false);
 
     const pin = new FXPin();
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     expect(pin.until(matcher)).toBe(pin);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(false); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true);
     expect(matcher.matches()).toBe(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // already deactivated, so no change
+    expect(pin.isPinned()).toBe(false); // already deactivated, so no change
 
     store.setState(false);
     expect(matcher.matches()).toBe(false);
     await window.waitFor(0); // callbacks are async
     // pin is still not active, since the condition was one-way (turn OFF)
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
   });
 
   test("already matching", async () => {
@@ -124,21 +124,21 @@ describe("single matcher: until", () => {
     expect(matcher.matches()).toBe(true);
 
     const pin = new FXPin();
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     pin.until(matcher);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // already deactivated, so no change
+    expect(pin.isPinned()).toBe(false); // already deactivated, so no change
 
     store.setState(true); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(false);
     expect(matcher.matches()).toBe(false);
     await window.waitFor(0); // callbacks are async
     // pin is still not active, since the condition was one-way (turn OFF)
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
   });
 });
 
@@ -148,50 +148,50 @@ describe("single matcher: while", () => {
     expect(matcher.matches()).toBe(false);
 
     const pin = new FXPin();
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     expect(pin.while(matcher)).toBe(pin);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(false); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true);
     expect(matcher.matches()).toBe(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     store.setState(true); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
 
     store.setState(false);
     expect(matcher.matches()).toBe(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
 
     store.setState(true);
     expect(matcher.matches()).toBe(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
   });
 
   test("match, then unmatch immediately", async () => {
     const { matcher, store } = newMatcher();
 
     const pin = new FXPin();
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     pin.while(matcher);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true); // activates
     store.setState(false); // deactivates
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
   });
 
   test("already matching", async () => {
@@ -200,29 +200,29 @@ describe("single matcher: while", () => {
     expect(matcher.matches()).toBe(true);
 
     const pin = new FXPin();
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     pin.while(matcher);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     store.setState(true); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
 
     store.setState(false);
     expect(matcher.matches()).toBe(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
 
     store.setState(false); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true);
     expect(matcher.matches()).toBe(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
   });
 });
 
@@ -240,20 +240,20 @@ describe("multiple conditions (OR) with single matcher: when", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false);
+      expect(pin.isPinned()).toBe(false);
 
       storeA.setState(true);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeB.setState(true);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // still activate
+      expect(pin.isPinned()).toBe(true); // still activate
 
       storeA.setState(false); // ignored
       storeB.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // still activate
+      expect(pin.isPinned()).toBe(true); // still activate
     });
 
     test(`one matching already: order ${firstA ? 1 : 2}`, async () => {
@@ -269,16 +269,16 @@ describe("multiple conditions (OR) with single matcher: when", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeB.setState(true);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // still activate
+      expect(pin.isPinned()).toBe(true); // still activate
 
       storeA.setState(false); // ignored
       storeB.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // still activate
+      expect(pin.isPinned()).toBe(true); // still activate
     });
   }
 
@@ -291,12 +291,12 @@ describe("multiple conditions (OR) with single matcher: when", () => {
     const pin = new FXPin();
     pin.when(matcherA).when(matcherB);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeA.setState(false); // ignored
     storeB.setState(false); // ignored
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // still activate
+    expect(pin.isPinned()).toBe(true); // still activate
   });
 });
 
@@ -308,16 +308,16 @@ test("multiple conditions (OR) with single matcher: until", async () => {
   const pin = new FXPin();
   pin.until(matcherA).until(matcherB);
   await window.waitFor(0); // callbacks are async
-  expect(pin.isActive()).toBe(false); // already deactivated, so no change
+  expect(pin.isPinned()).toBe(false); // already deactivated, so no change
 
   storeB.setState(true);
   await window.waitFor(0); // callbacks are async
-  expect(pin.isActive()).toBe(false); // already deactivated, so no change
+  expect(pin.isPinned()).toBe(false); // already deactivated, so no change
 
   storeA.setState(false); // ignored
   storeB.setState(false); // ignored
   await window.waitFor(0); // callbacks are async
-  expect(pin.isActive()).toBe(false);
+  expect(pin.isPinned()).toBe(false);
 });
 
 describe("multiple conditions (OR) with single matcher: while", () => {
@@ -334,23 +334,23 @@ describe("multiple conditions (OR) with single matcher: while", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false);
+      expect(pin.isPinned()).toBe(false);
 
       storeA.setState(true);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeB.setState(true);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // already activated, so no change
+      expect(pin.isPinned()).toBe(true); // already activated, so no change
 
       storeA.setState(false);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // still activate, since matcherB matches
+      expect(pin.isPinned()).toBe(true); // still activate, since matcherB matches
 
       storeB.setState(false);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
     });
 
     test(`already matching: order ${firstA ? 1 : 2}`, async () => {
@@ -367,24 +367,24 @@ describe("multiple conditions (OR) with single matcher: while", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeA.setState(false);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // still activate, since matcherB matches
+      expect(pin.isPinned()).toBe(true); // still activate, since matcherB matches
 
       storeB.setState(false);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
 
       storeA.setState(false); // no-op
       storeB.setState(false); // no-op
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false);
+      expect(pin.isPinned()).toBe(false);
 
       storeA.setState(true);
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
     });
   }
 });
@@ -399,26 +399,26 @@ describe("multiple matchers (AND): when", () => {
     pin.when(matcherA, matcherB, matcherC);
 
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     storeA.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // not activated yet
+    expect(pin.isPinned()).toBe(false); // not activated yet
 
     storeC.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // not activated yet
+    expect(pin.isPinned()).toBe(false); // not activated yet
 
     storeB.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeA.setState(false);
     storeB.setState(false);
     storeC.setState(false);
     await window.waitFor(0); // callbacks are async
     // pin is still active, since the condition was one-way (turn ON)
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
   });
 
   test("match, then unmatch immediately", async () => {
@@ -431,14 +431,14 @@ describe("multiple matchers (AND): when", () => {
 
     pin.when(matcherA, matcherB);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     storeA.setState(true);
     storeA.setState(false);
     storeB.setState(true);
     storeB.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     expect(cbk).toHaveBeenCalledTimes(0); // matcherA and B not matching at the same time
 
@@ -447,7 +447,7 @@ describe("multiple matchers (AND): when", () => {
     storeA.setState(false);
     storeB.setState(false); // still active as it's one-way
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
 
     expect(cbk).toHaveBeenCalledTimes(1);
   });
@@ -463,18 +463,18 @@ describe("multiple matchers (AND): when", () => {
     pin.when(matcherA, matcherB, matcherC);
 
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // not activated yet
+    expect(pin.isPinned()).toBe(false); // not activated yet
 
     storeB.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeA.setState(false);
     storeB.setState(false);
     storeC.setState(false);
     await window.waitFor(0); // callbacks are async
     // pin is still active, since the condition was one-way (turn ON)
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
   });
 
   test("all already matching", async () => {
@@ -489,14 +489,14 @@ describe("multiple matchers (AND): when", () => {
     pin.when(matcherA, matcherB, matcherC);
 
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeA.setState(false);
     storeB.setState(false);
     storeC.setState(false);
     await window.waitFor(0); // callbacks are async
     // pin is still active, since the condition was one-way (turn ON)
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
   });
 });
 
@@ -513,7 +513,7 @@ describe("multiple matchers (AND): until", () => {
     storeB.setState(true);
     storeC.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // already deactivated, so no change
+    expect(pin.isPinned()).toBe(false); // already deactivated, so no change
   });
 
   test("all already matching", async () => {
@@ -528,7 +528,7 @@ describe("multiple matchers (AND): until", () => {
     pin.until(matcherA, matcherB, matcherC);
 
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // already deactivated, so no change
+    expect(pin.isPinned()).toBe(false); // already deactivated, so no change
   });
 });
 
@@ -542,36 +542,36 @@ describe("multiple matchers (AND): while", () => {
     pin.while(matcherA, matcherB, matcherC);
 
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     storeA.setState(true);
     storeB.setState(true);
     storeC.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeA.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
 
     storeA.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeA.setState(false);
     storeB.setState(false);
     storeC.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
 
     storeA.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // not activated yet
+    expect(pin.isPinned()).toBe(false); // not activated yet
 
     storeB.setState(true);
     storeC.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
   });
 
   test("not matching yet", async () => {
@@ -583,47 +583,47 @@ describe("multiple matchers (AND): while", () => {
     pin.while(matcherA, matcherB, matcherC);
 
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     storeA.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // not activated yet
+    expect(pin.isPinned()).toBe(false); // not activated yet
 
     storeA.setState(true); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     storeC.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // not activated yet
+    expect(pin.isPinned()).toBe(false); // not activated yet
 
     storeB.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeA.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
 
     storeB.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // already deactivated, so no change
+    expect(pin.isPinned()).toBe(false); // already deactivated, so no change
 
     storeB.setState(false); // no-op
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     storeA.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // not activated yet
+    expect(pin.isPinned()).toBe(false); // not activated yet
 
     storeB.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeC.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
   });
 
   test("match, then unmatch immediately", async () => {
@@ -636,14 +636,14 @@ describe("multiple matchers (AND): while", () => {
 
     pin.while(matcherA, matcherB);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     storeA.setState(true);
     storeA.setState(false);
     storeB.setState(true);
     storeB.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     expect(cbk).toHaveBeenCalledTimes(0); // matcherA and B not matching at the same time
 
@@ -652,7 +652,7 @@ describe("multiple matchers (AND): while", () => {
     storeA.setState(false);
     storeB.setState(false); // deactivated
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     expect(cbk).toHaveBeenCalledTimes(2);
   });
@@ -668,23 +668,23 @@ describe("multiple matchers (AND): while", () => {
     pin.while(matcherA, matcherB, matcherC);
 
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // not activated yet
+    expect(pin.isPinned()).toBe(false); // not activated yet
 
     storeB.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeA.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
 
     storeA.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeC.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
   });
 
   test("all already matching", async () => {
@@ -699,19 +699,19 @@ describe("multiple matchers (AND): while", () => {
     pin.while(matcherA, matcherB, matcherC);
 
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeB.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
 
     storeB.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(true); // activated
+    expect(pin.isPinned()).toBe(true); // activated
 
     storeC.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(pin.isPinned()).toBe(false); // deactivated
   });
 });
 
@@ -729,32 +729,32 @@ describe("mix", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false);
+      expect(pin.isPinned()).toBe(false);
 
       storeB.setState(true); // OFF trigger
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // already deactivated, so no change
+      expect(pin.isPinned()).toBe(false); // already deactivated, so no change
 
       storeA.setState(true); // ON trigger
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated, even though matcherB matches
+      expect(pin.isPinned()).toBe(true); // activated, even though matcherB matches
 
       storeB.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true);
+      expect(pin.isPinned()).toBe(true);
 
       storeB.setState(true); // OFF trigger
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated, even though matcherA matches
+      expect(pin.isPinned()).toBe(false); // deactivated, even though matcherA matches
 
       storeA.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false);
+      expect(pin.isPinned()).toBe(false);
 
       storeB.setState(false); // ignored
       storeB.setState(true); // OFF trigger
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // already deactivated, so no change
+      expect(pin.isPinned()).toBe(false); // already deactivated, so no change
 
       storeB.setState(false); // reset
 
@@ -762,17 +762,17 @@ describe("mix", () => {
       storeB.setState(true); // OFF trigger
       storeA.setState(true); // ON trigger
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeB.setState(false); // ignored
       storeA.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // no change
+      expect(pin.isPinned()).toBe(true); // no change
 
       storeA.setState(true); // ON trigger
       storeB.setState(true); // OFF trigger
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
       storeA.setState(false); // reset
       storeB.setState(false); // reset
 
@@ -780,12 +780,12 @@ describe("mix", () => {
       storeA.setState(true); // ON trigger
       storeA.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeB.setState(true); // OFF trigger
       storeB.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
     });
 
     test(`when + until (both matching): order ${firstA ? 1 : 2}`, async () => {
@@ -808,50 +808,50 @@ describe("mix", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(initialExpectedState);
+      expect(pin.isPinned()).toBe(initialExpectedState);
 
       storeA.setState(true); // no-op, since it already matches
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(initialExpectedState); // no change
+      expect(pin.isPinned()).toBe(initialExpectedState); // no change
 
       storeA.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(initialExpectedState);
+      expect(pin.isPinned()).toBe(initialExpectedState);
 
       storeB.setState(true); // no-op, since it already matches
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(initialExpectedState); // no change
+      expect(pin.isPinned()).toBe(initialExpectedState); // no change
 
       storeB.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(initialExpectedState);
+      expect(pin.isPinned()).toBe(initialExpectedState);
 
       if (initialExpectedState) {
         storeA.setState(true); // ON trigger
         await window.waitFor(0); // callbacks are async
-        expect(pin.isActive()).toBe(true); // already activate
+        expect(pin.isPinned()).toBe(true); // already activate
         storeA.setState(false); // reset, ignored
 
         storeB.setState(true); // OFF trigger
         await window.waitFor(0); // callbacks are async
-        expect(pin.isActive()).toBe(false); // deactivated
+        expect(pin.isPinned()).toBe(false); // deactivated
 
         storeA.setState(true); // ON trigger
         await window.waitFor(0); // callbacks are async
-        expect(pin.isActive()).toBe(true); // activated
+        expect(pin.isPinned()).toBe(true); // activated
       } else {
         storeB.setState(true); // OFF trigger
         await window.waitFor(0); // callbacks are async
-        expect(pin.isActive()).toBe(false); // already deactivated
+        expect(pin.isPinned()).toBe(false); // already deactivated
         storeB.setState(false); // reset, ignored
 
         storeA.setState(true); // ON trigger
         await window.waitFor(0); // callbacks are async
-        expect(pin.isActive()).toBe(true); // activated
+        expect(pin.isPinned()).toBe(true); // activated
 
         storeB.setState(true); // OFF trigger
         await window.waitFor(0); // callbacks are async
-        expect(pin.isActive()).toBe(false); // deactivated
+        expect(pin.isPinned()).toBe(false); // deactivated
       }
     });
 
@@ -870,32 +870,32 @@ describe("mix", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false);
+      expect(pin.isPinned()).toBe(false);
       expect(cbk).toHaveBeenCalledTimes(0);
 
       storeA.setState(true); // ON trigger
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true);
+      expect(pin.isPinned()).toBe(true);
       expect(cbk).toHaveBeenCalledTimes(1);
 
       storeB.setState(true); // LOCK
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // already active, so no change
+      expect(pin.isPinned()).toBe(true); // already active, so no change
       expect(cbk).toHaveBeenCalledTimes(1);
 
       storeB.setState(false); // UNLOCK and deactivate
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
       expect(cbk).toHaveBeenCalledTimes(2);
 
       storeB.setState(true); // activate and LOCK
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
       expect(cbk).toHaveBeenCalledTimes(3);
 
       storeA.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true);
+      expect(pin.isPinned()).toBe(true);
       expect(cbk).toHaveBeenCalledTimes(3);
     });
 
@@ -915,27 +915,27 @@ describe("mix", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated by when condition
+      expect(pin.isPinned()).toBe(true); // activated by when condition
       expect(cbk).toHaveBeenCalledTimes(1);
 
       storeA.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true);
+      expect(pin.isPinned()).toBe(true);
       expect(cbk).toHaveBeenCalledTimes(1);
 
       storeB.setState(true); // LOCK
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // already active, so no change
+      expect(pin.isPinned()).toBe(true); // already active, so no change
       expect(cbk).toHaveBeenCalledTimes(1);
 
       storeB.setState(false); // UNLOCK and deactivate
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
       expect(cbk).toHaveBeenCalledTimes(2);
 
       storeA.setState(true); // ON trigger
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
       expect(cbk).toHaveBeenCalledTimes(3);
     });
   }
@@ -959,30 +959,30 @@ describe("mix", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // not activated yet
+      expect(pin.isPinned()).toBe(false); // not activated yet
 
       // ---------- one at a time
       storeA.setState(true); // ON trigger
       storeA.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeB.setState(true); // OFF trigger
       storeB.setState(false); // ignored
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
 
       storeC.setState(true); // activate and LOCK
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeB.setState(true); // OFF trigger, but it's locked
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // still activated
+      expect(pin.isPinned()).toBe(true); // still activated
 
       storeC.setState(false); // UNLOCK and deactivate
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
       storeB.setState(false);
 
       // ---------- multiple at a time v1
@@ -990,11 +990,11 @@ describe("mix", () => {
       storeB.setState(true); // OFF trigger
       storeC.setState(true); // activate and LOCK
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeC.setState(false); // UNLOCK and deactivate
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
 
       storeA.setState(false); // ignored
       storeB.setState(false); // ignored
@@ -1003,12 +1003,12 @@ describe("mix", () => {
       storeC.setState(true); // activate and LOCK
       storeB.setState(true); // OFF trigger but it's locked
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
 
       storeA.setState(true); // ON trigger but already active
       storeC.setState(false); // UNLOCK and deactivate
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(false); // deactivated
+      expect(pin.isPinned()).toBe(false); // deactivated
 
       storeA.setState(false); // ignored
       storeB.setState(false); // ignored
@@ -1042,7 +1042,7 @@ describe("mix", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(initialExpectedState);
+      expect(pin.isPinned()).toBe(initialExpectedState);
     });
 
     test(`when + until + while (already matching): order ${order}`, async () => {
@@ -1064,7 +1064,7 @@ describe("mix", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
     });
 
     test(`when + until + while (all already matching): order ${order}`, async () => {
@@ -1088,7 +1088,7 @@ describe("mix", () => {
       }
 
       await window.waitFor(0); // callbacks are async
-      expect(pin.isActive()).toBe(true); // activated
+      expect(pin.isPinned()).toBe(true); // activated
     });
   }
 });
@@ -1104,18 +1104,18 @@ describe("with pin", () => {
     const pin = new FXPin();
     pin.when(triggerPin);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(triggerPin.isActive()).toBe(true);
-    expect(pin.isActive()).toBe(true); // activated
+    expect(triggerPin.isPinned()).toBe(true);
+    expect(pin.isPinned()).toBe(true); // activated
 
     store.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(triggerPin.isActive()).toBe(false);
+    expect(triggerPin.isPinned()).toBe(false);
     // pin is still active, since the condition was one-way (turn ON)
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
   });
 
   test("until", async () => {
@@ -1128,12 +1128,12 @@ describe("with pin", () => {
     const pin = new FXPin();
     pin.until(triggerPin);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(triggerPin.isActive()).toBe(true);
-    expect(pin.isActive()).toBe(false); // already deactivated, so no change
+    expect(triggerPin.isPinned()).toBe(true);
+    expect(pin.isPinned()).toBe(false); // already deactivated, so no change
   });
 
   test("while", async () => {
@@ -1146,17 +1146,17 @@ describe("with pin", () => {
     const pin = new FXPin();
     pin.while(triggerPin);
     await window.waitFor(0); // callbacks are async
-    expect(pin.isActive()).toBe(false);
+    expect(pin.isPinned()).toBe(false);
 
     store.setState(true);
     await window.waitFor(0); // callbacks are async
-    expect(triggerPin.isActive()).toBe(true);
-    expect(pin.isActive()).toBe(true); // activated
+    expect(triggerPin.isPinned()).toBe(true);
+    expect(pin.isPinned()).toBe(true); // activated
 
     store.setState(false);
     await window.waitFor(0); // callbacks are async
-    expect(triggerPin.isActive()).toBe(false);
-    expect(pin.isActive()).toBe(false); // deactivated
+    expect(triggerPin.isPinned()).toBe(false);
+    expect(pin.isPinned()).toBe(false); // deactivated
   });
 });
 
@@ -1178,7 +1178,7 @@ describe("onChange/offChange", () => {
     store.setState(true);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, true, pin);
+    expect(cbk).toHaveBeenNthCalledWith(1, pin, { isPinned: true });
 
     store.setState(true); // no-op
     await window.waitFor(0); // callbacks are async
@@ -1187,7 +1187,7 @@ describe("onChange/offChange", () => {
     store.setState(false);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, false, pin);
+    expect(cbk).toHaveBeenNthCalledWith(2, pin, { isPinned: false });
 
     store.setState(false); // no-op
     await window.waitFor(0); // callbacks are async
@@ -1196,7 +1196,7 @@ describe("onChange/offChange", () => {
     store.setState(true);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(3);
-    expect(cbk).toHaveBeenNthCalledWith(3, true, pin);
+    expect(cbk).toHaveBeenNthCalledWith(3, pin, { isPinned: true });
 
     pin.offChange(cbk);
     store.setState(true);
@@ -1226,7 +1226,7 @@ describe("onChange/offChange", () => {
     storeA.setState(true);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, true, pin);
+    expect(cbk).toHaveBeenNthCalledWith(1, pin, { isPinned: true });
 
     storeA.setState(true); // no-op
     await window.waitFor(0); // callbacks are async
@@ -1247,12 +1247,12 @@ describe("onChange/offChange", () => {
 
     storeB.setState(false); // ignored
     storeC.setState(false); // ignored
-    expect(pin.isActive()).toBe(true);
+    expect(pin.isPinned()).toBe(true);
 
     storeA.setState(false);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, false, pin);
+    expect(cbk).toHaveBeenNthCalledWith(2, pin, { isPinned: false });
 
     // -----
 
@@ -1268,19 +1268,19 @@ describe("onChange/offChange", () => {
     storeC.setState(true);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(3);
-    expect(cbk).toHaveBeenNthCalledWith(3, true, pin);
+    expect(cbk).toHaveBeenNthCalledWith(3, pin, { isPinned: true });
 
     storeD.setState(true);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(4);
-    expect(cbk).toHaveBeenNthCalledWith(4, false, pin);
+    expect(cbk).toHaveBeenNthCalledWith(4, pin, { isPinned: false });
 
     storeA.setState(true);
     storeB.setState(true);
     storeC.setState(true);
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(5);
-    expect(cbk).toHaveBeenNthCalledWith(5, true, pin);
+    expect(cbk).toHaveBeenNthCalledWith(5, pin, { isPinned: true });
 
     pin.offChange(cbk);
     storeA.setState(false);

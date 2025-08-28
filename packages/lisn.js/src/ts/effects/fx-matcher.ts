@@ -4,8 +4,6 @@
  * @since v1.3.0
  */
 
-// XXX TODO ability to disable/pause matchers
-
 import * as _ from "@lisn/_internal";
 
 import { usageError } from "@lisn/globals/errors";
@@ -34,7 +32,11 @@ import { FXState } from "@lisn/effects/effect";
 import { FXComposer } from "@lisn/effects/fx-composer";
 import { FXPin } from "@lisn/effects/fx-pin";
 
-import { ScrollWatcher, ScrollData } from "@lisn/watchers/scroll-watcher";
+import {
+  ScrollWatcher,
+  ScrollData,
+  OnScrollHandler,
+} from "@lisn/watchers/scroll-watcher";
 import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
 
 // -------------------------------------------------------------------------
@@ -46,6 +48,7 @@ import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
  */
 export const FX_MATCH = {
   negate: (matcher: FXMatcher) => new FXNegateMatcher(matcher),
+  pin: (pin: FXPin) => new FXPinMatcher(pin),
   composer: (bounds: FXComposerMatcherBounds, composer: FXComposer) =>
     new FXComposerMatcher(bounds, composer),
   scroll: (bounds: FXScrollMatcherBounds, scrollable?: ScrollTarget) =>
@@ -55,7 +58,6 @@ export const FX_MATCH = {
     viewTarget: ViewTarget,
     config?: ViewWatcherConfig,
   ) => new FXViewMatcher(views, viewTarget, config),
-  pin: (pin: FXPin) => new FXPinMatcher(pin),
 } as const;
 
 // -------------------------------------------------------------------------
@@ -68,12 +70,6 @@ export const FX_MATCH = {
  * to subclass it when defining your own matcher types.
  *
  * There are built-in matchers in {@link FX_MATCH}.
- *
- * @param executor A function which accepts a {@link FXMatcherStore}. The
- *                 executor is responsible for calling
- *                 {@link FXMatcherStore.setState | store.setState} whenever
- *                 it's state changes. It will be called inside the class
- *                 constructor with `this` set to the newly created matcher.
  */
 export class FXMatcher {
   /**
@@ -82,8 +78,26 @@ export class FXMatcher {
   readonly matches: () => boolean;
 
   /**
-   * Calls the given handler whenever the matcher's {@link matches | state}
-   * changes.
+   * Returns true if the matcher is running (not paused).
+   */
+  readonly isRunning: () => boolean;
+
+  /**
+   * Pauses the matcher. It will not change its {@link matches} state until
+   * resumed.
+   */
+  readonly pause: () => void;
+
+  /**
+   * Resumes the matcher. If the state was internally updated while paused, the
+   * new value will now be available via {@link matches} and the {@link onChange}
+   * handlers will be called.
+   */
+  readonly resume: () => void;
+
+  /**
+   * Calls the given handler whenever the matcher's
+   * {@link matches | matching state} changes.
    *
    * The handler is called after updating the state, such that calling
    * {@link matches} from the handler will reflect the latest state.
@@ -95,28 +109,86 @@ export class FXMatcher {
    */
   readonly offChange: (handler: FXMatcherHandler) => void;
 
+  /**
+   * Calls the given handler whenever the matcher's
+   * {@link isRunning | active state} changes.
+   *
+   * The handler is called after pausing or resuming the matcher, such that
+   * calling {@link isRunning} from the handler will reflect the latest state.
+   */
+  readonly onToggle: (handler: FXMatcherHandler) => void;
+
+  /**
+   * Removes a previously added {@link onToggle} handler.
+   */
+  readonly offToggle: (handler: FXMatcherHandler) => void;
+
+  /**
+   * @param executor A function which accepts a {@link FXMatcherStore}. The
+   *                 executor is responsible for calling
+   *                 {@link FXMatcherStore.setState | store.setState} whenever
+   *                 it's state changes. It is also the responsibility for the
+   *                 executor to set up an {@link onToggle} handler and pause
+   *                 its monitoring when the matcher is paused. It will be
+   *                 called inside the class constructor with `this` set to the
+   *                 newly created matcher.
+   */
   constructor(executor: (store: FXMatcherStore) => void) {
+    let isRunning = true;
+    let lastChangeWhilePaused: boolean | null = null;
+
     const storeData = { matches: false };
 
     const store: FXMatcherStore = {
       getState: () => storeData.matches,
       setState: (m) => {
-        if (!_.isBoolean(m)) {
-          throw usageError("Matcher state must be a boolean");
-        }
+        if (isRunning) {
+          if (!_.isBoolean(m)) {
+            throw usageError("Matcher state must be a boolean");
+          }
 
-        if (storeData.matches !== m) {
-          storeData.matches = m;
-          invokeHandlers(changeCallbacks, m, this);
+          if (storeData.matches !== m) {
+            storeData.matches = m;
+            invokeCallbacks(changeCallbacks);
+          }
+        } else {
+          lastChangeWhilePaused = m;
         }
       },
     };
 
     const changeCallbacks = _.createMap<FXMatcherHandler, FXMatcherCallback>();
+    const toggleCallbacks = _.createMap<FXMatcherHandler, FXMatcherCallback>();
+
+    // ----------
+
+    const invokeCallbacks = (
+      callbacks: Map<FXMatcherHandler, FXMatcherCallback>,
+    ) =>
+      invokeHandlers(callbacks, this, {
+        matches: storeData.matches,
+        isRunning,
+      });
+
+    const setRunningState = (activate: boolean) => {
+      if (isRunning !== activate) {
+        isRunning = activate;
+
+        if (activate && !_.isNull(lastChangeWhilePaused)) {
+          store.setState(lastChangeWhilePaused);
+          lastChangeWhilePaused = null;
+        }
+
+        invokeCallbacks(toggleCallbacks);
+      }
+    };
 
     // --------------------
 
     this.matches = () => storeData.matches;
+    this.isRunning = () => isRunning;
+    this.pause = () => setRunningState(false);
+    this.resume = () => setRunningState(true);
 
     this.onChange = (handler) => {
       addHandlerToMap(handler, changeCallbacks);
@@ -124,6 +196,14 @@ export class FXMatcher {
 
     this.offChange = (handler) => {
       _.remove(changeCallbacks.get(handler));
+    };
+
+    this.onToggle = (handler) => {
+      addHandlerToMap(handler, toggleCallbacks);
+    };
+
+    this.offToggle = (handler) => {
+      _.remove(toggleCallbacks.get(handler));
     };
 
     // --------------------
@@ -194,12 +274,18 @@ export class FXRelativeMatcher<D = unknown> extends FXMatcher {
 /**
  * The handler is invoked with two arguments:
  *
- * - `true` if the matcher matches, `false` otherwise.
  * - The {@link FXMatcher} instance.
+ * - An object containing `matches` and `isRunning` boolean properties,
+ *   indicating the state of the matcher at the time the callback was invoked.
+ *   Note that by default, unless you pass a concurrent {@link Callback}, the
+ *   handler will be invoked asynchronously, and so the state of the matcher may
+ *   have changed by the time the handler runs. If you need the know the latest
+ *   states, call {@link FXMatcher.isRunning | isRunning} and
+ *   {@link FXMatcher.matches | matches} on the matcher instance.
  */
 export type FXMatcherHandlerArgs<T extends FXMatcher = FXMatcher> = [
-  boolean,
   T,
+  { matches: boolean; isRunning: boolean },
 ];
 export type FXMatcherCallback<T extends FXMatcher = FXMatcher> = Callback<
   FXMatcherHandlerArgs<T>
@@ -267,7 +353,30 @@ export class FXNegateMatcher extends FXMatcher {
   constructor(matcher: FXMatcher) {
     const executor = (store: FXMatcherStore) => {
       store.setState(!matcher.matches());
-      matcher.onChange(createCallback((state) => store.setState(!state), true));
+      // No point in removing callback on pause; parent won't update state
+      // anyway
+      matcher.onChange(
+        createCallback((m, { matches }) => store.setState(!matches), true),
+      );
+    };
+    super(executor);
+  }
+}
+
+// --------------------------------- PIN -----------------------------------
+
+/**
+ * Matches while the given pin is active.
+ */
+export class FXPinMatcher extends FXMatcher {
+  constructor(pin: FXPin) {
+    const executor = (store: FXMatcherStore) => {
+      store.setState(pin.isPinned());
+      // No point in removing callback on pause; parent won't update state
+      // anyway
+      pin.onChange(
+        createCallback((p, { isPinned }) => store.setState(isPinned), true),
+      );
     };
     super(executor);
   }
@@ -301,8 +410,18 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
       );
     }
 
+    let updateData: Callback;
+
+    const addOrRemoveCallback = () => {
+      if (this.isRunning()) {
+        composer.onTween(updateData);
+      } else {
+        composer.offTween(updateData);
+      }
+    };
+
     const executor = (store: FXRelativeMatcherStore<FXState>) => {
-      const updateData = () => {
+      updateData = createCallback(() => {
         const fxState = composer.getState();
         store.setData(fxState);
 
@@ -310,16 +429,18 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
         // setData also sets the reference, but TypeScript doesn't know that
         const refData = store.getReferenceData() ?? fxState;
         store.setState(areAxesWithinBounds(bounds, fxState, refData));
-      };
+      }, true);
 
-      updateData(); // check initial state
-      composer.onTween(createCallback(updateData, true));
+      updateData.invoke(); // check initial state
 
       // Recheck if within bounds on restart
-      store.restartCallback = updateData;
+      store.restartCallback = updateData.invoke;
     };
 
     super(executor);
+
+    this.onToggle(addOrRemoveCallback);
+    addOrRemoveCallback();
   }
 }
 
@@ -405,10 +526,26 @@ export class FXScrollMatcher extends FXRelativeMatcher<
 
     const scrollWatcher = ScrollWatcher.reuse();
 
+    let updateData: (data?: FXPinAllAxesData<"top" | "left">) => void;
+
+    const watcherHandler: OnScrollHandler = (e, scrollData) =>
+      updateData(scrollToAxesData(scrollData));
+
+    const addOrRemoveWatcher = () => {
+      if (this.isRunning()) {
+        scrollWatcher.trackScroll(
+          watcherHandler,
+          _.fastWatcherConf({ scrollable }),
+        );
+      } else {
+        scrollWatcher.noTrackScroll(watcherHandler, scrollable);
+      }
+    };
+
     const executor = (
       store: FXRelativeMatcherStore<FXPinAllAxesData<"top" | "left">>,
     ) => {
-      const updateData = (data?: FXPinAllAxesData<"top" | "left">) => {
+      updateData = (data) => {
         if (data) {
           store.setData(data);
         } else {
@@ -423,13 +560,6 @@ export class FXScrollMatcher extends FXRelativeMatcher<
         }
       };
 
-      scrollWatcher.trackScroll(
-        (e, scrollData) => updateData(scrollToAxesData(scrollData)),
-        _.fastWatcherConf({
-          scrollable,
-        }),
-      );
-
       // ScrollWatcher will soon call us with initial state, asynchronously
 
       // Recheck if within bounds on restart
@@ -437,6 +567,8 @@ export class FXScrollMatcher extends FXRelativeMatcher<
     };
 
     super(executor);
+    this.onToggle(addOrRemoveWatcher);
+    addOrRemoveWatcher();
   }
 }
 
@@ -514,29 +646,29 @@ export class FXViewMatcher extends FXMatcher {
 
     const viewWatcher = ViewWatcher.reuse(config);
 
+    let matchHandler: () => void;
+    let noMatchHandler: () => void;
+
+    const addOrRemoveWatcher = () => {
+      if (this.isRunning()) {
+        viewWatcher.onView(viewTarget, matchHandler, { views });
+        viewWatcher.onView(viewTarget, noMatchHandler, {
+          views: oppositeViews,
+        });
+      } else {
+        viewWatcher.offView(viewTarget, matchHandler);
+        viewWatcher.offView(viewTarget, noMatchHandler);
+      }
+    };
+
     const executor = (store: FXMatcherStore) => {
-      viewWatcher.onView(viewTarget, () => store.setState(true), { views });
-      viewWatcher.onView(viewTarget, () => store.setState(false), {
-        views: oppositeViews,
-      });
+      matchHandler = () => store.setState(true);
+      noMatchHandler = () => store.setState(false);
     };
 
     super(executor);
-  }
-}
-
-// --------------------------------- PIN -----------------------------------
-
-/**
- * Matches while the given pin is active.
- */
-export class FXPinMatcher extends FXMatcher {
-  constructor(pin: FXPin) {
-    const executor = (store: FXMatcherStore) => {
-      store.setState(pin.isActive());
-      pin.onChange(createCallback((state) => store.setState(state), true));
-    };
-    super(executor);
+    this.onToggle(addOrRemoveWatcher);
+    addOrRemoveWatcher();
   }
 }
 

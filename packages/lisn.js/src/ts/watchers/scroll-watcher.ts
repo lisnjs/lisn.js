@@ -21,6 +21,7 @@ import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { getMaxDeltaDirection } from "@lisn/utils/directions";
 import { moveElement, tryWrapContent } from "@lisn/utils/dom-alter";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
+import { isNodeBAfterA } from "@lisn/utils/dom-query";
 import {
   addEventListenerTo,
   removeEventListenerFrom,
@@ -601,9 +602,13 @@ export class ScrollWatcher {
           if (wrapper) {
             // Move this child into the wrapper. If this results in change of size
             // for wrapper, SizeWatcher will call us.
-            moveElement(child, { to: wrapper, ignoreMove: true });
+            moveElement(child, {
+              to: wrapper,
+              position: isNodeBAfterA(wrapper, child) ? "append" : "prepend",
+              ignoreMove: true,
+            });
           } else {
-            // Track the size of this child.
+            // We weren't allowed to wrap, so track the size of this child.
             // Don't skip initial, call the callback now
             setupOnResize(child);
             observedElements.add(child);

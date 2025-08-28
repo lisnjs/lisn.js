@@ -56,8 +56,8 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
    * Calling this with no arguments essentially clones the effect.
    *
    * **NOTE:** If any of the given effects is
-   * {@link Effect.isAbsolute | absolute}, all previous ones are essentially
-   * discarded and the resulting effect becomes absolute.
+   * {@link Effect.isAbsolute | absolute}, all previous ones are discarded and
+   * the resulting effect becomes absolute.
    */
   toComposition: (...others: Effect<T>[]) => Effect<T>;
 
@@ -73,11 +73,17 @@ export interface EffectInterface<T extends keyof EffectRegistry> {
 export type Effect<T extends keyof EffectRegistry = keyof EffectRegistry> =
   EffectRegistry[T] & EffectInterface<T>;
 
+/**
+ * An effect handler that should return a value specific to each effect and
+ * sub-type (e.g. translate sub-type part of transform).
+ *
+ * Returning `undefined` should leave the current value unchanged.
+ */
 export type FXHandler<R> = (
   parameters: FXParams,
   state: FXState,
   composer: FXComposer,
-) => R;
+) => R | undefined;
 
 /**
  * The parameters for the current animation frame that {@link FXHandler}s should

@@ -43,7 +43,7 @@ export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
  * once, i.e. subsequent calls to {@link perspective} always override previous
  * perspective handlers.
  *
- * {@link Transform} supports parallax depth as follows:
+ * {@link Transform} supports negation. It also supports parallax depth as follows:
  * - {@link translate} will divide the parameters by the depth before passing
  *   them to the handlers.
  * - {@link rotate} will multiply the parameters by the depth before passing
@@ -69,8 +69,8 @@ export class Transform implements EffectInterface<"transform"> {
    * Updates the transform as per the given state.
    *
    * @throws {@link Errors.LisnUsageError | LisnUsageError}
-   *                If any of the values returned by the {@link FXHandler}
-   *                s is invalid.
+   *                If any of the values returned by the {@link FXHandler}s
+   *                is invalid.
    */
   readonly update: (state: FXState, composer: FXComposer) => this;
 
@@ -96,7 +96,7 @@ export class Transform implements EffectInterface<"transform"> {
    *
    * **NOTE:** If any of the given transforms is
    * {@link TransformConfig.isAbsolute | absolute}, all previous ones are
-   * essentially discarded and the resulting transform becomes absolute.
+   * discarded and the resulting transform becomes absolute.
    *
    * @returns **A new** {@link Transform} instance with all the same handlers as
    * this one.
@@ -433,149 +433,125 @@ export class Transform implements EffectInterface<"transform"> {
 /**
  * Should return the perspective as a number in pixels.
  *
- * If {@link TransformConfig.isAbsolute} is `false` (default), the return value
- * is taken as a change in the current perspective. Otherwise the return value
- * overrides the perspective.
- *
  * Returning `null` clears the perspective completely even if the transform is
  * not absolute.
- *
- * Returning `undefined` does nothing (leaves the perspective unchanged).
- *
- * @defaultValue undefined
  */
-export type PerspectiveHandlerReturn = number | null | undefined;
+export type PerspectiveHandlerReturn = number | null;
 
 /**
  * Should return the translation distances along one or more axes.
- *
- * Returning `undefined` does nothing (leaves the transform unchanged).
  */
-export type TranslateHandlerReturn =
-  | AtLeastOne<{
-      /**
-       * The translation distance in pixels along the X-axis.
-       *
-       * @defaultValue 0
-       */
-      x: number;
+export type TranslateHandlerReturn = AtLeastOne<{
+  /**
+   * The translation distance in pixels along the X-axis.
+   *
+   * @defaultValue 0
+   */
+  x: number;
 
-      /**
-       * The translation distance in pixels along the Y-axis.
-       *
-       * @defaultValue 0
-       */
-      y: number;
+  /**
+   * The translation distance in pixels along the Y-axis.
+   *
+   * @defaultValue 0
+   */
+  y: number;
 
-      /**
-       * The translation distance in pixels along the Z-axis.
-       *
-       * @defaultValue 0
-       */
-      z: number;
-    }>
-  | undefined;
+  /**
+   * The translation distance in pixels along the Z-axis.
+   *
+   * @defaultValue 0
+   */
+  z: number;
+}>;
 
 /**
  * Should return the scaling factor along one or more axes.
- *
- * Returning `undefined` does nothing (leaves the transform unchanged).
  */
-export type ScaleHandlerReturn =
-  | (AtLeastOne<{
-      /**
-       * The default scaling factor for any axis if not overridden by {@link sx},
-       * {@link sy} or {@link sz}. This would result in all three axes being
-       * scaled.
-       *
-       * @defaultValue 1
-       */
-      s: number;
+export type ScaleHandlerReturn = AtLeastOne<{
+  /**
+   * The default scaling factor for any axis if not overridden by {@link sx},
+   * {@link sy} or {@link sz}. This would result in all three axes being
+   * scaled.
+   *
+   * @defaultValue 1
+   */
+  s: number;
 
-      /**
-       * The translation distance in pixels along the X-axis.
-       *
-       * @defaultValue {@link s}
-       */
-      sx: number;
+  /**
+   * The translation distance in pixels along the X-axis.
+   *
+   * @defaultValue {@link s}
+   */
+  sx: number;
 
-      /**
-       * The translation distance in pixels along the Y-axis.
-       *
-       * @defaultValue {@link s}
-       */
-      sy: number;
+  /**
+   * The translation distance in pixels along the Y-axis.
+   *
+   * @defaultValue {@link s}
+   */
+  sy: number;
 
-      /**
-       * The translation distance in pixels along the Z-axis.
-       *
-       * @defaultValue {@link s}
-       */
-      sz: number;
-    }> & {
-      /**
-       * The transform origin.
-       *
-       * @defaultValue [0,0,0]
-       */
-      origin?: Origin;
-    })
-  | undefined;
+  /**
+   * The translation distance in pixels along the Z-axis.
+   *
+   * @defaultValue {@link s}
+   */
+  sz: number;
+}> & {
+  /**
+   * The transform origin.
+   *
+   * @defaultValue [0,0,0]
+   */
+  origin?: Origin;
+};
 
 /**
  * Should return the skewing angle along one or more axes.
  *
  * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
  * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
- *
- * Returning `undefined` does nothing (leaves the transform unchanged).
  */
-export type SkewHandlerReturn =
-  | AtLeastOne<{
-      /**
-       * The skewing angle in degrees for either axis if not overridden by
-       * {@link degX} or {@link degY}. This would result in both axes being skewed.
-       *
-       * @defaultValue 0
-       */
-      deg: number;
+export type SkewHandlerReturn = AtLeastOne<{
+  /**
+   * The skewing angle in degrees for either axis if not overridden by
+   * {@link degX} or {@link degY}. This would result in both axes being skewed.
+   *
+   * @defaultValue 0
+   */
+  deg: number;
 
-      /**
-       * The skewing angle in degrees along the X-axis.
-       *
-       * @defaultValue {@link deg}
-       */
-      degX: number;
+  /**
+   * The skewing angle in degrees along the X-axis.
+   *
+   * @defaultValue {@link deg}
+   */
+  degX: number;
 
-      /**
-       * The skewing angle in degrees along the Y-axis.
-       *
-       * @defaultValue {@link deg}
-       */
-      degY: number;
-    }>
-  | undefined;
+  /**
+   * The skewing angle in degrees along the Y-axis.
+   *
+   * @defaultValue {@link deg}
+   */
+  degY: number;
+}>;
 
 /**
  * Should return the rotation angle and axis of rotation.
- *
- * Returning `undefined` does nothing (leaves the transform unchanged).
  */
-export type RotateHandlerReturn =
-  | {
-      /**
-       * The angle in degrees to rotate.
-       */
-      deg: number;
+export type RotateHandlerReturn = {
+  /**
+   * The angle in degrees to rotate.
+   */
+  deg: number;
 
-      /**
-       * The axis of rotation.
-       *
-       * @defaultValue [0,0,1] // The Z-axis
-       */
-      axis?: Axis;
-    }
-  | undefined;
+  /**
+   * The axis of rotation.
+   *
+   * @defaultValue [0,0,1] // The Z-axis
+   */
+  axis?: Axis;
+};
 
 export type TransformConfig = {
   /**

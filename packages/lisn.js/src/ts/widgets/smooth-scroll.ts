@@ -2,7 +2,7 @@
  * @module Widgets
  */
 
-// XXX TODO more effect types: opacity, color, background-color, filters, svg stroke, etc, and custom props
+// XXX TODO more effect types: color, background-color, svg stroke
 // for svg stroke, see svg.getTotalLength, stroke-dasharray and stroke-offset
 
 import * as _ from "@lisn/_internal";
@@ -39,7 +39,7 @@ import {
 } from "@lisn/utils/dom-optimize";
 import { isNodeBAfterA } from "@lisn/utils/dom-query";
 import { logError } from "@lisn/utils/log";
-import { isValidNum, toNumWithBounds } from "@lisn/utils/math";
+import { isValidNum } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { Tweener } from "@lisn/utils/tween";
 import {

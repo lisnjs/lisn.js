@@ -39,7 +39,7 @@ import {
 } from "@lisn/utils/dom-optimize";
 import { isNodeBAfterA } from "@lisn/utils/dom-query";
 import { logError } from "@lisn/utils/log";
-import { isValidNum, toNumWithBounds, toRawNum } from "@lisn/utils/math";
+import { isValidNum, toNumWithBounds } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { Tweener } from "@lisn/utils/tween";
 import {
@@ -476,10 +476,10 @@ const ONLY_HTML_ELEMENT_ERR = usageError(
 );
 
 type SmoothScrollLayerState = {
-  _lagX: number;
-  _lagY: number;
-  _depthX: number | "auto";
-  _depthY: number | "auto";
+  _lagX: RawOrRelativeNumber;
+  _lagY: RawOrRelativeNumber;
+  _depthX: RawOrRelativeNumber | "auto";
+  _depthY: RawOrRelativeNumber | "auto";
   _composer: FXComposer;
   _children: Set<Element>;
   _parentState: SmoothScrollLayerState | null;
@@ -488,6 +488,9 @@ type SmoothScrollLayerState = {
 };
 
 let mainWidget: SmoothScroll | null = null;
+
+const validateDepth = (key: string, value: unknown) =>
+  value === _.S_AUTO ? value : validateRawOrRelativeNumber(key, value);
 
 // For HTML API only
 const configValidator: WidgetConfigValidatorObject<SmoothScrollConfig> = {
@@ -502,9 +505,9 @@ const layerConfigValidator: WidgetConfigValidatorObject<SmoothScrollLayerConfig>
     lag: validateRawOrRelativeNumber,
     lagX: validateRawOrRelativeNumber,
     lagY: validateRawOrRelativeNumber,
-    depth: validateRawOrRelativeNumber,
-    depthX: validateRawOrRelativeNumber,
-    depthY: validateRawOrRelativeNumber,
+    depth: validateDepth,
+    depthX: validateDepth,
+    depthY: validateDepth,
   };
 
 const stateUsesAutoDepth = (state: SmoothScrollLayerState) =>
@@ -514,20 +517,6 @@ const toScrollable = (scrollable: HTMLElement) =>
   scrollable === _.getDocElement() || scrollable === _.getBody()
     ? getDefaultScrollingElement()
     : scrollable;
-
-const toDepth = (depth: unknown, parentDepth: number | "auto") => {
-  depth ??= parentDepth;
-  if (depth === _.S_AUTO) {
-    return depth;
-  }
-
-  const reference = parentDepth === _.S_AUTO ? 1 : parentDepth;
-  return toNumWithBounds(
-    toRawNum(depth, reference, reference),
-    { min: 0.01 },
-    1,
-  );
-};
 
 const isRootLayer = (scrollable: HTMLElement, layer: Element) =>
   layer === _.getDocElement() || layer === _.getBody()
@@ -559,8 +548,6 @@ const getLayersFrom = (
   // map will include the root scrollable
   const layerMap = _.createMap<Element, SmoothScrollLayerState>();
   const defaultLag = rootConfig?.lag ?? settings.effectLag;
-  const defaultLagX = rootConfig?.lagX ?? defaultLag;
-  const defaultLagY = rootConfig?.lagY ?? defaultLag;
 
   const createComposer = (
     useDefaultEffects: boolean,
@@ -619,23 +606,14 @@ const getLayersFrom = (
         parentState._children.add(layer);
       }
 
-      const parentLagX = parentState?._lagX ?? defaultLagX;
-      const parentLagY = parentState?._lagY ?? defaultLagY;
-      const parentDepthX = parentState?._depthX ?? 1;
-      const parentDepthY = parentState?._depthY ?? 1;
-
-      const lagX = toRawNum(
-        config?.lagX ?? config?.lag,
-        parentLagX,
-        parentLagX,
-      );
-      const lagY = toRawNum(
-        config?.lagY ?? config?.lag,
-        parentLagY,
-        parentLagY,
-      );
-      const depthX = toDepth(config?.depthX ?? config?.depth, parentDepthX);
-      const depthY = toDepth(config?.depthY ?? config?.depth, parentDepthY);
+      const lagX =
+        config?.lagX ?? config?.lag ?? parentState?._lagX ?? defaultLag;
+      const lagY =
+        config?.lagY ?? config?.lag ?? parentState?._lagY ?? defaultLag;
+      const depthX =
+        config?.depthX ?? config?.depth ?? parentState?._depthX ?? 1;
+      const depthY =
+        config?.depthY ?? config?.depth ?? parentState?._depthY ?? 1;
       const useDefaultEffects =
         config?.defaultEffects ?? rootConfig?.defaultEffects ?? true;
 
@@ -882,13 +860,28 @@ const init = async (
 
     const rootScrollData = rootState._scrollData;
     const layerSize = state._sizeData;
-    /* istanbul ignore next */
     if (!rootScrollData || !layerSize) {
-      throw bugError("No size data saved for root or layer");
+      return; // watchers haven't called us yet
     }
 
-    const depthX = rootScrollData[_.S_SCROLL_WIDTH] / layerSize[_.S_WIDTH];
-    const depthY = rootScrollData[_.S_SCROLL_HEIGHT] / layerSize[_.S_HEIGHT];
+    const maxScrollLeft =
+      rootScrollData[_.S_SCROLL_WIDTH] - rootScrollData[_.S_CLIENT_WIDTH];
+    const maxScrollTop =
+      rootScrollData[_.S_SCROLL_HEIGHT] - rootScrollData[_.S_CLIENT_HEIGHT];
+
+    const maxLayerLeft =
+      layerSize[_.S_WIDTH] - rootScrollData[_.S_CLIENT_WIDTH];
+    const maxLayerTop =
+      layerSize[_.S_HEIGHT] - rootScrollData[_.S_CLIENT_HEIGHT];
+
+    // If it's smaller than the viewport, keep it fixed
+    const depthX =
+      maxLayerLeft <= 0
+        ? _.NUMBER.MAX_SAFE_INTEGER
+        : maxScrollLeft / maxLayerLeft;
+    const depthY =
+      maxLayerTop <= 0 ? _.NUMBER.MAX_SAFE_INTEGER : maxScrollTop / maxLayerTop;
+
     state._composer.setDepth({ depthX, depthY });
   };
 

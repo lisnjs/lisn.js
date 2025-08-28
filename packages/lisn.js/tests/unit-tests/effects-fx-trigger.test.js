@@ -482,13 +482,13 @@ describe("FXScrollTrigger", () => {
       expect(data).toEqual({
         x: {
           low: 0,
-          high: window.SCROLL_WIDTH,
+          high: window.SCROLL_WIDTH - window.CLIENT_WIDTH,
           target: scrollLeft,
           snap,
         },
         y: {
           low: 0,
-          high: window.SCROLL_HEIGHT,
+          high: window.SCROLL_HEIGHT - window.CLIENT_HEIGHT,
           target: scrollTop,
           snap,
         },

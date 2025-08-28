@@ -231,13 +231,13 @@ export class FXScrollTrigger extends FXTrigger {
         push({
           x: {
             low: 0,
-            high: scrollData[_.S_SCROLL_WIDTH],
+            high: scrollData[_.S_SCROLL_WIDTH] - scrollData[_.S_CLIENT_WIDTH],
             target: scrollData[_.S_SCROLL_LEFT],
             snap: shouldSnap,
           },
           y: {
             low: 0,
-            high: scrollData[_.S_SCROLL_HEIGHT],
+            high: scrollData[_.S_SCROLL_HEIGHT] - scrollData[_.S_CLIENT_HEIGHT],
             target: scrollData[_.S_SCROLL_TOP],
             snap: shouldSnap,
           },

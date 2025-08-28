@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.link.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <script charset="utf-8">
+      LISN.widgets.SmoothScroll.enableMain();
+    </script>
+    <link
+      rel="stylesheet"
+      href="assets/lisn/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .container {
+        min-width: 900px;
+      }
+
+      .section {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        padding: 2vh 0;
+        gap: 2vw;
+      }
+
+      .box {
+        background: blue;
+        flex-grow: 1;
+        height: 200px;
+      }
+
+      .box:nth-child(odd) {
+        background: yellow;
+        height: 300px;
+      }
+
+      .parallax-bg {
+        position: absolute;
+        z-index: -1;
+      }
+
+      .parallax-bg img {
+        width: 150vw;
+        height: 130vh;
+        object-fit: cover;
+      }
+
+      #add {
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="add" type="button" onclick="addContent()">Add content</button>
+
+    <div class="container">
+      <div class="parallax-bg" data-lisn-smooth-scroll-layer="depth=auto">
+        <img src="assets/img/1.jpg" />
+      </div>
+
+      <div class="section">
+        <span class="box"></span>
+        <span class="box"></span>
+        <span class="box"></span>
+        <span class="box"></span>
+      </div>
+
+      <div class="section">
+        <span class="box"></span>
+        <span class="box"></span>
+        <span class="box"></span>
+        <span class="box"></span>
+      </div>
+
+      <div class="section">
+        <span class="box"></span>
+        <span class="box"></span>
+        <span class="box"></span>
+        <span class="box"></span>
+      </div>
+
+      <div class="section">
+        <span class="box"></span>
+        <span class="box"></span>
+        <span class="box"></span>
+        <span class="box"></span>
+      </div>
+    </div>
+
+    <script>
+      function addContent() {
+        const boxA = document.createElement("div");
+        boxA.classList.add("box");
+        const boxB = document.createElement("div");
+        boxB.classList.add("box");
+        document.body.append(boxA);
+        document.body.prepend(boxB);
+      }
+    </script>
+  </body>
+</html>

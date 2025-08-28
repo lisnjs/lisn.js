@@ -543,6 +543,19 @@ describe("FXProxyTrigger", () => {
     expect(received).toEqual(["A"]);
   });
 
+  test("proxied paused", async () => {
+    const { trigger: proxied, push } = newTrigger();
+    const proxy = new FXProxyTrigger(proxied);
+    proxy.pause();
+
+    const received = [];
+    startReceiver(proxy, received);
+
+    push("A");
+    await window.waitFor(0); // callbacks are async
+    expect(received).toEqual([]);
+  });
+
   test("with delay", async () => {
     const { trigger: proxied, push } = newTrigger();
     const delay = 100;

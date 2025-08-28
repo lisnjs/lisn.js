@@ -335,9 +335,18 @@ export class FXComposer {
     const {
       parent,
       negate: defaultNegate,
-      tweener = "spring",
+      tweener: userTweener = "spring",
       trigger = new FXScrollTrigger(),
     } = config ?? {};
+
+    const tweener =
+      _.isString(userTweener) || _.isFunction(userTweener)
+        ? userTweener
+        : {
+            x: userTweener.x ?? "spring",
+            y: userTweener.y ?? "spring",
+            z: userTweener.z ?? "spring",
+          };
 
     const effectiveConfig: FXComposerEffectiveConfig = {
       trigger,
@@ -895,7 +904,7 @@ export type FXComposerConfig = {
    *
    * @defaultValue "spring"
    */
-  tweener?: Tweener | { [K in "x" | "y" | "z"]: Tweener };
+  tweener?: Tweener | { [K in "x" | "y" | "z"]?: Tweener };
 
   /**
    * The time in milliseconds it takes for effect states to catch up to the

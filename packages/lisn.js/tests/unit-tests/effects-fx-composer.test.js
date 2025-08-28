@@ -391,6 +391,57 @@ describe("getConfig", () => {
     });
   });
 
+  test("with tweener name", () => {
+    const composer = new FXComposer({
+      tweener: "linear",
+    });
+
+    expect(composer.getConfig().tweener).toBe("linear");
+  });
+
+  test("with tweener func", () => {
+    const composer = new FXComposer({
+      tweener: linearTweener,
+    });
+
+    expect(composer.getConfig().tweener).toBe(linearTweener);
+  });
+
+  test("with partial per-axis tweener name", () => {
+    const composer = new FXComposer({
+      tweener: { x: "linear" },
+    });
+
+    expect(composer.getConfig().tweener).toEqual({
+      x: "linear",
+      y: "spring",
+      z: "spring",
+    });
+  });
+
+  test("with partial per-axis tweener func", () => {
+    const composer = new FXComposer({
+      tweener: { x: linearTweener },
+    });
+
+    expect(composer.getConfig().tweener).toEqual({
+      x: linearTweener,
+      y: "spring",
+      z: "spring",
+    });
+  });
+
+  test("with full per-axis tweener", () => {
+    const tweener = {
+      x: linearTweener,
+      y: "spring",
+      z: "cubic",
+    };
+    const composer = new FXComposer({ tweener });
+
+    expect(composer.getConfig().tweener).toEqual(tweener);
+  });
+
   test("with relative lag/depth", () => {
     const parent = new FXComposer({ lag: 100, lagY: 200, depth: 2, depthX: 3 });
     const parentConfig = parent.getConfig();

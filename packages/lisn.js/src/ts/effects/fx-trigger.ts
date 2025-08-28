@@ -354,3 +354,4 @@ const createPoller = (): Poller => {
 
 _.brandClass(FXTrigger, "FXTrigger");
 _.brandClass(FXScrollTrigger, "FXScrollTrigger");
+_.brandClass(FXProxyTrigger, "FXProxyTrigger");

@@ -778,7 +778,7 @@ const scrollToAxesData = (
 _.brandClass(FXMatcher, "FXMatcher");
 _.brandClass(FXRelativeMatcher, "FXRelativeMatcher");
 _.brandClass(FXNegateMatcher, "FXNegateMatcher");
+_.brandClass(FXPinMatcher, "FXPinMatcher");
 _.brandClass(FXComposerMatcher, "FXComposerMatcher");
 _.brandClass(FXScrollMatcher, "FXScrollMatcher");
 _.brandClass(FXViewMatcher, "FXViewMatcher");
-_.brandClass(FXPinMatcher, "FXPinMatcher");

@@ -55,7 +55,7 @@ import {
   addEventListenerTo,
   removeEventListenerFrom,
   preventSelect,
-} from "@lisn/utils/event";
+} from "@lisn/utils/events";
 import { logError, logWarn } from "@lisn/utils/log";
 import { toIterableIfNot } from "@lisn/utils/misc";
 import {

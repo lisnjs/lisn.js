@@ -24,7 +24,10 @@ import {
   waitForElementOrInteractive,
 } from "@lisn/utils/dom-events";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
-import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
+import {
+  addEventListenerTo,
+  removeEventListenerFrom,
+} from "@lisn/utils/events";
 import { logError, logWarn } from "@lisn/utils/log";
 import { maxAbs } from "@lisn/utils/math";
 import { randId, formatAsString } from "@lisn/utils/text";

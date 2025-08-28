@@ -13,7 +13,7 @@ import {
   removeEventListenerFrom,
   preventSelect,
   undoPreventSelect,
-} from "@lisn/utils/event";
+} from "@lisn/utils/events";
 import { logError } from "@lisn/utils/log";
 import { isValidPointerAction, POINTER_ACTIONS } from "@lisn/utils/pointer";
 import { objToStrKey } from "@lisn/utils/text";

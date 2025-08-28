@@ -21,7 +21,10 @@ import { setNumericStyleJsVars } from "@lisn/utils/css-alter";
 import { getMaxDeltaDirection } from "@lisn/utils/directions";
 import { moveElement, tryWrapContent } from "@lisn/utils/dom-alter";
 import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
-import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
+import {
+  addEventListenerTo,
+  removeEventListenerFrom,
+} from "@lisn/utils/events";
 import { logError } from "@lisn/utils/log";
 import { toNonNegNum, maxAbs } from "@lisn/utils/math";
 import {

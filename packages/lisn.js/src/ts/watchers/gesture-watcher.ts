@@ -24,7 +24,7 @@ import {
   removeEventListenerFrom,
   preventSelect,
   undoPreventSelect,
-} from "@lisn/utils/event";
+} from "@lisn/utils/events";
 import { getDebouncedHandler } from "@lisn/utils/tasks";
 
 import { addDeltaZ } from "@lisn/utils/gesture";

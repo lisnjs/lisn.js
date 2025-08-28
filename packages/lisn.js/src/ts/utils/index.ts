@@ -14,7 +14,7 @@ export * from "@lisn/utils/dom-optimize";
 export * from "@lisn/utils/dom-query";
 export * from "@lisn/utils/dom-search";
 export * from "@lisn/utils/dom";
-export * from "@lisn/utils/event";
+export * from "@lisn/utils/events";
 export * from "@lisn/utils/gesture-key";
 export * from "@lisn/utils/gesture-pointer";
 export * from "@lisn/utils/gesture-touch";

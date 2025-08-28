@@ -5,7 +5,7 @@
 import * as _ from "@lisn/_internal";
 
 import { getVectorDirection } from "@lisn/utils/directions";
-import { getBrowserSupport } from "@lisn/utils/event";
+import { getBrowserSupport } from "@lisn/utils/events";
 import { GestureFragment } from "@lisn/utils/gesture";
 
 /**

@@ -9,7 +9,10 @@
 import * as _ from "@lisn/_internal";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
+import {
+  addEventListenerTo,
+  removeEventListenerFrom,
+} from "@lisn/utils/events";
 
 import { Action } from "@lisn/actions/action";
 

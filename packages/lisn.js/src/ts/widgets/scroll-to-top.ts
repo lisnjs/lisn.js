@@ -30,7 +30,10 @@ import {
 import { waitForElement } from "@lisn/utils/dom-events";
 import { waitForMutateTime } from "@lisn/utils/dom-optimize";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
+import {
+  addEventListenerTo,
+  removeEventListenerFrom,
+} from "@lisn/utils/events";
 import { validateString } from "@lisn/utils/validation";
 import { isValidScrollOffset } from "@lisn/utils/views";
 

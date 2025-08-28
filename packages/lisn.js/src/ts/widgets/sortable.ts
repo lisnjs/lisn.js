@@ -27,7 +27,7 @@ import {
   removeEventListenerFrom,
   preventSelect,
   undoPreventSelect,
-} from "@lisn/utils/event";
+} from "@lisn/utils/events";
 import { toInt } from "@lisn/utils/math";
 import { validateString } from "@lisn/utils/validation";
 

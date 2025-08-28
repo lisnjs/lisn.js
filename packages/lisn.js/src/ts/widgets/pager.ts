@@ -29,7 +29,10 @@ import {
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
 import { getVisibleContentChildren } from "@lisn/utils/dom-query";
-import { addEventListenerTo, removeEventListenerFrom } from "@lisn/utils/event";
+import {
+  addEventListenerTo,
+  removeEventListenerFrom,
+} from "@lisn/utils/events";
 import { isValidInputDevice } from "@lisn/utils/gesture";
 import { toInt } from "@lisn/utils/math";
 import { toBoolean } from "@lisn/utils/misc";

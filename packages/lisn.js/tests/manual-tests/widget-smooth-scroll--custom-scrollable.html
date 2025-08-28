@@ -6,6 +6,7 @@
     <script src="assets/js/lisn.link.js" charset="utf-8"></script>
     <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
     <script charset="utf-8">
+      LISN.settings.mainScrollableElementSelector = "#main";
       LISN.widgets.SmoothScroll.enableMain();
     </script>
     <link
@@ -16,6 +17,14 @@
       charset="utf-8"
     />
     <style type="text/css" media="screen">
+      #main {
+        width: 90vw;
+        height: 90vh;
+        overflow: scroll;
+        border: solid 1px grey;
+        margin: 5vh 5vw;
+      }
+
       .overflow {
         min-width: 350vw;
         min-height: 200vh;
@@ -45,44 +54,48 @@
   <body>
     <button type="button" onclick="addContent()">Add content</button>
 
-    <div class="overflow">
-      <div class="section">
-        <span class="box"></span>
-        <span class="box"></span>
-        <span class="box"></span>
-        <span class="box"></span>
-      </div>
+    <div id="main">
+      <div class="overflow">
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
 
-      <div class="section">
-        <span class="box"></span>
-        <span class="box"></span>
-        <span class="box"></span>
-        <span class="box"></span>
-      </div>
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
 
-      <div class="section">
-        <span class="box"></span>
-        <span class="box"></span>
-        <span class="box"></span>
-        <span class="box"></span>
-      </div>
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
 
-      <div class="section">
-        <span class="box"></span>
-        <span class="box"></span>
-        <span class="box"></span>
-        <span class="box"></span>
+        <div class="section">
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+          <span class="box"></span>
+        </div>
       </div>
     </div>
 
     <script>
       function addContent() {
+        const main = document.getElementById("main");
+
         const boxA = document.createElement("div");
         boxA.classList.add("box");
         const boxB = document.createElement("div");
         boxB.classList.add("box");
-        document.body.append(boxA);
-        document.body.prepend(boxB);
+        main.append(boxA);
+        main.prepend(boxB);
       }
     </script>
   </body>

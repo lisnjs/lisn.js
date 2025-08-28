@@ -28,6 +28,7 @@ import {
 } from "@lisn/utils/css-alter";
 import {
   getContentWrapper,
+  moveElement,
   moveElementNow,
   tryWrapContentNow,
   unwrapContentNow,
@@ -36,10 +37,11 @@ import {
   waitForMeasureTime,
   waitForMutateTime,
 } from "@lisn/utils/dom-optimize";
+import { isNodeBAfterA } from "@lisn/utils/dom-query";
 import { logError } from "@lisn/utils/log";
 import { isValidNum, toNumWithBounds, toRawNum } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
-import { formatAsString } from "@lisn/utils/text";
+import { Tweener } from "@lisn/utils/tween";
 import {
   validateNumber,
   validateRawOrRelativeNumber,
@@ -49,6 +51,7 @@ import { FXComposer, FXComposerConfig } from "@lisn/effects/fx-composer";
 import { FXScrollTrigger } from "@lisn/effects/fx-trigger";
 import { Transform } from "@lisn/effects/transform";
 
+import { DOMWatcher, MutationOperation } from "@lisn/watchers/dom-watcher";
 import { ScrollWatcher, ScrollData } from "@lisn/watchers/scroll-watcher";
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 
@@ -59,9 +62,6 @@ import {
   getWidgetConfig,
 } from "@lisn/widgets/widget";
 
-import { LoggerInterface } from "@lisn/debug/types";
-import debug from "@lisn/debug/debug";
-
 /**
  * Configures the given element as a {@link SmoothScroll} widget.
  *
@@ -69,7 +69,8 @@ import debug from "@lisn/debug/debug";
  * experience. By default it creates basic smooth scrolling with options for lag
  * duration.
  *
- * However you can define custom transforms in an easy yet flexible way.
+ * However you can define custom effects in an easy yet flexible way. See
+ * {@link FXComposer}
  *
  * It supports scroll in any direction as well as using a custom scrolling
  * element that may only takes up part of the page, all while preserving
@@ -77,7 +78,7 @@ import debug from "@lisn/debug/debug";
  * does not use fake scrollbars).
  *
  * Any descendant element of the scrollable can define custom lag duration and
- * transforms as well as a parallax depth. Such child elements are referred to
+ * effects, as well as a parallax depth. Such child elements are referred to
  * as "layers".
  *
  * **IMPORTANT:** The scrollable element you pass must have its children
@@ -259,13 +260,6 @@ export class SmoothScroll extends Widget {
     const destroyPromise = SmoothScroll.get(scrollable)?.destroy();
     super(scrollable, { id: DUMMY_ID });
 
-    const logger = debug
-      ? new debug.Logger({
-          name: `SmoothScroll-${formatAsString(scrollable)}`,
-          logAtCreation: { config, isBody },
-        })
-      : null;
-
     let layers: Map<Element, SmoothScrollLayerState> | null = null;
     this.getComposer = (layer) => {
       let key: Element = scrollable;
@@ -290,6 +284,12 @@ export class SmoothScroll extends Widget {
     trigger.pause();
     layers = getLayersFrom(scrollable, config, trigger);
 
+    for (const layer of layers.keys()) {
+      if (!scrollable.contains(layer)) {
+        throw usageError("SmoothScroll's layers must be its descendants");
+      }
+    }
+
     (destroyPromise || _.promiseResolve()).then(async () => {
       if (this.isDestroyed()) {
         return;
@@ -304,6 +304,14 @@ export class SmoothScroll extends Widget {
  * @interface
  */
 export type SmoothScrollConfig = {
+  /**
+   * The {@link FXComposerConfig.tweener | tweener} for
+   * {@link SmoothScroll.getComposer | the root composer}.
+   *
+   * @defaultValue {@link FXComposer} default
+   */
+  tweener?: Tweener | { [K in "x" | "y"]: Tweener };
+
   /**
    * The lag for the {@link SmoothScroll.getComposer | root composer}.
    *
@@ -372,6 +380,15 @@ export type SmoothScrollConfig = {
  * @interface
  */
 export type SmoothScrollLayerConfig = {
+  /**
+   * The {@link FXComposerConfig.tweener | tweener} for
+   * {@link SmoothScroll.getComposer | this layer's composer}.
+   *
+   * @defaultValue The main widget's
+   * {@link SmoothScrollConfig.tweener | tweener} setting
+   */
+  tweener?: Tweener | { [K in "x" | "y"]: Tweener };
+
   /**
    * The lag for {@link SmoothScroll.getComposer | this layer's composer}.
    *
@@ -549,7 +566,7 @@ const getLayersFrom = (
     useDefaultEffects: boolean,
     config: FXComposerConfig,
   ) => {
-    const composer = new FXComposer(_.merge(config, { trigger }));
+    const composer = new FXComposer(_.merge(config, { trigger, lagZ: 0 }));
     if (useDefaultEffects) {
       composer.add(
         new Transform({ isAbsolute: true }).translate((data) => ({
@@ -567,7 +584,13 @@ const getLayersFrom = (
     // let parseEffectsAttr = false;
 
     if (layer === scrollable) {
-      config = rootConfig;
+      config = _.merge(rootConfig, {
+        // do not accept depth for root
+        depth: 1,
+        depthX: 1,
+        depthY: 1,
+        depthZ: 1,
+      });
     } else if (_.isArray(inputLayers)) {
       // parseEffectsAttr = true;
       config = getWidgetConfig(
@@ -626,6 +649,7 @@ const getLayersFrom = (
           lagY,
           depthX: depthX === _.S_AUTO ? 1 : depthX,
           depthY: depthY === _.S_AUTO ? 1 : depthY,
+          tweener: config?.tweener ?? rootConfig?.tweener,
           parent: parentState?._composer,
           negate: parentState?._composer,
         }),
@@ -744,6 +768,12 @@ const init = async (
   // we need scroll width/height measurements for "auto" parallax
   const scrollWatcher = anyUseAutoDepth ? ScrollWatcher.reuse() : null;
 
+  const domWatcher = DOMWatcher.create({
+    root,
+    // only direct children
+    subtree: false,
+  });
+
   // ----------
 
   // If the content is resized, update the size of body or the dummy overflow to
@@ -751,6 +781,22 @@ const init = async (
   // Only applies when using the document scrolling element.
   const updatePropsOnResize = (target: Element, sizeData: SizeData) => {
     setSizeVars(root, sizeData.border[_.S_WIDTH], sizeData.border[_.S_HEIGHT]);
+  };
+
+  // ----------
+
+  // If any elements are dynamically added into the root, move them into the
+  // content wrapper.
+  const moveNewElements = (operation: MutationOperation) => {
+    const child = _.currentTargetOf(operation);
+    if (child !== outerWrapper && child !== overflowEl) {
+      // Move this child into the contentWrapper
+      moveElement(child, {
+        to: contentWrapper,
+        position: isNodeBAfterA(contentWrapper, child) ? "append" : "prepend",
+        ignoreMove: true,
+      });
+    }
   };
 
   // ----------
@@ -780,12 +826,15 @@ const init = async (
         scrollable,
       }),
     );
+
     sizeWatcher.onResize(
       updatePropsOnResize,
       _.fastWatcherConf({
         target: contentWrapper,
       }),
     );
+
+    domWatcher.onMutation(moveNewElements, { categories: [_.S_ADDED] });
 
     trigger.resume();
 
@@ -807,6 +856,7 @@ const init = async (
   const removeWatchers = () => {
     scrollWatcher?.noTrackScroll(updateScrollData, scrollable);
     sizeWatcher.offResize(updatePropsOnResize, contentWrapper);
+    domWatcher.offMutation(moveNewElements);
 
     trigger.pause();
 
@@ -874,7 +924,7 @@ const init = async (
     wrappers,
     unwrapFn,
   }: {
-    wrappers: { c: HTMLElement };
+    wrappers: { c: HTMLElement; p?: HTMLElement };
     unwrapFn: () => void;
   } = createWrappersNow(
     root,
@@ -887,7 +937,9 @@ const init = async (
   );
 
   const contentWrapper = wrappers.c;
+  const outerWrapper = wrappers.p ?? contentWrapper;
 
+  let overflowEl: Element | null = null;
   if (isDoc) {
     // Set its size now to prevent initial layout shifts
     setSizeVars(root, initialContentWidth, initialContentHeight, true);
@@ -897,11 +949,12 @@ const init = async (
     });
   } else {
     setBooleanDataNow(root, PREFIX_USES_STICKY);
-    const overflowEl = _.createElement("div");
+    overflowEl = _.createElement("div");
     addClassesNow(overflowEl, PREFIX_OVERFLOW);
     moveElementNow(overflowEl, { to: root });
 
-    // don't let ScrollWatcher wrap its children, the pin wrapper and the dummy overflow
+    // Don't let ScrollWatcher wrap its children, the pin wrapper and the dummy
+    // overflow
     setBooleanDataNow(root, _.PREFIX_NO_WRAP);
   }
 
@@ -924,6 +977,9 @@ const init = async (
 
     await waitForMutateTime();
 
+    if (overflowEl) {
+      moveElementNow(overflowEl); // remove
+    }
     unwrapFn();
 
     // delete CSS vars from root

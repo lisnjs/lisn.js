@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width" />
     <script src="assets/js/lisn.link.js" charset="utf-8"></script>
     <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
-    <script charset="utf-8">
-      LISN.settings.mainScrollableElementSelector = "#main";
-      LISN.widgets.SmoothScroll.enableMain();
-    </script>
     <link
       rel="stylesheet"
       href="assets/lisn/css/lisn.css"
@@ -60,7 +56,7 @@
     </style>
   </head>
   <body>
-    <div id="main">
+    <div id="main" data-lisn-smooth-scroll="lag=300">
       <div class="overflow">
         <div class="section">
           <span class="box"></span>
@@ -84,12 +80,12 @@
           <span class="box"></span>
           <span
             class="box"
-            data-lisn-smooth-scroll-layer="lag=600 | depth=1"
+            data-lisn-smooth-scroll-layer="lag=200% | depth=1"
           ></span>
           <span class="box"></span>
           <span
             class="box"
-            data-lisn-smooth-scroll-layer="lag=1200 | depth=1"
+            data-lisn-smooth-scroll-layer="lag=+900 | depth=1"
           ></span>
           <span class="box"></span>
         </div>
@@ -107,12 +103,12 @@
           <span class="box"></span>
           <span
             class="box"
-            data-lisn-smooth-scroll-layer="lag=600 | depth=0.8"
+            data-lisn-smooth-scroll-layer="lag=+100% | depth=0.8"
           ></span>
           <span class="box"></span>
           <span
             class="box"
-            data-lisn-smooth-scroll-layer="lag=1200 | depth=0.8"
+            data-lisn-smooth-scroll-layer="lag=+900 | depth=0.8"
           ></span>
           <span class="box"></span>
         </div>

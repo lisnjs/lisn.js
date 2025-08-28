@@ -551,7 +551,7 @@ export type MoveOptions = AtLeastOne<{
 
 export type MutationOperation = {
   /**
-   * The target that was changed.
+   * The target that was changed (added, removed or had a change of attributes).
    */
   target: Element;
 
@@ -566,6 +566,8 @@ export type MutationOperation = {
    *
    * If `target` is given as part of {@link OnMutationOptions}, then
    * `currentTarget` will be that element.
+   *
+   * Otherwise, it will be the same as `target`.
    */
   currentTarget: Element;
 

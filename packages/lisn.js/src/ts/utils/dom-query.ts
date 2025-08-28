@@ -44,7 +44,7 @@ export const isDOMElement = _.isStyledElement;
  * @ignore
  * @internal
  *
- * Returns true if `nodeA` follows `nodeB` in document order.
+ * Returns true if `nodeB` follows `nodeA` in document order.
  *
  * @category DOM: Querying
  */

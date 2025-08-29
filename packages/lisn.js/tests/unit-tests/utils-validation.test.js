@@ -101,6 +101,55 @@ describe("validateNumber", () => {
     expect(utils.validateNumber("key", "0")).toBe(0);
     expect(utils.validateNumber("key", 0)).toBe(0);
   });
+
+  test("with limits", () => {
+    expect(utils.validateNumber("key", 1, { min: 1 })).toBe(1);
+    expect(utils.validateNumber("key", 1, { min: 0 })).toBe(1);
+    expect(utils.validateNumber("key", 1, { min: -1 })).toBe(1);
+    expect(utils.validateNumber("key", 1, { min: -Infinity })).toBe(1);
+    expect(utils.validateNumber("key", -1, { min: -1 })).toBe(-1);
+    expect(utils.validateNumber("key", -1, { min: -Infinity })).toBe(-1);
+
+    expect(() => utils.validateNumber("key", 1, { min: 1.1 })).toThrow(
+      /'key' must be >= 1.1/,
+    );
+    expect(() => utils.validateNumber("key", -1, { min: 0 })).toThrow(
+      /'key' must be >= 0/,
+    );
+    expect(() => utils.validateNumber("key", -1, { min: -0.9 })).toThrow(
+      /'key' must be >= -0.9/,
+    );
+
+    expect(utils.validateNumber("key", 1, { max: 1.1 })).toBe(1);
+    expect(utils.validateNumber("key", 1, { max: Infinity })).toBe(1);
+    expect(utils.validateNumber("key", -1, { max: -0.9 })).toBe(-1);
+    expect(utils.validateNumber("key", -1, { max: 0 })).toBe(-1);
+
+    expect(() => utils.validateNumber("key", 1, { max: 0.9 })).toThrow(
+      /'key' must be <= 0.9/,
+    );
+    expect(() => utils.validateNumber("key", 1, { max: 0 })).toThrow(
+      /'key' must be <= 0/,
+    );
+    expect(() => utils.validateNumber("key", 1, { max: -1 })).toThrow(
+      /'key' must be <= -1/,
+    );
+  });
+});
+
+test("validateNonNegNumber & validatePosNumber (selected)", () => {
+  expect(utils.validateNonNegNumber("key", 1)).toBe(1);
+  expect(utils.validatePosNumber("key", 1)).toBe(1);
+
+  expect(utils.validateNonNegNumber("key", 0)).toBe(0);
+  expect(utils.validatePosNumber("key", 0.0001)).toBe(0.0001);
+
+  expect(() => utils.validateNonNegNumber("key", -0.0001)).toThrow(
+    /'key' must be >= 0/,
+  );
+  expect(() => utils.validatePosNumber("key", 0)).toThrow(
+    /'key' must be >= 1e-10/,
+  );
 });
 
 describe("validateBoolean", () => {

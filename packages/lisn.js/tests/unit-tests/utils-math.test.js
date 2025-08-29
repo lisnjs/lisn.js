@@ -119,6 +119,15 @@ describe("toNumWithBounds", () => {
     expect(utils.toNumWithBounds("x")).toBe(0);
   });
 
+  test("Infinity as bounds", () => {
+    expect(
+      utils.toNumWithBounds(1, { min: -Infinity, max: Infinity }, null),
+    ).toBe(1);
+    expect(
+      utils.toNumWithBounds(-1, { min: -Infinity, max: Infinity }, null),
+    ).toBe(-1);
+  });
+
   test("outside bounds with default", () => {
     expect(utils.toNumWithBounds("1", { min: 10 }, null)).toBe(null);
     expect(utils.toNumWithBounds("20", { min: 10 }, null)).toBe(20);

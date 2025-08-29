@@ -6,9 +6,13 @@ import * as _ from "@lisn/_internal";
 
 import { usageError, isUsageError } from "@lisn/globals/errors";
 
-import { CommaSeparatedStr, RawOrRelativeNumber } from "@lisn/globals/types";
+import {
+  AtLeastOne,
+  CommaSeparatedStr,
+  RawOrRelativeNumber,
+} from "@lisn/globals/types";
 
-import { toNum, toRawNum } from "@lisn/utils/math";
+import { toNum, toNumWithBounds, toRawNum } from "@lisn/utils/math";
 import { toBoolean } from "@lisn/utils/misc";
 import { splitOn } from "@lisn/utils/text";
 
@@ -18,6 +22,8 @@ import { splitOn } from "@lisn/utils/text";
  *
  * @param allowEmpty If `false`, then input without any entries is
  * considered _invalid_.
+ *
+ * @category Validation
  */
 export const isValidStrList = <T extends string = string>(
   value: unknown,
@@ -89,7 +95,7 @@ export const validateNumList = (
 ): number[] | undefined =>
   _.filterBlank(
     toArray(value)?.map((v) =>
-      _validateNumber(key, v, "a number or a number array"),
+      _validateNumber(key, v, null, "a number or a number array"),
     ),
   );
 
@@ -104,8 +110,37 @@ export const validateNumList = (
  *
  * @category Validation
  */
-export const validateNumber = (key: string, value: unknown) =>
-  _validateNumber(key, value);
+export const validateNumber = (
+  key: string,
+  value: unknown,
+  limits?: AtLeastOne<{ min: number | null; max: number | null }>,
+) => _validateNumber(key, value, limits);
+
+/**
+ * Alias for `validateNumber(key, value, {min: 0})`.
+ *
+ * @throws {@link Errors.LisnUsageError | LisnUsageError}
+ *                If the value is invalid.
+ *
+ * @returns `undefined` if the input is nullish.
+ *
+ * @category Validation
+ */
+export const validateNonNegNumber = (key: string, value: unknown) =>
+  _validateNumber(key, value, { min: 0 });
+
+/**
+ * Alias for `validateNumber(key, value, {min: 1e-10})`.
+ *
+ * @throws {@link Errors.LisnUsageError | LisnUsageError}
+ *                If the value is invalid.
+ *
+ * @returns `undefined` if the input is nullish.
+ *
+ * @category Validation
+ */
+export const validatePosNumber = (key: string, value: unknown) =>
+  _validateNumber(key, value, { min: 1e-10 });
 
 /**
  * Returns a boolean corresponding to the given value as follows:
@@ -225,7 +260,7 @@ export const validateRawOrRelativeNumber = (
     return isRaw ? raw : (value as RawOrRelativeNumber);
   }
 
-  return _validateNumber(key, value, typeDescription);
+  return _validateNumber(key, value, null, typeDescription);
 };
 
 // --------------------
@@ -252,6 +287,7 @@ const toArray = (value: unknown): unknown[] | undefined => {
 const _validateNumber = (
   key: string,
   value: unknown,
+  limits?: AtLeastOne<{ min: number | null; max: number | null }> | null,
   typeDescription?: string,
 ) => {
   if (_.isNullish(value)) {
@@ -261,6 +297,17 @@ const _validateNumber = (
   const numVal = toNum(value, null);
   if (_.isNull(numVal)) {
     throw usageError(`'${key}' must be ${typeDescription ?? "a number"}`);
+  }
+
+  if (limits) {
+    if (toNumWithBounds(numVal, limits, false) === false) {
+      const lStr = [
+        ...(_.isNullish(limits?.min) ? [] : [`>= ${limits.min}`]),
+        ...(_.isNullish(limits?.max) ? [] : [`<= ${limits.max}`]),
+      ];
+
+      throw usageError(`'${key}' must be ${lStr.join(" ")}`);
+    }
   }
 
   return numVal;

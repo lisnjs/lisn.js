@@ -74,7 +74,7 @@ import { waitForDelay } from "@lisn/utils/tasks";
 import { formatAsString, randId, splitOn } from "@lisn/utils/text";
 import {
   validateString,
-  validateNumber,
+  validateNonNegNumber,
   validateBoolean,
 } from "@lisn/utils/validation";
 
@@ -456,9 +456,9 @@ const createBaseConfigValidator: WidgetConfigValidatorFunc<TriggerConfig> = (
     id: validateString,
     once: validateBoolean,
     oneWay: validateBoolean,
-    delay: validateNumber,
-    doDelay: validateNumber,
-    undoDelay: validateNumber,
+    delay: validateNonNegNumber,
+    doDelay: validateNonNegNumber,
+    undoDelay: validateNonNegNumber,
     actOn: (key, value) =>
       _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...

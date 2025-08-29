@@ -4,7 +4,7 @@
 
 import * as _ from "@lisn/_internal";
 
-import { validateNumber } from "@lisn/utils/validation";
+import { validateNonNegNumber } from "@lisn/utils/validation";
 
 import { ScrollWatcher } from "@lisn/watchers/scroll-watcher";
 
@@ -112,8 +112,8 @@ const DUMMY_ID = WIDGET_NAME;
 
 // For HTML API only
 const configValidator: WidgetConfigValidatorObject<TrackScrollConfig> = {
-  threshold: validateNumber,
-  debounceWindow: validateNumber,
+  threshold: validateNonNegNumber,
+  debounceWindow: validateNonNegNumber,
 };
 
 _.brandClass(TrackScroll, "TrackScroll");

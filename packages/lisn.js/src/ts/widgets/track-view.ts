@@ -6,7 +6,7 @@ import * as _ from "@lisn/_internal";
 
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
 import {
-  validateNumber,
+  validateNonNegNumber,
   validateString,
   validateNumList,
 } from "@lisn/utils/validation";
@@ -170,9 +170,9 @@ const createConfigValidator: WidgetConfigValidatorFunc<TrackViewConfig> = (
         : void 0,
     rootMargin: validateString,
     threshold: (key, value) => validateNumList(key, value),
-    debounceWindow: validateNumber,
-    resizeThreshold: validateNumber,
-    scrollThreshold: validateNumber,
+    debounceWindow: validateNonNegNumber,
+    resizeThreshold: validateNonNegNumber,
+    scrollThreshold: validateNonNegNumber,
   };
 };
 

@@ -861,9 +861,11 @@ export type OnScrollOptions = {
   scrollable?: ScrollTarget;
 
   /**
-   * If non-0, the scroll handler will only be called when the scrollable's
+   * If non-zero, the scroll handler will only be called when the scrollable's
    * scroll offset in the observed direction has changed at least
    * `scrollThreshold` pixels since the last time the handler was called.
+   *
+   * Values < 0 are invalid, and the default value will be used.
    *
    * @defaultValue {@link ScrollWatcherConfig.scrollThreshold}
    */
@@ -923,11 +925,13 @@ export type OnScrollOptions = {
   skipInitial?: boolean;
 
   /**
-   * If non-0, the handler will be "debounced" so it's called at most
+   * If non-zero, the handler will be "debounced" so it's called at most
    * `debounceWindow` milliseconds.
    *
+   * Values < 0 are invalid, and the default value will be used.
+   *
    * **IMPORTANT:**
-   * If the debounce window is non-0 (default), then the callback is always
+   * If the debounce window is non-zero (default), then the callback is always
    * delayed by at least an animation frame following a scroll event to allow
    * for optimized `scrollTop`/`scrollLeft` measurements via
    * {@link waitForMeasureTime}.

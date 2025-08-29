@@ -81,7 +81,8 @@ export const validateStrList = <T extends string = string>(
  *                If the input is not a number or array of numbers. Numerical
  *                strings are accepted.
  *
- * @param key Used in the error message thrown
+ * @param key    Used in the error message thrown
+ * @param limits If given, define a minimum and/or maximum allowed value
  *
  * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
@@ -92,16 +93,20 @@ export const validateStrList = <T extends string = string>(
 export const validateNumList = (
   key: string,
   value: unknown,
+  limits?: AtLeastOne<{ min: number | null; max: number | null }>,
 ): number[] | undefined =>
   _.filterBlank(
     toArray(value)?.map((v) =>
-      _validateNumber(key, v, null, "a number or a number array"),
+      _validateNumber(key, v, limits, "a number or a number array"),
     ),
   );
 
 /**
  * Returns a number corresponding to the supplied value, ensuring the supplied
  * value is a valid number or a string containing only a number.
+ *
+ * @param key Used in the error message thrown
+ * @param limits If given, define a minimum and/or maximum allowed value
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
@@ -119,6 +124,8 @@ export const validateNumber = (
 /**
  * Alias for `validateNumber(key, value, {min: 0})`.
  *
+ * @param key Used in the error message thrown
+ *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
  *
@@ -131,6 +138,8 @@ export const validateNonNegNumber = (key: string, value: unknown) =>
 
 /**
  * Alias for `validateNumber(key, value, {min: 1e-10})`.
+ *
+ * @param key Used in the error message thrown
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
@@ -152,6 +161,8 @@ export const validatePosNumber = (key: string, value: unknown) =>
  *
  * Note that an empty string is treated as `true`.
  *
+ * @param key Used in the error message thrown
+ *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is not a valid boolean or boolean string.
  *
@@ -165,6 +176,8 @@ export const validateBoolean = (key: string, value: unknown) =>
 /**
  * Returns a valid string from the supplied value, ensuring the supplied value
  * is a string that conforms to the given `checkFn`.
+ *
+ * @param key Used in the error message thrown
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
@@ -187,6 +200,8 @@ export const validateString = <T extends string = string>(
 /**
  * Like {@link validateString} except it requires input to be given and
  * non-empty.
+ *
+ * @param key Used in the error message thrown
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid or empty.
@@ -211,6 +226,8 @@ export const validateStringRequired = <T extends string = string>(
  * Returns a valid boolean or a string from the supplied value, ensuring the
  * supplied value is either a boolean or boolean string (see
  * {@link validateBoolean}), or a string that conforms to the given `checkFn`.
+ *
+ * @param key Used in the error message thrown
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
@@ -288,7 +305,7 @@ const _validateNumber = (
   key: string,
   value: unknown,
   limits?: AtLeastOne<{ min: number | null; max: number | null }> | null,
-  typeDescription?: string,
+  typeDescription = "a number",
 ) => {
   if (_.isNullish(value)) {
     return;
@@ -296,7 +313,7 @@ const _validateNumber = (
 
   const numVal = toNum(value, null);
   if (_.isNull(numVal)) {
-    throw usageError(`'${key}' must be ${typeDescription ?? "a number"}`);
+    throw usageError(`'${key}' must be ${typeDescription}`);
   }
 
   if (limits) {
@@ -306,7 +323,7 @@ const _validateNumber = (
         ...(_.isNullish(limits?.max) ? [] : [`<= ${limits.max}`]),
       ];
 
-      throw usageError(`'${key}' must be ${lStr.join(" ")}`);
+      throw usageError(`'${key}' must be ${typeDescription} ${lStr.join(" ")}`);
     }
   }
 

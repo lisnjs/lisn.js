@@ -43,7 +43,7 @@ import { isValidNum } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { Tweener } from "@lisn/utils/tween";
 import {
-  validateNumber,
+  validateNonNegNumber,
   validateRawOrRelativeNumber,
 } from "@lisn/utils/validation";
 
@@ -494,9 +494,9 @@ const validateDepth = (key: string, value: unknown) =>
 
 // For HTML API only
 const configValidator: WidgetConfigValidatorObject<SmoothScrollConfig> = {
-  lag: validateNumber,
-  lagX: validateNumber,
-  lagY: validateNumber,
+  lag: validateNonNegNumber,
+  lagX: validateNonNegNumber,
+  lagY: validateNonNegNumber,
 };
 
 // For HTML API only

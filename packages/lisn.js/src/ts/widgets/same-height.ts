@@ -346,7 +346,7 @@ import { getVisibleContentChildren } from "@lisn/utils/dom-query";
 import { logError } from "@lisn/utils/log";
 import { isValidNum, toNumWithBounds, quadraticRoots } from "@lisn/utils/math";
 import { formatAsString } from "@lisn/utils/text";
-import { validateNumber } from "@lisn/utils/validation";
+import { validateNumber, validateNonNegNumber } from "@lisn/utils/validation";
 
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 
@@ -645,6 +645,8 @@ export type SameHeightConfig = {
    * the same time setting `flex-wrap` to `wrap` (or `wrap-reverse`) on the
    * element may lead to premature/unnecessary wrapping.
    *
+   * It has to be >= 0. Otherwise it is invalid.
+   *
    * Note that this is not strictly enforced, and is only used in finding
    * optimal height based on other constraints. If you want to enforce this gap,
    * set it as a `column-gap` CSS rule.
@@ -733,12 +735,12 @@ const MIN_CHARS_FOR_TEXT = 100;
 
 // For HTML API only
 const configValidator: WidgetConfigValidatorObject<SameHeightConfig> = {
-  diffTolerance: validateNumber,
-  resizeThreshold: validateNumber,
-  [_.S_DEBOUNCE_WINDOW]: validateNumber,
-  minGap: validateNumber,
-  maxFreeR: validateNumber,
-  maxWidthR: validateNumber,
+  diffTolerance: validateNonNegNumber,
+  resizeThreshold: validateNonNegNumber,
+  [_.S_DEBOUNCE_WINDOW]: validateNonNegNumber,
+  minGap: validateNonNegNumber,
+  maxFreeR: (key, value) => validateNumber(key, value, { min: 0, max: 0.9999 }),
+  maxWidthR: (key, value) => validateNumber(key, value, { min: 1 }),
 };
 
 const isText = (element: Element) =>
@@ -778,7 +780,7 @@ const fetchConfig = async (
     _minGap: toNumWithBounds(userConfig?.minGap ?? minGap, { min: 0 }, 10),
     _maxFreeR: toNumWithBounds(
       userConfig?.maxFreeR ?? settings.sameHeightMaxFreeR,
-      { min: 0, max: 0.9 },
+      { min: 0, max: 0.9999 },
       -1,
     ),
     _maxWidthR: toNumWithBounds(

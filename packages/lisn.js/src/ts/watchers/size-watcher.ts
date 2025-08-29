@@ -465,7 +465,7 @@ export type OnResizeOptions = {
   dimension?: Dimension;
 
   /**
-   * If non-0, the handler will only be called when the target's size in the
+   * If non-zero, the handler will only be called when the target's size in the
    * observed {@link OnResizeOptions.dimension} and {@link OnResizeOptions.box}
    * type has changed at least `threshold` pixels since the last time the
    * handler was called.
@@ -474,6 +474,8 @@ export type OnResizeOptions = {
    * {@link OnResizeOptions.dimension} or {@link OnResizeOptions.box} is given:
    * if there's a resize event but the size in the observed dimensions/box
    * types has not changed, the callback is _not_ called.
+   *
+   * Values < 0 are invalid, and the default value will be used.
    *
    * @defaultValue {@link SizeWatcherConfig.resizeThreshold}
    */
@@ -490,8 +492,10 @@ export type OnResizeOptions = {
   skipInitial?: boolean;
 
   /**
-   * If non-0, the handler will be "debounced" so it's called at most
+   * If non-zero, the handler will be "debounced" so it's called at most
    * `debounceWindow` milliseconds.
+   *
+   * Values < 0 are invalid, and the default value will be used.
    *
    * @defaultValue {@link SizeWatcherConfig.debounceWindow}
    */

@@ -1537,20 +1537,33 @@ describe("perspective", () => {
     t.perspective(() => NaN);
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Perspective must be finite/,
+      /'Perspective' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
     expect(t.toPerspective()).toBe(p);
   });
 
-  test("invalid return v1", () => {
+  test("invalid return v2", () => {
     const init = newTestMatrix();
     const p = 200;
     const t = newTransform(init, p);
     t.perspective(() => -Infinity);
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Perspective must be finite/,
+      /'Perspective' must be a number/,
+    );
+    expect(t).toBeCloseToArray(init);
+    expect(t.toPerspective()).toBe(p);
+  });
+
+  test("invalid return v3", () => {
+    const init = newTestMatrix();
+    const p = 200;
+    const t = newTransform(init, p);
+    t.perspective(() => -10);
+
+    expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+      /'Perspective' must be a number >= 0/,
     );
     expect(t).toBeCloseToArray(init);
     expect(t.toPerspective()).toBe(p);
@@ -1786,7 +1799,7 @@ describe("translate", () => {
     t.translate(() => ({ x: NaN }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Translate distance must be finite/,
+      /'Translation distances' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -1797,7 +1810,7 @@ describe("translate", () => {
     t.translate(() => ({ x: -Infinity }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Translate distance must be finite/,
+      /'Translation distances' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -1956,7 +1969,7 @@ describe("scale", () => {
     t.scale(() => ({ sx: NaN }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Scale factor must be finite and non-zero/,
+      /'Scale factors' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -1967,7 +1980,7 @@ describe("scale", () => {
     t.scale(() => ({ sx: -Infinity }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Scale factor must be finite and non-zero/,
+      /'Scale factors' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -1978,7 +1991,7 @@ describe("scale", () => {
     t.scale(() => ({ sx: 0 }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Scale factor must be finite and non-zero/,
+      /'Scale factors' must be a number >= 0.0001/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -1989,7 +2002,7 @@ describe("scale", () => {
     t.scale(() => ({ origin: [NaN, 0, 0] }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Origin must be finite/,
+      /'Origin coordinates' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -2000,7 +2013,7 @@ describe("scale", () => {
     t.scale(() => ({ origin: [-Infinity, 0, 0] }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Origin must be finite/,
+      /'Origin coordinates' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -2244,7 +2257,7 @@ describe("skew", () => {
     t.skew(() => ({ deg: NaN }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Skew angle must be finite/,
+      /'Skew angles' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -2255,7 +2268,7 @@ describe("skew", () => {
     t.skew(() => ({ deg: -Infinity }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Skew angle must be finite/,
+      /'Skew angles' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -2373,7 +2386,7 @@ describe("rotate", () => {
     t.rotate(() => ({ deg: NaN }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Rotation angle must be finite/,
+      /'Rotation angle' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -2384,7 +2397,7 @@ describe("rotate", () => {
     t.rotate(() => ({ deg: -Infinity }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Rotation angle must be finite/,
+      /'Rotation angle' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -2395,7 +2408,7 @@ describe("rotate", () => {
     t.rotate(() => ({ axis: [NaN, 0, 0] }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Rotation axis must be finite and non-zero/,
+      /'Rotation axis coordinates' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -2406,7 +2419,7 @@ describe("rotate", () => {
     t.rotate(() => ({ axis: [-Infinity, 0, 0] }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Rotation axis must be finite and non-zero/,
+      /'Rotation axis coordinates' must be a number/,
     );
     expect(t).toBeCloseToArray(init);
   });
@@ -2417,7 +2430,7 @@ describe("rotate", () => {
     t.rotate(() => ({ axis: [0, 0, 0] }));
 
     expect(() => t.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-      /Rotation axis must be finite and non-zero/,
+      /'Rotation axis length' must be a number >= 1e-10/,
     );
     expect(t).toBeCloseToArray(init);
   });

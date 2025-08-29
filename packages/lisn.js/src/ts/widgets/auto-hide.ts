@@ -7,7 +7,7 @@ import * as _ from "@lisn/_internal";
 import { hideElement } from "@lisn/utils/css-alter";
 import { hideAndRemoveElement } from "@lisn/utils/dom-alter";
 import { waitForPageReady } from "@lisn/utils/dom-events";
-import { validateString, validateNumber } from "@lisn/utils/validation";
+import { validateString, validateNonNegNumber } from "@lisn/utils/validation";
 
 import { DOMWatcher, OnMutationOptions } from "@lisn/watchers/dom-watcher";
 
@@ -214,6 +214,8 @@ export type AutoHideConfig = {
   /**
    * How long to wait before hiding or removing the matched elements.
    *
+   * Must be >= 0.
+   *
    * @defaultValue 3000
    */
   delay?: number;
@@ -234,7 +236,7 @@ const createConfigValidator = (
     id: validateString,
     remove: () => autoRemove,
     selector: validateString,
-    delay: validateNumber,
+    delay: validateNonNegNumber,
   };
 };
 

@@ -697,7 +697,7 @@ export type TrackViewOptions = {
    * {@link SizeWatcher} involved in the view tracking.
    *
    * **IMPORTANT:**
-   * If the debounce window is non-0 (default), then the callback is always
+   * If the debounce window is non-zero (default), then the callback is always
    * delayed by at least an animation frame following a scroll event to allow
    * for optimized `scrollTop`/`scrollLeft` measurements via
    * {@link waitForMeasureTime}.
@@ -707,6 +707,8 @@ export type TrackViewOptions = {
    * lead to forced re-layouts during scroll, but you probably need this when
    * doing scroll-based animations.
    *
+   * Values < 0 are invalid, and the default value will be used.
+   *
    * @defaultValue undefined // ScrollWatcher and SizeWatcher defaults
    */
   debounceWindow?: number;
@@ -715,6 +717,8 @@ export type TrackViewOptions = {
    * Use this resize threshold for the {@link SizeWatcher} involved in the view
    * tracking.
    *
+   * Values < 0 are invalid, and the default value will be used.
+   *
    * @defaultValue undefined // SizeWatcher default
    */
   resizeThreshold?: number;
@@ -722,6 +726,8 @@ export type TrackViewOptions = {
   /**
    * Use this scroll threshold for the {@link ScrollWatcher} involved in the
    * view tracking.
+   *
+   * Values < 0 are invalid, and the default value will be used.
    *
    * @defaultValue undefined // ScrollWatcher default
    */

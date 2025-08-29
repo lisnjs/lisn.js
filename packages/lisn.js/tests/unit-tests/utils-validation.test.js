@@ -27,48 +27,60 @@ test("isValidStrList", () => {
 });
 
 test("validateStrList", () => {
-  expect(utils.validateStrList("test", [], () => true)).toBeUndefined();
-  expect(utils.validateStrList("test", [""], () => true)).toBeUndefined();
-  expect(utils.validateStrList("test", "", () => true)).toBeUndefined();
-  expect(utils.validateStrList("test", ",", () => true)).toBeUndefined();
-  expect(utils.validateStrList("test", " ", () => true)).toBeUndefined();
-  expect(utils.validateStrList("test", [" a", "", "b "], () => true)).toEqual([
+  expect(utils.validateStrList("key", [], () => true)).toBeUndefined();
+  expect(utils.validateStrList("key", [""], () => true)).toBeUndefined();
+  expect(utils.validateStrList("key", "", () => true)).toBeUndefined();
+  expect(utils.validateStrList("key", ",", () => true)).toBeUndefined();
+  expect(utils.validateStrList("key", " ", () => true)).toBeUndefined();
+  expect(utils.validateStrList("key", [" a", "", "b "], () => true)).toEqual([
     "a",
     "b",
   ]);
-  expect(utils.validateStrList("test", "a ,, b ,", () => true)).toEqual([
+  expect(utils.validateStrList("key", "a ,, b ,", () => true)).toEqual([
     "a",
     "b",
   ]);
 
-  expect(utils.validateStrList("test", "a", (s) => s === "a")).toEqual(["a"]);
+  expect(utils.validateStrList("key", "a", (s) => s === "a")).toEqual(["a"]);
 
-  expect(() => utils.validateStrList("test", false, () => true)).toThrow(
-    /'test' must be a string or a string array/,
+  expect(() => utils.validateStrList("key", false, () => true)).toThrow(
+    /'key' must be a string or a string array/,
   );
-  expect(() => utils.validateStrList("test", [false], () => true)).toThrow(
-    /'test' must be a string or a string array/,
+  expect(() => utils.validateStrList("key", [false], () => true)).toThrow(
+    /'key' must be a string or a string array/,
   );
-  expect(() => utils.validateStrList("test", "a,b", () => false)).toThrow(
-    /Invalid value for 'test'/,
+  expect(() => utils.validateStrList("key", "a,b", () => false)).toThrow(
+    /Invalid value for 'key'/,
   );
-  expect(() => utils.validateStrList("test", [1], () => true)).toThrow(
-    /'test' must be a string or a string array/,
+  expect(() => utils.validateStrList("key", [1], () => true)).toThrow(
+    /'key' must be a string or a string array/,
   );
 });
 
 test("validateNumList", () => {
-  expect(utils.validateNumList("test", [])).toBeUndefined();
-  expect(utils.validateNumList("test", "")).toBeUndefined();
-  expect(utils.validateNumList("test", ",")).toBeUndefined();
-  expect(utils.validateNumList("test", " ")).toBeUndefined();
-  expect(utils.validateNumList("test", "1 ,, 2 ,")).toEqual([1, 2]);
+  expect(utils.validateNumList("key", [])).toBeUndefined();
+  expect(utils.validateNumList("key", "")).toBeUndefined();
+  expect(utils.validateNumList("key", ",")).toBeUndefined();
+  expect(utils.validateNumList("key", " ")).toBeUndefined();
+  expect(utils.validateNumList("key", "1 ,, 2 ,")).toEqual([1, 2]);
 
-  expect(() => utils.validateNumList("test", false)).toThrow(
-    /'test' must be a number or a number array/,
+  expect(() => utils.validateNumList("key", false)).toThrow(
+    /'key' must be a number or a number array/,
   );
-  expect(() => utils.validateNumList("test", ["x"])).toThrow(
-    /'test' must be a number or a number array/,
+  expect(() => utils.validateNumList("key", ["x"])).toThrow(
+    /'key' must be a number or a number array/,
+  );
+
+  // selected limits test
+  expect(utils.validateNumList("key", 1, { min: 1 })).toEqual([1]);
+  expect(utils.validateNumList("key", [1, 2, 3], { min: 1 })).toEqual([
+    1, 2, 3,
+  ]);
+  expect(utils.validateNumList("key", "1, 2, 3", { min: 1 })).toEqual([
+    1, 2, 3,
+  ]);
+  expect(() => utils.validateNumList("key", [1, 2, 3], { min: 2 })).toThrow(
+    /'key' must be a number or a number array >= 2/,
   );
 });
 
@@ -111,13 +123,13 @@ describe("validateNumber", () => {
     expect(utils.validateNumber("key", -1, { min: -Infinity })).toBe(-1);
 
     expect(() => utils.validateNumber("key", 1, { min: 1.1 })).toThrow(
-      /'key' must be >= 1.1/,
+      /'key' must be a number >= 1.1/,
     );
     expect(() => utils.validateNumber("key", -1, { min: 0 })).toThrow(
-      /'key' must be >= 0/,
+      /'key' must be a number >= 0/,
     );
     expect(() => utils.validateNumber("key", -1, { min: -0.9 })).toThrow(
-      /'key' must be >= -0.9/,
+      /'key' must be a number >= -0.9/,
     );
 
     expect(utils.validateNumber("key", 1, { max: 1.1 })).toBe(1);
@@ -126,13 +138,13 @@ describe("validateNumber", () => {
     expect(utils.validateNumber("key", -1, { max: 0 })).toBe(-1);
 
     expect(() => utils.validateNumber("key", 1, { max: 0.9 })).toThrow(
-      /'key' must be <= 0.9/,
+      /'key' must be a number <= 0.9/,
     );
     expect(() => utils.validateNumber("key", 1, { max: 0 })).toThrow(
-      /'key' must be <= 0/,
+      /'key' must be a number <= 0/,
     );
     expect(() => utils.validateNumber("key", 1, { max: -1 })).toThrow(
-      /'key' must be <= -1/,
+      /'key' must be a number <= -1/,
     );
   });
 });
@@ -145,10 +157,10 @@ test("validateNonNegNumber & validatePosNumber (selected)", () => {
   expect(utils.validatePosNumber("key", 0.0001)).toBe(0.0001);
 
   expect(() => utils.validateNonNegNumber("key", -0.0001)).toThrow(
-    /'key' must be >= 0/,
+    /'key' must be a number >= 0/,
   );
   expect(() => utils.validatePosNumber("key", 0)).toThrow(
-    /'key' must be >= 1e-10/,
+    /'key' must be a number >= 1e-10/,
   );
 });
 

@@ -40,7 +40,7 @@ import { getClosestScrollable } from "@lisn/utils/scroll";
 import { formatAsString } from "@lisn/utils/text";
 import {
   validateStrList,
-  validateNumber,
+  validatePosNumber,
   validateString,
   validateBoolean,
 } from "@lisn/utils/validation";
@@ -755,9 +755,9 @@ const isValidStyle = (value: string): value is PagerStyle =>
 
 // For HTML API only
 const configValidator: WidgetConfigValidatorObject<PagerConfig> = {
-  initialPage: validateNumber,
+  initialPage: validatePosNumber,
   style: (key, value) => validateString(key, value, isValidStyle),
-  pageSize: validateNumber,
+  pageSize: validatePosNumber,
   peek: validateBoolean,
   fullscreen: validateBoolean,
   parallax: validateBoolean,

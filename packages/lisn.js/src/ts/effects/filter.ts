@@ -6,6 +6,8 @@
 
 import * as _ from "@lisn/_internal";
 
+import { validateNumber } from "@lisn/utils/validation";
+
 import {
   EffectInterface,
   FXHandler,
@@ -13,7 +15,6 @@ import {
   HandlerMethodName,
   HandlerMethodTuple,
   toParameters,
-  validateOutputParameters,
   saveHandlerFor,
   addHandlerTo,
   getHandlersFor,
@@ -100,9 +101,19 @@ export class Filter implements EffectInterface<"filter", Filter> {
   readonly toString: () => string;
 
   /**
-   * XXX TODO
+   * Returns the current filters as an array of `[name, value]` tuples, e.g.:
+   *
+   * ```javascript
+   * [
+   *   ["blur", 2],
+   *   ["brightness", 2],
+   *   ["contrast", 0.8],
+   *   ["brightness", 2],
+   *   ...
+   * ]
+   * ```
    */
-  readonly toXXX: () => FilterStateXXX;
+  readonly toEntries: () => FilterEntry[];
 
   /**
    * Adds a blur handler.
@@ -120,8 +131,7 @@ export class Filter implements EffectInterface<"filter", Filter> {
     const { isAbsolute = false, init } = config ?? {};
     const handlers: FXHandler<void>[] = [];
 
-    let filters = _.deepCopy(init) ?? {};
-    // XXX TODO
+    let filters = _.deepCopy(init) ?? [];
 
     // ----------
 
@@ -139,7 +149,7 @@ export class Filter implements EffectInterface<"filter", Filter> {
 
     this.update = (state, composer) => {
       if (isAbsolute) {
-        filters = {};
+        filters = [];
       }
 
       const parameters = toParameters(state, composer, { isAbsolute });
@@ -159,20 +169,18 @@ export class Filter implements EffectInterface<"filter", Filter> {
 
     this.toComposition = (...others) => {
       let resultIsAbsolute = false;
-      let resultInit: FilterStateXXX = {};
+      let resultInit: FilterEntry[] = [];
       let resultHandlers: HandlerMethodTuple<"filter">[] = [];
       for (const f of [this, ...others]) {
         if (f.isAbsolute()) {
           resultIsAbsolute = true;
-          resultInit = {};
+          resultInit = [];
           resultHandlers = [];
         }
 
-        const XXX = f.toXXX();
-        let prop: keyof FilterStateXXX;
-        for (prop in XXX) {
-          // XXX TODO add the values?
-          // resultInit[prop] = XXX[prop];
+        const entries = f.toEntries();
+        for (const e of entries) {
+          resultInit.push(e);
         }
         resultHandlers.push(...getHandlersFor(f));
       }
@@ -195,9 +203,7 @@ export class Filter implements EffectInterface<"filter", Filter> {
 
     this.toString = () => {
       let result = "";
-      let p: keyof FilterStateXXX;
-      for (p in filters) {
-        const val = filters[p];
+      for (const [p, val] of filters) {
         if (!_.isNullish(val)) {
           result += (result ? " " : "") + VALUE_FORMATTERS[p](val);
         }
@@ -206,17 +212,18 @@ export class Filter implements EffectInterface<"filter", Filter> {
       return result;
     };
 
-    this.toXXX = () => _.deepCopy(filters);
+    this.toEntries = () => _.deepCopy(filters);
 
     this.blur = (handler) => {
       addOwnHandler(["blur", handler], (parameters, state, composer) => {
         const blur = handler(parameters, state, composer);
-        if (_.isNull(blur)) {
-          delete filters.blur;
-        } else if (!_.isUndefined(blur)) {
-          validateOutputParameters("Blur radius", [blur]);
-          filters.blur = blur;
-        }
+        // XXX TODO
+        // if (_.isNull(blur)) {
+        //   delete filters.blur;
+        // } else if (!_.isUndefined(blur)) {
+        //   validateOutputParameters("Blur radius", [blur]);
+        //   filters.blur = blur;
+        // }
       });
 
       return this;
@@ -225,12 +232,13 @@ export class Filter implements EffectInterface<"filter", Filter> {
     this.brightness = (handler) => {
       addOwnHandler(["brightness", handler], (parameters, state, composer) => {
         const brightness = handler(parameters, state, composer);
-        if (_.isNull(brightness)) {
-          delete filters.brightness;
-        } else if (!_.isUndefined(brightness)) {
-          validateOutputParameters("brightness fraction", [brightness]); // XXX min/max
-          filters.brightness = brightness;
-        }
+        // XXX TODO
+        // if (_.isNull(brightness)) {
+        //   delete filters.brightness;
+        // } else if (!_.isUndefined(brightness)) {
+        //   validateOutputParameters("brightness fraction", [brightness]); // XXX min/max
+        //   filters.brightness = brightness;
+        // }
       });
 
       return this;
@@ -272,10 +280,10 @@ export type FilterConfig = {
    *
    * @defaultValue undefined
    */
-  init?: FilterStateXXX;
+  init?: FilterEntry[];
 };
 
-export type FilterStateXXX = {
+export type FilterValueMap = {
   blur?: number;
   brightness?: number;
   contrast?: number;
@@ -288,6 +296,12 @@ export type FilterStateXXX = {
   sepia?: number;
 };
 
+export type FilterName = keyof FilterValueMap;
+
+export type FilterEntryFor<F extends FilterName> = [F, FilterValueMap[F]];
+export type FilterEntry<K extends FilterName = FilterName> =
+  K extends FilterName ? [K, FilterValueMap[K]] : never;
+
 // ----------------------------------------
 
 declare module "@lisn/effects/effect" {
@@ -299,7 +313,7 @@ declare module "@lisn/effects/effect" {
 // ----------------------------------------
 
 const VALUE_FORMATTERS: {
-  [K in keyof Required<FilterStateXXX>]: (value: number) => string;
+  [K in FilterName]: (value: number) => string;
 } = {
   blur: (v) => `${v}px`,
   brightness: (v) => `${v}`,

@@ -4,7 +4,7 @@
 
 import * as _ from "@lisn/_internal";
 
-import { validateNumber } from "@lisn/utils/validation";
+import { validateNonNegNumber } from "@lisn/utils/validation";
 
 import { SizeWatcher } from "@lisn/watchers/size-watcher";
 
@@ -119,8 +119,8 @@ const DUMMY_ID = WIDGET_NAME;
 
 // For HTML API only
 const configValidator: WidgetConfigValidatorObject<TrackSizeConfig> = {
-  threshold: validateNumber,
-  debounceWindow: validateNumber,
+  threshold: validateNonNegNumber,
+  debounceWindow: validateNonNegNumber,
 };
 
 _.brandClass(TrackSize, "TrackSize");

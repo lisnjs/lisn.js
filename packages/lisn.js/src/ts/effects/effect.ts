@@ -6,9 +6,12 @@
 
 import * as _ from "@lisn/_internal";
 
+import { AtLeastOne } from "@lisn/globals/types";
+
 import { usageError } from "@lisn/globals/errors";
 
-import { toNum, isValidNum } from "@lisn/utils/math";
+import { toNum } from "@lisn/utils/math";
+import { validateNumber } from "@lisn/utils/validation";
 
 import { FXComposer } from "@lisn/effects/fx-composer";
 
@@ -556,6 +559,9 @@ export const saveHandlerFor = <
 /**
  * @ignore
  * @internal
+ *
+ * Note to self: If the effect type has only a single handler method, TS won't
+ * infer the tuple correctly. Need to explicitly give it as addHandlerTo<"my-type">(...)
  */
 export const addHandlerTo = <T extends EffectType>(
   effect: Effect<T>,
@@ -567,23 +573,5 @@ export const addHandlerTo = <T extends EffectType>(
     method(tuple[1]);
   } else {
     throw usageError(`Method '${tuple[0]}' is not a function.`);
-  }
-};
-
-/**
- * @ignore
- * @internal
- */
-export const validateOutputParameters = (
-  name: string,
-  outputs: number[],
-  requireNonZero = false,
-) => {
-  for (const p of outputs) {
-    if (!isValidNum(p) || (requireNonZero && _.abs(p) < 1e-10)) {
-      throw usageError(
-        `${name} must be finite${requireNonZero ? " and non-zero" : ""}`,
-      );
-    }
   }
 };

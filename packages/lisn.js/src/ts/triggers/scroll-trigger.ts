@@ -20,7 +20,7 @@ import {
   isValidXYDirection,
 } from "@lisn/utils/directions";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { validateStrList, validateNumber } from "@lisn/utils/validation";
+import { validateStrList, validateNonNegNumber } from "@lisn/utils/validation";
 
 import { Action } from "@lisn/actions/action";
 
@@ -226,7 +226,7 @@ const createConfigValidator: WidgetConfigValidatorFunc<
       _.isLiteralString(value)
         ? waitForReferenceElement(value, element).then((v) => v ?? void 0) // ugh, typescript...
         : void 0,
-    threshold: validateNumber,
+    threshold: validateNonNegNumber,
   };
 };
 

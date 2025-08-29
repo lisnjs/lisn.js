@@ -9,6 +9,11 @@ import * as _ from "@lisn/_internal";
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
 import { sum } from "@lisn/utils/math";
+import {
+  validateNumber,
+  validateNonNegNumber,
+  validatePosNumber,
+} from "@lisn/utils/validation";
 
 import {
   EffectInterface,
@@ -18,7 +23,6 @@ import {
   HandlerMethodTuple,
   toParameters,
   scaleParameters,
-  validateOutputParameters,
   saveHandlerFor,
   addHandlerTo,
   getHandlersFor,
@@ -342,7 +346,7 @@ export class Transform implements EffectInterface<"transform", Transform> {
       addOwnHandler(["perspective", handler], (parameters, state, composer) => {
         const perspective = handler(parameters, state, composer);
         if (!_.isUndefined(perspective)) {
-          validateOutputParameters("Perspective", [perspective ?? 0]);
+          validateNonNegNumber("Perspective", perspective ?? 0);
 
           if (_.isNullish(currentPerspective) || _.isNullish(perspective)) {
             currentPerspective = perspective;
@@ -366,7 +370,7 @@ export class Transform implements EffectInterface<"transform", Transform> {
         if (!_.isNullish(result)) {
           const { x = 0, y = 0, z = 0 } = result;
 
-          validateOutputParameters("Translate distance", [x, y, z]);
+          [x, y, z].map((v) => validateNumber("Translation distances", v));
           matrix.translateSelf(x, y, z);
         }
       });
@@ -382,8 +386,10 @@ export class Transform implements EffectInterface<"transform", Transform> {
         if (!_.isNullish(result)) {
           const { s = 1, sx = s, sy = s, sz = s, origin = [0, 0, 0] } = result;
 
-          validateOutputParameters("Scale factor", [sx, sy, sz], true);
-          validateOutputParameters("Origin", origin);
+          [sx, sy, sz].map((v) =>
+            validateNumber("Scale factors", v, { min: 0.0001 }),
+          );
+          origin.map((v) => validateNumber("Origin coordinates", v));
           matrix.scaleSelf(sx, sy, sz, ...origin);
         }
       });
@@ -399,7 +405,7 @@ export class Transform implements EffectInterface<"transform", Transform> {
         if (!_.isNullish(result)) {
           const { deg = 0, degX = deg, degY = deg } = result;
 
-          validateOutputParameters("Skew angle", [degX, degY]);
+          [degX, degY].map((v) => validateNumber("Skew angles", v));
           matrix.skewXSelf(degX).skewYSelf(degY);
         }
       });
@@ -416,8 +422,9 @@ export class Transform implements EffectInterface<"transform", Transform> {
         if (!_.isNullish(result)) {
           const { deg = 0, axis = [0, 0, 1] } = result;
 
-          validateOutputParameters("Rotation angle", [deg]);
-          validateOutputParameters("Rotation axis", [sum(...axis)], true);
+          validateNumber("Rotation angle", deg);
+          axis.map((v) => validateNumber("Rotation axis coordinates", v));
+          validatePosNumber("Rotation axis length", _.abs(sum(...axis)));
           matrix.rotateAxisAngleSelf(axis[0], axis[1] ?? 0, axis[2] ?? 0, deg);
         }
       });

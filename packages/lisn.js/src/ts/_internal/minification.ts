@@ -378,9 +378,10 @@ export const freezeObj = OBJECT.freeze.bind(OBJECT);
 export const hasOwnProp = (o: object, prop: string | symbol) =>
   OBJECT.prototype.hasOwnProperty.call(o, prop);
 
-export const keysOf = <T extends Record<string | symbol, unknown>>(
-  obj: T,
-): Array<keyof T & string> => OBJECT.keys(obj);
+export const keysOf = <T extends object>(obj: T) =>
+  OBJECT.keys(obj) as Array<keyof T & string>;
+
+export const numKeysOf = (obj: object) => lengthOf(keysOf(obj));
 
 // use it in place of object spread
 export const merge = <A extends readonly (object | null | undefined)[]>(

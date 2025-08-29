@@ -6,6 +6,7 @@
 
 export * from "@lisn/utils/animations";
 export * from "@lisn/utils/browser";
+export * from "@lisn/utils/colors";
 export * from "@lisn/utils/css-alter";
 export * from "@lisn/utils/directions";
 export * from "@lisn/utils/dom-alter";

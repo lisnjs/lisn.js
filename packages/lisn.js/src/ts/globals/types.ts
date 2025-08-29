@@ -64,6 +64,20 @@ export type Position = Anchor;
 export type FlexDirection = "row" | "column" | "row-reverse" | "column-reverse";
 
 /**
+ * @category Layout
+ */
+export type BoundingRect = {
+  x: number;
+  left: number;
+  right: number;
+  width: number;
+  y: number;
+  top: number;
+  bottom: number;
+  height: number;
+};
+
+/**
  * @category Views
  */
 export type ViewTarget = Element | ScrollOffsetSpec;
@@ -138,6 +152,11 @@ export type Size = { width: number; height: number };
  * @category DOM
  */
 export type MutationCategory = "added" | "removed" | "attribute";
+
+/**
+ * @category DOM
+ */
+export type DOMElement = HTMLElement | SVGElement | MathMLElement;
 
 /**
  * @category Scrolling
@@ -243,6 +262,135 @@ export type GestureDevice = "key" | "pointer" | "touch" | "wheel";
 export type GestureIntent = "scroll" | "zoom" | "drag" | "unknown";
 
 /**
+ * Screen coordinate. 0, 0 is top-left corner.
+ *
+ * @category Geometry
+ */
+export type Point = [/** x position */ number, /** y position */ number];
+
+/**
+ * Represents a change of position. Positive x is to the right, positive y is down.
+ *
+ * @category Geometry
+ */
+export type Vector = [
+  /** deltaX/x component */ number,
+  /** deltaY/y component */ number,
+];
+
+/**
+ * @since v1.3.0
+ *
+ * @category Geometry
+ */
+export type Axis =
+  | [/** x component */ number, /** y component */ number]
+  | [
+      /** x component */ number,
+      /** y component */ number,
+      /** z component */ number,
+    ];
+
+/**
+ * @since v1.3.0
+ *
+ * @category Geometry
+ */
+export type Origin =
+  | [/** x coordinate */ number, /** y coordinate */ number]
+  | [
+      /** x coordinate */ number,
+      /** y coordinate */ number,
+      /** z coordinate */ number,
+    ];
+
+/**
+ * @since v1.3.0
+ *
+ * @category Color
+ */
+export type ColorRGBComponents = {
+  /**
+   * Red channel. From 0 to 255.
+   */
+  r: number;
+
+  /**
+   * Green channel. From 0 to 255.
+   */
+  g: number;
+
+  /**
+   * Blue channel. From 0 to 255.
+   */
+  b: number;
+
+  /**
+   * Alpha channel. From 0 to 1.
+   */
+  a?: number;
+};
+
+/**
+ * @since v1.3.0
+ *
+ * @category Color
+ */
+export type ColorRGBAComponents = Required<ColorRGBComponents>;
+
+/**
+ * @since v1.3.0
+ *
+ * @category Color
+ */
+export type ColorHSLComponents = {
+  /**
+   * Hue in degrees from 0 to 360.
+   */
+  h: number;
+
+  /**
+   * Saturation in percentage from 0 to 100.
+   */
+  s: number;
+
+  /**
+   * Lightness in percentage from 0 to 100.
+   */
+  l: number;
+
+  /**
+   * Alpha channel. From 0 to 1.
+   *
+   * @defaultValue 1
+   */
+  a?: number;
+};
+
+/**
+ * @since v1.3.0
+ *
+ * @category Color
+ */
+export type ColorHSLAComponents = Required<ColorHSLComponents>;
+
+/**
+ * @since v1.3.0
+ *
+ * @category Color
+ */
+export type ColorComponents = ColorRGBComponents | ColorHSLComponents;
+
+/**
+ * @since v1.3.0
+ *
+ * @category Color
+ */
+export type ColorComponentsWithAlpha =
+  | ColorRGBAComponents
+  | ColorHSLAComponents;
+
+/**
  * Represents an absolute or relative numerical value. If the value is a number,
  * then it is taken as the actual value. Otherwise, it should be a numerical
  * string that is optionally suffixed with `%`.
@@ -269,66 +417,9 @@ export type GestureIntent = "scroll" | "zoom" | "drag" | "unknown";
 export type RawOrRelativeNumber = number | `${number}` | `${number}%`;
 
 /**
- * Screen coordinate. 0, 0 is top-left corner.
- *
- * @category Misc
- */
-export type Point = [/** x position */ number, /** y position */ number];
-
-/**
- * Represents a change of position. Positive x is to the right, positive y is down.
- *
- * @category Misc
- */
-export type Vector = [
-  /** deltaX/x component */ number,
-  /** deltaY/y component */ number,
-];
-
-/**
- * @since v1.3.0
- *
- * @category Misc
- */
-export type Axis =
-  | [/** x component */ number, /** y component */ number]
-  | [
-      /** x component */ number,
-      /** y component */ number,
-      /** z component */ number,
-    ];
-
-/**
- * @since v1.3.0
- *
- * @category Misc
- */
-export type Origin =
-  | [/** x coordinate */ number, /** y coordinate */ number]
-  | [
-      /** x coordinate */ number,
-      /** y coordinate */ number,
-      /** z coordinate */ number,
-    ];
-
-/**
  * @category Misc
  */
 export type PointerAction = "click" | "hover" | "press";
-
-/**
- * @category Misc
- */
-export type BoundingRect = {
-  x: number;
-  left: number;
-  right: number;
-  width: number;
-  y: number;
-  top: number;
-  bottom: number;
-  height: number;
-};
 
 /**
  * @param args Arguments to log
@@ -336,11 +427,6 @@ export type BoundingRect = {
  * @category Misc
  */
 export type LogFunction = (...args: unknown[]) => void;
-
-/**
- * @category Misc
- */
-export type DOMElement = HTMLElement | SVGElement | MathMLElement;
 
 /**
  * @category Utility
@@ -364,7 +450,8 @@ export type NestedRecord<T = unknown> = {
 };
 
 /**
- * @category Utility
+ * @ignore
+ * @deprecated
  */
 export type OnlyOneOf<T, U> =
   | ({
@@ -404,6 +491,17 @@ export type ExceptKeysOf<T extends object> = Record<string, unknown> & {
  * @category Utility
  */
 export type NonEmptyArray<T> = [T, ...T[]];
+
+/**
+ * @since v1.3.0
+ *
+ * @category Utility
+ */
+export type DeepRequired<T> = T extends object
+  ? {
+      [P in keyof T]-?: DeepRequired<T[P]>;
+    }
+  : T;
 
 /**
  * @since v1.3.0

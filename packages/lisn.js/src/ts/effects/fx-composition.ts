@@ -6,7 +6,7 @@
 
 import * as _ from "@lisn/_internal";
 
-import { Effect, EffectOf, EffectType } from "@lisn/effects/effect";
+import { Effect, EffectType } from "@lisn/effects/effect";
 
 /**
  * Represents a map of effects, one per {@link Effect.type | type} that are
@@ -23,7 +23,7 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
    * it discards all previous effects of the respective
    * {@link Effect.type | type}.
    */
-  readonly add: <T extends EffectType>(effect: EffectOf<T>) => this;
+  readonly add: (effect: Effect) => this;
 
   /**
    * Returns a new **live** copy of the composition, where each effect is
@@ -37,18 +37,18 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
    */
   readonly export: () => FXComposition;
 
-  readonly get: <T extends EffectType>(key: T) => EffectOf<T> | undefined;
+  readonly get: <T extends EffectType>(key: T) => Effect<T> | undefined;
 
-  readonly delete: <T extends EffectType>(key: T) => boolean;
+  readonly delete: (key: EffectType) => boolean;
   readonly clear: () => void;
 
   readonly keys: () => IterableIterator<EffectType>;
-  readonly values: () => IterableIterator<EffectOf<EffectType>>;
+  readonly values: () => IterableIterator<Effect>;
   readonly entries: <T extends EffectType>() => IterableIterator<
-    [T, EffectOf<T>]
+    [T, Effect<T>]
   >;
   readonly [Symbol.iterator]!: <T extends EffectType>() => IterableIterator<
-    [T, EffectOf<T>]
+    [T, Effect<T>]
   >;
 
   constructor() {
@@ -56,7 +56,7 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
 
     const cloneOrExport = (asExport: boolean) => {
       const copy = new FXComposition();
-      for (const effect of map.values()) {
+      for (const [t__ignored, effect] of map) {
         copy.add((asExport ? effect.export : effect.toComposition)());
       }
 
@@ -65,7 +65,7 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
 
     _.defineProperty(this, "size", { get: () => map.size });
 
-    this.add = (effect) => {
+    const add = <T extends EffectType>(effect: Effect<T>) => {
       const current = map.get(effect.type);
       const composed =
         !current || effect.isAbsolute()
@@ -76,6 +76,8 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
 
       return this;
     };
+
+    this.add = (effect) => add(effect);
 
     this.clone = () => cloneOrExport(false);
     this.export = () => cloneOrExport(true);
@@ -95,15 +97,15 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
 
 interface EffectsMap {
   size: number;
-  get<T extends EffectType>(key: T): EffectOf<T> | undefined;
-  set<T extends EffectType>(key: T, value: EffectOf<T>): this;
-  has<T extends EffectType>(key: T): boolean;
-  delete<T extends EffectType>(key: T): boolean;
+  get<T extends EffectType>(key: T): Effect<T> | undefined;
+  set<T extends EffectType>(key: T, value: Effect<T>): this;
+  has(key: EffectType): boolean;
+  delete(key: EffectType): boolean;
   clear(): void;
   keys(): IterableIterator<EffectType>;
-  values(): IterableIterator<EffectOf<EffectType>>;
-  entries<T extends EffectType>(): IterableIterator<[T, EffectOf<T>]>;
-  [Symbol.iterator]<T extends EffectType>(): IterableIterator<[T, EffectOf<T>]>;
+  values(): IterableIterator<Effect>;
+  entries<T extends EffectType>(): IterableIterator<[T, Effect<T>]>;
+  [Symbol.iterator]<T extends EffectType>(): IterableIterator<[T, Effect<T>]>;
 }
 
 _.brandClass(FXComposition, "FXComposition");

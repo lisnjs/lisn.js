@@ -11,11 +11,10 @@ import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 import { sum } from "@lisn/utils/math";
 
 import {
-  EffectOf,
+  EffectInterface,
   FXHandler,
   FXState,
   HandlerMethodName,
-  HandlerForMethod,
   HandlerMethodTuple,
   toParameters,
   scaleParameters,
@@ -52,7 +51,7 @@ export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
  *   them to the handlers.
  * - {@link scale} and {@link skew} do not alter the parameters, ignoring depth.
  */
-export class Transform implements EffectOf<"transform"> {
+export class Transform implements EffectInterface<"transform", Transform> {
   readonly type = "transform";
 
   /**
@@ -214,16 +213,15 @@ export class Transform implements EffectOf<"transform"> {
     // ----------
 
     const addOwnHandler = <M extends HandlerMethodName<"transform">>(
-      methodName: M,
-      handler: HandlerForMethod<"transform", M>,
+      tuple: HandlerMethodTuple<"transform", M>,
       fn: FXHandler<void>,
     ) => {
-      if (methodName === "perspective") {
+      if (tuple[0] === "perspective") {
         perspectiveFn = fn;
       } else {
         transformers.push(fn);
       }
-      saveHandlerFor(this, methodName, handler);
+      saveHandlerFor(this, tuple);
     };
 
     // ----------
@@ -318,7 +316,7 @@ export class Transform implements EffectOf<"transform"> {
       });
 
       for (const h of resultHandlers) {
-        addHandlerTo(composed, ...h);
+        addHandlerTo(composed, h);
       }
 
       return composed;
@@ -341,7 +339,7 @@ export class Transform implements EffectOf<"transform"> {
     this.toFloat32Array = (negate) => toMatrix(negate).toFloat32Array();
 
     this.perspective = (handler) => {
-      addOwnHandler("perspective", handler, (parameters, state, composer) => {
+      addOwnHandler(["perspective", handler], (parameters, state, composer) => {
         const perspective = handler(parameters, state, composer);
         if (!_.isUndefined(perspective)) {
           validateOutputParameters("Perspective", [perspective ?? 0]);
@@ -360,7 +358,7 @@ export class Transform implements EffectOf<"transform"> {
     };
 
     this.translate = (handler) => {
-      addOwnHandler("translate", handler, (parameters, state, composer) => {
+      addOwnHandler(["translate", handler], (parameters, state, composer) => {
         parameters = scaleParameters(parameters, composer, (v, d) => v / d);
         const result: Partial<TranslateHandlerReturn> =
           handler(parameters, state, composer) ?? {};
@@ -377,7 +375,7 @@ export class Transform implements EffectOf<"transform"> {
     };
 
     this.scale = (handler) => {
-      addOwnHandler("scale", handler, (parameters, state, composer) => {
+      addOwnHandler(["scale", handler], (parameters, state, composer) => {
         const result: Partial<ScaleHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
@@ -394,7 +392,7 @@ export class Transform implements EffectOf<"transform"> {
     };
 
     this.skew = (handler) => {
-      addOwnHandler("skew", handler, (parameters, state, composer) => {
+      addOwnHandler(["skew", handler], (parameters, state, composer) => {
         const result: Partial<SkewHandlerReturn> =
           handler(parameters, state, composer) ?? {};
 
@@ -410,7 +408,7 @@ export class Transform implements EffectOf<"transform"> {
     };
 
     this.rotate = (handler) => {
-      addOwnHandler("rotate", handler, (parameters, state, composer) => {
+      addOwnHandler(["rotate", handler], (parameters, state, composer) => {
         parameters = scaleParameters(parameters, composer, (v, d) => v * d);
         const result: Partial<RotateHandlerReturn> =
           handler(parameters, state, composer) ?? {};

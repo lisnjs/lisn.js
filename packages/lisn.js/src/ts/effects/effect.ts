@@ -15,7 +15,11 @@ import { FXComposer } from "@lisn/effects/fx-composer";
 /**
  * @interface
  */
-export interface EffectInterface<T extends EffectType> {
+export interface EffectInterface<
+  T extends string,
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  S extends EffectInterface<T, S> = any,
+> {
   /**
    * Unique type for the effect
    */
@@ -46,7 +50,7 @@ export interface EffectInterface<T extends EffectType> {
    *               before adding the current effect's state. Not all effects may
    *               implement this.
    */
-  export: (negate?: EffectOf<T>) => EffectOf<T>;
+  export: (negate?: S) => S;
 
   /**
    * Returns a **new live** effect that has all the handlers from this one and
@@ -59,7 +63,7 @@ export interface EffectInterface<T extends EffectType> {
    * {@link Effect.isAbsolute | absolute}, all previous ones are discarded and
    * the resulting effect becomes absolute.
    */
-  toComposition: (...others: EffectOf<T>[]) => EffectOf<T>;
+  toComposition: (...others: S[]) => S;
 
   /**
    * Returns an object with CSS properties and their values that represent the
@@ -67,16 +71,17 @@ export interface EffectInterface<T extends EffectType> {
    *
    * @param negate See {@link export}.
    */
-  toCss: (negate?: EffectOf<T>) => Record<string, string>;
+  toCss: (negate?: S) => Record<string, string>;
 }
 
-export type EffectType = keyof EffectRegistry;
+export type EffectType = {
+  [K in keyof EffectRegistry]: EffectRegistry[K] extends EffectInterface<K>
+    ? K
+    : never;
+}[keyof EffectRegistry];
 
-export type EffectOf<T extends EffectType> = EffectInterface<T> &
-  EffectRegistry[T]; // specific
-export type Effect<T = unknown> = T extends EffectType
-  ? EffectOf<T>
-  : { [K in EffectType]: EffectOf<K> }[EffectType]; // any effect
+export type Effect<T extends EffectType = EffectType> =
+  EffectRegistry[T] extends EffectInterface<T> ? EffectRegistry[T] : never;
 
 /**
  * An effect handler that should return a value specific to each effect and
@@ -459,17 +464,24 @@ export const getUpdatedState = (
 };
 
 // ----------
-
 /**
  * @ignore
  * @internal
  */
-export type HandlerMethodMap<T extends EffectType> = {
-  [M in keyof EffectOf<T> & string]: EffectOf<T>[M] extends (
+export type HandlerMethodName<T extends EffectType> = {
+  [M in keyof Effect<T> & string]: Effect<T>[M] extends (
     ...args: infer A
-  ) => EffectOf<T>
+  ) => Effect<T>
+    ? A extends [FXHandler<infer R__ignored>]
+      ? M
+      : never
+    : never;
+}[keyof Effect<T> & string];
+
+export type HandlerMethodTupleMap<T extends EffectType> = {
+  [M in HandlerMethodName<T>]: Effect<T>[M] extends (...args: infer A) => Effect
     ? A extends [FXHandler<infer R>]
-      ? FXHandler<R>
+      ? [M, FXHandler<R>]
       : never
     : never;
 };
@@ -478,53 +490,35 @@ export type HandlerMethodMap<T extends EffectType> = {
  * @ignore
  * @internal
  */
-export type HandlerMethodName<T extends EffectType> = {
-  [M in keyof EffectOf<T> & string]: EffectOf<T>[M] extends (
-    ...args: infer A
-  ) => EffectOf<T>
-    ? A extends [FXHandler<infer R__ignored>]
-      ? M
-      : never
-    : never;
-}[keyof EffectOf<T> & string];
-
-/**
- * @ignore
- * @internal
- */
 export type HandlerForMethod<
   T extends EffectType,
-  M extends keyof HandlerMethodMap<T>,
-> = HandlerMethodMap<T>[M];
+  M extends HandlerMethodName<T>,
+> = HandlerMethodTupleMap<T>[M][1];
 
-/**
- * @ignore
- * @internal
- */
 export type HandlerMethodTuple<
   T extends EffectType = EffectType,
-  M extends keyof HandlerMethodMap<T> = keyof HandlerMethodMap<T>,
-> = [M, HandlerForMethod<T, M>];
+  M extends HandlerMethodName<T> = HandlerMethodName<T>,
+> = HandlerMethodTupleMap<T>[M];
 
 interface HandlersMap {
   size: number;
   get<T extends EffectType>(
-    effect: EffectOf<T>,
+    effect: Effect<T>,
   ): HandlerMethodTuple<T>[] | undefined;
   set<T extends EffectType>(
-    effect: EffectOf<T>,
+    effect: Effect<T>,
     handlers: HandlerMethodTuple<T>[],
   ): this;
-  has<T extends EffectType>(effect: EffectOf<T>): boolean;
-  delete<T extends EffectType>(effect: EffectOf<T>): boolean;
+  has(effect: Effect): boolean;
+  delete(effect: Effect): boolean;
   clear(): void;
-  keys(): IterableIterator<EffectOf<EffectType>>;
+  keys(): IterableIterator<Effect>;
   values(): IterableIterator<HandlerMethodTuple[]>;
   entries<T extends EffectType>(): IterableIterator<
-    [EffectOf<T>, HandlerMethodTuple<T>[]]
+    [Effect<T>, HandlerMethodTuple<T>[]]
   >;
   [Symbol.iterator]<T extends EffectType>(): IterableIterator<
-    [EffectOf<T>, HandlerMethodTuple<T>[]]
+    [Effect<T>, HandlerMethodTuple<T>[]]
   >;
 }
 
@@ -534,7 +528,7 @@ const allUserHandlersMap: HandlersMap = new Map();
  * @ignore
  * @internal
  */
-export const getHandlersFor = <T extends EffectType>(effect: EffectOf<T>) => {
+export const getHandlersFor = <T extends EffectType>(effect: Effect<T>) => {
   let handlers = allUserHandlersMap.get(effect);
   if (!handlers) {
     handlers = [];
@@ -550,33 +544,29 @@ export const getHandlersFor = <T extends EffectType>(effect: EffectOf<T>) => {
  */
 export const saveHandlerFor = <
   T extends EffectType,
-  M extends keyof HandlerMethodMap<T>,
+  M extends HandlerMethodName<T>,
 >(
-  effect: EffectOf<T>,
-  methodName: M,
-  handler: HandlerForMethod<T, M>,
+  effect: Effect<T>,
+  tuple: HandlerMethodTuple<T, M>,
 ) => {
   const handlers = getHandlersFor(effect);
-  handlers.push([methodName, handler]);
+  handlers.push(tuple);
 };
 
 /**
  * @ignore
  * @internal
  */
-export const addHandlerTo = <
-  T extends EffectType,
-  M extends keyof HandlerMethodMap<T>,
->(
-  effect: EffectOf<T>,
-  methodName: M,
-  handler: HandlerForMethod<T, M>,
+export const addHandlerTo = <T extends EffectType>(
+  effect: Effect<T>,
+  tuple: HandlerMethodTuple<T>,
 ) => {
-  const method = effect[methodName];
+  const method: (h: HandlerForMethod<T, HandlerMethodName<T>>) => void =
+    effect[tuple[0]];
   if (_.isFunction(method)) {
-    method(handler);
+    method(tuple[1]);
   } else {
-    throw usageError(`Method '${methodName}' is not a function.`);
+    throw usageError(`Method '${tuple[0]}' is not a function.`);
   }
 };
 

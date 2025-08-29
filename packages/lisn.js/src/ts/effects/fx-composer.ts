@@ -35,8 +35,6 @@ import { createXMap } from "@lisn/modules/x-map";
 
 import {
   Effect,
-  EffectOf,
-  EffectType,
   FXAxisState,
   FXState,
   FXStateUpdate,
@@ -404,7 +402,7 @@ export class FXComposer {
 
     // ----------
 
-    const add = (link: EffectOf<EffectType> | FXComposer, pin?: FXPin) => {
+    const add = (link: Effect | FXComposer, pin?: FXPin) => {
       if (_.isInstanceOf(link, FXComposer)) {
         compositionChain.push([link, void 0]);
         link.onCompose(recomposeOnOtherCompose);
@@ -758,8 +756,7 @@ export class FXComposer {
           link.update(_.deepCopy(currentFXState), this);
         }
 
-        // TODO Why...
-        (currentComposition.add as (e: EffectOf<EffectType>) => void)(link);
+        currentComposition.add(link);
       }
     };
 

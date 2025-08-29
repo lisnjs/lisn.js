@@ -7,11 +7,10 @@
 import * as _ from "@lisn/_internal";
 
 import {
-  EffectOf,
+  EffectInterface,
   FXHandler,
   FXState,
   HandlerMethodName,
-  HandlerForMethod,
   HandlerMethodTuple,
   toParameters,
   validateOutputParameters,
@@ -41,7 +40,7 @@ import { FXComposer } from "@lisn/effects/fx-composer";
  * {@link Filter} does not support negation and it does not support parallax
  * depth; it is ignored.
  */
-export class Filter implements EffectOf<"filter"> {
+export class Filter implements EffectInterface<"filter", Filter> {
   readonly type = "filter";
 
   /**
@@ -110,6 +109,11 @@ export class Filter implements EffectOf<"filter"> {
    */
   readonly blur: (handler: FXHandler<BlurHandlerReturn>) => this;
 
+  /**
+   * Adds a brightness handler.
+   */
+  readonly brightness: (handler: FXHandler<BrightnessHandlerReturn>) => this;
+
   // XXX rest
 
   constructor(config?: FilterConfig) {
@@ -122,12 +126,11 @@ export class Filter implements EffectOf<"filter"> {
     // ----------
 
     const addOwnHandler = <M extends HandlerMethodName<"filter">>(
-      methodName: M,
-      handler: HandlerForMethod<"filter", M>,
+      tuple: HandlerMethodTuple<"filter", M>,
       fn: FXHandler<void>,
     ) => {
       handlers.push(fn);
-      saveHandlerFor(this, methodName, handler);
+      saveHandlerFor(this, tuple);
     };
 
     // --------------------
@@ -158,7 +161,7 @@ export class Filter implements EffectOf<"filter"> {
       let resultIsAbsolute = false;
       let resultInit: FilterStateXXX = {};
       let resultHandlers: HandlerMethodTuple<"filter">[] = [];
-      for (const f of others) {
+      for (const f of [this, ...others]) {
         if (f.isAbsolute()) {
           resultIsAbsolute = true;
           resultInit = {};
@@ -168,7 +171,8 @@ export class Filter implements EffectOf<"filter"> {
         const XXX = f.toXXX();
         let prop: keyof FilterStateXXX;
         for (prop in XXX) {
-          resultInit[prop] = XXX[prop];
+          // XXX TODO add the values?
+          // resultInit[prop] = XXX[prop];
         }
         resultHandlers.push(...getHandlersFor(f));
       }
@@ -179,7 +183,7 @@ export class Filter implements EffectOf<"filter"> {
       });
 
       for (const h of resultHandlers) {
-        addHandlerTo(composed, ...h);
+        addHandlerTo(composed, h);
       }
 
       return composed;
@@ -205,13 +209,27 @@ export class Filter implements EffectOf<"filter"> {
     this.toXXX = () => _.deepCopy(filters);
 
     this.blur = (handler) => {
-      addOwnHandler("blur", handler, (parameters, state, composer) => {
+      addOwnHandler(["blur", handler], (parameters, state, composer) => {
         const blur = handler(parameters, state, composer);
         if (_.isNull(blur)) {
           delete filters.blur;
         } else if (!_.isUndefined(blur)) {
           validateOutputParameters("Blur radius", [blur]);
           filters.blur = blur;
+        }
+      });
+
+      return this;
+    };
+
+    this.brightness = (handler) => {
+      addOwnHandler(["brightness", handler], (parameters, state, composer) => {
+        const brightness = handler(parameters, state, composer);
+        if (_.isNull(brightness)) {
+          delete filters.brightness;
+        } else if (!_.isUndefined(brightness)) {
+          validateOutputParameters("brightness fraction", [brightness]); // XXX min/max
+          filters.brightness = brightness;
         }
       });
 
@@ -226,6 +244,13 @@ export class Filter implements EffectOf<"filter"> {
  * Returning `null` resets the blur even if the filter is not absolute.
  */
 export type BlurHandlerReturn = number | null;
+
+/**
+ * Should return the brightness fraction in pixels.
+ *
+ * Returning `null` resets the brightness even if the filter is not absolute.
+ */
+export type BrightnessHandlerReturn = number | null;
 
 export type FilterConfig = {
   /**

@@ -439,11 +439,15 @@ export class Transform implements EffectInterface<"transform", Transform> {
  *
  * Returning `null` clears the perspective completely even if the transform is
  * not absolute.
+ *
+ * Returning `undefined` should leave the current value unchanged.
  */
 export type PerspectiveHandlerReturn = number | null;
 
 /**
  * Should return the translation distances along one or more axes.
+ *
+ * Returning `undefined` should leave the current value unchanged.
  */
 export type TranslateHandlerReturn = AtLeastOne<{
   /**
@@ -470,6 +474,8 @@ export type TranslateHandlerReturn = AtLeastOne<{
 
 /**
  * Should return the scaling factor along one or more axes.
+ *
+ * Returning `undefined` should leave the current value unchanged.
  */
 export type ScaleHandlerReturn = AtLeastOne<{
   /**
@@ -515,6 +521,8 @@ export type ScaleHandlerReturn = AtLeastOne<{
  *
  * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
  * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
+ *
+ * Returning `undefined` should leave the current value unchanged.
  */
 export type SkewHandlerReturn = AtLeastOne<{
   /**
@@ -542,6 +550,8 @@ export type SkewHandlerReturn = AtLeastOne<{
 
 /**
  * Should return the rotation angle and axis of rotation.
+ *
+ * Returning `undefined` should leave the current value unchanged.
  */
 export type RotateHandlerReturn = {
   /**

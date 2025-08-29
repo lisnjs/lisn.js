@@ -337,6 +337,16 @@ export const normalizeAngle = (a: number) => {
 };
 
 /**
+ * Normalizes the given angle (in degrees) so that it's in the range 0 to 360,
+ * not including 360.
+ *
+ * @category Math
+ *
+ * @since v1.3.0
+ */
+export const normalizeAngleDeg = (a: number) => ((a % 360) + 360) % 360;
+
+/**
  * Normalizes a vector defined by the given x, y and z coordinates to length 1.
  *
  * @since v1.3.0

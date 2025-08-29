@@ -13,7 +13,7 @@ import {
   ColorRGBAComponents,
 } from "@lisn/globals/types";
 
-import { toNumWithBounds } from "@lisn/utils/math";
+import { toNumWithBounds, normalizeAngleDeg } from "@lisn/utils/math";
 
 /**
  * Returns true if the given value is a valid {@link ColorComponents} object
@@ -175,7 +175,7 @@ const normalizeHSLColor = (
     toNumWithBounds(value, { min: 0, max });
 
   let { h = 0, s = 100, l = 50, a = 1 } = color;
-  h = ((h % 360) + 360) % 360;
+  h = normalizeAngleDeg(h);
   s = normalizeNum(s);
   l = normalizeNum(l);
   a = normalizeNum(a, 1);

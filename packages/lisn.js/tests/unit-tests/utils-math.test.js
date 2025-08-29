@@ -351,6 +351,18 @@ for (const offset of [
   });
 }
 
+test("normalizeAngleDeg", () => {
+  expect(utils.normalizeAngleDeg(0)).toBe(0);
+  expect(utils.normalizeAngleDeg(90)).toBe(90);
+  expect(utils.normalizeAngleDeg(180)).toBe(180);
+  expect(utils.normalizeAngleDeg(359.99)).toBe(359.99);
+  expect(utils.normalizeAngleDeg(360)).toBe(0);
+  expect(utils.normalizeAngleDeg(30 + 360)).toBe(30);
+  expect(utils.normalizeAngleDeg(30 + 2 * 360)).toBe(30);
+  expect(utils.normalizeAngleDeg(30 - 360)).toBe(30);
+  expect(utils.normalizeAngleDeg(30 - 2 * 360)).toBe(30);
+});
+
 test("degToRad", () => {
   expect(utils.degToRad(0)).toBe(0);
   expect(utils.degToRad(45)).toBe(Math.PI / 4);

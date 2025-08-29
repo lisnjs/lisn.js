@@ -6,16 +6,21 @@
 
 import * as _ from "@lisn/_internal";
 
-import { AtLeastOne } from "@lisn/globals/types";
-
 import { usageError } from "@lisn/globals/errors";
 
 import { toNum } from "@lisn/utils/math";
-import { validateNumber } from "@lisn/utils/validation";
 
 import { FXComposer } from "@lisn/effects/fx-composer";
 
 /**
+ * An effect defines one or more methods that accept an {@link FXHandler} as
+ * well as an {@link update} method which accepts the {@link FXState | state} of
+ * a composer. When the effect is updated, each handler is called in turn with
+ * parsed {@link FXParams} based on the composer's state and the return values
+ * of the handlers are used to modify the effect's values.
+ *
+ * See each specific effect for the type of handlers it supports.
+ *
  * @interface
  */
 export interface EffectInterface<

@@ -111,6 +111,32 @@ export const toColorComponents = (
     : void 0;
 
 /**
+ * Like {@link toColorComponents} but returns the result as a CSS string as
+ * `hsl(h s l / a)` or `rgb(r g b / a)`. If the given value is not a valid partial
+ * color, an empty string is returned.
+ *
+ * @since v1.3.0
+ *
+ * @category Color
+ */
+export const toColor = (v: unknown) => {
+  let result = "";
+
+  const components = toColorComponents(v);
+  if (components) {
+    if (colorIsHSL(components)) {
+      const { h, s, l, a } = components;
+      result = `hsl(${h} ${s} ${l} / ${a})`;
+    } else {
+      const { r, g, b, a } = components;
+      result = `rgb(${r} ${g} ${b} / ${a})`;
+    }
+  }
+
+  return result;
+};
+
+/**
  * Converts the given HSLA color to RGBA. Default values for the channels are:
  * - h: 0
  * - s: 100

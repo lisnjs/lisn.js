@@ -73,6 +73,21 @@ test("toColorComponents", () => {
   });
 });
 
+test("toColor", () => {
+  expect(utils.toColor(null)).toBe("");
+  expect(utils.toColor({})).toBe("");
+
+  expect(utils.toColor({ h: 10 })).toBe("hsl(10 100 50 / 1)");
+  expect(utils.toColor({ h: 10, s: 50, l: 20, a: 0.5 })).toBe(
+    "hsl(10 50 20 / 0.5)",
+  );
+
+  expect(utils.toColor({ r: 10 })).toBe("rgb(10 0 0 / 1)");
+  expect(utils.toColor({ r: 10, g: 50, b: 20, a: 0.5 })).toBe(
+    "rgb(10 50 20 / 0.5)",
+  );
+});
+
 describe("addColor", () => {
   test("hsl + hsl", () => {
     // no other

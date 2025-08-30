@@ -351,7 +351,7 @@ export class Filter implements EffectInterface<"filter", Filter> {
       let result = "";
       for (const [name, val] of filters) {
         if (!_.isNullish(val)) {
-          result += (result ? " " : "") + `${name}(${formatValue(name, val)})`;
+          result += (result ? " " : "") + formatEntry(name, val);
         }
       }
 
@@ -623,19 +623,20 @@ const VALUE_VALIDATORS: {
   },
 };
 
-const VALUE_FORMATTERS: {
+const ENTRY_FORMATTERS: {
   [F in FilterName]: (value: NonNullable<FilterValueMap[F]>) => string;
 } = {
-  brightness: (v) => `${v}`,
-  blur: (v) => `${v}px`,
-  contrast: (v) => `${v}`,
-  dropShadow: (v) => `${v.offsetX} ${v.offsetY} ${v.blur} ${toColor(v.color)}`,
-  grayscale: (v) => `${v}`,
-  hueRotate: (v) => `${v}deg`,
-  invert: (v) => `${v}`,
-  opacity: (v) => `${v}`,
-  saturate: (v) => `${v}`,
-  sepia: (v) => `${v}`,
+  brightness: (v) => `brightness(${v})`,
+  blur: (v) => `blur(${v}px)`,
+  contrast: (v) => `contrast(${v})`,
+  dropShadow: (v) =>
+    `drop-shadow(${v.offsetX} ${v.offsetY} ${v.blur} ${toColor(v.color)})`,
+  grayscale: (v) => `grayscale(${v})`,
+  hueRotate: (v) => `hue-rotate(${v}deg)`,
+  invert: (v) => `invert(${v})`,
+  opacity: (v) => `opacity(${v})`,
+  saturate: (v) => `saturate(${v})`,
+  sepia: (v) => `sepia(${v})`,
 };
 
 const validateColor = (
@@ -672,9 +673,9 @@ const validateAndAddEntry = <F extends FilterName>(
 ): FilterEntryResolved<F> =>
   [name, VALUE_VALIDATORS[name](value, currentValue)] as const;
 
-const formatValue = <F extends FilterName>(
+const formatEntry = <F extends FilterName>(
   name: F,
   value: NonNullable<FilterValueMap[F]> | null,
-) => (_.isNullish(value) ? "" : VALUE_FORMATTERS[name](value));
+) => (_.isNullish(value) ? "" : ENTRY_FORMATTERS[name](value));
 
 _.brandClass(Filter, "Filter");

@@ -129,14 +129,14 @@ const newState = (partial = {}) => {
 
 describe("basic", () => {
   for (const isAbsolute of [true, false]) {
-    test(`${isAbsolute ? "absolute: " : ""}no init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: no init`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       expect(f.isAbsolute()).toBe(isAbsolute);
       expect(f.toEntries()).toEqual([]);
       expect(f.toString()).toBe("none");
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}with init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: with init`, () => {
       const initCopy = deepCopy(DUMMY_INIT);
       const f = isAbsolute
         ? newAbsoluteFilter(DUMMY_INIT)
@@ -155,7 +155,7 @@ describe("basic", () => {
       expect(DUMMY_INIT).toEqual(initCopy); // not modified
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}overflowing values in init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: overflowing values in init`, () => {
       const init = [
         ["brightness", -0.1],
         ["sepia", 1.2],
@@ -198,7 +198,7 @@ describe("basic", () => {
 
 describe("update", () => {
   for (const isAbsolute of [true, false]) {
-    test(`${isAbsolute ? "absolute: " : ""}basic`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: basic`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       for (const [method, value] of DUMMY_INIT) {
         f[method](() => value ?? 1);
@@ -210,7 +210,7 @@ describe("update", () => {
       expect(f.toString()).toEqual(DUMMY_INIT_RESOLVED_STR);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}no init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: no init`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       expect(f.isAbsolute()).toBe(isAbsolute);
 
@@ -236,7 +236,7 @@ describe("update", () => {
       expect(f.toEntries()).toEqual(expectedFinal);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}init but no handlers`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: init but no handlers`, () => {
       const f = isAbsolute
         ? newAbsoluteFilter(DUMMY_INIT)
         : newFilter(DUMMY_INIT);
@@ -246,7 +246,7 @@ describe("update", () => {
       expect(f.toEntries()).toEqual(isAbsolute ? [] : DUMMY_INIT);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}with init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: with init`, () => {
       const f = isAbsolute
         ? newAbsoluteFilter(DUMMY_INIT)
         : newFilter(DUMMY_INIT);
@@ -275,7 +275,7 @@ describe("update", () => {
       expect(f.toEntries()).toEqual(expectedFinal);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}with mismatching init (mismatch at i=0)`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: with mismatching init (mismatch at i=0)`, () => {
       const mismatchingInit = [
         ["brightness", 0.8],
         ["blur", 2],
@@ -327,7 +327,7 @@ describe("update", () => {
       expect(f.toEntries()).toEqual(expectedFinal);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}with mismatching init (mismatch at i=2)`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: with mismatching init (mismatch at i=2)`, () => {
       const mismatchingInit = [
         ["brightness", 1.5],
         ["contrast", 1.2],
@@ -391,7 +391,7 @@ describe("update", () => {
       expect(f.toEntries()).toEqual(expectedFinal);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}adding handlers after update`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: adding handlers after update`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       f.brightness(() => 1.5);
       f.contrast(() => 0.7);
@@ -426,7 +426,7 @@ describe("update", () => {
   }
 
   for (const isAbsolute of [true, false]) {
-    test(`${isAbsolute ? "absolute: " : ""}overflowing values in handler return`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: overflowing values in handler return`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       f.brightness(() => -0.1);
       f.sepia(() => 1.2);
@@ -448,14 +448,14 @@ describe("update", () => {
       ]);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}returning undefined: no init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: returning undefined: no init`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       f.brightness(() => {});
       f.update(DUMMY_STATE, DEFAULT_COMPOSER);
       expect(f.toEntries()).toEqual([["brightness", null]]);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}returning undefined: with init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: returning undefined: with init`, () => {
       const init = [["brightness", 0.3]];
       const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
       f.brightness(() => {});
@@ -503,7 +503,7 @@ describe("update parameters", () => {
 
 describe("export", () => {
   for (const isAbsolute of [true, false]) {
-    test(`${isAbsolute ? "absolute: " : ""}no init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: no init`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       for (const [method, value] of DUMMY_INIT) {
         f[method](() => value ?? 1);
@@ -531,7 +531,7 @@ describe("export", () => {
       expect(exported.toEntries()).toEqual([]);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}with init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: with init`, () => {
       const init = [
         ["brightness", 1.5],
         ["contrast", null],
@@ -589,7 +589,7 @@ describe("export", () => {
       }
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}after update`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: after update`, () => {
       let hasCalled = false;
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       for (const [method, value] of DUMMY_INIT) {
@@ -661,7 +661,7 @@ describe("export", () => {
 
 describe("toComposition: single (clone)", () => {
   for (const isAbsolute of [true, false]) {
-    test(`${isAbsolute ? "absolute: " : ""}no init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: no init`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       for (const [method, value] of DUMMY_INIT) {
         f[method](() => value ?? 1);
@@ -688,7 +688,7 @@ describe("toComposition: single (clone)", () => {
       expect(composed.toEntries()).toEqual(DUMMY_INIT_RESOLVED); // preserved handlers
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}with init`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: with init`, () => {
       const f = isAbsolute
         ? newAbsoluteFilter(DUMMY_INIT)
         : newFilter(DUMMY_INIT);
@@ -722,7 +722,7 @@ describe("toComposition: single (clone)", () => {
       expect(f.toEntries()).toEqual(expected);
     });
 
-    test(`${isAbsolute ? "absolute: " : ""}after update`, () => {
+    test(`${isAbsolute ? "absolute" : "incremental"}: after update`, () => {
       let hasCalled = false;
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       for (const [method, value] of DUMMY_INIT) {
@@ -1308,6 +1308,26 @@ describe("toEntries", () => {
 });
 
 for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
+  const axis = {
+    low: -1,
+    high: 1,
+    initial: 0,
+    previous: 0,
+    current: 0.5,
+    target: 1,
+    lag: 0,
+    depth: 1,
+    snap: false,
+  };
+  const state = { x: axis, y: axis, z: axis };
+
+  const axis2 = {
+    ...axis,
+    previous: axis.current,
+    current: 0.8,
+  };
+  const state2 = { x: axis2, y: axis2, z: axis2 };
+
   describe(name, () => {
     test("update", () => {
       const cbk = jest.fn(() => 0.5);
@@ -1324,72 +1344,45 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
       );
     });
 
-    test("with init, missing return", () => {
-      const init = [[name === "brightness" ? "blur" : "brightness", 0.1]];
-      const f = newFilter(init);
-      f[name](() => {});
-
-      const expected = deepCopy(init);
-      expected.push([name, null]);
-
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
-      expect(f.toEntries()).toEqual(expected);
-    });
-
-    test("absolute: with init, missing return", () => {
-      const f = newAbsoluteFilter(DUMMY_INIT);
-      f[name](() => {});
-
-      const expected = [[name, null]];
-
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
-      expect(f.toEntries()).toEqual(expected);
-    });
-
-    for (const v of [NaN, -Infinity]) {
-      test(`with init, invalid return ${v}`, () => {
-        const f = newFilter(DUMMY_INIT);
-        f[name](() => v);
-
-        expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-          /must be a number/,
-        );
-        expect(f.toEntries()).toEqual(DUMMY_INIT);
-      });
-
-      test(`absolute: with init, invalid return ${v}`, () => {
-        const f = newAbsoluteFilter(DUMMY_INIT);
-        f[name](() => v);
-
-        expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-          /must be a number/,
-        );
-        expect(f.toEntries()).toEqual([]);
-      });
-    }
-
     for (const isAbsolute of [true, false]) {
-      const axis = {
-        low: -1,
-        high: 1,
-        initial: 0,
-        previous: 0,
-        current: 0.5,
-        target: 1,
-        lag: 0,
-        depth: 1,
-        snap: false,
-      };
-      const state = { x: axis, y: axis, z: axis };
+      test(`${isAbsolute ? "absolute" : "incremental"}: with other filter init, missing return`, () => {
+        const init = [[name === "brightness" ? "blur" : "brightness", 0.5]];
+        const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+        f[name](() => {});
 
-      const axis2 = {
-        ...axis,
-        previous: axis.current,
-        current: 0.8,
-      };
-      const state2 = { x: axis2, y: axis2, z: axis2 };
+        const expected = isAbsolute ? [] : deepCopy(init);
+        expected.push([name, null]);
 
-      test(`${isAbsolute ? "absolute: " : ""}2 updates: no init`, () => {
+        f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+        expect(f.toEntries()).toEqual(expected);
+      });
+
+      test(`${isAbsolute ? "absolute" : "incremental"}: with same init, missing return`, () => {
+        const init = [[name, 0.5]];
+        const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+        f[name](() => {});
+
+        const expected = isAbsolute ? [[name, null]] : deepCopy(init);
+
+        f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+        expect(f.toEntries()).toEqual(expected);
+      });
+
+      for (const v of [NaN, -Infinity]) {
+        test(`${isAbsolute ? "absolute" : "incremental"}: with init, invalid return ${v}`, () => {
+          const f = isAbsolute
+            ? newAbsoluteFilter(DUMMY_INIT)
+            : newFilter(DUMMY_INIT);
+          f[name](() => v);
+
+          expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+            /must be a number/,
+          );
+          expect(f.toEntries()).toEqual(isAbsolute ? [] : DUMMY_INIT);
+        });
+      }
+
+      test(`${isAbsolute ? "absolute" : "incremental"}: 2 updates: no init`, () => {
         const f = isAbsolute ? newAbsoluteFilter() : newFilter();
         f[name]((p) => p.x);
 
@@ -1404,8 +1397,8 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
         expect(f.toEntries()[0]).toBeCloseToArray([name, state2.x.current]);
       });
 
-      test(`${isAbsolute ? "absolute: " : ""}2 updates: with init`, () => {
-        const initVal = 0.1;
+      test(`${isAbsolute ? "absolute" : "incremental"}: 2 updates: with init`, () => {
+        const initVal = 0.2;
         const init = [[name, initVal]];
         const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
         f[name]((p) => p.x);
@@ -1430,11 +1423,326 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
     }
   });
 }
-// XXX TODO dropShadow
-//`'${key}' must be a valid HSL(A) or RGB(A) color object`;
 
-describe("multiple filters", () => {
-  // XXX TODO
+describe("dropShadow", () => {
+  const axis = {
+    low: -10,
+    high: 10,
+    initial: 0,
+    previous: 0,
+    current: 5,
+    target: 10,
+    lag: 0,
+    depth: 1,
+    snap: false,
+  };
+  const state = { x: axis, y: axis, z: axis };
+
+  const axis2 = {
+    ...axis,
+    previous: axis.current,
+    current: 8,
+  };
+  const state2 = { x: axis2, y: axis2, z: axis2 };
+
+  test("update", () => {
+    const cbk = jest.fn(() => 0.5);
+    const f = newFilter();
+    f.dropShadow(cbk);
+    expect(cbk).toHaveBeenCalledTimes(0);
+
+    f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenCalledWith(
+      DEFAULT_TWEEN_STATE,
+      DUMMY_STATE,
+      DEFAULT_COMPOSER,
+    );
+  });
+
+  for (const isAbsolute of [true, false]) {
+    test(`${isAbsolute ? "absolute" : "incremental"}: with other filter init, missing return`, () => {
+      const init = [["brightness", 0.5]];
+      const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+      f.dropShadow(() => {});
+
+      const expected = isAbsolute ? [] : deepCopy(init);
+      expected.push(["dropShadow", null]);
+
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(f.toEntries()).toEqual(expected);
+    });
+
+    test(`${isAbsolute ? "absolute" : "incremental"}: with same init, missing return`, () => {
+      const init = [
+        [
+          "dropShadow",
+          {
+            color: { r: 10, g: 20, b: 30, a: 0.5 },
+            offsetX: 10,
+            offsetY: 20,
+            blur: 5,
+          },
+        ],
+      ];
+      const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+      f.dropShadow(() => {});
+
+      const expected = isAbsolute ? [["dropShadow", null]] : deepCopy(init);
+
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(f.toEntries()).toEqual(expected);
+    });
+
+    test(`${isAbsolute ? "absolute" : "incremental"}: with same filter init, missing prop`, () => {
+      const init = [
+        [
+          "dropShadow",
+          {
+            color: { r: 10, g: 20, b: 30, a: 0.5 },
+            offsetX: 10,
+            offsetY: 20,
+            blur: 5,
+          },
+        ],
+      ];
+      const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+      f.dropShadow(() => ({ color: { r: 20, a: 0.2 }, offsetY: 10 }));
+
+      let expected;
+      if (isAbsolute) {
+        expected = [
+          [
+            "dropShadow",
+            {
+              color: { r: 20, g: 0, b: 0, a: 0.2 },
+              offsetX: 0,
+              offsetY: 10,
+              blur: 0,
+            },
+          ],
+        ];
+      } else {
+        expected = [
+          [
+            "dropShadow",
+            {
+              color: { r: 10 + 20, g: 20, b: 30, a: 0.7 },
+              offsetX: 10,
+              offsetY: 20 + 10,
+              blur: 5,
+            },
+          ],
+        ];
+      }
+
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(f.toEntries()).toEqual(expected);
+    });
+
+    for (const c of [false, { x: 1 }]) {
+      test(`${isAbsolute ? "absolute" : "incremental"}: with init, invalid color ${c}`, () => {
+        const f = isAbsolute
+          ? newAbsoluteFilter(DUMMY_INIT)
+          : newFilter(DUMMY_INIT);
+        f.dropShadow(() => ({ color: c }));
+
+        expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+          /must be a valid HSL\(A\) or RGB\(A\) color object/,
+        );
+        expect(f.toEntries()).toEqual(isAbsolute ? [] : DUMMY_INIT);
+      });
+    }
+
+    for (const v of [NaN, -Infinity]) {
+      for (const prop of ["offsetX", "offsetY", "blur"]) {
+        test(`${isAbsolute ? "absolute" : "incremental"}: with init, invalid ${prop} ${v}`, () => {
+          const f = isAbsolute
+            ? newAbsoluteFilter(DUMMY_INIT)
+            : newFilter(DUMMY_INIT);
+          f.dropShadow(() => ({ [prop]: v }));
+
+          expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+            /must be a number/,
+          );
+          expect(f.toEntries()).toEqual(isAbsolute ? [] : DUMMY_INIT);
+        });
+      }
+    }
+
+    test(`${isAbsolute ? "absolute" : "incremental"}: 2 updates: no init`, () => {
+      const f = isAbsolute ? newAbsoluteFilter() : newFilter();
+      f.dropShadow((p) => ({
+        color: { r: p.x, g: p.x, b: p.x },
+        offsetX: p.x,
+        offsetY: p.x,
+        blur: p.x,
+      }));
+
+      expect(f.toEntries()).toEqual([]);
+
+      for (const s of [state, state2]) {
+        f.update(s, DEFAULT_COMPOSER);
+        const entries = f.toEntries();
+        expect(entries.length).toBe(1);
+        expect(entries[0][0]).toBe("dropShadow");
+        const val = entries[0][1];
+        const x = s.x.current;
+
+        expect(val.offsetX).toBeCloseTo(x);
+        expect(val.offsetY).toBeCloseTo(x);
+        expect(val.blur).toBeCloseTo(x);
+        expect(val.color).toEqual({
+          r: x,
+          g: x,
+          b: x,
+          a: 1,
+        });
+      }
+    });
+
+    test(`${isAbsolute ? "absolute" : "incremental"}: 2 updates: with init`, () => {
+      const initVal = {
+        color: { r: 10, g: 20, b: 30, a: 0.5 },
+        offsetX: 10,
+        offsetY: 20,
+        blur: 5,
+      };
+      const init = [["dropShadow", initVal]];
+      const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+      f.dropShadow((p) => ({
+        color: { r: p.x, g: p.x, b: p.x },
+        offsetX: p.x,
+        offsetY: p.x,
+        blur: p.x,
+      }));
+
+      expect(f.toEntries()).toEqual(init);
+
+      for (const s of [state, state2]) {
+        f.update(s, DEFAULT_COMPOSER);
+        const entries = f.toEntries();
+        expect(entries.length).toBe(1);
+        expect(entries[0][0]).toBe("dropShadow");
+        const val = entries[0][1];
+        const x = s.x.current;
+
+        expect(val.offsetX).toBeCloseTo((isAbsolute ? 0 : initVal.offsetX) + x);
+        expect(val.offsetY).toBeCloseTo((isAbsolute ? 0 : initVal.offsetY) + x);
+        expect(val.blur).toBeCloseTo((isAbsolute ? 0 : initVal.blur) + x);
+        expect(val.color).toEqual({
+          r: (isAbsolute ? 0 : initVal.color.r) + x,
+          g: (isAbsolute ? 0 : initVal.color.g) + x,
+          b: (isAbsolute ? 0 : initVal.color.b) + x,
+          a: 1,
+        });
+      }
+    });
+  }
+});
+
+test("all filters + toCss", () => {
+  const f = newFilter();
+  f.brightness(() => 0.1)
+    .brightness(() => 0.2)
+    .blur(() => 2)
+    .contrast(() => 0.3)
+    .dropShadow(() => ({
+      color: { r: 100, g: 110, b: 120, a: 0.5 },
+      offsetX: 10,
+      offsetY: 20,
+      blur: 3,
+    }))
+    .grayscale(() => 0.4)
+    .hueRotate(() => 30)
+    .invert(() => 0.3)
+    .hueRotate(() => 30)
+    .opacity(() => 0.2)
+    .saturate(() => 0.1)
+    .sepia(() => 0.2);
+
+  expect(f.toEntries()).toEqual([]);
+  expect(f.toString()).toBe("none");
+  expect(f.toCss()).toEqual({ filter: "none" });
+
+  f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+  expect(f.toEntries()).toEqual([
+    ["brightness", 0.1],
+    ["brightness", 0.2],
+    ["blur", 2],
+    ["contrast", 0.3],
+    [
+      "dropShadow",
+      {
+        color: { r: 100, g: 110, b: 120, a: 0.5 },
+        offsetX: 10,
+        offsetY: 20,
+        blur: 3,
+      },
+    ],
+    ["grayscale", 0.4],
+    ["hueRotate", 30],
+    ["invert", 0.3],
+    ["hueRotate", 30],
+    ["opacity", 0.2],
+    ["saturate", 0.1],
+    ["sepia", 0.2],
+  ]);
+  expect(f.toString()).toBe(
+    "brightness(0.1) " +
+      "brightness(0.2) " +
+      "blur(2px) " +
+      "contrast(0.3) " +
+      "drop-shadow(10 20 3 rgb(100 110 120 / 0.5)) " +
+      "grayscale(0.4) " +
+      "hue-rotate(30deg) " +
+      "invert(0.3) " +
+      "hue-rotate(30deg) " +
+      "opacity(0.2) " +
+      "saturate(0.1) " +
+      "sepia(0.2)",
+  );
+  expect(f.toCss()).toEqual({ filter: f.toString() });
+
+  // doubled values
+  f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+  expect(f.toEntries()).toEqual([
+    ["brightness", 0.2],
+    ["brightness", 0.4],
+    ["blur", 4],
+    ["contrast", 0.6],
+    [
+      "dropShadow",
+      {
+        color: { r: 200, g: 220, b: 240, a: 1 },
+        offsetX: 20,
+        offsetY: 40,
+        blur: 6,
+      },
+    ],
+    ["grayscale", 0.8],
+    ["hueRotate", 60],
+    ["invert", 0.6],
+    ["hueRotate", 60],
+    ["opacity", 0.4],
+    ["saturate", 0.2],
+    ["sepia", 0.4],
+  ]);
+  expect(f.toString()).toBe(
+    "brightness(0.2) " +
+      "brightness(0.4) " +
+      "blur(4px) " +
+      "contrast(0.6) " +
+      "drop-shadow(20 40 6 rgb(200 220 240 / 1)) " +
+      "grayscale(0.8) " +
+      "hue-rotate(60deg) " +
+      "invert(0.6) " +
+      "hue-rotate(60deg) " +
+      "opacity(0.4) " +
+      "saturate(0.2) " +
+      "sepia(0.4)",
+  );
+  expect(f.toCss()).toEqual({ filter: f.toString() });
 });
 
 describe("parallax depth (ignored)", () => {

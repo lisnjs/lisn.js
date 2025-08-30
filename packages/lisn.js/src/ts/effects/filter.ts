@@ -43,6 +43,9 @@ import { bugError, usageError } from "@lisn/globals";
  * - saturate
  * - sepia
  *
+ * In general, in the handlers you add, you will want to be using the normalized
+ * (`nx`, `ny` and `nz`) {@link Effects.FXParams | parameters}.
+ *
  * {@link Filter} does not support negation and it does not support parallax
  * depth; it is ignored.
  */

@@ -4,6 +4,10 @@
  * @since v1.3.0
  */
 
+// TODO Reveal Effect:
+// - draw: for svg stroke (using svg.getTotalLength, stroke-dasharray and stroke-offset)
+// - ... various clipping masks to reveal entire element
+
 import * as _ from "@lisn/_internal";
 
 import { usageError } from "@lisn/globals/errors";

@@ -2,9 +2,6 @@
  * @module Widgets
  */
 
-// XXX TODO more effect types: color, background-color, svg stroke
-// for svg stroke, see svg.getTotalLength, stroke-dasharray and stroke-offset
-
 import * as _ from "@lisn/_internal";
 
 import { usageError, bugError } from "@lisn/globals/errors";

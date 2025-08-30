@@ -115,8 +115,8 @@ export class Transform implements EffectInterface<"transform", Transform> {
    * - `transform`: {@link toString | the transform's state as a CSS string}
    * - `transition`: transform 0.05s linear
    *
-   * The `transition` property is needed to smooth out the animation. It does
-   * not introduce lag.
+   * The `transition` property is helpful on lower end devices to smooth out the
+   * animation. It does not introduce lag.
    *
    * @param negate See {@link export}
    */

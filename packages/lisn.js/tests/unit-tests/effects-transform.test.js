@@ -784,6 +784,43 @@ describe("export", () => {
     expect(exported).toBeCloseToArray(expectedExp);
     expect(exported.toPerspective()).toBe(p);
   });
+
+  test("add handlers after export", () => {
+    const dx = 100,
+      dy = 200,
+      dz = 300,
+      sx = 2,
+      sy = 4,
+      sz = 4,
+      p = 200;
+
+    const t = newTransform();
+    t.translate(() => ({ x: dx, y: dy, z: dz }));
+
+    const exported = t.export(); // discards translate handler
+
+    t.scale(() => ({ sx, sy })); // does not affect exported
+    exported.scale(() => ({ sy, sz })); // does not affect original
+    exported.perspective(() => p); // does not affect original
+
+    const expectedO = IDENTITY.translate(dx, dy, dz).scale(sx, sy);
+    const expectedE = IDENTITY.scale(1, sy, sz);
+
+    expect(t).toBeCloseToArray(IDENTITY);
+    expect(t.toPerspective()).toBeUndefined();
+
+    expect(exported).toBeCloseToArray(IDENTITY);
+    expect(exported.toPerspective()).toBeUndefined();
+
+    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
+
+    expect(exported).toBeCloseToArray(expectedE);
+    expect(exported.toPerspective()).toBe(p);
+
+    expect(t).toBeCloseToArray(expectedO);
+    expect(t.toPerspective()).toBeUndefined();
+  });
 });
 
 describe("toComposition: single (clone)", () => {
@@ -948,7 +985,7 @@ describe("toComposition: single (clone)", () => {
     expect(composed.toPerspective()).toBe(p * 2);
   });
 
-  test("add handlers after clone", () => {
+  test("add handlers after cloning", () => {
     const dx = 100,
       dy = 200,
       dz = 300,
@@ -2465,7 +2502,7 @@ describe("rotate", () => {
   });
 });
 
-describe("multiple effects", () => {
+describe("multiple transforms", () => {
   test("order 1", () => {
     const dx = 100,
       dy = 200,

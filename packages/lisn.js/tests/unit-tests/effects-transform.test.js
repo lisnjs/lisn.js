@@ -3,8 +3,6 @@ const { jest, describe, test, expect } = require("@jest/globals");
 const { deepCopy, copyExistingKeysTo } = window.LISN._;
 const { Transform, FXComposer, toParameters } = window.LISN.effects;
 
-window.LISN.settings.effectLag = 0;
-
 const DEFAULT_COMPOSER = new FXComposer();
 
 const IDENTITY = new DOMMatrixReadOnly([
@@ -80,61 +78,45 @@ const newState = (partial = {}) => {
 };
 
 describe("basic", () => {
-  test("no init", () => {
-    const t = newTransform();
-    expect(t.isAbsolute()).toBe(false);
-    expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
-    expect(t.toMatrix()).toBeCloseToArray(IDENTITY);
+  for (const isAbsolute of [true, false]) {
+    test(`${isAbsolute ? "absolute: " : ""}no init`, () => {
+      const t = isAbsolute ? newAbsoluteTransform() : newTransform();
+      expect(t.isAbsolute()).toBe(isAbsolute);
+      expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
+      expect(t.toMatrix()).toBeCloseToArray(IDENTITY);
 
-    expect(t.toFloat32Array()).toBeInstanceOf(Float32Array);
-    expect(t.toFloat32Array()).toBeCloseToArray(IDENTITY);
+      expect(t.toFloat32Array()).toBeInstanceOf(Float32Array);
+      expect(t.toFloat32Array()).toBeCloseToArray(IDENTITY);
 
-    expect(t.toPerspective()).toBeUndefined();
-    expect(t.toString()).toBe(IDENTITY.toString());
-  });
+      expect(t.toPerspective()).toBeUndefined();
+      expect(t.toString()).toBe(IDENTITY.toString());
+    });
 
-  test("with init", () => {
-    const init = newTestMatrix();
-    const p = 200;
-    const t = newTransform(init, p);
-    expect(t.isAbsolute()).toBe(false);
-    expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
-    expect(t.toMatrix()).toBeCloseToArray(init);
+    test(`${isAbsolute ? "absolute: " : ""}with init`, () => {
+      const init = newTestMatrix();
+      const initCopy = deepCopy(init);
+      const p = 200;
+      const t = isAbsolute
+        ? newAbsoluteTransform(init, p)
+        : newTransform(init, p);
+      expect(t.isAbsolute()).toBe(isAbsolute);
 
-    expect(t.toFloat32Array()).toBeInstanceOf(Float32Array);
-    expect(t.toFloat32Array()).toBeCloseToArray(init);
+      expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
+      expect(t.toMatrix()).toBeCloseToArray(init);
+      expect(t.toMatrix()).not.toBe(init); // copied
 
-    expect(t.toPerspective()).toBe(p);
-    expect(t.toString()).toBe(`perspective(${p}px) ` + init.toString());
-  });
+      expect(t.toFloat32Array()).toBeInstanceOf(Float32Array);
+      expect(t.toFloat32Array()).toBeCloseToArray(init);
 
-  test("absolute", () => {
-    const t = newAbsoluteTransform();
-    expect(t.isAbsolute()).toBe(true);
-    expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
-    expect(t.toMatrix()).toBeCloseToArray(IDENTITY);
+      expect(t.toPerspective()).toBe(p);
+      expect(t.toString()).toBe(`perspective(${p}px) ` + init.toString());
 
-    expect(t.toFloat32Array()).toBeInstanceOf(Float32Array);
-    expect(t.toFloat32Array()).toBeCloseToArray(IDENTITY);
-
-    expect(t.toPerspective()).toBeUndefined();
-    expect(t.toString()).toBe(IDENTITY.toString());
-  });
-
-  test("absolute: with init", () => {
-    const init = newTestMatrix();
-    const p = 200;
-    const t = newAbsoluteTransform(init, p);
-    expect(t.isAbsolute()).toBe(true);
-    expect(t.toMatrix()).toBeInstanceOf(DOMMatrixReadOnly);
-    expect(t.toMatrix()).toBeCloseToArray(init);
-
-    expect(t.toFloat32Array()).toBeInstanceOf(Float32Array);
-    expect(t.toFloat32Array()).toBeCloseToArray(init);
-
-    expect(t.toPerspective()).toBe(p);
-    expect(t.toString()).toBe(`perspective(${p}px) ` + init.toString());
-  });
+      t.translate(() => ({ x: 100 }));
+      t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(t.toMatrix()).not.toBeCloseToArray(init);
+      expect(init).toBeCloseToArray(initCopy); // not modified
+    });
+  }
 
   test("modifying init DOMMatrix", () => {
     const init = newTestMatrix();
@@ -509,146 +491,114 @@ describe("update parameters", () => {
     },
   };
 
-  test("incremental", () => {
-    const t = newTransform();
-    const cbk = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
-    t.translate(cbk);
+  for (const isAbsolute of [true, false]) {
+    test(isAbsolute ? "incremental" : "absolute", () => {
+      const t = isAbsolute ? newAbsoluteTransform() : newTransform();
+      const cbk = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
+      t.translate(cbk);
 
-    const params = toParameters(state, DEFAULT_COMPOSER);
-    t.update(state, DEFAULT_COMPOSER);
+      const params = toParameters(state, DEFAULT_COMPOSER, { isAbsolute });
+      t.update(state, DEFAULT_COMPOSER);
 
-    expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_COMPOSER);
+      expect(cbk).toHaveBeenCalledTimes(1);
+      expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_COMPOSER);
 
-    t.update(state2, DEFAULT_COMPOSER);
-    const params2 = toParameters(state2, DEFAULT_COMPOSER);
+      t.update(state2, DEFAULT_COMPOSER);
+      const params2 = toParameters(state2, DEFAULT_COMPOSER, { isAbsolute });
 
-    expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_COMPOSER);
-  });
-
-  test("absolute", () => {
-    const t = newAbsoluteTransform();
-    const cbk = jest.fn((d) => ({ x: d.x, y: d.y, z: d.z }));
-    t.translate(cbk);
-
-    const params = toParameters(state, DEFAULT_COMPOSER, {
-      isAbsolute: true,
+      expect(cbk).toHaveBeenCalledTimes(2);
+      expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_COMPOSER);
     });
-    t.update(state, DEFAULT_COMPOSER);
-
-    expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_COMPOSER);
-
-    t.update(state2, DEFAULT_COMPOSER);
-    const params2 = toParameters(state2, DEFAULT_COMPOSER, {
-      isAbsolute: true,
-    });
-
-    expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_COMPOSER);
-  });
+  }
 });
 
 describe("export", () => {
-  test("basic", () => {
-    const dx = 100,
-      dy = 200,
-      dz = 300,
-      sx = 2,
-      sy = 4,
-      sz = 4,
-      p = 200;
+  for (const isAbsolute of [true, false]) {
+    test(`${isAbsolute ? "absolute: " : ""}no init`, () => {
+      const dx = 100,
+        dy = 200,
+        dz = 300,
+        sx = 2,
+        sy = 4,
+        sz = 4,
+        p = 200;
 
-    const t = newTransform();
-    t.translate(() => ({ x: dx, y: dy, z: dz }));
-    t.scale(() => ({ sx, sy, sz }));
-    t.perspective(() => p);
+      const t = isAbsolute ? newAbsoluteTransform() : newTransform();
+      t.translate(() => ({ x: dx, y: dy, z: dz }));
+      t.scale(() => ({ sx, sy, sz }));
+      t.perspective(() => p);
 
-    const expectedO = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
+      const expectedO = IDENTITY.translate(dx, dy, dz).scale(sx, sy, sz);
 
-    const exported = t.export();
-    expect(exported).toBeCloseToArray(IDENTITY);
-    expect(exported.toPerspective()).toBeUndefined();
-    expect(exported.isAbsolute()).toBe(false);
+      const exported = t.export();
+      expect(exported).toBeCloseToArray(IDENTITY);
+      expect(exported.toPerspective()).toBeUndefined();
+      expect(exported.isAbsolute()).toBe(isAbsolute);
 
-    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
-    // unchanged
-    expect(exported).toBeCloseToArray(IDENTITY);
-    expect(exported.toPerspective()).toBeUndefined();
+      // update original
+      t.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(t).toBeCloseToArray(expectedO);
+      expect(t.toPerspective()).toBe(p);
 
-    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      // export unchanged
+      expect(exported).toBeCloseToArray(IDENTITY);
+      expect(exported.toPerspective()).toBeUndefined();
 
-    // original unchanged
-    expect(t).toBeCloseToArray(expectedO);
-    expect(t.toPerspective()).toBe(p);
+      // update exported
+      exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
-    // exported is static and detached from t's state and handlers
-    expect(exported).toBeCloseToArray(IDENTITY);
-    expect(exported.toPerspective()).toBeUndefined();
-  });
+      // original unchanged
+      expect(t).toBeCloseToArray(expectedO);
+      expect(t.toPerspective()).toBe(p);
 
-  test("absolute", () => {
-    const dx = 100,
-      dy = 200,
-      dz = 300,
-      sx = 2,
-      sy = 4,
-      sz = 4,
-      p = 200;
+      // exported is static and detached from t's state and handlers
+      expect(exported).toBeCloseToArray(IDENTITY);
+      expect(exported.toPerspective()).toBeUndefined();
+    });
 
-    const t = newAbsoluteTransform();
-    t.translate(() => ({ x: dx, y: dy, z: dz }));
-    t.scale(() => ({ sx, sy, sz }));
-    t.perspective(() => p);
+    test(`${isAbsolute ? "absolute: " : ""}with init`, () => {
+      const dx = 100,
+        dy = 200,
+        dz = 300,
+        sx = 2,
+        sy = 4,
+        sz = 4,
+        p = 200;
 
-    const exported = t.export();
-    expect(exported).toBeCloseToArray(IDENTITY);
-    expect(exported.toPerspective()).toBeUndefined();
-    expect(exported.isAbsolute()).toBe(true);
+      const init = newTestMatrix((i) => i + 1);
+      const t = isAbsolute
+        ? newAbsoluteTransform(init, p)
+        : newTransform(init, p);
+      t.translate(() => ({ x: dx, y: dy, z: dz }));
+      t.scale(() => ({ sx, sy, sz }));
+      t.perspective(() => p * 2);
 
-    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
-    // unchanged
-    expect(exported).toBeCloseToArray(IDENTITY);
-    expect(exported.toPerspective()).toBeUndefined();
+      const exported = t.export();
+      expect(exported).toBeCloseToArray(init);
+      expect(exported.toPerspective()).toBe(p);
+      expect(exported.isAbsolute()).toBe(isAbsolute);
 
-    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      // update original
+      t.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
-    // exported is static and detached from t's state and handlers
-    expect(exported).toBeCloseToArray(IDENTITY);
-    expect(exported.toPerspective()).toBeUndefined();
-  });
+      // export unchanged
+      expect(exported).toBeCloseToArray(init);
+      expect(exported.toPerspective()).toBe(p);
 
-  test("with init", () => {
-    const dx = 100,
-      dy = 200,
-      dz = 300,
-      sx = 2,
-      sy = 4,
-      sz = 4,
-      p = 200;
+      // update export
+      exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
-    const init = newTestMatrix((i) => i + 1);
-    const t = newTransform(init, p);
-    t.translate(() => ({ x: dx, y: dy, z: dz }));
-    t.scale(() => ({ sx, sy, sz }));
-    t.perspective(() => p * 2);
-
-    const exported = t.export();
-    expect(exported).toBeCloseToArray(init);
-    expect(exported.toPerspective()).toBe(p);
-
-    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
-    // unchanged
-    expect(exported).toBeCloseToArray(init);
-    expect(exported.toPerspective()).toBe(p);
-
-    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
-
-    // static and detached from t's state and handlers
-    expect(exported).toBeCloseToArray(init);
-    expect(exported.toPerspective()).toBe(p);
-  });
+      // static and detached from t's state and handlers and resets itself on
+      // update if absolute
+      if (isAbsolute) {
+        expect(exported).toBeCloseToArray(IDENTITY);
+        expect(exported.toPerspective()).toBeUndefined();
+      } else {
+        expect(exported).toBeCloseToArray(init);
+        expect(exported.toPerspective()).toBe(p);
+      }
+    });
+  }
 
   test("with init matrix only", () => {
     const dx = 100,
@@ -678,39 +628,6 @@ describe("export", () => {
 
     // static and detached from t's state and handlers
     expect(exported).toBeCloseToArray(init);
-    expect(exported.toPerspective()).toBeUndefined();
-  });
-
-  test("absolute: with init", () => {
-    const dx = 100,
-      dy = 200,
-      dz = 300,
-      sx = 2,
-      sy = 4,
-      sz = 4,
-      p = 200;
-
-    const init = newTestMatrix((i) => i + 1);
-    const t = newAbsoluteTransform(init, p);
-    t.translate(() => ({ x: dx, y: dy, z: dz }));
-    t.scale(() => ({ sx, sy, sz }));
-    t.perspective(() => p * 2);
-
-    const exported = t.export();
-    expect(exported).toBeCloseToArray(init);
-    expect(exported.toPerspective()).toBe(p);
-    expect(exported.isAbsolute()).toBe(true);
-
-    t.update(DUMMY_STATE, DEFAULT_COMPOSER);
-    // unchanged
-    expect(exported).toBeCloseToArray(init);
-    expect(exported.toPerspective()).toBe(p);
-
-    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
-
-    // static and detached from t's state and handlers
-    // and resets itself on update
-    expect(exported).toBeCloseToArray(IDENTITY);
     expect(exported.toPerspective()).toBeUndefined();
   });
 
@@ -818,43 +735,28 @@ describe("export", () => {
     expect(exported.toPerspective()).toBeUndefined();
   });
 
-  test("negate", () => {
-    const init = newTestMatrix();
-    const p = 200;
-    const ref = new DOMMatrix([
-      ...[8, -6, -3, -5],
-      ...[-2, 7, -8, -5],
-      ...[-9, -3, 7, 8],
-      ...[-4, -3, 1, -10],
-    ]);
+  for (const isAbsolute of [true, false]) {
+    test(`${isAbsolute ? "absolute: " : ""}negate`, () => {
+      const init = newTestMatrix();
+      const p = 200;
+      const ref = new DOMMatrix([
+        ...[8, -6, -3, -5],
+        ...[-2, 7, -8, -5],
+        ...[-9, -3, 7, 8],
+        ...[-4, -3, 1, -10],
+      ]);
 
-    const expected = ref.inverse().multiply(init);
+      const expected = ref.inverse().multiply(init);
 
-    const t = newTransform(init, p);
-    const exported = t.export(ref);
-    expect(exported).toBeCloseToArray(expected);
-    expect(exported.toPerspective()).toBe(p);
-    expect(exported.isAbsolute()).toBe(false);
-  });
-
-  test("negate: absolute", () => {
-    const init = newTestMatrix();
-    const p = 200;
-    const ref = new DOMMatrix([
-      ...[8, -6, -3, -5],
-      ...[-2, 7, -8, -5],
-      ...[-9, -3, 7, 8],
-      ...[-4, -3, 1, -10],
-    ]);
-
-    const expected = ref.inverse().multiply(init);
-
-    const t = newAbsoluteTransform(init, p);
-    const exported = t.export(ref);
-    expect(exported).toBeCloseToArray(expected);
-    expect(exported.toPerspective()).toBe(p);
-    expect(exported.isAbsolute()).toBe(true);
-  });
+      const t = isAbsolute
+        ? newAbsoluteTransform(init, p)
+        : newTransform(init, p);
+      const exported = t.export(ref);
+      expect(exported).toBeCloseToArray(expected);
+      expect(exported.toPerspective()).toBe(p);
+      expect(exported.isAbsolute()).toBe(isAbsolute);
+    });
+  }
 
   test("negage: after update", () => {
     const dx = 100,

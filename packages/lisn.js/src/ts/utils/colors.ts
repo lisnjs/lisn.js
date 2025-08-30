@@ -25,10 +25,25 @@ import { toNumWithBounds, normalizeAngleDeg } from "@lisn/utils/math";
  */
 export const isValidColorComponents = (
   color: unknown,
-): color is ColorComponents =>
-  _.isPlainObject(color) &&
-  IS_KNOWN_SPACE[sortChars(_.keysOf(color))] === true &&
-  _.keysOf(color).every((k) => _.isNumber(color[k])); // don't bother validating number range
+): color is ColorComponents => {
+  if (!_.isObject(color)) {
+    return false;
+  }
+
+  for (const space of KNOWN_COLOR_SPACES) {
+    if (
+      [...space].every(
+        (char) =>
+          char in color && _.isNumber((color as Record<string, unknown>)[char]),
+      ) && // special check for alpha channel if present, but don't require
+      (!("a" in color) || _.isNumber(color.a))
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 /**
  * Adds the values of the given other color to the first color, where each
@@ -102,7 +117,7 @@ export function addColor(
 export const toColorComponents = (
   v: unknown,
 ): ColorComponentsWithAlpha | undefined =>
-  _.isPlainObject(v)
+  _.isObject(v)
     ? colorIsHSL(v)
       ? normalizeHSLColor(v)
       : colorIsRGB(v)
@@ -165,16 +180,7 @@ export const hsl2rgb = (
 
 // --------------------
 
-const sortChars = (s: string | string[]) => [...s].sort().join("");
-
-const KNOWN_COLOR_SPACES = ["rgb", "rgba", "hsl", "hsla"];
-const IS_KNOWN_SPACE = (() => {
-  const sortedSpaces: Record<string, true> = {};
-  for (const space of KNOWN_COLOR_SPACES) {
-    sortedSpaces[sortChars(space)] = true;
-  }
-  return sortedSpaces;
-})();
+const KNOWN_COLOR_SPACES = ["rgb", "hsl"] as const;
 
 function colorIsHSL(
   c: Partial<ColorComponents>,

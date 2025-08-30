@@ -321,6 +321,7 @@ export const isOfType = <T extends keyof StringTagMap>(
 // Not including function
 export const isObject = (v: unknown) => !isNull(v) && typeof v === "object";
 
+// Whose prototype is Object or null
 export const isPlainObject = (
   v: unknown,
 ): v is Record<string | symbol, unknown> =>

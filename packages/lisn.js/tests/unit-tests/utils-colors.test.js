@@ -9,7 +9,13 @@ describe("isValidColorComponents", () => {
     expect(utils.isValidColorComponents({ h: 100, s: 50, l: 50, a: 1 })).toBe(
       true,
     );
+    expect(utils.isValidColorComponents({ h: 100, s: 50, l: 50, x: 10 })).toBe(
+      true,
+    );
 
+    expect(utils.isValidColorComponents({ h: 100, s: 50, l: 50, a: "1" })).toBe(
+      false,
+    );
     expect(utils.isValidColorComponents({ h: 100, s: "50" })).toBe(false);
     expect(utils.isValidColorComponents({ h: 100, s: 50 })).toBe(false);
     expect(utils.isValidColorComponents({ h: 100, s: 50, a: 1 })).toBe(false);
@@ -21,7 +27,13 @@ describe("isValidColorComponents", () => {
     expect(utils.isValidColorComponents({ r: 100, g: 50, b: 50, a: 1 })).toBe(
       true,
     );
+    expect(utils.isValidColorComponents({ r: 100, g: 50, b: 50, x: 10 })).toBe(
+      true,
+    );
 
+    expect(utils.isValidColorComponents({ r: 100, g: 50, b: 50, a: "1" })).toBe(
+      false,
+    );
     expect(utils.isValidColorComponents({ r: 100, g: "50", b: 50 })).toBe(
       false,
     );

@@ -261,13 +261,13 @@ export class Filter implements EffectInterface<"filter", Filter> {
       let idx = 0;
       for (const [name, handler] of handlers) {
         const value = handler(parameters, state, composer);
-        if (_.isNull(value)) {
-          filters[idx] = [name, null];
-        } else if (!_.isUndefined(value)) {
+        if (!_.isNullish(value)) {
           const currentValue = (filters[idx] ??
             [])[1] as FilterValueMap[typeof name];
 
           filters[idx] = validateAndAddEntry(name, value, currentValue);
+        } else if (!filters[idx] || _.isNull(value)) {
+          filters[idx] = [name, null];
         }
 
         idx++;
@@ -294,6 +294,7 @@ export class Filter implements EffectInterface<"filter", Filter> {
           resultIsAbsolute = true;
           resultInit = [];
           resultHandlers = [];
+          prevEntries = prevHandlers = null;
         }
 
         if (prevEntries && prevHandlers) {
@@ -332,7 +333,7 @@ export class Filter implements EffectInterface<"filter", Filter> {
 
       const composed = new Filter({
         isAbsolute: resultIsAbsolute,
-        init: resultInit,
+        init: resultInit.some((e) => !_.isNull(e[1])) ? resultInit : [],
       });
 
       for (const h of resultHandlers) {

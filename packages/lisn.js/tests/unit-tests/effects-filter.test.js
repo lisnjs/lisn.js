@@ -5,6 +5,19 @@ const { Filter, FXComposer, toParameters } = window.LISN.effects;
 
 const DEFAULT_COMPOSER = new FXComposer();
 
+const FILTER_NAMES = [
+  "brightness",
+  "blur",
+  "contrast",
+  "dropShadow",
+  "grayscale",
+  "hueRotate",
+  "invert",
+  "opacity",
+  "saturate",
+  "sepia",
+];
+
 const DEFAULT_TWEEN_STATE = {
   x: 0,
   nx: 0,
@@ -44,6 +57,42 @@ const DUMMY_STATE = {
     previous: 0,
     current: 0,
     target: 5,
+    lag: 0,
+    depth: 1,
+    snap: true,
+  },
+};
+
+const DUMMY_STATE2 = {
+  x: {
+    low: -3000,
+    high: 3000,
+    initial: 0,
+    previous: 0,
+    current: 0,
+    target: 700,
+    lag: 0,
+    depth: 1,
+    snap: false,
+  },
+  y: {
+    low: -300,
+    high: 300,
+    initial: 0,
+    previous: 0,
+    current: 0,
+    target: 70,
+    lag: 0,
+    depth: 1,
+    snap: false,
+  },
+  z: {
+    low: -30,
+    high: 30,
+    initial: 0,
+    previous: 0,
+    current: 0,
+    target: 7,
     lag: 0,
     depth: 1,
     snap: true,
@@ -104,6 +153,29 @@ describe("basic", () => {
       f.update(DUMMY_STATE, DEFAULT_COMPOSER);
       expect(f.toEntries()).not.toEqual(DUMMY_INIT);
       expect(DUMMY_INIT).toEqual(initCopy); // not modified
+    });
+
+    test(`${isAbsolute ? "absolute: " : ""}overflowing values in init`, () => {
+      const init = [
+        ["brightness", -0.1],
+        ["sepia", 1.2],
+        ["dropShadow", { color: { h: 380, s: -10, l: 120 } }],
+      ];
+
+      const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+      expect(f.toEntries()).toEqual([
+        ["brightness", 0],
+        ["sepia", 1],
+        [
+          "dropShadow",
+          {
+            color: { h: 20, s: 0, l: 100, a: 1 },
+            offsetX: 0,
+            offsetY: 0,
+            blur: 0,
+          },
+        ],
+      ]);
     });
   }
 
@@ -352,92 +424,79 @@ describe("update", () => {
       );
     });
   }
+
+  for (const isAbsolute of [true, false]) {
+    test(`${isAbsolute ? "absolute: " : ""}overflowing values in handler return`, () => {
+      const f = isAbsolute ? newAbsoluteFilter() : newFilter();
+      f.brightness(() => -0.1);
+      f.sepia(() => 1.2);
+      f.dropShadow(() => ({ color: { h: 380, s: -10, l: 120 } }));
+
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(f.toEntries()).toEqual([
+        ["brightness", 0],
+        ["sepia", 1],
+        [
+          "dropShadow",
+          {
+            color: { h: 20, s: 0, l: 100, a: 1 },
+            offsetX: 0,
+            offsetY: 0,
+            blur: 0,
+          },
+        ],
+      ]);
+    });
+
+    test(`${isAbsolute ? "absolute: " : ""}returning undefined: no init`, () => {
+      const f = isAbsolute ? newAbsoluteFilter() : newFilter();
+      f.brightness(() => {});
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(f.toEntries()).toEqual([["brightness", null]]);
+    });
+
+    test(`${isAbsolute ? "absolute: " : ""}returning undefined: with init`, () => {
+      const init = [["brightness", 0.3]];
+      const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+      f.brightness(() => {});
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(f.toEntries()).toEqual([["brightness", isAbsolute ? null : 0.3]]);
+    });
+  }
 });
 
 describe("update parameters", () => {
-  const state = {
-    x: {
-      low: -1000,
-      high: 1000,
-      initial: 0,
-      previous: 0,
-      current: 100,
-      target: 500,
-      lag: 0,
-      depth: 1,
-    },
-    y: {
-      low: -100,
-      high: 100,
-      initial: 0,
-      previous: 0,
-      current: 10,
-      target: 50,
-      lag: 0,
-      depth: 1,
-    },
-    z: {
-      low: -10,
-      high: 10,
-      initial: 0,
-      previous: 0,
-      current: 1,
-      target: 5,
-      lag: 0,
-      depth: 1,
-    },
-  };
-
-  const state2 = {
-    x: {
-      low: -2000,
-      high: 2000,
-      initial: 0,
-      previous: 100,
-      current: 150,
-      target: 500,
-      lag: 0,
-      depth: 1,
-    },
-    y: {
-      low: -100,
-      high: 100,
-      initial: 0,
-      previous: 10,
-      current: 15,
-      target: 50,
-      lag: 0,
-      depth: 1,
-    },
-    z: {
-      low: -10,
-      high: 10,
-      initial: 0,
-      previous: 1,
-      current: 2,
-      target: 5,
-      lag: 0,
-      depth: 1,
-    },
-  };
-
   for (const isAbsolute of [true, false]) {
-    test(isAbsolute ? "incremental" : "absolute", () => {
+    test(`${isAbsolute ? "" : "absolute: "}basic`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
-      const cbk = jest.fn((d) => d.nx);
+      const cbk = jest.fn((p) => p.nx);
       f.opacity(cbk);
 
-      const params = toParameters(state, DEFAULT_COMPOSER, { isAbsolute });
-      f.update(state, DEFAULT_COMPOSER);
+      const params = toParameters(DUMMY_STATE, DEFAULT_COMPOSER, {
+        isAbsolute,
+      });
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
 
       expect(cbk).toHaveBeenCalledTimes(1);
-      expect(cbk).toHaveBeenNthCalledWith(1, params, state, DEFAULT_COMPOSER);
+      expect(cbk).toHaveBeenNthCalledWith(
+        1,
+        params,
+        DUMMY_STATE,
+        DEFAULT_COMPOSER,
+      );
 
-      f.update(state2, DEFAULT_COMPOSER);
-      const params2 = toParameters(state2, DEFAULT_COMPOSER, { isAbsolute });
+      f.update(DUMMY_STATE2, DEFAULT_COMPOSER);
+      const params2 = toParameters(DUMMY_STATE2, DEFAULT_COMPOSER, {
+        isAbsolute,
+      });
 
       expect(cbk).toHaveBeenCalledTimes(2);
-      expect(cbk).toHaveBeenNthCalledWith(2, params2, state2, DEFAULT_COMPOSER);
+      expect(cbk).toHaveBeenNthCalledWith(
+        2,
+        params2,
+        DUMMY_STATE2,
+        DEFAULT_COMPOSER,
+      );
     });
   }
 });
@@ -728,6 +787,170 @@ describe("toComposition: single (clone)", () => {
 });
 
 describe("toComposition: multiple", () => {
+  test("no init", () => {
+    const fA = newFilter();
+    fA.brightness(() => 0.2);
+    fA.contrast(() => 0.1);
+    fA.brightness(() => 0.3);
+
+    const fB = newFilter();
+    fB.brightness(() => 0.8);
+
+    const fC = newFilter();
+    fC.blur(() => 3);
+    fC.opacity(() => 0.5);
+
+    const expectedIntermediate = [
+      ["brightness", 0.2],
+      ["contrast", 0.1],
+      ["brightness", 0.3],
+      ["brightness", 0.8],
+      ["blur", 3],
+      ["opacity", 0.5],
+    ];
+
+    const expectedFinal = expectedIntermediate.map((e) => [e[0], e[1] * 2]);
+
+    const composed = fA.toComposition(fB, fC);
+    expect(composed.isAbsolute()).toBe(false);
+    expect(composed.toEntries()).toEqual([]);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expectedIntermediate);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expectedFinal);
+
+    expect(fA.toEntries()).toEqual([]); // unchanged
+    expect(fB.toEntries()).toEqual([]); // unchanged
+    expect(fC.toEntries()).toEqual([]); // unchanged
+  });
+
+  test("1st absolute: no init", () => {
+    let hasCalled = false;
+    const fA = newAbsoluteFilter();
+    fA.brightness(() => (hasCalled ? 1 : 0) + 0.2);
+    fA.contrast(() => (hasCalled ? 1 : 0) + 0.1);
+    fA.brightness(() => (hasCalled ? 1 : 0) + 0.3);
+
+    const fB = newFilter();
+    fB.brightness(() => 0.8);
+
+    const fC = newFilter();
+    fC.blur(() => 3);
+    fC.opacity(() => 0.5);
+
+    const expectedIntermediate = [
+      ["brightness", 0.2],
+      ["contrast", 0.1],
+      ["brightness", 0.3],
+      ["brightness", 0.8],
+      ["blur", 3],
+      ["opacity", 0.5],
+    ];
+
+    const expectedFinal = [
+      // discarded previous value
+      ["brightness", 1.2],
+      ["contrast", 1.1],
+      ["brightness", 1.3],
+      ["brightness", 0.8],
+      ["blur", 3],
+      ["opacity", 0.5],
+    ];
+
+    const composed = fA.toComposition(fB, fC);
+    expect(composed.isAbsolute()).toBe(true);
+    expect(composed.toEntries()).toEqual([]);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    hasCalled = true;
+    expect(composed.toEntries()).toEqual(expectedIntermediate);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expectedFinal);
+
+    expect(fA.toEntries()).toEqual([]); // unchanged
+    expect(fB.toEntries()).toEqual([]); // unchanged
+    expect(fC.toEntries()).toEqual([]); // unchanged
+  });
+
+  test("2nd absolute: no init", () => {
+    let hasCalled = false;
+    const fA = newFilter();
+    fA.brightness(() => 0.2);
+    fA.contrast(() => 0.1);
+    fA.brightness(() => 0.3);
+
+    const fB = newAbsoluteFilter();
+    fB.brightness(() => (hasCalled ? 1 : 0) + 0.8);
+
+    const fC = newFilter();
+    fC.blur(() => 3);
+    fC.opacity(() => 0.5);
+
+    const expectedIntermediate = [
+      ["brightness", 0.8],
+      ["blur", 3],
+      ["opacity", 0.5],
+    ];
+
+    const expectedFinal = [
+      // discarded previous values
+      ["brightness", 1.8],
+      ["blur", 3],
+      ["opacity", 0.5],
+    ];
+
+    const composed = fA.toComposition(fB, fC);
+    expect(composed.isAbsolute()).toBe(true);
+    expect(composed.toEntries()).toEqual([]);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    hasCalled = true;
+    expect(composed.toEntries()).toEqual(expectedIntermediate);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expectedFinal);
+
+    expect(fA.toEntries()).toEqual([]); // unchanged
+    expect(fB.toEntries()).toEqual([]); // unchanged
+    expect(fC.toEntries()).toEqual([]); // unchanged
+  });
+
+  test("all absolute: no init", () => {
+    const fA = newAbsoluteFilter();
+    fA.brightness(() => 0.2);
+    fA.contrast(() => 0.1);
+    fA.brightness(() => 0.3);
+
+    const fB = newAbsoluteFilter();
+    fB.brightness(() => 0.8);
+
+    const fC = newAbsoluteFilter();
+    fC.blur(() => 3);
+    fC.opacity(() => 0.5);
+
+    const expected = [
+      ["blur", 3],
+      ["opacity", 0.5],
+    ];
+
+    const composed = fA.toComposition(fB, fC);
+    expect(composed.isAbsolute()).toBe(true);
+    expect(composed.toEntries()).toEqual([]);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expected);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expected);
+
+    expect(fA.toEntries()).toEqual([]); // unchanged
+    expect(fB.toEntries()).toEqual([]); // unchanged
+    expect(fC.toEntries()).toEqual([]); // unchanged
+  });
+
   test("with init", () => {
     const initA = [
       ["brightness", 1.5],
@@ -754,8 +977,8 @@ describe("toComposition: multiple", () => {
     ];
     const fC = newFilter(initC);
     fC.contrast(() => -0.3);
-    fC.opacity(() => 0.3);
-    fC.sepia(() => 0.3); // new entry
+    fC.opacity(() => 0.4);
+    fC.sepia(() => 0.5); // new entry
 
     const expectedInit = [
       ["brightness", 1.5],
@@ -770,7 +993,6 @@ describe("toComposition: multiple", () => {
     ];
 
     const expectedFinal = [
-      // after handlers
       ["brightness", 1.5 + 0.2],
       ["contrast", 1.2 - 0.1],
       ["brightness", 0.8 - 0.3],
@@ -778,8 +1000,8 @@ describe("toComposition: multiple", () => {
       ["brightness", 0.9 + 0.3],
       ["blur", 2], // unchanged
       ["contrast", 1.2 - 0.3],
-      ["opacity", 0.4 + 0.3],
-      ["sepia", 0.3],
+      ["opacity", 0.4 + 0.4],
+      ["sepia", 0.5],
     ];
 
     const composed = fA.toComposition(fB, fC);
@@ -794,50 +1016,497 @@ describe("toComposition: multiple", () => {
     expect(fC.toEntries()).toEqual(initC); // unchanged
   });
 
-  // XXX TODO with some absolute, some not
+  test("1st absolute: with init", () => {
+    let hasCalled = false;
+    const initA = [
+      ["brightness", 1.5],
+      ["contrast", 1.2],
+      ["brightness", 0.8],
+    ];
+    const fA = newAbsoluteFilter(initA);
+    fA.brightness(() => (hasCalled ? 1 : 0) + 0.2);
+    fA.contrast(() => (hasCalled ? 1 : 0) + 0.1);
+    fA.brightness(() => (hasCalled ? 1 : 0) + 0.3);
+    fA.blur(() => 3); // adds a new entry
+
+    const initB = [
+      ["brightness", 0.9],
+      ["blur", 2],
+    ];
+    const fB = newFilter(initB);
+    fB.brightness(() => 0.3);
+    // no handler for modifying blur
+
+    const initC = [
+      ["contrast", 1.2],
+      ["opacity", 0.4],
+    ];
+    const fC = newFilter(initC);
+    fC.contrast(() => -0.3);
+    fC.opacity(() => 0.4);
+    fC.sepia(() => 0.5); // new entry
+
+    const expectedInit = [
+      ["brightness", 1.5],
+      ["contrast", 1.2],
+      ["brightness", 0.8],
+      ["blur", null], // blank slot for blur handler from fA
+      ["brightness", 0.9],
+      ["blur", 2],
+      ["contrast", 1.2],
+      ["opacity", 0.4],
+      // ["sepia", null], // blank slot for sepia handler from fC not added yet
+    ];
+
+    const expectedIntermediate = [
+      // discarded initial values
+      ["brightness", 0.2],
+      ["contrast", 0.1],
+      ["brightness", 0.3],
+      ["blur", 3],
+      ["brightness", 0.3],
+      ["blur", null],
+      ["contrast", 0], // forced to min of 0
+      ["opacity", 0.4],
+      ["sepia", 0.5],
+    ];
+
+    const expectedFinal = [
+      // discarded previous values
+      ["brightness", 1.2],
+      ["contrast", 1.1],
+      ["brightness", 1.3],
+      ["blur", 3],
+      ["brightness", 0.3],
+      ["blur", null],
+      ["contrast", 0],
+      ["opacity", 0.4],
+      ["sepia", 0.5],
+    ];
+
+    const composed = fA.toComposition(fB, fC);
+    expect(composed.isAbsolute()).toBe(true);
+    expect(composed.toEntries()).toEqual(expectedInit);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    hasCalled = true;
+    expect(composed.toEntries()).toEqual(expectedIntermediate);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expectedFinal);
+
+    expect(fA.toEntries()).toEqual(initA); // unchanged
+    expect(fB.toEntries()).toEqual(initB); // unchanged
+    expect(fC.toEntries()).toEqual(initC); // unchanged
+  });
+
+  test("2nd absolute: with init", () => {
+    let hasCalled = false;
+    const initA = [
+      ["brightness", 1.5],
+      ["contrast", 1.2],
+      ["brightness", 0.8],
+    ];
+    const fA = newFilter(initA);
+    fA.brightness(() => 0.2);
+    fA.contrast(() => 0.1);
+    fA.brightness(() => 0.3);
+    fA.blur(() => 3); // adds a new entry
+
+    const initB = [
+      ["brightness", 0.9],
+      ["blur", 2],
+    ];
+    const fB = newAbsoluteFilter(initB);
+    fB.brightness(() => (hasCalled ? 1 : 0) + 0.3);
+    // no handler for modifying blur
+
+    const initC = [
+      ["contrast", 1.2],
+      ["opacity", 0.4],
+    ];
+    const fC = newFilter(initC);
+    fC.contrast(() => -0.3);
+    fC.opacity(() => 0.4);
+    fC.sepia(() => 0.5); // new entry
+
+    const expectedInit = [
+      ["brightness", 0.9],
+      ["blur", 2],
+      ["contrast", 1.2],
+      ["opacity", 0.4],
+      // ["sepia", null], // blank slot for sepia handler from fC not added yet
+    ];
+
+    const expectedIntermediate = [
+      // discarded initial values
+      ["brightness", 0.3],
+      ["blur", null],
+      ["contrast", 0], // forced to min of 0
+      ["opacity", 0.4],
+      ["sepia", 0.5],
+    ];
+
+    const expectedFinal = [
+      // discarded previous values
+      ["brightness", 1.3],
+      ["blur", null],
+      ["contrast", 0],
+      ["opacity", 0.4],
+      ["sepia", 0.5],
+    ];
+
+    const composed = fA.toComposition(fB, fC);
+    expect(composed.isAbsolute()).toBe(true);
+    expect(composed.toEntries()).toEqual(expectedInit);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    hasCalled = true;
+    expect(composed.toEntries()).toEqual(expectedIntermediate);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expectedFinal);
+
+    expect(fA.toEntries()).toEqual(initA); // unchanged
+    expect(fB.toEntries()).toEqual(initB); // unchanged
+    expect(fC.toEntries()).toEqual(initC); // unchanged
+  });
+
+  test("all absolute: with init", () => {
+    let hasCalled = false;
+    const initA = [
+      ["brightness", 1.5],
+      ["contrast", 1.2],
+      ["brightness", 0.8],
+    ];
+    const fA = newAbsoluteFilter(initA);
+    fA.brightness(() => 0.2);
+    fA.contrast(() => 0.1);
+    fA.brightness(() => 0.3);
+    fA.blur(() => 3); // adds a new entry
+
+    const initB = [
+      ["brightness", 0.9],
+      ["blur", 2],
+    ];
+    const fB = newAbsoluteFilter(initB);
+    fB.brightness(() => (hasCalled ? 1 : 0) + 0.3);
+    // no handler for modifying blur
+
+    const initC = [
+      ["contrast", 1.2],
+      ["opacity", 0.4],
+    ];
+    const fC = newAbsoluteFilter(initC);
+    fC.contrast(() => 0.3);
+    fC.opacity(() => 0.4);
+    fC.sepia(() => 0.5); // new entry
+
+    const expectedInit = [
+      ["contrast", 1.2],
+      ["opacity", 0.4],
+      // ["sepia", null], // blank slot for sepia handler from fC not added yet
+    ];
+
+    const expectedFinal = [
+      ["contrast", 0.3],
+      ["opacity", 0.4],
+      ["sepia", 0.5],
+    ];
+
+    const composed = fA.toComposition(fB, fC);
+    expect(composed.isAbsolute()).toBe(true);
+    expect(composed.toEntries()).toEqual(expectedInit);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    hasCalled = true;
+    expect(composed.toEntries()).toEqual(expectedFinal);
+
+    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(composed.toEntries()).toEqual(expectedFinal);
+
+    expect(fA.toEntries()).toEqual(initA); // unchanged
+    expect(fB.toEntries()).toEqual(initB); // unchanged
+    expect(fC.toEntries()).toEqual(initC); // unchanged
+  });
 });
 
-test("toCss", () => {
-  // XXX TODO
+describe("toCss", () => {
+  test("no init", () => {
+    const f = newFilter();
+    expect(f.toCss()).toEqual({ filter: "none" });
+  });
+
+  test("all null init", () => {
+    const f = newFilter([
+      ["brightness", null],
+      ["contrast", null],
+    ]);
+    expect(f.toCss()).toEqual({ filter: "none" });
+  });
+
+  test("with init", () => {
+    const f = newFilter([
+      ["brightness", 0.9],
+      ["contrast", 1.1],
+    ]);
+    expect(f.toCss()).toEqual({ filter: "brightness(0.9) contrast(1.1)" });
+  });
+
+  test("after update", () => {
+    const f = newFilter();
+    for (const [method, value] of DUMMY_INIT) {
+      f[method](() => value ?? 1);
+    }
+
+    f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(f.toCss()).toEqual({ filter: DUMMY_INIT_RESOLVED_STR });
+  });
 });
 
-test("toString", () => {
-  // XXX TODO
+describe("toString", () => {
+  test("no init", () => {
+    const f = newFilter();
+    expect(f.toString()).toBe("none");
+  });
+
+  test("all null init", () => {
+    const f = newFilter([
+      ["brightness", null],
+      ["contrast", null],
+    ]);
+    expect(f.toString()).toBe("none");
+  });
+
+  test("with init", () => {
+    const f = newFilter([
+      ["brightness", 0.9],
+      ["contrast", 1.1],
+    ]);
+    expect(f.toString()).toBe("brightness(0.9) contrast(1.1)");
+  });
+
+  test("after update", () => {
+    const f = newFilter();
+    for (const [method, value] of DUMMY_INIT) {
+      f[method](() => value ?? 1);
+    }
+
+    f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    expect(f.toString()).toEqual(DUMMY_INIT_RESOLVED_STR);
+  });
 });
 
 describe("toEntries", () => {
-  test("basic + after update", () => {
-    // XXX TODO
-  });
-
   test("modifying", () => {
-    // XXX TODO
+    const f = newFilter();
+    const entries = f.toEntries();
+    expect(f.toEntries()).not.toBe(entries); // new copy
+    entries.push(["brightness", 0.9]);
+    expect(f.toEntries()).toEqual([]);
   });
 });
 
-describe("single filters", () => {
-  // XXX for (const ...
-  test("update", () => {
-    // XXX TODO
-  });
+for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
+  describe(name, () => {
+    test("update", () => {
+      const cbk = jest.fn(() => 0.5);
+      const f = newFilter();
+      f[name](cbk);
+      expect(cbk).toHaveBeenCalledTimes(0);
 
-  test("missing return", () => {
-    // XXX TODO
-  });
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(cbk).toHaveBeenCalledTimes(1);
+      expect(cbk).toHaveBeenCalledWith(
+        DEFAULT_TWEEN_STATE,
+        DUMMY_STATE,
+        DEFAULT_COMPOSER,
+      );
+    });
 
-  test("invalid return", () => {
-    // XXX TODO
-  });
+    test("with init, missing return", () => {
+      const init = [[name === "brightness" ? "blur" : "brightness", 0.1]];
+      const f = newFilter(init);
+      f[name](() => {});
 
-  test("basic", () => {
-    // XXX TODO
+      const expected = deepCopy(init);
+      expected.push([name, null]);
+
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(f.toEntries()).toEqual(expected);
+    });
+
+    test("absolute: with init, missing return", () => {
+      const f = newAbsoluteFilter(DUMMY_INIT);
+      f[name](() => {});
+
+      const expected = [[name, null]];
+
+      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      expect(f.toEntries()).toEqual(expected);
+    });
+
+    for (const v of [NaN, -Infinity]) {
+      test(`with init, invalid return ${v}`, () => {
+        const f = newFilter(DUMMY_INIT);
+        f[name](() => v);
+
+        expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+          /must be a number/,
+        );
+        expect(f.toEntries()).toEqual(DUMMY_INIT);
+      });
+
+      test(`absolute: with init, invalid return ${v}`, () => {
+        const f = newAbsoluteFilter(DUMMY_INIT);
+        f[name](() => v);
+
+        expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+          /must be a number/,
+        );
+        expect(f.toEntries()).toEqual([]);
+      });
+    }
+
+    for (const isAbsolute of [true, false]) {
+      const axis = {
+        low: -1,
+        high: 1,
+        initial: 0,
+        previous: 0,
+        current: 0.5,
+        target: 1,
+        lag: 0,
+        depth: 1,
+        snap: false,
+      };
+      const state = { x: axis, y: axis, z: axis };
+
+      const axis2 = {
+        ...axis,
+        previous: axis.current,
+        current: 0.8,
+      };
+      const state2 = { x: axis2, y: axis2, z: axis2 };
+
+      test(`${isAbsolute ? "absolute: " : ""}2 updates: no init`, () => {
+        const f = isAbsolute ? newAbsoluteFilter() : newFilter();
+        f[name]((p) => p.x);
+
+        expect(f.toEntries()).toEqual([]);
+
+        f.update(state, DEFAULT_COMPOSER);
+        expect(f.toEntries().length).toBe(1);
+        expect(f.toEntries()[0]).toBeCloseToArray([name, state.x.current]);
+
+        f.update(state2, DEFAULT_COMPOSER);
+        expect(f.toEntries().length).toBe(1);
+        expect(f.toEntries()[0]).toBeCloseToArray([name, state2.x.current]);
+      });
+
+      test(`${isAbsolute ? "absolute: " : ""}2 updates: with init`, () => {
+        const initVal = 0.1;
+        const init = [[name, initVal]];
+        const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
+        f[name]((p) => p.x);
+
+        expect(f.toEntries().length).toBe(1);
+        expect(f.toEntries()[0]).toBeCloseToArray(init[0]);
+
+        f.update(state, DEFAULT_COMPOSER);
+        expect(f.toEntries().length).toBe(1);
+        expect(f.toEntries()[0]).toBeCloseToArray([
+          name,
+          (isAbsolute ? 0 : initVal) + state.x.current,
+        ]);
+
+        f.update(state2, DEFAULT_COMPOSER);
+        expect(f.toEntries().length).toBe(1);
+        expect(f.toEntries()[0]).toBeCloseToArray([
+          name,
+          (isAbsolute ? 0 : initVal) + state2.x.current,
+        ]);
+      });
+    }
   });
-});
+}
+// XXX TODO dropShadow
+//`'${key}' must be a valid HSL(A) or RGB(A) color object`;
 
 describe("multiple filters", () => {
   // XXX TODO
 });
 
 describe("parallax depth (ignored)", () => {
-  // XXX TODO
+  const depthX = 4,
+    depthY = 3,
+    depthZ = 2;
+  const composer = new FXComposer({ depthX, depthY, depthZ });
+  const cbk = jest.fn(() => 0.5);
+  const cbkSh = jest.fn(() => ({
+    color: { r: 10, g: 10, b: 10, a: 0.5 },
+    offsetX: 10,
+    offsetY: 10,
+    blur: 10,
+  }));
+  const f = newFilter();
+
+  for (const name of FILTER_NAMES) {
+    f[name](name === "dropShadow" ? cbkSh : cbk);
+  }
+
+  const params = toParameters(DUMMY_STATE, composer);
+  f.update(DUMMY_STATE, composer);
+  expect(cbk).toHaveBeenCalledTimes(9);
+  for (let i = 1; i <= 9; i++) {
+    expect(cbk).toHaveBeenNthCalledWith(i, params, DUMMY_STATE, composer);
+  }
+  expect(cbkSh).toHaveBeenCalledTimes(1);
+  expect(cbkSh).toHaveBeenCalledWith(params, DUMMY_STATE, composer);
+
+  expect(f.toEntries()).toEqual(
+    FILTER_NAMES.map((name) => [
+      name,
+      name === "dropShadow"
+        ? {
+            color: { r: 10, g: 10, b: 10, a: 0.5 },
+            offsetX: 10,
+            offsetY: 10,
+            blur: 10,
+          }
+        : 0.5,
+    ]),
+  );
+});
+
+test("modifying params and state inside handler", () => {
+  const f = newFilter();
+  const cbkA = jest.fn((p) => {
+    params.x *= 2;
+    state.x.current *= 2;
+
+    return p.x;
+  });
+
+  const cbkB = jest.fn((p) => p.x);
+
+  const state = newState();
+  const params = toParameters(state, DEFAULT_COMPOSER);
+
+  const stateCopy = deepCopy(state);
+  const paramsCopy = deepCopy(params);
+
+  f.blur(cbkA);
+  f.blur(cbkB);
+
+  f.update(state, DEFAULT_COMPOSER);
+
+  expect(cbkA).toHaveBeenCalledTimes(1);
+  expect(cbkA).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_COMPOSER);
+
+  expect(cbkB).toHaveBeenCalledTimes(1);
+  expect(cbkB).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_COMPOSER);
+
+  expect(state).toEqual(stateCopy);
+  expect(params).toEqual(paramsCopy);
 });

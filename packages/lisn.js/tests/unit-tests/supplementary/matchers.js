@@ -22,7 +22,10 @@ expect.extend({
     }
 
     const allClose = received.every((value, i) => {
-      return Math.abs(value - expected[i]) < Math.pow(10, -precision) / 2;
+      if (typeof value === "number") {
+        return Math.abs(value - expected[i]) < Math.pow(10, -precision) / 2;
+      }
+      return value === expected[i];
     });
 
     return {

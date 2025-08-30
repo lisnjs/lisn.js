@@ -4,6 +4,8 @@
  * @since v1.3.0
  */
 
+// TODO FXGestureTrigger
+
 import * as _ from "@lisn/_internal";
 
 import { usageError } from "@lisn/globals/errors";

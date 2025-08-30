@@ -50,7 +50,6 @@ const DUMMY_STATE = {
   },
 };
 
-// XXX what if we add undefined as a value?
 const DUMMY_INIT = [
   ["brightness", 1.5],
   ["contrast", null],

@@ -56,9 +56,10 @@ export class Filter implements EffectInterface<"filter", Filter> {
    * reset the filters back to "none".
    *
    * Otherwise, the handlers receive delta values reflecting the change in
-   * parameters since the last animation frame and the filter's state is
-   * preserved between calls to {@link update}. Each filter entry's value will
-   * be added to with the new value returned by the corresponding handler.
+   * parameters since the last animation frame and the filter's entries are
+   * preserved between calls to {@link update}. Each handler's return value adds
+   * to the value of the corresponding entry. If the current value in the entry
+   * is null, it is converted to 0 (or "black" for color).
    */
   readonly isAbsolute: () => boolean;
 
@@ -374,7 +375,7 @@ export class Filter implements EffectInterface<"filter", Filter> {
  * Handlers should return the {@link FilterValueMap | correct value} for the
  * respective filter type or `null`.
  *
- * Returning `null` temporarily disabled this filter entry so that it's not
+ * Returning `null` temporarily disables this filter entry so that it's not
  * included in the CSS string.
  *
  * Returning `undefined` should leave the current value unchanged.
@@ -390,8 +391,10 @@ export type FilterConfig = {
    * reset the filter back to "none".
    *
    * Otherwise, the handlers receive delta values reflecting the change in
-   * parameters since the last animation frame and the filter's state is
-   * preserved between calls to {@link update}.
+   * parameters since the last animation frame and the filter's entries are
+   * preserved between calls to {@link update}. Each handler's return value adds
+   * to the value of the corresponding entry. If the current value in the entry
+   * is null, it is converted to 0 (or "black" for color).
    *
    * @defaultValue false
    */
@@ -448,6 +451,9 @@ export type FilterConfig = {
   init?: FilterEntry[];
 };
 
+/**
+ * The initial values for all filters types is null.
+ */
 export type FilterValueMap = {
   /**
    * The brightness fraction where 1 is 100%.
@@ -486,25 +492,16 @@ export type FilterValueMap = {
 
     /**
      * The X offset of the shadow in pixels.
-     *
-     * Initial value is 0. If you've returned an offset from the handler once
-     * and later you omit this property, the last color set will be preserved.
      */
     offsetX: number;
 
     /**
      * The Y offset of the shadow in pixels.
-     *
-     * Initial value is 0. If you've returned an offset from the handler once
-     * and later you omit this property, the last color set will be preserved.
      */
     offsetY: number;
 
     /**
      * The Gaussian blur standard deviation in pixels.
-     *
-     * Initial value is 0. If you've returned a blur value from the handler once
-     * and later you omit this property, the last color set will be preserved.
      */
     blur: number;
   } | null;

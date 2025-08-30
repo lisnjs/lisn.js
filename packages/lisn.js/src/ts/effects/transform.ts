@@ -65,8 +65,10 @@ export class Transform implements EffectInterface<"transform", Transform> {
    * reset the transform back to the identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
-   * parameters since the last animation frame and the transform's state is
-   * preserved between calls to {@link update}.
+   * parameters since the last animation frame and the transform's matrix is
+   * preserved between calls to {@link update}. The handler's return multiplies
+   * the transform. For perspective, the handler's return is added to the
+   * current value.
    */
   readonly isAbsolute: () => boolean;
 
@@ -574,8 +576,10 @@ export type TransformConfig = {
    * reset the transform back to the identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
-   * parameters since the last animation frame and the transform's state is
-   * preserved between calls to {@link update}.
+   * parameters since the last animation frame and the transform's matrix is
+   * preserved between calls to {@link update}. The handler's return multiplies
+   * the transform. For perspective, the handler's return is added to the
+   * current value.
    *
    * @defaultValue false
    */

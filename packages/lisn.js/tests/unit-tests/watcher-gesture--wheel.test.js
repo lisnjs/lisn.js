@@ -155,9 +155,9 @@ test("with intent (single)", async () => {
   watcher.onGesture(element, callback, { intents: "scroll" });
 
   // remember, if delta >= 50 it is treated as a mouse wheel and divided by 10
-  element.dispatchEvent(window.newWheel(0, -50, false, true)); // + 5%
+  element.dispatchEvent(window.newWheel(0, -50, false, true)); // zoom +5%
   await window.waitFor(10); // callback is async
-  expect(callback).toHaveBeenCalledTimes(0); // but total deltas updated: + 0.5 Z
+  expect(callback).toHaveBeenCalledTimes(0); // but total deltas updated: + 0.05 Z
 
   const event = window.newWheel(0, -100);
   element.dispatchEvent(event);

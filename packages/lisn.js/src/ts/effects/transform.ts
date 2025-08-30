@@ -310,7 +310,7 @@ export class Transform implements EffectInterface<"transform", Transform> {
         }
 
         resultInit.multiplySelf(t.toMatrix());
-        resultHandlers.push(...getHandlersFor(t));
+        resultHandlers.push(...getHandlersFor<"transform">(t));
       }
 
       const composed = new Transform({

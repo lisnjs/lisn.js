@@ -34,6 +34,8 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
   /**
    * Returns a new **static** copy of the composition, where each effect is
    * {@link Effect.export | exported}, discarding its handlers.
+   *
+   * New effects with handlers can be added afterwards.
    */
   readonly export: () => FXComposition;
 

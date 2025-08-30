@@ -52,7 +52,7 @@ export interface EffectInterface<
 
   /**
    * Returns a **static copy** of the effect that has the current state/value of
-   * this effect, but no handlers.
+   * this effect, but no handlers. New handlers can be added afterwards.
    *
    * @param negate If given, `negate` will be inverted and used as the base
    *               before adding the current effect's state. Not all effects may

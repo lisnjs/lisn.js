@@ -81,7 +81,7 @@ export class Transform implements EffectInterface<"transform", Transform> {
 
   /**
    * Returns a **static copy** of the transform that has the current state/value
-   * of this transform, but no handlers.
+   * of this transform, but no handlers. New handlers can be added afterwards.
    *
    * @param negate If given, `negate` will be inverted and used as the
    *               pre-multiplication matrix for the current transform matrix.

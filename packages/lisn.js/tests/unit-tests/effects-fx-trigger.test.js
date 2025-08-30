@@ -1,8 +1,13 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { Callback } = window.LISN.modules;
-const { FXTrigger, FXScrollTrigger, FXProxyTrigger, FX_TRIGGER } =
-  window.LISN.effects;
+const {
+  FXTrigger,
+  FXProxyTrigger,
+  FXScrollTrigger,
+  FXGestureTrigger,
+  FX_TRIGGER,
+} = window.LISN.effects;
 
 const diffTolerance = 20; // in percent
 
@@ -475,74 +480,6 @@ describe("FXTrigger", () => {
   });
 });
 
-describe("FXScrollTrigger", () => {
-  test("basic", async () => {
-    const pollAndTestData = async (snap) => {
-      const data = (await poller.next()).value;
-      expect(data).toEqual({
-        x: {
-          low: 0,
-          high: window.SCROLL_WIDTH - window.CLIENT_WIDTH,
-          target: scrollLeft,
-          snap,
-        },
-        y: {
-          low: 0,
-          high: window.SCROLL_HEIGHT - window.CLIENT_HEIGHT,
-          target: scrollTop,
-          snap,
-        },
-      });
-    };
-
-    const scrollable = document.createElement("div");
-    scrollable.enableScroll();
-
-    let scrollLeft = 20,
-      scrollTop = 50;
-    scrollable.scrollTo(scrollLeft, scrollTop);
-
-    const trigger = new FXScrollTrigger(scrollable);
-    const poller = trigger.poll();
-
-    // ---------- initial
-    await pollAndTestData(true);
-    expect(window.numEventListeners.get(scrollable) || 0).toBeGreaterThan(0);
-
-    // ---------- after scroll
-    scrollLeft += 5;
-    scrollTop += 5;
-    scrollable.scrollTo(scrollLeft, scrollTop);
-
-    await pollAndTestData(false);
-
-    // ---------- after pause/resume
-    trigger.pause();
-    trigger.resume();
-
-    scrollLeft += 5;
-    scrollTop += 5;
-    scrollable.scrollTo(scrollLeft, scrollTop);
-
-    await pollAndTestData(true);
-
-    // ---------- stop watcher on pause
-    trigger.pause();
-    await window.waitFor(50);
-    expect(window.numEventListeners.get(scrollable) || 0).toBe(0);
-
-    // ---------- restart watcher on resume
-    trigger.resume();
-    await window.waitFor(50);
-    expect(window.numEventListeners.get(scrollable) || 0).toBeGreaterThan(0);
-  });
-
-  test("in FX_TRIGGER", () => {
-    expect(FX_TRIGGER.scroll).not.toBeUndefined();
-    expect(FX_TRIGGER.scroll()).toBeInstanceOf(FXScrollTrigger);
-  });
-});
-
 describe("FXProxyTrigger", () => {
   test("no proxied", () => {
     expect(() => new FXProxyTrigger()).toThrow(/A trigger is required/);
@@ -629,5 +566,264 @@ describe("FXProxyTrigger", () => {
     const { trigger: proxied } = newTrigger();
     expect(FX_TRIGGER.proxy).not.toBeUndefined();
     expect(FX_TRIGGER.proxy(proxied)).toBeInstanceOf(FXProxyTrigger);
+  });
+});
+
+describe("FXScrollTrigger", () => {
+  test("basic", async () => {
+    const pollAndTestData = async (snap) => {
+      const data = (await poller.next()).value;
+      expect(data).toEqual({
+        x: {
+          low: 0,
+          high: window.SCROLL_WIDTH - window.CLIENT_WIDTH,
+          target: scrollLeft,
+          snap,
+        },
+        y: {
+          low: 0,
+          high: window.SCROLL_HEIGHT - window.CLIENT_HEIGHT,
+          target: scrollTop,
+          snap,
+        },
+      });
+    };
+
+    const scrollable = document.createElement("div");
+    scrollable.enableScroll();
+
+    let scrollLeft = 20,
+      scrollTop = 50;
+    scrollable.scrollTo(scrollLeft, scrollTop);
+
+    const trigger = new FXScrollTrigger(scrollable);
+    const poller = trigger.poll();
+
+    // ---------- initial
+    await pollAndTestData(true);
+    expect(window.numEventListeners.get(scrollable) || 0).toBeGreaterThan(0);
+
+    // ---------- after scroll
+    scrollLeft += 5;
+    scrollTop += 5;
+    scrollable.scrollTo(scrollLeft, scrollTop);
+
+    await pollAndTestData(false);
+
+    // ---------- after pause/resume
+    trigger.pause();
+    trigger.resume();
+
+    scrollLeft += 5;
+    scrollTop += 5;
+    scrollable.scrollTo(scrollLeft, scrollTop);
+
+    await pollAndTestData(true);
+
+    // ---------- stop watcher on pause
+    trigger.pause();
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(scrollable) || 0).toBe(0);
+
+    // ---------- restart watcher on resume
+    trigger.resume();
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(scrollable) || 0).toBeGreaterThan(0);
+  });
+
+  test("in FX_TRIGGER", () => {
+    expect(FX_TRIGGER.scroll).not.toBeUndefined();
+    expect(FX_TRIGGER.scroll()).toBeInstanceOf(FXScrollTrigger);
+  });
+});
+
+describe("FXGestureTrigger", () => {
+  test("no target", () => {
+    expect(() => new FXGestureTrigger()).toThrow(/A target is required/);
+  });
+
+  test("basic", async () => {
+    const pollAndTestData = async (x, y, z) => {
+      const data = (await poller.next()).value;
+      expect(data).toEqual({
+        x: {
+          low: 0,
+          high: x,
+          target: x,
+        },
+        y: {
+          low: 0,
+          high: y,
+          target: y,
+        },
+        z: {
+          low: 0,
+          high: z,
+          target: z,
+        },
+      });
+    };
+    const target = document.createElement("div");
+
+    const trigger = new FXGestureTrigger(target);
+    const poller = trigger.poll();
+
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(target) || 0).toBeGreaterThan(0);
+
+    // ---------- wheel scroll
+    target.dispatchEvent(window.newWheel(0, -100));
+    await pollAndTestData(0, -100, 1);
+
+    // ---------- wheel zoom
+    target.dispatchEvent(window.newWheel(0, -10, false, true)); // +10% zoom
+    await pollAndTestData(0, -100, 1.1);
+
+    // ---------- after pause/resume
+    trigger.pause();
+    trigger.resume();
+
+    await window.waitFor(50);
+
+    target.dispatchEvent(window.newWheel(10, 10));
+    await pollAndTestData(10, -90, 1.1);
+
+    // ---------- stop watcher on pause
+    trigger.pause();
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(target) || 0).toBe(0);
+
+    // ---------- restart watcher on resume
+    trigger.resume();
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(target) || 0).toBeGreaterThan(0);
+  });
+
+  test("with config (selected)", async () => {
+    const pollAndTestData = (x, y, z, next = null, timeout = 100) => {
+      return new Promise((resolve) => {
+        let isResolved = false;
+
+        setTimeout(() => {
+          if (!isResolved) {
+            isResolved = true;
+            resolve({ timeout: true, next });
+          }
+        }, timeout);
+
+        (async () => {
+          next ??= poller.next().then((v) => v.value);
+          const data = await next;
+          if (isResolved) {
+            return;
+          }
+
+          expect(data).toEqual({
+            x: {
+              low: 0,
+              high: x,
+              target: x,
+            },
+            y: {
+              low: 0,
+              high: y,
+              target: y,
+            },
+            z: {
+              low: 0,
+              high: z,
+              target: z,
+            },
+          });
+
+          isResolved = true;
+          resolve({ timeout: false, next: null });
+        })();
+      });
+    };
+
+    const LINE = 40;
+
+    const target = document.createElement("div");
+
+    const trigger = new FXGestureTrigger(target, {
+      devices: "key",
+      intents: "scroll",
+      directions: "up,down",
+    });
+    const poller = trigger.poll();
+
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(target) || 0).toBeGreaterThan(0);
+
+    // ---------- key scroll up
+    target.dispatchEvent(window.newKeyDown("Up"));
+    let result = await pollAndTestData(0, -LINE, 1);
+    expect(result.timeout).toBe(false);
+    expect(result.next).toBe(null);
+
+    // ---------- wheel scroll (ignored)
+    target.dispatchEvent(window.newWheel(0, -100));
+    result = await pollAndTestData(0, -LINE, 1);
+    expect(result.timeout).toBe(true);
+    expect(result.next).toBeTruthy();
+
+    // ---------- key scroll left (ignored)
+    target.dispatchEvent(window.newKeyDown("Left"));
+    result = await pollAndTestData(0, -LINE, 1, result.next);
+    expect(result.timeout).toBe(true);
+    expect(result.next).toBeTruthy();
+
+    // ---------- key zoom (ignored)
+    target.dispatchEvent(window.newKeyDown("+"));
+    result = await pollAndTestData(0, -LINE, 1, result.next);
+    expect(result.timeout).toBe(true);
+    expect(result.next).toBeTruthy();
+
+    // ---------- key scroll down
+    target.dispatchEvent(window.newKeyDown("Down"));
+    result = await pollAndTestData(0, 0, 1, result.next);
+    expect(result.timeout).toBe(false);
+    expect(result.next).toBe(null);
+
+    target.dispatchEvent(window.newKeyDown("Down"));
+    result = await pollAndTestData(0, LINE, 1, result.next);
+    expect(result.timeout).toBe(false);
+    expect(result.next).toBe(null);
+
+    // ---------- after pause/resume
+    trigger.pause();
+    trigger.resume();
+
+    await window.waitFor(50);
+
+    // ---------- key scroll down
+    target.dispatchEvent(window.newKeyDown("Down"));
+    result = await pollAndTestData(0, 2 * LINE, 1, result.next);
+    expect(result.timeout).toBe(false);
+    expect(result.next).toBe(null);
+
+    // ---------- key scroll left (ignored)
+    target.dispatchEvent(window.newKeyDown("Left"));
+    result = await pollAndTestData(0, 2 * LINE, 1, result.next);
+    expect(result.timeout).toBe(true);
+    expect(result.next).toBeTruthy();
+
+    // ---------- stop watcher on pause
+    trigger.pause();
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(target) || 0).toBe(0);
+
+    // ---------- restart watcher on resume
+    trigger.resume();
+    await window.waitFor(50);
+    expect(window.numEventListeners.get(target) || 0).toBeGreaterThan(0);
+  });
+
+  test("in FX_TRIGGER", () => {
+    expect(FX_TRIGGER.gesture).not.toBeUndefined();
+    expect(FX_TRIGGER.gesture(document.createElement("div"))).toBeInstanceOf(
+      FXGestureTrigger,
+    );
   });
 });

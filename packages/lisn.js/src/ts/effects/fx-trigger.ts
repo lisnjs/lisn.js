@@ -4,14 +4,14 @@
  * @since v1.3.0
  */
 
-// TODO FXGestureTrigger
-
 import * as _ from "@lisn/_internal";
 
 import { usageError } from "@lisn/globals/errors";
 
 import { ScrollTarget } from "@lisn/globals/types";
 
+import { addDeltaZ } from "@lisn/utils/gesture";
+import { toNumWithBounds } from "@lisn/utils/math";
 import { waitForDelay } from "@lisn/utils/tasks";
 
 import {
@@ -24,6 +24,11 @@ import {
 import { FXStateUpdate } from "@lisn/effects/effect";
 
 import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
+import {
+  GestureWatcher,
+  OnGestureHandler,
+  OnGestureOptions,
+} from "@lisn/watchers/gesture-watcher";
 
 // -------------------------------------------------------------------------
 // -------------------- BUILT-IN TRIGGERS SINGLE EXPORT --------------------
@@ -33,9 +38,11 @@ import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
  * Function wrappers around built-in triggers.
  */
 export const FX_TRIGGER = {
-  scroll: (scrollable?: ScrollTarget) => new FXScrollTrigger(scrollable),
   proxy: (trigger: FXTrigger, config: FXProxyTriggerConfig) =>
     new FXProxyTrigger(trigger, config),
+  scroll: (scrollable?: ScrollTarget) => new FXScrollTrigger(scrollable),
+  gesture: (target: EventTarget, config?: FXGestureTriggerConfig) =>
+    new FXGestureTrigger(target, config),
 } as const;
 
 // -------------------------------------------------------------------------
@@ -197,6 +204,65 @@ export type FXTriggerHandler =
 // -------------------------- BUILT-IN TRIGGERS ---------------------------
 // ------------------------------------------------------------------------
 
+// --------------------------------- PROXY ---------------------------------
+
+/**
+ * {@link FXProxyTrigger} is triggered by another trigger and uses its
+ * {@link FXStateUpdate} but can transform the values or introduce delay before
+ * it fires.
+ */
+export class FXProxyTrigger extends FXTrigger {
+  constructor(trigger: FXTrigger, config: FXProxyTriggerConfig) {
+    if (!trigger) {
+      throw usageError("A trigger is required for FXProxyTrigger");
+    }
+
+    const { delay = 0, transformFn } = config ?? {};
+
+    const executor = (push: (update: FXStateUpdate) => void) => {
+      (async () => {
+        const relayUpdate = async (update: FXStateUpdate) => {
+          if (delay > 0) {
+            await waitForDelay(delay);
+          }
+
+          push(transformFn ? transformFn(update) : update);
+        };
+
+        for await (const update of trigger.poll()) {
+          relayUpdate(update); // don't await, just queue
+        }
+      })();
+    };
+
+    // --------------------
+
+    super(executor);
+  }
+}
+
+export type FXProxyTriggerConfig = {
+  /**
+   * A delay in milliseconds before this trigger fires following an update from
+   * the original, proxied trigger.
+   *
+   * If the trigger fires again before delay has passed, the new data will
+   * simply be queued. No updates are dropped.
+   *
+   * @defaultValue 0
+   */
+  delay?: number;
+
+  /**
+   * If given, it will be called with the update data from the proxied trigger
+   * and must return new values. The function is called after the {@link delay}
+   * has passed.
+   *
+   * @defaultValue undefined
+   */
+  transformFn?: (update: FXStateUpdate) => FXStateUpdate;
+};
+
 // -------------------------------- SCROLL ---------------------------------
 
 /**
@@ -257,64 +323,107 @@ export class FXScrollTrigger extends FXTrigger {
   }
 }
 
-// --------------------------------- PROXY ---------------------------------
+// -------------------------------- GESTURE --------------------------------
 
 /**
- * {@link FXProxyTrigger} is triggered by another trigger and uses its
- * {@link FXStateUpdate} but can transform the values or introduce delay before
- * it fires.
+ * {@link FXGestureTrigger} is triggered by user gestures and sends an
+ * {@link FXStateUpdate} based on the total delta values. See
+ * {@link GestureWatcher}.
  */
-export class FXProxyTrigger extends FXTrigger {
-  constructor(trigger: FXTrigger, config: FXProxyTriggerConfig) {
-    if (!trigger) {
-      throw usageError("A trigger is required for FXProxyTrigger");
+export class FXGestureTrigger extends FXTrigger {
+  constructor(target: EventTarget, config?: FXGestureTriggerConfig) {
+    if (!target) {
+      throw usageError("A target is required for FXGestureTrigger");
     }
 
-    const { delay = 0, transformFn } = config ?? {};
+    const {
+      minTotalDeltaX = null,
+      minTotalDeltaY = null,
+      minTotalDeltaZ = null,
+      maxTotalDeltaX = null,
+      maxTotalDeltaY = null,
+      maxTotalDeltaZ = null,
+    } = config ?? {};
+
+    const gestureWatcher = GestureWatcher.reuse();
+    let gestureHandler: OnGestureHandler;
+
+    // We need to keep track of the total deltas here, since when removing and
+    // re-adding the watcher handler on pause/resume, will reset the total
+    // deltas we receive from the GestureWatcher.
+    const totalDeltas = { x: 0, y: 0, z: 1 };
+
+    const addOrRemoveWatcher = () => {
+      if (this.isRunning()) {
+        gestureWatcher.onGesture(
+          target,
+          gestureHandler,
+          _.merge(config, {
+            debounceWindow: 0,
+            deltaThreshold: 0,
+          }),
+        );
+      } else {
+        gestureWatcher.offGesture(target, gestureHandler);
+      }
+    };
 
     const executor = (push: (update: FXStateUpdate) => void) => {
-      (async () => {
-        const relayUpdate = async (update: FXStateUpdate) => {
-          if (delay > 0) {
-            await waitForDelay(delay);
-          }
+      gestureHandler = (t__ignored, gestureData) => {
+        totalDeltas.x = toNumWithBounds(totalDeltas.x + gestureData.deltaX, {
+          min: minTotalDeltaX,
+          max: maxTotalDeltaX,
+        });
+        totalDeltas.y = toNumWithBounds(totalDeltas.y + gestureData.deltaY, {
+          min: minTotalDeltaY,
+          max: maxTotalDeltaY,
+        });
+        totalDeltas.z = toNumWithBounds(
+          addDeltaZ(totalDeltas.z, gestureData.deltaZ),
+          {
+            min: minTotalDeltaZ,
+            max: maxTotalDeltaZ,
+          },
+        );
 
-          push(transformFn ? transformFn(update) : update);
-        };
-
-        for await (const update of trigger.poll()) {
-          relayUpdate(update); // don't await, just queue
-        }
-      })();
+        push({
+          x: {
+            low: 0,
+            high: totalDeltas.x,
+            target: totalDeltas.x,
+          },
+          y: {
+            low: 0,
+            high: totalDeltas.y,
+            target: totalDeltas.y,
+          },
+          z: {
+            low: 0,
+            high: totalDeltas.z,
+            target: totalDeltas.z,
+          },
+        });
+      };
     };
 
     // --------------------
 
     super(executor);
+
+    this.onToggle(addOrRemoveWatcher);
+    addOrRemoveWatcher();
   }
 }
 
-export type FXProxyTriggerConfig = {
-  /**
-   * A delay in milliseconds before this trigger fires following an update from
-   * the original, proxied trigger.
-   *
-   * If the trigger fires again before delay has passed, the new data will
-   * simply be queued. No updates are dropped.
-   *
-   * @defaultValue 0
-   */
-  delay?: number;
-
-  /**
-   * If given, it will be called with the update data from the proxied trigger
-   * and must return new values. The function is called after the {@link delay}
-   * has passed.
-   *
-   * @defaultValue undefined
-   */
-  transformFn?: (update: FXStateUpdate) => FXStateUpdate;
-};
+/**
+ * See {@link OnGestureOptions}.
+ *
+ * @interface
+ */
+export type FXGestureTriggerConfig = Omit<
+  OnGestureOptions,
+  "debounceWindow" | "deltaThreshold"
+>;
 
 // ------------------------------
 

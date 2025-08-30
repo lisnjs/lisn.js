@@ -9,7 +9,7 @@ import * as _ from "@lisn/_internal";
 import { ColorComponentsWithAlpha } from "@lisn/globals/types";
 
 import { addColor, toColorComponents, toColor } from "@lisn/utils/colors";
-import { normalizeAngleDeg } from "@lisn/utils/math";
+import { normalizeAngleDeg, toNumWithBounds } from "@lisn/utils/math";
 import { validateNumber } from "@lisn/utils/validation";
 
 import {
@@ -25,15 +25,15 @@ import {
 } from "@lisn/effects/effect";
 
 import { FXComposer } from "@lisn/effects/fx-composer";
-import { usageError } from "@lisn/globals";
+import { bugError, usageError } from "@lisn/globals";
 
 /**
  * {@link Filter} controls an element's
  * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/filter | filters}
  *
  * It supports:
- * - blur
  * - brightness
+ * - blur
  * - contrast
  * - drop-shadow
  * - grayscale
@@ -72,8 +72,8 @@ export class Filter implements EffectInterface<"filter", Filter> {
   readonly update: (state: FXState, composer: FXComposer) => this;
 
   /**
-   * Returns a **static copy** of the filter that has the current state/value
-   * of this filter, but no handlers.
+   * Returns a **static copy** of the filter that has the current entries
+   * of this filter, but no handlers. New handlers can be added afterwards.
    *
    * @returns **A new** {@link Filter} instance with no handlers.
    */
@@ -81,13 +81,28 @@ export class Filter implements EffectInterface<"filter", Filter> {
 
   /**
    * Returns a **new live** filter that has all the handlers from this one
-   * and the given filters, in order. The resulting values are the combined (sum
-   * or product, depending on the filter types) of its current state and that of
-   * all the other given ones.
+   * and the given filters, in order. The resulting entries are the combined
+   * (joined arrays) of its current entries and that of all the other given ones.
    *
    * **NOTE:** If any of the given filters is
    * {@link FilterConfig.isAbsolute | absolute}, all previous ones are discarded
    * and the resulting filter becomes absolute.
+   *
+   * **NOTE:** If any of the given filters is not absolute, then for each filter
+   * in the list of filters to compose, its entries and handlers will be
+   * compared by the {@link FilterName | filter type} and if there's a mismatch
+   * it will be handled in a similar way as explained in
+   * {@link FilterConfig.init}.
+   *
+   * With each new filter added to the composition, if the previous filter had
+   * entries and no corresponding handlers (which could be the case if the
+   * filter was initialized with existing entries), then dummy (no-change)
+   * handlers will be added that preserve those entries. And if it had handlers
+   * that haven't yet pushed their values into the entries (which would be the
+   * case if the filter hasn't been updated since those handlers were added),
+   * then blank (null) entries will be pushed which will accept the new value
+   * from those handlers on update. In this way multiple filters composed don't
+   * affect entries and handlers from each other.
    *
    * @returns **A new** {@link Filter} instance with all the same handlers as
    * this one.
@@ -122,16 +137,16 @@ export class Filter implements EffectInterface<"filter", Filter> {
   readonly toEntries: () => FilterEntryResolved[];
 
   /**
-   * Adds a blur handler.
-   */
-  readonly blur: (handler: FXHandler<FilterHandlerReturn<"blur">>) => this;
-
-  /**
    * Adds a brightness handler.
    */
   readonly brightness: (
     handler: FXHandler<FilterHandlerReturn<"brightness">>,
   ) => this;
+
+  /**
+   * Adds a blur handler.
+   */
+  readonly blur: (handler: FXHandler<FilterHandlerReturn<"blur">>) => this;
 
   /**
    * Adds a contrast handler.
@@ -191,17 +206,44 @@ export class Filter implements EffectInterface<"filter", Filter> {
 
     let filters: FilterEntryResolved[] = [];
     for (const [name, value] of init) {
-      filters.push(validateEntry(name, value));
+      if (!(name in VALUE_VALIDATORS)) {
+        throw usageError(`Unknown filter type '${name}'`);
+      }
+
+      if (_.isNull(value)) {
+        filters.push([name, value]);
+      } else {
+        filters.push(validateAndAddEntry(name, value));
+      }
     }
+
+    // ----------
+
+    const pushHandler = <M extends HandlerMethodName<"filter">>(
+      tuple: HandlerMethodTuple<"filter", M>,
+    ) => {
+      handlers.push(tuple);
+      saveHandlerFor(this, tuple);
+      return this;
+    };
 
     // ----------
 
     const addOwnHandler = <M extends HandlerMethodName<"filter">>(
       tuple: HandlerMethodTuple<"filter", M>,
     ) => {
-      handlers.push(tuple);
-      saveHandlerFor(this, tuple);
-      return this;
+      const idx = _.lengthOf(handlers);
+      const existingEntry = filters[idx];
+      if (!isAbsolute && existingEntry && existingEntry[0] !== tuple[0]) {
+        // mismatching handler
+        // pad with no-op handlers to keep existing entries
+        const numEntries = _.lengthOf(filters);
+        for (let i = idx; i < numEntries; i++) {
+          pushHandler([filters[i][0], () => void 0]);
+        }
+      }
+
+      return pushHandler(tuple);
     };
 
     // --------------------
@@ -221,15 +263,10 @@ export class Filter implements EffectInterface<"filter", Filter> {
         if (_.isNull(value)) {
           filters[idx] = [name, null];
         } else if (!_.isUndefined(value)) {
-          const currentType = (filters[idx] ?? [])[0];
-          if (currentType !== name) {
-            filters.length = idx;
-          }
-
           const currentValue = (filters[idx] ??
             [])[1] as FilterValueMap[typeof name];
 
-          filters[idx] = validateEntry(name, value, currentValue);
+          filters[idx] = validateAndAddEntry(name, value, currentValue);
         }
 
         idx++;
@@ -248,6 +285,9 @@ export class Filter implements EffectInterface<"filter", Filter> {
       let resultIsAbsolute = false;
       let resultInit: FilterEntryResolved[] = [];
       let resultHandlers: HandlerMethodTuple<"filter">[] = [];
+
+      let prevEntries: FilterEntryResolved[] | null = null;
+      let prevHandlers: HandlerMethodTuple<"filter">[] | null = null;
       for (const f of [this, ...others]) {
         if (f.isAbsolute()) {
           resultIsAbsolute = true;
@@ -255,11 +295,38 @@ export class Filter implements EffectInterface<"filter", Filter> {
           resultHandlers = [];
         }
 
-        const entries = f.toEntries();
-        for (const e of entries) {
-          resultInit.push(e);
+        if (prevEntries && prevHandlers) {
+          const numEntries = _.lengthOf(prevEntries);
+          const numHandlers = _.lengthOf(prevHandlers);
+          let i = 0;
+          for (i = 0; i < _.min(numEntries, numHandlers); i++) {
+            /* istanbul ignore next */
+            if (prevEntries[i][0] !== prevHandlers[i][0]) {
+              // Should have been handled by addOwnHandler when that filter's
+              // handler was being added
+              throw bugError("Handlers for filter don't match entries");
+            }
+          }
+
+          const diffN = _.abs(numHandlers - numEntries);
+          for (let j = i; j < i + diffN; j++) {
+            if (numEntries > numHandlers) {
+              // pad with no-op handlers
+              resultHandlers.push([prevEntries[j][0], () => void 0]);
+            } else {
+              // pad with null entries
+              resultInit.push([prevHandlers[j][0], null]);
+            }
+          }
         }
-        resultHandlers.push(...getHandlersFor(f));
+
+        const entries = f.toEntries();
+        const handlers = getHandlersFor<"filter">(f);
+        prevEntries = entries;
+        prevHandlers = handlers;
+
+        resultInit.push(...entries);
+        resultHandlers.push(...handlers);
       }
 
       const composed = new Filter({
@@ -280,18 +347,18 @@ export class Filter implements EffectInterface<"filter", Filter> {
 
     this.toString = () => {
       let result = "";
-      for (const [p, val] of filters) {
+      for (const [name, val] of filters) {
         if (!_.isNullish(val)) {
-          result += (result ? " " : "") + formatEntry(p, val);
+          result += (result ? " " : "") + `${name}(${formatValue(name, val)})`;
         }
       }
 
-      return result;
+      return result ? result : "none";
     };
 
     this.toEntries = () => _.deepCopy(filters);
-    this.blur = (handler) => addOwnHandler(["blur", handler]);
     this.brightness = (handler) => addOwnHandler(["brightness", handler]);
+    this.blur = (handler) => addOwnHandler(["blur", handler]);
     this.contrast = (handler) => addOwnHandler(["contrast", handler]);
     this.dropShadow = (handler) => addOwnHandler(["dropShadow", handler]);
     this.grayscale = (handler) => addOwnHandler(["grayscale", handler]);
@@ -332,25 +399,49 @@ export type FilterConfig = {
 
   /**
    * Initial filters to begin with. Note that if {@link isAbsolute} is `true`,
-   * these will be discarded on {@link Transform.update | update}.
+   * these will be discarded on {@link Filter.update | update}.
    *
-   * **IMPORTANT** If the filter is not absolute (which is the case by default),
-   * the {@link FilterName | filter type} in each entry in the array must
-   * correspond to the type of handler added in this order. I.e. if {@link init}
-   * is `[
+   * **NOTE** If the filter is not absolute (which is the case by default),
+   * then each entry in the init array will try to be matched to subsequent
+   * handlers added, in order, based on the {@link FilterName | filter type}.
+   * The handler will then amend (add to) the entry during
+   * {@link Filter.update | update}.
+   *
+   * As soon as a mismatching handler is added, then for each remaining entry in
+   * the array, a dummy no-change handler will be added which will preserve it,
+   * and the new handler being added will push its own new entry into the array,
+   * which it will modify on each {@link Filter.update | update}.
+   *
+   * For example, if {@link init} is:
+   * ```javascript
+   * [
    *   ["blur", 2],
    *   ["brightness", 0.9],
    *   ["contrast", 0.8],
    *   ["brightness", 1.2],
-   * ]`
+   * ]
+   * ```
    *
-   * then the first handler you add must be {@link Filter.blur | blur}, and it
-   * will add to the value of 2px in each {@link Filter.update | update}; the
-   * next handler you add must be {@link Filter.brightness | brightness} and it
-   * will add to the value of 0.9 in each {@link Filter.update | update}, and so
-   * on. If the number `N` handler you add does not correspond to the type in
-   * entry `N` in the {@link init} array, that entry and all subsequent ones
-   * will be discarded.
+   * and you add the following handlers in order:
+   * ```javascript
+   * filter.blur(() => {...}) // will modify the entry in init at index 0
+   * filter.brightness(() => {...}) // will modify the entry in init at index 1
+   * filter.saturation(() => {...}) // NO match => will push its own entry at index 4
+   * filter.opacity(() => {...}) // will push its own entry at index 5
+   * ```
+   *
+   * then each time you {@link Filter.update | update} the filter the entries
+   * will be as follows:
+   * ```javascript
+   * [
+   *   ["blur", 2 + ...], // added whatever the first handler returned
+   *   ["brightness", 0.9 + ...], // added whatever the second handler returned
+   *   ["contrast", 0.8], // preserved, will never change
+   *   ["brightness", 1.2], // preserved, will never change
+   *   ["saturation", ...], // whatever the third handler returned
+   *   ["opacity", ...], // whatever the fourth handler returned
+   * ]
+   * ```
    *
    * @defaultValue undefined
    */
@@ -359,18 +450,18 @@ export type FilterConfig = {
 
 export type FilterValueMap = {
   /**
-   * The blur radius in pixels.
-   *
-   * Value must be >= 0.
-   */
-  blur: number | null;
-
-  /**
    * The brightness fraction where 1 is 100%.
    *
    * Value must be >= 0.
    */
   brightness: number | null;
+
+  /**
+   * The blur radius in pixels.
+   *
+   * Value must be >= 0.
+   */
+  blur: number | null;
 
   /**
    * The contrast fraction where 1 is 100%.
@@ -386,29 +477,34 @@ export type FilterValueMap = {
     /**
      * The color of the drop shadow as RGBA or HSLA values.
      *
-     * @defaultValue null // no color will be specified and the browser will use
-     * the current color
+     * Initial value is `null`, which means no color will be specified and the
+     * browser will use the current color. If you've returned a color from the
+     * handler once and later you omit this property, the last color set will be
+     * preserved.
      */
     color: ColorComponentsWithAlpha | null;
 
     /**
      * The X offset of the shadow in pixels.
      *
-     * @defaultValue 0
+     * Initial value is 0. If you've returned an offset from the handler once
+     * and later you omit this property, the last color set will be preserved.
      */
     offsetX: number;
 
     /**
      * The Y offset of the shadow in pixels.
      *
-     * @defaultValue 0
+     * Initial value is 0. If you've returned an offset from the handler once
+     * and later you omit this property, the last color set will be preserved.
      */
     offsetY: number;
 
     /**
      * The Gaussian blur standard deviation in pixels.
      *
-     * @defaultValue 0
+     * Initial value is 0. If you've returned a blur value from the handler once
+     * and later you omit this property, the last color set will be preserved.
      */
     blur: number;
   } | null;
@@ -468,6 +564,15 @@ export type FilterEntry<F extends FilterName = FilterName> = [
 
 // ----------------------------------------
 
+// Ensure they match
+type FilterNameFromMethods = HandlerMethodName<"filter">;
+type FilterNameGuard = FilterName extends FilterNameFromMethods
+  ? FilterNameFromMethods extends FilterName
+    ? FilterName
+    : never
+  : never;
+const typeGuard__ignored: FilterNameGuard = "brightness";
+
 declare module "@lisn/effects/effect" {
   interface EffectRegistry {
     filter: Filter;
@@ -482,8 +587,8 @@ const VALUE_VALIDATORS: {
     currentValue?: FilterValueMap[F],
   ) => FilterValueMap[F];
 } = {
-  blur: (v, c) => validateAndAddNumeric("blur", v, c),
   brightness: (v, c) => validateAndAddNumeric("brightness", v, c),
+  blur: (v, c) => validateAndAddNumeric("blur", v, c),
   contrast: (v, c) => validateAndAddNumeric("contrast", v, c),
   grayscale: (v, c) => validateAndAddNumeric("grayscale", v, c, 1),
   hueRotate: (v, c) =>
@@ -494,7 +599,9 @@ const VALUE_VALIDATORS: {
   sepia: (v, c) => validateAndAddNumeric("sepia", v, c, 1),
 
   dropShadow: (v, c) => {
-    const { color, offsetX, offsetY, blur } = _.isPlainObject(v) ? v : {};
+    const { color, offsetX, offsetY, blur } = _.isObject(v)
+      ? (v as Record<string, unknown>)
+      : {};
 
     let newColor = validateColor("drop-shadow color", color) ?? null;
     if (c?.color) {
@@ -503,13 +610,17 @@ const VALUE_VALIDATORS: {
 
     return {
       color: newColor,
-      offsetX:
-        (c?.offsetX ?? 0) +
-        (validateNumber("drop-shadow offsetX", offsetX) ?? 0),
-      offsetY:
-        (c?.offsetY ?? 0) +
-        (validateNumber("drop-shadow offsetY", offsetY) ?? 0),
-      blur: (c?.blur ?? 0) + (validateNumber("drop-shadow blur", blur) ?? 0),
+      offsetX: validateAndAddNumeric(
+        "drop-shadow offsetX",
+        offsetX,
+        c?.offsetX,
+      ),
+      offsetY: validateAndAddNumeric(
+        "drop-shadow offsetY",
+        offsetY,
+        c?.offsetY,
+      ),
+      blur: validateAndAddNumeric("drop-shadow blur", blur, c?.blur),
     };
   },
 };
@@ -517,8 +628,8 @@ const VALUE_VALIDATORS: {
 const VALUE_FORMATTERS: {
   [F in FilterName]: (value: NonNullable<FilterValueMap[F]>) => string;
 } = {
-  blur: (v) => `${v}px`,
   brightness: (v) => `${v}`,
+  blur: (v) => `${v}px`,
   contrast: (v) => `${v}`,
   dropShadow: (v) => `${v.offsetX} ${v.offsetY} ${v.blur} ${toColor(v.color)}`,
   grayscale: (v) => `${v}`,
@@ -550,16 +661,20 @@ const validateAndAddNumeric = (
   value: unknown,
   currentValue: number | null | undefined,
   max: number | null = null,
-) => (currentValue ?? 0) + (validateNumber(key, value, { min: 0, max }) ?? 0);
+) =>
+  toNumWithBounds((currentValue ?? 0) + (validateNumber(key, value) ?? 0), {
+    min: 0,
+    max,
+  });
 
-const validateEntry = <F extends FilterName>(
+const validateAndAddEntry = <F extends FilterName>(
   name: F,
   value: unknown,
   currentValue?: FilterValueMap[F],
 ): FilterEntryResolved<F> =>
   [name, VALUE_VALIDATORS[name](value, currentValue)] as const;
 
-const formatEntry = <F extends FilterName>(
+const formatValue = <F extends FilterName>(
   name: F,
   value: NonNullable<FilterValueMap[F]> | null,
 ) => (_.isNullish(value) ? "" : VALUE_FORMATTERS[name](value));

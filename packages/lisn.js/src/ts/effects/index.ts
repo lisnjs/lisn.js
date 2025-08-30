@@ -13,3 +13,4 @@ export * from "@lisn/effects/fx-trigger";
 export * from "@lisn/effects/effect";
 
 export * from "@lisn/effects/transform";
+export * from "@lisn/effects/filter";

@@ -213,6 +213,7 @@ export class Transform implements EffectInterface<"transform", Transform> {
 
     let currentPerspective: number | null | undefined = initPerspective;
     const matrix = createMatrix(false, init);
+    matrices.set(this, matrix);
 
     // ----------
 
@@ -230,11 +231,13 @@ export class Transform implements EffectInterface<"transform", Transform> {
 
     // ----------
 
-    const toMatrix = (negate?: TransformLike) => {
-      const m = createMatrix(true, matrix);
-      const relM = negate ? createMatrix(true, negate) : null;
-      return relM ? relM.inverse().multiply(m) : m;
-    };
+    const toMatrix = (negate?: TransformLike) =>
+      negate
+        ? createMatrix(true, negate).inverse().multiply(matrix)
+        : createMatrix(true, matrix);
+
+    const toMatrixNoCopy = (negate?: TransformLike) =>
+      negate ? toMatrix(negate) : matrix;
 
     // ----------
 
@@ -283,35 +286,34 @@ export class Transform implements EffectInterface<"transform", Transform> {
     this.export = (negate) =>
       new Transform({
         isAbsolute: isAbsolute,
-        init: toMatrix(negate),
+        init: negate ? toMatrix(negate) : matrix,
         perspective: currentPerspective,
       });
 
     this.toComposition = (...others) => {
-      let toCombine: Transform[] = [];
-      let resultIsAbsolute = false;
-      // Avoid computing products unnecessarily, so filter first.
+      let resultIsAbsolute = isAbsolute;
+      let resultInits: DOMMatrixReadOnly[] = [];
+      let resultHandlers: HandlerMethodTuple<"transform">[] = [];
+      let resultPerspective: number | null | undefined = void 0;
+
       for (const t of [this, ...others]) {
         if (t.isAbsolute()) {
           resultIsAbsolute = true;
-          toCombine = [];
+          resultInits = [];
+          resultHandlers = [];
+          resultPerspective = void 0;
         }
 
-        toCombine.push(t);
-      }
-
-      const resultInit = new DOMMatrix();
-      const resultHandlers: HandlerMethodTuple<"transform">[] = [];
-      let resultPerspective: number | null | undefined = void 0;
-      for (const t of toCombine) {
         const thisPerspective = t.toPerspective();
         if (!_.isUndefined(thisPerspective)) {
           resultPerspective = thisPerspective;
         }
 
-        resultInit.multiplySelf(t.toMatrix());
+        resultInits.push(getMatrixFor(t));
         resultHandlers.push(...getHandlersFor<"transform">(t));
       }
+
+      const resultInit = resultInits.reduce((res, i) => res.multiply(i));
 
       const composed = new Transform({
         isAbsolute: resultIsAbsolute,
@@ -335,12 +337,12 @@ export class Transform implements EffectInterface<"transform", Transform> {
       (_.isNullish(currentPerspective)
         ? ""
         : `perspective(${currentPerspective}px) `) +
-      toMatrix(negate).toString();
+      toMatrixNoCopy(negate).toString();
 
     this.toPerspective = () => currentPerspective;
 
     this.toMatrix = toMatrix;
-    this.toFloat32Array = (negate) => toMatrix(negate).toFloat32Array();
+    this.toFloat32Array = (negate) => toMatrixNoCopy(negate).toFloat32Array();
 
     this.perspective = (handler) => {
       addOwnHandler(["perspective", handler], (parameters, state) => {
@@ -609,6 +611,12 @@ declare module "@lisn/effects/effect" {
 }
 
 // ----------------------------------------
+
+const matrices = _.createMap<Transform, DOMMatrix>();
+
+const getMatrixFor = (t: TransformLike | undefined): DOMMatrix =>
+  (_.isInstanceOf(t, Transform) ? matrices.get(t) : void 0) ??
+  createMatrix(false, t);
 
 function createMatrix(readonly: true, init?: TransformLike): DOMMatrixReadOnly;
 function createMatrix(readonly: false, init?: TransformLike): DOMMatrix;

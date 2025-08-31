@@ -258,10 +258,14 @@ export class FXComposer {
    * Returns the current state of the composition, i.e. the combined state of
    * all effects for each effect type.
    *
-   * It is a **live** copy of the composition, where each effect is
-   * {@link Effect.toComposition | cloned} while preserving its handlers.
+   * @param asExport If set to false, the composition is
+   *                 {@link FXComposition.export | exported}, i.e. effects are
+   *                 static. By default it returns a **live** copy of the
+   *                 composition, where each effect is
+   *                 {@link Effect.toComposition | cloned} while preserving its
+   *                 handlers.
    */
-  readonly getComposition: () => FXComposition;
+  readonly getComposition: (asExport?: boolean) => FXComposition;
 
   /**
    * Returns a copy of the composer's {@link FXState}.
@@ -367,6 +371,7 @@ export class FXComposer {
     const compositionChain: Array<[Effect | FXComposer, FXPin | undefined]> =
       [];
     const currentComposition = new FXComposition();
+    compositions.set(this, currentComposition);
 
     const clearCallbacks = _.createMap<FXComposerHandler, FXComposerCallback>();
     const triggerCallbacks = _.createMap<
@@ -562,7 +567,9 @@ export class FXComposer {
 
     const toCss = (negate?: FXComposer) => {
       const negatedComposer = negate ?? defaultNegate;
-      const negatedComposition = negatedComposer?.getComposition();
+      const negatedComposition = negatedComposer
+        ? compositions.get(negatedComposer)
+        : null;
       const css: Record<string, string> = {};
 
       for (const [type, effect] of currentComposition) {
@@ -745,7 +752,7 @@ export class FXComposer {
       updateMode: false | UPDATE_MODE = UPDATE_ALL,
     ) => {
       if (_.isInstanceOf(link, FXComposer)) {
-        for (const effect of link.getComposition().values()) {
+        for (const effect of compositions.get(link)?.values() ?? []) {
           currentComposition.add(effect);
         }
       } else {
@@ -849,7 +856,8 @@ export class FXComposer {
     this.stopAnimate = stopAnimate;
 
     this.toCss = toCss;
-    this.getComposition = () => currentComposition.clone();
+    this.getComposition = (asExport = false) =>
+      asExport ? currentComposition.export() : currentComposition.clone();
     this.getState = () => _.copyNested(currentFXState);
     this.getConfig = () => _.copyNested(effectiveConfig);
     this.setLag = setLag;
@@ -1016,6 +1024,8 @@ const LIST_PROPERTIES: Record<string, string> = {
   filter: " ",
   transform: " ",
 };
+
+const compositions = _.createMap<FXComposer, FXComposition>();
 
 const createState = (): FXState => {
   const axisState: FXAxisState = {

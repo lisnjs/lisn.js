@@ -2018,11 +2018,6 @@ describe("add/getComposition/toCss", () => {
       expect(e.toComposition).toHaveBeenCalledTimes(1);
     }
 
-    for (const e of [effectAInt, effectBIntX]) {
-      expect(e.export).toHaveBeenCalledTimes(0);
-      expect(e.toComposition.mock.calls.length).toBeGreaterThan(0);
-    }
-
     // No calls for the cloned effects
     for (const e of [effectACln, effectBCln, effectBClnX]) {
       for (const m of ["update", "export", "toComposition", "toCss"]) {
@@ -2034,7 +2029,7 @@ describe("add/getComposition/toCss", () => {
     expect(effectAInt.update).toHaveBeenCalledTimes(1); // not updated when composerX recomposes
   });
 
-  test("getComposition is a live clone", async () => {
+  test("getComposition with asExport=false (default)", async () => {
     const transform = new Transform();
     const cbk = jest.fn((params) => params);
     // transform.translate(({ x }) => ({ x }));
@@ -2073,6 +2068,47 @@ describe("add/getComposition/toCss", () => {
     expect(transformClone.toCss().transform).toBe(
       expectedFinalMatrix.toString(),
     ); // it's live; has the handler
+  });
+
+  test("getComposition with asExport=true", async () => {
+    const transform = new Transform();
+    const cbk = jest.fn((params) => params);
+    // transform.translate(({ x }) => ({ x }));
+    transform.translate(cbk);
+
+    const { push, composer } = newComposer({ lag: 0 });
+    composer.add(transform);
+
+    push({ x: { target: 100 } });
+    await window.waitFor(50);
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+
+    const expectedInitialMatrix = new DOMMatrixReadOnly().translate(100);
+    expect(composer.toCss().transform).toBe(expectedInitialMatrix.toString());
+
+    const transformClone = composer.getComposition(true).get("transform");
+    expect(transformClone).not.toBeUndefined();
+    expect(transformClone.toCss().transform).toBe(
+      expectedInitialMatrix.toString(),
+    );
+
+    push({ x: { target: 200 } });
+    await window.waitFor(50);
+
+    expect(cbk).toHaveBeenCalledTimes(2);
+
+    const expectedFinalMatrix = new DOMMatrixReadOnly().translate(200);
+    expect(composer.toCss().transform).toBe(expectedFinalMatrix.toString());
+    expect(transformClone.toCss().transform).toBe(
+      expectedInitialMatrix.toString(),
+    ); // unchanged
+
+    transformClone.update(composer.getState());
+    expect(cbk).toHaveBeenCalledTimes(2); // no new calls
+    expect(transformClone.toCss().transform).toBe(
+      expectedInitialMatrix.toString(),
+    ); // unchanged
   });
 
   test("toCss with no negated", async () => {

@@ -684,7 +684,7 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
   // --------------------
 
   // We'll be updating the state object. "previous" updated in every loop
-  const output = _.deepCopy(init) as Animation3DTweenerOutput<Axes>;
+  const output = _.copyNested(init) as Animation3DTweenerOutput<Axes>;
   for (const axis in init) {
     output[axis].initial = output[axis].previous = output[axis].current;
     output[axis].precision ??= 1;
@@ -727,7 +727,7 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
       return;
     }
 
-    const updateData = yield _.deepCopy(output);
+    const updateData = yield _.copyNested(output);
     hasYielded = true;
 
     if (updateData) {

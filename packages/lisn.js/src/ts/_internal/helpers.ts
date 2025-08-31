@@ -67,6 +67,22 @@ export const filterBlank = <A extends readonly unknown[]>(
 // -------------------- Object operations
 
 /**
+ * Recursively copies a **plain** object or array. Faster but more limited than
+ * deepCopy. Any value that is not a plain object or a plain array is returned
+ * as is.
+ *
+ * @since v1.3.0
+ */
+export const copyNested = <T>(value: T): T => {
+  if (isPlainObject(value)) {
+    return _copyNestedObject(value);
+  } else if (isArray(value)) {
+    return value.map((v) => copyNested(v)) as T;
+  }
+  return value;
+};
+
+/**
  * Recursively copies the given value. Handles circular references.
  *
  * The following types are deeply copied:
@@ -553,3 +569,18 @@ const isInstanceOfByClassName = <C extends keyof typeof globalThis>(
   className: C,
 ): value is GlobalClassByName<C> =>
   isInstanceOfByClass(value, globalThis[className]);
+
+const _copyNestedObject = <T extends NestedRecord>(value: T): T => {
+  const copy = M.copyObject(value);
+  let k: keyof T;
+  for (k in copy) {
+    const n = copy[k];
+    if (isPlainObject(n)) {
+      copy[k] = _copyNestedObject(n) as T[keyof T];
+    } else if (isArray(n)) {
+      copy[k] = M.slice(n) as T[keyof T];
+    }
+  }
+
+  return copy;
+};

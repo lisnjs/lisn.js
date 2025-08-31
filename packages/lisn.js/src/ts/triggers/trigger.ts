@@ -264,8 +264,8 @@ export class Trigger extends Widget {
     this.run = run.invoke;
     this.reverse = reverse.invoke;
     this[_.S_TOGGLE] = oneWay ? run.invoke : toggle.invoke;
-    this.getActions = () => [...actions]; // copy
-    this.getConfig = () => _.deepCopy(config);
+    this.getActions = () => _.slice(actions); // copy
+    this.getConfig = () => _.copyNested(config);
   }
 }
 
@@ -382,7 +382,7 @@ export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
 
     for (const cls of _.classList(element)) {
       if (cls.startsWith(`${clsPref}--`)) {
-        allSpecs.push(cls.slice(_.lengthOf(clsPref) + 2));
+        allSpecs.push(_.slice(cls, _.lengthOf(clsPref) + 2));
       }
     }
 

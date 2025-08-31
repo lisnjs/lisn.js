@@ -1198,7 +1198,7 @@ const invokeCallback = (
   invokeHandler(
     callback,
     element,
-    _.deepCopy(viewData),
+    _.copyNested(viewData),
     lastViewData, // no need to copy that one as it's not used again
     watcher,
   ).catch(logError);

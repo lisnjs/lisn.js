@@ -187,7 +187,7 @@ export class LayoutWatcher {
     const fetchCurrentLayout = async (): Promise<LayoutData> => {
       await readyPromise;
 
-      return _.deepCopy(currentLayoutData);
+      return _.copyNested(currentLayoutData);
     };
 
     // ----------
@@ -676,6 +676,6 @@ const invokeCallback = (
   callback: OnLayoutCallback,
   layoutData: LayoutData,
   watcher: LayoutWatcher,
-) => invokeHandler(callback, _.deepCopy(layoutData), watcher).catch(logError);
+) => invokeHandler(callback, _.copyNested(layoutData), watcher).catch(logError);
 
 _.brandClass(LayoutWatcher, "LayoutWatcher");

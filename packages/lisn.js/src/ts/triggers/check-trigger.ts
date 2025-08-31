@@ -124,7 +124,7 @@ export class CheckTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => _.deepCopy(config);
+    this.getConfig = () => _.copyNested(config);
 
     if (!_.lengthOf(actions)) {
       return;

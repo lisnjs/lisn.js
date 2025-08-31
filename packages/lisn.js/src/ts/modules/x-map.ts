@@ -90,7 +90,7 @@ export abstract class XMapBase<K, V> {
     this.prune = (sk, ...rest) => {
       const value = root.get(sk);
       if (value instanceof XMapBase && _.lengthOf(rest)) {
-        value.prune(rest[0], ...rest.slice(1));
+        value.prune(rest[0], ..._.slice(rest, 1));
       }
 
       if (

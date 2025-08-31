@@ -218,7 +218,7 @@ const getBitmaskFromSpec = <T extends Device | AspectRatio>(
   if (_.isEmpty(spec)) {
     return 0;
   }
-  const singleKeyName = keyName.slice(0, -1);
+  const singleKeyName = _.slice(keyName, 0, -1);
 
   if (_.isString(spec)) {
     const rangeMatch = spec.match(LAYOUT_RANGE_REGEX);

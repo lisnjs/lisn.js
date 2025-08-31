@@ -5,8 +5,13 @@
  */
 
 // TODO Reveal Effect:
-// - draw: for svg stroke (using svg.getTotalLength, stroke-dasharray and stroke-offset)
+// - draw: for svg stroke (using svg.getTotalLength, stroke-dasharray)
+//   - optionally accept path element or absolute path length to avoid percentages
+//   - from 0 to 100: <N>% 110% where N is from 0 to just above 100
+//   - from 100 to 0: 0% <N>% 110% where N is from just above 100 to 0
+//   - from centre outwards: 0 <50 - N/2>% <N>% 100% where N is from 0 to just above 100
 // - ... various clipping masks to reveal entire element
+//   - https://jsfiddle.net/z9gjL5o6/
 
 import * as _ from "@lisn/_internal";
 

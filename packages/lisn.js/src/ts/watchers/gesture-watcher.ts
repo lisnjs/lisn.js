@@ -1095,7 +1095,7 @@ const getCallbackAndWrapper = (
     debug: logger?.debug8(
       `[${id}] Got fragment for ${device} (${event.type})`,
       fragment,
-      [...eventQueue].map((e) => e.type),
+      eventQueue.map((e) => e.type),
     );
 
     if (preventDefault) {
@@ -1128,7 +1128,7 @@ const getCallbackAndWrapper = (
     debouncedWrapper(
       target,
       fragment,
-      [...eventQueue], // copy
+      _.slice(eventQueue), // copy
     );
 
     return false;

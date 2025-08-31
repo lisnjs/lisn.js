@@ -73,7 +73,7 @@ export const getReferenceElement = (
 
   if (spec[0] === "#") {
     // element ID
-    const referenceElement = _.getElementById(spec.slice(1));
+    const referenceElement = _.getElementById(_.slice(spec, 1));
     if (!referenceElement) {
       return null;
     }
@@ -88,9 +88,9 @@ export const getReferenceElement = (
     throw usageError(`Invalid search specification '${spec}'`);
   }
 
-  const rest = spec.slice(_.lengthOf(relation));
-  const matchOp = rest.slice(0, 1);
-  let refOrCls = rest.slice(1);
+  const rest = _.slice(spec, _.lengthOf(relation));
+  const matchOp = _.slice(rest, 0, 1);
+  let refOrCls = _.slice(rest, 1);
 
   let selector: string;
   if (matchOp === ".") {

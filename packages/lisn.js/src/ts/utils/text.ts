@@ -30,7 +30,7 @@ export const formatAsString = (value: unknown, maxLen?: number) => {
   const result = maybeConvertToString(value, false);
 
   if (!_.isNullish(maxLen) && maxLen > 0 && _.lengthOf(result) > maxLen) {
-    return result.slice(0, _.max(0, maxLen - 3)) + "...";
+    return _.slice(result, 0, _.max(0, maxLen - 3)) + "...";
   }
 
   return result;
@@ -107,8 +107,8 @@ export const splitOn = (
       break;
     }
 
-    addEntry(input.slice(0, matchIndex));
-    input = input.slice(matchIndex + matchLength);
+    addEntry(_.slice(input, 0, matchIndex));
+    input = _.slice(input, matchIndex + matchLength);
   }
 
   addEntry(input);
@@ -149,7 +149,7 @@ export const randId = (nChars = 8) => {
   while (_.lengthOf(s) < nChars) {
     s += segment();
   }
-  return s.slice(0, nChars);
+  return _.slice(s, 0, nChars);
 };
 
 /**

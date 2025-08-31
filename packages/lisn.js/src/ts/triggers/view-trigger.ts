@@ -201,7 +201,7 @@ export class ViewTrigger extends Trigger {
         })
       : null;
 
-    this.getConfig = () => _.deepCopy(config);
+    this.getConfig = () => _.copyNested(config);
 
     if (!_.lengthOf(actions)) {
       return;

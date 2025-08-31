@@ -363,6 +363,17 @@ export const firstOf = <A extends readonly unknown[]>(
 
 export const arrayFrom = ARRAY.from.bind(ARRAY);
 
+export function slice<T extends readonly unknown[]>(
+  a: T,
+  start?: number,
+  end?: number,
+): T[number][];
+export function slice(a: string, start?: number, end?: number): string;
+
+export function slice(a: unknown[] | string, start?: number, end?: number) {
+  return a.slice(start, end);
+}
+
 // ---------- Objects
 
 export const assign = OBJECT.assign.bind(OBJECT);
@@ -392,7 +403,6 @@ export const merge = <A extends readonly (object | null | undefined)[]>(
 
 export function copyObject<T extends object>(obj: T): T;
 export function copyObject(obj: null | undefined): EmptyLiteral;
-// implementation (wide) — callers see the overloads, not this signature
 export function copyObject(obj: object | null | undefined) {
   return merge(obj);
 }

@@ -237,7 +237,7 @@ export class Sortable extends Widget {
     this.offMove = methods._offMove;
 
     this.getItems = (currentOrder = false) =>
-      currentOrder ? methods._getSortedItems() : [...items];
+      currentOrder ? methods._getSortedItems() : _.slice(items);
   }
 }
 
@@ -498,7 +498,7 @@ const getMethods = (
   const callbacks = _.createMap<WidgetHandler, WidgetCallback>();
 
   const getSortedItems = () =>
-    [...items].sort((a, b) => (isNodeBAfterA(a, b) ? -1 : 1));
+    _.slice(items).sort((a, b) => (isNodeBAfterA(a, b) ? -1 : 1));
 
   const getOrigItemNumber = (itemNum: number, currentOrder = false) =>
     currentOrder ? items.indexOf(getSortedItems()[itemNum - 1]) + 1 : itemNum;

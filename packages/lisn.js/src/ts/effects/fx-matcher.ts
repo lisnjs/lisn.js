@@ -245,15 +245,15 @@ export class FXRelativeMatcher<D = unknown> extends FXMatcher {
     const store: FXRelativeMatcherStore<D> = {
       getState: () => baseStore.getState(),
       setState: (m) => baseStore.setState(m),
-      getData: () => _.deepCopy(storeData.data),
+      getData: () => _.copyNested(storeData.data),
       setData: (data) => {
-        storeData.data = _.deepCopy(data);
+        storeData.data = _.copyNested(data);
         if (_.isUndefined(storeData.refData)) {
           // set initial reference
           storeData.refData = storeData.data;
         }
       },
-      getReferenceData: () => _.deepCopy(storeData.refData),
+      getReferenceData: () => _.copyNested(storeData.refData),
     };
 
     // --------------------

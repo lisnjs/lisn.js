@@ -139,7 +139,7 @@ export class ClickTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => _.deepCopy(config);
+    this.getConfig = () => _.copyNested(config);
 
     setupWatcher(this, element, actions, config, _.S_CLICK);
   }
@@ -250,7 +250,7 @@ export class PressTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => _.deepCopy(config);
+    this.getConfig = () => _.copyNested(config);
 
     setupWatcher(this, element, actions, config, _.S_PRESS);
   }
@@ -358,7 +358,7 @@ export class HoverTrigger extends Trigger {
   ) {
     config ??= {};
     super(element, actions, config);
-    this.getConfig = () => _.deepCopy(config);
+    this.getConfig = () => _.copyNested(config);
 
     setupWatcher(this, element, actions, config, _.S_HOVER);
   }

@@ -694,7 +694,7 @@ export class FXComposer {
 
       isTweening = true;
 
-      logger?.debug7("Starting tween", _.deepCopy(currentFXState));
+      logger?.debug7("Starting tween", _.copyNested(currentFXState));
       const tweenGenerator = animation3DTweener(tweener, currentFXState);
       while (true) {
         const tweenUpdate: Animation3DTweenerUpdate<keyof FXState> = {};
@@ -753,7 +753,7 @@ export class FXComposer {
           updateMode === UPDATE_ALL ||
           (updateMode === UPDATE_ABSOLUTE && link.isAbsolute())
         ) {
-          link.update(_.deepCopy(currentFXState), this);
+          link.update(_.copyNested(currentFXState), this);
         }
 
         currentComposition.add(link);
@@ -765,7 +765,7 @@ export class FXComposer {
     const recompose = (updateMode: false | UPDATE_MODE = UPDATE_ALL) => {
       if (currentComposition.size > 0) {
         currentComposition.clear();
-        logger?.debug10("Recomposing", _.deepCopy(currentFXState));
+        logger?.debug10("Recomposing", _.copyNested(currentFXState));
 
         for (const [link, pin] of compositionChain) {
           addToComposition(link, pin?.isPinned() ? false : updateMode);
@@ -850,8 +850,8 @@ export class FXComposer {
 
     this.toCss = toCss;
     this.getComposition = () => currentComposition.clone();
-    this.getState = () => _.deepCopy(currentFXState);
-    this.getConfig = () => _.deepCopy(effectiveConfig);
+    this.getState = () => _.copyNested(currentFXState);
+    this.getConfig = () => _.copyNested(effectiveConfig);
     this.setLag = setLag;
     this.setDepth = setDepth;
 
@@ -1030,7 +1030,7 @@ const createState = (): FXState => {
     snap: false,
   };
 
-  return _.deepCopy({ x: axisState, y: axisState, z: axisState });
+  return _.copyNested({ x: axisState, y: axisState, z: axisState });
 };
 
 _.brandClass(FXComposer, "FXComposer");

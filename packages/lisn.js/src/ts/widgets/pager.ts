@@ -458,9 +458,9 @@ export class Pager extends Widget {
     this.onTransition = methods._onTransition;
     this.offTransition = methods._offTransition;
 
-    this.getPages = () => [...pages];
-    this.getSwitches = () => [...switches];
-    this.getToggles = () => [...toggles];
+    this.getPages = () => _.slice(pages);
+    this.getSwitches = () => _.slice(switches);
+    this.getToggles = () => _.slice(toggles);
   }
 }
 

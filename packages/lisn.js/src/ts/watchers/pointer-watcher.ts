@@ -415,8 +415,12 @@ const invokeCallback = (
   event: Event,
   watcher: PointerWatcher,
 ) =>
-  invokeHandler(callback, target, _.deepCopy(actionData), event, watcher).catch(
-    logError,
-  );
+  invokeHandler(
+    callback,
+    target,
+    _.copyNested(actionData),
+    event,
+    watcher,
+  ).catch(logError);
 
 _.brandClass(PointerWatcher, "PointerWatcher");

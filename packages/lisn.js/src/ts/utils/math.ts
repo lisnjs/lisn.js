@@ -229,12 +229,12 @@ export const toRawNum = <D extends number | false | null = 0>(
 
   if (_.isLiteralNumber(input)) {
     numerical = input;
-  } else if (_.isString(input)) {
-    const opA = input.slice(0, 1);
-    const opB = input.slice(-1);
+  } else if (_.isLiteralString(input)) {
+    const opA = _.slice(input, 0, 1);
+    const opB = _.slice(input, -1);
     isAdditive = opA === "+" || opA === "-";
     isPercent = opB === "%";
-    numerical = toNum(isPercent ? input.slice(0, -1) : input, NaN);
+    numerical = toNum(isPercent ? _.slice(input, 0, -1) : input, NaN);
   }
 
   let result = numerical;

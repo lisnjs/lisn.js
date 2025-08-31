@@ -155,12 +155,12 @@ export class FXTrigger {
 
       if (lastPush && isRunning) {
         // there's been a push already
-        yield _.deepCopy(lastPush._update);
+        yield _.copyNested(lastPush._update);
       }
 
       try {
         while (true) {
-          yield _.deepCopy(await poller._pull());
+          yield _.copyNested(await poller._pull());
         }
       } finally {
         _.deleteKey(pollers, poller);

@@ -190,7 +190,7 @@ export class SizeWatcher {
       const element = await fetchElement(target);
       const sizeData = allSizeData.get(element);
       if (sizeData) {
-        return _.deepCopy(sizeData);
+        return _.copyNested(sizeData);
       }
 
       return _.createPromise((resolve) => {
@@ -652,7 +652,7 @@ const invokeCallback = (
   invokeHandler(
     callback,
     element,
-    _.deepCopy(sizeData),
+    _.copyNested(sizeData),
     lastSizeData, // no need to copy that one as it's not used again
     watcher,
   ).catch(logError);

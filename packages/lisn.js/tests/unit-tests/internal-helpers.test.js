@@ -2,6 +2,69 @@ const { describe, test, expect } = require("@jest/globals");
 
 const _ = window.LISN._;
 
+describe("copyNested", () => {
+  test("object", () => {
+    const obj = {
+      a: 1,
+      b: 2,
+      c: {
+        a: 1,
+        b: 2,
+        c: {
+          a: 1,
+          b: 2,
+        },
+        d: [1, 2, 3],
+        e: new Set(),
+        f: new Promise(() => {}),
+      },
+    };
+
+    const copy = _.copyNested(obj);
+    expect(copy).toEqual(obj);
+    expect(copy).not.toBe(obj);
+    expect(copy.c).not.toBe(obj.c); // object copied
+    expect(copy.c.c).not.toBe(obj.c.c); // object copied
+    expect(copy.c.d).not.toBe(obj.c.d); // array copied
+    expect(copy.c.e).toBe(obj.c.e); // set left as is
+    expect(copy.c.f).toBe(obj.c.f); // promise left as is
+  });
+
+  test("array", () => {
+    const obj = [
+      1,
+      [1, 2, 3],
+      {
+        a: 1,
+        b: 2,
+        c: {
+          a: 1,
+          b: 2,
+        },
+        d: [1, 2, 3],
+        e: new Set(),
+        f: new Promise(() => {}),
+      },
+    ];
+
+    const copy = _.copyNested(obj);
+    expect(copy).toEqual(obj);
+    expect(copy).not.toBe(obj);
+    expect(copy[1]).not.toBe(obj[1]); // array at top level copied
+    expect(copy[2]).not.toBe(obj[2]); // object at top level copied
+    expect(copy[2].c).not.toBe(obj[2].c); // object at bottom level copied
+    expect(copy[2].d).not.toBe(obj[2].d); // array at bottom level copied
+    expect(copy[2].e).toBe(obj[2].e); // set left as is
+    expect(copy[2].f).toBe(obj[2].f); // promise left as is
+  });
+
+  test("other", () => {
+    const pr = new Promise(() => {});
+    expect(_.copyNested(pr)).toBe(pr);
+    expect(_.copyNested(1)).toBe(1);
+  });
+});
+
 describe("deepCopy", () => {
   test("primitives", () => {
     expect(_.deepCopy(42)).toBe(42);

@@ -1228,7 +1228,7 @@ const invokeCallback = (
   invokeHandler(
     callback,
     element,
-    _.deepCopy(scrollData),
+    _.copyNested(scrollData),
     lastScrollData, // no need to copy that one as it's not used again
     watcher,
   ).catch(logError);

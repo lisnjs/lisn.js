@@ -82,7 +82,7 @@ export const validateStrList = <T extends string = string>(
  *                strings are accepted.
  *
  * @param key    Used in the error message thrown
- * @param limits If given, define a minimum and/or maximum allowed value
+ * @param bounds If given, define a minimum and/or maximum allowed value
  *
  * @returns `undefined` if the input contains no non-empty values (after
  * trimming whitespace on left/right from each), otherwise a non-empty array of
@@ -93,11 +93,11 @@ export const validateStrList = <T extends string = string>(
 export const validateNumList = (
   key: string,
   value: unknown,
-  limits?: AtLeastOne<{ min: number | null; max: number | null }>,
+  bounds?: AtLeastOne<{ min: number | null; max: number | null }>,
 ): number[] | undefined =>
   _.filterBlank(
     toArray(value)?.map((v) =>
-      _validateNumber(key, v, limits, "a number or a number array"),
+      _validateNumber(key, v, bounds, "a number or a number array"),
     ),
   );
 
@@ -105,8 +105,8 @@ export const validateNumList = (
  * Returns a number corresponding to the supplied value, ensuring the supplied
  * value is a valid number or a string containing only a number.
  *
- * @param key Used in the error message thrown
- * @param limits If given, define a minimum and/or maximum allowed value
+ * @param key    Used in the error message thrown
+ * @param bounds If given, define a minimum and/or maximum allowed value
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the value is invalid.
@@ -118,8 +118,8 @@ export const validateNumList = (
 export const validateNumber = (
   key: string,
   value: unknown,
-  limits?: AtLeastOne<{ min: number | null; max: number | null }>,
-) => _validateNumber(key, value, limits);
+  bounds?: AtLeastOne<{ min: number | null; max: number | null }>,
+) => _validateNumber(key, value, bounds);
 
 /**
  * Alias for `validateNumber(key, value, {min: 0})`.
@@ -304,7 +304,7 @@ const toArray = (value: unknown): unknown[] | undefined => {
 const _validateNumber = (
   key: string,
   value: unknown,
-  limits?: AtLeastOne<{ min: number | null; max: number | null }> | null,
+  bounds?: AtLeastOne<{ min: number | null; max: number | null }> | null,
   typeDescription = "a number",
 ) => {
   if (_.isNullish(value)) {
@@ -316,11 +316,11 @@ const _validateNumber = (
     throw usageError(`'${key}' must be ${typeDescription}`);
   }
 
-  if (limits) {
-    if (toNumWithBounds(numVal, limits, false) === false) {
+  if (bounds) {
+    if (toNumWithBounds(numVal, bounds, false) === false) {
       const lStr = [
-        ...(_.isNullish(limits?.min) ? [] : [`>= ${limits.min}`]),
-        ...(_.isNullish(limits?.max) ? [] : [`<= ${limits.max}`]),
+        ...(_.isNullish(bounds?.min) ? [] : [`>= ${bounds.min}`]),
+        ...(_.isNullish(bounds?.max) ? [] : [`<= ${bounds.max}`]),
       ];
 
       throw usageError(`'${key}' must be ${typeDescription} ${lStr.join(" ")}`);

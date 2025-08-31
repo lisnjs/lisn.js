@@ -106,8 +106,8 @@ export const toPosNum = <D extends number | false | null = 0>(
  * Returns the given number bound by min and/or max value.
  *
  * If the value is not a valid number, then `defaultValue` is returned if given
- * (_including if it is null_), otherwise `limits.min` if given and not null,
- * otherwise `limits.max` if given and not null, or finally 0.
+ * (_including if it is null_), otherwise `bounds.min` if given and not null,
+ * otherwise `bounds.max` if given and not null, or finally 0.
  *
  * If the value is outside the bounds, then:
  * - if `defaultValue` is given, `defaultValue` is returned (_including if it
@@ -119,13 +119,13 @@ export const toPosNum = <D extends number | false | null = 0>(
  */
 export const toNumWithBounds = <D extends number | false | null = number>(
   value: unknown,
-  limits: AtLeastOne<{ min: number | null; max: number | null }>,
+  bounds: AtLeastOne<{ min: number | null; max: number | null }>,
   defaultValue?: D,
 ): number | D => {
   const isDefaultGiven = !_.isUndefined(defaultValue);
   const numValue = toNum(value, null);
-  const min = limits?.min ?? null;
-  const max = limits?.max ?? null;
+  const min = bounds?.min ?? null;
+  const max = bounds?.max ?? null;
 
   let result: number | D;
   if (!isValidNum(numValue)) {

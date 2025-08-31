@@ -704,21 +704,24 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
       }
 
       const params = output[axis];
+      let newCurrent: number | null = null;
 
       if (params.snap || params.lag <= 0) {
-        params.previous = params.current;
-        params.current = params.target;
+        newCurrent = params.target;
         setAxisDone(axis);
-        isStale = true;
       } else {
         const next = getNextValue(axis, deltaTime);
         if (next.done) {
           setAxisDone(axis);
         } else {
-          isStale = true;
-          params.previous = params.current;
-          params.current = next.value.current;
+          newCurrent = next.value.current;
         }
+      }
+
+      if (!_.isNull(newCurrent)) {
+        isStale = true;
+        params.previous = params.current;
+        params.current = newCurrent;
       }
     }
 

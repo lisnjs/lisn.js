@@ -11,8 +11,8 @@
 # Intro
 
 LISN.js is a flexible, full-featured and simple to use library for handling user
-gestures and interactions (like scrolling) as well as observing elements for
-changes in viewport position, size and so on.
+gestures and interactions (like scrolling), animations as well as observing
+elements for changes in viewport position, size and so on.
 
 LISN handles all complexities (and browser quirks) so you can simply handle user
 gestures, interactions and layout events. It makes it super simple and easy to
@@ -32,6 +32,9 @@ JavaScript, using the HTML-only mode (perfect for Wordpress for example!).
 There are **React wrappers** available as a separate package. It works in
 server-side rendering environments like Next.js.
 
+**NEW in v1.3.0** LISN now has an effect controller! Read about it below in
+basic concepts.
+
 LISN also comes with many awesome widgets, like:
 
 * Collapsible
@@ -45,10 +48,7 @@ LISN also comes with many awesome widgets, like:
 * Auto-hide/remove matching elements
 * Scroll-to-top button
 * Page loader
-
-Coming soon:
-
-* SmoothScroller (native scroll)
+* SmoothScroller (native scroll + support for custom scrolling elements)
 
 # Basic concepts
 
@@ -56,16 +56,19 @@ LISN's basic blocks include watchers, triggers, actions and widgets.
 
 ## Watchers
 
-These are the base classes that allow you to lisn for various events or user
-gestures and run callbacks. They are highly configurable and most flexible. Many
-of them are build around `MutationObserver`, `IntersectionObserver` and
-`ResizeObserver`, though some listen for primitive events directly.
+[Watchers](https://lisnjs.github.io/docs/modules/Watchers) are the base classes
+that allow you to lisn for various events or user gestures and run callbacks.
+They are highly configurable and most flexible. Many of them are build around
+`MutationObserver`, `IntersectionObserver` and `ResizeObserver`, though some
+listen for primitive events directly.
 
 ## Triggers
 
-They are simple wrappers around (some of) the watchers that allow you to use the
-watchers in the HTML-only mode, or as a simpler/quicker alternative for some
-actions. You always use Triggers together with Actions.
+[Triggers](https://lisnjs.github.io/docs/modules/Triggers) are simple wrappers
+around (some of) the watchers that allow you to use the watchers in the
+HTML-only mode, or as a simpler/quicker alternative for some actions. You always
+use triggers together with
+[Actions](https://lisnjs.github.io/docs/modules/Actions).
 
 Each trigger is tied to an element and a set of actions. It can be run
 (forward), reversed or toggled (which does, undoes or toggles each action).
@@ -78,19 +81,45 @@ as "up,down", then "left" or "right" scroll will reverse it.
 
 ## Actions
 
-Actions are simple classes that do or undo one thing. They're really useful when
-used with triggers since they have a `do`, `undo` and `toggle` methods.
+[Actions](https://lisnjs.github.io/docs/modules/Actions) are simple classes that
+do, undo or toggle one thing. They're really useful when used with triggers.
 
 ## Widgets
 
-Widgets are... well widgets. Like a pager, a custom scrollbar, a scroll-to-top
-button and so on. They configure a specific element in a certain way. They may
-wrap or move the element. Each widget has a set of basic actions like `enable`,
-`disable` and `destroy` (which reverts it back to the original state). Widgets
-also include some basic CSS which you should load by either importing it
-directly or loading LISN's CSS files from the CDN.
+[Widgets](https://lisnjs.github.io/docs/modules/Widgets) are... well widgets.
+Like a pager, a custom scrollbar, a scroll-to-top button and so on. They
+configure a specific element in a certain way. They may wrap or move the
+element. Each widget has a set of basic actions like `enable`, `disable` and
+`destroy` (which reverts the DOM back to the original state). Widgets also
+include some basic CSS which you should load by either importing it directly or
+loading LISN's CSS files from the CDN.
 
 Triggers are actually a special kind of a widget.
+
+## Effects (NEW!)
+
+The [effects](https://lisnjs.github.io/docs/modules/Widgets) portion of LISN was
+introduced in v1.3.0 as a flexible way to create amazing custom animations
+limited by your imagination.
+
+The basic building blocks are:
+
+* The composer, which links together multiple effects or other composers. It
+  works with effect triggers (not to be confused with the basic triggers
+  mentioned above) and each time it is triggered, it updates its state and
+  effect composition.
+* An effect trigger is what the composer can continually poll for new data.
+  There are build-in triggers based on scroll or gestures. There's also a proxy
+  trigger which takes another trigger and can introduce delays or shifts in the
+  data.
+* Effects, of which there are several built-in types such as transform or
+  filter. They keep an internal state which translates to CSS that can be set on
+  an element to animate it. They are updated by a composer and can be pinned (or
+  frozen).
+* Pins can be associated with an effect (via a composer) in order to "pin" or
+  freeze the effect and stop it from being updated by the composer. A pin is
+  activated or deactivated based on various when, until or while conditions
+  defined by "pin matchers".
 
 # Loading LISN
 
@@ -104,8 +133,8 @@ top-level group:
 * `"lisn.js/triggers"`
 * `"lisn.js/actions"`
 * `"lisn.js/widgets"`
-* `"lisn.js/globals"`
 * `"lisn.js/effects"`
+* `"lisn.js/globals"`
 * `"lisn.js/modules"`
 * `"lisn.js/utils"`
 * `"lisn.js/debug"`
@@ -143,6 +172,22 @@ possible:
 </script>
 ```
 
+The bundle defines a single global entry point `LISN` (available on the `window`
+object) that contains the following properties:
+
+* `LISN.settings`: The global settings object which you can modify
+* `LISN.watchers`: Contains all watcher-related exports
+* `LISN.triggers`: Contains all trigger-related exports (not available in the
+  essential bundle)
+* `LISN.actions`: Contains all actions-related exports (not available in the
+  essential bundle)
+* `LISN.widgets`: Contains all widget-related exports (not available in the slim
+  and essential bundles)
+* `LISN.effects`: Contains all effects-related exports (not available in the
+  slim and essential bundles)
+
+The debug bundle also exposes `utils`, `modules` and `debug`.
+
 # HTML-only mode (aka auto-widgets)
 
 LISN supports the so called HTML-only mode or alternatively "auto-widgets" which
@@ -151,8 +196,9 @@ widget selector. For example `[data-lisn-pager]` or `.lisn-pager` selectors
 match the Pager widget. As soon as such an element is inserted into the DOM,
 LISN will instantiate it as a widget. Each widget supports a human-readable
 string configuration that you can set in its data attribute (not supported if
-using class names). See the [documentation](https://lisnjs.github.io/docs) on
-Widgets for more info.
+using class names). See the
+[documentation](https://lisnjs.github.io/docs/modules/Widgets) on Widgets for
+more info.
 
 **NOTE:** The data attribute or class name must be set on the element before
 inserting it into the DOM. For performance reasons LISN does not watch for
@@ -274,18 +320,18 @@ by setting the `$light-theme-cls` and `$dark-theme-cls` variables.
 
 # Examples/demos
 
-Throughout the [Demos](https://lisnjs.github.io/docs) there are some basic
-examples, mostly to do with using widgets/triggers/actions in HTML only mode.
+Throughout the [Docs](https://lisnjs.github.io/docs/modules) there are some
+basic examples, mostly to do with using widgets/triggers/actions in HTML only
+mode.
 
 For complete and more advanced examples, see the
-[Demos](https://lisnjs.github.io/demos). You may also find the
+[Demos](https://lisnjs.github.io/demos).
+
+You may also find the
 [tests](https://github.com/lisnjs/lisn.js/tree/main/packages/lisn.js/tests)
-useful. Although rough, there's likely everything that you'll want to find in
-there.
+useful. Although rough around the edges, they can be useful if you're looking
+for something specific.
 
-# Tests
+# Next steps
 
-LISN is extensively
-[tested](https://github.com/lisnjs/lisn.js/tree/main/packages/lisn.js/tests)
-before each release, both manual and unit tests. See here for
-[coverage report](https://lisnjs.github.io/test-coverage).
+Read the [full documentation](https://lisnjs.github.io/docs/modules).

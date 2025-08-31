@@ -9,8 +9,8 @@
  * freeze effects and stop them from being updated by the composer.
  *
  * It is activated or deactivated based on various {@link FXPin.when | when},
- * {@link FXPin.until | until} or {@link FXPin.while | while} conditions based
- * on {@link FXMatcher}s.
+ * {@link FXPin.until | until} or {@link FXPin.while | while} conditions defined
+ * by {@link FXMatcher}s.
  */
 
 import * as _ from "@lisn/_internal";

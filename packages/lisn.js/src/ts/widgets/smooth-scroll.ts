@@ -8,9 +8,6 @@
  *
  * However you can define custom effects in an easy yet flexible way. See
  * {@link FXComposer}.
- *
- * It is a wrapper around the {@link Effects} module. If you are using the
- * JavaScript API, you may prefer to use those directly.
  */
 
 import * as _ from "@lisn/_internal";

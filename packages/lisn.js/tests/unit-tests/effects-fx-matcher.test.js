@@ -5,11 +5,9 @@ const { linearTweener } = window.LISN.utils;
 const {
   FXMatcher,
   FXRelativeMatcher,
-  FXNegateMatcher,
   FXComposerMatcher,
   FXScrollMatcher,
   FXViewMatcher,
-  FXPinMatcher,
   FXPin,
   FXComposer,
   FXTrigger,
@@ -352,6 +350,41 @@ describe("FXMatcher/FXRelativeMatcher common", () => {
       await window.waitFor(0); // callbacks are async
       expect(cbk).toHaveBeenCalledTimes(1); // removed after 1st time
     });
+
+    test(`${Class.name}: initially paused`, () => {
+      const matcher = new Class(() => {}, { paused: true });
+      expect(matcher.isRunning()).toBe(false);
+      matcher.resume();
+      expect(matcher.isRunning()).toBe(true);
+    });
+
+    test(`${Class.name}: invert`, () => {
+      const { matcher, store } = newMatcher(Class);
+      const inverted = matcher.invert();
+      expect(matcher.matches()).toBe(false);
+      expect(inverted.matches()).toBe(true);
+
+      store.setState(true);
+
+      expect(matcher.matches()).toBe(true);
+      expect(inverted.matches()).toBe(false);
+    });
+
+    test(`${Class.name}: invert when matching`, () => {
+      const { matcher, store } = newMatcher(Class);
+
+      store.setState(true);
+      expect(matcher.matches()).toBe(true);
+
+      const inverted = matcher.invert();
+      expect(matcher.matches()).toBe(true);
+      expect(inverted.matches()).toBe(false);
+
+      store.setState(false);
+
+      expect(matcher.matches()).toBe(false);
+      expect(inverted.matches()).toBe(true);
+    });
   }
 });
 
@@ -486,350 +519,13 @@ describe("FXRelativeMatcher", () => {
 
     expect(executor).toHaveBeenCalledTimes(1);
   });
-});
 
-describe("FXNegateMatcher", () => {
-  test("basic", async () => {
-    const { matcher, store } = newMatcher();
-    const negated = new FXNegateMatcher(matcher);
-
-    expect(matcher.matches()).toBe(false);
-    expect(negated.matches()).toBe(true);
-
-    store.setState(true);
-    expect(matcher.matches()).toBe(true);
-    await window.waitFor(0); // callbacks are async
-    expect(negated.matches()).toBe(false);
-
-    store.setState(false);
-    expect(matcher.matches()).toBe(false);
-    await window.waitFor(0); // callbacks are async
-    expect(negated.matches()).toBe(true);
-  });
-
-  test("basic v2", async () => {
-    const { matcher, store } = newMatcher();
-    store.setState(true);
-
-    const negated = new FXNegateMatcher(matcher);
-    expect(matcher.matches()).toBe(true);
-    await window.waitFor(0); // callbacks are async
-    expect(negated.matches()).toBe(false);
-
-    store.setState(false);
-    expect(matcher.matches()).toBe(false);
-    await window.waitFor(0); // callbacks are async
-    expect(negated.matches()).toBe(true);
-  });
-
-  test("onChange/offChange", async () => {
-    const cbk = jest.fn();
-    const negatedCbk = jest.fn();
-    const { matcher, store, executor } = newMatcher();
-
-    const negated = new FXNegateMatcher(matcher);
-
-    matcher.onChange(cbk);
-    negated.onChange(negatedCbk);
-
-    expect(executor).toHaveBeenCalledTimes(1);
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(0);
-    expect(negatedCbk).toHaveBeenCalledTimes(0);
-    expect(matcher.matches()).toBe(false);
-    expect(negated.matches()).toBe(true);
-
-    store.setState(false); // no-op
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(0);
-    expect(negatedCbk).toHaveBeenCalledTimes(0);
-    expect(matcher.matches()).toBe(false);
-    expect(negated.matches()).toBe(true);
-
-    store.setState(true);
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, matcher, {
-      matches: true,
-      isRunning: true,
-    });
-    expect(matcher.matches()).toBe(true);
-
-    expect(negatedCbk).toHaveBeenCalledTimes(1);
-    expect(negatedCbk).toHaveBeenNthCalledWith(1, negated, {
-      matches: false,
-      isRunning: true,
-    });
-    expect(negated.matches()).toBe(false);
-
-    store.setState(true); // no-op
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, matcher, {
-      matches: true,
-      isRunning: true,
-    });
-    expect(matcher.matches()).toBe(true);
-
-    expect(negatedCbk).toHaveBeenCalledTimes(1);
-    expect(negatedCbk).toHaveBeenNthCalledWith(1, negated, {
-      matches: false,
-      isRunning: true,
-    });
-    expect(negated.matches()).toBe(false);
-
-    store.setState(false);
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, matcher, {
-      matches: false,
-      isRunning: true,
-    });
-    expect(matcher.matches()).toBe(false);
-
-    expect(negatedCbk).toHaveBeenCalledTimes(2);
-    expect(negatedCbk).toHaveBeenNthCalledWith(2, negated, {
-      matches: true,
-      isRunning: true,
-    });
-    expect(negated.matches()).toBe(true);
-
-    matcher.offChange(cbk);
-    negated.offChange(negatedCbk);
-    store.setState(true);
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(2); // no new calls
-    expect(negatedCbk).toHaveBeenCalledTimes(2); // no new calls
-
-    expect(executor).toHaveBeenCalledTimes(1);
-  });
-
-  test("onToggle/offToggle + change while paused", async () => {
-    const cbk = jest.fn();
-    const { matcher, store } = newMatcher();
-    const negated = new FXNegateMatcher(matcher);
-
-    negated.onToggle(cbk);
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(0);
-    expect(negated.isRunning()).toBe(true);
-    expect(negated.matches()).toBe(true);
-
-    negated.pause();
-    store.setState(true); // ignored
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, negated, {
-      matches: true,
-      isRunning: false,
-    });
-    expect(negated.isRunning()).toBe(false);
-    expect(negated.matches()).toBe(true); // still old value
-    expect(matcher.matches()).toBe(true);
-
-    negated.resume();
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, negated, {
-      matches: false,
-      isRunning: true,
-    });
-    expect(negated.isRunning()).toBe(true);
-    expect(negated.matches()).toBe(false); // updated on resume
-    expect(matcher.matches()).toBe(true);
-
-    negated.offToggle(cbk);
-    negated.pause();
-    negated.resume();
-    negated.pause();
-    negated.resume();
-
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(2); // no new calls
-  });
-});
-
-describe("FXPinMatcher", () => {
-  test("basic", async () => {
-    const { matcher: triggerMatcher, store } = newMatcher();
-    const pin = new FXPin();
-    pin.while(triggerMatcher);
-
-    const pinMatcher = new FXPinMatcher(pin);
-
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(false);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(true);
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(true); // no-op
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(false);
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(false);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(false); // no-op
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(false);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(true);
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-  });
-
-  test("basic v2", async () => {
-    const { matcher: triggerMatcher, store } = newMatcher();
-    store.setState(true);
-
-    const pin = new FXPin();
-    pin.while(triggerMatcher);
-
-    const pinMatcher = new FXPinMatcher(pin);
-
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(true); // no-op
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(false);
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(false);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(false); // no-op
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(false);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-
-    store.setState(true);
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-  });
-
-  test("onChange/offChange", async () => {
-    const cbk = jest.fn();
-    const { matcher: triggerMatcher, store } = newMatcher();
-    const pin = new FXPin();
-    pin.while(triggerMatcher);
-
-    const pinMatcher = new FXPinMatcher(pin);
-    pinMatcher.onChange(cbk);
-
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(false);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-    expect(cbk).toHaveBeenCalledTimes(0);
-
-    store.setState(true);
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-    expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, pinMatcher, {
-      matches: true,
-      isRunning: true,
-    });
-
-    store.setState(true); // no-op
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-    expect(cbk).toHaveBeenCalledTimes(1);
-
-    store.setState(false);
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(false);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-    expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, pinMatcher, {
-      matches: false,
-      isRunning: true,
-    });
-
-    store.setState(false); // no-op
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(false);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-    expect(cbk).toHaveBeenCalledTimes(2);
-
-    store.setState(true);
-    await window.waitFor(0); // callbacks are async
-    expect(pin.isPinned()).toBe(true);
-    expect(pinMatcher.matches()).toBe(pin.isPinned());
-    expect(cbk).toHaveBeenCalledTimes(3);
-    expect(cbk).toHaveBeenNthCalledWith(3, pinMatcher, {
-      matches: true,
-      isRunning: true,
-    });
-
-    pinMatcher.offChange(cbk);
-    store.setState(false);
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(3); // no new calls
-  });
-
-  test("onToggle/offToggle + change while paused", async () => {
-    const cbk = jest.fn();
-    const { matcher: triggerMatcher, store } = newMatcher();
-    const pin = new FXPin();
-    pin.while(triggerMatcher);
-
-    const pinMatcher = new FXPinMatcher(pin);
-    pinMatcher.onToggle(cbk);
-
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(0);
-    expect(pinMatcher.isRunning()).toBe(true);
-    expect(pinMatcher.matches()).toBe(false);
-
-    pinMatcher.pause();
-    store.setState(true); // ignored
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenNthCalledWith(1, pinMatcher, {
-      matches: false,
-      isRunning: false,
-    });
-    expect(pinMatcher.isRunning()).toBe(false);
-    expect(pinMatcher.matches()).toBe(false);
-    expect(triggerMatcher.matches()).toBe(true);
-    expect(pin.isPinned()).toBe(true);
-
-    pinMatcher.resume();
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(2);
-    expect(cbk).toHaveBeenNthCalledWith(2, pinMatcher, {
-      matches: true,
-      isRunning: true,
-    });
-    expect(pinMatcher.isRunning()).toBe(true);
-    expect(pinMatcher.matches()).toBe(true); // updated on resume
-    expect(triggerMatcher.matches()).toBe(true);
-    expect(pin.isPinned()).toBe(true);
-
-    pinMatcher.offToggle(cbk);
-    pinMatcher.pause();
-    pinMatcher.resume();
-    pinMatcher.pause();
-    pinMatcher.resume();
-
-    await window.waitFor(0); // callbacks are async
-    expect(cbk).toHaveBeenCalledTimes(2); // no new calls
+  test("restart resumes paused", () => {
+    const { matcher } = newMatcher(FXRelativeMatcher);
+    matcher.pause();
+    expect(matcher.isRunning()).toBe(false);
+    matcher.restart();
+    expect(matcher.isRunning()).toBe(true);
   });
 });
 

@@ -24,7 +24,7 @@ import {
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
 
-import { FXMatcher, FXPinMatcher } from "@lisn/effects/fx-matcher";
+import { FXMatcher, FXMatcherStore } from "@lisn/effects/fx-matcher";
 import { bugError } from "@lisn/globals";
 
 /**
@@ -111,6 +111,12 @@ export class FXPin {
    */
   readonly offChange: (handler: FXPinHandler) => void;
 
+  /**
+   * Returns a new pin synchronised with this one, that has the opposite
+   * {@link isPinned} state.
+   */
+  readonly invert: () => FXPin;
+
   constructor() {
     let isPinned = false;
     let numFulfilledLocking = 0; // number of fulfilled while conditions
@@ -161,7 +167,7 @@ export class FXPin {
       }
 
       const matchers = matchersOrPins.map((e) =>
-        _.isInstanceOf(e, FXPin) ? new FXPinMatcher(e) : e,
+        _.isInstanceOf(e, FXPin) ? matcherFromPin(e) : e,
       );
 
       const condition: Condition = {
@@ -227,6 +233,8 @@ export class FXPin {
     this.until = (...matchersOrPins) =>
       addCondition(DEACTIVATE, matchersOrPins);
     this.while = (...matchersOrPins) => addCondition(LOCK, matchersOrPins);
+
+    this.invert = () => new FXPin().while(matcherFromPin(this).invert());
   }
 }
 
@@ -265,5 +273,15 @@ type CONDITION_TYPE = typeof ACTIVATE | typeof DEACTIVATE | typeof LOCK;
 const ACTIVATE = 0;
 const DEACTIVATE = 1;
 const LOCK = 2;
+
+const matcherFromPin = (pin: FXPin) =>
+  new FXMatcher((store: FXMatcherStore) => {
+    store.setState(pin.isPinned());
+    // No point in removing callback on pause; parent won't update state
+    // anyway
+    pin.onChange(
+      createCallback((p, { isPinned }) => store.setState(isPinned), true),
+    );
+  });
 
 _.brandClass(FXPin, "FXPin");

@@ -30,7 +30,6 @@ import {
 
 import { FXState } from "@lisn/effects/effect";
 import { FXComposer } from "@lisn/effects/fx-composer";
-import { FXPin } from "@lisn/effects/fx-pin";
 
 import {
   ScrollWatcher,
@@ -101,6 +100,12 @@ export class FXMatcher {
   readonly offToggle: (handler: FXMatcherHandler) => void;
 
   /**
+   * Returns a new matcher synchronised with this one, that has the opposite
+   * {@link matches} state.
+   */
+  readonly invert: (config?: FXMatcherConfig) => FXMatcher;
+
+  /**
    * @param executor A function which accepts a {@link FXMatcherStore}. The
    *                 executor is responsible for calling
    *                 {@link FXMatcherStore.setState | store.setState} whenever
@@ -110,8 +115,11 @@ export class FXMatcher {
    *                 called inside the class constructor with `this` set to the
    *                 newly created matcher.
    */
-  constructor(executor: (store: FXMatcherStore) => void) {
-    let isRunning = true;
+  constructor(
+    executor: (store: FXMatcherStore) => void,
+    config?: FXMatcherConfig,
+  ) {
+    let isRunning = !config?.paused;
     let lastChangeWhilePaused: boolean | null = null;
 
     const storeData = { matches: false };
@@ -183,6 +191,8 @@ export class FXMatcher {
       _.remove(toggleCallbacks.get(handler));
     };
 
+    this.invert = (config) => invertMatcher(this, config);
+
     // --------------------
 
     executor.call(this, store);
@@ -212,12 +222,23 @@ export class FXMatcher {
 export class FXRelativeMatcher<D = unknown> extends FXMatcher {
   /**
    * Updates the matcher's internal reference data to be its current data.
+   *
+   * It also resumes it if it is paused.
    */
   readonly restart: () => void;
 
-  constructor(executor: (store: FXRelativeMatcherStore<D>) => void) {
+  /**
+   * Returns a new matcher synchronised with this one, that has the opposite
+   * {@link matches} state.
+   */
+  readonly invert!: (config?: FXMatcherConfig) => FXRelativeMatcher;
+
+  constructor(
+    executor: (store: FXRelativeMatcherStore<D>) => void,
+    config?: FXMatcherConfig,
+  ) {
     let baseStore: FXMatcherStore;
-    super((store) => (baseStore = store));
+    super((store) => (baseStore = store), config);
 
     const storeData: { data?: D; refData?: D } = {};
 
@@ -242,6 +263,7 @@ export class FXRelativeMatcher<D = unknown> extends FXMatcher {
       if (_.isFunction(store.restartCallback)) {
         store.restartCallback();
       }
+      this.resume();
     };
 
     // --------------------
@@ -331,51 +353,19 @@ export type FXRelativeMatcherStore<D = unknown> = FXMatcherStore & {
   restartCallback?: () => void;
 };
 
+/**
+ * @category Pinning
+ */
+export type FXMatcherConfig = {
+  /**
+   * Set to true to have the matcher start in a paused state.
+   */
+  paused?: boolean;
+};
+
 // -------------------------------------------------------------------------
 // --------------------------- BUILT-IN MATCHERS ---------------------------
 // -------------------------------------------------------------------------
-
-// -------------------------------- NEGATE ---------------------------------
-
-/**
- * Negates the given matcher.
- *
- * @category Pinning
- */
-export class FXNegateMatcher extends FXMatcher {
-  constructor(matcher: FXMatcher) {
-    const executor = (store: FXMatcherStore) => {
-      store.setState(!matcher.matches());
-      // No point in removing callback on pause; parent won't update state
-      // anyway
-      matcher.onChange(
-        createCallback((m, { matches }) => store.setState(!matches), true),
-      );
-    };
-    super(executor);
-  }
-}
-
-// --------------------------------- PIN -----------------------------------
-
-/**
- * Matches while the given pin is active.
- *
- * @category Pinning
- */
-export class FXPinMatcher extends FXMatcher {
-  constructor(pin: FXPin) {
-    const executor = (store: FXMatcherStore) => {
-      store.setState(pin.isPinned());
-      // No point in removing callback on pause; parent won't update state
-      // anyway
-      pin.onChange(
-        createCallback((p, { isPinned }) => store.setState(isPinned), true),
-      );
-    };
-    super(executor);
-  }
-}
 
 // ------------------------------- COMPOSER --------------------------------
 
@@ -684,6 +674,24 @@ type FXPinAxisData = { low: number; high: number; current: number };
 
 type FXPinAllAxesData<Keys extends string> = { [K in Keys]: FXPinAxisData };
 
+const invertMatcher = <T extends FXMatcher>(
+  matcher: T,
+  config: FXMatcherConfig | undefined,
+) => {
+  const executor = (store: FXMatcherStore) => {
+    store.setState(!matcher.matches());
+    // No point in removing callback on pause; parent won't update state
+    // anyway
+    matcher.onChange(
+      createCallback((m, { matches }) => store.setState(!matches), true),
+    );
+  };
+
+  return new (_.isInstanceOf(matcher, FXRelativeMatcher)
+    ? FXRelativeMatcher
+    : FXMatcher)(executor, config) as T;
+};
+
 /**
  * Converts the given input raw or relative number as explained in
  * {@link FXComposerMatcherBounds}.
@@ -783,8 +791,6 @@ const scrollToAxesData = (
 
 _.brandClass(FXMatcher, "FXMatcher");
 _.brandClass(FXRelativeMatcher, "FXRelativeMatcher");
-_.brandClass(FXNegateMatcher, "FXNegateMatcher");
-_.brandClass(FXPinMatcher, "FXPinMatcher");
 _.brandClass(FXComposerMatcher, "FXComposerMatcher");
 _.brandClass(FXScrollMatcher, "FXScrollMatcher");
 _.brandClass(FXViewMatcher, "FXViewMatcher");

@@ -46,9 +46,15 @@
     "readme": "INTRO.md",
     "entryPointStrategy": "expand",
     "groupOrder": ["Methods", "Constructors", "Properties", "*"],
+    "defaultCategory": "Common",
+    "categoryOrder": ["*", "Common"],
     "sort": ["kind", "static-first", "alphabetical"],
     "jsDocCompatibility": {
       "exampleTag": false
+    },
+    "navigation": {
+      "includeCategories": true,
+      "includeGroups": false
     },
     "out": "../../website/public/docs/",
     "favicon": "../../website/app/favicon.ico",

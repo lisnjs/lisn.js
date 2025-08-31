@@ -1,5 +1,10 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription ScrollToTop
+ * {@link ScrollToTop} adds a scroll-to-top button in the lower right corder of
+ * the screen (can be changed to bottom left) which scrolls smoothly (and more
+ * slowly than the native scroll) back to the top.
  */
 
 import * as _ from "@lisn/_internal";
@@ -167,6 +172,8 @@ import {
  *                               | offset=top:300vh
  * "></button>
  * ```
+ *
+ * @category ScrollToTop
  */
 export class ScrollToTop extends Widget {
   /**
@@ -356,6 +363,8 @@ export class ScrollToTop extends Widget {
 
 /**
  * @interface
+ *
+ * @category ScrollToTop
  */
 export type ScrollToTopConfig = {
   /**

@@ -1,5 +1,5 @@
 /**
- * @module Modules/XResizeObserver
+ * @module Modules
  */
 
 import * as _ from "@lisn/_internal";
@@ -10,6 +10,9 @@ import { logWarn, logError } from "@lisn/utils/log";
 
 import debug from "@lisn/debug/debug";
 
+/**
+ * @category XResizeObserver
+ */
 export type XResizeObserverCallback = (
   entries: ResizeObserverEntry[],
   observer: XResizeObserver,
@@ -22,6 +25,8 @@ export type XResizeObserverCallback = (
  * - can skip the initial callback that happens shortly after setting up via
  *   {@link observeLater}
  * - can debounce the callback
+ *
+ * @category XResizeObserver
  */
 export class XResizeObserver {
   /**

@@ -153,8 +153,8 @@ export const settings = _.preventExtensions({
   /**
    * Default lag value. Used by
    * - {@link Widgets.SmoothScroll}
-   * - {@link Effects/FXController.FXController}
-   * - {@link Watchers/ScrollWatcher.ScrollWatcher} (default scroll duration)
+   * - {@link Effects.FXComposer}
+   * - {@link Watchers.ScrollWatcher} (default scroll duration)
    *
    * @defaultValue 1000
    * @category Effects

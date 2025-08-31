@@ -22,8 +22,6 @@ import { ConsoleInterface } from "@lisn/debug/types";
  *
  * In the root of the Git repository, there is a simple example server that
  * listens for these messages and logs them to the local console.
- *
- * @category Logging
  */
 export class RemoteConsole implements ConsoleInterface {
   /**

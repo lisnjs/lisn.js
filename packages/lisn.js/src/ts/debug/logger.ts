@@ -1,7 +1,4 @@
 /**
- * @module Debugging
- *
- * @categoryDescription Logging
  * {@link Debugging.LocalConsole | LocalConsole} logs to the local browser
  * console. On iOS devices it uses `console.info` for all levels because of a
  * bug in WebKit whereby other log levels don't show in some remote debuggers.
@@ -17,6 +14,8 @@
  * {@link Logger} holds a {@link Console} and implements debug at 10 different
  * levels. The maximum logged level is configurable. Also emits a prefix in
  * debug messages that identifies the instance.
+ *
+ * @module Debugging
  */
 
 import * as _ from "@lisn/_internal";
@@ -36,8 +35,6 @@ import { Console } from "@lisn/debug/console";
  * Holds a {@link Console} and implements debug at 10 different levels. The
  * maximum logged level is configurable. Also emits a prefix in debug messages
  * that identifies the instance.
- *
- * @category Logging
  */
 export class Logger implements LoggerInterface {
   readonly debug: LogFunction;

@@ -2,6 +2,21 @@
  * @module Effects
  *
  * @since v1.3.0
+ *
+ * @categoryDescription Effects/Filter
+ * {@link Filter} controls an element's
+ * {@link https://developer.mozilla.org/en-US/docs/Web/CSS/filter | filters}
+ * It supports:
+ * - brightness
+ * - blur
+ * - contrast
+ * - drop-shadow
+ * - grayscale
+ * - hue-rotate
+ * - invert
+ * - opacity
+ * - saturate
+ * - sepia
  */
 
 import * as _ from "@lisn/_internal";
@@ -44,6 +59,8 @@ import { bugError, usageError } from "@lisn/globals";
  *
  * {@link Filter} does not support negation and it does not support parallax
  * depth; it is ignored.
+ *
+ * @category Effects/Filter
  */
 export class Filter implements EffectInterface<"filter", Filter> {
   readonly type = "filter";
@@ -379,22 +396,27 @@ export class Filter implements EffectInterface<"filter", Filter> {
  * included in the CSS string.
  *
  * Returning `undefined` should leave the current value unchanged.
+ *
+ * @category Effects/Filter
  */
 export type FilterHandlerReturn<F extends FilterName> = Partial<
   FilterValueMap[F]
 >;
 
+/**
+ * @category Effects/Filter
+ */
 export type FilterConfig = {
   /**
    * If true, the {@link FXHandler | handlers} receive absolute
-   * {@link Effects.FXParams | parameters} and each call to {@link update} will
-   * reset the filter back to "none".
+   * {@link Effects.FXParams | parameters} and each call to
+   * {@link Filter.update | update} will reset the filter back to "none".
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the filter's entries are
-   * preserved between calls to {@link update}. Each handler's return value adds
-   * to the value of the corresponding entry. If the current value in the entry
-   * is null, it is converted to 0 (or "black" for color).
+   * preserved between calls to {@link Filter.update | update}. Each handler's
+   * return value adds to the value of the corresponding entry. If the current
+   * value in the entry is null, it is converted to 0 (or "black" for color).
    *
    * @defaultValue false
    */
@@ -453,6 +475,8 @@ export type FilterConfig = {
 
 /**
  * The initial values for all filters types is null.
+ *
+ * @category Effects/Filter
  */
 export type FilterValueMap = {
   /**
@@ -547,13 +571,22 @@ export type FilterValueMap = {
   sepia: number | null;
 };
 
+/**
+ * @category Effects/Filter
+ */
 export type FilterName = keyof FilterValueMap;
 
+/**
+ * @category Effects/Filter
+ */
 export type FilterEntryResolved<F extends FilterName = FilterName> = [
   F,
   FilterValueMap[F],
 ];
 
+/**
+ * @category Effects/Filter
+ */
 export type FilterEntry<F extends FilterName = FilterName> = [
   F,
   Partial<FilterValueMap[F]>,

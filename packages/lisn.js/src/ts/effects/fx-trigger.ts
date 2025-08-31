@@ -1,7 +1,11 @@
 /**
- * @module Effects/Triggers
+ * @module Effects
  *
  * @since v1.3.0
+ *
+ * @categoryDescription Triggers
+ * A trigger is what the {@link Effects.FXComposer | FXComposer} can
+ * continually poll for new data.
  */
 
 import * as _ from "@lisn/_internal";
@@ -30,31 +34,17 @@ import {
   OnGestureOptions,
 } from "@lisn/watchers/gesture-watcher";
 
-// -------------------------------------------------------------------------
-// -------------------- BUILT-IN TRIGGERS SINGLE EXPORT --------------------
-// -------------------------------------------------------------------------
-
 /**
- * Function wrappers around built-in triggers.
- */
-export const FX_TRIGGER = {
-  proxy: (trigger: FXTrigger, config: FXProxyTriggerConfig) =>
-    new FXProxyTrigger(trigger, config),
-  scroll: (scrollable?: ScrollTarget) => new FXScrollTrigger(scrollable),
-  gesture: (target: EventTarget, config?: FXGestureTriggerConfig) =>
-    new FXGestureTrigger(target, config),
-} as const;
-
-// -------------------------------------------------------------------------
-
-/**
- * A trigger is what the {@link FXComposer} can continually poll for new data.
+ * A trigger is what the {@link Effects.FXComposer | FXComposer} can
+ * continually poll for new data.
  *
  * It can be polled by multiple receivers, so you can reuse triggers across
  * composers.
  *
  * This is a generic class that accepts a custom executor function. You may want
  * to subclass it when defining your own trigger types.
+ *
+ * @category Triggers
  */
 export class FXTrigger {
   /**
@@ -193,9 +183,17 @@ export class FXTrigger {
  *   asynchronously, and so the state of the trigger may have changed by the
  *   time the handler runs. If you need the know the latest state, call
  *   {@link FXTrigger.isRunning | isRunning} on the trigger instance.
+ *
+ * @category Triggers
  */
 export type FXTriggerHandlerArgs = [FXTrigger, { isRunning: boolean }];
+/**
+ * @category Triggers
+ */
 export type FXTriggerCallback = Callback<FXTriggerHandlerArgs>;
+/**
+ * @category Triggers
+ */
 export type FXTriggerHandler =
   | FXTriggerCallback
   | CallbackHandler<FXTriggerHandlerArgs>;
@@ -210,6 +208,8 @@ export type FXTriggerHandler =
  * {@link FXProxyTrigger} is triggered by another trigger and uses its
  * {@link FXStateUpdate} but can transform the values or introduce delay before
  * it fires.
+ *
+ * @category Triggers
  */
 export class FXProxyTrigger extends FXTrigger {
   constructor(trigger: FXTrigger, config: FXProxyTriggerConfig) {
@@ -241,6 +241,9 @@ export class FXProxyTrigger extends FXTrigger {
   }
 }
 
+/**
+ * @category Triggers
+ */
 export type FXProxyTriggerConfig = {
   /**
    * A delay in milliseconds before this trigger fires following an update from
@@ -269,6 +272,8 @@ export type FXProxyTriggerConfig = {
  * {@link FXScrollTrigger} is triggered by scroll events and sends an
  * {@link FXStateUpdate} based on the top/left scroll offsets and scroll
  * width/height.
+ *
+ * @category Triggers
  */
 export class FXScrollTrigger extends FXTrigger {
   /**
@@ -329,6 +334,8 @@ export class FXScrollTrigger extends FXTrigger {
  * {@link FXGestureTrigger} is triggered by user gestures and sends an
  * {@link FXStateUpdate} based on the total delta values. See
  * {@link GestureWatcher}.
+ *
+ * @category Triggers
  */
 export class FXGestureTrigger extends FXTrigger {
   constructor(target: EventTarget, config?: FXGestureTriggerConfig) {
@@ -419,6 +426,8 @@ export class FXGestureTrigger extends FXTrigger {
  * See {@link OnGestureOptions}.
  *
  * @interface
+ *
+ * @category Triggers
  */
 export type FXGestureTriggerConfig = Omit<
   OnGestureOptions,

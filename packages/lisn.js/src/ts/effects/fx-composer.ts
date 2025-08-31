@@ -2,6 +2,11 @@
  * @module Effects
  *
  * @since v1.3.0
+ *
+ * @categoryDescription Composer
+ * {@link FXComposer} links together multiple effects or other composers. It
+ * works with {@link FXTrigger}s and each time it is triggered, it updates its
+ * state and {@link FXComposition | effect composition}.
  */
 
 import * as _ from "@lisn/_internal";
@@ -51,23 +56,26 @@ import debug from "@lisn/debug/debug";
  * {@link FXComposer} links together multiple effects or other composers. It
  * works with {@link FXTrigger}s and each time it is triggered, it updates its
  * state and {@link FXComposition | effect composition}.
+ *
+ * @category Composer
  */
 export class FXComposer {
   /**
    * Adds one or more links, which can be either an effect or another composer,
    * to the current chain of composition.
    *
-   * Effects added here are {@link Effect.toComposition | cloned} beforehand, so
-   * you can add the same effect instance to multiple composers, or multiple
-   * times to the same composer.
+   * Effects added here are
+   * {@link Effects.EffectInterface.toComposition | cloned} beforehand, so you
+   * can add the same effect instance to multiple composers, or multiple times
+   * to the same composer.
    *
    * Adding the same link multiple times will result in it being applied
    * multiple times when the composer updates its
    * {@link getComposition | composition}.
    *
    * If the given link is an {@link Effect} it will be managed by **this**
-   * composer and will be {@link Effect.update | updated} with the composer's
-   * state at each frame while it is tweening.
+   * composer and will be {@link Effects.EffectInterface.update | updated} with
+   * the composer's state at each frame while it is tweening.
    *
    * Otherwise, if the link is another {@link FXComposer}, its composition will
    * be used as is in this composer's composition and not updated with the state
@@ -83,9 +91,10 @@ export class FXComposer {
    * to manage and update, simply pass `otherComposer.getComposition().values()`
    * as the links to add.
    *
-   * **IMPORTANT:** If you add an {@link Effect.isAbsolute | absolute} effect,
-   * or a composer that has absolute effects it discards all previous effects of
-   * the respective {@link Effect.type | type}.
+   * **IMPORTANT:** If you add an
+   * {@link Effects.EffectInterface.isAbsolute | absolute} effect, or a
+   * composer that has absolute effects it discards all previous effects of the
+   * respective {@link Effects.EffectInterface.type | type}.
    *
    * @param pin If given, then when the pin is active, the given effect won't be
    *            updated, but simply added to the composition with its current
@@ -162,7 +171,8 @@ export class FXComposer {
    * - the composer triggered with new data and tweens
    * - any other composers {@link add | added} update their composition
    * - the composer's {@link setDepth | depth is updated} and subsequently the
-   *   {@link Effect.isAbsolute | absolute} effects are updated
+   *   {@link Effects.EffectInterface.isAbsolute | absolute} effects are
+   *   updated
    *
    * The handler is called after updating its composition, such that calling
    * {@link toCss} or {@link getComposition} from the handler will reflect the
@@ -236,10 +246,11 @@ export class FXComposer {
    *
    * Note that effects of the same type (or class) are composed together, so in
    * general there will likely not be any conflicting values whereby more than
-   * one effect returns the same property from their {@link Effect.toCss | toCss}
-   * method. If there are such cases, then by default subsequent values will
-   * override previous ones for the property. However, certain properties are
-   * handled as a list and the values are joined. These are:
+   * one effect returns the same property from their
+   * {@link Effects.EffectInterface.toCss | toCss} method. If there are such
+   * cases, then by default subsequent values will override previous ones for
+   * the property. However, certain properties are handled as a list and the
+   * values are joined. These are:
    * - `transition`
    * - `animation`
    * - `filter`
@@ -250,7 +261,7 @@ export class FXComposer {
    * @param negate If given, then for every effect in the composition, the
    *               corresponding effect (of the same type) in the given negated
    *               composer's composition will be queried, and used for
-   *               negation. See {@link Effect.export}
+   *               negation. See {@link Effects.EffectInterface.export}
    */
   readonly toCss: (negate?: FXComposer) => Record<string, string>;
 
@@ -262,8 +273,8 @@ export class FXComposer {
    *                 {@link FXComposition.export | exported}, i.e. effects are
    *                 static. By default it returns a **live** copy of the
    *                 composition, where each effect is
-   *                 {@link Effect.toComposition | cloned} while preserving its
-   *                 handlers.
+   *                 {@link Effects.EffectInterface.toComposition | cloned}
+   *                 while preserving its handlers.
    */
   readonly getComposition: (asExport?: boolean) => FXComposition;
 
@@ -307,13 +318,15 @@ export class FXComposer {
    * Note that this will result in the effects managed by this composer being
    * updated for this new depth and the {@link onCompose} handlers being called.
    *
-   * **NOTE:** Any effects that are {@link Effect.isAbsolute | absolute}, will
-   * update their values as per the new depth. Their handlers will receive the
-   * current parameters re-scaled at the new depth. Effects that are **not**
-   * {@link Effect.isAbsolute | absolute} will remain unchanged, since there is
-   * no change to the target values of the {@link FXState | state}. Further
-   * tweening will result in the delta values received by the handlers of these
-   * non-absolute effects being re-scaled at the new depth.
+   * **NOTE:** Any effects that are
+   * {@link Effects.EffectInterface.isAbsolute | absolute}, will update their
+   * values as per the new depth. Their handlers will receive the current
+   * parameters re-scaled at the new depth. Effects that are **not**
+   * {@link Effects.EffectInterface.isAbsolute | absolute} will remain
+   * unchanged, since there is no change to the target values of the
+   * {@link FXState | state} . Further tweening will result in the delta values
+   * received by the handlers of these non-absolute effects being re-scaled at
+   * the new depth.
    *
    * @param depth If a single number is given, it is set for all three axes.
    */
@@ -876,6 +889,9 @@ export class FXComposer {
   }
 }
 
+/**
+ * @category Composer
+ */
 export type FXComposerConfig = {
   /**
    * The parent composer. Used for resolving relative values of lag or depth.
@@ -887,7 +903,7 @@ export type FXComposerConfig = {
   /**
    * The trigger to use. By default an {@link FXScrollTrigger} is used with the
    * default scrollable (see
-   * {@link Watchers/ScrollWatcher.OnScrollOptions.scrollable | ScrollWatcher})
+   * {@link Watchers.OnScrollOptions.scrollable | ScrollWatcher})
    *
    * @defaultValue undefined // new FXScrollTrigger()
    */
@@ -985,6 +1001,9 @@ export type FXComposerConfig = {
   depthZ?: RawOrRelativeNumber;
 };
 
+/**
+ * @category Composer
+ */
 export type FXComposerEffectiveConfig = {
   trigger: FXTrigger;
   parent: FXComposer | undefined;
@@ -1002,9 +1021,17 @@ export type FXComposerEffectiveConfig = {
  * The handler is invoked with one argument:
  *
  * - The {@link FXComposer} instance.
+ *
+ * @category Composer
  */
 export type FXComposerHandlerArgs = [FXComposer];
+/**
+ * @category Composer
+ */
 export type FXComposerCallback = Callback<FXComposerHandlerArgs>;
+/**
+ * @category Composer
+ */
 export type FXComposerHandler =
   | FXComposerCallback
   | CallbackHandler<FXComposerHandlerArgs>;

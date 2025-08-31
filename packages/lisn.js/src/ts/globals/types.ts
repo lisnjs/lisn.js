@@ -83,8 +83,8 @@ export type BoundingRect = {
 export type ViewTarget = Element | ScrollOffsetSpec;
 
 /**
- * The {@link Watchers/ViewWatcher.ViewWatcherConfig.root | root}'s
- * (default is the viewport) view relative to the target:
+ * The {@link Watchers.ViewWatcherConfig.root | root}'s (default is the
+ * viewport) view relative to the target:
  *
  * - "above": the root is above the target, i.e. target is below the root
  * - "below": the root is below the target, i.e. target is above the root

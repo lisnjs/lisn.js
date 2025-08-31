@@ -39,29 +39,6 @@ import {
 } from "@lisn/watchers/scroll-watcher";
 import { ViewWatcher, ViewWatcherConfig } from "@lisn/watchers/view-watcher";
 
-// -------------------------------------------------------------------------
-// -------------------- BUILT-IN MATCHERS SINGLE EXPORT --------------------
-// -------------------------------------------------------------------------
-
-/**
- * Function wrappers around built-in matchers.
- */
-export const FX_MATCH = {
-  negate: (matcher: FXMatcher) => new FXNegateMatcher(matcher),
-  pin: (pin: FXPin) => new FXPinMatcher(pin),
-  composer: (bounds: FXComposerMatcherBounds, composer: FXComposer) =>
-    new FXComposerMatcher(bounds, composer),
-  scroll: (bounds: FXScrollMatcherBounds, scrollable?: ScrollTarget) =>
-    new FXScrollMatcher(bounds, scrollable),
-  view: (
-    views: CommaSeparatedStr<View> | View[],
-    viewTarget: ViewTarget,
-    config?: ViewWatcherConfig,
-  ) => new FXViewMatcher(views, viewTarget, config),
-} as const;
-
-// -------------------------------------------------------------------------
-
 /**
  * A pin matcher internally keeps track of certain conditions and has a binary
  * state (matches/does not match).
@@ -69,7 +46,7 @@ export const FX_MATCH = {
  * This is a generic class that accepts a custom executor function. You may want
  * to subclass it when defining your own matcher types.
  *
- * There are built-in matchers in {@link FX_MATCH}.
+ * @category Pinning
  */
 export class FXMatcher {
   /**
@@ -229,6 +206,8 @@ export class FXMatcher {
  *                 to potentially update its state when the matcher is
  *                 restarted. The executor will be called inside the class
  *                 constructor with `this` set to the newly created matcher.
+ *
+ * @category Pinning
  */
 export class FXRelativeMatcher<D = unknown> extends FXMatcher {
   /**
@@ -282,20 +261,30 @@ export class FXRelativeMatcher<D = unknown> extends FXMatcher {
  *   have changed by the time the handler runs. If you need the know the latest
  *   states, call {@link FXMatcher.isRunning | isRunning} and
  *   {@link FXMatcher.matches | matches} on the matcher instance.
+ *
+ * @category Pinning
  */
 export type FXMatcherHandlerArgs<T extends FXMatcher = FXMatcher> = [
   T,
   { matches: boolean; isRunning: boolean },
 ];
+/**
+ * @category Pinning
+ */
 export type FXMatcherCallback<T extends FXMatcher = FXMatcher> = Callback<
   FXMatcherHandlerArgs<T>
 >;
+/**
+ * @category Pinning
+ */
 export type FXMatcherHandler<T extends FXMatcher = FXMatcher> =
   | FXMatcherCallback<T>
   | CallbackHandler<FXMatcherHandlerArgs<T>>;
 
 /**
  * Internal state and data management for a matcher to be used by its executor.
+ *
+ * @category Pinning
  */
 export type FXMatcherStore = {
   /**
@@ -314,6 +303,8 @@ export type FXMatcherStore = {
  * executor.
  *
  * @interface
+ *
+ * @category Pinning
  */
 export type FXRelativeMatcherStore<D = unknown> = FXMatcherStore & {
   /**
@@ -327,9 +318,9 @@ export type FXRelativeMatcherStore<D = unknown> = FXMatcherStore & {
   setData: (data: D) => void;
 
   /**
-   * Returns the data at the time {@link FXMatcher.restart | restart} was last
-   * called on the matcher, or the initial data {@link setData | data} if the
-   * matcher had never been restarted).
+   * Returns the data at the time {@link FXRelativeMatcher.restart | restart}
+   * was last called on the matcher, or the initial data {@link setData | data}
+   * if the matcher had never been restarted).
    */
   getReferenceData: () => D | undefined;
 
@@ -348,6 +339,8 @@ export type FXRelativeMatcherStore<D = unknown> = FXMatcherStore & {
 
 /**
  * Negates the given matcher.
+ *
+ * @category Pinning
  */
 export class FXNegateMatcher extends FXMatcher {
   constructor(matcher: FXMatcher) {
@@ -367,6 +360,8 @@ export class FXNegateMatcher extends FXMatcher {
 
 /**
  * Matches while the given pin is active.
+ *
+ * @category Pinning
  */
 export class FXPinMatcher extends FXMatcher {
   constructor(pin: FXPin) {
@@ -396,6 +391,8 @@ export class FXPinMatcher extends FXMatcher {
  * {@link Effects.FXAxisState.low | low} and
  * {@link Effects.FXAxisState.high | high} values of each axis' parameters. See
  * {@link FXComposerMatcherBounds} for an example.
+ *
+ * @category Pinning
  */
 export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
   constructor(bounds: FXComposerMatcherBounds, composer: FXComposer) {
@@ -469,6 +466,8 @@ export class FXComposerMatcher extends FXRelativeMatcher<FXState> {
  *   matcher was last restarted or the initial value.
  * - `"-10%"` is treated as "10% * (high - low)" less than the value since the
  *   matcher was last restarted or the initial value.
+ *
+ * @category Pinning
  */
 export type FXComposerMatcherBounds = AtLeastOne<{
   /**
@@ -506,8 +505,11 @@ export type FXComposerMatcherBounds = AtLeastOne<{
  * {@link FXScrollMatcherBounds} for an example.
  *
  * If you are using this matcher for an effect that's triggered on scroll (i.e.
- * updated by a composer that is triggered by an {@link FXScrollTrigger}), it's
- * better to use the {@link FXComposerMatcher} and pass it the composer.
+ * updated by a composer that is triggered by an
+ * {@link Effects.FXScrollTrigger | FXScrollTrigger}), it's better to use the
+ * {@link FXComposerMatcher} and pass it the composer.
+ *
+ * @category Pinning
  */
 export class FXScrollMatcher extends FXRelativeMatcher<
   FXPinAllAxesData<"top" | "left">
@@ -597,6 +599,8 @@ export class FXScrollMatcher extends FXRelativeMatcher<
  *   the matcher was last restarted or the initial value.
  * - `"-10%"` is treated as 10% the scroll height/width back up/left since the
  *   matcher was last restarted or the initial value.
+ *
+ * @category Pinning
  */
 export type FXScrollMatcherBounds = AtLeastOne<{
   /**
@@ -626,6 +630,8 @@ export type FXScrollMatcherBounds = AtLeastOne<{
  * {@link View | views}.
  *
  * @see {@link ViewWatcher}.
+ *
+ * @category Pinning
  */
 export class FXViewMatcher extends FXMatcher {
   constructor(

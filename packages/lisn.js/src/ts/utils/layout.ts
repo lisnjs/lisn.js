@@ -46,8 +46,8 @@ export const isValidAspectRatio = (
  * `"min <Device>"`, etc).
  *
  * Returns false for "", although if you passed "" in
- * {@link Watchers/LayoutWatcher.OnLayoutOptions | OnLayoutOptions} it would
- * accept it as specifying _all_ devices.
+ * {@link Watchers.OnLayoutOptions | OnLayoutOptions} it would accept it as
+ * specifying _all_ devices.
  *
  * @category Validation
  */
@@ -61,8 +61,8 @@ export const isValidDeviceList = (
  * (including `"min <AspectRatio>"`, etc).
  *
  * Returns false for "", although if you passed "" in
- * {@link Watchers/LayoutWatcher.OnLayoutOptions | OnLayoutOptions} it would
- * accept it as specifying _all_ aspect ratios.
+ * {@link Watchers.OnLayoutOptions | OnLayoutOptions} it would accept it as
+ * specifying _all_ aspect ratios.
  *
  * @category Validation
  */
@@ -74,8 +74,7 @@ export const isValidAspectRatioList = (
 /**
  * Returns a list of {@link Device}s that are not covered by the given device
  * specification. See
- * {@link Watchers/LayoutWatcher.OnLayoutOptions | OnLayoutOptions} for accepted
- * formats.
+ * {@link Watchers.OnLayoutOptions | OnLayoutOptions} for accepted formats.
  *
  * Returns an empty for "" or for a specification that includes all devices.
  *
@@ -87,8 +86,7 @@ export const getOtherDevices = (device: DeviceSpec | Device[]): Device[] =>
 /**
  * Returns a list of {@link AspectRatio}s that are not covered by the given
  * aspect ratio specification. See
- * {@link Watchers/LayoutWatcher.OnLayoutOptions | OnLayoutOptions} for accepted
- * formats.
+ * {@link Watchers.OnLayoutOptions | OnLayoutOptions} for accepted formats.
  *
  * Returns an empty for "" or for a specification that includes all aspect
  * ratios.

@@ -1,9 +1,12 @@
 /**
- * @module Modules/XIntersectionObserver
+ * @module Modules
  */
 
 import * as _ from "@lisn/_internal";
 
+/**
+ * @category XIntersectionObserver
+ */
 export type XIntersectionObserverCallback = (
   entries: IntersectionObserverEntry[],
   observer: XIntersectionObserver,
@@ -15,6 +18,8 @@ export type XIntersectionObserverCallback = (
  * with added capabilities:
  * - can skip the initial callback that happens shortly after setting up via
  *   {@link observeLater}
+ *
+ * @category XIntersectionObserver
  */
 export class XIntersectionObserver {
   /**

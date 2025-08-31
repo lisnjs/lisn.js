@@ -1,5 +1,16 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription SmoothScroll
+ * {@link SmoothScroll} creates a highly configurable animated scrolling
+ * experience. By default it creates basic smooth scrolling with options for
+ * lag duration.
+ *
+ * However you can define custom effects in an easy yet flexible way. See
+ * {@link FXComposer}.
+ *
+ * It is a wrapper around the {@link Effects} module. If you are using the
+ * JavaScript API, you may prefer to use those directly.
  */
 
 import * as _ from "@lisn/_internal";
@@ -178,6 +189,8 @@ import {
  * ```html
  * XXX TODO
  * ```
+ *
+ * @category SmoothScroll
  */
 export class SmoothScroll extends Widget {
   /**
@@ -299,6 +312,8 @@ export class SmoothScroll extends Widget {
 
 /**
  * @interface
+ *
+ * @category SmoothScroll
  */
 export type SmoothScrollConfig = {
   /**
@@ -375,6 +390,8 @@ export type SmoothScrollConfig = {
  * ```
  *
  * @interface
+ *
+ * @category SmoothScroll
  */
 export type SmoothScrollLayerConfig = {
   /**

@@ -21,11 +21,11 @@ import { settings } from "@lisn/globals/settings";
  *
  * @category DOM: Events
  */
-export function waitForElement<F>(checkFn: () => F): Promise<NonNullable<F>>;
 export function waitForElement<F>(
   checkFn: () => F,
   timeout: number,
 ): Promise<null | NonNullable<F>>;
+export function waitForElement<F>(checkFn: () => F): Promise<NonNullable<F>>;
 export function waitForElement(checkFn: () => unknown, timeout?: number) {
   return _.createPromise((resolve) => {
     const callFn = () => {

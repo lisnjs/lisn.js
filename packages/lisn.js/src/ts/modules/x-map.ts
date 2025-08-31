@@ -1,12 +1,18 @@
 /**
- * @module Modules/XMap
+ * @module Modules
  */
 
 import * as _ from "@lisn/_internal";
 
 import { MapBase } from "@lisn/globals/types";
 
+/**
+ * @category XMap
+ */
 export type DefaultValueGetter<K, V> = (key: K) => V;
+/**
+ * @category XMap
+ */
 export type IteratorCallback<K, V> = (
   value: V,
   key: K,
@@ -18,6 +24,8 @@ export type IteratorCallback<K, V> = (
  *
  * @ignore
  * @internal
+ *
+ * @category XMap
  */
 export const createXMap = <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
   new XMap(getDefaultV);
@@ -27,11 +35,16 @@ export const createXMap = <K, V>(getDefaultV: DefaultValueGetter<K, V>) =>
  *
  * @ignore
  * @internal
+ *
+ * @category XMap
  */
 export const createXWeakMap = <K extends WeakKey, V>(
   getDefaultV: DefaultValueGetter<K, V>,
 ) => new XWeakMap(getDefaultV);
 
+/**
+ * @category XMap
+ */
 export abstract class XMapBase<K, V> {
   /**
    * Returns the value at the given key in the {@link XMap} or {@link XWeakMap}.
@@ -115,6 +128,8 @@ export abstract class XMapBase<K, V> {
  *
  * @typeParam K The type of the keys the map holds.
  * @typeParam V The type of the values the map holds.
+ *
+ * @category XMap
  */
 export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
   /**
@@ -181,6 +196,8 @@ export class XMap<K, V> extends XMapBase<K, V> implements Iterable<[K, V]> {
  *
  * @typeParam K The type of the keys the map holds.
  * @typeParam V The type of the values the map holds.
+ *
+ * @category XMap
  */
 export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
   /**
@@ -210,6 +227,8 @@ export class XWeakMap<K extends WeakKey, V> extends XMapBase<K, V> {
  *
  * @ignore
  * @internal
+ *
+ * @category XMap
  */
 export const createXMapGetter = XMap.newXMapGetter;
 
@@ -218,6 +237,8 @@ export const createXMapGetter = XMap.newXMapGetter;
  *
  * @ignore
  * @internal
+ *
+ * @category XMap
  */
 export const createXWeakMapGetter = XWeakMap.newXWeakMapGetter;
 

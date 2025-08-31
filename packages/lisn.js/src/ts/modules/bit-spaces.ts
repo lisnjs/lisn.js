@@ -1,5 +1,5 @@
 /**
- * @module Modules/BitSpaces
+ * @module Modules
  */
 
 import * as _ from "@lisn/_internal";
@@ -8,10 +8,15 @@ import { usageError } from "@lisn/globals/errors";
 
 import { getBitmask } from "@lisn/utils/math";
 
+/**
+ * @category BitSpaces
+ */
 export type BitPropName = string;
 
 /**
  * A union of all property names in the space.
+ *
+ * @category BitSpaces
  */
 export type BitSpaceKey<S> = S extends BitSpace<infer T> ? T : never;
 
@@ -25,6 +30,8 @@ export type BitSpaceKey<S> = S extends BitSpace<infer T> ? T : never;
  * Created using {@link BitSpaces.create}
  *
  * @interface
+ *
+ * @category BitSpaces
  */
 export type BitSpace<T extends BitPropName> = {
   /**
@@ -121,6 +128,8 @@ export type BitSpace<T extends BitPropName> = {
 /**
  * {@link BitSpaces} represents one or more related {@link BitSpace}s whose bit
  * values will not overlap.
+ *
+ * @category BitSpaces
  */
 export class BitSpaces {
   /**
@@ -207,6 +216,8 @@ export class BitSpaces {
  *
  * @ignore
  * @internal
+ *
+ * @category BitSpaces
  */
 export const createBitSpaces = () => new BitSpaces();
 
@@ -215,6 +226,8 @@ export const createBitSpaces = () => new BitSpaces();
  *
  * @ignore
  * @internal
+ *
+ * @category BitSpaces
  */
 export const addBitSpace = <T extends BitPropName>(
   spaces: BitSpaces,

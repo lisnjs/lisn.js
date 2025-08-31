@@ -1,5 +1,9 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription PageLoader
+ * {@link PageLoader} is a full-page spinner. You would almost certainly use
+ * this only once, to hide the page before it's loaded.
  */
 
 import * as _ from "@lisn/_internal";
@@ -70,6 +74,8 @@ import {
  * ```html
  * <div data-lisn-page-loader="auto-remove=false"></div>
  * ```
+ *
+ * @category PageLoader
  */
 export class PageLoader extends Widget {
   /**
@@ -170,6 +176,8 @@ export class PageLoader extends Widget {
 
 /**
  * @interface
+ *
+ * @category PageLoader
  */
 export type PageLoaderConfig = {
   /**

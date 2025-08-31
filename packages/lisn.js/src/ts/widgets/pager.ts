@@ -1,5 +1,12 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription Pager
+ * {@link Pager} sets up the elements that make up its pages to be overlayed on
+ * top of each other with only one of them visible at a time. When a user
+ * performs a scroll-like gesture (see {@link GestureWatcher}), the pages are
+ * flicked through: gestures, whose direction is down (or left) result in the
+ * next page being shown, otherwise the previous.
  */
 
 import * as _ from "@lisn/_internal";
@@ -226,6 +233,8 @@ import debug from "@lisn/debug/debug";
  *   </div>
  * </div>
  * ```
+ *
+ * @category Pager
  */
 export class Pager extends Widget {
   /**
@@ -466,6 +475,8 @@ export class Pager extends Widget {
 
 /**
  * @interface
+ *
+ * @category Pager
  */
 export type PagerConfig = {
   /**

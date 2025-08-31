@@ -1,5 +1,12 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription Scrollbar
+ * {@link Scrollbar} is a customizable alternative to the native scrollbars
+ * (vertical and horizontal). You can position each of the two scrollbars on
+ * any of the four sides of the element, make them automatically hide after
+ * certain time of inactivity, style them as a traditional handle scrollbar or
+ * a percentage fill progress bar and so on.
  */
 
 // [TODO v2]: Instead of wrapping children and changing which element is the
@@ -205,6 +212,8 @@ import debug from "@lisn/debug/debug";
  *   <!-- content here... -->
  * </div>
  * ```
+ *
+ * @category Scrollbar
  */
 export class Scrollbar extends Widget {
   /**
@@ -311,6 +320,8 @@ export class Scrollbar extends Widget {
 
 /**
  * @interface
+ *
+ * @category Scrollbar
  */
 export type ScrollbarConfig = {
   /**

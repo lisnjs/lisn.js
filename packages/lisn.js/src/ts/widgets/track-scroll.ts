@@ -42,6 +42,8 @@ import {
  * ```html
  * <div data-lisn-track-scroll="threshold=0 | debounce-window=0"></div>
  * ```
+ *
+ * @category Tracking interactions
  */
 export class TrackScroll extends Widget {
   static get(element: Element): TrackScroll | null {
@@ -84,11 +86,13 @@ export class TrackScroll extends Widget {
 
 /**
  * @interface
+ *
+ * @category Tracking interactions
  */
 export type TrackScrollConfig = {
   /**
    * Corresponds to
-   * {@link Watchers/ScrollWatcher.OnScrollOptions.threshold | OnScrollOptions.threshold}.
+   * {@link Watchers.OnScrollOptions.threshold | OnScrollOptions.threshold}.
    *
    * @defaultValue undefined // ScrollWatcher default
    */
@@ -96,7 +100,7 @@ export type TrackScrollConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/ScrollWatcher.OnScrollOptions.debounceWindow | OnScrollOptions.debounceWindow}.
+   * {@link Watchers.OnScrollOptions.debounceWindow | OnScrollOptions.debounceWindow}.
    *
    * @defaultValue undefined // ScrollWatcher default
    */

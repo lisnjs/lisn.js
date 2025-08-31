@@ -892,7 +892,7 @@ const INVERSE_PRECISION = 4;
 const INVERSE_NEGLIGIBLE = 1 / _.pow(10, INVERSE_PRECISION);
 const INVERSE_STARTING_RESOLUTION = 100;
 
-export const invertEase = (
+const invertEase = (
   x: number,
   easeFn: (p: number) => number,
   isIncreasing?: boolean,

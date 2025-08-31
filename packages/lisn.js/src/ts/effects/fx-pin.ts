@@ -2,6 +2,15 @@
  * @module Effects
  *
  * @since v1.3.0
+ *
+ * @categoryDescription Pinning
+ * {@link FXPin} can be associated with an {@link Effects.Effect | Effects}
+ * (via {@link Effects.FXComposer.add | FXComposer.add}) in order to "pin" or
+ * freeze effects and stop them from being updated by the composer.
+ *
+ * It is activated or deactivated based on various {@link FXPin.when | when},
+ * {@link FXPin.until | until} or {@link FXPin.while | while} conditions based
+ * on {@link FXMatcher}s.
  */
 
 import * as _ from "@lisn/_internal";
@@ -15,16 +24,16 @@ import {
 } from "@lisn/modules/callback";
 import { createXMap } from "@lisn/modules/x-map";
 
-import { FXMatcher, FX_MATCH } from "@lisn/effects/fx-matcher";
+import { FXMatcher, FXPinMatcher } from "@lisn/effects/fx-matcher";
 import { bugError } from "@lisn/globals";
 
 /**
- * {@link FXPin} can be associated with an {@link Effects.Effect | Effects} (via
- * {@link Effects.FXComposer.add | FXComposer.add}) in order to "pin" or freeze
- * effects and stop them from being updated by the composer.
+ * {@link FXPin} can be associated with an {@link Effects.Effect | Effects}
+ * (via {@link Effects.FXComposer.add | FXComposer.add}) in order to "pin" or
+ * freeze effects and stop them from being updated by the composer.
  *
- * It is activated or deactivated based on various conditions built by calling
- * {@link when}, {@link until} or {@link while}.
+ * It is activated or deactivated based on various {@link when}, {@link until}
+ * or {@link while} conditions based on {@link FXMatcher}s.
  *
  * To understand how {@link when}, {@link until} and {@link while} work together,
  * think of the following analogy. The pin itself is like a light (when it's
@@ -51,6 +60,8 @@ import { bugError } from "@lisn/globals";
  * Each condition is a set of one or more matchers and/or other pins. For a
  * condition to be fulfilled, **all** of the given matchers must match and
  * **all** of the given pins must be active.
+ *
+ * @category Pinning
  */
 export class FXPin {
   /**
@@ -150,7 +161,7 @@ export class FXPin {
       }
 
       const matchers = matchersOrPins.map((e) =>
-        _.isInstanceOf(e, FXPin) ? FX_MATCH.pin(e) : e,
+        _.isInstanceOf(e, FXPin) ? new FXPinMatcher(e) : e,
       );
 
       const condition: Condition = {
@@ -229,9 +240,17 @@ export class FXPin {
  *   asynchronously, and so the state of the pin may have changed by the
  *   time the handler runs. If you need the know the latest state, call
  *   {@link FXPin.isPinned | isPinned} on the pin instance.
+ *
+ * @category Pinning
  */
 export type FXPinHandlerArgs = [FXPin, { isPinned: boolean }];
+/**
+ * @category Pinning
+ */
 export type FXPinCallback = Callback<FXPinHandlerArgs>;
+/**
+ * @category Pinning
+ */
 export type FXPinHandler = FXPinCallback | CallbackHandler<FXPinHandlerArgs>;
 
 // ------------------------------

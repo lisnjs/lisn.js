@@ -4,6 +4,8 @@
 
 import * as _ from "@lisn/_internal";
 
+import { DOMElement } from "@lisn/globals/types";
+
 /**
  * Returns all the child elements of the given element that are not `script` or
  * `style` tags.
@@ -38,7 +40,8 @@ export const isInlineTag = (tagName: string) =>
  *
  * @category DOM: Querying
  */
-export const isDOMElement = _.isStyledElement;
+export const isDOMElement = (target: unknown): target is DOMElement =>
+  _.isStyledElement(target);
 
 /**
  * @ignore

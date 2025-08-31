@@ -1,5 +1,5 @@
 /**
- * @module Modules/Callback
+ * @module Modules
  */
 
 import * as _ from "@lisn/_internal";
@@ -12,11 +12,16 @@ import debug from "@lisn/debug/debug";
 
 /**
  * @typeParam Args See {@link Callback}
+ *
+ * @category Callback
  */
 export type CallbackHandler<Args extends readonly unknown[] = []> = (
   ...args: Args
 ) => CallbackReturnType | Promise<CallbackReturnType>;
 
+/**
+ * @category Callback
+ */
 export type CallbackReturnType =
   | typeof Callback.KEEP
   | typeof Callback.REMOVE
@@ -26,9 +31,17 @@ export type CallbackReturnType =
  * The handler is invoked with one argument:
  *
  * - The {@link Callback} instance.
+ *
+ * @category Callback
  */
 export type OnRemoveHandlerArgs = [Callback];
+/**
+ * @category Callback
+ */
 export type OnRemoveCallback = Callback<OnRemoveHandlerArgs>;
+/**
+ * @category Callback
+ */
 export type OnRemoveHandler =
   | OnRemoveCallback
   | CallbackHandler<OnRemoveHandlerArgs>;
@@ -44,6 +57,8 @@ export type OnRemoveHandler =
  *   subsequent {@link invoke}s will be queued; this can be disabled
  *
  * @typeParam Args The type of arguments that the callback expects.
+ *
+ * @category Callback
  */
 export class Callback<Args extends readonly unknown[] = []> {
   /**
@@ -297,12 +312,16 @@ export class Callback<Args extends readonly unknown[] = []> {
  *
  * @ignore
  * @internal
+ *
+ * @category Callback
  */
 export const wrapCallback = Callback.wrap;
 
 /**
  * @ignore
  * @internal
+ *
+ * @category Callback
  */
 export const createCallback = <Args extends readonly unknown[]>(
   handler: CallbackHandler<Args>,
@@ -323,6 +342,8 @@ export const createCallback = <Args extends readonly unknown[]>(
  *
  * @ignore
  * @internal
+ *
+ * @category Callback
  */
 export const addHandlerToMap = <Args extends readonly unknown[]>(
   handler: CallbackHandler<Args> | Callback<Args>,
@@ -355,6 +376,8 @@ export const addHandlerToMap = <Args extends readonly unknown[]>(
  *
  * @ignore
  * @internal
+ *
+ * @category Callback
  */
 export const invokeHandler = async <Args extends readonly unknown[]>(
   handler: CallbackHandler<Args> | Callback<Args>,
@@ -389,6 +412,8 @@ export const invokeHandler = async <Args extends readonly unknown[]>(
  *
  * @ignore
  * @internal
+ *
+ * @category Callback
  */
 export const invokeHandlers = async <Args extends readonly unknown[]>(
   mapOrSet:

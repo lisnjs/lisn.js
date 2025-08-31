@@ -1,5 +1,5 @@
 /**
- * @module Watchers/ViewWatcher
+ * @module Watchers
  */
 
 import * as _ from "@lisn/_internal";
@@ -55,6 +55,8 @@ import debug from "@lisn/debug/debug";
  *
  * It manages registered callbacks globally and reuses IntersectionObservers
  * for more efficient performance.
+ *
+ * @category ViewWatcher
  */
 export class ViewWatcher {
   /**
@@ -617,6 +619,8 @@ export class ViewWatcher {
 
 /**
  * @interface
+ *
+ * @category ViewWatcher
  */
 export type ViewWatcherConfig = {
   /**
@@ -645,11 +649,19 @@ export type ViewWatcherConfig = {
    *
    * Since v1.3.0 you can also pass an object with one or more sides (top/right/bottom/left).
    *
+   * Number values are treated as pixels.
+   *
    * @defaultValue "0px 0px 0px 0px"
    */
   rootMargin?:
+    | number
     | string
-    | { top?: number; right?: number; bottom?: number; left?: number };
+    | {
+        top?: number | string;
+        right?: number | string;
+        bottom?: number | string;
+        left?: number | string;
+      };
 
   /**
    * The
@@ -663,6 +675,8 @@ export type ViewWatcherConfig = {
 
 /**
  * @interface
+ *
+ * @category ViewWatcher
  */
 export type OnViewOptions = {
   /**
@@ -690,6 +704,8 @@ export type OnViewOptions = {
 
 /**
  * @interface
+ *
+ * @category ViewWatcher
  */
 export type TrackViewOptions = {
   /**
@@ -756,6 +772,8 @@ export type TrackViewOptions = {
  * - (since v1.3.0) The {@link ViewData} for the target when the callback was
  *   last called. Will be `undefined` during the initial call.
  * - (since v1.3.0) The {@link ViewWatcher} instance.
+ *
+ * @category ViewWatcher
  */
 export type OnViewHandlerArgs = [
   Element,
@@ -763,9 +781,18 @@ export type OnViewHandlerArgs = [
   ViewData | undefined,
   ViewWatcher,
 ];
+/**
+ * @category ViewWatcher
+ */
 export type OnViewCallback = Callback<OnViewHandlerArgs>;
+/**
+ * @category ViewWatcher
+ */
 export type OnViewHandler = CallbackHandler<OnViewHandlerArgs> | OnViewCallback;
 
+/**
+ * @category ViewWatcher
+ */
 export type ViewData = {
   isIntersecting: boolean;
 

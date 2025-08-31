@@ -61,6 +61,8 @@ import {
  *                            | scroll-threshold=0"
  * ></div>
  * ```
+ *
+ * @category Tracking interactions
  */
 export class TrackView extends Widget {
   static get(element: Element): TrackView | null {
@@ -101,11 +103,13 @@ export class TrackView extends Widget {
 
 /**
  * @interface
+ *
+ * @category Tracking interactions
  */
 export type TrackViewConfig = {
   /**
    * Corresponds to
-   * {@link Watchers/ViewWatcher.ViewWatcherConfig.root | ViewWatcherConfig.root}.
+   * {@link Watchers.ViewWatcherConfig.root | ViewWatcherConfig.root}.
    *
    * @defaultValue undefined // ViewWatcher default
    */
@@ -113,7 +117,7 @@ export type TrackViewConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/ViewWatcher.ViewWatcherConfig.rootMargin | ViewWatcherConfig.rootMargin}.
+   * {@link Watchers.ViewWatcherConfig.rootMargin | ViewWatcherConfig.rootMargin}.
    *
    * @defaultValue undefined // ViewWatcher default
    */
@@ -121,7 +125,7 @@ export type TrackViewConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/ViewWatcher.ViewWatcherConfig.threshold | ViewWatcherConfig.threshold}.
+   * {@link Watchers.ViewWatcherConfig.threshold | ViewWatcherConfig.threshold}.
    *
    * @defaultValue undefined // ViewWatcher default
    */
@@ -129,7 +133,7 @@ export type TrackViewConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/ViewWatcher.TrackViewOptions.debounceWindow | TrackViewOptions.debounceWindow}.
+   * {@link Watchers.TrackViewOptions.debounceWindow | TrackViewOptions.debounceWindow}.
    *
    * @defaultValue undefined // ViewWatcher default
    */
@@ -137,7 +141,7 @@ export type TrackViewConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/ViewWatcher.TrackViewOptions.resizeThreshold | TrackViewOptions.resizeThreshold}.
+   * {@link Watchers.TrackViewOptions.resizeThreshold | TrackViewOptions.resizeThreshold}.
    *
    * @defaultValue undefined // ViewWatcher default
    */
@@ -145,7 +149,7 @@ export type TrackViewConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/ViewWatcher.TrackViewOptions.scrollThreshold | TrackViewOptions.scrollThreshold}.
+   * {@link Watchers.TrackViewOptions.scrollThreshold | TrackViewOptions.scrollThreshold}.
    *
    * @defaultValue undefined // ViewWatcher default
    */

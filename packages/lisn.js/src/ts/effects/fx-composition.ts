@@ -9,8 +9,11 @@ import * as _ from "@lisn/_internal";
 import { Effect, EffectType } from "@lisn/effects/effect";
 
 /**
- * Represents a map of effects, one per {@link Effect.type | type} that are
- * {@link Effect.toComposition | composed} together.
+ * Represents a map of effects, one per
+ * {@link Effects.EffectInterface.type | type} that are
+ * {@link Effects.EffectInterface.toComposition | composed} together.
+ *
+ * @category Composer
  */
 export class FXComposition implements Iterable<[EffectType, Effect]> {
   readonly size!: number;
@@ -19,21 +22,24 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
    * Adds a new effect to the composition. Will use the current effect for the
    * relevant type, if any, and compose it with the given.
    *
-   * **IMPORTANT:** If you add an {@link Effect.isAbsolute | absolute} effect,
-   * it discards all previous effects of the respective
-   * {@link Effect.type | type}.
+   * **IMPORTANT:** If you add an
+   * {@link Effects.EffectInterface.isAbsolute | absolute} effect, it discards
+   * all previous effects of the respective
+   * {@link Effects.EffectInterface.type | type}.
    */
   readonly add: (effect: Effect) => this;
 
   /**
    * Returns a new **live** copy of the composition, where each effect is
-   * {@link Effect.toComposition | cloned} while preserving its handlers.
+   * {@link Effects.EffectInterface.toComposition | cloned} while preserving
+   * its handlers.
    */
   readonly clone: () => FXComposition;
 
   /**
    * Returns a new **static** copy of the composition, where each effect is
-   * {@link Effect.export | exported}, discarding its handlers.
+   * {@link Effects.EffectInterface.export | exported}, discarding its
+   * handlers.
    *
    * New effects with handlers can be added afterwards.
    */

@@ -20,7 +20,7 @@ import { roundNumTo } from "@lisn/utils/math";
  * If `value` is a string, it is lower-cased and trimmed of whitespace before
  * comparing.
  *
- * @param The value to return in case `value` is an empty string
+ * @category Misc
  */
 export const toBoolean = (value: unknown, emptyStr = true) => {
   if (_.isLiteralString(value)) {
@@ -41,6 +41,8 @@ export const toBoolean = (value: unknown, emptyStr = true) => {
  * @deprecated
  *
  * Deprecated alias for {@link toBoolean}
+ *
+ * @category Misc
  */
 export const toBool = toBoolean;
 
@@ -50,6 +52,8 @@ export const toBool = toBoolean;
  * If given value is `null` or `undefined` it returns an empty array.
  *
  * Otherwise it returns an array with the value as the only element.
+ *
+ * @category Misc
  */
 export const toIterableIfNot = <T>(
   value?: T | Iterable<T> | null | undefined,
@@ -59,6 +63,8 @@ export const toIterableIfNot = <T>(
 /**
  * Returns true if the two objects are equal. If values are numeric, it will
  * round to the given number of decimal places.
+ *
+ * @category Misc
  */
 export const compareValuesIn = <T extends NestedRecord<V>, V>(
   objA: T,

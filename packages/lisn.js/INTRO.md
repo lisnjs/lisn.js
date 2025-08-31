@@ -97,7 +97,8 @@ Triggers are actually a special kind of a widget.
 ## Importing it
 
 Everything is available for importing from the main entry point `"lisn.js"`, but
-there are also sub-exports available, that correspond to the respective group:
+there are also sub-exports available, that correspond to the respective
+top-level group:
 
 - `"lisn.js/watchers"`
 - `"lisn.js/triggers"`

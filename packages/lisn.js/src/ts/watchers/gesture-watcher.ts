@@ -1,5 +1,5 @@
 /**
- * @module Watchers/GestureWatcher
+ * @module Watchers
  */
 
 import * as _ from "@lisn/_internal";
@@ -69,6 +69,8 @@ import debug from "@lisn/debug/debug";
  *
  * It manages registered callbacks globally and reuses event listeners for more
  * efficient performance.
+ *
+ * @category GestureWatcher
  */
 export class GestureWatcher {
   /**
@@ -452,6 +454,8 @@ export class GestureWatcher {
 
 /**
  * @interface
+ *
+ * @category GestureWatcher
  */
 export type GestureWatcherConfig = {
   /**
@@ -524,6 +528,8 @@ export type GestureWatcherConfig = {
 
 /**
  * @interface
+ *
+ * @category GestureWatcher
  */
 export type OnGestureOptions = {
   /**
@@ -716,6 +722,8 @@ export type OnGestureOptions = {
  *   last time the callback was called and since the callback was added.
  * - The list of events that constituted the gesture.
  * - (since v1.3.0) The {@link GestureWatcher} instance.
+ *
+ * @category GestureWatcher
  */
 export type OnGestureHandlerArgs = [
   EventTarget,
@@ -723,11 +731,20 @@ export type OnGestureHandlerArgs = [
   Event[],
   GestureWatcher,
 ];
+/**
+ * @category GestureWatcher
+ */
 export type OnGestureCallback = Callback<OnGestureHandlerArgs>;
+/**
+ * @category GestureWatcher
+ */
 export type OnGestureHandler =
   | CallbackHandler<OnGestureHandlerArgs>
   | OnGestureCallback;
 
+/**
+ * @category GestureWatcher
+ */
 export type GestureData = {
   device: GestureDevice;
   direction: Direction;

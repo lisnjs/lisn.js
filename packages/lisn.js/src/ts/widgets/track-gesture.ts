@@ -1,5 +1,13 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription Tracking interactions
+ * {@link TrackGesture}, {@link Widgets.TrackSize}, {@link Widgets.TrackScroll}
+ * and {@link Widgets.TrackView} are simple wrappers around the respective
+ * {@link Watchers} for use with the HTML API>
+ *
+ * If you are using the JavaScript API, you should use the {@link Watchers}
+ * directly.
  */
 
 import * as _ from "@lisn/_internal";
@@ -53,6 +61,8 @@ import {
  *                               | max-delta-z=2"
  * ></div>
  * ```
+ *
+ * @category Tracking interactions
  */
 export class TrackGesture extends Widget {
   static get(element: Element): TrackGesture | null {
@@ -95,11 +105,13 @@ export class TrackGesture extends Widget {
 
 /**
  * @interface
+ *
+ * @category Tracking interactions
  */
 export type TrackGestureConfig = {
   /**
    * Corresponds to
-   * {@link Watchers/GestureWatcher.OnGestureOptions.preventDefault | OnGestureOptions.preventDefault}.
+   * {@link Watchers.OnGestureOptions.preventDefault | OnGestureOptions.preventDefault}.
    *
    * @defaultValue undefined // GestureWatcher default
    */
@@ -107,7 +119,7 @@ export type TrackGestureConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/GestureWatcher.OnGestureOptions.minTotalDeltaX | OnGestureOptions.minTotalDeltaX}.
+   * {@link Watchers.OnGestureOptions.minTotalDeltaX | OnGestureOptions.minTotalDeltaX}.
    *
    * @defaultValue undefined // GestureWatcher default
    */
@@ -115,7 +127,7 @@ export type TrackGestureConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/GestureWatcher.OnGestureOptions.maxTotalDeltaX | OnGestureOptions.maxTotalDeltaX}.
+   * {@link Watchers.OnGestureOptions.maxTotalDeltaX | OnGestureOptions.maxTotalDeltaX}.
    *
    * @defaultValue undefined // GestureWatcher default
    */
@@ -123,7 +135,7 @@ export type TrackGestureConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/GestureWatcher.OnGestureOptions.minTotalDeltaY | OnGestureOptions.minTotalDeltaY}.
+   * {@link Watchers.OnGestureOptions.minTotalDeltaY | OnGestureOptions.minTotalDeltaY}.
    *
    * @defaultValue undefined // GestureWatcher default
    */
@@ -131,7 +143,7 @@ export type TrackGestureConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/GestureWatcher.OnGestureOptions.maxTotalDeltaY | OnGestureOptions.maxTotalDeltaY}.
+   * {@link Watchers.OnGestureOptions.maxTotalDeltaY | OnGestureOptions.maxTotalDeltaY}.
    *
    * @defaultValue undefined // GestureWatcher default
    */
@@ -139,7 +151,7 @@ export type TrackGestureConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/GestureWatcher.OnGestureOptions.minTotalDeltaZ | OnGestureOptions.minTotalDeltaZ}.
+   * {@link Watchers.OnGestureOptions.minTotalDeltaZ | OnGestureOptions.minTotalDeltaZ}.
    *
    * @defaultValue undefined // GestureWatcher default
    */
@@ -147,7 +159,7 @@ export type TrackGestureConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/GestureWatcher.OnGestureOptions.maxTotalDeltaZ | OnGestureOptions.maxTotalDeltaZ}.
+   * {@link Watchers.OnGestureOptions.maxTotalDeltaZ | OnGestureOptions.maxTotalDeltaZ}.
    *
    * @defaultValue undefined // GestureWatcher default
    */

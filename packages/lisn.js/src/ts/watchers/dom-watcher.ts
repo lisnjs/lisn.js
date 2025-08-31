@@ -1,5 +1,5 @@
 /**
- * @module Watchers/DOMWatcher
+ * @module Watchers
  */
 
 import * as _ from "@lisn/_internal";
@@ -48,6 +48,8 @@ import debug from "@lisn/debug/debug";
  * {@link https://developer.mozilla.org/en-US/docs/Web/API/Node | Node}s
  * (non-{@link https://developer.mozilla.org/en-US/docs/Web/API/Element | Element})
  * are not supported.
+ *
+ * @category DOMWatcher
  */
 export class DOMWatcher {
   /**
@@ -466,6 +468,8 @@ export class DOMWatcher {
 
 /**
  * @interface
+ *
+ * @category DOMWatcher
  */
 export type DOMWatcherConfig = {
   /**
@@ -489,6 +493,8 @@ export type DOMWatcherConfig = {
 
 /**
  * @interface
+ *
+ * @category DOMWatcher
  */
 export type OnMutationOptions = {
   /**
@@ -537,6 +543,9 @@ export type OnMutationOptions = {
   skipInitial?: boolean;
 };
 
+/**
+ * @category DOMWatcher
+ */
 export type MoveOptions = AtLeastOne<{
   /**
    * If to is missing or null, it's a removal operation.
@@ -549,6 +558,9 @@ export type MoveOptions = AtLeastOne<{
   from: Element | null;
 }>;
 
+/**
+ * @category DOMWatcher
+ */
 export type MutationOperation = {
   /**
    * The target that was changed (added, removed or had a change of attributes).
@@ -602,9 +614,17 @@ export type MutationOperation = {
  * The handler could be invoked multiple times in each "round" (cycle of event
  * loop) if there are mutation operations for more than one element that match
  * the supplied {@link OnMutationOptions}.
+ *
+ * @category DOMWatcher
  */
 export type OnMutationHandlerArgs = [MutationOperation, DOMWatcher];
+/**
+ * @category DOMWatcher
+ */
 export type OnMutationCallback = Callback<OnMutationHandlerArgs>;
+/**
+ * @category DOMWatcher
+ */
 export type OnMutationHandler =
   | CallbackHandler<OnMutationHandlerArgs>
   | OnMutationCallback;

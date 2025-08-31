@@ -150,9 +150,9 @@ import debug from "@lisn/debug/debug";
  * ```
  *
  * @example
- * As above but using a custom {@link Watchers/ViewWatcher.ViewWatcherConfig.root | root},
- * {@link Watchers/ViewWatcher.ViewWatcherConfig.rootMargin | rootMargin} and
- * {@link Watchers/ViewWatcher.ViewWatcherConfig.threshold | threshold} for the
+ * As above but using a custom {@link Watchers.ViewWatcherConfig.root | root},
+ * {@link Watchers.ViewWatcherConfig.rootMargin | rootMargin} and
+ * {@link Watchers.ViewWatcherConfig.threshold | threshold} for the
  * {@link ViewWatcher}.
  *
  * ```html
@@ -261,7 +261,8 @@ export class ViewTrigger extends Trigger {
 export type ViewTriggerConfig = TriggerConfig & {
   /**
    * The {@link View} to use as the trigger.
-   * See also {@link Watchers/ViewWatcher.OnViewOptions | OnViewOptions}
+   *
+   * See also {@link Watchers.OnViewOptions | OnViewOptions}.
    *
    * Actions will be "done" when the view matches the given spec and "undone"
    * otherwise. What the opposite views are depends on the given view. E.g. for
@@ -275,7 +276,8 @@ export type ViewTriggerConfig = TriggerConfig & {
   /**
    * The target to use for the ViewWatcher. It can be a string offset
    * specification.
-   * See {@link Watchers/ViewWatcher.OnViewOptions | OnViewOptions}
+   *
+   * See {@link Watchers.OnViewOptions | OnViewOptions}.
    *
    * @defaultValue The element on which the {@link ViewTrigger} is defined
    */
@@ -283,7 +285,8 @@ export type ViewTriggerConfig = TriggerConfig & {
 
   /**
    * The root to pass to the {@link ViewWatcher}.
-   * See also {@link Watchers/ViewWatcher.ViewWatcherConfig | ViewWatcherConfig}
+   *
+   * See also {@link Watchers.ViewWatcherConfig | ViewWatcherConfig}.
    *
    * @defaultValue {@link ViewWatcher} default
    */
@@ -291,17 +294,25 @@ export type ViewTriggerConfig = TriggerConfig & {
 
   /**
    * The root margin to pass to the {@link ViewWatcher}.
-   * See also {@link Watchers/ViewWatcher.ViewWatcherConfig | ViewWatcherConfig}
+   *
+   * See also {@link Watchers.ViewWatcherConfig | ViewWatcherConfig}.
    *
    * @defaultValue {@link ViewWatcher} default
    */
   rootMargin?:
+    | number
     | string
-    | { top?: number; right?: number; bottom?: number; left?: number };
+    | {
+        top?: number | string;
+        right?: number | string;
+        bottom?: number | string;
+        left?: number | string;
+      };
 
   /**
    * The threshold to pass to the {@link ViewWatcher}.
-   * See also {@link Watchers/ViewWatcher.ViewWatcherConfig | ViewWatcherConfig}
+   *
+   * See also {@link Watchers.ViewWatcherConfig | ViewWatcherConfig}.
    *
    * @defaultValue {@link ViewWatcher} default
    */

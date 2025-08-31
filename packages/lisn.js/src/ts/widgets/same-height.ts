@@ -1,5 +1,11 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription SameHeight
+ * {@link SameHeight} sets up the given element as a flexbox and sets the
+ * flex basis of its components so that their heights are as close as possible
+ * to each other. It tracks their size (see {@link SizeWatcher}) and
+ * continually updates the basis as needed.
  */
 
 // This widget finds optimal widths of flexbox children so that their heights
@@ -486,6 +492,8 @@ import debug from "@lisn/debug/debug";
  *   </div>
  * </div>
  * ```
+ *
+ * @category SameHeight
  */
 export class SameHeight extends Widget {
   /**
@@ -594,6 +602,8 @@ export class SameHeight extends Widget {
 
 /**
  * @interface
+ *
+ * @category SameHeight
  */
 export type SameHeightConfig = {
   /**

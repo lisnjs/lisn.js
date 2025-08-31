@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <script src="assets/js/lisn.link.js" charset="utf-8"></script>
+    <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
+    <link
+      rel="stylesheet"
+      href="assets/lisn/css/lisn.css"
+      type="text/css"
+      media="screen"
+      charset="utf-8"
+    />
+    <style type="text/css" media="screen">
+      .section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .box {
+        background: blue;
+        flex-grow: 1;
+        width: 200px;
+        height: 10px;
+      }
+
+      .box:nth-child(odd) {
+        background: yellow;
+        width: 300px;
+      }
+
+      .spacer {
+        height: 200vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spacer"></div>
+
+    <div class="section">
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+      <span class="box"></span>
+    </div>
+
+    <div class="spacer"></div>
+    <div class="spacer"></div>
+
+    <script>
+      const {
+        FXComposer,
+        FXScrollTrigger,
+        FXPin,
+        FXViewMatcher,
+        FXScrollMatcher,
+        Transform,
+      } = LISN.effects;
+
+      const section = document.querySelector(".section");
+
+      const trigger = new FXScrollTrigger();
+      const sectionInView = new FXViewMatcher("at", section);
+      const sectionInCentre = new FXViewMatcher("at", section, {
+        rootMargin: { top: "-50%", bottom: "-50%" },
+      });
+    </script>
+  </body>
+</html>

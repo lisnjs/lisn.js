@@ -1,5 +1,5 @@
 /**
- * @module Watchers/ScrollWatcher
+ * @module Watchers
  */
 
 import * as _ from "@lisn/_internal";
@@ -58,6 +58,9 @@ import { SizeWatcher } from "@lisn/watchers/size-watcher";
 import debug from "@lisn/debug/debug";
 
 // re-export for convenience
+/**
+ * @category ScrollWatcher
+ */
 export type { ScrollAction, ScrollToOptions } from "@lisn/utils/scroll";
 
 /**
@@ -65,6 +68,8 @@ export type { ScrollAction, ScrollToOptions } from "@lisn/utils/scroll";
  *
  * It manages registered callbacks globally and reuses event listeners for more
  * efficient performance.
+ *
+ * @category ScrollWatcher
  */
 export class ScrollWatcher {
   /**
@@ -815,6 +820,8 @@ export class ScrollWatcher {
 
 /**
  * @interface
+ *
+ * @category ScrollWatcher
  */
 export type ScrollWatcherConfig = {
   /**
@@ -847,6 +854,8 @@ export type ScrollWatcherConfig = {
 
 /**
  * @interface
+ *
+ * @category ScrollWatcher
  */
 export type OnScrollOptions = {
   /**
@@ -948,6 +957,8 @@ export type OnScrollOptions = {
 
 /**
  * @interface
+ *
+ * @category ScrollWatcher
  */
 export type ScrollOptions = ScrollToOptions & {
   /**
@@ -983,6 +994,8 @@ export type ScrollOptions = ScrollToOptions & {
  *   scroll direction, then this will be the data when it was last invoked. Will
  *   be `undefined` during the initial call.
  * - (since v1.3.0) The {@link ScrollWatcher} instance.
+ *
+ * @category ScrollWatcher
  */
 export type OnScrollHandlerArgs = [
   Element,
@@ -990,11 +1003,20 @@ export type OnScrollHandlerArgs = [
   ScrollData | undefined,
   ScrollWatcher,
 ];
+/**
+ * @category ScrollWatcher
+ */
 export type OnScrollCallback = Callback<OnScrollHandlerArgs>;
+/**
+ * @category ScrollWatcher
+ */
 export type OnScrollHandler =
   | CallbackHandler<OnScrollHandlerArgs>
   | OnScrollCallback;
 
+/**
+ * @category ScrollWatcher
+ */
 export type ScrollData = {
   clientWidth: number;
   clientHeight: number;

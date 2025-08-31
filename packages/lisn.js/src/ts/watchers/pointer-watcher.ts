@@ -1,5 +1,5 @@
 /**
- * @module Watchers/PointerWatcher
+ * @module Watchers
  */
 
 import * as _ from "@lisn/_internal";
@@ -30,6 +30,8 @@ import { createXWeakMap } from "@lisn/modules/x-map";
 /**
  * {@link PointerWatcher} listens for simple pointer actions like clicks, press
  * and hold or hover.
+ *
+ * @category PointerWatcher
  */
 export class PointerWatcher {
   /**
@@ -173,6 +175,8 @@ export class PointerWatcher {
 
 /**
  * @interface
+ *
+ * @category PointerWatcher
  */
 export type PointerWatcherConfig = {
   /**
@@ -196,6 +200,8 @@ export type PointerWatcherConfig = {
 
 /**
  * @interface
+ *
+ * @category PointerWatcher
  */
 export type OnPointerOptions = {
   /**
@@ -245,6 +251,8 @@ export type OnPointerOptions = {
  * - The {@link PointerActionData} describing the state of the action.
  * - The event that triggered the action.
  * - (since v1.3.0) The {@link PointerWatcher} instance.
+ *
+ * @category PointerWatcher
  */
 export type OnPointerHandlerArgs = [
   EventTarget,
@@ -252,11 +260,20 @@ export type OnPointerHandlerArgs = [
   Event,
   PointerWatcher,
 ];
+/**
+ * @category PointerWatcher
+ */
 export type OnPointerCallback = Callback<OnPointerHandlerArgs>;
+/**
+ * @category PointerWatcher
+ */
 export type OnPointerHandler =
   | CallbackHandler<OnPointerHandlerArgs>
   | OnPointerCallback;
 
+/**
+ * @category PointerWatcher
+ */
 export type PointerActionData = {
   action: PointerAction;
   state: "ON" | "OFF";

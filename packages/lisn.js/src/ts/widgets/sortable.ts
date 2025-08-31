@@ -1,5 +1,12 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription Sortable
+ * {@link Sortable} allows the user to reorder elements by dragging and
+ * dropping. It works on touch devices as well. However, it does not yet
+ * support automatic scrolling when dragging beyond edge of screen on mobile
+ * devices. For this, you may want to use
+ * {@link https://github.com/SortableJS/Sortable | SortableJS} instead.
  */
 
 import * as _ from "@lisn/_internal";
@@ -94,6 +101,8 @@ import {
  *   <div class="box">Item 4</div>
  * </div>
  * ```
+ *
+ * @category Sortable
  */
 export class Sortable extends Widget {
   /**
@@ -243,6 +252,8 @@ export class Sortable extends Widget {
 
 /**
  * @interface
+ *
+ * @category Sortable
  */
 export type SortableConfig = {
   /**

@@ -142,14 +142,11 @@ export const toNumWithBounds = <D extends number | false | null = number>(
 };
 
 /**
- * Used as a custom calculator for {@link toRawNum}. The function should return
- * the final numerical result.
- *
  * @since v1.3.0
  *
  * @category Math
  */
-export type RawNumberCalculator = (props: {
+export type RawNumberCalculatorProps = {
   /**
    * The original value passed to {@link toRawNum}
    */
@@ -173,12 +170,22 @@ export type RawNumberCalculator = (props: {
    * prefix)
    */
   numerical: number;
-}) => number;
+};
 
 /**
- * Converts the given {@link RawOrRelativeNumber} to a raw number using the
- * given reference or calculator function. If the final result is invalid, the
- * default is returned.
+ * Used as a custom calculator for {@link toRawNum}. The function should return
+ * the final numerical result.
+ *
+ * @since v1.3.0
+ *
+ * @category Math
+ */
+export type RawNumberCalculator = (props: RawNumberCalculatorProps) => number;
+
+/**
+ * Converts the given {@link Types.RawOrRelativeNumber | RawOrRelativeNumber} to
+ * a raw number using the given reference or calculator function. If the final
+ * result is invalid, the default is returned.
  *
  * The default calculation process, if `input` is relative and if
  * `referenceOrCalculator` is only a number is as follows:

@@ -132,6 +132,7 @@ import { WidgetConfigValidatorFunc } from "@lisn/widgets/widget";
  *      data-lisn-on-run="@show +id=my-trigger"
  * ></div>
  * <div data-lisn-ref="box"></div>
+ * ```
  *
  * @category Layout
  */
@@ -214,14 +215,16 @@ export class LayoutTrigger extends Trigger {
 }
 
 /**
- * @category Layout
  * @interface
+ *
+ * @category Layout
  */
 export type LayoutTriggerConfig = TriggerConfig & {
   /**
    * The {@link DeviceSpec} or {@link AspectRatioSpec} to use. Required.
-   * See {@link Watchers/LayoutWatcher.OnLayoutOptions | OnLayoutOptions} for
-   * accepted formats.
+   *
+   * See {@link Watchers.OnLayoutOptions | OnLayoutOptions} for accepted
+   * formats.
    *
    * Actions will be "done" when the layout of the root matches the given spec
    * and "undone" otherwise.
@@ -230,7 +233,8 @@ export type LayoutTriggerConfig = TriggerConfig & {
 
   /**
    * The root to use for the {@link LayoutWatcher}.
-   * See {@link Watchers/LayoutWatcher.LayoutWatcherConfig | LayoutWatcherConfig}
+   *
+   * See {@link Watchers.LayoutWatcherConfig | LayoutWatcherConfig}.
    *
    * @defaultValue {@link LayoutWatcher} default, the viewport
    */

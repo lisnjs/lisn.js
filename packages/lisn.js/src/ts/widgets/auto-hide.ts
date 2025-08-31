@@ -1,5 +1,10 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription AutoHide
+ * {@link AutoHide} automatically hides (and optionally removes) the given
+ * element, or children of it that match a given selector, after a certain
+ * delay.
  */
 
 import * as _ from "@lisn/_internal";
@@ -87,6 +92,8 @@ import {
  *   </p>
  * </div>
  * ```
+ *
+ * @category AutoHide
  */
 export class AutoHide extends Widget {
   static get(element: Element, id: string): AutoHide | null {
@@ -179,6 +186,8 @@ export class AutoHide extends Widget {
 
 /**
  * @interface
+ *
+ * @category AutoHide
  */
 export type AutoHideConfig = {
   /**

@@ -1,5 +1,5 @@
 /**
- * @module Watchers/LayoutWatcher
+ * @module Watchers
  */
 
 // NOTES FOR DEVELOPERS
@@ -99,6 +99,8 @@ import debug from "@lisn/debug/debug";
  *
  * It manages registered callbacks globally and reuses IntersectionObservers
  * for more efficient performance.
+ *
+ * @category LayoutWatcher
  */
 export class LayoutWatcher {
   /**
@@ -358,6 +360,8 @@ export class LayoutWatcher {
 
 /**
  * @interface
+ *
+ * @category LayoutWatcher
  */
 export type LayoutWatcherConfig = {
   /**
@@ -390,6 +394,8 @@ export type LayoutWatcherConfig = {
 
 /**
  * @interface
+ *
+ * @category LayoutWatcher
  */
 export type OnLayoutOptions = {
   /**
@@ -465,9 +471,17 @@ export type OnLayoutOptions = {
  *
  * - The current {@link LayoutData}.
  * - (since v1.3.0) The {@link LayoutWatcher} instance.
+ *
+ * @category LayoutWatcher
  */
 export type OnLayoutHandlerArgs = [LayoutData, LayoutWatcher];
+/**
+ * @category LayoutWatcher
+ */
 export type OnLayoutCallback = Callback<OnLayoutHandlerArgs>;
+/**
+ * @category LayoutWatcher
+ */
 export type OnLayoutHandler =
   | CallbackHandler<OnLayoutHandlerArgs>
   | OnLayoutCallback;
@@ -478,6 +492,8 @@ export type OnLayoutHandler =
  * happen if the narrowest device/aspect ratio is _not_ 0-width (which is not
  * the case with the default breakpoints and is against the recommendation for
  * setting breakpoints.
+ *
+ * @category LayoutWatcher
  */
 export type LayoutData = {
   device: Device | null;

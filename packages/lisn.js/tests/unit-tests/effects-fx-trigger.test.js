@@ -1,13 +1,8 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { Callback } = window.LISN.modules;
-const {
-  FXTrigger,
-  FXProxyTrigger,
-  FXScrollTrigger,
-  FXGestureTrigger,
-  FX_TRIGGER,
-} = window.LISN.effects;
+const { FXTrigger, FXProxyTrigger, FXScrollTrigger, FXGestureTrigger } =
+  window.LISN.effects;
 
 const diffTolerance = 20; // in percent
 
@@ -561,12 +556,6 @@ describe("FXProxyTrigger", () => {
     expect(transformFn).toHaveBeenCalledWith("A");
     expect(received).toEqual(["B"]);
   });
-
-  test("in FX_TRIGGER", () => {
-    const { trigger: proxied } = newTrigger();
-    expect(FX_TRIGGER.proxy).not.toBeUndefined();
-    expect(FX_TRIGGER.proxy(proxied)).toBeInstanceOf(FXProxyTrigger);
-  });
 });
 
 describe("FXScrollTrigger", () => {
@@ -629,11 +618,6 @@ describe("FXScrollTrigger", () => {
     trigger.resume();
     await window.waitFor(50);
     expect(window.numEventListeners.get(scrollable) || 0).toBeGreaterThan(0);
-  });
-
-  test("in FX_TRIGGER", () => {
-    expect(FX_TRIGGER.scroll).not.toBeUndefined();
-    expect(FX_TRIGGER.scroll()).toBeInstanceOf(FXScrollTrigger);
   });
 });
 
@@ -818,12 +802,5 @@ describe("FXGestureTrigger", () => {
     trigger.resume();
     await window.waitFor(50);
     expect(window.numEventListeners.get(target) || 0).toBeGreaterThan(0);
-  });
-
-  test("in FX_TRIGGER", () => {
-    expect(FX_TRIGGER.gesture).not.toBeUndefined();
-    expect(FX_TRIGGER.gesture(document.createElement("div"))).toBeInstanceOf(
-      FXGestureTrigger,
-    );
   });
 });

@@ -191,7 +191,8 @@ export class ScrollTrigger extends Trigger {
 export type ScrollTriggerConfig = TriggerConfig & {
   /**
    * The {@link XYDirection}s to use as the trigger.
-   * See also {@link Watchers/ScrollWatcher.OnScrollOptions | OnScrollOptions}
+   *
+   * See also {@link Watchers.OnScrollOptions | OnScrollOptions}.
    *
    * Actions will be "done" when the scroll direction is one of the given ones
    * and "undone" when it's the opposite direction. E.g. for "up" the opposite
@@ -201,7 +202,8 @@ export type ScrollTriggerConfig = TriggerConfig & {
 
   /**
    * The scrolling element target to use for the ScrollWatcher.
-   * See {@link Watchers/ScrollWatcher.OnScrollOptions | OnScrollOptions}
+   *
+   * See {@link Watchers.OnScrollOptions | OnScrollOptions}.
    *
    * @defaultValue {@link ScrollWatcher} default, the main scrolling element
    */
@@ -209,7 +211,8 @@ export type ScrollTriggerConfig = TriggerConfig & {
 
   /**
    * The scroll threshold to pass to the {@link ScrollWatcher}.
-   * See also {@link Watchers/ScrollWatcher.OnScrollOptions | OnScrollOptions}
+   *
+   * See also {@link Watchers.OnScrollOptions | OnScrollOptions}.
    *
    * @defaultValue {@link ScrollWatcher} default
    */

@@ -74,9 +74,8 @@ export interface EffectInterface<
    *
    * Calling this with no arguments essentially clones the effect.
    *
-   * **NOTE:** If any of the given effects is
-   * {@link Effect.isAbsolute | absolute}, all previous ones are discarded and
-   * the resulting effect becomes absolute.
+   * **NOTE:** If any of the given effects is {@link isAbsolute | absolute}, all
+   * previous ones are discarded and the resulting effect becomes absolute.
    */
   toComposition: (...others: S[]) => S;
 
@@ -115,9 +114,9 @@ export type FXHandler<R> = (
  */
 export type FXParams = {
   /**
-   * If the effect is {@link Effect.isAbsolute | absolute}, it is the current
-   * value for the X-axis. Otherwise it is the change in that value since the
-   * last animation frame.
+   * If the effect is {@link EffectInterface.isAbsolute | absolute}, it is the
+   * current value for the X-axis. Otherwise it is the change in that value
+   * since the last animation frame.
    *
    * Depending on each effect and effect category, it may also be scaled by the
    * parallax depth of the {@link Effects.FXComposer}.
@@ -125,15 +124,15 @@ export type FXParams = {
   x: number;
 
   /**
-   * If the effect is {@link Effect.isAbsolute | absolute}, it is the normalized
-   * {@link x} relative to the difference between {@link FXState.x.low}
-   * (`nx = 0`) to {@link FXState.x.high} (`nx = 1`). It may be below 0 or above
-   * 1 since {@link FXAxisState.low | low} and {@link FXAxisState.high | high}
-   * are only reference values used for computing this normalized parameter, and
-   * not strictly enforced.
+   * If the effect is {@link EffectInterface.isAbsolute | absolute}, it is the
+   * normalized {@link x} relative to the difference between
+   * {@link FXAxisState.low | low} (`nx = 0`) and {@link FXAxisState.high | high}
+   * (`nx = 1`). It may be below 0 or above 1 since {@link FXAxisState.low | low}
+   * and {@link FXAxisState.high | high} are only reference values used for
+   * computing this normalized parameter, and not strictly enforced.
    *
-   * If {@link FXState.x.low} equals {@link FXState.x.high}, this will always be
-   * set to 1.
+   * If {@link FXAxisState.low | low} equals {@link FXAxisState.high | high},
+   * this will always be set to 1.
    *
    * If the effect is not absolute, it is the change in the absolute normalized
    * value since the last animation frame.
@@ -254,12 +253,13 @@ export type FXAxisState = {
   target: number;
 
   /**
-   * The composer's {@link FXComposerConfig.lag | lag} for this axis.
+   * The composer's {@link Effects.FXComposerConfig.lag | lag} for this axis.
    */
   lag: number;
 
   /**
-   * The composer's {@link FXComposerConfig.depth | depth} for this axis.
+   * The composer's {@link Effects.FXComposerConfig.depth | depth} for this
+   * axis.
    */
   depth: number;
 
@@ -284,7 +284,7 @@ export type FXState = {
 
 /**
  * Add to this interface to register a new effect type. The key must match the
- * {@link Effect.type} property.
+ * {@link EffectInterface.type} property.
  *
  * @example
  *

@@ -2,6 +2,11 @@
  * @module Effects
  *
  * @since v1.3.0
+ *
+ * @categoryDescription Effects/Transform
+ * {@link Transform} controls an element's transform as a 3D matrix.
+ * It supports translation, scaling, skewing and rotation as well as
+ * setting a perspective.
  */
 
 import * as _ from "@lisn/_internal";
@@ -28,6 +33,9 @@ import {
   getHandlersFor,
 } from "@lisn/effects/effect";
 
+/**
+ * @category Effects/Transform
+ */
 export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
 
 /**
@@ -52,6 +60,8 @@ export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
  * - {@link rotate} will multiply the parameters by the depth before passing
  *   them to the handlers.
  * - {@link scale} and {@link skew} do not alter the parameters, ignoring depth.
+ *
+ * @category Effects/Transform
  */
 export class Transform implements EffectInterface<"transform", Transform> {
   readonly type = "transform";
@@ -167,8 +177,8 @@ export class Transform implements EffectInterface<"transform", Transform> {
   /**
    * Adds a translation handler.
    *
-   * The handler receives scaled {@link Effects.FXParams | parameters}, divided
-   * by the parallax depth along the respective axis.
+   * The handler receives scaled {@link Effects.FXParams | parameters},
+   * divided by the parallax depth along the respective axis.
    */
   readonly translate: (handler: FXHandler<TranslateHandlerReturn>) => this;
 
@@ -443,6 +453,8 @@ export class Transform implements EffectInterface<"transform", Transform> {
  * not absolute.
  *
  * Returning `undefined` should leave the current value unchanged.
+ *
+ * @category Effects/Transform
  */
 export type PerspectiveHandlerReturn = number | null;
 
@@ -450,6 +462,8 @@ export type PerspectiveHandlerReturn = number | null;
  * Should return the translation distances along one or more axes.
  *
  * Returning `undefined` should leave the current value unchanged.
+ *
+ * @category Effects/Transform
  */
 export type TranslateHandlerReturn = AtLeastOne<{
   /**
@@ -478,6 +492,8 @@ export type TranslateHandlerReturn = AtLeastOne<{
  * Should return the scaling factor along one or more axes.
  *
  * Returning `undefined` should leave the current value unchanged.
+ *
+ * @category Effects/Transform
  */
 export type ScaleHandlerReturn = AtLeastOne<{
   /**
@@ -525,6 +541,8 @@ export type ScaleHandlerReturn = AtLeastOne<{
  * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
  *
  * Returning `undefined` should leave the current value unchanged.
+ *
+ * @category Effects/Transform
  */
 export type SkewHandlerReturn = AtLeastOne<{
   /**
@@ -554,6 +572,8 @@ export type SkewHandlerReturn = AtLeastOne<{
  * Should return the rotation angle and axis of rotation.
  *
  * Returning `undefined` should leave the current value unchanged.
+ *
+ * @category Effects/Transform
  */
 export type RotateHandlerReturn = {
   /**
@@ -569,17 +589,21 @@ export type RotateHandlerReturn = {
   axis?: Axis;
 };
 
+/**
+ * @category Effects/Transform
+ */
 export type TransformConfig = {
   /**
    * If true, the {@link FXHandler | handlers} receive absolute
-   * {@link Effects.FXParams | parameters} and each call to {@link update} will
-   * reset the transform back to the identity one.
+   * {@link Effects.FXParams | parameters} and each call to
+   * {@link Transform.update | update} will reset the transform back to the
+   * identity one.
    *
    * Otherwise, the handlers receive delta values reflecting the change in
    * parameters since the last animation frame and the transform's matrix is
-   * preserved between calls to {@link update}. The handler's return multiplies
-   * the transform. For perspective, the handler's return is added to the
-   * current value.
+   * preserved between calls to {@link Transform.update | update}. The handler's
+   * return multiplies the transform. For perspective, the handler's return is
+   * added to the current value.
    *
    * @defaultValue false
    */

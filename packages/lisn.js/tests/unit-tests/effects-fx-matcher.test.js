@@ -13,7 +13,6 @@ const {
   FXPin,
   FXComposer,
   FXTrigger,
-  FX_MATCH,
 } = window.LISN.effects;
 
 const newMatcher = (Class = FXMatcher, executorBody) => {
@@ -648,13 +647,6 @@ describe("FXNegateMatcher", () => {
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(2); // no new calls
   });
-
-  test("in FX_MATCH", () => {
-    expect(FX_MATCH.negate).not.toBeUndefined();
-    expect(FX_MATCH.negate(newMatcher().matcher)).toBeInstanceOf(
-      FXNegateMatcher,
-    );
-  });
 });
 
 describe("FXPinMatcher", () => {
@@ -838,11 +830,6 @@ describe("FXPinMatcher", () => {
 
     await window.waitFor(0); // callbacks are async
     expect(cbk).toHaveBeenCalledTimes(2); // no new calls
-  });
-
-  test("in FX_MATCH", () => {
-    expect(FX_MATCH.pin).not.toBeUndefined();
-    expect(FX_MATCH.pin(new FXPin())).toBeInstanceOf(FXPinMatcher);
   });
 });
 
@@ -1406,13 +1393,6 @@ describe("FXComposerMatcher", () => {
       expect(matcher.matches()).toBe(true);
     });
   }
-
-  test("in FX_MATCH", () => {
-    expect(FX_MATCH.composer).not.toBeUndefined();
-    expect(
-      FX_MATCH.composer({ max: { x: 10 } }, new FXComposer()),
-    ).toBeInstanceOf(FXComposerMatcher);
-  });
 });
 
 describe("FXScrollMatcher", () => {
@@ -2074,13 +2054,6 @@ describe("FXScrollMatcher", () => {
     await window.waitFor(50);
     expect(window.numEventListeners.get(scrollable) || 0).toBeGreaterThan(0);
   });
-
-  test("in FX_MATCH", () => {
-    expect(FX_MATCH.scroll).not.toBeUndefined();
-    expect(FX_MATCH.scroll({ max: { top: 10 } })).toBeInstanceOf(
-      FXScrollMatcher,
-    );
-  });
 });
 
 describe("FXViewMatcher", () => {
@@ -2111,9 +2084,4 @@ describe("FXViewMatcher", () => {
   });
 
   // TODO more tests
-
-  test("in FX_MATCH", () => {
-    expect(FX_MATCH.view).not.toBeUndefined();
-    expect(FX_MATCH.view("at", "top: 100px")).toBeInstanceOf(FXViewMatcher);
-  });
 });

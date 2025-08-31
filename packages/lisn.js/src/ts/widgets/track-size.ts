@@ -47,6 +47,8 @@ import {
  * ```html
  * <div data-lisn-track-size="threshold=0 | debounce-window=0"></div>
  * ```
+ *
+ * @category Tracking interactions
  */
 export class TrackSize extends Widget {
   static get(element: Element): TrackSize | null {
@@ -91,11 +93,13 @@ export class TrackSize extends Widget {
  * @interface
  *
  * @since v1.2.0
+ *
+ * @category Tracking interactions
  */
 export type TrackSizeConfig = {
   /**
    * Corresponds to
-   * {@link Watchers/SizeWatcher.OnResizeOptions.threshold | OnResizeOptions.threshold}.
+   * {@link Watchers.OnResizeOptions.threshold | OnResizeOptions.threshold}.
    *
    * @defaultValue undefined // SizeWatcher default
    */
@@ -103,7 +107,7 @@ export type TrackSizeConfig = {
 
   /**
    * Corresponds to
-   * {@link Watchers/SizeWatcher.OnResizeOptions.debounceWindow | OnResizeOptions.debounceWindow}.
+   * {@link Watchers.OnResizeOptions.debounceWindow | OnResizeOptions.debounceWindow}.
    *
    * @defaultValue undefined // SizeWatcher default
    */

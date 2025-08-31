@@ -377,14 +377,14 @@ export type PointerTriggerConfig = TriggerConfig & {
   target?: Element;
 
   /**
-   * See {@link Watchers/PointerWatcher.OnPointerOptions | OnPointerOptions}.
+   * See {@link Watchers.OnPointerOptions | OnPointerOptions}.
    *
    * @defaultValue {@link PointerWatcher} default, false
    */
   preventDefault?: boolean;
 
   /**
-   * See {@link Watchers/PointerWatcher.OnPointerOptions | OnPointerOptions}.
+   * See {@link Watchers.OnPointerOptions | OnPointerOptions}.
    *
    * @defaultValue {@link PointerWatcher} default, true
    */

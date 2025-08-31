@@ -1,5 +1,21 @@
 /**
  * @module Widgets
+ *
+ * @categoryDescription Openables
+ * {@link Collapsible} sets up the given element to be collapsed and
+ * expanded upon activation.
+ *
+ * {@link Popup} sets up the given element to be hidden and open in a floating
+ * popup upon activation.
+ *
+ * {@link Modal} sets up the given element to be hidden and open in a fixed
+ * full-screen modal popup upon activation.
+ *
+ * {@link Offcanvas} sets up the given element to be hidden and open in a
+ * fixed overlay (non full-screen) upon activation.
+ *
+ * Activation for any of these openables can be done manually via JavaScript
+ * or when a user clicks on any of the configured trigger elements.
  */
 
 import * as _ from "@lisn/_internal";
@@ -86,6 +102,9 @@ import {
  * Base Openable
  * ********************/
 
+/**
+ * @category Openables
+ */
 export type OpenableCreateFn<Config extends Record<string, unknown>> = (
   element: HTMLElement,
   config?: Config,
@@ -106,6 +125,8 @@ export type OpenableCreateFn<Config extends Record<string, unknown>> = (
  *                        an object, for all options supported by the widget.
  *
  * @see {@link registerWidget}
+ *
+ * @category Openables
  */
 export const registerOpenable = <Config extends Record<string, unknown>>(
   name: string,
@@ -139,6 +160,8 @@ export const registerOpenable = <Config extends Record<string, unknown>>(
  * widget of any type on this element, it will be destroyed!
  *
  * @see {@link registerOpenable}
+ *
+ * @category Openables
  */
 export abstract class Openable extends Widget {
   /**
@@ -354,6 +377,8 @@ export abstract class Openable extends Widget {
  * ```
  *
  * @interface
+ *
+ * @category Openables
  */
 export type OpenableTriggerConfig = {
   /**
@@ -436,6 +461,8 @@ export type OpenableTriggerConfig = {
  * @interface
  *
  * @since v1.2.1 Previously called `OpenableProperties`
+ *
+ * @category Openables
  */
 export type OpenableConfig = {
   /**
@@ -544,6 +571,8 @@ export type OpenableConfig = {
  * @deprecated
  *
  * Deprecated alias for {@link OpenableConfig}
+ *
+ * @category Openables
  */
 export type OpenableProperties = OpenableConfig;
 
@@ -714,6 +743,8 @@ export type OpenableProperties = OpenableConfig;
  *   </div>
  * </div>
  * ```
+ *
+ * @category Openables
  */
 export class Collapsible extends Openable {
   static register() {
@@ -837,6 +868,8 @@ export class Collapsible extends Openable {
 
 /**
  * @interface
+ *
+ * @category Openables
  */
 export type CollapsibleConfig = {
   /**
@@ -1094,6 +1127,8 @@ export type CollapsibleConfig = {
  *   </div>
  * </div>
  * ```
+ *
+ * @category Openables
  */
 export class Popup extends Openable {
   static register() {
@@ -1143,6 +1178,8 @@ export class Popup extends Openable {
 
 /**
  * @interface
+ *
+ * @category Openables
  */
 export type PopupConfig = {
   /**
@@ -1361,6 +1398,8 @@ export type PopupConfig = {
  *   </div>
  * </div>
  * ```
+ *
+ * @category Openables
  */
 export class Modal extends Openable {
   static register() {
@@ -1387,6 +1426,8 @@ export class Modal extends Openable {
 
 /**
  * @interface
+ *
+ * @category Openables
  */
 export type ModalConfig = {
   /**
@@ -1599,6 +1640,8 @@ export type ModalConfig = {
  *   </div>
  * </div>
  * ```
+ *
+ * @category Openables
  */
 export class Offcanvas extends Openable {
   static register() {
@@ -1628,6 +1671,8 @@ export class Offcanvas extends Openable {
 
 /**
  * @interface
+ *
+ * @category Openables
  */
 export type OffcanvasConfig = {
   /**

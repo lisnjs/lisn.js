@@ -1,5 +1,5 @@
 /**
- * @module Watchers/SizeWatcher
+ * @module Watchers
  */
 
 import * as _ from "@lisn/_internal";
@@ -40,6 +40,8 @@ import debug from "@lisn/debug/debug";
  *
  * Each instance of SizeWatcher manages up to two ResizeObservers: one
  * for content-box size changes and one for border-box size changes.
+ *
+ * @category SizeWatcher
  */
 export class SizeWatcher {
   /**
@@ -408,6 +410,8 @@ export class SizeWatcher {
 
 /**
  * @interface
+ *
+ * @category SizeWatcher
  */
 export type SizeWatcherConfig = {
   /**
@@ -431,6 +435,8 @@ export type SizeWatcherConfig = {
 
 /**
  * @interface
+ *
+ * @category SizeWatcher
  */
 export type OnResizeOptions = {
   /**
@@ -512,6 +518,8 @@ export type OnResizeOptions = {
  * - (since v1.3.0) The {@link SizeData} for the element when the callback was
  *   last called. Will be `undefined` during the initial call.
  * - (since v1.3.0) The {@link SizeWatcher} instance.
+ *
+ * @category SizeWatcher
  */
 export type OnResizeHandlerArgs = [
   Element,
@@ -519,11 +527,20 @@ export type OnResizeHandlerArgs = [
   SizeData | undefined,
   SizeWatcher,
 ];
+/**
+ * @category SizeWatcher
+ */
 export type OnResizeCallback = Callback<OnResizeHandlerArgs>;
+/**
+ * @category SizeWatcher
+ */
 export type OnResizeHandler =
   | CallbackHandler<OnResizeHandlerArgs>
   | OnResizeCallback;
 
+/**
+ * @category SizeWatcher
+ */
 export type SizeData = Record<Box, Size>;
 
 // ----------------------------------------

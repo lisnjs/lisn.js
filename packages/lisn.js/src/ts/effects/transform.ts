@@ -28,8 +28,6 @@ import {
   getHandlersFor,
 } from "@lisn/effects/effect";
 
-import { FXComposer } from "@lisn/effects/fx-composer";
-
 export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
 
 /**
@@ -79,7 +77,7 @@ export class Transform implements EffectInterface<"transform", Transform> {
    *                If any of the values returned by the {@link FXHandler}s
    *                is invalid.
    */
-  readonly update: (state: FXState, composer: FXComposer) => this;
+  readonly update: (state: FXState) => this;
 
   /**
    * Returns a **static copy** of the transform that has the current state/value
@@ -265,18 +263,18 @@ export class Transform implements EffectInterface<"transform", Transform> {
 
     this.isAbsolute = () => isAbsolute;
 
-    this.update = (state, composer) => {
+    this.update = (state) => {
       if (isAbsolute) {
         reset();
       }
 
-      const parameters = toParameters(state, composer, { isAbsolute });
+      const parameters = toParameters(state, { isAbsolute });
 
       for (const fn of [
         ...(perspectiveFn ? [perspectiveFn] : []),
         ...transformers,
       ]) {
-        fn(parameters, state, composer);
+        fn(parameters, state);
       }
 
       return this;
@@ -345,8 +343,8 @@ export class Transform implements EffectInterface<"transform", Transform> {
     this.toFloat32Array = (negate) => toMatrix(negate).toFloat32Array();
 
     this.perspective = (handler) => {
-      addOwnHandler(["perspective", handler], (parameters, state, composer) => {
-        const perspective = handler(parameters, state, composer);
+      addOwnHandler(["perspective", handler], (parameters, state) => {
+        const perspective = handler(parameters, state);
         if (!_.isUndefined(perspective)) {
           validateNonNegNumber("Perspective", perspective ?? 0);
 
@@ -364,10 +362,10 @@ export class Transform implements EffectInterface<"transform", Transform> {
     };
 
     this.translate = (handler) => {
-      addOwnHandler(["translate", handler], (parameters, state, composer) => {
-        parameters = scaleParameters(parameters, composer, (v, d) => v / d);
+      addOwnHandler(["translate", handler], (parameters, state) => {
+        parameters = scaleParameters(parameters, state, (v, d) => v / d);
         const result: Partial<TranslateHandlerReturn> =
-          handler(parameters, state, composer) ?? {};
+          handler(parameters, state) ?? {};
 
         if (!_.isNullish(result)) {
           const { x = 0, y = 0, z = 0 } = result;
@@ -381,9 +379,9 @@ export class Transform implements EffectInterface<"transform", Transform> {
     };
 
     this.scale = (handler) => {
-      addOwnHandler(["scale", handler], (parameters, state, composer) => {
+      addOwnHandler(["scale", handler], (parameters, state) => {
         const result: Partial<ScaleHandlerReturn> =
-          handler(parameters, state, composer) ?? {};
+          handler(parameters, state) ?? {};
 
         if (!_.isNullish(result)) {
           const { s = 1, sx = s, sy = s, sz = s, origin = [0, 0, 0] } = result;
@@ -400,9 +398,9 @@ export class Transform implements EffectInterface<"transform", Transform> {
     };
 
     this.skew = (handler) => {
-      addOwnHandler(["skew", handler], (parameters, state, composer) => {
+      addOwnHandler(["skew", handler], (parameters, state) => {
         const result: Partial<SkewHandlerReturn> =
-          handler(parameters, state, composer) ?? {};
+          handler(parameters, state) ?? {};
 
         if (!_.isNullish(result)) {
           const { deg = 0, degX = deg, degY = deg } = result;
@@ -416,10 +414,10 @@ export class Transform implements EffectInterface<"transform", Transform> {
     };
 
     this.rotate = (handler) => {
-      addOwnHandler(["rotate", handler], (parameters, state, composer) => {
-        parameters = scaleParameters(parameters, composer, (v, d) => v * d);
+      addOwnHandler(["rotate", handler], (parameters, state) => {
+        parameters = scaleParameters(parameters, state, (v, d) => v * d);
         const result: Partial<RotateHandlerReturn> =
-          handler(parameters, state, composer) ?? {};
+          handler(parameters, state) ?? {};
 
         if (!_.isNullish(result)) {
           const { deg = 0, axis = [0, 0, 1] } = result;

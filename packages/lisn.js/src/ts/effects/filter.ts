@@ -24,7 +24,6 @@ import {
   getHandlersFor,
 } from "@lisn/effects/effect";
 
-import { FXComposer } from "@lisn/effects/fx-composer";
 import { bugError, usageError } from "@lisn/globals";
 
 /**
@@ -70,7 +69,7 @@ export class Filter implements EffectInterface<"filter", Filter> {
    *                If any of the values returned by the {@link FXHandler}s
    *                is invalid.
    */
-  readonly update: (state: FXState, composer: FXComposer) => this;
+  readonly update: (state: FXState) => this;
 
   /**
    * Returns a **static copy** of the filter that has the current entries
@@ -251,16 +250,16 @@ export class Filter implements EffectInterface<"filter", Filter> {
 
     this.isAbsolute = () => isAbsolute;
 
-    this.update = (state, composer) => {
+    this.update = (state) => {
       if (isAbsolute) {
         filters = [];
       }
 
-      const parameters = toParameters(state, composer, { isAbsolute });
+      const parameters = toParameters(state, { isAbsolute });
 
       let idx = 0;
       for (const [name, handler] of handlers) {
-        const value = handler(parameters, state, composer);
+        const value = handler(parameters, state);
         if (!_.isNullish(value)) {
           const currentValue = (filters[idx] ??
             [])[1] as FilterValueMap[typeof name];

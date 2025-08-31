@@ -143,10 +143,10 @@ class DummyEffect {
 
     this.isAbsolute = () => isAbsolute;
 
-    this.update = jest.fn((fx, composer) => {
-      const dX = composer.getConfig().depthX;
-      const dY = composer.getConfig().depthY;
-      const dZ = composer.getConfig().depthZ;
+    this.update = jest.fn((fx) => {
+      const dX = fx.x.depth;
+      const dY = fx.y.depth;
+      const dZ = fx.z.depth;
       for (const p in state) {
         let a, d;
         if (p === "y" || p === "height") {
@@ -2068,7 +2068,7 @@ describe("add/getComposition/toCss", () => {
       expectedInitialMatrix.toString(),
     ); // unchanged
 
-    transformClone.update(composer.getState(), composer);
+    transformClone.update(composer.getState());
     expect(cbk).toHaveBeenCalledTimes(3);
     expect(transformClone.toCss().transform).toBe(
       expectedFinalMatrix.toString(),

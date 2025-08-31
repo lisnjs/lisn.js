@@ -19,8 +19,6 @@ import { usageError } from "@lisn/globals/errors";
 
 import { toNum } from "@lisn/utils/math";
 
-import { FXComposer } from "@lisn/effects/fx-composer";
-
 /**
  * An effect defines one or more methods that accept an {@link FXHandler} as
  * well as an {@link update} method which accepts the {@link FXState | state} of
@@ -57,7 +55,7 @@ export interface EffectInterface<
   /**
    * Updates the effect as per the given state.
    */
-  update: (state: FXState, composer: FXComposer) => this;
+  update: (state: FXState) => this;
 
   /**
    * Returns a **static copy** of the effect that has the current state/value of
@@ -109,7 +107,6 @@ export type Effect<T extends EffectType = EffectType> =
 export type FXHandler<R> = (
   parameters: FXParams,
   state: FXState,
-  composer: FXComposer,
 ) => R | undefined;
 
 /**
@@ -333,10 +330,9 @@ export type ParallaxScalerFn = (
  */
 export const toParameters = (
   state: FXState,
-  composer: FXComposer,
   options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
 ): FXParams => {
-  state = getUpdatedState(state, composer); // validate
+  state = getUpdatedState(state); // validate
   const { isAbsolute, scalerFn } = options ?? {};
 
   const getAxisParam = (axisState: FXAxisState, normalized = false) => {
@@ -367,28 +363,24 @@ export const toParameters = (
     nz: getAxisParam(state.z, true),
   };
 
-  return scalerFn
-    ? scaleParameters(parameters, composer, scalerFn)
-    : parameters;
+  return scalerFn ? scaleParameters(parameters, state, scalerFn) : parameters;
 };
 
 /**
  * Returns the parameters scaled by the given scaling function using the
- * composer's parallax depths.
+ * parallax depths in the state.
  */
 export const scaleParameters = (
   parameters: FXParams,
-  composer: FXComposer,
+  state: FXState,
   scalerFn: ParallaxScalerFn,
 ): FXParams => {
-  const { depthX, depthY, depthZ } = composer.getConfig();
-
   return {
-    x: scalerFn(parameters.x, depthX, "x"),
+    x: scalerFn(parameters.x, state.x.depth, "x"),
     nx: parameters.nx,
-    y: scalerFn(parameters.y, depthY, "y"),
+    y: scalerFn(parameters.y, state.y.depth, "y"),
     ny: parameters.ny,
-    z: scalerFn(parameters.z, depthZ, "z"),
+    z: scalerFn(parameters.z, state.z.depth, "z"),
     nz: parameters.nz,
   };
 };
@@ -398,7 +390,6 @@ export const scaleParameters = (
  * valid values for all properties.
  *
  * **NOTE:** For any axis:
- * - lag and depth are always set from the composer's configuration.
  * - If the input state has snap: true and there is no update given for this
  *   axis (`update` or `update[axis]` is `undefined`), snap is preserved.
  *   Otherwise, if there's an update given for the axis, snap is reset to
@@ -406,22 +397,16 @@ export const scaleParameters = (
  */
 export const getUpdatedState = (
   state: Partial<FXState> | undefined,
-  composer: FXComposer,
   update?: FXStateUpdate,
 ): FXState => {
   state ??= {};
   update ??= {};
 
-  const composerConfig = composer.getConfig();
-
   const toBool = (input: unknown) => (_.isBoolean(input) ? input : false);
 
   const validateAxis = (
     axisState: Partial<FXAxisState> | undefined,
-    axis: "x" | "y" | "z",
   ): FXAxisState => {
-    const axisC = axis === "x" ? "X" : axis === "y" ? "Y" : "Z";
-
     axisState ??= {};
     let { low, high } = axisState;
     low = toNum(low, 0);
@@ -430,8 +415,8 @@ export const getUpdatedState = (
       [low, high] = [high, low]; // swap
     }
 
-    const lag = composerConfig[`lag${axisC}`];
-    const depth = composerConfig[`depth${axisC}`];
+    const lag = toNum(axisState.lag, 0);
+    const depth = toNum(axisState.depth, 1);
 
     // default initial is low
     // default previous and current are initial
@@ -462,7 +447,7 @@ export const getUpdatedState = (
   };
 
   const updateAxis = (axis: "x" | "y" | "z") => {
-    const axisState = validateAxis(state[axis], axis); // validate input state
+    const axisState = validateAxis(state[axis]); // validate input state
 
     const axisUpdate = update[axis] ?? axisState;
     for (const prop of ["low", "high", "target"] as const) {
@@ -470,7 +455,7 @@ export const getUpdatedState = (
     }
     axisState.snap = toBool(axisUpdate.snap);
 
-    return validateAxis(axisState, axis); // validate final state
+    return validateAxis(axisState); // validate final state
   };
 
   return {

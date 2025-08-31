@@ -666,7 +666,7 @@ export class FXComposer {
       if (newState) {
         _.copyExistingKeysTo(newState, currentFXState);
       }
-      const validated = getUpdatedState(currentFXState, this, updateData);
+      const validated = getUpdatedState(currentFXState, updateData);
 
       const didUpdate = !compareValuesIn(currentFXState, validated, 5);
 
@@ -753,7 +753,7 @@ export class FXComposer {
           updateMode === UPDATE_ALL ||
           (updateMode === UPDATE_ABSOLUTE && link.isAbsolute())
         ) {
-          link.update(_.copyNested(currentFXState), this);
+          link.update(_.copyNested(currentFXState));
         }
 
         currentComposition.add(link);

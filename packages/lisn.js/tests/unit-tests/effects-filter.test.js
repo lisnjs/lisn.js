@@ -1,9 +1,7 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
 const { deepCopy, copyExistingKeysTo } = window.LISN._;
-const { Filter, FXComposer, toParameters } = window.LISN.effects;
-
-const DEFAULT_COMPOSER = new FXComposer();
+const { Filter, toParameters } = window.LISN.effects;
 
 const FILTER_NAMES = [
   "brightness",
@@ -150,7 +148,7 @@ describe("basic", () => {
       expect(f.toString()).toBe(DUMMY_INIT_STR);
 
       f.blur(() => 100);
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).not.toEqual(DUMMY_INIT);
       expect(DUMMY_INIT).toEqual(initCopy); // not modified
     });
@@ -205,7 +203,7 @@ describe("update", () => {
       }
       expect(f.toEntries()).toEqual([]);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(DUMMY_INIT_RESOLVED);
       expect(f.toString()).toEqual(DUMMY_INIT_RESOLVED_STR);
     });
@@ -228,11 +226,11 @@ describe("update", () => {
       // not updated yet
       expect(f.toEntries()).toEqual([]);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       hasCalled = true;
       expect(f.toEntries()).toEqual(expectedIntermediate);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expectedFinal);
     });
 
@@ -242,7 +240,7 @@ describe("update", () => {
         : newFilter(DUMMY_INIT);
       expect(f.isAbsolute()).toBe(isAbsolute);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(isAbsolute ? [] : DUMMY_INIT);
     });
 
@@ -268,10 +266,10 @@ describe("update", () => {
       // not updated yet
       expect(f.toEntries()).toEqual(DUMMY_INIT);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expectedIntermediate);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expectedFinal);
     });
 
@@ -319,11 +317,11 @@ describe("update", () => {
       // not updated yet
       expect(f.toEntries()).toEqual(mismatchingInit);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       hasCalled = true;
       expect(f.toEntries()).toEqual(expectedIntermediate);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expectedFinal);
     });
 
@@ -383,11 +381,11 @@ describe("update", () => {
       // not updated yet
       expect(f.toEntries()).toEqual(mismatchingInit);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       hasCalled = true;
       expect(f.toEntries()).toEqual(expectedIntermediate);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expectedFinal);
     });
 
@@ -400,7 +398,7 @@ describe("update", () => {
       expect(f.toEntries()).toEqual([]);
       expect(f.toString()).toBe("none");
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual([
         ["brightness", 1.5],
         ["contrast", 0.7],
@@ -411,7 +409,7 @@ describe("update", () => {
       f.brightness(() => 0.8);
       f.blur(() => 4);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual([
         ["brightness", (isAbsolute ? 1 : 2) * 1.5],
         ["contrast", (isAbsolute ? 1 : 2) * 0.7],
@@ -432,7 +430,7 @@ describe("update", () => {
       f.sepia(() => 1.2);
       f.dropShadow(() => ({ color: { h: 380, s: -10, l: 120 } }));
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual([
         ["brightness", 0],
         ["sepia", 1],
@@ -451,7 +449,7 @@ describe("update", () => {
     test(`${isAbsolute ? "absolute" : "incremental"}: returning undefined: no init`, () => {
       const f = isAbsolute ? newAbsoluteFilter() : newFilter();
       f.brightness(() => {});
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual([["brightness", null]]);
     });
 
@@ -459,7 +457,7 @@ describe("update", () => {
       const init = [["brightness", 0.3]];
       const f = isAbsolute ? newAbsoluteFilter(init) : newFilter(init);
       f.brightness(() => {});
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual([["brightness", isAbsolute ? null : 0.3]]);
     });
   }
@@ -472,31 +470,21 @@ describe("update parameters", () => {
       const cbk = jest.fn((p) => p.nx);
       f.opacity(cbk);
 
-      const params = toParameters(DUMMY_STATE, DEFAULT_COMPOSER, {
+      const params = toParameters(DUMMY_STATE, {
         isAbsolute,
       });
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
 
       expect(cbk).toHaveBeenCalledTimes(1);
-      expect(cbk).toHaveBeenNthCalledWith(
-        1,
-        params,
-        DUMMY_STATE,
-        DEFAULT_COMPOSER,
-      );
+      expect(cbk).toHaveBeenNthCalledWith(1, params, DUMMY_STATE);
 
-      f.update(DUMMY_STATE2, DEFAULT_COMPOSER);
-      const params2 = toParameters(DUMMY_STATE2, DEFAULT_COMPOSER, {
+      f.update(DUMMY_STATE2);
+      const params2 = toParameters(DUMMY_STATE2, {
         isAbsolute,
       });
 
       expect(cbk).toHaveBeenCalledTimes(2);
-      expect(cbk).toHaveBeenNthCalledWith(
-        2,
-        params2,
-        DUMMY_STATE2,
-        DEFAULT_COMPOSER,
-      );
+      expect(cbk).toHaveBeenNthCalledWith(2, params2, DUMMY_STATE2);
     });
   }
 });
@@ -515,14 +503,14 @@ describe("export", () => {
       expect(exported.isAbsolute()).toBe(isAbsolute);
 
       // update original
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(DUMMY_INIT_RESOLVED);
 
       // exported unchanged
       expect(exported.toEntries()).toEqual([]);
 
       // update exported
-      exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      exported.update(DUMMY_STATE);
 
       // original unchanged
       expect(f.toEntries()).toEqual(DUMMY_INIT_RESOLVED);
@@ -568,14 +556,14 @@ describe("export", () => {
       expect(exported.isAbsolute()).toBe(isAbsolute);
 
       // update original
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expected);
 
       // exported unchanged
       expect(exported.toEntries()).toEqual(init);
 
       // update export
-      exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      exported.update(DUMMY_STATE);
 
       // original unchanged
       expect(f.toEntries()).toEqual(expected);
@@ -597,7 +585,7 @@ describe("export", () => {
       }
       expect(f.toEntries()).toEqual([]);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       hasCalled = true;
       const newEntries = f.toEntries();
 
@@ -606,7 +594,7 @@ describe("export", () => {
       expect(exported.isAbsolute()).toBe(isAbsolute);
 
       // update original again
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       const newEntries2 = f.toEntries();
       expect(newEntries2).not.toEqual(newEntries);
 
@@ -614,7 +602,7 @@ describe("export", () => {
       expect(exported.toEntries()).toEqual(newEntries);
 
       // update exported
-      exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      exported.update(DUMMY_STATE);
 
       // static and detached from f's state and handlers and resets itself on
       // update if absolute
@@ -651,8 +639,8 @@ describe("export", () => {
     expect(f.toEntries()).toEqual([]);
     expect(exported.toEntries()).toEqual([]);
 
-    f.update(DUMMY_STATE, DEFAULT_COMPOSER);
-    exported.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    f.update(DUMMY_STATE);
+    exported.update(DUMMY_STATE);
 
     expect(f.toEntries()).toEqual(expectedO);
     expect(exported.toEntries()).toEqual(expectedE);
@@ -673,14 +661,14 @@ describe("toComposition: single (clone)", () => {
       expect(composed.isAbsolute()).toBe(isAbsolute);
 
       // update original
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(DUMMY_INIT_RESOLVED);
 
       // composed unchanged
       expect(composed.toEntries()).toEqual([]);
 
       // update composed
-      composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      composed.update(DUMMY_STATE);
 
       // original unchanged
       expect(f.toEntries()).toEqual(DUMMY_INIT_RESOLVED);
@@ -708,14 +696,14 @@ describe("toComposition: single (clone)", () => {
       expect(composed.isAbsolute()).toBe(isAbsolute);
 
       // update original
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expected);
 
       // composed unchanged
       expect(composed.toEntries()).toEqual(DUMMY_INIT);
 
       // update composed
-      composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      composed.update(DUMMY_STATE);
       expect(composed.toEntries()).toEqual(expected); // preserved handlers
 
       // original unchanged
@@ -730,7 +718,7 @@ describe("toComposition: single (clone)", () => {
       }
       expect(f.toEntries()).toEqual([]);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       hasCalled = true;
       expect(f.toEntries()).toEqual(DUMMY_INIT_RESOLVED);
 
@@ -739,7 +727,7 @@ describe("toComposition: single (clone)", () => {
       expect(composed.isAbsolute()).toBe(isAbsolute);
 
       // update original again
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       const newEntries = f.toEntries();
       expect(newEntries).not.toEqual(DUMMY_INIT_RESOLVED);
 
@@ -747,7 +735,7 @@ describe("toComposition: single (clone)", () => {
       expect(composed.toEntries()).toEqual(DUMMY_INIT_RESOLVED);
 
       // update composed
-      composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      composed.update(DUMMY_STATE);
       expect(composed.toEntries()).toEqual(newEntries); // preserved handlers
 
       // original unchanged
@@ -778,8 +766,8 @@ describe("toComposition: single (clone)", () => {
     expect(f.toEntries()).toEqual([]);
     expect(composed.toEntries()).toEqual([]);
 
-    f.update(DUMMY_STATE, DEFAULT_COMPOSER);
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    f.update(DUMMY_STATE);
+    composed.update(DUMMY_STATE);
 
     expect(f.toEntries()).toEqual(expectedO);
     expect(composed.toEntries()).toEqual(expectedE);
@@ -815,10 +803,10 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(false);
     expect(composed.toEntries()).toEqual([]);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expectedIntermediate);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expectedFinal);
 
     expect(fA.toEntries()).toEqual([]); // unchanged
@@ -863,11 +851,11 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(true);
     expect(composed.toEntries()).toEqual([]);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     hasCalled = true;
     expect(composed.toEntries()).toEqual(expectedIntermediate);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expectedFinal);
 
     expect(fA.toEntries()).toEqual([]); // unchanged
@@ -906,11 +894,11 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(true);
     expect(composed.toEntries()).toEqual([]);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     hasCalled = true;
     expect(composed.toEntries()).toEqual(expectedIntermediate);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expectedFinal);
 
     expect(fA.toEntries()).toEqual([]); // unchanged
@@ -940,10 +928,10 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(true);
     expect(composed.toEntries()).toEqual([]);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expected);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expected);
 
     expect(fA.toEntries()).toEqual([]); // unchanged
@@ -1008,7 +996,7 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(false);
     expect(composed.toEntries()).toEqual(expectedInit);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expectedFinal);
 
     expect(fA.toEntries()).toEqual(initA); // unchanged
@@ -1088,11 +1076,11 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(true);
     expect(composed.toEntries()).toEqual(expectedInit);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     hasCalled = true;
     expect(composed.toEntries()).toEqual(expectedIntermediate);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expectedFinal);
 
     expect(fA.toEntries()).toEqual(initA); // unchanged
@@ -1160,11 +1148,11 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(true);
     expect(composed.toEntries()).toEqual(expectedInit);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     hasCalled = true;
     expect(composed.toEntries()).toEqual(expectedIntermediate);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expectedFinal);
 
     expect(fA.toEntries()).toEqual(initA); // unchanged
@@ -1218,11 +1206,11 @@ describe("toComposition: multiple", () => {
     expect(composed.isAbsolute()).toBe(true);
     expect(composed.toEntries()).toEqual(expectedInit);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     hasCalled = true;
     expect(composed.toEntries()).toEqual(expectedFinal);
 
-    composed.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    composed.update(DUMMY_STATE);
     expect(composed.toEntries()).toEqual(expectedFinal);
 
     expect(fA.toEntries()).toEqual(initA); // unchanged
@@ -1259,7 +1247,7 @@ describe("toCss", () => {
       f[method](() => value ?? 1);
     }
 
-    f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    f.update(DUMMY_STATE);
     expect(f.toCss()).toEqual({ filter: DUMMY_INIT_RESOLVED_STR });
   });
 });
@@ -1292,7 +1280,7 @@ describe("toString", () => {
       f[method](() => value ?? 1);
     }
 
-    f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    f.update(DUMMY_STATE);
     expect(f.toString()).toEqual(DUMMY_INIT_RESOLVED_STR);
   });
 });
@@ -1335,13 +1323,9 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
       f[name](cbk);
       expect(cbk).toHaveBeenCalledTimes(0);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(cbk).toHaveBeenCalledTimes(1);
-      expect(cbk).toHaveBeenCalledWith(
-        DEFAULT_TWEEN_STATE,
-        DUMMY_STATE,
-        DEFAULT_COMPOSER,
-      );
+      expect(cbk).toHaveBeenCalledWith(DEFAULT_TWEEN_STATE, DUMMY_STATE);
     });
 
     for (const isAbsolute of [true, false]) {
@@ -1353,7 +1337,7 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
         const expected = isAbsolute ? [] : deepCopy(init);
         expected.push([name, null]);
 
-        f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+        f.update(DUMMY_STATE);
         expect(f.toEntries()).toEqual(expected);
       });
 
@@ -1364,7 +1348,7 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
 
         const expected = isAbsolute ? [[name, null]] : deepCopy(init);
 
-        f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+        f.update(DUMMY_STATE);
         expect(f.toEntries()).toEqual(expected);
       });
 
@@ -1375,9 +1359,7 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
             : newFilter(DUMMY_INIT);
           f[name](() => v);
 
-          expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-            /must be a number/,
-          );
+          expect(() => f.update(DUMMY_STATE)).toThrow(/must be a number/);
           expect(f.toEntries()).toEqual(isAbsolute ? [] : DUMMY_INIT);
         });
       }
@@ -1388,11 +1370,11 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
 
         expect(f.toEntries()).toEqual([]);
 
-        f.update(state, DEFAULT_COMPOSER);
+        f.update(state);
         expect(f.toEntries().length).toBe(1);
         expect(f.toEntries()[0]).toBeCloseToArray([name, state.x.current]);
 
-        f.update(state2, DEFAULT_COMPOSER);
+        f.update(state2);
         expect(f.toEntries().length).toBe(1);
         expect(f.toEntries()[0]).toBeCloseToArray([name, state2.x.current]);
       });
@@ -1406,14 +1388,14 @@ for (const name of FILTER_NAMES.filter((n) => n !== "dropShadow")) {
         expect(f.toEntries().length).toBe(1);
         expect(f.toEntries()[0]).toBeCloseToArray(init[0]);
 
-        f.update(state, DEFAULT_COMPOSER);
+        f.update(state);
         expect(f.toEntries().length).toBe(1);
         expect(f.toEntries()[0]).toBeCloseToArray([
           name,
           (isAbsolute ? 0 : initVal) + state.x.current,
         ]);
 
-        f.update(state2, DEFAULT_COMPOSER);
+        f.update(state2);
         expect(f.toEntries().length).toBe(1);
         expect(f.toEntries()[0]).toBeCloseToArray([
           name,
@@ -1451,13 +1433,9 @@ describe("dropShadow", () => {
     f.dropShadow(cbk);
     expect(cbk).toHaveBeenCalledTimes(0);
 
-    f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+    f.update(DUMMY_STATE);
     expect(cbk).toHaveBeenCalledTimes(1);
-    expect(cbk).toHaveBeenCalledWith(
-      DEFAULT_TWEEN_STATE,
-      DUMMY_STATE,
-      DEFAULT_COMPOSER,
-    );
+    expect(cbk).toHaveBeenCalledWith(DEFAULT_TWEEN_STATE, DUMMY_STATE);
   });
 
   for (const isAbsolute of [true, false]) {
@@ -1469,7 +1447,7 @@ describe("dropShadow", () => {
       const expected = isAbsolute ? [] : deepCopy(init);
       expected.push(["dropShadow", null]);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expected);
     });
 
@@ -1490,7 +1468,7 @@ describe("dropShadow", () => {
 
       const expected = isAbsolute ? [["dropShadow", null]] : deepCopy(init);
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expected);
     });
 
@@ -1536,7 +1514,7 @@ describe("dropShadow", () => {
         ];
       }
 
-      f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+      f.update(DUMMY_STATE);
       expect(f.toEntries()).toEqual(expected);
     });
 
@@ -1547,7 +1525,7 @@ describe("dropShadow", () => {
           : newFilter(DUMMY_INIT);
         f.dropShadow(() => ({ color: c }));
 
-        expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
+        expect(() => f.update(DUMMY_STATE)).toThrow(
           /must be a valid HSL\(A\) or RGB\(A\) color object/,
         );
         expect(f.toEntries()).toEqual(isAbsolute ? [] : DUMMY_INIT);
@@ -1562,9 +1540,7 @@ describe("dropShadow", () => {
             : newFilter(DUMMY_INIT);
           f.dropShadow(() => ({ [prop]: v }));
 
-          expect(() => f.update(DUMMY_STATE, DEFAULT_COMPOSER)).toThrow(
-            /must be a number/,
-          );
+          expect(() => f.update(DUMMY_STATE)).toThrow(/must be a number/);
           expect(f.toEntries()).toEqual(isAbsolute ? [] : DUMMY_INIT);
         });
       }
@@ -1582,7 +1558,7 @@ describe("dropShadow", () => {
       expect(f.toEntries()).toEqual([]);
 
       for (const s of [state, state2]) {
-        f.update(s, DEFAULT_COMPOSER);
+        f.update(s);
         const entries = f.toEntries();
         expect(entries.length).toBe(1);
         expect(entries[0][0]).toBe("dropShadow");
@@ -1620,7 +1596,7 @@ describe("dropShadow", () => {
       expect(f.toEntries()).toEqual(init);
 
       for (const s of [state, state2]) {
-        f.update(s, DEFAULT_COMPOSER);
+        f.update(s);
         const entries = f.toEntries();
         expect(entries.length).toBe(1);
         expect(entries[0][0]).toBe("dropShadow");
@@ -1665,7 +1641,7 @@ test("all filters + toCss", () => {
   expect(f.toString()).toBe("none");
   expect(f.toCss()).toEqual({ filter: "none" });
 
-  f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+  f.update(DUMMY_STATE);
   expect(f.toEntries()).toEqual([
     ["brightness", 0.1],
     ["brightness", 0.2],
@@ -1705,7 +1681,7 @@ test("all filters + toCss", () => {
   expect(f.toCss()).toEqual({ filter: f.toString() });
 
   // doubled values
-  f.update(DUMMY_STATE, DEFAULT_COMPOSER);
+  f.update(DUMMY_STATE);
   expect(f.toEntries()).toEqual([
     ["brightness", 0.2],
     ["brightness", 0.4],
@@ -1749,7 +1725,11 @@ describe("parallax depth (ignored)", () => {
   const depthX = 4,
     depthY = 3,
     depthZ = 2;
-  const composer = new FXComposer({ depthX, depthY, depthZ });
+  const state = newState({
+    x: { depth: depthX },
+    y: { depth: depthY },
+    z: { depth: depthZ },
+  });
   const cbk = jest.fn(() => 0.5);
   const cbkSh = jest.fn(() => ({
     color: { r: 10, g: 10, b: 10, a: 0.5 },
@@ -1763,14 +1743,14 @@ describe("parallax depth (ignored)", () => {
     f[name](name === "dropShadow" ? cbkSh : cbk);
   }
 
-  const params = toParameters(DUMMY_STATE, composer);
-  f.update(DUMMY_STATE, composer);
+  const params = toParameters(state);
+  f.update(state);
   expect(cbk).toHaveBeenCalledTimes(9);
   for (let i = 1; i <= 9; i++) {
-    expect(cbk).toHaveBeenNthCalledWith(i, params, DUMMY_STATE, composer);
+    expect(cbk).toHaveBeenNthCalledWith(i, params, state);
   }
   expect(cbkSh).toHaveBeenCalledTimes(1);
-  expect(cbkSh).toHaveBeenCalledWith(params, DUMMY_STATE, composer);
+  expect(cbkSh).toHaveBeenCalledWith(params, state);
 
   expect(f.toEntries()).toEqual(
     FILTER_NAMES.map((name) => [
@@ -1799,7 +1779,7 @@ test("modifying params and state inside handler", () => {
   const cbkB = jest.fn((p) => p.x);
 
   const state = newState();
-  const params = toParameters(state, DEFAULT_COMPOSER);
+  const params = toParameters(state);
 
   const stateCopy = deepCopy(state);
   const paramsCopy = deepCopy(params);
@@ -1807,13 +1787,13 @@ test("modifying params and state inside handler", () => {
   f.blur(cbkA);
   f.blur(cbkB);
 
-  f.update(state, DEFAULT_COMPOSER);
+  f.update(state);
 
   expect(cbkA).toHaveBeenCalledTimes(1);
-  expect(cbkA).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_COMPOSER);
+  expect(cbkA).toHaveBeenCalledWith(paramsCopy, stateCopy);
 
   expect(cbkB).toHaveBeenCalledTimes(1);
-  expect(cbkB).toHaveBeenCalledWith(paramsCopy, stateCopy, DEFAULT_COMPOSER);
+  expect(cbkB).toHaveBeenCalledWith(paramsCopy, stateCopy);
 
   expect(state).toEqual(stateCopy);
   expect(params).toEqual(paramsCopy);

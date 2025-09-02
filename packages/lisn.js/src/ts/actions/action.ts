@@ -5,6 +5,10 @@
  * {@link Triggers | the documentation on triggers} for the required syntax.
  *
  * @module Actions
+ *
+ * @categoryDescription Base
+ * These types, classes and functions are to be used by those who want to define
+ * their own actions.
  */
 
 import * as _ from "@lisn/_internal";
@@ -16,14 +20,17 @@ import { splitOn } from "@lisn/utils/text";
 import { WidgetConfigValidator, fetchWidgetConfig } from "@lisn/widgets/widget";
 
 /**
- * @interface
+ * @category Base
  */
-export type Action = {
+export interface Action {
   do: () => void;
   undo: () => void;
   toggle: () => void;
-};
+}
 
+/**
+ * @category Base
+ */
 export type ActionCreateFn<Config extends Record<string, unknown>> = (
   element: Element,
   args: string[],
@@ -40,6 +47,8 @@ export type ActionCreateFn<Config extends Record<string, unknown>> = (
  * @param name         The name of the action. Should be in kebab-case.
  * @param createAction Called for every action specification for a trigger
  *                     parsed by {@link Triggers.registerTrigger}
+ *
+ * @category Base
  */
 export const registerAction = <Config extends Record<string, unknown>>(
   name: string,
@@ -92,6 +101,8 @@ export const registerAction = <Config extends Record<string, unknown>>(
  *
  * @throws {@link Errors.LisnUsageError | LisnUsageError}
  *                If the given spec is not valid.
+ *
+ * @category Base
  */
 export const fetchAction = async (
   element: Element,

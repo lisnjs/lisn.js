@@ -169,6 +169,10 @@ export const PREFIX_ANIMATE_PAUSE = `${ANIMATE_PREFIX}pause`;
 export const PREFIX_ANIMATE_REVERSE = `${ANIMATE_PREFIX}${S_REVERSE}`;
 export const PREFIX_ANIMATE_INFINITE = `${ANIMATE_PREFIX}infinite`;
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type */
+export const bind = <F extends Function>(fn: F, thisArg: any): F =>
+  fn.bind(thisArg);
+
 // -------------------- String prefixing
 
 export const prefixName = (name: string) => `${PREFIX}-${name}`;
@@ -279,11 +283,11 @@ export const userAgent =
 export const onAnimationFrame = (callback: FrameRequestCallback) =>
   requestAnimationFrame(callback);
 
-export const setTimer = root.setTimeout.bind(root);
+export const setTimer = bind(root.setTimeout, root);
 
-export const clearTimer = root.clearTimeout.bind(root);
+export const clearTimer = bind(root.clearTimeout, root);
 
-export const timeNow = Date.now.bind(Date);
+export const timeNow = bind(Date.now, Date);
 
 export const timeSince = (startTime: number) => timeNow() - startTime;
 
@@ -361,7 +365,7 @@ export const firstOf = <A extends readonly unknown[]>(
   a: A | null | undefined,
 ) => a?.slice(0, 1)[0] as FirstElement<A>;
 
-export const arrayFrom = ARRAY.from.bind(ARRAY);
+export const arrayFrom = bind(ARRAY.from, ARRAY);
 
 export function slice<T extends readonly unknown[]>(
   a: T,
@@ -376,15 +380,15 @@ export function slice(a: unknown[] | string, start?: number, end?: number) {
 
 // ---------- Objects
 
-export const assign = OBJECT.assign.bind(OBJECT);
+export const assign = bind(OBJECT.assign, OBJECT);
 
-export const defineProperty = OBJECT.defineProperty.bind(OBJECT);
+export const defineProperty = bind(OBJECT.defineProperty, OBJECT);
 
-export const getPrototypeOf = OBJECT.getPrototypeOf.bind(OBJECT);
+export const getPrototypeOf = bind(OBJECT.getPrototypeOf, OBJECT);
 
-export const preventExtensions = OBJECT.preventExtensions.bind(OBJECT);
+export const preventExtensions = bind(OBJECT.preventExtensions, OBJECT);
 
-export const freezeObj = OBJECT.freeze.bind(OBJECT);
+export const freezeObj = bind(OBJECT.freeze, OBJECT);
 
 export const hasOwnProp = (o: object, prop: string | symbol) =>
   OBJECT.prototype.hasOwnProperty.call(o, prop);
@@ -412,9 +416,9 @@ export const deleteObjKey = <O extends object>(obj: O, key: keyof O) =>
 
 // ---------- Promises
 
-export const promiseResolve = PROMISE.resolve.bind(PROMISE);
+export const promiseResolve = bind(PROMISE.resolve, PROMISE);
 
-export const promiseAll = PROMISE.all.bind(PROMISE);
+export const promiseAll = bind(PROMISE.all, PROMISE);
 
 export const createPromise = <T>(
   executor: (
@@ -426,37 +430,37 @@ export const createPromise = <T>(
 
 // ---------- Math
 
-export const floor = MATH.floor.bind(MATH);
+export const floor = bind(MATH.floor, MATH);
 
-export const ceil = MATH.ceil.bind(MATH);
+export const ceil = bind(MATH.ceil, MATH);
 
-export const log2 = MATH.log2.bind(MATH);
+export const log2 = bind(MATH.log2, MATH);
 
-export const sqrt = MATH.sqrt.bind(MATH);
+export const sqrt = bind(MATH.sqrt, MATH);
 
-export const max = MATH.max.bind(MATH);
+export const max = bind(MATH.max, MATH);
 
-export const min = MATH.min.bind(MATH);
+export const min = bind(MATH.min, MATH);
 
-export const abs = MATH.abs.bind(MATH);
+export const abs = bind(MATH.abs, MATH);
 
-export const round = MATH.round.bind(MATH);
+export const round = bind(MATH.round, MATH);
 
-export const pow = MATH.pow.bind(MATH);
+export const pow = bind(MATH.pow, MATH);
 
-export const exp = MATH.exp.bind(MATH);
+export const exp = bind(MATH.exp, MATH);
 
-export const cos = MATH.cos.bind(MATH);
+export const cos = bind(MATH.cos, MATH);
 
-export const sin = MATH.sin.bind(MATH);
+export const sin = bind(MATH.sin, MATH);
 
-export const tan = MATH.tan.bind(MATH);
+export const tan = bind(MATH.tan, MATH);
 
-export const random = MATH.random.bind(MATH);
+export const random = bind(MATH.random, MATH);
 
-export const parseFloat = NUMBER.parseFloat.bind(NUMBER);
+export const parseFloat = bind(NUMBER.parseFloat, NUMBER);
 
-export const isNaN = NUMBER.isNaN.bind(NUMBER);
+export const isNaN = bind(NUMBER.isNaN, NUMBER);
 
 // ---------- Maps and Sets
 
@@ -481,7 +485,7 @@ export const deleteKey = <K, V>(
 
 // ---------- Misc
 
-export const stringify = JSON.stringify.bind(JSON);
+export const stringify = bind(JSON.stringify, JSON);
 
 // Call the remove method on an object that has it
 export const remove = <A extends readonly unknown[]>(
@@ -515,15 +519,15 @@ export const realtimeWatcherConf = <T extends object>(obj: T) =>
 // ---------- Console
 
 const CONSOLE = console;
-export const consoleDebug = CONSOLE.debug.bind(CONSOLE);
+export const consoleDebug = bind(CONSOLE.debug, CONSOLE);
 
-export const consoleLog = CONSOLE.log.bind(CONSOLE);
+export const consoleLog = bind(CONSOLE.log, CONSOLE);
 
-export const consoleInfo = CONSOLE.info.bind(CONSOLE);
+export const consoleInfo = bind(CONSOLE.info, CONSOLE);
 
-export const consoleWarn = CONSOLE.warn.bind(CONSOLE);
+export const consoleWarn = bind(CONSOLE.warn, CONSOLE);
 
-export const consoleError = CONSOLE.error.bind(CONSOLE);
+export const consoleError = bind(CONSOLE.error, CONSOLE);
 
 type FirstElement<T extends readonly unknown[]> = T extends readonly [
   infer Head,

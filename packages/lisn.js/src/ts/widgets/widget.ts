@@ -38,6 +38,10 @@
  * See documentation on a specific widget for examples.
  *
  * @module Widgets
+ *
+ * @categoryDescription Base
+ * These types, classes and functions are to be used by those who want to define
+ * their own widgets.
  */
 
 import * as _ from "@lisn/_internal";
@@ -63,6 +67,9 @@ import { DOMWatcher } from "@lisn/watchers/dom-watcher";
 
 import debug from "@lisn/debug/debug";
 
+/**
+ * @category Base
+ */
 export abstract class Widget {
   /**
    * Disables the functionality of the widget. What this means is specific to
@@ -289,6 +296,8 @@ export type WidgetCallbackArgs = WidgetHandlerArgs;
  * **NOTE:** If the function returns a widget or a list of widgets created for
  * the given element, then each one will be automatically destroyed if the
  * element is removed from the DOM.
+ *
+ * @category Base
  */
 export type WidgetCreateFn<Config extends Record<string, unknown>> = (
   element: Element,
@@ -297,6 +306,8 @@ export type WidgetCreateFn<Config extends Record<string, unknown>> = (
 
 /**
  * @see {@link getWidgetConfig}.
+ *
+ * @category Base
  */
 export type WidgetConfigValidatorObject<
   Config extends Record<string, unknown>,
@@ -306,6 +317,8 @@ export type WidgetConfigValidatorObject<
 
 /**
  * @see {@link getWidgetConfig}.
+ *
+ * @category Base
  */
 export type WidgetConfigAsyncValidatorObject<
   Config extends Record<string, unknown>,
@@ -315,6 +328,8 @@ export type WidgetConfigAsyncValidatorObject<
 
 /**
  * @see {@link getWidgetConfig}.
+ *
+ * @category Base
  */
 export type WidgetConfigValidatorFunc<Config extends Record<string, unknown>> =
   (
@@ -325,6 +340,8 @@ export type WidgetConfigValidatorFunc<Config extends Record<string, unknown>> =
 
 /**
  * @see {@link getWidgetConfig}.
+ *
+ * @category Base
  */
 export type WidgetConfigValidator<Config extends Record<string, unknown>> =
   | WidgetConfigValidatorObject<Config>
@@ -363,6 +380,8 @@ export type WidgetConfigValidator<Config extends Record<string, unknown>> =
  *                     will be split on `;` and each one parsed individually as
  *                     a configuration. Then the `createWidget` function will
  *                     be called once for each configuration.
+ *
+ * @category Base
  */
 export const registerWidget = async <Config extends Record<string, unknown>>(
   name: string,
@@ -477,6 +496,8 @@ export const registerWidget = async <Config extends Record<string, unknown>>(
  * - {@link Utils.validateString}
  * - {@link Utils.validateStringRequired}
  * - {@link Utils.validateBooleanOrString}
+ *
+ * @category Base
  */
 export const getWidgetConfig = <Config extends Record<string, unknown>>(
   input: Record<string, unknown> | string | null | undefined,
@@ -497,6 +518,8 @@ export const getWidgetConfig = <Config extends Record<string, unknown>>(
 /**
  * Like {@link getWidgetConfig} but it accepts an object whose validator
  * functions may return a promise.
+ *
+ * @category Base
  */
 export const fetchWidgetConfig = async <Config extends Record<string, unknown>>(
   input: Record<string, unknown> | string | null | undefined,
@@ -518,6 +541,8 @@ export const fetchWidgetConfig = async <Config extends Record<string, unknown>>(
 /**
  * @ignore
  * @internal
+ *
+ * @category Base
  */
 export const getDataAttrConfigSpecs = (
   name: string,
@@ -549,6 +574,8 @@ export const getDataAttrConfigSpecs = (
 /**
  * @ignore
  * @internal
+ *
+ * @category Base
  */
 export const getDefaultWidgetSelector = (prefix: string) =>
   `.${prefix},[data-${prefix}]`;
@@ -556,6 +583,8 @@ export const getDefaultWidgetSelector = (prefix: string) =>
 /**
  * @ignore
  * @internal
+ *
+ * @category Base
  */
 export const fetchUniqueWidget = async <W extends Widget>(
   name: string,

@@ -10,6 +10,11 @@ import { getDebouncedHandler } from "@lisn/utils/tasks";
 
 import debug from "@lisn/debug/debug";
 
+// [TODO v2]:
+// - don't await unless return is actually a promise (i.e. don't enforce
+//   callbacks being async)
+// - isConcurrent true by default?
+
 /**
  * @typeParam Args See {@link Callback}
  *
@@ -327,6 +332,12 @@ export const createCallback = <Args extends readonly unknown[]>(
   handler: CallbackHandler<Args>,
   isConcurrent = false,
 ) => new Callback(handler, isConcurrent);
+
+// [TODO]: A Callback manager:
+// - add(handlerOrCallback, onRemove?)
+// - remove(handlerOrCallback)
+// - invoke(...args)
+// - clear
 
 /**
  * Wraps the given handler as a callback, even if it's already a callback,

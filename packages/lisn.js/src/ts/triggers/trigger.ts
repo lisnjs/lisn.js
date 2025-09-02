@@ -58,6 +58,10 @@
  * {@link Trigger} is the base trigger class that you can extend when building
  * custom triggers and it also registers a trigger that needs to be run
  * manually (by e.g. the {@link Actions.Run | Run} action).
+ *
+ * @categoryDescription Base
+ * These types, classes and functions are to be used by those who want to define
+ * their own triggers.
  */
 
 // [TODO v2]: Perhaps remove support for trigger spec in CSS classes?
@@ -329,6 +333,9 @@ export type TriggerConfig = {
   actOn?: Element;
 };
 
+/**
+ * @category Base
+ */
 export type TriggerCreateFn<Config extends TriggerConfig> = (
   element: Element,
   args: string[],
@@ -359,6 +366,8 @@ export type TriggerCreateFn<Config extends TriggerConfig> = (
  *                      the element on which the trigger is being defined.
  *
  * @see {@link registerWidget}
+ *
+ * @category Base
  */
 export const registerTrigger = <Config extends TriggerConfig = TriggerConfig>(
   name: string,

@@ -47,7 +47,7 @@
     "entryPointStrategy": "expand",
     "groupOrder": ["Methods", "Constructors", "Properties", "*"],
     "defaultCategory": "Common",
-    "categoryOrder": ["*", "Common"],
+    "categoryOrder": ["*", "Common", "Base"],
     "sort": ["kind", "static-first", "alphabetical"],
     "jsDocCompatibility": {
       "exampleTag": false

@@ -692,7 +692,18 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
   }
 
   let hasYielded = false;
-  for await (const { sinceLast: deltaTime } of animationFrameGenerator()) {
+  // using for await .. animationFrameGenerator() doesn't allow it to detect
+  // when caller has quit
+  const generator = animationFrameGenerator();
+  while (true) {
+    const {
+      value: { sinceLast: deltaTime },
+      done,
+    } = await generator.next();
+    if (done) {
+      break;
+    }
+
     if (deltaTime === 0) {
       continue;
     }

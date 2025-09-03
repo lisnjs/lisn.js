@@ -52,7 +52,7 @@ import {
   validateBoolean,
 } from "@lisn/utils/validation";
 
-import { addHandlerToMap, invokeHandlers } from "@lisn/modules/callback";
+import { createCallbackManager } from "@lisn/modules/callback";
 
 import {
   GestureWatcher,
@@ -67,7 +67,7 @@ import {
   Widget,
   WidgetConfigValidatorObject,
   WidgetHandler,
-  WidgetCallback,
+  WidgetHandlerArgs,
   registerWidget,
   getDefaultWidgetSelector,
 } from "@lisn/widgets/widget";
@@ -1190,7 +1190,7 @@ const getMethods = (
   const scrollWatcher = ScrollWatcher.reuse();
   const isFullscreen = config?.fullscreen;
   const disabledPages: Record<number, boolean> = {};
-  const callbacks = _.createMap<WidgetHandler, WidgetCallback>();
+  const callbacks = createCallbackManager<WidgetHandlerArgs>();
 
   const fetchScrollOptions = async (): Promise<ScrollOptions> => ({
     scrollable: await fetchClosestScrollable(element),
@@ -1258,7 +1258,7 @@ const getMethods = (
     lastPageNum = currPageNum > 0 ? currPageNum : pageNum;
     currPageNum = pageNum;
 
-    await invokeHandlers(callbacks, widget);
+    await callbacks.invoke(widget);
 
     _.delAttr(pages[lastPageNum - 1], S_ARIA_CURRENT);
     for (
@@ -1360,13 +1360,8 @@ const getMethods = (
   const togglePage = (pageNum: number) =>
     isPageDisabled(pageNum) ? enablePage(pageNum) : disablePage(pageNum);
 
-  const onTransition = (handler: WidgetHandler) => {
-    addHandlerToMap(handler, callbacks);
-  };
-
-  const offTransition = (handler: WidgetHandler) => {
-    _.remove(callbacks.get(handler));
-  };
+  const onTransition = (handler: WidgetHandler) => callbacks.add(handler);
+  const offTransition = (handler: WidgetHandler) => callbacks.delete(handler);
 
   return {
     _nextPage: nextPage,

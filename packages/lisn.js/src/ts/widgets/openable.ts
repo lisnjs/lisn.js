@@ -82,7 +82,7 @@ import {
   validateString,
 } from "@lisn/utils/validation";
 
-import { addHandlerToMap, invokeHandlers } from "@lisn/modules/callback";
+import { createCallbackManager } from "@lisn/modules/callback";
 
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
 import { ViewWatcher, ViewData } from "@lisn/watchers/view-watcher";
@@ -90,7 +90,7 @@ import { ViewWatcher, ViewData } from "@lisn/watchers/view-watcher";
 import {
   Widget,
   WidgetHandler,
-  WidgetCallback,
+  WidgetHandlerArgs,
   WidgetConfigValidator,
   WidgetConfigValidatorObject,
   registerWidget,
@@ -260,8 +260,8 @@ export abstract class Openable extends Widget {
 
     const { isModal, isOffcanvas } = config;
 
-    const openCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
-    const closeCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
+    const openCallbacks = createCallbackManager<WidgetHandlerArgs>();
+    const closeCallbacks = createCallbackManager<WidgetHandlerArgs>();
 
     let isOpen = false;
 
@@ -273,7 +273,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = true;
-      await invokeHandlers(openCallbacks, this);
+      await openCallbacks.invoke(this);
 
       if (isModal) {
         setHasModal();
@@ -290,7 +290,7 @@ export abstract class Openable extends Widget {
       }
 
       isOpen = false;
-      await invokeHandlers(closeCallbacks, this);
+      await closeCallbacks.invoke(this);
 
       if (isModal) {
         delHasModal();
@@ -322,21 +322,10 @@ export abstract class Openable extends Widget {
     this.close = close;
     this[_.S_TOGGLE] = () => (isOpen ? close() : open());
 
-    this.onOpen = (handler) => {
-      addHandlerToMap(handler, openCallbacks);
-    };
-
-    this.offOpen = (handler) => {
-      _.remove(openCallbacks.get(handler));
-    };
-
-    this.onClose = (handler) => {
-      addHandlerToMap(handler, closeCallbacks);
-    };
-
-    this.offClose = (handler) => {
-      _.remove(closeCallbacks.get(handler));
-    };
+    this.onOpen = (handler) => openCallbacks.add(handler);
+    this.offOpen = (handler) => openCallbacks.delete(handler);
+    this.onClose = (handler) => closeCallbacks.add(handler);
+    this.offClose = (handler) => closeCallbacks.delete(handler);
 
     this.isOpen = () => isOpen;
     this.getRoot = () => root;

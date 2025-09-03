@@ -38,13 +38,13 @@ import {
 import { toInt } from "@lisn/utils/math";
 import { validateString } from "@lisn/utils/validation";
 
-import { addHandlerToMap, invokeHandlers } from "@lisn/modules/callback";
+import { createCallbackManager } from "@lisn/modules/callback";
 
 import {
   Widget,
   WidgetConfigValidatorObject,
   WidgetHandler,
-  WidgetCallback,
+  WidgetHandlerArgs,
   registerWidget,
   getDefaultWidgetSelector,
 } from "@lisn/widgets/widget";
@@ -506,7 +506,7 @@ const getMethods = (
   const doSwap = config?.mode === "swap";
 
   const disabledItems: Record<number, boolean> = {};
-  const callbacks = _.createMap<WidgetHandler, WidgetCallback>();
+  const callbacks = createCallbackManager<WidgetHandlerArgs>();
 
   const getSortedItems = () =>
     _.slice(items).sort((a, b) => (isNodeBAfterA(a, b) ? -1 : 1));
@@ -544,13 +544,8 @@ const getMethods = (
       ? enableItem(itemNum, currentOrder)
       : disableItem(itemNum, currentOrder);
 
-  const onMove = (handler: WidgetHandler) => {
-    addHandlerToMap(handler, callbacks);
-  };
-
-  const offMove = (handler: WidgetHandler) => {
-    _.remove(callbacks.get(handler));
-  };
+  const onMove = (handler: WidgetHandler) => callbacks.add(handler);
+  const offMove = (handler: WidgetHandler) => callbacks.delete(handler);
 
   // This is internal only for now...
   const dragItemOnto = async (dragged: Element, draggedOver: Element) => {
@@ -564,7 +559,7 @@ const getMethods = (
       });
     }
 
-    await invokeHandlers(callbacks, widget);
+    await callbacks.invoke(widget);
   };
 
   return {

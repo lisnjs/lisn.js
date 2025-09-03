@@ -14,6 +14,8 @@ import debug from "@lisn/debug/debug";
 // - don't await unless return is actually a promise (i.e. don't enforce
 //   callbacks being async)
 // - isConcurrent true by default?
+// - both wrap and Callback constructor to accept options: isConcurrent and
+//   debounceWindow
 
 /**
  * @typeParam Args See {@link Callback}
@@ -310,6 +312,94 @@ export class Callback<Args extends readonly unknown[] = []> {
   }
 }
 
+/**
+ * {@link CallbackManager} stores handlers or callbacks and can invoke all of
+ * them at once.
+ *
+ * @typeParam Args The type of arguments that the callback expects.
+ *
+ * @param [options.defaultIsConcurrent] If the handler is not a callback already,
+ *                                      this sets its isConcurrent. Otherwise
+ *                                      the wrapper will inherit the callback's
+ *                                      setting.
+ * @param [options.debounceWindow]      See {@link Callback.wrap}
+ * @param [options.onRemove]            Will call the given handler when the
+ *                                      callback is removed or deleted from the
+ *                                      map.
+ *
+ * @category Callback
+ *
+ * @since v1.3.0
+ */
+export class CallbackManager<Args extends readonly unknown[] = []> {
+  /**
+   * Adds a new handler or callback to the manager.
+   */
+  readonly add: (
+    handler: CallbackHandler<Args> | Callback<Args>,
+    options?: {
+      onRemove?: OnRemoveHandler;
+      defaultIsConcurrent?: boolean;
+      debounceWindow?: number;
+    },
+  ) => void;
+
+  /**
+   * Removes a previously added callback or handler.
+   */
+  readonly delete: (handler: CallbackHandler<Args> | Callback<Args>) => void;
+
+  /**
+   * Removes all callbacks or handlers added.
+   */
+  readonly clear: () => void;
+
+  /**
+   * Invokes all callbacks it holds with the given arguments.
+   */
+  readonly invoke: (...args: Args) => Promise<void>;
+
+  /**
+   * @param config Default options for {@link add}
+   */
+  constructor(config?: {
+    onRemove?: OnRemoveHandler;
+    defaultIsConcurrent?: boolean;
+    debounceWindow?: number;
+  }) {
+    const callbacks = _.createMap<
+      CallbackHandler<Args> | Callback<Args>,
+      Callback<Args>
+    >();
+
+    this.add = (handler, options) => {
+      const wrapped = addHandlerToMap(
+        handler,
+        callbacks,
+        options?.defaultIsConcurrent ?? config?.defaultIsConcurrent,
+        options?.debounceWindow ?? config?.debounceWindow,
+      );
+
+      const onRemove = options?.onRemove ?? config?.onRemove;
+      if (onRemove) {
+        wrapped.onRemove(onRemove);
+      }
+    };
+
+    this.delete = (handler) => {
+      _.remove(callbacks.get(handler));
+    };
+
+    this.clear = () => {
+      for (const wrapped of callbacks.values()) {
+        _.remove(wrapped);
+      }
+    };
+
+    this.invoke = (...args) => invokeHandlers(callbacks, ...args);
+  }
+}
+
 // ----------
 
 /**
@@ -323,6 +413,8 @@ export class Callback<Args extends readonly unknown[] = []> {
 export const wrapCallback = Callback.wrap;
 
 /**
+ * For minification optimization.
+ *
  * @ignore
  * @internal
  *
@@ -333,11 +425,21 @@ export const createCallback = <Args extends readonly unknown[]>(
   isConcurrent = false,
 ) => new Callback(handler, isConcurrent);
 
-// [TODO]: A Callback manager:
-// - add(handlerOrCallback, onRemove?)
-// - remove(handlerOrCallback)
-// - invoke(...args)
-// - clear
+/**
+ * For minification optimization.
+ *
+ * @ignore
+ * @internal
+ *
+ * @category Callback
+ */
+export const createCallbackManager = <
+  Args extends readonly unknown[],
+>(config?: {
+  onRemove?: OnRemoveHandler;
+  defaultIsConcurrent?: boolean;
+  debounceWindow?: number;
+}) => new CallbackManager<Args>(config);
 
 /**
  * Wraps the given handler as a callback, even if it's already a callback,
@@ -360,15 +462,22 @@ export const addHandlerToMap = <Args extends readonly unknown[]>(
   handler: CallbackHandler<Args> | Callback<Args>,
   map: Map<CallbackHandler<Args> | Callback<Args>, Callback<Args>>,
   defaultIsConcurrent = false,
+  debounceWindow = 0,
 ) => {
-  const callback = _.isFunction(handler)
-    ? createCallback(handler, defaultIsConcurrent)
-    : wrapCallback(handler);
+  let callback;
+  if (_.isFunction(handler)) {
+    callback = createCallback(handler, defaultIsConcurrent);
+    if (debounceWindow) {
+      callback = wrapCallback(callback, debounceWindow);
+    }
+  } else {
+    callback = wrapCallback(handler, debounceWindow);
+  }
 
   map.set(handler, callback);
 
   callback.onRemove(() => {
-    map.delete(handler);
+    _.deleteKey(map, handler);
   });
 
   return callback;

@@ -58,8 +58,7 @@ import { formatAsString, kebabToCamelCase, splitOn } from "@lisn/utils/text";
 import {
   CallbackHandler,
   Callback,
-  addHandlerToMap,
-  invokeHandlers,
+  createCallbackManager,
 } from "@lisn/modules/callback";
 import { createXWeakMap } from "@lisn/modules/x-map";
 
@@ -191,15 +190,15 @@ export abstract class Widget {
     let isDestroyed = false;
     let destroyPromise: Promise<void>;
 
-    const enableCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
-    const disableCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
-    const destroyCallbacks = _.createMap<WidgetHandler, WidgetCallback>();
+    const enableCallbacks = createCallbackManager<WidgetHandlerArgs>();
+    const disableCallbacks = createCallbackManager<WidgetHandlerArgs>();
+    const destroyCallbacks = createCallbackManager<WidgetHandlerArgs>();
 
     this.disable = async () => {
       if (!isDisabled) {
         debug: logger?.debug8("Disabling");
         isDisabled = true;
-        await invokeHandlers(disableCallbacks, this);
+        await disableCallbacks.invoke(this);
       }
     };
 
@@ -207,7 +206,7 @@ export abstract class Widget {
       if (!isDestroyed && isDisabled) {
         debug: logger?.debug8("Enabling");
         isDisabled = false;
-        await invokeHandlers(enableCallbacks, this);
+        await enableCallbacks.invoke(this);
       }
     };
 
@@ -217,21 +216,11 @@ export abstract class Widget {
       }
     };
 
-    this.onDisable = (handler) => {
-      addHandlerToMap(handler, disableCallbacks);
-    };
+    this.onDisable = (handler) => disableCallbacks.add(handler);
+    this.offDisable = (handler) => disableCallbacks.delete(handler);
 
-    this.offDisable = (handler) => {
-      _.remove(disableCallbacks.get(handler));
-    };
-
-    this.onEnable = (handler) => {
-      addHandlerToMap(handler, enableCallbacks);
-    };
-
-    this.offEnable = (handler) => {
-      _.remove(enableCallbacks.get(handler));
-    };
+    this.onEnable = (handler) => enableCallbacks.add(handler);
+    this.offEnable = (handler) => enableCallbacks.delete(handler);
 
     this.isDisabled = () => isDisabled;
 
@@ -242,7 +231,7 @@ export abstract class Widget {
           isDestroyed = true;
           await this.disable();
 
-          await invokeHandlers(destroyCallbacks, this);
+          await destroyCallbacks.invoke(this);
 
           enableCallbacks.clear();
           disableCallbacks.clear();
@@ -261,13 +250,8 @@ export abstract class Widget {
       return destroyPromise;
     };
 
-    this.onDestroy = (handler) => {
-      addHandlerToMap(handler, destroyCallbacks);
-    };
-
-    this.offDestroy = (handler) => {
-      _.remove(destroyCallbacks.get(handler));
-    };
+    this.onDestroy = (handler) => destroyCallbacks.add(handler);
+    this.offDestroy = (handler) => destroyCallbacks.delete(handler);
 
     this.isDestroyed = () => isDestroyed;
 

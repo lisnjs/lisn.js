@@ -55,6 +55,8 @@ import { toIterableIfNot } from "@lisn/utils/misc";
 import { waitForDelay } from "@lisn/utils/tasks";
 import { formatAsString, kebabToCamelCase, splitOn } from "@lisn/utils/text";
 
+// [TODO v2]: single onToggle method instead of onEnable and onDisable
+
 import {
   CallbackHandler,
   Callback,

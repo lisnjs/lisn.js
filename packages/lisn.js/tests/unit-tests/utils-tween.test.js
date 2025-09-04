@@ -1200,4 +1200,60 @@ describe("animation3DTweener", () => {
       });
     }
   }
+
+  test("breaking early", async () => {
+    const cbk = jest.fn(({ current }) => current + 10);
+    const tweener = newTweener(cbk);
+
+    const input = {
+      x: {
+        current: 100,
+        target: 200,
+        lag: 100,
+      },
+    };
+
+    const generator = animation3DTweener(tweener, input);
+    let i = 0;
+    for await (const __ignored of generator) {
+      if (i++ === 1) {
+        break;
+      }
+    }
+
+    expect(i).toBe(2);
+    expect(cbk).toHaveBeenCalledTimes(2);
+
+    await window.waitFor(100);
+    expect(cbk).toHaveBeenCalledTimes(2);
+  });
+
+  test("calling return() early", async () => {
+    const cbk = jest.fn(({ current }) => current + 10);
+    const tweener = newTweener(cbk);
+
+    const input = {
+      x: {
+        current: 100,
+        target: 200,
+        lag: 100,
+      },
+    };
+
+    const generator = animation3DTweener(tweener, input);
+    let i = 0;
+    while (true) {
+      await generator.next();
+      if (i++ === 1) {
+        generator.return();
+        break;
+      }
+    }
+
+    expect(i).toBe(2);
+    expect(cbk).toHaveBeenCalledTimes(2);
+
+    await window.waitFor(100);
+    expect(cbk).toHaveBeenCalledTimes(2);
+  });
 });

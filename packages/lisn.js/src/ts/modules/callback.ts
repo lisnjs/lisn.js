@@ -360,6 +360,11 @@ export class CallbackManager<Args extends readonly unknown[] = []> {
   readonly invoke: (...args: Args) => Promise<void>;
 
   /**
+   * Returns true if there are no callbacks in the manager.
+   */
+  readonly isEmpty: () => boolean;
+
+  /**
    * @param config Default options for {@link add}
    */
   constructor(config?: {
@@ -397,6 +402,8 @@ export class CallbackManager<Args extends readonly unknown[] = []> {
     };
 
     this.invoke = (...args) => invokeHandlers(callbacks, ...args);
+
+    this.isEmpty = () => !_.sizeOf(callbacks);
   }
 }
 

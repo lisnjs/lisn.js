@@ -1,6 +1,6 @@
 const { jest, describe, test, expect } = require("@jest/globals");
 
-const { Callback } = window.LISN.modules;
+const { Callback, CallbackManager } = window.LISN.modules;
 
 describe("sync callbacks", () => {
   test("call: non-concurrent (default)", async () => {
@@ -307,5 +307,276 @@ describe("async callbacks (selected tests)", () => {
         }),
     );
     await expect(cbk.invoke()).rejects.toBe("err");
+  });
+});
+
+describe("CallbackManager", () => {
+  test("basic", async () => {
+    const manager = new CallbackManager();
+    expect(manager.isEmpty()).toBe(true);
+    const fnA = jest.fn();
+    const fnB = jest.fn();
+    const cbkB = new Callback(fnB);
+
+    manager.add(fnA);
+    expect(manager.isEmpty()).toBe(false);
+    manager.add(cbkB);
+
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(0);
+    }
+
+    manager.invoke("A", "B");
+    for (const fn of [fnA, fnB]) {
+      // not yet
+      expect(fn).toHaveBeenCalledTimes(0);
+    }
+
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(1);
+      expect(fn).toHaveBeenLastCalledWith("A", "B");
+    }
+
+    manager.invoke("C", "D");
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(2);
+      expect(fn).toHaveBeenLastCalledWith("C", "D");
+    }
+  });
+
+  test("auto-removing", async () => {
+    let removeSelf = false;
+
+    const manager = new CallbackManager();
+    const fnA = jest.fn(() => (removeSelf ? Callback.REMOVE : null));
+    const fnB = jest.fn();
+    const cbkB = new Callback(fnB);
+
+    manager.add(fnA);
+    manager.add(cbkB);
+
+    manager.invoke(1);
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(1);
+    }
+
+    removeSelf = true;
+    manager.invoke(2);
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(2); // fnA will have auto-removed
+    }
+
+    manager.invoke(3);
+    await window.waitFor(0);
+    expect(fnA).toHaveBeenCalledTimes(2); // no new calls
+    expect(fnB).toHaveBeenCalledTimes(3);
+
+    expect(manager.isEmpty()).toBe(false);
+    cbkB.remove();
+    expect(manager.isEmpty()).toBe(true);
+
+    await window.waitFor(0);
+    expect(fnA).toHaveBeenCalledTimes(2); // no new calls
+    expect(fnB).toHaveBeenCalledTimes(3); // no new calls
+  });
+
+  test("config: defaultIsConcurrent", async () => {
+    const managerA = new CallbackManager({ defaultIsConcurrent: true });
+    const managerB = new CallbackManager({ defaultIsConcurrent: false });
+
+    const fnA = jest.fn();
+    const fnB = jest.fn();
+    const cbkB = new Callback(fnB);
+
+    managerA.add(fnA);
+    managerB.add(cbkB);
+
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(0);
+    }
+
+    managerA.invoke("A");
+    managerB.invoke("A");
+    expect(fnA).toHaveBeenCalledTimes(1);
+    expect(fnB).toHaveBeenCalledTimes(0); // async
+
+    await window.waitFor(0);
+    expect(fnB).toHaveBeenCalledTimes(1);
+  });
+
+  test("config + add options: defaultIsConcurrent", async () => {
+    const managerA = new CallbackManager({ defaultIsConcurrent: false }); // opposite
+    const managerB = new CallbackManager({ defaultIsConcurrent: true }); // opposite
+
+    const fnA = jest.fn();
+    const fnB = jest.fn();
+    const cbkB = new Callback(fnB);
+
+    managerA.add(fnA, { defaultIsConcurrent: true });
+    managerB.add(cbkB, { defaultIsConcurrent: false });
+
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(0);
+    }
+
+    managerA.invoke("A");
+    managerB.invoke("A");
+    expect(fnA).toHaveBeenCalledTimes(1);
+    expect(fnB).toHaveBeenCalledTimes(0); // async
+
+    await window.waitFor(0);
+    expect(fnB).toHaveBeenCalledTimes(1);
+  });
+
+  test("existing concurrent callback", async () => {
+    const manager = new CallbackManager({ defaultIsConcurrent: false }); // irrelevant
+
+    const fn = jest.fn();
+    const cbk = new Callback(fn, true);
+
+    manager.add(cbk, { defaultIsConcurrent: false }); // irrelevant
+
+    await window.waitFor(0);
+    expect(fn).toHaveBeenCalledTimes(0);
+
+    manager.invoke(1);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  test("config: debounceWindow", async () => {
+    const manager = new CallbackManager({ debounceWindow: 10 });
+
+    const fnA = jest.fn();
+    const fnB = jest.fn();
+    const cbkB = new Callback(fnB);
+
+    manager.add(fnA);
+    manager.add(cbkB);
+
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(0);
+    }
+
+    manager.invoke("A");
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(0); // not yet
+    }
+
+    await window.waitFor(20);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  test("config + add options: debounceWindow", async () => {
+    const manager = new CallbackManager({ debounceWindow: 0 }); // ignored
+
+    const fnA = jest.fn();
+    const fnB = jest.fn();
+    const cbkB = new Callback(fnB);
+
+    manager.add(fnA, { debounceWindow: 10 });
+    manager.add(cbkB, { debounceWindow: 50 });
+
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(0);
+    }
+
+    manager.invoke(1);
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(0); // not yet
+    }
+
+    await window.waitFor(20);
+    expect(fnA).toHaveBeenCalledTimes(1);
+    expect(fnB).toHaveBeenCalledTimes(0); // not yet
+
+    await window.waitFor(50);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  test("delete", async () => {
+    const manager = new CallbackManager();
+
+    const fnA = jest.fn();
+    const fnB = jest.fn();
+    const cbkB = new Callback(fnB);
+
+    manager.add(fnA);
+    manager.add(cbkB);
+
+    manager.invoke(1);
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(1);
+    }
+
+    manager.delete(fnA);
+    expect(manager.isEmpty()).toBe(false);
+
+    manager.invoke(2);
+    await window.waitFor(0);
+    expect(fnA).toHaveBeenCalledTimes(1); // no new calls
+    expect(fnB).toHaveBeenCalledTimes(2);
+
+    manager.delete(fnB); // no-op since the callback was added
+    manager.delete(() => {}); // no-op
+    expect(manager.isEmpty()).toBe(false);
+
+    manager.invoke(3);
+    await window.waitFor(0);
+    expect(fnA).toHaveBeenCalledTimes(1); // no new calls
+    expect(fnB).toHaveBeenCalledTimes(3);
+
+    manager.delete(cbkB);
+    expect(manager.isEmpty()).toBe(true);
+
+    manager.invoke(4);
+    await window.waitFor(0);
+    expect(fnA).toHaveBeenCalledTimes(1); // no new calls
+    expect(fnB).toHaveBeenCalledTimes(3); // no new calls
+
+    expect(cbkB.isRemoved()).toBe(false); // original callback not affected
+  });
+
+  test("clear", async () => {
+    const manager = new CallbackManager();
+
+    const fnA = jest.fn();
+    const fnB = jest.fn();
+    const cbkB = new Callback(fnB);
+
+    manager.add(fnA);
+    manager.add(cbkB);
+
+    manager.invoke(1);
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(1);
+    }
+
+    manager.clear();
+    expect(manager.isEmpty()).toBe(true);
+
+    manager.invoke(2);
+    await window.waitFor(0);
+    for (const fn of [fnA, fnB]) {
+      expect(fn).toHaveBeenCalledTimes(1); // no new calls
+    }
+
+    expect(cbkB.isRemoved()).toBe(false); // original callback not affected
   });
 });

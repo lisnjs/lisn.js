@@ -366,7 +366,7 @@ export class ScrollWatcher {
         _callback: callback,
         _trackType: trackType,
         _options: options,
-      };
+      } as const;
       allCallbacks.sGet(element).set(handler, entry);
 
       return entry;
@@ -1089,8 +1089,8 @@ const getConfig = (
   };
 };
 
-const TRACK_REGULAR = 1; // only scroll events
-const TRACK_FULL = 2; // scroll + resizing of content and/or wrapper
+const TRACK_REGULAR: unique symbol = _.SYMBOL() as typeof TRACK_REGULAR; // only scroll events
+const TRACK_FULL: unique symbol = _.SYMBOL() as typeof TRACK_FULL; // scroll + resizing of content and/or wrapper
 
 // --------------------
 

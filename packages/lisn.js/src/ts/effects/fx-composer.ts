@@ -6,8 +6,12 @@
  * @categoryDescription Composer
  * {@link FXComposer} links together multiple effects or other composers. It
  * works with {@link FXTrigger}s and each time it is triggered, it updates its
- * state and {@link FXComposition | effect composition}.
+ * state and {@link FXComposition | effect composition}. It can animate one or
+ * more elements by applying its CSS to them.
  */
+
+// XXX autoStandBy: it needs to check for any composers that depend on it, or
+// warn user
 
 import * as _ from "@lisn/_internal";
 
@@ -21,8 +25,9 @@ import {
 
 import { setStylePropNow, delStylePropNow } from "@lisn/utils/css-alter";
 import { waitForMutateTime } from "@lisn/utils/dom-optimize";
-import { isValidNum, toNumWithBounds, toRawNum } from "@lisn/utils/math";
-import { compareValuesIn, toIterableIfNot } from "@lisn/utils/misc";
+import { logError } from "@lisn/utils/log";
+import { isValidNum, toNumWithBounds, toNum } from "@lisn/utils/math";
+import { compareValuesIn } from "@lisn/utils/misc";
 import {
   animation3DTweener,
   Tweener,
@@ -32,30 +37,31 @@ import {
 import {
   CallbackHandler,
   Callback,
+  CallbackManager,
   createCallback,
-  invokeHandlers,
-  addHandlerToMap,
+  createCallbackManager,
 } from "@lisn/modules/callback";
-import { createXMap } from "@lisn/modules/x-map";
 
 import {
   Effect,
+  EffectInstance,
   FXAxisState,
   FXState,
   FXStateUpdate,
-  getUpdatedState,
-} from "@lisn/effects/effect";
+} from "@lisn/effects/types";
 
+import { getUpdatedState, createEffectInstance } from "@lisn/effects/effect";
 import { FXComposition } from "@lisn/effects/fx-composition";
 import { FXScrollTrigger, FXTrigger } from "@lisn/effects/fx-trigger";
-import { FXPin } from "@lisn/effects/fx-pin";
+import { atLeastOneVisible } from "@lisn/effects/_internal";
 
 import debug from "@lisn/debug/debug";
+import { usageError } from "@lisn/globals";
 
 /**
  * {@link FXComposer} links together multiple effects or other composers. It
- * works with {@link FXTrigger}s and each time it is triggered, it updates its
- * state and {@link FXComposition | effect composition}.
+ * works with {@link FXTrigger}s and each time it is triggered, it updates
+ * tweens or interpolates its state smoothly. It animates one or more elements.
  *
  * @category Composer
  */
@@ -64,51 +70,65 @@ export class FXComposer {
    * Adds one or more links, which can be either an effect or another composer,
    * to the current chain of composition.
    *
-   * Effects added here are
-   * {@link Effects.EffectInterface.toComposition | cloned} beforehand, so you
-   * can add the same effect instance to multiple composers, or multiple times
-   * to the same composer.
-   *
    * Adding the same link multiple times will result in it being applied
-   * multiple times when the composer updates its
-   * {@link getComposition | composition}.
+   * multiple times when the composer updates its composition.
    *
-   * If the given link is an {@link Effect} it will be managed by **this**
-   * composer and will be {@link Effects.EffectInterface.update | updated} with
-   * the composer's state at each frame while it is tweening.
+   * If the link is another {@link FXComposer}, its composition will be used
+   * "as is" in this composer's composition. This is an efficient way to reuse
+   * effects across composers where the effects need to be synchronised.
    *
-   * Otherwise, if the link is another {@link FXComposer}, its composition will
-   * be used as is in this composer's composition and not updated with the state
-   * of this composer.
+   * This also allows you to animate a single property of an element (e.g.
+   * transform) where the relevant effect's state is the result of multiple
+   * composers, each one with different triggers, lag or depth.
    *
-   * This allows you to animate a single property of an element (e.g. transform)
-   * by multiple composers, each one with different triggers, lag or depth.
-   *
-   * However, you should call {@link startAnimate} with the element only on this
-   * composer, to which you add all other relevant composers.
-   *
-   * If you want to clone and use all effects from another composer for this one
-   * to manage and update, simply pass `otherComposer.getComposition().values()`
-   * as the links to add.
+   * However, you should **not** animate the same element with multiple
+   * composers.
    *
    * **IMPORTANT:** If you add an
-   * {@link Effects.EffectInterface.isAbsolute | absolute} effect, or a
+   * {@link Effects.EffectConfig.isAbsolute | absolute} effect, or a
    * composer that has absolute effects it discards all previous effects of the
-   * respective {@link Effects.EffectInterface.type | type}.
-   *
-   * @param pin If given, then when the pin is active, the given effect won't be
-   *            updated, but simply added to the composition with its current
-   *            state. Only relevant when adding an {@link Effect}, otherwise it
-   *            is ignored.
-   * @interface
+   * respective {@link Effects.EffectInstanceInterface.type | type}.
    */
-  readonly add: (
-    links: Effect | FXComposer | Iterable<Effect | FXComposer>,
-    pin?: FXPin,
-  ) => this;
+  readonly add: (...links: Array<Effect | FXComposer>) => this;
 
   /**
-   * Removes all previously added effects.
+   * Returns true if the composer is running (not paused).
+   */
+  readonly isActive: () => boolean;
+
+  /**
+   * Pauses the composer. It will stop polling the trigger and therefore, stop
+   * updating its effects or animating the elements.
+   *
+   * If the composer is already paused, this does nothing.
+   *
+   * @param clearCss If true, it will clear the CSS from the elements until
+   *                 resumed.
+   */
+  readonly pause: (clearCss?: boolean) => this;
+
+  /**
+   * Resumes the composer.
+   */
+  readonly resume: () => this;
+
+  /**
+   * Calls the given handler when the composer is paused or resumed.
+   *
+   * The handler is called after updating the state such that calling
+   * {@link isActive} from the handler will reflect the latest state.
+   */
+  readonly onToggle: (handler: FXComposerHandler) => this;
+
+  /**
+   * Removes a previously added {@link onToggle} handler.
+   */
+  readonly offToggle: (handler: FXComposerHandler) => this;
+
+  /**
+   * Removes all previously added effects and clears the CSS from the elements
+   * being animated. It also {@link pause | pauses} the composer until new
+   * effects are added.
    */
   readonly clear: () => this;
 
@@ -126,6 +146,30 @@ export class FXComposer {
    * Removes a previously added {@link onClear} handler.
    */
   readonly offClear: (handler: FXComposerHandler) => this;
+
+  /**
+   * Returns true if the composer has been destroyed.
+   */
+  readonly isDestroyed: () => boolean;
+
+  /**
+   * {@link clear | Clears} the composer and marks it as destroyed. No more
+   * effects can be added to it. Its elements can now be animated by other
+   * composers.
+   */
+  readonly destroy: () => this;
+
+  /**
+   * Calls the given handler when the composer is destroyed.
+   *
+   * {@link isDestroyed} from the handler will return true.
+   */
+  readonly onDestroy: (handler: FXComposerHandler) => this;
+
+  /**
+   * Removes a previously added {@link onDestroy} handler.
+   */
+  readonly offDestroy: (handler: FXComposerHandler) => this;
 
   /**
    * Calls the given handler whenever the composer is triggered.
@@ -171,7 +215,7 @@ export class FXComposer {
    * - the composer triggered with new data and tweens
    * - any other composers {@link add | added} update their composition
    * - the composer's {@link setDepth | depth is updated} and subsequently the
-   *   {@link Effects.EffectInterface.isAbsolute | absolute} effects are
+   *   {@link Effects.EffectConfig.isAbsolute | absolute} effects are
    *   updated
    *
    * The handler is called after updating its composition, such that calling
@@ -186,70 +230,16 @@ export class FXComposer {
   readonly offCompose: (handler: FXComposerHandler) => this;
 
   /**
-   * Will apply the latest {@link toCss | CSS} to the given elements once.
-   *
-   * Note that relevant CSS properties are applied directly to the element's
-   * style and override current values. You should not have more than one
-   * composer animate the same properties (i.e. using the same effect types) on
-   * any given element.
-   *
-   * If you want to combine multiple effects of the same type from multiple
-   * composers, {@link add} each relevant composer to the "master" composer and
-   * call {@link animate} on it only.
-   *
-   * It will {@link Utils.waitForMutateTime | waitForMutateTime} before
-   * modifying the style.
-   *
-   * @param negate See {@link toCss}.
-   */
-  readonly animate: (
-    elements: Element | Element[],
-    negate?: FXComposer,
-  ) => Promise<this>;
-
-  /**
-   * Will clear the relevant {@link toCss | CSS} properties from the given
-   * elements.
-   *
-   * It will {@link Utils.waitForMutateTime | waitForMutateTime} before
-   * modifying the style.
-   */
-  readonly deanimate: (elements: Element | Element[]) => Promise<this>;
-
-  /**
-   * Will continually apply the latest {@link toCss | CSS} to the given
-   * elements.
-   *
-   * @param negate See {@link toCss}. The given negated composer will be watched
-   *               for any changes in its composition, and this will result in
-   *               updating the CSS on the elements.
-   */
-  readonly startAnimate: (
-    elements: Element | Element[],
-    negate?: FXComposer,
-  ) => this;
-
-  /**
-   * Will stop animating the given elements.
-   *
-   * @param clearCss If true, the {@link toCss | CSS} properties will be cleared
-   *                 from the elements now.
-   */
-  readonly stopAnimate: (
-    elements: Element | Element[],
-    clearCss?: boolean,
-  ) => this;
-
-  /**
    * Returns an object with the combined CSS properties and their values from
-   * all the effects in the composition.
+   * all the effects in the composition. This is the CSS that's applied to the
+   * elements being animated.
    *
    * Note that effects of the same type (or class) are composed together, so in
    * general there will likely not be any conflicting values whereby more than
    * one effect returns the same property from their
-   * {@link Effects.EffectInterface.toCss | toCss} method. If there are such
+   * {@link Effects.EffectInstanceInterface.toCss | toCss} method. If there are such
    * cases, then by default subsequent values will override previous ones for
-   * the property. However, certain properties are handled as a list and the
+   * that property. However, certain properties are handled as a list and the
    * values are joined. These are:
    * - `transition`
    * - `animation`
@@ -258,30 +248,38 @@ export class FXComposer {
    * - `will-change`
    * - `background`
    *
-   * @param negate If given, then for every effect in the composition, the
-   *               corresponding effect (of the same type) in the given negated
-   *               composer's composition will be queried, and used for
-   *               negation. See {@link Effects.EffectInterface.export}
+   * So if multiple effect **types** (e.g. Transform, Filter) return a
+   * `transition` property for example, it will be merged.
    */
-  readonly toCss: (negate?: FXComposer) => Record<string, string>;
+  readonly toCss: () => Record<string, string>;
 
   /**
-   * Returns the current state of the composition, i.e. the combined state of
-   * all effects for each effect type.
+   * Returns **a copy** of the current state of the composition, i.e. the
+   * combined state of all effects, one for each effect type.
    *
-   * @param asExport If set to false, the composition is
-   *                 {@link FXComposition.export | exported}, i.e. effects are
-   *                 static. By default it returns a **live** copy of the
-   *                 composition, where each effect is
-   *                 {@link Effects.EffectInterface.toComposition | cloned}
-   *                 while preserving its handlers.
+   * @param discardUpdaters See {@link Effects.EffectInstanceInterface.clone | EffectInstanceInterface.clone}
    */
-  readonly getComposition: (asExport?: boolean) => FXComposition;
+  readonly getComposition: (discardUpdaters?: boolean) => FXComposition;
 
   /**
-   * Returns a copy of the composer's {@link FXState}.
+   * Returns **a copy** of the composer's {@link FXState}.
    */
   readonly getState: () => FXState;
+
+  /**
+   * Returns the list of elements being animated by the composer.
+   */
+  readonly getElements: () => Element[];
+
+  /**
+   * Adds to the list of elements being animated by the composer.
+   */
+  readonly addElements: (...elements: Element[]) => this;
+
+  /**
+   * Resets the list of elements being animated by the composer.
+   */
+  readonly setElements: (...elements: Element[]) => this;
 
   /**
    * Returns the composer's **effective** configuration.
@@ -289,72 +287,73 @@ export class FXComposer {
   readonly getConfig: () => FXComposerEffectiveConfig;
 
   /**
-   * Updates the composer's {@link FXComposerConfig.lag | lag}
-   *
-   * Note that if the value is relative to the parent's lag, it is resolved at
-   * the time of this call to {@link setLag} and not updated when the parent's
-   * lag changes.
+   * Updates the composer's {@link FXComposerConfig.lag | lag}.
    *
    * @param lag If a single number is given, it is set for all three axes.
+   *            Otherwise, the format is the same as for {@link FXComposerConfig}.
    */
   readonly setLag: (
     lag:
-      | RawOrRelativeNumber
+      | number
       | AtLeastOne<{
-          lag: RawOrRelativeNumber;
-          lagX: RawOrRelativeNumber;
-          lagY: RawOrRelativeNumber;
-          lagZ: RawOrRelativeNumber;
+          lag: number;
+          lagX: number;
+          lagY: number;
+          lagZ: number;
         }>,
   ) => this;
 
   /**
-   * Updates the composer's {@link FXComposerConfig.depth | parallax depth}
-   *
-   * Note that if the value is relative to the parent's depth, it is resolved at
-   * the time of this call to {@link setDepth} and not updated when the parent's
-   * depth changes.
+   * Updates the composer's {@link FXComposerConfig.depth | parallax depth}.
    *
    * Note that this will result in the effects managed by this composer being
    * updated for this new depth and the {@link onCompose} handlers being called.
    *
    * **NOTE:** Any effects that are
-   * {@link Effects.EffectInterface.isAbsolute | absolute}, will update their
+   * {@link Effects.EffectConfig.isAbsolute | absolute}, will update their
    * values as per the new depth. Their handlers will receive the current
-   * parameters re-scaled at the new depth. Effects that are **not**
-   * {@link Effects.EffectInterface.isAbsolute | absolute} will remain
-   * unchanged, since there is no change to the target values of the
-   * {@link FXState | state} . Further tweening will result in the delta values
-   * received by the handlers of these non-absolute effects being re-scaled at
-   * the new depth.
+   * absolute parameters re-scaled at the new depth. Effects that are **not**
+   * {@link Effects.EffectConfig.isAbsolute | absolute} will remain unchanged,
+   * since there is no change to the target values of the {@link FXState | state}.
+   * Further tweening will result in the delta values received by the handlers
+   * of these non-absolute effects being re-scaled at the new depth.
    *
    * @param depth If a single number is given, it is set for all three axes.
+   *              Otherwise, the format is the same as for {@link FXComposerConfig}.
    */
   readonly setDepth: (
     depth:
-      | RawOrRelativeNumber
+      | number
       | AtLeastOne<{
-          depth: RawOrRelativeNumber;
-          depthX: RawOrRelativeNumber;
-          depthY: RawOrRelativeNumber;
-          depthZ: RawOrRelativeNumber;
+          depth: number;
+          depthX: number;
+          depthY: number;
+          depthZ: number;
         }>,
   ) => this;
 
   /**
-   * This creates a new async generator that will yield update data
-   * whenever the returned helper callback is called.
+   * @param elements The elements the composer will animate.
+   *
+   * @throws {@link Errors.LisnUsageError | LisnUsageError}
+   *                If any of the elements are already being animated by another
+   *                composer.
    */
-  constructor(config?: FXComposerConfig) {
+  constructor(elements: Iterable<Element>, config?: FXComposerConfig) {
     const logger = debug
-      ? new debug.Logger({ name: "FXComposer", logAtCreation: config })
+      ? new debug.Logger({
+          name: "FXComposer",
+          logAtCreation: { elements, config },
+        })
       : null;
 
+    // ----- config
+
     const {
-      parent,
-      negate: defaultNegate,
-      tweener: userTweener = "spring",
       trigger = new FXScrollTrigger(),
+      tweener: userTweener = "spring",
+      negateParent = true,
+      autoStandBy = true,
     } = config ?? {};
 
     const tweener =
@@ -368,9 +367,9 @@ export class FXComposer {
 
     const effectiveConfig: FXComposerEffectiveConfig = {
       trigger,
-      parent,
-      negate: defaultNegate,
       tweener,
+      negated: null, // set below when starting
+      autoStandBy,
       // updated below in setLag
       lagX: 0,
       lagY: 0,
@@ -381,67 +380,114 @@ export class FXComposer {
       depthZ: 1,
     };
 
-    const compositionChain: Array<[Effect | FXComposer, FXPin | undefined]> =
-      [];
+    // ----- data
+
+    const compositionChain: Array<EffectInstance | FXComposer> = [];
     const currentComposition = new FXComposition();
     compositions.set(this, currentComposition);
 
-    const clearCallbacks = _.createMap<FXComposerHandler, FXComposerCallback>();
-    const triggerCallbacks = _.createMap<
-      FXComposerHandler,
-      FXComposerCallback
-    >();
-    const tweenCallbacks = _.createMap<FXComposerHandler, FXComposerCallback>();
-    const composeCallbacks = _.createMap<
-      FXComposerHandler,
-      FXComposerCallback
-    >();
+    const animatedElements = _.createSet<Element>();
 
-    const animatedElements = _.createMap<Element, FXComposer | undefined>();
-    const animatedElementsByNegated = createXMap<FXComposer, Set<Element>>(() =>
-      _.createSet(),
-    );
+    const toggleCallbacks = createCallbackManager<FXComposerHandlerArgs>();
+    const clearCallbacks = createCallbackManager<FXComposerHandlerArgs>();
+    const destroyCallbacks = createCallbackManager<FXComposerHandlerArgs>();
+    const triggerCallbacks = createCallbackManager<FXComposerHandlerArgs>();
+    const tweenCallbacks = createCallbackManager<FXComposerHandlerArgs>();
+    const composeCallbacks = createCallbackManager<FXComposerHandlerArgs>();
 
     const currentFXState = createState();
+
+    let isActive = false; // we start after initialized
+    let isDestroyed = false;
+    let isTweening = false;
     let updatePending = false;
+
+    // ----- viewport watching (for auto stand-by)
+    // set below when starting
+    let viewWatch: ReturnType<typeof atLeastOneVisible> | null = null;
 
     // ----------
 
     const recomposeOnOtherCompose = createCallback(() => {
-      recompose(false);
+      recompose(UPDATE_NONE);
     }, true);
 
-    const reanimateOnNegatedCompose = createCallback((negate: FXComposer) => {
-      const elements = animatedElementsByNegated.get(negate);
-      if (elements) {
-        applyCss(elements, false, negate); // no need to await
-      }
+    const reanimateOnNegatedCompose = createCallback(() => {
+      applyCss(); // no need to await
     }, true);
 
     // ----------
 
-    const add = (link: Effect | FXComposer, pin?: FXPin) => {
+    const add = (link: Effect | FXComposer) => {
       if (_.isInstanceOf(link, FXComposer)) {
-        compositionChain.push([link, void 0]);
+        compositionChain.push(link);
         link.onCompose(recomposeOnOtherCompose);
+        addToComposition(link);
       } else {
-        link = link.toComposition(); // clone
-        compositionChain.push([link, pin]);
+        const effectInstance = createEffectInstance(link, this);
+        compositionChain.push(effectInstance);
+        addToComposition(effectInstance);
+      }
+    };
+
+    // ----------
+
+    const pause = (options?: {
+      _clearCss?: boolean;
+      _skipCallbacks?: boolean;
+    }) => setRunningState(PAUSE, options);
+
+    const resume = (options?: { _skipCallbacks?: boolean }) =>
+      setRunningState(RESUME, options);
+
+    const setRunningState = (
+      state: RUNNING_STATE,
+      options?: { _clearCss?: boolean; _skipCallbacks?: boolean },
+    ) => {
+      const activate = state === RESUME;
+      if (isActive !== activate && !isDestroyed) {
+        logger?.debug5(activate ? "Resuming" : "Pausing");
+        const negated = effectiveConfig.negated;
+
+        if (negated) {
+          (activate ? negated.onCompose : negated.offCompose)(
+            reanimateOnNegatedCompose,
+          );
+        }
+
+        for (const link of compositionChain) {
+          if (_.isInstanceOf(link, FXComposer)) {
+            (activate ? link.onCompose : link.offCompose)(
+              recomposeOnOtherCompose,
+            );
+          }
+        }
+
+        applyCss(!activate && options?._clearCss);
+
+        isActive = activate;
+        if (viewWatch) {
+          (activate ? viewWatch.start : viewWatch.stop)();
+        }
+
+        if (!options?._skipCallbacks) {
+          invokeCallbacks(toggleCallbacks);
+        }
+
+        if (activate) {
+          pollTrigger();
+        }
       }
 
-      addToComposition(link, false);
+      return this;
     };
 
     // ----------
 
     const clear = () => {
-      logger?.debug5("Clearing");
-      if (_.lengthOf(compositionChain) > 0) {
-        for (const [link] of compositionChain) {
-          if (_.isInstanceOf(link, FXComposer)) {
-            link.offCompose(recomposeOnOtherCompose);
-          }
-        }
+      if (_.lengthOf(compositionChain)) {
+        logger?.debug5("Clearing");
+        pause({ _clearCss: true });
 
         compositionChain.length = 0; // clear
         currentComposition.clear();
@@ -454,123 +500,26 @@ export class FXComposer {
 
     // ----------
 
-    const onClear = (handler: FXComposerHandler) => {
-      addHandlerToMap(handler, clearCallbacks);
-      return this;
-    };
+    const destroy = () => {
+      if (!isDestroyed) {
+        logger?.debug5("Destroying");
+        clear();
+        isDestroyed = true;
 
-    const offClear = (handler: FXComposerHandler) => {
-      _.remove(clearCallbacks.get(handler));
-      return this;
-    };
-
-    // ----------
-
-    const onTrigger = (handler: FXComposerHandler) => {
-      addHandlerToMap(handler, triggerCallbacks);
-      return this;
-    };
-
-    const offTrigger = (handler: FXComposerHandler) => {
-      _.remove(triggerCallbacks.get(handler));
-      return this;
-    };
-
-    // ----------
-
-    const onTween = (handler: FXComposerHandler) => {
-      addHandlerToMap(handler, tweenCallbacks);
-      return this;
-    };
-
-    const offTween = (handler: FXComposerHandler) => {
-      _.remove(tweenCallbacks.get(handler));
-      return this;
-    };
-
-    // ----------
-
-    const onCompose = (handler: FXComposerHandler) => {
-      addHandlerToMap(handler, composeCallbacks);
-      return this;
-    };
-
-    const offCompose = (handler: FXComposerHandler) => {
-      _.remove(composeCallbacks.get(handler));
-      return this;
-    };
-
-    // ----------
-
-    const animate = async (
-      elements: Element | Element[],
-      negate?: FXComposer,
-    ) => {
-      await applyCss(toIterableIfNot(elements), false, negate);
-      return this;
-    };
-
-    const deanimate = async (elements: Element | Element[]) => {
-      await applyCss(toIterableIfNot(elements), true);
-      return this;
-    };
-
-    // ----------
-
-    const startAnimate = (
-      elements: Element | Element[],
-      negate?: FXComposer,
-    ) => {
-      logger?.debug5("Starting animating ", elements, negate);
-
-      const elementsIter = toIterableIfNot(elements);
-      const negatedComposer = negate ?? defaultNegate;
-
-      for (const element of elementsIter) {
-        // clean up previous entry if there was one using another composer to negate
-        stopAnimate(element);
-
-        if (negatedComposer) {
-          animatedElementsByNegated.sGet(negatedComposer).add(element);
-          negatedComposer.onCompose(reanimateOnNegatedCompose);
+        for (const el of animatedElements) {
+          _.deleteKey(allAnimatedElements, el);
         }
 
-        animatedElements.set(element, negatedComposer);
-      }
+        _.deleteKey(compositions, this);
 
-      // apply the CSS now
-      applyCss(elementsIter, false, negate); // no need to await
-
-      return this;
-    };
-
-    // ----------
-
-    const stopAnimate = (elements: Element | Element[], clearCss?: boolean) => {
-      logger?.debug5("Stopping animating ", elements, clearCss);
-
-      const elementsIter = toIterableIfNot(elements);
-
-      if (clearCss) {
-        applyCss(elementsIter, true); // no need to await
-      }
-
-      for (const element of elementsIter) {
-        const negatedComposer = animatedElements.get(element);
-        _.deleteKey(animatedElements, element);
-
-        if (negatedComposer) {
-          const relatedElements =
-            animatedElementsByNegated.get(negatedComposer);
-
-          _.deleteKey(relatedElements, element);
-
-          if (_.sizeOf(relatedElements) === 0) {
-            // no more elements using the old negated composer
-            negatedComposer.offCompose(reanimateOnNegatedCompose);
-            _.deleteKey(animatedElementsByNegated, negatedComposer);
-          }
-        }
+        invokeCallbacks(destroyCallbacks).then(() => {
+          toggleCallbacks.clear();
+          clearCallbacks.clear();
+          destroyCallbacks.clear();
+          triggerCallbacks.clear();
+          tweenCallbacks.clear();
+          composeCallbacks.clear();
+        });
       }
 
       return this;
@@ -578,16 +527,11 @@ export class FXComposer {
 
     // ----------
 
-    const toCss = (negate?: FXComposer) => {
-      const negatedComposer = negate ?? defaultNegate;
-      const negatedComposition = negatedComposer
-        ? compositions.get(negatedComposer)
-        : null;
+    const toCss = () => {
       const css: Record<string, string> = {};
 
-      for (const [type, effect] of currentComposition) {
-        const negatedEffect = negatedComposition?.get(type);
-        const thisCss = effect.toCss(negatedEffect);
+      for (const [type__ignored, effect] of currentComposition) {
+        const thisCss = effect.toCss();
 
         for (const p in thisCss) {
           const val = _.STRING(thisCss[p]);
@@ -606,15 +550,48 @@ export class FXComposer {
 
     // ----------
 
+    const setElements = (...elements: Element[]) => {
+      for (const el of elements) {
+        if (allAnimatedElements.has(el)) {
+          throw usageError("Element already animated by another composer");
+        }
+
+        allAnimatedElements.set(el, this);
+      }
+
+      pause({ _clearCss: true, _skipCallbacks: true });
+
+      animatedElements.clear();
+      for (const el of elements) {
+        animatedElements.add(el);
+      }
+
+      effectiveConfig.negated = negateParent
+        ? getParentComposer(elements)
+        : null;
+
+      // We don't bother figuring out if animated elements are inside a custom
+      // scrollable, just use the viewport as the root.
+      viewWatch = autoStandBy
+        ? atLeastOneVisible(animatedElements, (hasVisible) => {
+            (hasVisible ? resume : pause)();
+          })
+        : null;
+
+      resume({ _skipCallbacks: true });
+
+      return this;
+    };
+
+    // ----------
+
     const setLag = (
       input: RawOrRelativeNumber | Partial<FXComposerConfig> | undefined,
     ) => {
       updateConf(input, "lag", settings.effectLag, { min: 0 });
-      // Update the current state. No need to re-tween. If it's currently
-      // tweening, it will automatically pick up the new lag. Otherwise, effects
-      // don't need updating and no need to call onTween handlers.
-      updateState(); // will re-apply lag from config
-
+      // No need to re-tween. If it's currently tweening, it will automatically
+      // pick up the new lag. Otherwise, effects don't need updating and no need
+      // to call onTween handlers.
       return this;
     };
 
@@ -623,7 +600,10 @@ export class FXComposer {
     ) => {
       const didUpdate = updateConf(input, "depth", 1, { min: 0.01 });
       if (didUpdate) {
-        recompose(UPDATE_ABSOLUTE);
+        // If it's currently tweening, it will recompose anyway.
+        if (!isTweening) {
+          recompose(UPDATE_ABSOLUTE);
+        }
       }
 
       return this;
@@ -637,9 +617,6 @@ export class FXComposer {
       defaultValue: number,
       bounds?: AtLeastOne<{ min: number; max: number }>,
     ) => {
-      const parentConfig: Partial<FXComposerEffectiveConfig> =
-        parent?.getConfig() ?? {};
-
       let values: Partial<FXComposerConfig>;
       if (_.isObject(input)) {
         values = input;
@@ -653,12 +630,7 @@ export class FXComposer {
         ["y", "Y"],
         ["z", "Z"],
       ] as const) {
-        const parentVal = parentConfig[`${prop}${A}`] ?? defaultValue;
-        let newVal = toRawNum(
-          values[`${prop}${A}`] ?? values[prop],
-          parentVal,
-          NaN,
-        );
+        let newVal = toNum(values[`${prop}${A}`] ?? values[prop], NaN);
 
         if (!isValidNum(newVal)) {
           continue;
@@ -674,6 +646,7 @@ export class FXComposer {
         currentFXState[a][prop] = newVal;
       }
 
+      updateState(); // will re-apply lag/depth from config
       return didUpdate;
     };
 
@@ -686,8 +659,8 @@ export class FXComposer {
       if (newState) {
         _.copyExistingKeysTo(newState, currentFXState);
       }
-      const validated = getUpdatedState(currentFXState, updateData);
 
+      const validated = getUpdatedState(currentFXState, updateData);
       const didUpdate = !compareValuesIn(currentFXState, validated, 5);
 
       logger?.debug10("New state", validated, { didUpdate });
@@ -700,13 +673,28 @@ export class FXComposer {
 
     // ----------
 
+    const addHandler = (
+      handler: FXComposerHandler,
+      callbacks: CallbackManager<FXComposerHandlerArgs>,
+    ) => {
+      callbacks.add(handler);
+      return this;
+    };
+
+    const deleteHandler = (
+      handler: FXComposerHandler,
+      callbacks: CallbackManager<FXComposerHandlerArgs>,
+    ) => {
+      callbacks.delete(handler);
+      return this;
+    };
+
     const invokeCallbacks = (
-      callbacks: Map<FXComposerHandler, FXComposerCallback>,
-    ) => invokeHandlers(callbacks, this);
+      callbacks: CallbackManager<FXComposerHandlerArgs>,
+    ) => callbacks.invoke(this);
 
     // ----------
 
-    let isTweening = false;
     const tween = async () => {
       if (isTweening) {
         return;
@@ -717,6 +705,10 @@ export class FXComposer {
       logger?.debug7("Starting tween", _.copyNested(currentFXState));
       const tweenGenerator = animation3DTweener(tweener, currentFXState);
       while (true) {
+        if (!isActive) {
+          break;
+        }
+
         const tweenUpdate: Animation3DTweenerUpdate<keyof FXState> = {};
         for (const a of ["x", "y", "z"] as const) {
           tweenUpdate[a] = { snap: currentFXState[a].snap };
@@ -732,7 +724,6 @@ export class FXComposer {
 
         logger?.debug10("Tween result", newState, { done, updatePending });
         if (done) {
-          isTweening = false;
           break;
         }
 
@@ -752,6 +743,7 @@ export class FXComposer {
         invokeCallbacks(tweenCallbacks);
       }
 
+      isTweening = false;
       if (updatePending) {
         // restart
         tween();
@@ -760,41 +752,36 @@ export class FXComposer {
 
     // ----------
 
-    const addToComposition = (
-      link: Effect | FXComposer,
-      updateMode: false | UPDATE_MODE = UPDATE_ALL,
-    ) => {
+    const addToComposition = (link: EffectInstance | FXComposer) => {
       if (_.isInstanceOf(link, FXComposer)) {
         for (const effect of compositions.get(link)?.values() ?? []) {
           currentComposition.add(effect);
         }
       } else {
-        if (
-          updateMode === UPDATE_ALL ||
-          (updateMode === UPDATE_ABSOLUTE && link.isAbsolute())
-        ) {
-          link.update(_.copyNested(currentFXState));
-        }
-
         currentComposition.add(link);
       }
     };
 
     // ----------
 
-    const recompose = (updateMode: false | UPDATE_MODE = UPDATE_ALL) => {
-      if (currentComposition.size > 0) {
+    const recompose = (update: UPDATE_MODE = UPDATE_ALL) => {
+      if (_.sizeOf(currentComposition)) {
         currentComposition.clear();
         logger?.debug10("Recomposing", _.copyNested(currentFXState));
 
-        for (const [link, pin] of compositionChain) {
-          addToComposition(link, pin?.isPinned() ? false : updateMode);
+        for (const link of compositionChain) {
+          if (
+            !_.isInstanceOf(link, FXComposer) &&
+            (update === UPDATE_ALL ||
+              (update === UPDATE_ABSOLUTE && link.isAbsolute()))
+          ) {
+            link.update();
+          }
+
+          addToComposition(link);
         }
 
-        for (const [element, negatedComposer] of animatedElements) {
-          applyCss([element], false, negatedComposer); // no need to await
-        }
-
+        applyCss(); // no need to await
         invokeCallbacks(composeCallbacks);
       }
 
@@ -803,31 +790,38 @@ export class FXComposer {
 
     // ----------
 
+    let isPolling = false;
     const pollTrigger = async () => {
-      for await (const updateData of trigger.poll()) {
-        const didUpdate = updateState(null, updateData);
-        logger?.debug9("Got trigger data", { updateData, didUpdate });
+      if (!isPolling) {
+        isPolling = true;
 
-        if (didUpdate) {
-          invokeCallbacks(triggerCallbacks);
-          invokeCallbacks(tweenCallbacks);
-          tween();
+        for await (const updateData of trigger.poll()) {
+          if (!isActive) {
+            break;
+          }
+
+          const didUpdate = updateState(null, updateData);
+          logger?.debug9("Got trigger data", { updateData, didUpdate });
+
+          if (didUpdate) {
+            invokeCallbacks(triggerCallbacks);
+            invokeCallbacks(tweenCallbacks);
+            tween();
+          }
         }
+
+        isPolling = false;
       }
     };
 
     // ----------
 
-    const applyCss = async (
-      elements: Iterable<Element>,
-      clearCss: boolean,
-      negate?: FXComposer,
-    ) => {
-      const css = toCss(negate);
-      logger?.debug10("Applying CSS ", elements, css, clearCss);
+    const applyCss = async (clearCss = false) => {
+      const css = toCss();
+      logger?.debug10("Applying CSS ", animatedElements, css, clearCss);
       await waitForMutateTime();
       for (const prop in css) {
-        for (const element of elements) {
+        for (const element of animatedElements) {
           if (clearCss) {
             delStylePropNow(element, prop);
           } else {
@@ -839,44 +833,60 @@ export class FXComposer {
 
     // --------------------
 
-    this.add = (links, pin) => {
-      logger?.debug7("Adding links", links, pin);
-
-      for (const link of toIterableIfNot(links)) {
-        add(link, pin);
+    this.add = (...links) => {
+      if (isDestroyed) {
+        logError(usageError("FXComposer is destroyed"));
+        return this;
       }
-      invokeCallbacks(composeCallbacks);
 
+      logger?.debug7("Adding links", links);
+
+      for (const link of links) {
+        add(link);
+      }
+
+      resume();
+      invokeCallbacks(composeCallbacks);
       return this;
     };
 
+    this.isActive = () => isActive;
+    this.pause = (clearCss?: boolean) => pause({ _clearCss: clearCss });
+    this.resume = () => resume();
+    this.onToggle = (handler) => addHandler(handler, toggleCallbacks);
+    this.offToggle = (handler) => deleteHandler(handler, toggleCallbacks);
+
     this.clear = clear;
-    this.onClear = onClear;
-    this.offClear = offClear;
+    this.onClear = (handler) => addHandler(handler, clearCallbacks);
+    this.offClear = (handler) => deleteHandler(handler, clearCallbacks);
 
-    this.onTrigger = onTrigger;
-    this.offTrigger = offTrigger;
+    this.isDestroyed = () => isDestroyed;
+    this.destroy = destroy;
+    this.onDestroy = (handler) => addHandler(handler, destroyCallbacks);
+    this.offDestroy = (handler) => deleteHandler(handler, destroyCallbacks);
 
-    this.onTween = onTween;
-    this.offTween = offTween;
+    this.onTrigger = (handler) => addHandler(handler, triggerCallbacks);
+    this.offTrigger = (handler) => deleteHandler(handler, triggerCallbacks);
 
-    this.onCompose = onCompose;
-    this.offCompose = offCompose;
+    this.onTween = (handler) => addHandler(handler, tweenCallbacks);
+    this.offTween = (handler) => deleteHandler(handler, tweenCallbacks);
 
-    this.animate = animate;
-    this.deanimate = deanimate;
-    this.startAnimate = startAnimate;
-    this.stopAnimate = stopAnimate;
+    this.onCompose = (handler) => addHandler(handler, composeCallbacks);
+    this.offCompose = (handler) => deleteHandler(handler, composeCallbacks);
 
     this.toCss = toCss;
-    this.getComposition = (asExport = false) =>
-      asExport ? currentComposition.export() : currentComposition.clone();
+    this.getComposition = (discardUpdaters) =>
+      currentComposition.clone(discardUpdaters);
     this.getState = () => _.copyNested(currentFXState);
+    this.getElements = () => [...animatedElements];
+    this.addElements = (...elements: Element[]) =>
+      setElements(...animatedElements, ...elements);
+    this.setElements = (...elements: Element[]) => setElements(...elements);
     this.getConfig = () => _.copyNested(effectiveConfig);
     this.setLag = setLag;
     this.setDepth = setDepth;
 
-    // --------------------
+    // SETUP --------------------
 
     // Set default lag now, since if it's not supplied in the config, it won't
     // update it. Depth is already at default of 1.
@@ -885,7 +895,7 @@ export class FXComposer {
     setLag(config);
     setDepth(config);
 
-    pollTrigger();
+    setElements(...elements); // it will resume when done
   }
 }
 
@@ -893,13 +903,6 @@ export class FXComposer {
  * @category Composer
  */
 export type FXComposerConfig = {
-  /**
-   * The parent composer. Used for resolving relative values of lag or depth.
-   *
-   * @defaultValue undefined
-   */
-  parent?: FXComposer;
-
   /**
    * The trigger to use. By default an {@link FXScrollTrigger} is used with the
    * default scrollable (see
@@ -910,16 +913,6 @@ export type FXComposerConfig = {
   trigger?: FXTrigger;
 
   /**
-   * The default value for the composer to negate in calls to
-   * {@link FXComposer.animate | animate} and {@link FXComposer.toCss | toCss}
-   *
-   * In most cases you'll want to pass the {@link parent} composer here.
-   *
-   * @defaultValue undefined
-   */
-  negate?: FXComposer;
-
-  /**
    * A built-in or custom tweener function to calculate the interpolation from
    * current to target.
    *
@@ -928,77 +921,100 @@ export type FXComposerConfig = {
   tweener?: Tweener | { [K in "x" | "y" | "z"]?: Tweener };
 
   /**
+   * If the elements you are animating with this composer are descendants of
+   * another element that's being animated by another composer, then by default
+   * effects that support negation, like transforms, will cancel out the closest
+   * parent composer's effects so as to treat the transformation as absolute
+   * rather than relative to the parent. (Remember, transforming an element,
+   * transforms also all its children, and applying transforms to the children
+   * only "adds" to the overall transform).
+   *
+   * **IMPORTANT:** Either all, or none of the elements you pass to this
+   * composer must be descendants of another composer's element. Otherwise this
+   * won't work as expected.
+   *
+   * Set this to false to disable this behaviour.
+   *
+   * @defaultValue true
+   */
+  negateParent?: boolean;
+
+  /**
+   * By default, elements that are outside the viewport are not animated and if
+   * all of the composer's elements are outside the viewport, the composer will
+   * temporarily {@link FXComposer.pause} (without clearing the CSS).
+   *
+   * Set this to false to disable this behaviour.
+   *
+   * @defaultValue true
+   */
+  autoStandBy?: boolean;
+
+  /**
    * The time in milliseconds it takes for effect states to catch up to the
-   * {@link FXState | target parameters}. It can be relative to the parent's
-   * lag. Note however, that the value is resolved at the time the composer is
-   * created and not updated when the parent's lag changes.
+   * {@link FXState | target parameters}.
    *
    * It must result in a non-negative number, otherwise it will be forced to 0.
    *
-   * @defaultValue undefined
+   * @defaultValue {@link settings.effectLag}
    */
-  lag?: RawOrRelativeNumber;
+  lag?: number;
 
   /**
    * The {@link lag} along the X axis only.
    *
-   * @defaultValue {@link lag} or otherwise the parent's {@link lagX} or
-   * otherwise {@link settings.effectLag}
+   * @defaultValue {@link lag}
    */
-  lagX?: RawOrRelativeNumber;
+  lagX?: number;
 
   /**
    * The {@link lag} along the Y axis only.
    *
-   * @defaultValue {@link lag} or otherwise the parent's {@link lagY} or
-   * otherwise {@link settings.effectLag}
+   * @defaultValue {@link lag}
    */
   lagY?: RawOrRelativeNumber;
 
   /**
    * The {@link lag} along the Z axis only.
    *
-   * @defaultValue {@link lag} or otherwise the parent's {@link lagZ} or
-   * otherwise {@link settings.effectLag}
+   * @defaultValue {@link lag}
    */
   lagZ?: RawOrRelativeNumber;
 
   /**
-   * Parallax depth. It can be relative to the parent's depth. Note however,
-   * that the value is resolved at the time the composer is created and not
-   * updated when the parent's depth changes.
+   * Parallax depth.
    *
-   * It must result in a positive number; minimum allowed is 0.01.
+   * It must be >= 0.01, otherwise it is forced to 0.01.
    *
    * Refer to each specific {@link Effect} to see whether and how it is used.
    *
-   * @defaultValue undefined
+   * Currently the only built-in effect using parallax depth is
+   * {@link Effects.Transform | Transform}'s translation.
+   *
+   * @defaultValue 1
    */
-  depth?: RawOrRelativeNumber;
+  depth?: number;
 
   /**
    * The {@link depth} along the X axis only.
    *
-   * @defaultValue {@link depth} or otherwise the parent's {@link depthX} or
-   * otherwise 1.
+   * @defaultValue {@link depth}
    */
-  depthX?: RawOrRelativeNumber;
+  depthX?: number;
 
   /**
    * The {@link depth} along the Y axis only.
    *
-   * @defaultValue {@link depth} or otherwise the parent's {@link depthY} or
-   * otherwise 1.
+   * @defaultValue {@link depth}
    */
-  depthY?: RawOrRelativeNumber;
+  depthY?: number;
 
   /**
    * The {@link depth} along the Z axis only.
    *
-   * @defaultValue {@link depth} or otherwise the parent's {@link depthZ} or
-   * otherwise 1.
+   * @defaultValue {@link depth}
    */
-  depthZ?: RawOrRelativeNumber;
+  depthZ?: number;
 };
 
 /**
@@ -1006,9 +1022,9 @@ export type FXComposerConfig = {
  */
 export type FXComposerEffectiveConfig = {
   trigger: FXTrigger;
-  parent: FXComposer | undefined;
-  negate: FXComposer | undefined;
   tweener: Tweener | { [K in "x" | "y" | "z"]: Tweener };
+  negated: FXComposer | null;
+  autoStandBy: boolean;
   lagX: number;
   lagY: number;
   lagZ: number;
@@ -1038,10 +1054,19 @@ export type FXComposerHandler =
 
 // ------------------------------
 
-type UPDATE_MODE = typeof UPDATE_ALL | typeof UPDATE_ABSOLUTE;
+type UPDATE_MODE =
+  | typeof UPDATE_NONE
+  | typeof UPDATE_ABSOLUTE
+  | typeof UPDATE_ALL;
 
-const UPDATE_ALL = 0;
-const UPDATE_ABSOLUTE = 1;
+type RUNNING_STATE = typeof PAUSE | typeof RESUME;
+
+const UPDATE_NONE: unique symbol = _.SYMBOL() as typeof UPDATE_NONE;
+const UPDATE_ABSOLUTE: unique symbol = _.SYMBOL() as typeof UPDATE_ABSOLUTE;
+const UPDATE_ALL: unique symbol = _.SYMBOL() as typeof UPDATE_ALL;
+
+const PAUSE: unique symbol = _.SYMBOL() as typeof PAUSE;
+const RESUME: unique symbol = _.SYMBOL() as typeof RESUME;
 
 const LIST_PROPERTIES: Record<string, string> = {
   transition: ",",
@@ -1052,7 +1077,8 @@ const LIST_PROPERTIES: Record<string, string> = {
   transform: " ",
 };
 
-const compositions = _.createMap<FXComposer, FXComposition>();
+const compositions = _.createWeakMap<FXComposer, FXComposition>();
+const allAnimatedElements = _.createWeakMap<Element, FXComposer>();
 
 const createState = (): FXState => {
   const axisState: FXAxisState = {
@@ -1068,6 +1094,22 @@ const createState = (): FXState => {
   };
 
   return _.copyNested({ x: axisState, y: axisState, z: axisState });
+};
+
+const getParentComposer = (elements: Iterable<Element>): FXComposer | null => {
+  // check only the first element, since either all or none of them should be
+  // descendants
+  let el = [...elements][0]?.parentElement;
+
+  while (el) {
+    const composer = allAnimatedElements.get(el);
+    if (composer) {
+      return composer;
+    }
+    el = el.parentElement;
+  }
+
+  return null;
 };
 
 _.brandClass(FXComposer, "FXComposer");

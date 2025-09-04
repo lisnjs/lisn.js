@@ -21,22 +21,14 @@ import {
 } from "@lisn/utils/validation";
 
 import {
-  EffectInterface,
-  FXHandler,
-  FXState,
-  HandlerMethodName,
-  HandlerMethodTuple,
-  toParameters,
-  scaleParameters,
-  saveHandlerFor,
-  addHandlerTo,
-  getHandlersFor,
-} from "@lisn/effects/effect";
+  EffectConfig,
+  EffectUpdater,
+  EffectUpdaterName,
+  EffectUpdaterReturn,
+  EffectUpdaterEntry,
+} from "@lisn/effects/types";
 
-/**
- * @category Effects/Transform
- */
-export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
+import { EffectBase, registerEffect } from "@lisn/effects/effect";
 
 /**
  * {@link Transform} controls an element's transform as a 3D matrix.
@@ -44,405 +36,104 @@ export type TransformLike = Transform | DOMMatrixReadOnly | Float32Array;
  * It supports translation, scaling, skewing and rotation as well as
  * setting a perspective.
  *
- * Except for perspective, you can add multiple handlers of each category and
+ * Except for perspective, you can add multiple updaters of each category and
  * they will all be applied (multiply the state matrix) in order. E.g. adding a
  * {@link translate}, then {@link rotate}, then another {@link translate}
- * handler results in a transform matrix that's the product of
- * `translate(...) * rotate(...) * translate(...)`.
+ * updater results in a transform matrix that's the equivalent of of
+ * `translate(...) rotate(...) translate(...)`.
  *
- * Perspective handlers apply at the start of all transforms and can be set only
- * once, i.e. subsequent calls to {@link perspective} always override previous
- * perspective handlers.
+ * Perspective applies at the start of all transforms and can be set only once,
+ * i.e. subsequent calls to {@link perspective} always override the previous
+ * result.
  *
- * {@link Transform} supports negation. It also supports parallax depth as follows:
- * - {@link translate} will divide the parameters by the depth before passing
- *   them to the handlers.
- * - {@link rotate} will multiply the parameters by the depth before passing
- *   them to the handlers.
- * - {@link scale} and {@link skew} do not alter the parameters, ignoring depth.
+ * ## Setting updaters and initial state
+ *
+ * Each updater method (e.g. "perspective", "translate", "scale", etc) accepts
+ * either a plain value or a function.
+ *
+ * If a value is given, it should be of the correct type for this transform type,
+ * e.g. {@link TranslateReturn} for "translate", and so on. This value will
+ * modify the initial state of the effect instance that's to be
+ * created. It's like a one-time update at the time of creation.
+ *
+ * If a function is given, it will be called whenever the effect instance is
+ * updated by the composer. It will receive the latest
+ * {@link Effects.FXParams | parameters} and
+ * {@link Effects.FXState | composer state}. The updater function should return
+ * the correct type of value.
+ *
+ * {@link translate} updater functions will receive the parameters scaled by the
+ * parallax depth of the composer. Other updater methods receive unscaled
+ * parameters since parallax depth does not apply there.
+ *
+ * **IMPORTANT:** For {@link EffectConfig.isAbsolute | absolute} transform
+ * instances, the state is reset at each update and so initial values set are
+ * always discarded at every update.
+ *
+ * ## Negation and parallax depth
+ *
+ * {@link Transform} supports negation. It also supports parallax depth but only
+ * for {@link translate | translation}.
  *
  * @category Effects/Transform
  */
-export class Transform implements EffectInterface<"transform", Transform> {
+export class Transform extends EffectBase<"transform"> {
   readonly type = "transform";
 
   /**
-   * Returns true if the transform is absolute. If true, the
-   * {@link FXHandler | handlers} receive absolute
-   * {@link Effects.FXParams | parameters} and each call to {@link update} will
-   * reset the transform back to the identity one.
-   *
-   * Otherwise, the handlers receive delta values reflecting the change in
-   * parameters since the last animation frame and the transform's matrix is
-   * preserved between calls to {@link update}. The handler's return multiplies
-   * the transform. For perspective, the handler's return is added to the
-   * current value.
-   */
-  readonly isAbsolute: () => boolean;
-
-  /**
-   * Updates the transform as per the given state.
-   *
-   * @throws {@link Errors.LisnUsageError | LisnUsageError}
-   *                If any of the values returned by the {@link FXHandler}s
-   *                is invalid.
-   */
-  readonly update: (state: FXState) => this;
-
-  /**
-   * Returns a **static copy** of the transform that has the current state/value
-   * of this transform, but no handlers. New handlers can be added afterwards.
-   *
-   * @param negate If given, `negate` will be inverted and used as the
-   *               pre-multiplication matrix for the current transform matrix.
-   *               Useful if you want to apply the current transform to an
-   *               element that's a descendant of another transformed element
-   *               and you want to first "undo" the parent transform.
-   *
-   * @returns **A new** {@link Transform} instance with no handlers.
-   */
-  readonly export: (negate?: TransformLike) => Transform;
-
-  /**
-   * Returns a **new live** transform that has all the handlers from this one
-   * and the given transforms, in order. The resulting state (matrix) is the
-   * combined product of its current matrix and that of all the other given
-   * ones.
-   *
-   * **NOTE:** If any of the given transforms is
-   * {@link TransformConfig.isAbsolute | absolute}, all previous ones are
-   * discarded and the resulting transform becomes absolute.
-   *
-   * @returns **A new** {@link Transform} instance with all the same handlers as
-   * this one.
-   */
-  readonly toComposition: (...others: Transform[]) => Transform;
-
-  /**
-   * Returns an object with the following properties:
-   * - `transform`: {@link toString | the transform's state as a CSS string}
-   * - `transition`: transform 0.05s linear
-   *
-   * The `transition` property is helpful on lower end devices to smooth out the
-   * animation. It does not introduce lag.
-   *
-   * @param negate See {@link export}
-   */
-  readonly toCss: (negate?: TransformLike) => Record<string, string>;
-
-  /**
-   * Returns a `perspective(...) matrix3d(...)` string for use as a CSS property.
-   *
-   * If no perspective has been set or it's `null`, it's omitted from the string.
-   *
-   * @param negate See {@link export}
-   */
-  readonly toString: (negate?: TransformLike) => string;
-
-  /**
-   * Returns the current perspective (since the last call to {@link update}).
-   *
-   * @returns The last applied perspective, or `undefined` if no perspective has
-   * been applied.
-   */
-  readonly toPerspective: () => number | null | undefined;
-
-  /**
-   * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMMatrixReadOnly | DOMMatrixReadOnly} representing the transform.
-   *
-   * @param negate See {@link export}
-   */
-  readonly toMatrix: (negate?: TransformLike) => DOMMatrixReadOnly;
-
-  /**
-   * Returns a {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array | Float32Array} representing the transform.
-   *
-   * @param negate See {@link export}
-   */
-  readonly toFloat32Array: (negate?: TransformLike) => Float32Array;
-
-  /**
-   * Sets the transform's perspective handler.
+   * Sets the perspective initially or during update.
    *
    * **NOTE:** Unlike other transformations, perspective applies at the start of
    * all transforms and can be set only once. Subsequent calls to this method
-   * always override previous perspective handlers.
-   *
-   * The handler receives the unscaled original
-   * {@link Effects.FXParams | parameters}, regardless of the
-   * {@link Effects.FXComposer | composer}'s parallax depth.
+   * always override the previous perspective.
    */
-  readonly perspective: (handler: FXHandler<PerspectiveHandlerReturn>) => this;
+  readonly perspective: (
+    updater: EffectUpdater<PerspectiveReturn> | PerspectiveReturn,
+  ) => this;
 
   /**
-   * Adds a translation handler.
-   *
-   * The handler receives scaled {@link Effects.FXParams | parameters},
-   * divided by the parallax depth along the respective axis.
+   * Adds translation initially or during update.
    */
-  readonly translate: (handler: FXHandler<TranslateHandlerReturn>) => this;
+  readonly translate: (
+    updater: EffectUpdater<TranslateReturn> | TranslateReturn,
+  ) => this;
 
   /**
-   * Adds a scaling handler.
-   *
-   * The handler receives the unscaled original
-   * {@link Effects.FXParams | parameters}, regardless of the
-   * {@link Effects.FXComposer | composer}'s parallax depth.
+   * Adds scaling initially or during update.
    */
-  readonly scale: (handler: FXHandler<ScaleHandlerReturn>) => this;
+  readonly scale: (updater: EffectUpdater<ScaleReturn> | ScaleReturn) => this;
 
   /**
-   * Adds a skewing handler.
+   * Adds skewing initially or during update.
    *
-   * The handler receives the unscaled original
-   * {@link Effects.FXParams | parameters}, regardless of the
-   * {@link Effects.FXComposer | composer}'s parallax depth.
-   *
-   * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
+   * **NOTE:** If skewing along both axis (i.e. the updater returns both `degX`
    * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
    */
-  readonly skew: (handler: FXHandler<SkewHandlerReturn>) => this;
+  readonly skew: (updater: EffectUpdater<SkewReturn> | SkewReturn) => this;
 
   /**
-   * Adds a rotation handler.
-   *
-   * The handler receives scaled {@link Effects.FXParams | parameters},
-   * multiplied by the parallax depth along the respective axis.
+   * Adds rotation initially or during update.
    */
-  readonly rotate: (handler: FXHandler<RotateHandlerReturn>) => this;
+  readonly rotate: (
+    updater: EffectUpdater<RotateReturn> | RotateReturn,
+  ) => this;
 
-  constructor(config?: TransformConfig) {
-    const {
-      isAbsolute = false,
-      init,
-      perspective: initPerspective,
-    } = config ?? {};
+  constructor(config?: EffectConfig) {
+    super();
+    const { addUpdater: _addUpdater } = init(this, config);
 
-    const transformers: FXHandler<void>[] = []; // not including perspective
-    let perspectiveFn: FXHandler<void> | null = null;
-
-    let currentPerspective: number | null | undefined = initPerspective;
-    const matrix = createMatrix(false, init);
-    matrices.set(this, matrix);
-
-    // ----------
-
-    const addOwnHandler = <M extends HandlerMethodName<"transform">>(
-      tuple: HandlerMethodTuple<"transform", M>,
-      fn: FXHandler<void>,
-    ) => {
-      if (tuple[0] === "perspective") {
-        perspectiveFn = fn;
-      } else {
-        transformers.push(fn);
-      }
-      saveHandlerFor(this, tuple);
-    };
-
-    // ----------
-
-    const toMatrix = (negate?: TransformLike) =>
-      negate
-        ? createMatrix(true, negate).inverse().multiply(matrix)
-        : createMatrix(true, matrix);
-
-    const toMatrixNoCopy = (negate?: TransformLike) =>
-      negate ? toMatrix(negate) : matrix;
-
-    // ----------
-
-    const reset = () => {
-      currentPerspective = void 0;
-
-      matrix.m12 =
-        matrix.m13 =
-        matrix.m14 =
-        matrix.m21 =
-        matrix.m23 =
-        matrix.m24 =
-        matrix.m31 =
-        matrix.m32 =
-        matrix.m34 =
-        matrix.m41 =
-        matrix.m42 =
-        matrix.m43 =
-          0;
-      matrix.m11 = matrix.m22 = matrix.m33 = matrix.m44 = 1;
-
+    const addUpdater = (updaterEntry: EffectUpdaterEntry<"transform">) => {
+      _addUpdater(updaterEntry);
       return this;
     };
 
-    // --------------------
-
-    this.isAbsolute = () => isAbsolute;
-
-    this.update = (state) => {
-      if (isAbsolute) {
-        reset();
-      }
-
-      const parameters = toParameters(state, { isAbsolute });
-
-      for (const fn of [
-        ...(perspectiveFn ? [perspectiveFn] : []),
-        ...transformers,
-      ]) {
-        fn(parameters, state);
-      }
-
-      return this;
-    };
-
-    this.export = (negate) =>
-      new Transform({
-        isAbsolute: isAbsolute,
-        init: negate ? toMatrix(negate) : matrix,
-        perspective: currentPerspective,
-      });
-
-    this.toComposition = (...others) => {
-      let resultIsAbsolute = isAbsolute;
-      let resultInits: DOMMatrixReadOnly[] = [];
-      let resultHandlers: HandlerMethodTuple<"transform">[] = [];
-      let resultPerspective: number | null | undefined = void 0;
-
-      for (const t of [this, ...others]) {
-        if (t.isAbsolute()) {
-          resultIsAbsolute = true;
-          resultInits = [];
-          resultHandlers = [];
-          resultPerspective = void 0;
-        }
-
-        const thisPerspective = t.toPerspective();
-        if (!_.isUndefined(thisPerspective)) {
-          resultPerspective = thisPerspective;
-        }
-
-        resultInits.push(getMatrixFor(t));
-        resultHandlers.push(...getHandlersFor<"transform">(t));
-      }
-
-      const resultInit = resultInits.reduce((res, i) => res.multiply(i));
-
-      const composed = new Transform({
-        isAbsolute: resultIsAbsolute,
-        init: resultInit,
-        perspective: resultPerspective,
-      });
-
-      for (const h of resultHandlers) {
-        addHandlerTo(composed, h);
-      }
-
-      return composed;
-    };
-
-    this.toCss = (negate) => ({
-      transform: this.toString(negate),
-      transition: "transform 0.05s linear",
-    });
-
-    this.toString = (negate) =>
-      (_.isNullish(currentPerspective)
-        ? ""
-        : `perspective(${currentPerspective}px) `) +
-      toMatrixNoCopy(negate).toString();
-
-    this.toPerspective = () => currentPerspective;
-
-    this.toMatrix = toMatrix;
-    this.toFloat32Array = (negate) => toMatrixNoCopy(negate).toFloat32Array();
-
-    this.perspective = (handler) => {
-      addOwnHandler(["perspective", handler], (parameters, state) => {
-        const perspective = handler(parameters, state);
-        if (!_.isUndefined(perspective)) {
-          validateNonNegNumber("Perspective", perspective ?? 0);
-
-          if (_.isNullish(currentPerspective) || _.isNullish(perspective)) {
-            currentPerspective = perspective;
-          } else {
-            // If transform is absolute, perspective would have been reset to null,
-            // so this won't apply anyway.
-            currentPerspective += perspective;
-          }
-        }
-      });
-
-      return this;
-    };
-
-    this.translate = (handler) => {
-      addOwnHandler(["translate", handler], (parameters, state) => {
-        parameters = scaleParameters(parameters, state, (v, d) => v / d);
-        const result: Partial<TranslateHandlerReturn> =
-          handler(parameters, state) ?? {};
-
-        if (!_.isNullish(result)) {
-          const { x = 0, y = 0, z = 0 } = result;
-
-          [x, y, z].map((v) => validateNumber("Translation distances", v));
-          matrix.translateSelf(x, y, z);
-        }
-      });
-
-      return this;
-    };
-
-    this.scale = (handler) => {
-      addOwnHandler(["scale", handler], (parameters, state) => {
-        const result: Partial<ScaleHandlerReturn> =
-          handler(parameters, state) ?? {};
-
-        if (!_.isNullish(result)) {
-          const { s = 1, sx = s, sy = s, sz = s, origin = [0, 0, 0] } = result;
-
-          [sx, sy, sz].map((v) =>
-            validateNumber("Scale factors", v, { min: 0.0001 }),
-          );
-          origin.map((v) => validateNumber("Origin coordinates", v));
-          matrix.scaleSelf(sx, sy, sz, ...origin);
-        }
-      });
-
-      return this;
-    };
-
-    this.skew = (handler) => {
-      addOwnHandler(["skew", handler], (parameters, state) => {
-        const result: Partial<SkewHandlerReturn> =
-          handler(parameters, state) ?? {};
-
-        if (!_.isNullish(result)) {
-          const { deg = 0, degX = deg, degY = deg } = result;
-
-          [degX, degY].map((v) => validateNumber("Skew angles", v));
-          matrix.skewXSelf(degX).skewYSelf(degY);
-        }
-      });
-
-      return this;
-    };
-
-    this.rotate = (handler) => {
-      addOwnHandler(["rotate", handler], (parameters, state) => {
-        parameters = scaleParameters(parameters, state, (v, d) => v * d);
-        const result: Partial<RotateHandlerReturn> =
-          handler(parameters, state) ?? {};
-
-        if (!_.isNullish(result)) {
-          const { deg = 0, axis = [0, 0, 1] } = result;
-
-          validateNumber("Rotation angle", deg);
-          axis.map((v) => validateNumber("Rotation axis coordinates", v));
-          validatePosNumber("Rotation axis length", _.abs(sum(...axis)));
-          matrix.rotateAxisAngleSelf(axis[0], axis[1] ?? 0, axis[2] ?? 0, deg);
-        }
-      });
-
-      return this;
-    };
+    this.perspective = (updater) =>
+      addUpdater({ name: "perspective", updater });
+    this.translate = (updater) =>
+      addUpdater({ name: "translate", updater, scaler: (v, d) => v / d });
+    this.scale = (updater) => addUpdater({ name: "scale", updater });
+    this.skew = (updater) => addUpdater({ name: "skew", updater });
+    this.rotate = (updater) => addUpdater({ name: "rotate", updater });
   }
 }
 
@@ -452,20 +143,20 @@ export class Transform implements EffectInterface<"transform", Transform> {
  * Returning `null` clears the perspective completely even if the transform is
  * not absolute.
  *
- * Returning `undefined` should leave the current value unchanged.
+ * Returning `undefined` leaves the current value unchanged.
  *
  * @category Effects/Transform
  */
-export type PerspectiveHandlerReturn = number | null;
+export type PerspectiveReturn = number | null;
 
 /**
  * Should return the translation distances along one or more axes.
  *
- * Returning `undefined` should leave the current value unchanged.
+ * Returning `undefined` leaves the current value unchanged.
  *
  * @category Effects/Transform
  */
-export type TranslateHandlerReturn = AtLeastOne<{
+export type TranslateReturn = AtLeastOne<{
   /**
    * The translation distance in pixels along the X-axis.
    *
@@ -491,11 +182,11 @@ export type TranslateHandlerReturn = AtLeastOne<{
 /**
  * Should return the scaling factor along one or more axes.
  *
- * Returning `undefined` should leave the current value unchanged.
+ * Returning `undefined` leaves the current value unchanged.
  *
  * @category Effects/Transform
  */
-export type ScaleHandlerReturn = AtLeastOne<{
+export type ScaleReturn = AtLeastOne<{
   /**
    * The default scaling factor for any axis if not overridden by {@link sx},
    * {@link sy} or {@link sz}. This would result in all three axes being
@@ -537,14 +228,14 @@ export type ScaleHandlerReturn = AtLeastOne<{
 /**
  * Should return the skewing angle along one or more axes.
  *
- * **NOTE:** If skewing along both axis (i.e. the handler returns both `degX`
+ * **NOTE:** If skewing along both axis (i.e. the updater returns both `degX`
  * and `degY`,* or `deg`), then skewing is done first along X, then along Y.
  *
- * Returning `undefined` should leave the current value unchanged.
+ * Returning `undefined` leaves the current value unchanged.
  *
  * @category Effects/Transform
  */
-export type SkewHandlerReturn = AtLeastOne<{
+export type SkewReturn = AtLeastOne<{
   /**
    * The skewing angle in degrees for either axis if not overridden by
    * {@link degX} or {@link degY}. This would result in both axes being skewed.
@@ -571,11 +262,11 @@ export type SkewHandlerReturn = AtLeastOne<{
 /**
  * Should return the rotation angle and axis of rotation.
  *
- * Returning `undefined` should leave the current value unchanged.
+ * Returning `undefined` leaves the current value unchanged.
  *
  * @category Effects/Transform
  */
-export type RotateHandlerReturn = {
+export type RotateReturn = {
   /**
    * The angle in degrees to rotate.
    */
@@ -589,72 +280,121 @@ export type RotateHandlerReturn = {
   axis?: Axis;
 };
 
-/**
- * @category Effects/Transform
- */
-export type TransformConfig = {
-  /**
-   * If true, the {@link FXHandler | handlers} receive absolute
-   * {@link Effects.FXParams | parameters} and each call to
-   * {@link Transform.update | update} will reset the transform back to the
-   * identity one.
-   *
-   * Otherwise, the handlers receive delta values reflecting the change in
-   * parameters since the last animation frame and the transform's matrix is
-   * preserved between calls to {@link Transform.update | update}. The handler's
-   * return multiplies the transform. For perspective, the handler's return is
-   * added to the current value.
-   *
-   * @defaultValue false
-   */
-  isAbsolute?: boolean;
+// --------------------
 
-  /**
-   * Initial transform to begin with. Note that if {@link isAbsolute} is `true`,
-   * it will be discarded on {@link Transform.update | update}.
-   *
-   * @defaultValue undefined // identity matrix
-   */
-  init?: TransformLike;
+type TransformState = {
+  _perspective: number | null | undefined;
+  _matrix: DOMMatrix;
+};
 
-  /**
-   * Initial transform to begin with. Note that if {@link isAbsolute} is `true`,
-   * it will be discarded on {@link Transform.update | update}.
-   *
-   * @defaultValue undefined
-   */
-  perspective?: number | null;
+const createMatrix = (init?: DOMMatrix) => {
+  return new DOMMatrix(
+    _.isNullish(init) ? init : _.arrayFrom(init.toFloat32Array()),
+  );
+};
+
+const { init } = registerEffect<"transform", TransformState>({
+  type: "transform",
+  logic: {
+    processUpdate: (state, name, result) => {
+      if (!_.isNull(result) || name === "perspective") {
+        UPDATE_PROCESSORS[name](state, result);
+      }
+      return state;
+    },
+    clone: (state) => {
+      return {
+        _perspective: state._perspective,
+        _matrix: createMatrix(state._matrix),
+      };
+    },
+    composeWith: (state, other) => {
+      const otherPerspective = other._perspective;
+      return {
+        _perspective: _.isUndefined(otherPerspective)
+          ? state._perspective
+          : otherPerspective,
+        _matrix: state._matrix.multiply(other._matrix),
+      };
+    },
+    toCss: (state, negate) => {
+      const matrix = negate
+        ? negate._matrix.inverse().multiply(state._matrix)
+        : state._matrix;
+
+      const perspectiveString = _.isNullish(state._perspective)
+        ? ""
+        : `perspective(${state._perspective}px) `;
+
+      return {
+        transform: perspectiveString + matrix.toString(),
+        transition: "transform 0.05s linear",
+      };
+    },
+  },
+  nullState: {
+    _perspective: void 0,
+    _matrix: createMatrix(),
+  },
+});
+
+const UPDATE_PROCESSORS: {
+  [M in EffectUpdaterName<"transform">]: (
+    state: TransformState,
+    result: EffectUpdaterReturn<"transform", M>,
+  ) => void;
+} = {
+  perspective: (state, result) => {
+    validateNonNegNumber("Perspective", result ?? 0);
+    if (_.isNullish(state._perspective) || _.isNull(result)) {
+      state._perspective = result;
+    } else {
+      // If transform is absolute, perspective would have been reset to
+      // undefined, so this won't apply anyway.
+      state._perspective += result;
+    }
+  },
+
+  translate: (state, result) => {
+    const { x = 0, y = 0, z = 0 } = result;
+
+    [x, y, z].map((v) => validateNumber("Translation distances", v));
+    state._matrix.translateSelf(x, y, z);
+  },
+
+  scale: (state, result) => {
+    const { s = 1, sx = s, sy = s, sz = s, origin = [0, 0, 0] } = result;
+
+    [sx, sy, sz].map((v) =>
+      validateNumber("Scale factors", v, { min: 0.0001 }),
+    );
+    origin.map((v) => validateNumber("Origin coordinates", v));
+    state._matrix.scaleSelf(sx, sy, sz, ...origin);
+  },
+
+  skew: (state, result) => {
+    const { deg = 0, degX = deg, degY = deg } = result;
+
+    [degX, degY].map((v) => validateNumber("Skew angles", v));
+    state._matrix.skewXSelf(degX).skewYSelf(degY);
+  },
+
+  rotate: (state, result) => {
+    const { deg = 0, axis = [0, 0, 1] } = result;
+
+    validateNumber("Rotation angle", deg);
+    axis.map((v) => validateNumber("Rotation axis coordinates", v));
+    validatePosNumber("Rotation axis length", _.abs(sum(...axis)));
+    state._matrix.rotateAxisAngleSelf(axis[0], axis[1] ?? 0, axis[2] ?? 0, deg);
+  },
 };
 
 // ----------------------------------------
 
-declare module "@lisn/effects/effect" {
+declare module "@lisn/effects/types" {
   interface EffectRegistry {
     transform: Transform;
   }
-}
-
-// ----------------------------------------
-
-const matrices = _.createMap<Transform, DOMMatrix>();
-
-const getMatrixFor = (t: TransformLike | undefined): DOMMatrix =>
-  (_.isInstanceOf(t, Transform) ? matrices.get(t) : void 0) ??
-  createMatrix(false, t);
-
-function createMatrix(readonly: true, init?: TransformLike): DOMMatrixReadOnly;
-function createMatrix(readonly: false, init?: TransformLike): DOMMatrix;
-function createMatrix(readonly: boolean, init?: TransformLike) {
-  const initM = _.isInstanceOf(init, Transform) ? init.toMatrix() : init;
-  return new (readonly ? DOMMatrixReadOnly : DOMMatrix)(
-    _.isNullish(initM)
-      ? initM
-      : _.arrayFrom(
-          _.isOfType(initM, "DOMMatrixReadOnly")
-            ? initM.toFloat32Array()
-            : initM,
-        ),
-  );
 }
 
 _.brandClass(Transform, "Transform");

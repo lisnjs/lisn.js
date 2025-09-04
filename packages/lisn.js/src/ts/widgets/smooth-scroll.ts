@@ -12,11 +12,11 @@
 
 import * as _ from "@lisn/_internal";
 
+import { RawOrRelativeNumber } from "@lisn/globals/types";
+
 import { usageError, bugError } from "@lisn/globals/errors";
 
 import { settings } from "@lisn/globals/settings";
-
-import { RawOrRelativeNumber } from "@lisn/globals/types";
 
 import { supportsSticky } from "@lisn/utils/browser";
 import {
@@ -44,7 +44,7 @@ import {
 } from "@lisn/utils/dom-optimize";
 import { isNodeBAfterA } from "@lisn/utils/dom-query";
 import { logError } from "@lisn/utils/log";
-import { isValidNum } from "@lisn/utils/math";
+import { isValidNum, toRawNum } from "@lisn/utils/math";
 import { getDefaultScrollingElement } from "@lisn/utils/scroll";
 import { Tweener } from "@lisn/utils/tween";
 import {
@@ -52,7 +52,7 @@ import {
   validateRawOrRelativeNumber,
 } from "@lisn/utils/validation";
 
-import { FXComposer, FXComposerConfig } from "@lisn/effects/fx-composer";
+import { FXComposer } from "@lisn/effects/fx-composer";
 import { FXScrollTrigger } from "@lisn/effects/fx-trigger";
 import { Transform } from "@lisn/effects/transform";
 
@@ -268,6 +268,7 @@ export class SmoothScroll extends Widget {
     super(scrollable, { id: DUMMY_ID });
 
     let layers: Map<Element, SmoothScrollLayerState> | null = null;
+
     this.getComposer = (layer) => {
       let key: Element = scrollable;
       if (layer && !isRootLayer(scrollable, layer)) {
@@ -287,9 +288,7 @@ export class SmoothScroll extends Widget {
       return;
     }
 
-    const trigger = new FXScrollTrigger(scrollable);
-    trigger.pause();
-    layers = getLayersFrom(scrollable, config, trigger);
+    layers = getLayersFrom(scrollable, config, new FXScrollTrigger(scrollable));
 
     for (const layer of layers.keys()) {
       if (!scrollable.contains(layer)) {
@@ -302,7 +301,7 @@ export class SmoothScroll extends Widget {
         return;
       }
 
-      init(this, scrollable, config, trigger, layers);
+      init(this, scrollable, config, layers);
     });
   }
 }
@@ -403,6 +402,8 @@ export type SmoothScrollLayerConfig = {
   /**
    * The lag for {@link SmoothScroll.getComposer | this layer's composer}.
    *
+   * It can be relative to the parent layer's lag.
+   *
    * @defaultValue undefined // parent lag
    */
   lag?: RawOrRelativeNumber;
@@ -410,6 +411,8 @@ export type SmoothScrollLayerConfig = {
   /**
    * The horizontal lag for
    * {@link SmoothScroll.getComposer | this layer's composer}.
+   *
+   * It can be relative to the parent layer's lagX.
    *
    * @defaultValue undefined // parent lagX
    */
@@ -419,6 +422,8 @@ export type SmoothScrollLayerConfig = {
    * The vertical lag for
    * {@link SmoothScroll.getComposer | this layer's composer}.
    *
+   * It can be relative to the parent layer's lagY.
+   *
    * @defaultValue undefined // parent lagY
    */
   lagY?: RawOrRelativeNumber;
@@ -426,6 +431,8 @@ export type SmoothScrollLayerConfig = {
   /**
    * The parallax depth for
    * {@link SmoothScroll.getComposer | this layer's composer}.
+   *
+   * It can be relative to the parent layer's depth.
    *
    * The special value "auto" is supported here and will result in vertical
    * (or horizontal) depth equal to the scrollable's scroll height (or width)
@@ -443,6 +450,8 @@ export type SmoothScrollLayerConfig = {
    * The horizontal parallax depth for
    * {@link SmoothScroll.getComposer | this layer's composer}.
    *
+   * It can be relative to the parent layer's depthX.
+   *
    * @defaultValue {@link depth}
    */
   depthX?: RawOrRelativeNumber | "auto";
@@ -450,6 +459,8 @@ export type SmoothScrollLayerConfig = {
   /**
    * The vertical parallax depth for
    * {@link SmoothScroll.getComposer | this layer's composer}.
+   *
+   * It can be relative to the parent layer's depthY.
    *
    * @defaultValue {@link depth}
    */
@@ -487,13 +498,13 @@ const ONLY_HTML_ELEMENT_ERR = usageError(
 );
 
 type SmoothScrollLayerState = {
-  _lagX: RawOrRelativeNumber;
-  _lagY: RawOrRelativeNumber;
-  _depthX: RawOrRelativeNumber | "auto";
-  _depthY: RawOrRelativeNumber | "auto";
+  _lagX: number;
+  _lagY: number;
+  _depthX: number | "auto";
+  _depthY: number | "auto";
   _composer: FXComposer;
   _children: Set<Element>;
-  _parentState: SmoothScrollLayerState | null;
+  _defaultEffects: boolean;
   _scrollData?: ScrollData;
   _sizeData?: SizeData["border"];
 };
@@ -502,6 +513,11 @@ let mainWidget: SmoothScroll | null = null;
 
 const validateDepth = (key: string, value: unknown) =>
   value === _.S_AUTO ? value : validateRawOrRelativeNumber(key, value);
+
+const toDepth = (value: unknown, ref: number | "auto") => {
+  const refNum = ref === _.S_AUTO ? 1 : ref;
+  return value === _.S_AUTO ? value : toRawNum(value, refNum, refNum);
+};
 
 // For HTML API only
 const configValidator: WidgetConfigValidatorObject<SmoothScrollConfig> = {
@@ -560,23 +576,6 @@ const getLayersFrom = (
   const layerMap = _.createMap<Element, SmoothScrollLayerState>();
   const defaultLag = rootConfig?.lag ?? settings.effectLag;
 
-  const createComposer = (
-    useDefaultEffects: boolean,
-    config: FXComposerConfig,
-  ) => {
-    const composer = new FXComposer(_.merge(config, { trigger, lagZ: 0 }));
-    if (useDefaultEffects) {
-      composer.add(
-        new Transform({ isAbsolute: true }).translate((data) => ({
-          x: -data.x,
-          y: -data.y,
-        })),
-      );
-    }
-
-    return composer;
-  };
-
   const getLayerConfig = (layer: Element) => {
     let config: SmoothScrollLayerConfig | null | undefined;
     // let parseEffectsAttr = false;
@@ -613,37 +612,44 @@ const getLayersFrom = (
       const parent = getParentLayer(scrollable, layer);
       const parentState = parent ? getLayerState(parent) : null;
 
-      if (parentState) {
-        parentState._children.add(layer);
-      }
+      parentState?._children.add(layer);
 
-      const lagX =
-        config?.lagX ?? config?.lag ?? parentState?._lagX ?? defaultLag;
-      const lagY =
-        config?.lagY ?? config?.lag ?? parentState?._lagY ?? defaultLag;
-      const depthX =
-        config?.depthX ?? config?.depth ?? parentState?._depthX ?? 1;
-      const depthY =
-        config?.depthY ?? config?.depth ?? parentState?._depthY ?? 1;
-      const useDefaultEffects =
-        config?.defaultEffects ?? rootConfig?.defaultEffects ?? true;
+      const parentLagX = parentState?._lagX ?? defaultLag;
+      const parentLagY = parentState?._lagY ?? defaultLag;
+      const parentDepthX = parentState?._depthX ?? 1;
+      const parentDepthY = parentState?._depthY ?? 1;
+
+      const lagX = toRawNum(
+        config?.lagX ?? config?.lag,
+        parentLagX,
+        parentLagX,
+      );
+      const lagY = toRawNum(
+        config?.lagY ?? config?.lag,
+        parentLagY,
+        parentLagY,
+      );
+      const depthX = toDepth(config?.depthX ?? config?.depth, parentDepthX);
+      const depthY = toDepth(config?.depthY ?? config?.depth, parentDepthY);
 
       state = {
         _lagX: lagX,
         _lagY: lagY,
         _depthX: depthX,
         _depthY: depthY,
-        _composer: createComposer(useDefaultEffects, {
+        _defaultEffects:
+          config?.defaultEffects ?? parentState?._defaultEffects ?? true,
+        _composer: new FXComposer([], {
+          trigger,
           lagX,
           lagY,
+          lagZ: 0,
+          negateParent: true,
           depthX: depthX === _.S_AUTO ? 1 : depthX,
           depthY: depthY === _.S_AUTO ? 1 : depthY,
           tweener: config?.tweener ?? rootConfig?.tweener,
-          parent: parentState?._composer,
-          negate: parentState?._composer,
         }),
         _children: _.createSet(),
-        _parentState: parentState,
       };
 
       layerMap.set(layer, state);
@@ -737,9 +743,17 @@ const init = async (
   widget: SmoothScroll,
   scrollable: HTMLElement,
   config: SmoothScrollConfig | undefined,
-  trigger: FXScrollTrigger,
   layers: Map<Element, SmoothScrollLayerState>,
 ) => {
+  const getStateOf = (layer: Element) => {
+    const state = layers.get(layer);
+    /* istanbul ignore next */
+    if (!state) {
+      throw bugError("No SmoothScroll state saved for layer");
+    }
+    return state;
+  };
+
   const isDoc = scrollable === getDefaultScrollingElement();
   const root = isDoc ? _.getBody() : scrollable;
 
@@ -747,11 +761,7 @@ const init = async (
     stateUsesAutoDepth(state),
   );
 
-  const rootState = layers.get(scrollable);
-  /* istanbul ignore next */
-  if (!rootState) {
-    throw bugError("No SmoothScroll state saved for the root");
-  }
+  const rootState = getStateOf(scrollable);
 
   const sizeWatcher = SizeWatcher.reuse();
   // we need scroll width/height measurements for "auto" parallax
@@ -792,11 +802,7 @@ const init = async (
   // For "auto" parallax
 
   const updateSizeData = (target: Element, sizeData: SizeData) => {
-    const state = layers.get(target);
-    /* istanbul ignore next */
-    if (!state) {
-      throw bugError("No SmoothScroll state saved for layer");
-    }
+    const state = getStateOf(target);
     state._sizeData = sizeData.border;
     resetAutoDepth(state);
   };
@@ -825,8 +831,6 @@ const init = async (
 
     domWatcher.onMutation(moveNewElements, { categories: [_.S_ADDED] });
 
-    trigger.resume();
-
     for (const [layer, state] of layers) {
       if (stateUsesAutoDepth(state)) {
         sizeWatcher.onResize(
@@ -835,10 +839,7 @@ const init = async (
         );
       }
 
-      state._composer.startAnimate(
-        [layer === scrollable ? contentWrapper : layer],
-        state._parentState?._composer,
-      );
+      layers.get(layer)?._composer.resume();
     }
   };
 
@@ -847,17 +848,12 @@ const init = async (
     sizeWatcher.offResize(updatePropsOnResize, contentWrapper);
     domWatcher.offMutation(moveNewElements);
 
-    trigger.pause();
-
     for (const [layer, state] of layers) {
       if (stateUsesAutoDepth(state)) {
         sizeWatcher.offResize(updateSizeData, layer);
       }
 
-      state._composer.stopAnimate(
-        [layer === scrollable ? contentWrapper : layer],
-        true,
-      );
+      layers.get(layer)?._composer.pause(true);
     }
   };
 
@@ -894,6 +890,24 @@ const init = async (
       maxLayerTop <= 0 ? _.NUMBER.MAX_SAFE_INTEGER : maxScrollTop / maxLayerTop;
 
     state._composer.setDepth({ depthX, depthY });
+  };
+
+  const setComposerElements = (layer: Element = scrollable) => {
+    const state = getStateOf(layer);
+
+    state._composer.setElements(layer === scrollable ? contentWrapper : layer);
+    if (state._defaultEffects) {
+      state._composer.add(
+        new Transform({ isAbsolute: true }).translate((params) => ({
+          x: -params.x,
+          y: -params.y,
+        })),
+      );
+    }
+
+    for (const layer of state._children) {
+      setComposerElements(layer);
+    }
   };
 
   // SETUP ------------------------------
@@ -963,8 +977,8 @@ const init = async (
   }
 
   addClassesNow(root, PREFIX_ROOT);
-
   addWatchers();
+  setComposerElements();
 
   widget.onDisable(() => {
     removeWatchers();
@@ -977,7 +991,9 @@ const init = async (
   });
 
   widget.onDestroy(async () => {
-    rootState._composer.clear();
+    for (const state of layers.values()) {
+      state._composer.destroy();
+    }
 
     await waitForMutateTime();
 

@@ -37,18 +37,18 @@ basic concepts.
 
 LISN also comes with many awesome widgets, like:
 
+* SmoothScroller (native scroll + support for custom scrolling elements)
+* Scrollbars (native scrolling)
 * Collapsible
 * Floating popup/tooltip
 * Modal
 * Offcanvas menu
 * Pager (carousel/slider/tabs)
 * Flex same-height
-* Scrollbars (native scrolling)
 * Sortable
 * Auto-hide/remove matching elements
 * Scroll-to-top button
 * Page loader
-* SmoothScroller (native scroll + support for custom scrolling elements)
 
 # Basic concepts
 
@@ -107,7 +107,8 @@ The basic building blocks are:
 * The composer, which links together multiple effects or other composers. It
   works with effect triggers (not to be confused with the basic triggers
   mentioned above) and each time it is triggered, it updates its state and
-  effect composition.
+  effect composition. It can animate one or more elements by applying its CSS to
+  them.
 * An effect trigger is what the composer can continually poll for new data.
   There are build-in triggers based on scroll or gestures. There's also a proxy
   trigger which takes another trigger and can introduce delays or shifts in the

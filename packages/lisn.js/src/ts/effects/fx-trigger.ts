@@ -8,6 +8,8 @@
  * continually poll for new data.
  */
 
+// XXX registerTrigger for consistency and don't invoke logic methods with this
+
 import * as _ from "@lisn/_internal";
 
 import { usageError } from "@lisn/globals/errors";
@@ -21,11 +23,10 @@ import { waitForDelay } from "@lisn/utils/tasks";
 import {
   CallbackHandler,
   Callback,
-  addHandlerToMap,
-  invokeHandlers,
+  createCallbackManager,
 } from "@lisn/modules/callback";
 
-import { FXStateUpdate } from "@lisn/effects/effect";
+import { FXStateUpdate } from "@lisn/effects/types";
 
 import { ScrollWatcher, OnScrollHandler } from "@lisn/watchers/scroll-watcher";
 import {
@@ -41,8 +42,8 @@ import {
  * It can be polled by multiple receivers, so you can reuse triggers across
  * composers.
  *
- * This is a generic class that accepts a custom executor function. You may want
- * to subclass it when defining your own trigger types.
+ * This is a generic base class that accepts a custom {@link FXTriggerLogic}.
+ * You may want to subclass it when defining your own trigger types.
  *
  * @category Triggers
  */
@@ -50,17 +51,50 @@ export class FXTrigger {
   /**
    * An infinite async generator that continually yields new data.
    *
+   * It can be called by multiple receivers.
+   *
+   * It will automatically detect when there are no more pollers and pause
+   * itself.
+   *
    * **NOTE:** The trigger does not queue or buffer data while it's paused or if
    * there are no active pollers, and therefore multiple pushes of new data
    * before the first call to {@link poll} or while the trigger is paused, will
    * only yield the last data that was pushed.
+   *
+   * You should generally use this in a `for await..of` loop, since the
+   * generator's `next` method does not accept any value. If you need to call
+   * `next` manually, make sure you also call the generator's `return` method
+   * when done, to allow it to detect a poller has quit and therefore
+   * automatically pause if needed.
+   *
+   * @example
+   * ```javascript
+   * for await (const updateData of trigger.poll()) {
+   *   // ...
+   * }
+   * ```
+   *
+   * @example
+   * ```javascript
+   * const generator = trigger.poll();
+   * while (true) {
+   *   const { value } = generator.next();
+   *   if (shouldQuit) {
+   *     generator.return();
+   *     break;
+   *   }
+   * }
+   * ```
    */
   readonly poll: () => AsyncGenerator<FXStateUpdate, never, undefined>;
 
   /**
    * Returns true if the trigger is running (not paused).
+   *
+   * **NOTE:** the initial state of the trigger is paused until there's at least
+   * one poller.
    */
-  readonly isRunning: () => boolean;
+  readonly isActive: () => boolean;
 
   /**
    * Pauses the trigger. It will not yield new data until resumed.
@@ -73,11 +107,11 @@ export class FXTrigger {
   readonly resume: () => void;
 
   /**
-   * Calls the given handler whenever the trigger's {@link isRunning | state}
+   * Calls the given handler whenever the trigger's {@link isActive | state}
    * changes.
    *
    * The handler is called after pausing or resuming the trigger, such that
-   * calling {@link isRunning} from the handler will reflect the latest state.
+   * calling {@link isActive} from the handler will reflect the latest state.
    */
   readonly onToggle: (handler: FXTriggerHandler) => void;
 
@@ -86,20 +120,10 @@ export class FXTrigger {
    */
   readonly offToggle: (handler: FXTriggerHandler) => void;
 
-  /**
-   *
-   * @param executor A function which accepts a `push` function. The executor
-   *                 should call this function when it has new data to send to
-   *                 the composer. It is also the responsibility for the
-   *                 executor to set up an {@link onToggle} handler and pause
-   *                 its data collection when the trigger is paused. It will be
-   *                 called inside the class constructor with `this` set to the
-   *                 newly created trigger.
-   */
-  constructor(executor: (push: (update: FXStateUpdate) => void) => void) {
-    let isRunning = true;
+  constructor(logic: FXTriggerLogic) {
+    let isActive = false;
 
-    const toggleCallbacks = _.createMap<FXTriggerHandler, FXTriggerCallback>();
+    const toggleCallbacks = createCallbackManager<FXTriggerHandlerArgs>();
     const pollers = _.createSet<Poller>();
 
     // Save it in an object in order to allow pushing `null` and
@@ -109,9 +133,9 @@ export class FXTrigger {
 
     const updateState = (state: PollUpdate | null) => {
       lastPush = state;
-      pushedWhilePaused = !isRunning;
+      pushedWhilePaused = !isActive;
 
-      if (state && isRunning) {
+      if (state && isActive) {
         for (const poller of pollers) {
           poller._push(state._update);
         }
@@ -121,29 +145,33 @@ export class FXTrigger {
     // ----------
 
     const setState = (activate: boolean) => {
-      if (isRunning !== activate) {
-        isRunning = activate;
+      if (isActive !== activate) {
+        isActive = activate;
 
         if (activate && pushedWhilePaused) {
           // wake up pollers with the last data pushed while paused
           updateState(lastPush);
         }
 
-        invokeHandlers(toggleCallbacks, this, { isRunning });
+        toggleCallbacks.invoke(this, { isActive });
+
+        (isActive ? logic?.resume : logic?.pause)?.call(this);
       }
     };
 
     // --------------------
 
-    this.isRunning = () => isRunning;
+    this.isActive = () => isActive;
     this.pause = () => setState(false);
     this.resume = () => setState(true);
 
     this.poll = async function* () {
+      setState(true); // resume if needed
+
       const poller = createPoller();
       pollers.add(poller);
 
-      if (lastPush && isRunning) {
+      if (lastPush && isActive) {
         // there's been a push already
         yield _.copyNested(lastPush._update);
       }
@@ -154,20 +182,19 @@ export class FXTrigger {
         }
       } finally {
         _.deleteKey(pollers, poller);
+
+        if (!_.sizeOf(pollers)) {
+          setState(false); // pause
+        }
       }
     };
 
-    this.onToggle = (handler) => {
-      addHandlerToMap(handler, toggleCallbacks);
-    };
-
-    this.offToggle = (handler) => {
-      _.remove(toggleCallbacks.get(handler));
-    };
+    this.onToggle = (handler) => toggleCallbacks.add(handler);
+    this.offToggle = (handler) => toggleCallbacks.delete(handler);
 
     // --------------------
 
-    executor.call(this, (update: FXStateUpdate) =>
+    logic.run.call(this, (update: FXStateUpdate) =>
       updateState({ _update: update }),
     );
   }
@@ -177,16 +204,16 @@ export class FXTrigger {
  * The handler is invoked with two arguments:
  *
  * - The {@link FXTrigger} instance.
- * - An object containing `isRunning` boolean property, indicating the state of
+ * - An object containing `isActive` boolean property, indicating the state of
  *   the trigger at the time the callback was invoked. Note that by default,
  *   unless you pass a concurrent {@link Callback}, the handler will be invoked
  *   asynchronously, and so the state of the trigger may have changed by the
  *   time the handler runs. If you need the know the latest state, call
- *   {@link FXTrigger.isRunning | isRunning} on the trigger instance.
+ *   {@link FXTrigger.isActive | isActive} on the trigger instance.
  *
  * @category Triggers
  */
-export type FXTriggerHandlerArgs = [FXTrigger, { isRunning: boolean }];
+export type FXTriggerHandlerArgs = [FXTrigger, { isActive: boolean }];
 /**
  * @category Triggers
  */
@@ -197,6 +224,45 @@ export type FXTriggerCallback = Callback<FXTriggerHandlerArgs>;
 export type FXTriggerHandler =
   | FXTriggerCallback
   | CallbackHandler<FXTriggerHandlerArgs>;
+
+/**
+ * @category Triggers
+ */
+export type FXTriggerLogic = {
+  /**
+   * A function which accepts a `push` function. The function should call this
+   * `push` function when it has new data to send to the composer.
+   *
+   * The function will be called once when the trigger instance is created with
+   * `this` set to the newly created trigger (the function must be a plain
+   * non-arrow function to access the instance via `this`).
+   */
+  run: (push: (update: FXStateUpdate) => void) => void;
+
+  /**
+   * If given, it will be called when the trigger pauses.
+   *
+   * The function will be called with `this` set to the newly created trigger
+   * (the function must be a plain non-arrow function to access the instance via
+   * `this`).
+   *
+   * **NOTE:** the initial state of the trigger is paused until there's at least
+   * one poller.
+   */
+  pause?: () => void;
+
+  /**
+   * If given, it will be called when the trigger resumes.
+   *
+   * The function will be called with `this` set to the newly created trigger
+   * (the function must be a plain non-arrow function to access the instance via
+   * `this`).
+   *
+   * **NOTE:** the initial state of the trigger is paused until there's at least
+   * one poller.
+   */
+  resume?: () => void;
+};
 
 // ------------------------------------------------------------------------
 // -------------------------- BUILT-IN TRIGGERS ---------------------------
@@ -219,7 +285,7 @@ export class FXProxyTrigger extends FXTrigger {
 
     const { delay = 0, transformFn } = config ?? {};
 
-    const executor = (push: (update: FXStateUpdate) => void) => {
+    const run = (push: (update: FXStateUpdate) => void) => {
       (async () => {
         const relayUpdate = async (update: FXStateUpdate) => {
           if (delay > 0) {
@@ -237,7 +303,7 @@ export class FXProxyTrigger extends FXTrigger {
 
     // --------------------
 
-    super(executor);
+    super({ run });
   }
 }
 
@@ -285,21 +351,21 @@ export class FXScrollTrigger extends FXTrigger {
     let scrollHandler: OnScrollHandler;
     let shouldSnap = true;
 
-    const addOrRemoveWatcher = () => {
+    const addWatcher = () => {
       shouldSnap = true;
-      if (this.isRunning()) {
-        scrollWatcher.trackScroll(
-          scrollHandler,
-          _.fastWatcherConf({
-            scrollable,
-          }),
-        );
-      } else {
-        scrollWatcher.noTrackScroll(scrollHandler, scrollable);
-      }
+      scrollWatcher.trackScroll(
+        scrollHandler,
+        _.fastWatcherConf({
+          scrollable,
+        }),
+      );
     };
 
-    const executor = (push: (update: FXStateUpdate) => void) => {
+    const removeWatcher = () => {
+      scrollWatcher.noTrackScroll(scrollHandler, scrollable);
+    };
+
+    const run = (push: (update: FXStateUpdate) => void) => {
       scrollHandler = (e__ignored, scrollData) => {
         push({
           x: {
@@ -321,10 +387,7 @@ export class FXScrollTrigger extends FXTrigger {
 
     // --------------------
 
-    super(executor);
-
-    this.onToggle(addOrRemoveWatcher);
-    addOrRemoveWatcher();
+    super({ run, pause: removeWatcher, resume: addWatcher });
   }
 }
 
@@ -360,22 +423,22 @@ export class FXGestureTrigger extends FXTrigger {
     // deltas we receive from the GestureWatcher.
     const totalDeltas = { x: 0, y: 0, z: 1 };
 
-    const addOrRemoveWatcher = () => {
-      if (this.isRunning()) {
-        gestureWatcher.onGesture(
-          target,
-          gestureHandler,
-          _.merge(config, {
-            debounceWindow: 0,
-            deltaThreshold: 0,
-          }),
-        );
-      } else {
-        gestureWatcher.offGesture(target, gestureHandler);
-      }
+    const addWatcher = () => {
+      gestureWatcher.onGesture(
+        target,
+        gestureHandler,
+        _.merge(config, {
+          debounceWindow: 0,
+          deltaThreshold: 0,
+        }),
+      );
     };
 
-    const executor = (push: (update: FXStateUpdate) => void) => {
+    const removeWatcher = () => {
+      gestureWatcher.offGesture(target, gestureHandler);
+    };
+
+    const run = (push: (update: FXStateUpdate) => void) => {
       gestureHandler = (t__ignored, gestureData) => {
         totalDeltas.x = toNumWithBounds(totalDeltas.x + gestureData.deltaX, {
           min: minTotalDeltaX,
@@ -415,10 +478,7 @@ export class FXGestureTrigger extends FXTrigger {
 
     // --------------------
 
-    super(executor);
-
-    this.onToggle(addOrRemoveWatcher);
-    addOrRemoveWatcher();
+    super({ run, pause: removeWatcher, resume: addWatcher });
   }
 }
 

@@ -2,6 +2,10 @@
  * @module Effects
  *
  * @since v1.3.0
+ *
+ * @categoryDescription Base
+ * These types, classes and functions are to be used by those who want to extend
+ * LISN's effect suite by defining own effects, matchers, triggers, etc.
  */
 
 // TODO Reveal Effect:
@@ -15,325 +19,196 @@
 
 import * as _ from "@lisn/_internal";
 
-import { usageError } from "@lisn/globals/errors";
+import { SemiPartial } from "@lisn/globals/types";
 
+import { bugError, usageError } from "@lisn/globals/errors";
+
+import { logError } from "@lisn/utils/log";
 import { toNum } from "@lisn/utils/math";
 
+import {
+  EffectUpdater,
+  EffectName,
+  Effect,
+  EffectConfig,
+  EffectInstance,
+  EffectDefinitions,
+  EffectLogic,
+  EffectUpdaterEntry,
+  ParallaxScalerFn,
+  EffectUpdaterReturn,
+  EffectUpdaterName,
+  FXParams,
+  FXAxisState,
+  FXState,
+  FXStateUpdate,
+} from "@lisn/effects/types";
+import { FXComposer } from "@lisn/effects/fx-composer";
+import { getOrCreatePinInstance, FXPin } from "@lisn/effects/fx-pin";
+
 /**
- * An effect defines one or more methods that accept an {@link FXHandler} as
- * well as an {@link update} method which accepts the {@link FXState | state} of
- * a composer. When the effect is updated, each handler is called in turn with
- * parsed {@link FXParams} based on the composer's state and the return values
- * of the handlers are used to modify the effect's values.
+ * An effect holds a state that can be translated into CSS to be applied on an
+ * element. Effects are managed {@link FXComposer}s.
  *
- * See each specific effect for the type of handlers it supports.
+ * There are several built-in effects:
+ * - {@link Transform}
+ * - {@link Filter}
  *
- * @interface
- */
-export interface EffectInterface<
-  T extends string,
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  S extends EffectInterface<T, S> = any,
-> {
-  /**
-   * Unique type for the effect
-   */
-  type: T;
-
-  /**
-   * Returns true if the effect is absolute. If true, the
-   * {@link FXHandler | handlers} receive absolute
-   * {@link FXParams | parameters} and each call to {@link update} will reset
-   * the effect back to the default/blank state.
-   *
-   * Otherwise, the handlers receive delta values reflecting the change in
-   * parameters since the last animation frame and the effect's state is
-   * preserved between calls to {@link update}.
-   */
-  isAbsolute: () => boolean;
-
-  /**
-   * Updates the effect as per the given state.
-   */
-  update: (state: FXState) => this;
-
-  /**
-   * Returns a **static copy** of the effect that has the current state/value of
-   * this effect, but no handlers. New handlers can be added afterwards.
-   *
-   * @param negate If given, `negate` will be inverted and used as the base
-   *               before adding the current effect's state. Not all effects may
-   *               implement this.
-   */
-  export: (negate?: S) => S;
-
-  /**
-   * Returns a **new live** effect that has all the handlers from this one and
-   * from the given effects, added in order. The resulting state/value is the
-   * combined product of its current state and that of all the other given ones.
-   *
-   * Calling this with no arguments essentially clones the effect.
-   *
-   * **NOTE:** If any of the given effects is {@link isAbsolute | absolute}, all
-   * previous ones are discarded and the resulting effect becomes absolute.
-   */
-  toComposition: (...others: S[]) => S;
-
-  /**
-   * Returns an object with CSS properties and their values that represent the
-   * effect's current state.
-   *
-   * @param negate See {@link export}.
-   */
-  toCss: (negate?: S) => Record<string, string>;
-}
-
-export type EffectType = {
-  [K in keyof EffectRegistry]: EffectRegistry[K] extends EffectInterface<K>
-    ? K
-    : never;
-}[keyof EffectRegistry];
-
-export type Effect<T extends EffectType = EffectType> =
-  EffectRegistry[T] extends EffectInterface<T> ? EffectRegistry[T] : never;
-
-/**
- * An effect handler that should return a value specific to each effect and
- * sub-type (e.g. translate sub-type part of transform).
+ * {@link registerEffect} registers a new effect type. It returns an object with
+ * an `init` property holding a function.
  *
- * Returning `undefined` should leave the current value unchanged.
- */
-export type FXHandler<R> = (
-  parameters: FXParams,
-  state: FXState,
-) => R | undefined;
-
-/**
- * The parameters for the current animation frame that {@link FXHandler}s should
- * use.
- */
-export type FXParams = {
-  /**
-   * If the effect is {@link EffectInterface.isAbsolute | absolute}, it is the
-   * current value for the X-axis. Otherwise it is the change in that value
-   * since the last animation frame.
-   *
-   * Depending on each effect and effect category, it may also be scaled by the
-   * parallax depth of the {@link Effects.FXComposer}.
-   */
-  x: number;
-
-  /**
-   * If the effect is {@link EffectInterface.isAbsolute | absolute}, it is the
-   * normalized {@link x} relative to the difference between
-   * {@link FXAxisState.low | low} (`nx = 0`) and {@link FXAxisState.high | high}
-   * (`nx = 1`). It may be below 0 or above 1 since {@link FXAxisState.low | low}
-   * and {@link FXAxisState.high | high} are only reference values used for
-   * computing this normalized parameter, and not strictly enforced.
-   *
-   * If {@link FXAxisState.low | low} equals {@link FXAxisState.high | high},
-   * this will always be set to 1.
-   *
-   * If the effect is not absolute, it is the change in the absolute normalized
-   * value since the last animation frame.
-   *
-   * It is always independent of parallax depth.
-   */
-  nx: number;
-
-  /**
-   * Like {@link x} but for the Y-axis.
-   */
-  y: number;
-
-  /**
-   * Like {@link nx} but for the Y-axis.
-   */
-  ny: number;
-
-  /**
-   * Like {@link x} but for the Z-axis.
-   */
-  z: number;
-
-  /**
-   * Like {@link nx} but for the Z-axis.
-   */
-  nz: number;
-};
-
-/**
- * The update for an axis (low, high and target) values.
- */
-export type FXAxisStateUpdate = {
-  /**
-   * The new low value. If it is greater than {@link high}, they are swapped.
-   */
-  low?: number;
-
-  /**
-   * The new high value. If it is less than {@link low}, they are swapped.
-   */
-  high?: number;
-
-  /**
-   * The new target value which we're interpolating towards.
-   *
-   * If it exceeds the current {@link FXAxisState.high} value, the high will be
-   * updated to this target value.
-   *
-   * If it is below the current {@link FXAxisState.low} value, the low will be
-   * updated to this target value.
-   */
-  target?: number;
-
-  /**
-   * If set to true, it tells the composer not to tween, but instead jump
-   * straight to the target value.
-   *
-   * This gets defaulted back to false during each update unless you explicitly
-   * set it to `true`.
-   */
-  snap?: boolean;
-};
-
-export type FXStateUpdate = {
-  x?: FXAxisStateUpdate;
-  y?: FXAxisStateUpdate;
-  z?: FXAxisStateUpdate;
-};
-
-/**
- * The current state of an axis (X, Y or Z).
- */
-export type FXAxisState = {
-  /**
-   * The low value. Used for computing {@link FXParams.nx | normalized}
-   * parameters.
-   *
-   * Initial value is 0.
-   */
-  low: number;
-
-  /**
-   * The high value. Used for computing {@link FXParams.nx | normalized}
-   * parameters.
-   *
-   * Initial value is 0.
-   */
-  high: number;
-
-  /**
-   * The initial value at which the composer started interpolating (since the
-   * last trigger).
-   *
-   * Initial value is 0.
-   */
-  initial: number;
-
-  /**
-   * The value at the last animation frame.
-   *
-   * Initial value is 0.
-   */
-  previous: number;
-
-  /**
-   * The current value.
-   *
-   * Initial value is 0.
-   */
-  current: number;
-
-  /**
-   * The target value which the composer is interpolating towards.
-   *
-   * Initial value is 0.
-   */
-  target: number;
-
-  /**
-   * The composer's {@link Effects.FXComposerConfig.lag | lag} for this axis.
-   */
-  lag: number;
-
-  /**
-   * The composer's {@link Effects.FXComposerConfig.depth | depth} for this
-   * axis.
-   */
-  depth: number;
-
-  /**
-   * If true, it means the composer was told to
-   * {@link FXAxisStateUpdate.snap | snap} straight to the target value during
-   * the last update.
-   *
-   * Initial value is `false`.
-   */
-  snap: boolean;
-};
-
-/**
- * Describes the whole state of the composer's parameters.
- */
-export type FXState = {
-  x: FXAxisState;
-  y: FXAxisState;
-  z: FXAxisState;
-};
-
-/**
- * Add to this interface to register a new effect type. The key must match the
- * {@link EffectInterface.type} property.
+ * Your effect class should call this `init` function in its constructor,
+ * passing it itself (`this`) and an {@link EffectConfig}. `init` will return an
+ * object containing the following functions that the effect can use to modify
+ * the data that is going to instantiate the effect for the composer.
+ * - `addUpdater`:  a function which can push an {@link EffectUpdaterEntry} into
+ *                  the effect's data for instantiation
+ * - `setUpdaters`: a function which overrides all updaters in the effect's data
+ *                  for instantiation
+ *
+ * Your custom effect class **must** extend {@link EffectBase}.
+ *
+ * For type check support, you also want to register the effect into the
+ * {@link EffectRegistry} mapping.
+ *
+ * See example below for implementing a basic effect class.
+ *
+ * @throws {@link Errors.LisnUsageError | LisnUsageError}
+ *                If this effect type has already been registered.
  *
  * @example
- *
  * ```typescript
- * export class FancyEffect implements EffectInterface<"fancy"> {
- *   readonly type = "fancy";
- *   // ... implement remaining methods from EffectInterface
+ * type FancyState = {
+ *   data: number[];
+ * }
+ *
+ * const { init } = registerEffect<"fancy", FancyState>({
+ *   type: "fancy",
+ *   logic: {
+ *     processUpdate(state, name, result, tag) {
+ *       state.data.push(result);
+ *       return state;
+ *     },
+ *     clone(state) {
+ *       return {
+ *         data: [...state.data],
+ *       }
+ *     },
+ *     composeWith(state, other) {
+ *       return {
+ *         data: [...state.data, ...other.data],
+ *       }
+ *     },
+ *     toCss(state) {
+ *       return {
+ *         fancy: `${state.data.reduce((sum, a) => sum + a, 0)}`;
+ *       }
+ *     },
+ *   },
+ *   nullState: {
+ *     data: [],
+ *   },
+ * });
+ *
+ * export class Fancy extends EffectBase<"fancy"> {
+ *   readonly type = "fancy"; // required
+ *
+ *   readonly fancy: (updater: EffectUpdater<number> | number) => this;
+ *
+ *   readonly schmancy: (updater: EffectUpdater<number> | number) => this;
+ *
+ *   constructor(config?: EffectConfig) {
+ *     super();
+ *
+ *     const { addUpdater, setUpdaters } = init(this, config);
+ *
+ *     this.fancy = (updater) => {
+ *       addUpdater({ name: "fancy", updater });
+ *       return this;
+ *     }
+ *
+ *     this.schmancy = (updater) => {
+ *       setUpdaters([ { name: "schmancy", updater } ]);
+ *       return this;
+ *     }
+ *   }
  * }
  *
  * declare module "lisn.js/effects" {
  *   interface EffectRegistry {
- *     fancy: FancyEffect;
+ *     fancy: Fancy;
  *   }
  * }
+ *
+ * ```
+ *
+ * @typeParam State The type of state the effect holds.
+ *
+ * @category Base
  */
-/* eslint-disable-next-line @typescript-eslint/no-empty-object-type */
-export interface EffectRegistry {}
+export const registerEffect = <const T extends EffectName, State>(
+  definitions: EffectDefinitions<T, State>,
+) => {
+  if (registeredTypes.has(definitions.type)) {
+    throw usageError(`Effect type '${definitions.type}' is already registered`);
+  }
+
+  registeredTypes.set(definitions.type, definitions);
+
+  return {
+    init: (self: Effect<T>, config?: EffectConfig) => {
+      const { isAbsolute = false, pin } = config ?? {};
+
+      const init: Required<EffectInitData<T>> = {
+        _isAbsolute: isAbsolute,
+        _pin: pin,
+        _updaters: [],
+      };
+
+      allBuilderData.set(self, init);
+
+      return {
+        addUpdater: (updater: EffectUpdaterEntry<T>) =>
+          addUpdater(self, updater),
+        setUpdaters: (updaters: EffectUpdaterEntry<T>[]) =>
+          setUpdaters(self, updaters),
+      } as const;
+    },
+  } as const;
+};
+
+const EFFECT: unique symbol = _.SYMBOL.for(
+  "LISN.js/types/effect",
+) as typeof EFFECT;
 
 /**
- * Used to scale a parameter for one of the axis by the respective parallax
- * depth.
+ * Base effect builder class.
  *
- * The function will receive the pre-scaled parameter value (which could be
- * absolute or delta) for this axis and the composer's depth along this axis
- * and should return the final parameter value to use.
+ * @category Base
  */
-export type ParallaxScalerFn = (
-  param: number,
-  depth: number,
-  axis: "x" | "y" | "z",
-) => number;
+export abstract class EffectBase<T extends string> {
+  /**
+   * @ignore
+   * @internal
+   */
+  readonly [EFFECT] = true;
+
+  /**
+   * Unique name for the effect type.
+   */
+  abstract type: T;
+}
+
+// --------------------
 
 /**
- * Returns the {@link FXParams | parameters} for the given state.
+ * @internal
+ * @ignore
  *
- * @param [options.isAbsolute] If false (default), the parameters will equal the
- *                             change in values since the last animation frame.
- *                             If true, they will equal the current values for
- *                             the axes.
- * @param [options.scalerFn]   If given, the parameters along each axis will be
- *                             scaled by the composer's parallax depth for this
- *                             axis.
+ * Returns the {@link FXParams | parameters} for the given composer state.
  */
-export const toParameters = (
-  state: FXState,
-  options?: { isAbsolute?: boolean; scalerFn?: ParallaxScalerFn },
-): FXParams => {
+export const toParameters = (state: FXState, isAbsolute = false): FXParams => {
   state = getUpdatedState(state); // validate
-  const { isAbsolute, scalerFn } = options ?? {};
 
   const getAxisParam = (axisState: FXAxisState, normalized = false) => {
     const { current, previous, low, high } = axisState;
@@ -354,7 +229,7 @@ export const toParameters = (
     return result;
   };
 
-  const parameters: FXParams = {
+  return {
     x: getAxisParam(state.x),
     nx: getAxisParam(state.x, true),
     y: getAxisParam(state.y),
@@ -362,30 +237,34 @@ export const toParameters = (
     z: getAxisParam(state.z),
     nz: getAxisParam(state.z, true),
   };
-
-  return scalerFn ? scaleParameters(parameters, state, scalerFn) : parameters;
 };
 
 /**
+ * @internal
+ * @ignore
+ *
  * Returns the parameters scaled by the given scaling function using the
  * parallax depths in the state.
  */
 export const scaleParameters = (
   parameters: FXParams,
   state: FXState,
-  scalerFn: ParallaxScalerFn,
+  scaler: ParallaxScalerFn,
 ): FXParams => {
   return {
-    x: scalerFn(parameters.x, state.x.depth, "x"),
+    x: scaler(parameters.x, state.x.depth, "x"),
     nx: parameters.nx,
-    y: scalerFn(parameters.y, state.y.depth, "y"),
+    y: scaler(parameters.y, state.y.depth, "y"),
     ny: parameters.ny,
-    z: scalerFn(parameters.z, state.z.depth, "z"),
+    z: scaler(parameters.z, state.z.depth, "z"),
     nz: parameters.nz,
   };
 };
 
 /**
+ * @internal
+ * @ignore
+ *
  * Returns a new updated state as per the update data if any while enforcing
  * valid values for all properties.
  *
@@ -465,112 +344,262 @@ export const getUpdatedState = (
   };
 };
 
-// ----------
 /**
- * @ignore
  * @internal
+ * @ignore
  */
-export type HandlerMethodName<T extends EffectType> = {
-  [M in keyof Effect<T> & string]: Effect<T>[M] extends (
-    ...args: infer A
-  ) => Effect<T>
-    ? A extends [FXHandler<infer R__ignored>]
-      ? M
-      : never
-    : never;
-}[keyof Effect<T> & string];
+export const createEffectInstance = <T extends EffectName>(
+  effect: Effect<T>,
+  composer: FXComposer,
+): EffectInstance<T> => {
+  const definitions = registeredTypes.get(effect.type);
+  if (!definitions) {
+    throw bugError("No definitions saved for effect type");
+  }
 
-export type HandlerMethodTupleMap<T extends EffectType> = {
-  [M in HandlerMethodName<T>]: Effect<T>[M] extends (...args: infer A) => Effect
-    ? A extends [FXHandler<infer R>]
-      ? [M, FXHandler<R>]
-      : never
-    : never;
+  const init = allBuilderData.get(effect);
+  if (!init) {
+    throw bugError("No init data saved for effect");
+  }
+
+  return _createEffectInstance(
+    definitions,
+    _.merge(init, { _composer: composer }),
+  );
 };
 
-/**
- * @ignore
- * @internal
- */
-export type HandlerForMethod<
-  T extends EffectType,
-  M extends HandlerMethodName<T>,
-> = HandlerMethodTupleMap<T>[M][1];
+// ------------------------------
 
-export type HandlerMethodTuple<
-  T extends EffectType = EffectType,
-  M extends HandlerMethodName<T> = HandlerMethodName<T>,
-> = HandlerMethodTupleMap<T>[M];
+type EffectUpdaterFnEntry<
+  T extends EffectName,
+  M extends EffectUpdaterName<T> = EffectUpdaterName<T>,
+> = {
+  name: M;
+  updater: EffectUpdater<EffectUpdaterReturn<T, M>>;
+  scaler?: ParallaxScalerFn | null;
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  tag?: any;
+};
 
-interface HandlersMap {
-  size: number;
-  get<T extends EffectType>(
-    effect: Effect<T>,
-  ): HandlerMethodTuple<T>[] | undefined;
-  set<T extends EffectType>(
-    effect: Effect<T>,
-    handlers: HandlerMethodTuple<T>[],
+type EffectInitData<T extends EffectName> = {
+  _isAbsolute: boolean;
+  _pin: FXPin | undefined;
+  _updaters: EffectUpdaterEntry<T>[];
+};
+
+type EffectInstanceData<T extends EffectName, S> = {
+  _isAbsolute: boolean;
+  _pin: FXPin | undefined;
+  _updaters: EffectUpdaterFnEntry<T>[];
+  _state: S;
+  _composer: FXComposer;
+};
+
+interface RegistrationMap {
+  has(type: EffectName): boolean;
+  get<T extends EffectName, S>(type: T): EffectDefinitions<T, S> | undefined;
+  set<T extends EffectName, S>(
+    type: T,
+    definitions: EffectDefinitions<T, S>,
   ): this;
-  has(effect: Effect): boolean;
-  delete(effect: Effect): boolean;
-  clear(): void;
-  keys(): IterableIterator<Effect>;
-  values(): IterableIterator<HandlerMethodTuple[]>;
-  entries<T extends EffectType>(): IterableIterator<
-    [Effect<T>, HandlerMethodTuple<T>[]]
-  >;
-  [Symbol.iterator]<T extends EffectType>(): IterableIterator<
-    [Effect<T>, HandlerMethodTuple<T>[]]
-  >;
 }
 
-const allUserHandlersMap: HandlersMap = new Map();
+interface BuilderDataMap {
+  get<T extends EffectName>(effect: Effect<T>): EffectInitData<T> | undefined;
+  set<T extends EffectName>(effect: Effect<T>, data: EffectInitData<T>): this;
+}
 
-/**
- * @ignore
- * @internal
- */
-export const getHandlersFor = <T extends EffectType>(effect: Effect<T>) => {
-  let handlers = allUserHandlersMap.get(effect);
-  if (!handlers) {
-    handlers = [];
+interface InstanceDataMap {
+  get<T extends EffectName, S>(
+    effectInstance: EffectInstance<T>,
+  ): EffectInstanceData<T, S> | undefined;
+  set<T extends EffectName, S>(
+    effectInstance: EffectInstance<T>,
+    data: EffectInstanceData<T, S>,
+  ): this;
+}
 
-    allUserHandlersMap.set(effect, handlers);
-  }
-  return handlers;
-};
+const registeredTypes: RegistrationMap = new Map();
+const allBuilderData = new WeakMap() as BuilderDataMap;
+const allInstanceData = new WeakMap() as InstanceDataMap;
 
-/**
- * @ignore
- * @internal
- */
-export const saveHandlerFor = <
-  T extends EffectType,
-  M extends HandlerMethodName<T>,
->(
+// ------------------------------
+
+const setUpdaters = <T extends EffectName>(
   effect: Effect<T>,
-  tuple: HandlerMethodTuple<T, M>,
+  updaters: EffectUpdaterEntry<T>[],
 ) => {
-  const handlers = getHandlersFor(effect);
-  handlers.push(tuple);
+  const data = allBuilderData.get(effect);
+  if (!data) {
+    throw bugError("No init data saved for effect");
+  }
+  data._updaters = updaters;
 };
 
-/**
- * @ignore
- * @internal
- *
- * Note to self: If the effect type has only a single handler method, TS won't
- * infer the tuple correctly. Need to explicitly give it as addHandlerTo<"my-type">(...)
- */
-export const addHandlerTo = <T extends EffectType>(
+const addUpdater = <T extends EffectName>(
   effect: Effect<T>,
-  tuple: HandlerMethodTuple<T>,
+  updater: EffectUpdaterEntry<T>,
 ) => {
-  const method: (h: HandlerForMethod<T, HandlerMethodName<T>>) => void =
-    effect[tuple[0]];
-  if (_.isFunction(method)) {
-    method(tuple[1]);
-  } else {
-    throw usageError(`Method '${tuple[0]}' is not a function.`);
+  const data = allBuilderData.get(effect);
+  if (!data) {
+    throw bugError("No init data saved for effect");
   }
+  data._updaters.push(updater);
 };
+
+const _createEffectInstance = <T extends EffectName, S>(
+  definitions: {
+    type: T;
+    logic: EffectLogic<T, S>;
+    nullState: S;
+  },
+  init: SemiPartial<EffectInitData<T> & EffectInstanceData<T, S>, "_state">,
+): EffectInstance<T> => {
+  const update = () => {
+    const clampedState = pinInstance?.getClampedState() ?? composer.getState();
+
+    if (isAbsolute) {
+      // reset state
+      data._state = cloneState(nullState);
+    }
+
+    const parameters = toParameters(clampedState, isAbsolute);
+
+    for (const entry of data._updaters) {
+      const { name, updater, scaler, tag } = entry;
+      const scaledParameters = scaler
+        ? scaleParameters(parameters, clampedState, scaler)
+        : parameters;
+
+      const result = updater(scaledParameters, clampedState);
+
+      if (!_.isUndefined(result)) {
+        processUpdate(data._state, name, result, tag);
+      }
+    }
+  };
+
+  // -----
+
+  const clone = (instanceData = data, discardUpdaters = false) => {
+    return _createEffectInstance(
+      definitions,
+      discardUpdaters
+        ? _.merge(instanceData, {
+            _updaters: [],
+          })
+        : instanceData,
+    );
+  };
+
+  // -----
+
+  const toComposition = (...others: EffectInstance<T>[]): EffectInstance<T> => {
+    let toCompose: EffectInstance<T>[] = [];
+
+    for (const e of [self, ...others]) {
+      if (e.isAbsolute()) {
+        toCompose = [];
+      }
+
+      toCompose.push(e);
+    }
+
+    let resultIsAbsolute = false;
+    let resultState: S | null = null;
+    const resultUpdaters: EffectUpdaterFnEntry<T>[] = [];
+
+    for (const effectI of toCompose) {
+      const thisData: EffectInstanceData<T, S> | undefined =
+        effectI === self ? data : allInstanceData.get(effectI);
+
+      if (!thisData) {
+        logError(bugError("No instance data saved for effect instance"));
+        return clone();
+      }
+
+      if (thisData) {
+        resultIsAbsolute ||= thisData._isAbsolute;
+        resultState = resultState
+          ? composeStateWith(resultState, thisData._state)
+          : thisData._state;
+        resultUpdaters.push(...thisData._updaters);
+      }
+    }
+
+    if (!resultState) {
+      logError(bugError("No state for effect composition"));
+      return clone();
+    }
+
+    return clone({
+      _isAbsolute: resultIsAbsolute,
+      _pin: void 0,
+      _state: resultState,
+      _updaters: resultUpdaters,
+      _composer: composer,
+    });
+  };
+
+  // --------------------
+
+  const { type, logic } = definitions;
+  const self: EffectInstance<T> = {
+    type: type,
+    isAbsolute: () => isAbsolute,
+    update,
+    clone: (discardUpdaters) => clone(data, discardUpdaters),
+    toComposition,
+    toCss: () => {
+      const negatedEffectI: EffectInstance<T> | undefined = negated
+        ?.getComposition()
+        .get(type);
+
+      const negatedState: S | undefined = negatedEffectI
+        ? allInstanceData.get<T, S>(negatedEffectI)?._state
+        : void 0;
+
+      return stateToCss(data._state, negatedState);
+    },
+  };
+
+  const processUpdate = _.bind(logic.processUpdate, self);
+  const cloneState = _.bind(logic.clone, self);
+  const composeStateWith = _.bind(logic.composeWith, self);
+  const stateToCss = _.bind(logic.toCss, self);
+
+  // ----------
+
+  const { _isAbsolute: isAbsolute = false, _composer: composer } = init;
+  const negated = composer.getConfig().negated;
+  const nullState = cloneState(definitions.nullState);
+
+  const pinInstance = init._pin
+    ? getOrCreatePinInstance(init._pin, composer)
+    : void 0;
+
+  const data: EffectInstanceData<T, S> = {
+    _isAbsolute: isAbsolute,
+    _pin: init._pin,
+    _state: cloneState(init._state ?? nullState),
+    _updaters: [],
+    _composer: composer,
+  };
+  allInstanceData.set(self, data);
+
+  // ----------
+
+  for (const entry of init._updaters ?? []) {
+    if (_.isFunction(entry.updater)) {
+      data._updaters.push(entry);
+    } else {
+      // TODO why is updater inferred to here as never
+      const v: EffectUpdaterReturn<T, typeof entry.name> = entry.updater;
+      processUpdate(data._state, entry.name, v, entry.tag);
+    }
+  }
+
+  return self;
+};
+
+_.brandClass(EffectBase, "EffectBase");

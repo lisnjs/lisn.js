@@ -86,10 +86,13 @@
         });
 
         // 500 px up or down from when it's restarted
-        const scrolledAway = new FXScrollMatcher({
-          max: { top: "+500" },
-          min: { top: "-500" },
-        });
+        const scrolledAway = new FXScrollMatcher(
+          {
+            max: { top: "+500" },
+            min: { top: "-500" },
+          },
+          { paused: true },
+        );
         // start counting from when the section is in the middle of the viewport
         sectionInCentre.onChange(scrolledAway.restart);
 
@@ -113,8 +116,14 @@
 
         // oppose the vertical transform
         new FXComposer({ trigger })
-          .add(trYOpposite, translateYPin)
+          .add(trYOpposite, translateYPin.invert())
           .startAnimate(section);
+        new FXComposer({ trigger })
+          .add(trXLeft, translateXPin.invert())
+          .startAnimate(evenBoxes);
+        new FXComposer({ trigger })
+          .add(trXRight, translateXPin.invert())
+          .startAnimate(oddBoxes);
       });
     </script>
   </body>

@@ -68,8 +68,8 @@ export const filterBlank = <A extends readonly unknown[]>(
 
 /**
  * Recursively copies a **plain** object or array. Faster but more limited than
- * deepCopy. Any value that is not a plain object or a plain array is returned
- * as is.
+ * {@link deepCopy}. Any value that is not a plain object or a plain array is
+ * returned as is.
  *
  * @since v1.3.0
  */
@@ -348,7 +348,7 @@ export const isPlainObject = (
 export const isIterableObject = (v: unknown): v is IterableObject<unknown> =>
   isObject(v) && M.SYMBOL.iterator in v;
 
-export const isArray = M.ARRAY.isArray.bind(M.ARRAY);
+export const isArray = M.bind(M.ARRAY.isArray, M.ARRAY);
 
 export const isPrimitive = (v: unknown) =>
   isLiteralString(v) ||

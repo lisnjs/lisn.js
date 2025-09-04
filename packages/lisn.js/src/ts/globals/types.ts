@@ -305,6 +305,43 @@ export type Origin =
     ];
 
 /**
+ * Represents an absolute or relative length. If the value is a number, then it
+ * is taken as pixels. Otherwise, it should be a numerical string that is
+ * optionally suffixed with `vw` or `vh` which represents percentage of the
+ * viewport width and height respectively.
+ *
+ * Having a `+` or `-` prefix and/or `%` suffix can be treated differently
+ * depending on the use-case. Refer to the respective use-case of to see what
+ * the reference value is and how percentage values are treated.
+ *
+ * @example
+ * This is an example use-case only.
+ * - `10` is treated as `10px`, ignoring the reference value
+ * - `10vw` is treated as 10% of the current viewport width, ignoring the
+ *   reference value.
+ * - `10vh` is treated as 10% of the current viewport height, ignoring the
+ *   reference value.
+ *
+ * - `+10` adds `10px` to the reference value
+ * - `-10` subtracts `10px` from the reference value
+ *
+ * - `+10vw` adds 10% of the viewport width to the reference value
+ * - `-10vw` subtracts 10% of the viewport width to the reference value
+ *
+ * - `+10vh` adds 10% of the viewport height to the reference value
+ * - `-10vh` subtracts 10% of the viewport height to the reference value
+ *
+ * @since v1.3.0
+ *
+ * @category Geometry
+ */
+export type ViewportLength =
+  | number
+  | `${number}`
+  | `${number}vw`
+  | `${number}vh`;
+
+/**
  * @since v1.3.0
  *
  * @category Color
@@ -401,10 +438,12 @@ export type ColorComponentsWithAlpha =
  *
  * @example
  * This is an example use-case only.
- * - `10` is treated as `10` ignoring the reference value
+ * - `10` is treated as `10`, ignoring the reference value
+ * - `10%` multiplies the reference by `0.1`
+ *
  * - `+10` adds `10` to the reference value
  * - `-10` subtracts `10` from the reference value
- * - `10%` multiplies the reference by `0.1`
+ *
  * - `+10%` adds 10% of one reference (e.g. maximum value) to another reference
  *   (e.g. current value)
  * - `-10%` subtracts 10% of one reference (e.g. maximum value) to another
@@ -497,6 +536,14 @@ export type NonEmptyArray<T> = [T, ...T[]];
  *
  * @category Utility
  */
+/* eslint-disable-next-line @typescript-eslint/no-unsafe-function-type */
+export type NotFunction<T> = T extends Function ? never : T;
+
+/**
+ * @since v1.3.0
+ *
+ * @category Utility
+ */
 export type DeepRequired<T> = T extends object
   ? {
       [P in keyof T]-?: DeepRequired<T[P]>;
@@ -513,6 +560,21 @@ export type DeepPartial<T> = T extends object
       [P in keyof T]?: DeepPartial<T[P]>;
     }
   : T;
+
+/**
+ * @since v1.3.0
+ *
+ * @category Utility
+ */
+export type SemiRequired<T, K extends keyof T> = Partial<T> & Pick<T, K>;
+
+/**
+ * @since v1.3.0
+ *
+ * @category Utility
+ */
+export type SemiPartial<T, K extends keyof T> = Required<Omit<T, K>> &
+  Partial<Pick<T, K>>;
 
 /**
  * @category Utility

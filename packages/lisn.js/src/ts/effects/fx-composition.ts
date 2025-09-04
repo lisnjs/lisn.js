@@ -6,89 +6,78 @@
 
 import * as _ from "@lisn/_internal";
 
-import { Effect, EffectType } from "@lisn/effects/effect";
+import { EffectInstance, EffectName } from "@lisn/effects/types";
 
 /**
  * Represents a map of effects, one per
- * {@link Effects.EffectInterface.type | type} that are
- * {@link Effects.EffectInterface.toComposition | composed} together.
+ * {@link Effects.EffectInstanceInterface.type | type} that are
+ * {@link Effects.EffectInstanceInterface.toComposition | composed} together.
  *
  * @category Composer
  */
-export class FXComposition implements Iterable<[EffectType, Effect]> {
+export class FXComposition implements Iterable<[EffectName, EffectInstance]> {
   readonly size!: number;
 
   /**
-   * Adds a new effect to the composition. Will use the current effect for the
-   * relevant type, if any, and compose it with the given.
+   * Adds a new effect instance to the composition. Will use the current effect
+   * for the relevant type, if any, and compose it with the given.
    *
    * **IMPORTANT:** If you add an
-   * {@link Effects.EffectInterface.isAbsolute | absolute} effect, it discards
+   * {@link Effects.EffectConfig.isAbsolute | absolute} effect, it discards
    * all previous effects of the respective
-   * {@link Effects.EffectInterface.type | type}.
+   * {@link Effects.EffectInstanceInterface.type | type}.
    */
-  readonly add: (effect: Effect) => this;
+  readonly add: (instance: EffectInstance) => this;
 
   /**
-   * Returns a new **live** copy of the composition, where each effect is
-   * {@link Effects.EffectInterface.toComposition | cloned} while preserving
-   * its handlers.
-   */
-  readonly clone: () => FXComposition;
-
-  /**
-   * Returns a new **static** copy of the composition, where each effect is
-   * {@link Effects.EffectInterface.export | exported}, discarding its
-   * handlers.
+   * Returns a copy of the composition, where each effect is
+   * {@link Effects.EffectInstanceInterface.clone | cloned}.
    *
-   * New effects with handlers can be added afterwards.
+   * @param discardUpdaters See {@link Effects.EffectInstanceInterface.clone}
    */
-  readonly export: () => FXComposition;
+  readonly clone: (discardUpdaters?: boolean) => FXComposition;
 
-  readonly get: <T extends EffectType>(key: T) => Effect<T> | undefined;
+  readonly get: <T extends EffectName>(key: T) => EffectInstance<T> | undefined;
 
-  readonly delete: (key: EffectType) => boolean;
+  readonly delete: (key: EffectName) => boolean;
   readonly clear: () => void;
 
-  readonly keys: () => IterableIterator<EffectType>;
-  readonly values: () => IterableIterator<Effect>;
-  readonly entries: <T extends EffectType>() => IterableIterator<
-    [T, Effect<T>]
+  readonly keys: () => IterableIterator<EffectName>;
+  readonly values: () => IterableIterator<EffectInstance>;
+  readonly entries: <T extends EffectName>() => IterableIterator<
+    [T, EffectInstance<T>]
   >;
-  readonly [Symbol.iterator]!: <T extends EffectType>() => IterableIterator<
-    [T, Effect<T>]
+  readonly [Symbol.iterator]!: <T extends EffectName>() => IterableIterator<
+    [T, EffectInstance<T>]
   >;
 
   constructor() {
     const map: EffectsMap = new Map();
 
-    const cloneOrExport = (asExport: boolean) => {
-      const copy = new FXComposition();
-      for (const [t__ignored, effect] of map) {
-        copy.add((asExport ? effect.export : effect.toComposition)());
-      }
-
-      return copy;
-    };
-
     _.defineProperty(this, "size", { get: () => map.size });
 
-    const add = <T extends EffectType>(effect: Effect<T>) => {
-      const current = map.get(effect.type);
+    const add = <T extends EffectName>(instance: EffectInstance<T>) => {
+      const current = map.get(instance.type);
       const composed =
-        !current || effect.isAbsolute()
-          ? effect
-          : current.toComposition(effect);
+        !current || instance.isAbsolute()
+          ? instance
+          : current.toComposition(instance);
 
-      map.set(effect.type, composed);
+      map.set(instance.type, composed);
 
       return this;
     };
 
-    this.add = (effect) => add(effect);
+    this.add = (instance) => add(instance);
 
-    this.clone = () => cloneOrExport(false);
-    this.export = () => cloneOrExport(true);
+    this.clone = (discardUpdaters) => {
+      const copy = new FXComposition();
+      for (const instance of map.values()) {
+        copy.add(instance.clone(discardUpdaters));
+      }
+
+      return copy;
+    };
 
     this.get = (key) => map.get(key);
     this.delete = (key) => map.delete(key);
@@ -105,15 +94,17 @@ export class FXComposition implements Iterable<[EffectType, Effect]> {
 
 interface EffectsMap {
   size: number;
-  get<T extends EffectType>(key: T): Effect<T> | undefined;
-  set<T extends EffectType>(key: T, value: Effect<T>): this;
-  has(key: EffectType): boolean;
-  delete(key: EffectType): boolean;
+  get<T extends EffectName>(key: T): EffectInstance<T> | undefined;
+  set<T extends EffectName>(key: T, value: EffectInstance<T>): this;
+  has(key: EffectName): boolean;
+  delete(key: EffectName): boolean;
   clear(): void;
-  keys(): IterableIterator<EffectType>;
-  values(): IterableIterator<Effect>;
-  entries<T extends EffectType>(): IterableIterator<[T, Effect<T>]>;
-  [Symbol.iterator]<T extends EffectType>(): IterableIterator<[T, Effect<T>]>;
+  keys(): IterableIterator<EffectName>;
+  values(): IterableIterator<EffectInstance>;
+  entries<T extends EffectName>(): IterableIterator<[T, EffectInstance<T>]>;
+  [Symbol.iterator]<T extends EffectName>(): IterableIterator<
+    [T, EffectInstance<T>]
+  >;
 }
 
 _.brandClass(FXComposition, "FXComposition");

@@ -1373,8 +1373,8 @@ const getMethods = (
     _isPageDisabled: isPageDisabled,
     _getCurrentPage: () => pages[currPageNum - 1],
     _getPreviousPage: () => pages[lastPageNum - 1],
-    _getCurrentPageNum: () => (_.lengthOf(pages) > 0 ? currPageNum : 0),
-    _getPreviousPageNum: () => (_.lengthOf(pages) > 0 ? lastPageNum : 0),
+    _getCurrentPageNum: () => (_.lengthOf(pages) ? currPageNum : 0),
+    _getPreviousPageNum: () => (_.lengthOf(pages) ? lastPageNum : 0),
     _onTransition: onTransition,
     _offTransition: offTransition,
   };

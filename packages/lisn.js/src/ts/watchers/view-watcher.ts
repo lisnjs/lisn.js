@@ -290,7 +290,7 @@ export class ViewWatcher {
         _callback: callback,
         _trackType: trackType,
         _options: options,
-      };
+      } as const;
       allCallbacks.sGet(element).set(handler, entry);
 
       return entry;
@@ -887,8 +887,8 @@ const getConfig = (
   };
 };
 
-const TRACK_REGULAR = 1; // only entering/leaving root
-const TRACK_FULL = 2; // entering/leaving + moving across (fine-grained)
+const TRACK_REGULAR: unique symbol = _.SYMBOL() as typeof TRACK_REGULAR; // only entering/leaving root
+const TRACK_FULL: unique symbol = _.SYMBOL() as typeof TRACK_FULL; // entering/leaving + moving across (fine-grained)
 
 // --------------------
 

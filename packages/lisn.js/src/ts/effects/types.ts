@@ -97,6 +97,11 @@ export interface EffectInstanceInterface<T extends string> {
   isAbsolute: () => boolean;
 
   /**
+   * Returns the pin for this effect if any.
+   */
+  getPin: () => FXPin | undefined;
+
+  /**
    * Triggers an update of the effect as per the composer's state.
    */
   update: () => void;

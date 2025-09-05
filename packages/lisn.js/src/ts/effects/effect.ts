@@ -547,6 +547,7 @@ const _createEffectInstance = <T extends EffectName, S>(
   const self: EffectInstance<T> = {
     type: type,
     isAbsolute: () => isAbsolute,
+    getPin: () => init._pin,
     update,
     clone: (discardUpdaters) => clone(data, discardUpdaters),
     toComposition,

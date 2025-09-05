@@ -165,6 +165,13 @@ export interface FXPinInstance {
  * @internal
  * @ignore
  */
+export const getPinInstance = (pin: FXPin, composer: FXComposer) =>
+  allInstances.get(pin)?.get(composer);
+
+/**
+ * @internal
+ * @ignore
+ */
 export const getOrCreatePinInstance = (
   pin: FXPin,
   composer: FXComposer,

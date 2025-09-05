@@ -53,6 +53,7 @@ import {
 import { getUpdatedState, createEffectInstance } from "@lisn/effects/effect";
 import { FXComposition } from "@lisn/effects/fx-composition";
 import { FXScrollTrigger, FXTrigger } from "@lisn/effects/fx-trigger";
+import { getPinInstance } from "@lisn/effects/fx-pin";
 import { atLeastOneVisible } from "@lisn/effects/_internal";
 
 import debug from "@lisn/debug/debug";
@@ -460,6 +461,12 @@ export class FXComposer {
             (activate ? link.onCompose : link.offCompose)(
               recomposeOnOtherCompose,
             );
+          } else {
+            const pin = link.getPin();
+            const pinInstance = pin ? getPinInstance(pin, this) : null;
+            if (pinInstance) {
+              (activate ? pinInstance.resume : pinInstance.pause)();
+            }
           }
         }
 

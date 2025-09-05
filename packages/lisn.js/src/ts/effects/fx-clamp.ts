@@ -85,11 +85,7 @@ export const registerClamp = <T extends string, State, Data, Config>(
     init: (self: FXClamp<T>) => {
       return {
         setConfig: (config: Config) => {
-          const data = allBuilderData.get(self);
-          if (!data) {
-            throw bugError("No init data saved for clamp");
-          }
-
+          const data = getInitData<Config>(self);
           data._config = config;
         },
       } as const;
@@ -122,7 +118,7 @@ export interface FXClamp<T extends string = string> {
    * Inverts the logic of the clamp. It will activate when it previously would
    * deactivate and vice versa.
    */
-  readonly invert: () => void;
+  readonly invert: () => this;
 }
 
 /**
@@ -146,7 +142,7 @@ export abstract class FXClampBase<T extends string> implements FXClamp<T> {
    * Inverts the logic of the clamp. It will activate when it previously would
    * deactivate and vice versa.
    */
-  readonly invert: () => void;
+  readonly invert: () => this;
 
   constructor() {
     const data: FXClampInitData<unknown> = { _invert: false, _config: null };
@@ -154,6 +150,7 @@ export abstract class FXClampBase<T extends string> implements FXClamp<T> {
 
     this.invert = () => {
       data._invert = true;
+      return this;
     };
   }
 }
@@ -604,19 +601,20 @@ export const createClampInstance = <T extends string, S, D, C>(
   composer: FXComposer,
   notifyPin: (state: FXState | null) => void,
 ): FXClampInstance => {
-  const definitions = registeredTypes.get<T, S, D, C>(clamp.type);
-  if (!definitions) {
-    throw bugError("No definitions saved for clamp type");
+  if (!_.isInstanceOf(clamp, FXClampBase)) {
+    throw usageError("Object is not an FXClamp");
   }
 
-  const init = allBuilderData.get<C>(clamp);
-  if (!init) {
-    throw bugError("No init data saved for clamp");
+  const definitions = registeredTypes.get<T, S, D, C>(clamp.type);
+  if (!definitions) {
+    throw bugError(`No definitions saved for clamp type '${clamp.type}'`);
   }
+
+  const init = getInitData<C>(clamp);
 
   const { logic } = definitions;
 
-  let isActive = true;
+  let isActive = false; // don't start until the pin resumes us
   let lastChangeWhilePaused: {
     _clampedState: FXState | null;
   } | null = null;
@@ -778,7 +776,7 @@ const { init: initComposer } = registerClamp<
     run: (store) => {
       const bounds = store.getConfig() ?? {};
       if (!bounds) {
-        throw bugError("No bounds saved for clamp");
+        throw bugError("No bounds saved for clamp type 'scroll'");
       }
 
       const vpSizeWatch = watchSize();
@@ -848,7 +846,7 @@ const { init: initView } = registerClamp<
     run: (store) => {
       const { _config: config, _bounds: bounds } = store.getConfig() ?? {};
       if (!bounds) {
-        throw bugError("No bounds saved for clamp");
+        throw bugError("No bounds saved for clamp type 'view'");
       }
 
       const xyToAnchor = {
@@ -954,7 +952,6 @@ const { init: initView } = registerClamp<
       data?._viewWatch.start();
       data?._vpSizeWatch.start();
       data?._rootSizeWatch.start();
-      data?._afterPaintLooper.start();
     },
 
     copyState: (s) => (s ? _.createMap([...s.entries()]) : void 0),
@@ -962,6 +959,14 @@ const { init: initView } = registerClamp<
 });
 
 // --------------------
+
+const getInitData = <C>(clamp: FXClamp<string>) => {
+  const data = allBuilderData.get<C>(clamp);
+  if (!data) {
+    throw bugError(`No init data saved for clamp '${clamp.type}'`);
+  }
+  return data;
+};
 
 const getComposerOffsets = (
   currState: FXState,

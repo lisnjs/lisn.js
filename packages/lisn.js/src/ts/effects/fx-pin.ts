@@ -15,7 +15,7 @@
 
 import * as _ from "@lisn/_internal";
 
-import { bugError } from "@lisn/globals/errors";
+import { bugError, usageError } from "@lisn/globals/errors";
 
 import { logError } from "@lisn/utils/log";
 
@@ -28,6 +28,8 @@ import {
 import { FXState } from "@lisn/effects/types";
 
 import { createXWeakMap } from "@lisn/modules/x-map";
+
+import debug from "@lisn/debug/debug";
 
 /**
  * {@link FXPin} can be associated with {@link Effects.Effect | effects}
@@ -176,6 +178,10 @@ export const getOrCreatePinInstance = (
   pin: FXPin,
   composer: FXComposer,
 ): FXPinInstance => {
+  if (!_.isInstanceOf(pin, FXPin)) {
+    throw usageError("Object is not an FXPin");
+  }
+
   const existing = allInstances.get(pin)?.get(composer);
   if (existing) {
     return existing;
@@ -185,6 +191,12 @@ export const getOrCreatePinInstance = (
   if (!conditionBuilders) {
     throw bugError("No init data saved for pin");
   }
+
+  const logger = debug
+    ? new debug.Logger({
+        name: "FXPin",
+      })
+    : null;
 
   let isPaused = true; // we start when initialized
   let effectiveClampedState: FXState | null = null;
@@ -285,6 +297,8 @@ export const getOrCreatePinInstance = (
   ) => {
     let activate;
 
+    logger?.debug7("Condidtion changed", condition);
+
     if (condition._type === LOCK) {
       if (condition._fulfilled) {
         incrementLocking();
@@ -316,6 +330,8 @@ export const getOrCreatePinInstance = (
   ) => {
     if (isPaused !== (state === PAUSE)) {
       isPaused = !isPaused;
+
+      logger?.debug6("Setting pin state", { isPaused });
 
       for (const condition of conditions.values()) {
         for (const clampInstance of condition._clamps) {

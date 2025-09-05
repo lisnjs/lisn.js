@@ -624,3 +624,4 @@ const CallbackScheduler = (() => {
 })();
 
 _.brandClass(Callback, "Callback");
+_.brandClass(CallbackManager, "CallbackManager");

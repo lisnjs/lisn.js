@@ -352,15 +352,16 @@ export const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
   composer: FXComposer,
 ): EffectInstance<T> => {
-  const definitions = registeredTypes.get(effect.type);
-  if (!definitions) {
-    throw bugError("No definitions saved for effect type");
+  if (!_.isInstanceOf(effect, EffectBase)) {
+    throw usageError("Object is not an Effect");
   }
 
-  const init = allBuilderData.get(effect);
-  if (!init) {
-    throw bugError("No init data saved for effect");
+  const definitions = registeredTypes.get(effect.type);
+  if (!definitions) {
+    throw bugError(`No definitions saved for effect type '${effect.type}'`);
   }
+
+  const init = getInitData(effect);
 
   return _createEffectInstance(
     definitions,
@@ -425,14 +426,19 @@ const allInstanceData = new WeakMap() as InstanceDataMap;
 
 // ------------------------------
 
+const getInitData = <T extends EffectName>(effect: Effect<T>) => {
+  const data = allBuilderData.get(effect);
+  if (!data) {
+    throw bugError(`No init data saved for effect '${effect.type}'`);
+  }
+  return data;
+};
+
 const setUpdaters = <T extends EffectName>(
   effect: Effect<T>,
   updaters: EffectUpdaterEntry<T>[],
 ) => {
-  const data = allBuilderData.get(effect);
-  if (!data) {
-    throw bugError("No init data saved for effect");
-  }
+  const data = getInitData(effect);
   data._updaters = updaters;
 };
 
@@ -440,10 +446,7 @@ const addUpdater = <T extends EffectName>(
   effect: Effect<T>,
   updater: EffectUpdaterEntry<T>,
 ) => {
-  const data = allBuilderData.get(effect);
-  if (!data) {
-    throw bugError("No init data saved for effect");
-  }
+  const data = getInitData(effect);
   data._updaters.push(updater);
 };
 

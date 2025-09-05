@@ -10,7 +10,7 @@ import * as _ from "@lisn/_internal";
 
 import { Size } from "@lisn/globals/types";
 
-import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
+import { waitForSubsequentMeasureTime } from "@lisn/utils/dom-optimize";
 
 import { createCallback } from "@lisn/modules/callback";
 
@@ -28,12 +28,12 @@ export const atLeastOneVisible = (
   let hasVisible = false;
 
   const viewHandler: OnViewHandler = (el, viewData) => {
-    const isVisible = viewData.views[0] === "at";
-    visible.set(el, isVisible);
+    const isThisVisible = viewData.views[0] === "at";
+    visible.set(el, isThisVisible);
 
-    const newHasVisible = isVisible || [...visible.values()].some((v) => v);
+    const newHasVisible = isThisVisible || [...visible.values()].some((v) => v);
 
-    if (isVisible !== newHasVisible) {
+    if (hasVisible !== newHasVisible) {
       hasVisible = newHasVisible;
       callback(hasVisible);
     }
@@ -91,7 +91,7 @@ export const loopOnAfterPaint = (callback: () => void) => {
       isRunning = true;
 
       while (true) {
-        await waitForMeasureTime(); // just after each repaint
+        await waitForSubsequentMeasureTime(); // just after each repaint
         if (shouldStop) {
           break;
         }

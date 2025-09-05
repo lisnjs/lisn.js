@@ -15,13 +15,15 @@
 
 import * as _ from "@lisn/_internal";
 
-import { settings } from "@lisn/globals/settings";
-
 import {
   AtLeastOne,
   RawOrRelativeNumber,
   DeepPartial,
 } from "@lisn/globals/types";
+
+import { settings } from "@lisn/globals/settings";
+
+import { usageError } from "@lisn/globals/errors";
 
 import { setStylePropNow, delStylePropNow } from "@lisn/utils/css-alter";
 import { waitForMutateTime } from "@lisn/utils/dom-optimize";
@@ -57,7 +59,6 @@ import { getPinInstance } from "@lisn/effects/fx-pin";
 import { atLeastOneVisible } from "@lisn/effects/_internal";
 
 import debug from "@lisn/debug/debug";
-import { usageError } from "@lisn/globals";
 
 /**
  * {@link FXComposer} links together multiple effects or other composers. It

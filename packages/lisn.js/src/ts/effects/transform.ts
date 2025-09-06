@@ -26,9 +26,9 @@ import {
   EffectUpdaterName,
   EffectUpdaterReturn,
   EffectUpdaterEntry,
-} from "@lisn/effects/types";
-
-import { EffectBase, registerEffect } from "@lisn/effects/effect";
+  EffectBase,
+  registerEffect,
+} from "@lisn/effects/effect";
 
 /**
  * {@link Transform} controls an element's transform as a 3D matrix.
@@ -58,7 +58,7 @@ import { EffectBase, registerEffect } from "@lisn/effects/effect";
  *
  * If a function is given, it will be called whenever the effect instance is
  * updated by the composer. It will receive the latest
- * {@link Effects.FXParams | parameters} and
+ * {@link Effects.EffectParams | parameters} and
  * {@link Effects.FXState | composer state}. The updater function should return
  * the correct type of value.
  *
@@ -391,7 +391,7 @@ const UPDATE_PROCESSORS: {
 
 // ----------------------------------------
 
-declare module "@lisn/effects/types" {
+declare module "@lisn/effects/effect" {
   interface EffectRegistry {
     transform: Transform;
   }

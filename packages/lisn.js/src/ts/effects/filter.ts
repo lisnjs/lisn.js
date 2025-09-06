@@ -34,9 +34,9 @@ import {
   EffectUpdater,
   EffectUpdaterName,
   EffectUpdaterEntry,
-} from "@lisn/effects/types";
-
-import { EffectBase, registerEffect } from "@lisn/effects/effect";
+  EffectBase,
+  registerEffect,
+} from "@lisn/effects/effect";
 
 /**
  * {@link Filter} controls an element's
@@ -66,7 +66,7 @@ import { EffectBase, registerEffect } from "@lisn/effects/effect";
  *
  * If a function is given, it will be called whenever the effect instance is
  * updated by the composer. It will receive the latest
- * {@link Effects.FXParams | parameters} and
+ * {@link Effects.EffectParams | parameters} and
  * {@link Effects.FXState | composer state}. The updater function should return
  * the correct type of value.
  *
@@ -75,10 +75,10 @@ import { EffectBase, registerEffect } from "@lisn/effects/effect";
  *
  * **IMPORTANT:** The filter state is composed of an array of filter sub-types
  * (e.g. blur, opacity), which preserve the order in which they have been added.
- * If the effect instance is not {@link EffectConfig.isAbsolute | absolute}
- * (which is the case by default), then each updater **function** modifies its
- * own slot into this array. Therefore, passing a plain value to an updater
- * method can do one of two things:
+ * If the effect instance is not {@link EffectConfig.isAbsolute | absolute},
+ * then each updater **function** modifies its own slot into this array.
+ * Therefore, passing a plain value to an updater method can do one of two
+ * things:
  * 1. Set the initial value for a filter that's later updated by an updater
  *    method.
  * 2. Add a static filter to the array that is never updated, but preserved
@@ -553,7 +553,7 @@ const formatEntry = <F extends FilterName>(
 
 // ----------------------------------------
 
-declare module "@lisn/effects/types" {
+declare module "@lisn/effects/effect" {
   interface EffectRegistry {
     filter: Filter;
   }

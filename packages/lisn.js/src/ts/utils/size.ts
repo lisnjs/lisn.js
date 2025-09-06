@@ -92,18 +92,42 @@ export const fetchViewportOverlay = async (): Promise<HTMLElement> => {
  * @ignore
  * @internal
  */
-export const fetchViewportSize = async (realtime = false) => {
+export const getSizeOf = (element?: Element | null): Size => {
+  element ??= _.hasDOM() ? (_.getDocScrollingElement() ?? _.getBody()) : void 0;
+
+  return {
+    [_.S_WIDTH]: element?.clientWidth ?? 0,
+    [_.S_HEIGHT]: element?.clientHeight ?? 0,
+  };
+};
+
+/**
+ * @ignore
+ * @internal
+ */
+export const fetchSizeOf = async (
+  element?: Element | null,
+  realtime?: boolean,
+) => {
   if (!realtime) {
     await waitForMeasureTime();
   }
 
-  const root = _.hasDOM() ? (_.getDocScrollingElement() ?? _.getBody()) : null;
-
-  return {
-    [_.S_WIDTH]: root?.clientWidth ?? 0,
-    [_.S_HEIGHT]: root?.clientHeight ?? 0,
-  };
+  return getSizeOf(element);
 };
+
+/**
+ * @ignore
+ * @internal
+ */
+export const getViewportSize = () => getSizeOf();
+
+/**
+ * @ignore
+ * @internal
+ */
+export const fetchViewportSize = (realtime?: boolean) =>
+  fetchSizeOf(null, realtime);
 
 // ----------------------------------------
 

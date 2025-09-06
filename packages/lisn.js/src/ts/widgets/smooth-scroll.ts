@@ -898,7 +898,7 @@ const init = async (
     state._composer.setElements(layer === scrollable ? contentWrapper : layer);
     if (state._defaultEffects) {
       state._composer.add(
-        new Transform({ isAbsolute: true }).translate((params) => ({
+        new Transform().translate((params) => ({
           x: -params.x,
           y: -params.y,
         })),

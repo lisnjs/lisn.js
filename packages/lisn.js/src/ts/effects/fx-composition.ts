@@ -6,7 +6,7 @@
 
 import * as _ from "@lisn/_internal";
 
-import { EffectInstance, EffectName } from "@lisn/effects/types";
+import type { EffectInstance, EffectName } from "@lisn/effects/effect";
 
 /**
  * Represents a map of effects, one per

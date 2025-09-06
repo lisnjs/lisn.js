@@ -10,9 +10,6 @@
  * more elements by applying its CSS to them.
  */
 
-// XXX autoStandBy: it needs to check for any composers that depend on it, or
-// warn user
-
 import * as _ from "@lisn/_internal";
 
 import {
@@ -44,19 +41,18 @@ import {
   createCallbackManager,
 } from "@lisn/modules/callback";
 
-import {
-  Effect,
-  EffectInstance,
-  FXAxisState,
-  FXState,
-  FXStateUpdate,
-} from "@lisn/effects/types";
-
-import { getUpdatedState, createEffectInstance } from "@lisn/effects/effect";
+import type { Effect, EffectInstance } from "@lisn/effects/effect";
 import { FXComposition } from "@lisn/effects/fx-composition";
 import { FXScrollTrigger, FXTrigger } from "@lisn/effects/fx-trigger";
-import { getPinInstance } from "@lisn/effects/fx-pin";
-import { atLeastOneVisible } from "@lisn/effects/_internal";
+
+import {
+  createEffectInstance,
+  getPinInstance,
+  getUpdatedState,
+  createTriggerInstance,
+  atLeastOneVisible,
+  setInstanceGetter,
+} from "@lisn/effects/_internal";
 
 import debug from "@lisn/debug/debug";
 
@@ -289,6 +285,14 @@ export class FXComposer {
   readonly getConfig: () => FXComposerEffectiveConfig;
 
   /**
+   * Updates the composer's {@link FXComposerConfig.autoStandBy | autoStandBy}
+   * setting.
+   *
+   * @param [autoStandBy = true] If not given, default is true.
+   */
+  readonly setAutoStandBy: (autoStandBy?: boolean) => this;
+
+  /**
    * Updates the composer's {@link FXComposerConfig.lag | lag}.
    *
    * @param lag If a single number is given, it is set for all three axes.
@@ -355,7 +359,6 @@ export class FXComposer {
       trigger = new FXScrollTrigger(),
       tweener: userTweener = "spring",
       negateParent = true,
-      autoStandBy = true,
     } = config ?? {};
 
     const tweener =
@@ -370,13 +373,12 @@ export class FXComposer {
     const effectiveConfig: FXComposerEffectiveConfig = {
       trigger,
       tweener,
-      negated: null, // set below when starting
-      autoStandBy,
-      // updated below in setLag
+      // the remaining is set below when starting
+      negated: null,
+      autoStandBy: false,
       lagX: 0,
       lagY: 0,
       lagZ: 0,
-      // updated below in setDepth
       depthX: 1,
       depthY: 1,
       depthZ: 1,
@@ -399,14 +401,40 @@ export class FXComposer {
 
     const currentFXState = createState();
 
+    const triggerInstance = createTriggerInstance(trigger);
+
+    let parent = getParentComposer(elements);
     let isActive = false; // we start after initialized
     let isDestroyed = false;
     let isTweening = false;
     let updatePending = false;
+    let hasVisibleElements = false;
+    let hasIncrementalEffects = false;
 
     // ----- viewport watching (for auto stand-by)
-    // set below when starting
+    // set/reset when updating elements or autoStandBy
     let viewWatch: ReturnType<typeof atLeastOneVisible> | null = null;
+
+    const resetViewWatch = () => {
+      viewWatch?.stop();
+      // We don't bother figuring out if animated elements are inside a custom
+      // scrollable, just use the viewport as the root.
+      viewWatch = effectiveConfig.autoStandBy
+        ? atLeastOneVisible(animatedElements, (hasVisible) => {
+            hasVisibleElements = hasVisible;
+
+            if (
+              effectiveConfig.autoStandBy &&
+              !hasVisibleElements &&
+              !hasIncrementalEffects
+            ) {
+              pause();
+            } else {
+              resume();
+            }
+          })
+        : null;
+    };
 
     // ----------
 
@@ -429,6 +457,8 @@ export class FXComposer {
         const effectInstance = createEffectInstance(link, this);
         compositionChain.push(effectInstance);
         addToComposition(effectInstance);
+
+        hasIncrementalEffects ||= !effectInstance.isAbsolute();
       }
     };
 
@@ -463,8 +493,7 @@ export class FXComposer {
               recomposeOnOtherCompose,
             );
           } else {
-            const pin = link.getPin();
-            const pinInstance = pin ? getPinInstance(pin, this) : null;
+            const pinInstance = getPinInstance(this, link);
             if (pinInstance) {
               (activate ? pinInstance.resume : pinInstance.pause)();
             }
@@ -499,6 +528,8 @@ export class FXComposer {
 
         compositionChain.length = 0; // clear
         currentComposition.clear();
+
+        hasIncrementalEffects = false;
 
         invokeCallbacks(clearCallbacks);
       }
@@ -574,19 +605,33 @@ export class FXComposer {
         animatedElements.add(el);
       }
 
-      effectiveConfig.negated = negateParent
-        ? getParentComposer(elements)
-        : null;
+      parent = getParentComposer(elements);
+      effectiveConfig.negated = negateParent ? parent : null;
 
-      // We don't bother figuring out if animated elements are inside a custom
-      // scrollable, just use the viewport as the root.
-      viewWatch = autoStandBy
-        ? atLeastOneVisible(animatedElements, (hasVisible) => {
-            (hasVisible ? resume : pause)();
-          })
-        : null;
-
+      resetViewWatch();
       resume({ _skipCallbacks: true });
+
+      return this;
+    };
+
+    // ----------
+
+    const setAutoStandBy = (autoStandBy?: boolean) => {
+      if (_.isNullish(autoStandBy)) {
+        autoStandBy = false;
+        if (parent) {
+          const parentConfig = parent.getConfig();
+          autoStandBy =
+            parentConfig.depthX <= effectiveConfig.depthX &&
+            parentConfig.depthY <= effectiveConfig.depthY &&
+            parentConfig.depthZ <= effectiveConfig.depthZ;
+        }
+      }
+
+      if (effectiveConfig.autoStandBy !== autoStandBy) {
+        effectiveConfig.autoStandBy = autoStandBy;
+        resetViewWatch();
+      }
 
       return this;
     };
@@ -777,11 +822,15 @@ export class FXComposer {
         currentComposition.clear();
         logger?.debug10("Recomposing", _.copyNested(currentFXState));
 
+        const shouldSkipAbsolute =
+          effectiveConfig.autoStandBy && !hasVisibleElements;
+
         for (const link of compositionChain) {
           if (
             !_.isInstanceOf(link, FXComposer) &&
             (update === UPDATE_ALL ||
-              (update === UPDATE_ABSOLUTE && link.isAbsolute()))
+              (update === UPDATE_ABSOLUTE && link.isAbsolute())) &&
+            (!shouldSkipAbsolute || !link.isAbsolute())
           ) {
             link.update();
           }
@@ -803,7 +852,7 @@ export class FXComposer {
       if (!isPolling) {
         isPolling = true;
 
-        for await (const updateData of trigger.poll()) {
+        for await (const updateData of triggerInstance.poll()) {
           if (!isActive) {
             break;
           }
@@ -891,10 +940,13 @@ export class FXComposer {
       setElements(...animatedElements, ...elements);
     this.setElements = (...elements: Element[]) => setElements(...elements);
     this.getConfig = () => _.copyNested(effectiveConfig);
+    this.setAutoStandBy = setAutoStandBy;
     this.setLag = setLag;
     this.setDepth = setDepth;
 
     // SETUP --------------------
+
+    setAutoStandBy(config?.autoStandBy);
 
     // Set default lag now, since if it's not supplied in the config, it won't
     // update it. Depth is already at default of 1.
@@ -904,6 +956,8 @@ export class FXComposer {
     setDepth(config);
 
     setElements(...elements); // it will resume when done
+
+    logger?.debug5(effectiveConfig);
   }
 }
 
@@ -948,13 +1002,24 @@ export type FXComposerConfig = {
   negateParent?: boolean;
 
   /**
-   * By default, elements that are outside the viewport are not animated and if
-   * all of the composer's elements are outside the viewport, the composer will
-   * temporarily {@link FXComposer.pause} (without clearing the CSS).
+   * If true, then if all of the composer's elements are outside the viewport,
+   * the composer will temporarily stop updating effects that are
+   * {@link Effects.EffectConfig.isAbsolute | absolute}. And if all of the
+   * composer's effects are absolute, the composer will temporarily
+   * {@link FXComposer.pause | pause}.
    *
    * Set this to false to disable this behaviour.
    *
-   * @defaultValue true
+   * If not specified, the default value is true if this composer has a
+   * parent composer (see {@link negateParent}) whose depth is smaller than or
+   * equal to this composer's depth along each axis. (If the parent's depth is
+   * larger, then this composer's elements may be translated by larger distances
+   * than the parent, in which case auto stand-by doesn't work reliably).
+   *
+   * Note that if you change this composer's depth or the parent composer's
+   * depth later on, {@link autoStandBy} **won't** be updated.
+   *
+   * @defaultValue undefined // See explanation above
    */
   autoStandBy?: boolean;
 
@@ -1060,6 +1125,135 @@ export type FXComposerHandler =
   | FXComposerCallback
   | CallbackHandler<FXComposerHandlerArgs>;
 
+/**
+ * The update for an axis (low, high and target) values.
+ *
+ * @category Composer
+ */
+export type FXAxisStateUpdate = {
+  /**
+   * The new low value. If it is greater than {@link high}, they are swapped.
+   */
+  low?: number;
+
+  /**
+   * The new high value. If it is less than {@link low}, they are swapped.
+   */
+  high?: number;
+
+  /**
+   * The new target value which we're interpolating towards.
+   *
+   * If it exceeds the current {@link FXAxisState.high} value, the high will be
+   * updated to this target value.
+   *
+   * If it is below the current {@link FXAxisState.low} value, the low will be
+   * updated to this target value.
+   */
+  target?: number;
+
+  /**
+   * If set to true, it tells the composer not to tween, but instead jump
+   * straight to the target value.
+   *
+   * This gets defaulted back to false during each update unless you explicitly
+   * set it to `true`.
+   */
+  snap?: boolean;
+};
+
+/**
+ * @category Composer
+ */
+export type FXStateUpdate = {
+  x?: FXAxisStateUpdate;
+  y?: FXAxisStateUpdate;
+  z?: FXAxisStateUpdate;
+};
+
+/**
+ * The current state of an axis (X, Y or Z).
+ *
+ * @category Composer
+ */
+export type FXAxisState = {
+  /**
+   * The low value. Used for computing {@link EffectParams.nx | normalized}
+   * parameters.
+   *
+   * Initial value is 0.
+   */
+  low: number;
+
+  /**
+   * The high value. Used for computing {@link EffectParams.nx | normalized}
+   * parameters.
+   *
+   * Initial value is 0.
+   */
+  high: number;
+
+  /**
+   * The initial value at which the composer started interpolating (since the
+   * last trigger).
+   *
+   * Initial value is 0.
+   */
+  initial: number;
+
+  /**
+   * The value at the last animation frame.
+   *
+   * Initial value is 0.
+   */
+  previous: number;
+
+  /**
+   * The current value.
+   *
+   * Initial value is 0.
+   */
+  current: number;
+
+  /**
+   * The target value which the composer is interpolating towards.
+   *
+   * Initial value is 0.
+   */
+  target: number;
+
+  /**
+   * The composer's {@link Effects.FXComposerConfig.lag | lag} for this axis.
+   */
+  lag: number;
+
+  /**
+   * The composer's {@link Effects.FXComposerConfig.depth | depth} for this
+   * axis.
+   */
+  depth: number;
+
+  /**
+   * If true, it means the composer was told to
+   * {@link FXAxisStateUpdate.snap | snap} straight to the target value during
+   * the last update.
+   *
+   * Initial value is `false`.
+   */
+  snap: boolean;
+};
+
+/**
+ * Describes the whole state of the composer's parameters.
+ *
+ * @category Composer
+ */
+export type FXState = {
+  x: FXAxisState;
+  y: FXAxisState;
+  z: FXAxisState;
+};
+
 // ------------------------------
 
 type UPDATE_MODE =
@@ -1087,6 +1281,9 @@ const LIST_PROPERTIES: Record<string, string> = {
 
 const compositions = _.createWeakMap<FXComposer, FXComposition>();
 const allAnimatedElements = _.createWeakMap<Element, FXComposer>();
+
+const getComposerInstance = (element: Element) =>
+  allAnimatedElements.get(element);
 
 const createState = (): FXState => {
   const axisState: FXAxisState = {
@@ -1119,5 +1316,9 @@ const getParentComposer = (elements: Iterable<Element>): FXComposer | null => {
 
   return null;
 };
+
+// --------------------
+
+setInstanceGetter("composer", getComposerInstance);
 
 _.brandClass(FXComposer, "FXComposer");

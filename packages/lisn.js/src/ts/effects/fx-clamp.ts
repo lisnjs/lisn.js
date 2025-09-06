@@ -17,14 +17,20 @@ import {
   RawOrRelativeNumber,
 } from "@lisn/globals/types";
 
-import { toRawNum, RawNumberCalculator } from "@lisn/utils/math";
+import { havingMaxAbs, toRawNum, RawNumberCalculator } from "@lisn/utils/math";
 import { toIterableIfNot } from "@lisn/utils/misc";
 
 import { createCallback } from "@lisn/modules/callback";
 
-import { FXState } from "@lisn/effects/types";
-import { FXComposer, FXComposerHandler } from "@lisn/effects/fx-composer";
+import type {
+  FXComposer,
+  FXComposerHandler,
+  FXState,
+} from "@lisn/effects/fx-composer";
 import {
+  StartStopper,
+  setInstanceCreator,
+  getComposerInstance,
   atLeastOneVisible,
   watchSize,
   loopOnAfterPaint,
@@ -32,66 +38,7 @@ import {
 
 import { ViewWatcher } from "@lisn/watchers/view-watcher";
 
-/**
- * Clamps are used by {@link FXPin}s as building blocks for a pin's multi-way
- * conditions.
- *
- * A clamp internally keeps track of a single condition and as soon as the
- * condition matches it requests to pin to activate or deactivate itself.
- *
- * There are several built-in clamps:
- * - {@link FXComposerClamp}
- * - {@link FXViewClamp}
- *
- * {@link registerClamp} registers a new clamp type. It returns an object with
- * an `init` property holding a function.
- *
- * Your clamp class should call this `init` function in its constructor, passing
- * it itself (`this`). `init` will return an object containing the following
- * function:
- * - `setConfig`: sets the configuration that the {@link FXClampStore} will hold
- *                for the instance
- *
- * @throws {@link Errors.LisnUsageError | LisnUsageError}
- *                If this clamp type has already been registered.
- *
- * XXX TODO example
- *
- * @typeParam State  The type of state the clamp has. The store will hold both
- *                   the current state as well as the state at the time the
- *                   clamp was last restarted.
- * @typeParam Data   The type of data the clamp stores. This is arbitrary data
- *                   to be shared across the {@link FXClampLogic} methods.
- * @typeParam Config The type of configuration the clamp needs. Use this to pass
- *                   data from your clamp class onto the instance methods
- *                   (defined in your {@link FXClampLogic}).
- *
- * See {@link FXClampStore}.
- *
- * @category Base
- */
-export const registerClamp = <T extends string, State, Data, Config>(
-  definitions: FXClampDefinitions<T, State, Data, Config>,
-) => {
-  if (registeredTypes.has(definitions.type)) {
-    throw usageError(
-      `FXClamp type '${definitions.type}' is already registered`,
-    );
-  }
-
-  registeredTypes.set(definitions.type, definitions);
-
-  return {
-    init: (self: FXClamp<T>) => {
-      return {
-        setConfig: (config: Config) => {
-          const data = getInitData<Config>(self);
-          data._config = config;
-        },
-      } as const;
-    },
-  };
-};
+import debug from "@lisn/debug/debug";
 
 const CLAMP: unique symbol = _.SYMBOL.for(
   "LISN.js/types/clamp",
@@ -101,6 +48,31 @@ const CLAMP: unique symbol = _.SYMBOL.for(
  * Base clamp builder class.
  *
  * @category Base
+ */
+export abstract class FXClampBase<T extends string> implements FXClamp<T> {
+  /**
+   * @ignore
+   * @internal
+   */
+  readonly [CLAMP] = true;
+
+  abstract type: T;
+
+  readonly invert: () => this;
+
+  constructor() {
+    const data: FXClampInitData<unknown[]> = { _invert: false, _args: null };
+    allBuilderData.set(this, data);
+
+    this.invert = () => {
+      data._invert = true;
+      return this;
+    };
+  }
+}
+
+/**
+ * @category Pinning
  */
 export interface FXClamp<T extends string = string> {
   /**
@@ -120,215 +92,6 @@ export interface FXClamp<T extends string = string> {
    */
   readonly invert: () => this;
 }
-
-/**
- * Base clamp builder class.
- *
- * @category Base
- */
-export abstract class FXClampBase<T extends string> implements FXClamp<T> {
-  /**
-   * @ignore
-   * @internal
-   */
-  readonly [CLAMP] = true;
-
-  /**
-   * Unique name for the clamp type.
-   */
-  abstract type: T;
-
-  /**
-   * Inverts the logic of the clamp. It will activate when it previously would
-   * deactivate and vice versa.
-   */
-  readonly invert: () => this;
-
-  constructor() {
-    const data: FXClampInitData<unknown> = { _invert: false, _config: null };
-    allBuilderData.set(this, data);
-
-    this.invert = () => {
-      data._invert = true;
-      return this;
-    };
-  }
-}
-
-/**
- * @category Base
- */
-export interface FXClampInstance {
-  /**
-   * Returns true if the clamp is running (not paused).
-   */
-  isActive: () => boolean;
-
-  /**
-   * Pauses the clamp's monitoring of the condition.
-   */
-  pause: () => void;
-
-  /**
-   * Resumes the clamp's monitoring of the condition.
-   */
-  resume: () => void;
-
-  /**
-   * Updates the clamps's internal reference data to be its current data.
-   *
-   * It also resumes it if it is paused.
-   */
-  restart: () => void;
-}
-
-/**
- * Defines a new clamp type.
- *
- * @category Base
- */
-export type FXClampDefinitions<T extends string, State, Data, Config> = {
-  /**
-   * Unique name for the clamp type.
-   */
-  type: T;
-
-  /**
-   * See {@link FXClampLogic}.
-   */
-  logic: FXClampLogic<State, Data, Config>;
-};
-
-/**
- * These methods define how clamps operate and copy their state/data.
- *
- * The current clamp instance which the logic operates can be accessed as the
- * `this` value (as long as the logic method is not an arrow function).
- *
- * @category Base
- */
-export type FXClampLogic<State, Data, Config> = {
-  /**
-   * The function will be called once when the clamp instance is created.
-   */
-  run: (store: FXClampStore<State, Data, Config>) => void;
-
-  /**
-   * If given, it will be called when the clamp is paused.
-   */
-  pause?: (store: FXClampStore<State, Data, Config>) => void;
-
-  /**
-   * If given, it will be called when the clamp is resumed.
-   */
-  resume?: (store: FXClampStore<State, Data, Config>) => void;
-
-  /**
-   * If given, it will be used to copy the state before storing it in or
-   * retrieving it from the store. It is required in order to keep a copy of the
-   * state at the time of last restart.
-   *
-   * @defaultValue An internal function which deeply copies arbitrary data, but
-   * may not be the most performance-efficient.
-   */
-  copyState?: (state: State | undefined) => State | undefined;
-
-  /**
-   * If given, it will be used to copy the data before storing it in or
-   * retrieving it from the store. If omitted the data is **not** copied, so if
-   * you modify it after storing or retrieving, it will be modified in the
-   * store.
-   *
-   * @defaultValue undefined // none
-   */
-  copyData?: (state: Data | undefined) => Data | undefined;
-};
-
-/**
- * Internal state and data management for a clamp to be used by its logic
- * methods.
- *
- * @category Base
- */
-export type FXClampStore<State, Data, Config> = {
-  /**
-   * Returns the configuration set by the clamp prior to instantiation.
-   *
-   * Note that it is not copied, so you should generally avoid modifying it.
-   */
-  getConfig: () => Config | null;
-
-  /**
-   * Returns the current state, last set using {@link setState}.
-   *
-   * It is copied according to
-   * {@link FXClampLogic.copyState | your logic's `copyState`} before returning.
-   */
-  getState: () => State | undefined;
-
-  /**
-   * Updates the current state.
-   *
-   * It is copied according to
-   * {@link FXClampLogic.copyState | your logic's `copyState`} before storing.
-   */
-  setState: (state: State) => void;
-
-  /**
-   * Returns the state at the time the clamp was last
-   * {@link FXClampInstance.restart | restarted}. Returns undefined if the clamp
-   * has never been restarted.
-   *
-   * It is copied according to
-   * {@link FXClampLogic.copyState | your logic's `copyState`} before returning.
-   */
-  getReferenceState: () => State | undefined;
-
-  /**
-   * Returns the current data, last set using {@link setData}.
-   *
-   * It is copied according to
-   * {@link FXClampLogic.copyData | your logic's `copyData`} before returning.
-   */
-  getData: () => Data | undefined;
-
-  /**
-   * Updates the current data.
-   *
-   * It is copied according to
-   * {@link FXClampLogic.copyData | your logic's `copyData`} before storing.
-   */
-  setData: (data: Data) => void;
-
-  /**
-   * Returns the {@link FXComposer} associated with this clamp.
-   */
-  getComposer: () => FXComposer;
-
-  /**
-   * Informs the pin that the clamp's state has changed.
-   *
-   * Set `active` to true if the clamp is now active, meaning that the pin
-   * should also be activated. Set `active` to false otherwise, meaning that the
-   * pin may be deactivated.
-   *
-   * If the clamp supports limits or bounds, such as maximum/minimum x/y/z, then
-   * in either case (active or not), set the deviation from the limits as the
-   * difference between the current value of x/y/z and the limit for that axis.
-   *
-   * For example if the clamp is activated on minimum x = 100 and the composer's
-   * state is 150, set deviation to `{ x: 50 }` and active to `true`; and if the
-   * composer's state is 50, then set deviation to `{ x: -50 }` and active to
-   * `false`.
-   *
-   * Note that if the clamp is paused, it will update the state only when
-   * resumed.
-   */
-  notify: (
-    active: boolean,
-    deviation: { x?: number; y?: number; z?: number } | null,
-  ) => void;
-};
 
 /**
  * This sets a limit (minimum and/or maximum, or exact value) for a parameter
@@ -387,8 +150,8 @@ export class FXComposerClamp extends FXClampBase<"composer"> {
       );
     }
 
-    const { setConfig } = initComposer(this);
-    setConfig(bounds);
+    const { setArgs } = initComposer(this);
+    setArgs(bounds);
   }
 }
 
@@ -479,8 +242,8 @@ export class FXViewClamp extends FXClampBase<"view"> {
       }
     }
 
-    const { setConfig } = initView(this);
-    setConfig({ _config: config, _bounds: bounds });
+    const { setArgs } = initView(this);
+    setArgs(bounds, config);
   }
 }
 
@@ -590,137 +353,452 @@ export type FXViewClampConfig = {
   aggressiveWatching?: boolean;
 };
 
-// --------------------
+// -------------------- BASE --------------------
 
 /**
- * @internal
- * @ignore
+ * Clamps are used by {@link FXPin}s as building blocks for a pin's multi-way
+ * conditions.
+ *
+ * A clamp internally keeps track of a single condition and as soon as the
+ * condition matches it requests to pin to activate or deactivate itself.
+ *
+ * There are several built-in clamps:
+ * - {@link FXComposerClamp}
+ * - {@link FXViewClamp}
+ *
+ * {@link registerFXClamp} registers a new clamp type. It returns an object with
+ * an `init` property holding a function.
+ *
+ * Your clamp class should call this `init` function in its constructor, passing
+ * it itself (`this`). `init` will return an object containing the following
+ * function:
+ * - `setArgs`: Sets the arguments that the {@link FXClampLogic}'s run method
+ *              will receive. Your clamp class **must** call this in its
+ *              constructor.
+ *
+ * See example below for implementing a basic clamp class.
+ *
+ * @throws {@link Errors.LisnUsageError | LisnUsageError}
+ *                If this clamp type has already been registered.
+ *
+ * @example
+ * ```typescript
+ * type CustomArg = string;
+ * type CustomConfig = { opt: boolean };
+ *
+ * const { init } = registerFXClamp<
+ *   "custom",
+ *   number, // state
+ *   { start: () => void, stop: () => void }, // data
+ *   [CustomArg, CustomConfig | undefined], // arguments passed to run
+ * >({
+ *   type: "custom",
+ *   logic: {
+ *     run(store, arg, config) {
+ *       // required, set initial state and data
+ *       store.setState(0);
+ *       // ... rest of init
+ *       store.setData({
+ *         start: () => {
+ *           // ...
+ *         },
+ *
+ *         stop: () => {
+ *           // ...
+ *         }
+ *       });
+ *     },
+ *
+ *     pause(store) {
+ *       store.getData().stop();
+ *     },
+ *
+ *     resume(store) {
+ *       store.getData().start();
+ *     },
+ *   }
+ * });
+ *
+ * export class FXCustomClamp extends FXClampBase<"custom"> {
+ *   readonly type = "custom"; // required
+ *
+ *   constructor(arg: CustomArgs, config?: CustomConfig) {
+ *     super();
+ *
+ *     const { setArgs } = init(this);
+ *     setArgs(arg, config);
+ *   }
+ * }
+ * ```
+ *
+ * @typeParam State  The type of state the clamp has. The store will hold both
+ *                   the current state as well as the state at the time the
+ *                   clamp was last restarted.
+ * @typeParam Data   The type of data the clamp stores. This is arbitrary data
+ *                   to be shared across the {@link FXClampLogic} methods.
+ * @typeParam Args   The type of arguments to pass to the instance methods
+ *                   (defined in your {@link FXClampLogic}).
+ *
+ * See {@link FXClampStore}.
+ *
+ * @category Base
  */
-export const createClampInstance = <T extends string, S, D, C>(
+export const registerFXClamp = <
+  T extends string,
+  State,
+  Data,
+  Args extends unknown[],
+>(
+  definitions: FXClampDefinitions<T, State, Data, Args>,
+) => {
+  if (registeredTypes.has(definitions.type)) {
+    throw usageError(
+      `FXClamp type '${definitions.type}' is already registered`,
+    );
+  }
+
+  registeredTypes.set(definitions.type, definitions);
+
+  return {
+    init: (self: FXClamp<T>) => {
+      return {
+        setArgs: (...args: Args) => {
+          const data = getInitData<Args>(self);
+          data._args = args;
+        },
+      } as const;
+    },
+  };
+};
+
+/**
+ * @category Base
+ */
+export interface FXClampInstance {
+  /**
+   * Pauses the clamp's monitoring of the condition.
+   */
+  pause: () => void;
+
+  /**
+   * Resumes the clamp's monitoring of the condition.
+   */
+  resume: () => void;
+
+  /**
+   * Updates the clamps's internal reference data to be its current data.
+   *
+   * It also resumes it if it is paused.
+   */
+  restart: () => void;
+}
+
+/**
+ * Defines a new clamp type.
+ *
+ * @category Base
+ */
+export type FXClampDefinitions<
+  T extends string,
+  State,
+  Data,
+  Args extends unknown[],
+> = {
+  /**
+   * Unique name for the clamp type.
+   */
+  type: T;
+
+  /**
+   * See {@link FXClampLogic}.
+   */
+  logic: FXClampLogic<State, Data, Args>;
+};
+
+/**
+ * These methods define how clamps operate and copy their state/data.
+ *
+ * Inside each method, the current clamp instance which the logic operates can
+ * be accessed as the `this` value (as long as the logic method is not an arrow
+ * function).
+ *
+ * @category Base
+ */
+export type FXClampLogic<State, Data, Args extends unknown[]> = {
+  /**
+   * The function will be called once when the clamp instance is created.
+   */
+  run: (store: FXClampStore<State, Data>, ...args: Args) => void;
+
+  /**
+   * If given, it will be called when the clamp is paused.
+   */
+  pause?: (store: FXClampStore<State, Data>) => void;
+
+  /**
+   * If given, it will be called when the clamp is resumed.
+   */
+  resume?: (store: FXClampStore<State, Data>) => void;
+
+  /**
+   * If given, it will be used to copy the state before storing it in or
+   * retrieving it from the store. It is required in order to keep a copy of the
+   * state at the time of last restart.
+   *
+   * @defaultValue An internal function which deeply copies arbitrary data, but
+   * may not be the most performance-efficient.
+   */
+  copyState?: (state: State) => State;
+};
+
+/**
+ * Internal state and data management for a clamp to be used by its logic
+ * methods.
+ *
+ * @category Base
+ */
+export type FXClampStore<State, Data> = {
+  /**
+   * Returns the current state, last set using {@link setState}.
+   *
+   * You **must** call {@link setState} before calling this.
+   *
+   * It is copied according to
+   * {@link FXClampLogic.copyState | your logic's `copyState`} before returning.
+   */
+  getState: () => State;
+
+  /**
+   * Updates the current state. If this is the first state to be set and the
+   * clamp has been restarted already, it will also update the
+   * {@link getReferenceState | reference} state.
+   *
+   * It is copied according to
+   * {@link FXClampLogic.copyState | your logic's `copyState`} before storing.
+   */
+  setState: (state: State) => void;
+
+  /**
+   * Returns the state at the time the clamp was last
+   * {@link FXClampInstance.restart | restarted}.
+   *
+   * It is copied according to
+   * {@link FXClampLogic.copyState | your logic's `copyState`} before returning.
+   */
+  getReferenceState: () => State;
+
+  /**
+   * Returns the current data, last set using {@link setData}.
+   *
+   * You **must** call {@link setData} before calling this.
+   *
+   * It is not copied before storing.
+   */
+  getData: () => Data;
+
+  /**
+   * Updates the current data.
+   *
+   * It is not copied before returning.
+   */
+  setData: (data: Data) => void;
+
+  /**
+   * Returns the {@link FXComposer} associated with this clamp.
+   */
+  getComposer: () => FXComposer;
+
+  /**
+   * Informs the pin that the clamp's state has changed.
+   *
+   * Set `active` to true if the clamp is now active, meaning that the pin
+   * should also be activated. Set `active` to false otherwise, meaning that the
+   * pin may be deactivated.
+   *
+   * If the clamp supports limits or bounds, such as maximum/minimum x/y/z, then
+   * in either case (active or not), set the deviation from the limits as the
+   * difference between the current value of x/y/z and the limit for that axis.
+   *
+   * For example if the clamp is activated on minimum x = 100 and the composer's
+   * state is 150, set deviation to `{ x: 50 }` and active to `true`; and if the
+   * composer's state is 50, then set deviation to `{ x: -50 }` and active to
+   * `false`.
+   *
+   * Note that if the clamp is paused, it will update the state only when
+   * resumed.
+   */
+  notify: (
+    active: boolean,
+    deviation: { x?: number; y?: number; z?: number } | null,
+  ) => void;
+};
+
+// ------------------------------
+
+const createClampInstance = <T extends string, S, D, A extends unknown[]>(
   clamp: FXClamp<T>,
   composer: FXComposer,
-  notifyPin: (state: FXState | null) => void,
+  notifyPin: (
+    active: boolean,
+    deviation: { x?: number; y?: number; z?: number } | null,
+  ) => void,
 ): FXClampInstance => {
+  /* istanbul ignore next */
   if (!_.isInstanceOf(clamp, FXClampBase)) {
     throw usageError("Object is not an FXClamp");
   }
 
-  const definitions = registeredTypes.get<T, S, D, C>(clamp.type);
+  const definitions = registeredTypes.get<T, S, D, A>(clamp.type);
+  /* istanbul ignore next */
   if (!definitions) {
     throw bugError(`No definitions saved for clamp type '${clamp.type}'`);
   }
 
-  const init = getInitData<C>(clamp);
+  const init = getInitData<A>(clamp);
+
+  const { _args: args, _invert: invert } = init;
+
+  /* istanbul ignore next */
+  if (!_.isArray(args)) {
+    // child class didn't call setArgs
+    throw usageError(`No arguments saved for clamp '${clamp.type}'`);
+  }
 
   const { logic } = definitions;
 
-  let isActive = false; // don't start until the pin resumes us
-  let lastChangeWhilePaused: {
-    _clampedState: FXState | null;
-  } | null = null;
+  const logger = debug
+    ? new debug.Logger({
+        name: `FXClamp-${clamp.type}${invert ? "-inverted" : ""}`,
+        logAtCreation: args,
+      })
+    : null;
+
+  let isPaused = true; // don't start until the pin restarts us
+  let effectiveViolation: BoundedStateViolation | null = null;
+  let lastChangeWhilePaused: BoundedStateViolation | null;
+
+  let hasSetState = false;
 
   const storeData: {
-    _config: C | null;
-    _clampedState: FXState | null;
     _data?: D;
     _state?: S;
     _refState?: S;
-  } = {
-    _config: init._config,
-    _clampedState: null,
+  } = {};
+
+  const getState = (useReference = false) => {
+    /* istanbul ignore next */
+    const state = useReference ? storeData._refState : storeData._state;
+    if (_.isUndefined(state)) {
+      throw usageError(`No state saved for clamp '${clamp.type}'`);
+    }
+
+    return copyState<S>(state);
   };
 
-  const store: FXClampStore<S, D, C> = {
-    getConfig: () => storeData._config,
+  const getData = () => {
+    /* istanbul ignore next */
+    const data = storeData._data;
+    if (_.isUndefined(data)) {
+      throw usageError(`No data saved for clamp '${clamp.type}'`);
+    }
 
-    getState: () => copyState(storeData._state),
+    return data;
+  };
+
+  const store: FXClampStore<S, D> = {
+    getState: () => getState(),
     setState: (state) => {
-      storeData._state = copyState(state);
-    },
-    getReferenceState: () => copyState(storeData._refState),
+      storeData._state = copyState<S>(state);
 
-    getData: () => copyData(storeData._data),
+      if (!hasSetState) {
+        // first time, save it as a reference too
+        storeData._refState = storeData._state;
+      }
+
+      hasSetState = true;
+    },
+    getReferenceState: () => getState(true),
+
+    getData,
     setData: (data) => {
-      storeData._data = copyData(data);
+      storeData._data = data;
     },
 
     getComposer: () => composer,
 
     notify: (active, deviation) => {
-      if (init._invert) {
+      logger?.debug7("Got violation", {
+        active,
+        deviation,
+        invert,
+      });
+
+      if (invert) {
         active = !active;
       }
 
-      let clampedState: FXState | null = null;
-
-      if (active) {
-        clampedState = composer.getState();
-        if (deviation) {
-          for (const a of ["x", "y", "z"] as const) {
-            clampedState[a].current -= deviation[a] ?? 0;
-          }
-        }
-      }
-
-      setClampedState(clampedState);
+      setViolation(active, deviation);
     },
   };
 
   // ----------
 
-  const setClampedState = (clampedState: FXState | null) => {
-    if (isActive) {
-      if (_.isNull(storeData._clampedState) !== _.isNull(clampedState)) {
-        storeData._clampedState = clampedState;
-        notifyPin(clampedState);
+  const setViolation = (
+    active: boolean,
+    deviation: { x?: number; y?: number; z?: number } | null,
+  ) => {
+    if (!isPaused) {
+      if (!!effectiveViolation?.active !== active) {
+        logger?.debug7("Setting new clamp violation", { active, deviation });
+
+        effectiveViolation = { active, deviation };
+        notifyPin(active, deviation);
       }
+
       lastChangeWhilePaused = null;
-    } else {
-      lastChangeWhilePaused = {
-        _clampedState: clampedState,
-      };
+    } else if (!!lastChangeWhilePaused?.active !== active) {
+      lastChangeWhilePaused = { active, deviation };
     }
   };
 
-  const setActiveState = (activate: boolean) => {
-    if (isActive !== activate) {
-      isActive = activate;
+  const setRunningState = (state: RUNNING_STATE) => {
+    if (isPaused !== (state === PAUSE)) {
+      isPaused = !isPaused;
 
-      if (isActive && lastChangeWhilePaused) {
-        setClampedState(lastChangeWhilePaused._clampedState);
+      logger?.debug7(`${isPaused ? "Pausing" : "Resuming"} clamp`);
+
+      if (!isPaused && lastChangeWhilePaused) {
+        setViolation(
+          lastChangeWhilePaused.active,
+          lastChangeWhilePaused.deviation,
+        );
       }
 
-      (isActive ? logic?.resume : logic?.pause)?.call(self, store);
+      (isPaused ? logic?.pause : logic?.resume)?.call(self, store);
     }
   };
 
   // --------------------
 
   const self: FXClampInstance = {
-    isActive: () => isActive,
-    pause: () => setActiveState(false),
-    resume: () => setActiveState(true),
+    pause: () => setRunningState(PAUSE),
+    resume: () => setRunningState(RESUME),
     restart: () => {
+      logger?.debug7("Restarting clamp");
       storeData._refState = storeData._state;
       self.resume();
     },
   };
 
   const copyState = logic.copyState?.bind(self) ?? _.deepCopy;
-  const copyData = logic.copyData?.bind(self) ?? ((d) => d);
 
   // --------------------
 
-  logic.run.call(self, store);
+  logic.run.call(self, store, ...args);
   return self;
 };
 
 // ------------------------------
-
-type StartStopWatcher = {
-  start: () => void;
-  stop: () => void;
-};
 
 type BoundedState<Axes extends "x" | "y" | "z"> = {
   _bounds: { [A in Axes]?: BoundedValue };
@@ -735,63 +813,63 @@ type BoundedState<Axes extends "x" | "y" | "z"> = {
 
 type BoundedStateViolation = {
   active: boolean;
-  deviation: { x: number; y: number; z: number } | null;
+  deviation: { x?: number; y?: number; z?: number } | null;
 };
 
-type FXClampInitData<C> = {
+type FXClampInitData<A extends unknown[]> = {
   _invert: boolean;
-  _config: C | null;
+  _args: A | null;
 };
 
 interface RegistrationMap {
   has(type: string): boolean;
-  get<T extends string, S, D, C>(
+  get<T extends string, S, D, A extends unknown[]>(
     type: T,
-  ): FXClampDefinitions<T, S, D, C> | undefined;
-  set<T extends string, S, D, C>(
+  ): FXClampDefinitions<T, S, D, A> | undefined;
+  set<T extends string, S, D, A extends unknown[]>(
     type: T,
-    definitions: FXClampDefinitions<T, S, D, C>,
+    definitions: FXClampDefinitions<T, S, D, A>,
   ): this;
 }
 
 interface BuilderDataMap {
-  get<C>(clamp: FXClamp<string>): FXClampInitData<C> | undefined;
-  set<C>(clamp: FXClamp<string>, config: FXClampInitData<C>): this;
+  get<A extends unknown[]>(clamp: FXClamp): FXClampInitData<A> | undefined;
+  set<A extends unknown[]>(clamp: FXClamp, data: FXClampInitData<A>): this;
 }
+
+type RUNNING_STATE = typeof PAUSE | typeof RESUME;
+const PAUSE: unique symbol = _.SYMBOL() as typeof PAUSE;
+const RESUME: unique symbol = _.SYMBOL() as typeof RESUME;
 
 const registeredTypes: RegistrationMap = new Map();
 const allBuilderData = new WeakMap() as BuilderDataMap;
 
-const { init: initComposer } = registerClamp<
+// --------------------
+
+const { init: initComposer } = registerFXClamp<
   "composer",
   FXState,
   {
-    _vpSizeWatch: StartStopWatcher;
-    _tweenWatch: StartStopWatcher;
+    _vpSizeWatch: StartStopper;
+    _tweenWatch: StartStopper;
   },
-  FXComposerClampBounds
+  [FXComposerClampBounds]
 >({
   type: "composer",
   logic: {
-    run: (store) => {
-      const bounds = store.getConfig() ?? {};
-      if (!bounds) {
-        throw bugError("No bounds saved for clamp type 'scroll'");
-      }
-
+    run: (store, bounds) => {
       const vpSizeWatch = watchSize();
 
       const composer = store.getComposer();
+
+      // set initial state
+      store.setState(composer.getState());
 
       const tweenHandler: FXComposerHandler = createCallback(() => {
         const refComposerState = store.getReferenceState();
 
         const composerState = composer.getState();
         store.setState(composerState);
-
-        if (!refComposerState) {
-          return;
-        }
 
         const offsets = getComposerOffsets(composerState, refComposerState);
 
@@ -801,7 +879,7 @@ const { init: initComposer } = registerClamp<
           _composerState: composerState,
         });
 
-        const violation = getClampViolation(boundedState);
+        const violation = getBoundViolation(boundedState);
         store.notify(violation.active, violation.deviation);
       }, true);
 
@@ -818,37 +896,32 @@ const { init: initComposer } = registerClamp<
 
     pause: (store) => {
       const data = store.getData();
-      data?._vpSizeWatch.stop();
-      data?._tweenWatch.stop();
+      data._vpSizeWatch.stop();
+      data._tweenWatch.stop();
     },
 
     resume: (store) => {
       const data = store.getData();
-      data?._vpSizeWatch.start();
-      data?._tweenWatch.start();
+      data._vpSizeWatch.start();
+      data._tweenWatch.start();
     },
   },
 });
 
-const { init: initView } = registerClamp<
+const { init: initView } = registerFXClamp<
   "view",
   Map<Element, { x: number; y: number }>,
   {
-    _viewWatch: StartStopWatcher;
-    _vpSizeWatch: StartStopWatcher;
-    _rootSizeWatch: StartStopWatcher;
-    _afterPaintLooper: StartStopWatcher;
+    _viewWatch: StartStopper;
+    _vpSizeWatch: StartStopper;
+    _rootSizeWatch: StartStopper;
+    _closeMonitor: StartStopper;
   },
-  { _bounds: FXViewClampBounds; _config: FXViewClampConfig | undefined }
+  [FXViewClampBounds, FXViewClampConfig | undefined]
 >({
   type: "view",
   logic: {
-    run: (store) => {
-      const { _config: config, _bounds: bounds } = store.getConfig() ?? {};
-      if (!bounds) {
-        throw bugError("No bounds saved for clamp type 'view'");
-      }
-
+    run: (store, bounds, config) => {
       const xyToAnchor = {
         x: _.S_LEFT in bounds ? _.S_LEFT : _.S_RIGHT,
         y: _.S_TOP in bounds ? _.S_TOP : _.S_BOTTOM,
@@ -869,7 +942,12 @@ const { init: initView } = registerClamp<
       const vpSizeWatch = watchSize();
       const rootSizeWatch = root ? watchSize(root) : vpSizeWatch;
 
-      const afterPaintLooper = loopOnAfterPaint(() => {
+      // set initial state
+      store.setState(
+        getViewOffsets(vpSizeWatch.get(), xyToAnchor, targets, root),
+      );
+
+      const closeMonitorHandler = () => {
         const prevOffsets = store.getState();
         const refOffsets = store.getReferenceState();
         const offsets = getViewOffsets(
@@ -879,10 +957,6 @@ const { init: initView } = registerClamp<
           root,
         );
         store.setState(offsets);
-
-        if (!prevOffsets || !refOffsets) {
-          return;
-        }
 
         const composerState = composer.getState();
         const vpSize = vpSizeWatch.get();
@@ -898,6 +972,7 @@ const { init: initView } = registerClamp<
           const tPrevOffsets = prevOffsets.get(t);
           const tRefOffsets = refOffsets.get(t);
           const tOffsets = offsets.get(t);
+          /* istanbul ignore next */
           if (!tPrevOffsets || !tRefOffsets || !tOffsets) {
             throw bugError("No offsets saved for view clamp target");
           }
@@ -913,17 +988,46 @@ const { init: initView } = registerClamp<
             _composerState: composerState,
           };
 
-          violations.push(getClampViolation(boundedState));
+          violations.push(getBoundViolation(boundedState));
         }
 
-        const violation = getMaxClampViolation(violations);
+        const violation = getMaxBoundViolation(violations);
         store.notify(violation.active, violation.deviation);
-      });
+      };
+
+      // If all targets we're watching are animated by some composer, use an
+      // onTween callback rather than looping on each animation frame when
+      // monitoring closely.
+      const animatingComposers: {
+        composers: Iterable<FXComposer>;
+        all: boolean;
+      } = customTargets
+        ? getComposersAnimating(targets)
+        : { composers: [composer], all: true };
+
+      let closeMonitor: StartStopper;
+      if (animatingComposers.all) {
+        const callback = createCallback(closeMonitorHandler, true);
+        closeMonitor = {
+          start: () => {
+            for (const c of animatingComposers.composers) {
+              c.onTween(callback);
+            }
+          },
+          stop: () => {
+            for (const c of animatingComposers.composers) {
+              c.offTween(callback);
+            }
+          },
+        };
+      } else {
+        closeMonitor = loopOnAfterPaint(closeMonitorHandler);
+      }
 
       const viewWatch = atLeastOneVisible(
         targets,
         (hasVisible) => {
-          (hasVisible ? afterPaintLooper.start : afterPaintLooper.stop)();
+          (hasVisible ? closeMonitor.start : closeMonitor.stop)();
         },
         ViewWatcher.reuse({
           root,
@@ -935,37 +1039,54 @@ const { init: initView } = registerClamp<
         _viewWatch: viewWatch,
         _vpSizeWatch: vpSizeWatch,
         _rootSizeWatch: rootSizeWatch,
-        _afterPaintLooper: afterPaintLooper,
+        _closeMonitor: closeMonitor,
       });
     },
 
     pause: (store) => {
       const data = store.getData();
-      data?._viewWatch.stop();
-      data?._vpSizeWatch.stop();
-      data?._rootSizeWatch.stop();
-      data?._afterPaintLooper.stop();
+      data._viewWatch.stop();
+      data._vpSizeWatch.stop();
+      data._rootSizeWatch.stop();
+      data._closeMonitor.stop();
     },
 
     resume: (store) => {
       const data = store.getData();
-      data?._viewWatch.start();
-      data?._vpSizeWatch.start();
-      data?._rootSizeWatch.start();
+      data._viewWatch.start();
+      data._vpSizeWatch.start();
+      data._rootSizeWatch.start();
     },
 
-    copyState: (s) => (s ? _.createMap([...s.entries()]) : void 0),
+    copyState: (s) => _.createMap([...s.entries()]),
   },
 });
 
 // --------------------
 
-const getInitData = <C>(clamp: FXClamp<string>) => {
-  const data = allBuilderData.get<C>(clamp);
+const getInitData = <A extends unknown[]>(clamp: FXClamp) => {
+  const data = allBuilderData.get<A>(clamp);
+  /* istanbul ignore next */
   if (!data) {
     throw bugError(`No init data saved for clamp '${clamp.type}'`);
   }
   return data;
+};
+
+const getComposersAnimating = (elements: Iterable<Element>) => {
+  const composers: Set<FXComposer> = _.createSet();
+  let all = true;
+
+  for (const e of elements) {
+    const c = getComposerInstance(e);
+    if (c) {
+      composers.add(c);
+    } else {
+      all = false;
+    }
+  }
+
+  return { all, composers };
 };
 
 const getComposerOffsets = (
@@ -1064,46 +1185,77 @@ const toRawBoundsValue = <Axes extends "x" | "y" | "z">(
     return result;
   };
 
-  return toRawNum(input, calculator, null);
+  return toRawNum(rawOrRelBound, calculator, null);
 };
 
-const getClampViolation = <Axes extends "x" | "y" | "z">(
+const getBoundViolation = <Axes extends "x" | "y" | "z">(
   input: BoundedState<Axes>,
 ): BoundedStateViolation => {
-  const getDeviation = (
+  const getDiff = (
     boundedValue: RawOrRelativeNumber | ViewportLength | undefined,
     axis: Axes,
   ) => {
     const raw = toRawBoundsValue(boundedValue, input, axis);
-    return _.isNull(raw) ? null : _.round(raw - input._current[axis]);
+    return { raw, diff: _.isNull(raw) ? null : raw - input._current[axis] };
   };
 
   const { _composerState: composerState } = input;
 
+  let active = false;
   const deviation = { x: 0, y: 0, z: 0 };
 
   for (const axis in input._bounds) {
     const boundedValue = input._bounds[axis];
-    if (_.isPrimitive(boundedValue)) {
-      deviation[axis] = getDeviation(boundedValue, axis) ?? 0;
+    if (_.isNullish(boundedValue)) {
+      continue;
+    }
+
+    if (_.isNonNullablePrimitive(boundedValue)) {
+      const { raw, diff } = getDiff(boundedValue, axis);
+      deviation[axis] = diff ?? 0;
+      // this is an "exact" bound, therefore it has been violated if it the
+      // bound has been crossed since the previous time
+      if (!_.isNull(raw)) {
+        active ||= input._current[axis] < raw !== input._previous[axis] < raw;
+      }
     } else {
-      const { min, max } = boundedValue;
-      deviation[axis] = getDeviation(min, axis) ?? getDeviation(max, axis) ?? 0;
+      for (const k of ["min", "max"] as const) {
+        const bound = boundedValue[k];
+
+        if (!_.isNullish(bound)) {
+          const thisDeviation = getDiff(bound, axis).diff ?? 0;
+          // this is a min/max bound, therefore it has been violated if it's min and
+          // current < bound or if it's max and current > bound
+          const thisViolated =
+            k === "min" ? thisDeviation > 0 : thisDeviation < 0;
+
+          if (thisViolated) {
+            deviation[axis] = havingMaxAbs(deviation[axis], thisDeviation);
+            active = true;
+          }
+        }
+      }
     }
 
     if (composerState) {
-      const depthScale =
-        (composerState[axis].current - composerState[axis].previous) /
-        (input._current[axis] - input._previous[axis]);
-      deviation[axis] *= depthScale;
+      const diffTop =
+        composerState[axis].current - composerState[axis].previous;
+      const diffBottom = input._current[axis] - input._previous[axis];
+
+      if (diffTop > 0 && diffBottom > 0) {
+        const depthScale =
+          (composerState[axis].current - composerState[axis].previous) /
+          (input._current[axis] - input._previous[axis]);
+
+        deviation[axis] *= depthScale;
+      }
     }
   }
 
-  const active = (deviation.x || deviation.y || deviation.z) !== 0;
   return { active, deviation };
 };
 
-const getMaxClampViolation = (
+const getMaxBoundViolation = (
   deviations: BoundedStateViolation[],
 ): BoundedStateViolation => {
   const maxDeviation = { x: 0, y: 0, z: 0 };
@@ -1111,13 +1263,17 @@ const getMaxClampViolation = (
 
   for (const { active, deviation } of deviations) {
     maxActive ||= active;
-    maxDeviation.x = _.max(maxDeviation.x, deviation?.x ?? 0);
-    maxDeviation.y = _.max(maxDeviation.y, deviation?.y ?? 0);
-    maxDeviation.z = _.max(maxDeviation.z, deviation?.z ?? 0);
+    maxDeviation.x = havingMaxAbs(maxDeviation.x, deviation?.x ?? 0);
+    maxDeviation.y = havingMaxAbs(maxDeviation.y, deviation?.y ?? 0);
+    maxDeviation.z = havingMaxAbs(maxDeviation.z, deviation?.z ?? 0);
   }
 
   return { active: maxActive, deviation: maxDeviation };
 };
+
+// --------------------
+
+setInstanceCreator("clamp", createClampInstance);
 
 _.brandClass(FXClampBase, "FXClampBase");
 _.brandClass(FXComposerClamp, "FXComposerClamp");

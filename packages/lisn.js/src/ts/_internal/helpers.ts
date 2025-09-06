@@ -351,11 +351,10 @@ export const isIterableObject = (v: unknown): v is IterableObject<unknown> =>
 export const isArray = M.bind(M.ARRAY.isArray, M.ARRAY);
 
 export const isPrimitive = (v: unknown) =>
-  isLiteralString(v) ||
-  isSymbol(v) ||
-  isLiteralNumber(v) ||
-  isBoolean(v) ||
-  isNullish(v);
+  isNonNullablePrimitive(v) || isNullish(v);
+
+export const isNonNullablePrimitive = (v: unknown) =>
+  isLiteralString(v) || isSymbol(v) || isLiteralNumber(v) || isBoolean(v);
 
 export const isLiteralNumber = (v: unknown) => typeof v === "number";
 

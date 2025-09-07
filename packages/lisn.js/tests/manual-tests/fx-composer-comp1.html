@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <script src="assets/lisn/js/lisn.min.js" charset="utf-8"></script>
+    <script src="assets/js/lisn.link.js" charset="utf-8"></script>
     <script src="assets/js/lisn-settings.js" charset="utf-8"></script>
     <link
       rel="stylesheet"
@@ -12,6 +12,12 @@
       media="screen"
       charset="utf-8"
     />
+    <script>
+      LISN.settings.effectLag = 1;
+      LISN.settings.verbosityLevel = 7;
+      // LISN.settings.compactLogging = true;
+      // LISN.settings.debugMessageFilter = /FXPin/;
+    </script>
     <style type="text/css" media="screen">
       .section {
         display: flex;
@@ -32,7 +38,7 @@
       }
 
       .spacer {
-        height: 200vh;
+        height: 150vh;
       }
     </style>
   </head>
@@ -61,70 +67,58 @@
     <script>
       // Make the page content fixed with smooth scrolling + automatically
       // adjust scroll height based on content, etc
-      LISN.widgets.SmoothScroll.enableMain().then((w) => {
-        const rootComposer = w.getComposer();
-        const { trigger } = rootComposer.getConfig();
+      LISN.widgets.SmoothScroll.enableMain({ defaultEffects: false }).then(
+        (w) => {
+          const rootComposer = w.getComposer();
+          const { trigger } = rootComposer.getConfig();
+          const { FXComposer, FXPin, FXViewClamp, FXComposerClamp, Transform } =
+            LISN.effects;
+          const section = document.querySelector(".section");
+          const boxes = section.querySelectorAll(".box");
+          const evenBoxes = [...boxes].filter((_, i) => i % 2 === 0);
+          const oddBoxes = [...boxes].filter((_, i) => i % 2 === 1);
 
-        const {
-          FXComposer,
-          FXScrollTrigger,
-          FXPin,
-          FXNegateMatcher,
-          FXViewMatcher,
-          FXScrollMatcher,
-          Transform,
-        } = LISN.effects;
+          const boxesNotInView = new FXViewClamp({
+            top: { min: 0, max: "100%" },
+          }).invert();
 
-        const section = document.querySelector(".section");
-        const boxes = section.querySelectorAll(".box");
-        const evenBoxes = [...boxes].filter((_, i) => i % 2 === 0);
-        const oddBoxes = [...boxes].filter((_, i) => i % 2 === 1);
+          const sectionInCentre = new FXViewClamp({ top: "50%" });
 
-        const sectionInView = new FXViewMatcher("at", section);
-        const sectionInCentre = new FXViewMatcher("at", section, {
-          rootMargin: { top: "-30%", bottom: "-30%" },
-        });
+          // 500 px up or down from when it's restarted
+          const scrolledAway = new FXComposerClamp({
+            x: { max: "+500", min: "-500" },
+          });
 
-        // 500 px up or down from when it's restarted
-        const scrolledAway = new FXScrollMatcher(
-          {
-            max: { top: "+500" },
-            min: { top: "-500" },
-          },
-          { paused: true },
-        );
-        // start counting from when the section is in the middle of the viewport
-        sectionInCentre.onChange(scrolledAway.restart);
+          const translateYPin = new FXPin()
+            .when(sectionInCentre)
+            .until(scrolledAway);
 
-        // pin for the vertical translate effect
-        const translateYPin = new FXPin()
-          .when(sectionInCentre) // pin it when it's in the middle of the viewport
-          .until(scrolledAway); // unpin it when user scrolls 500px up or down from that time
+          // pin for the horizontal translate effect
+          // const translateXPin = new FXPin().while(boxesNotInView);
 
-        // pin for the horizontal translate effect
-        const translateXPin = new FXPin()
-          .while(sectionInView.invert()) // keep it pinned while the section is not in the viewport
-          .while(translateYPin); // and also the same conditions as for the Y pin
+          const vp = { width: window.innerWidth, height: window.innerHeight };
 
-        const trXLeft = new Transform().translate((p) => ({ x: -p.y }));
+          const trY = new Transform({
+            pin: translateYPin,
+          }).translate((p) => ({
+            y: -p.y,
+          }));
+          // const trXLeft = new Transform({ pin: translateXPin })
+          //   .translate({ x: vp.width / 2 })
+          //   .translate((p) => ({ x: -p.y }));
+          // const trXRight = new Transform({ pin: translateXPin })
+          //   .translate({ x: -vp.width / 2 })
+          //   .translate((p) => ({ x: p.y }));
 
-        const trXRight = new Transform().translate((p) => ({ x: p.y }));
-
-        const trYOpposite = new Transform().translate((p) => ({
-          y: p.y,
-        }));
-
-        // oppose the vertical transform
-        new FXComposer({ trigger })
-          .add(trYOpposite, translateYPin.invert())
-          .startAnimate(section);
-        new FXComposer({ trigger })
-          .add(trXLeft, translateXPin.invert())
-          .startAnimate(evenBoxes);
-        new FXComposer({ trigger })
-          .add(trXRight, translateXPin.invert())
-          .startAnimate(oddBoxes);
-      });
+          new FXComposer([section], { trigger }).add(trY);
+          // new FXComposer(evenBoxes, { trigger, negateParent: false }).add(
+          //   trXLeft,
+          // );
+          // new FXComposer(oddBoxes, { trigger, negateParent: false }).add(
+          //   trXRight,
+          // );
+        },
+      );
     </script>
   </body>
 </html>

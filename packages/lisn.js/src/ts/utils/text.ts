@@ -492,8 +492,8 @@ const convertToString = (
   try {
     convertToStringContext._level++;
     result = _convertToString(value, options, level, skipToJSON);
-    convertToStringContext._level--;
   } finally {
+    convertToStringContext._level--;
     if (isFirst) {
       convertToStringContext._level = 0;
       convertToStringContext._seen.clear();
@@ -511,7 +511,7 @@ const _convertToString = (
     _compact: boolean;
     _formatter?: (value: unknown) => unknown;
   },
-  level = 0,
+  level = convertToStringContext._level,
   skipToJSON = false,
 ): string => {
   const seen = convertToStringContext._seen;

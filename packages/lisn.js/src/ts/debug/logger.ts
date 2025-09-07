@@ -12,8 +12,9 @@
  * {@link RemoteConsole} and logs to both.
  *
  * {@link Logger} holds a {@link Console} and implements debug at 10 different
- * levels. The maximum logged level is configurable. Also emits a prefix in
- * debug messages that identifies the instance.
+ * levels. The maximum logged level is configurable. It emits a prefix in
+ * debug messages that identifies the instance. It also supports various other
+ * configuration options.
  *
  * @module Debugging
  */
@@ -26,9 +27,13 @@ import { bugError } from "@lisn/globals/errors";
 
 import { LogFunction } from "@lisn/globals/types";
 
-import { randId } from "@lisn/utils/text";
+import { randId, joinAsString, formatAsString } from "@lisn/utils/text";
 
-import { LoggerInterface, LoggerConfig } from "@lisn/debug/types";
+import {
+  LoggerInterface,
+  LoggerConfig,
+  EffectiveLoggerConfig,
+} from "@lisn/debug/types";
 import { Console } from "@lisn/debug/console";
 
 /**
@@ -53,49 +58,143 @@ export class Logger implements LoggerInterface {
   readonly debug9: LogFunction;
   readonly debug10: LogFunction;
   readonly getName: () => string;
+  readonly setName: (name: string) => void;
   readonly getVerbosityLevel: () => number;
   readonly setVerbosityLevel: (level: number) => void;
+  readonly usesCompact: () => boolean;
+  readonly useCompact: (compact: boolean) => void;
+  readonly getConfig: () => EffectiveLoggerConfig;
+
+  /**
+   * Tags the given object, so that the tag is included with it whenever the
+   * object is logged.
+   *
+   * @param tag If not given, a random one will be generated
+   *
+   * @since v1.3.0
+   */
+  static tagObject(object: object, tag?: string) {
+    objectTags.set(object, tag ?? randId());
+  }
+
+  /**
+   * Returns a logger instance associated with the given object. If there's no
+   * logger for this object yet, it is created using the given `defaultConfig`.
+   *
+   * If `defaultConfig` does not explicitly set `name`, then a name is chosen as
+   * follows:
+   * - if object has a {@link tagObject}, the tag will be used
+   * - otherwise if object's
+   * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString | string tag}
+   * is other than "Object", this will be used
+   * - otherwise name will be blank
+   *
+   * If `defaultConfig` does not explicitly set `debugID` but the object is
+   * {@link tagObject | tagged}, a newly created logger will use that for its
+   * `debugID`. An existing logger instance however won't have its `debugID`
+   * changed.
+   *
+   * If the given object is not tagged, **it will be tagged with the final
+   * `debugID` of the logger**.
+   *
+   * ### Updating existing instance configuration
+   *
+   * If `defaultConfig` includes `verbosityLevel` or `compact`, an existing
+   * logger instance's {@link setVerbosityLevel | verbosity level} and
+   * {@link useCompact | compact} settings will be updated.
+   *
+   * And if a non-blank name was chosen based on the given object (as explained
+   * above), the logger instance will also be {@link setName | renamed}.
+   */
+  static getLoggerFor(object: object, defaultConfig?: LoggerConfig) {
+    const objTag = objectTags.get(object);
+    const strTag = _.typeOrClassOf(object);
+    const defaultName = objTag ?? (strTag === "Object" ? void 0 : strTag);
+
+    const config: LoggerConfig = _.merge(
+      { name: defaultName, debugID: objTag },
+      defaultConfig,
+    );
+
+    let logger = instances.get(object);
+
+    if (!logger) {
+      logger = new Logger(config);
+      instances.set(object, logger);
+    } else {
+      const { name, verbosityLevel, compact } = config;
+
+      if (!_.isUndefined(name)) {
+        logger.setName(name);
+      }
+
+      if (!_.isUndefined(verbosityLevel)) {
+        logger.setVerbosityLevel(verbosityLevel);
+      }
+
+      if (!_.isUndefined(compact)) {
+        logger.useCompact(compact);
+      }
+    }
+
+    if (_.isUndefined(objTag)) {
+      objectTags.set(object, logger.getConfig().debugID);
+    }
+
+    return logger;
+  }
 
   constructor(config?: LoggerConfig) {
     config ??= {};
-    const myConfig = _.merge(
+    const myConfig: EffectiveLoggerConfig = _.merge(
       {
         // set defaults
+        name: "",
         verbosityLevel: settings.verbosityLevel,
-        remoteLoggerURL: settings.remoteLoggerURL,
+        compact: settings.compactLogging,
+        remoteLoggerURL: settings.remoteLoggerURL ?? "",
         remoteLoggerOnMobileOnly: settings.remoteLoggerOnMobileOnly,
+        remoteLoggerConnectTimeout: settings.remoteLoggerConnectTimeout,
         debugID: randId(),
       },
       config,
     );
 
-    let remoteLoggerURL = "";
     if (
-      !getBooleanURLParam("disableRemoteLog") &&
-      (myConfig.remoteLoggerOnMobileOnly === false || isMobile())
+      getBooleanURLParam("disableRemoteLog") ||
+      (myConfig.remoteLoggerOnMobileOnly && isMobile())
     ) {
-      remoteLoggerURL = myConfig.remoteLoggerURL ?? "";
+      myConfig.remoteLoggerURL = "";
     }
 
-    const name = myConfig.name ?? "";
     const myConsole = new Console(
-      remoteLoggerURL,
+      myConfig.remoteLoggerURL,
       myConfig.remoteLoggerConnectTimeout,
     );
-    // use setters bellow to validate value
-    let verbosityLevel = 0;
-    const logPrefix = `[LISN${name ? ": " + name : ""}]`;
-    const debugID = myConfig.debugID;
-    const debugPrefix = `[LISN${(name ? ": " + name : "") + (debugID ? "-" + debugID : "")}]`;
 
-    this.getName = () => name;
+    let logPrefix = "";
+    let debugPrefix = "";
 
-    this.getVerbosityLevel = () => verbosityLevel;
-    this.setVerbosityLevel = (l) => {
-      verbosityLevel = l;
+    this.getName = () => myConfig.name;
+    this.setName = (name: string) => {
+      myConfig.name = name;
+
+      logPrefix = `[LISN${name ? ": " + name : ""}]`;
+      const debugID = myConfig.debugID;
+      debugPrefix = `[LISN${(name ? ": " + name : "") + (debugID ? "-" + debugID : "")}]`;
     };
 
-    this.setVerbosityLevel(myConfig.verbosityLevel ?? 0);
+    this.getVerbosityLevel = () => myConfig.verbosityLevel;
+    this.setVerbosityLevel = (l) => {
+      myConfig.verbosityLevel = l;
+    };
+
+    this.usesCompact = () => myConfig.compact;
+    this.useCompact = (p) => {
+      myConfig.compact = p;
+    };
+
+    this.getConfig = () => _.copyNested(myConfig);
 
     this.debug1 = (...args) => logDebugN(this, 1, debugPrefix, ...args);
     this.debug2 = (...args) => logDebugN(this, 2, debugPrefix, ...args);
@@ -117,6 +216,15 @@ export class Logger implements LoggerInterface {
     };
 
     // --------------------
+
+    const { forElement } = myConfig;
+    if (forElement) {
+      this.setName(myConfig.name + formatAsString(forElement));
+      if (!objectTags.has(forElement)) {
+        objectTags.set(forElement, myConfig.debugID);
+      }
+    }
+
     if ("logAtCreation" in myConfig) {
       this.debug6("New logger:", myConfig.logAtCreation);
     }
@@ -129,6 +237,9 @@ export type ErrorMatchList = Array<
 
 // ----------------------------------------
 
+const instances = _.createWeakMap<object, Logger>();
+const objectTags = _.createWeakMap<object, string>();
+
 const logDebugN = (logger: Logger, level: number, ...args: unknown[]) => {
   if (!_.isNumber(level)) {
     args.unshift(level);
@@ -140,7 +251,25 @@ const logDebugN = (logger: Logger, level: number, ...args: unknown[]) => {
     return;
   }
 
-  logger.debug(`[DEBUG ${level}]`, ...args);
+  const usesCompact = logger.usesCompact();
+  const string = joinAsString(
+    {
+      separator: usesCompact ? "," : ",\n",
+      depth: 10,
+      lineLength: 100,
+      compact: usesCompact,
+      formatter: (value) => {
+        const tag = _.isObject(value) ? objectTags.get(value) : void 0;
+        return tag ? [`TAG: ${tag}`, value] : value;
+      },
+    },
+    ...args,
+  );
+
+  const filter = settings.debugMessageFilter;
+  if (!filter || string.match(filter)) {
+    logger.debug(`[DEBUG ${level}]`, string);
+  }
 };
 
 const isMobile = () => {

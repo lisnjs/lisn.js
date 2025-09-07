@@ -402,6 +402,9 @@ export const settings = _.preventExtensions({
    *   --lisn-color-bg: some-light-color;
    *   --lisn-color-bg-t: some-light-color-with-transparency;
    * }
+   *
+   * @defaultValue "light-theme"
+   * @category Theme
    */
   lightThemeClassName: "light-theme",
 
@@ -418,6 +421,9 @@ export const settings = _.preventExtensions({
    *   --lisn-color-bg: some-dark-color;
    *   --lisn-color-bg-t: some-dark-color-with-transparency;
    * }
+   *
+   * @defaultValue "dark-theme"
+   * @category Theme
    */
   darkThemeClassName: "dark-theme",
 
@@ -468,6 +474,28 @@ export const settings = _.preventExtensions({
   verbosityLevel: 0,
 
   /**
+   * Whether to omit spacing and indentation when formatting objects logged
+   * in debug level.
+   *
+   * @since v1.3.0
+   *
+   * @defaultValue false
+   * @category Logging
+   */
+  compactLogging: false,
+
+  /**
+   * Sets a regex to filter debugging messages. Only messages that match the
+   * given expression will be emitted.
+   *
+   * @since v1.3.0
+   *
+   * @defaultValue null
+   * @category Logging
+   */
+  debugMessageFilter: null as RegExp | string | null,
+
+  /**
    * The URL of the remote logger to connect to. LISN uses
    * {@link https://socket.io/docs/v4/client-api/ | socket.io-client}
    * to talk to the client and emits messages on the following namespaces:
@@ -503,4 +531,19 @@ export const settings = _.preventExtensions({
    * @category Logging
    */
   remoteLoggerOnMobileOnly: false,
+
+  /**
+   * Enable remote logging only on mobile devices.
+   *
+   * You can always disable remote logging for any page by setting
+   * `disableRemoteLog=1` URL query parameter.
+   *
+   * **Note:** Logging is not available in bundles (except in the `debug` bundle).
+   *
+   * @since v1.3.0
+   *
+   * @defaultValue 1500
+   * @category Logging
+   */
+  remoteLoggerConnectTimeout: 1500,
 });

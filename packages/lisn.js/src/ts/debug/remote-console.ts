@@ -4,6 +4,8 @@
 
 import * as _ from "@lisn/_internal";
 
+import { settings } from "@lisn/globals/settings";
+
 import { LogFunction } from "@lisn/globals/types";
 
 import { joinAsString } from "@lisn/utils/text";
@@ -68,7 +70,10 @@ export class RemoteConsole implements ConsoleInterface {
    * @param [connectTimeout = 1500] The timeout in ms for a connection
    *                                to be considered failed.
    */
-  constructor(url: string, connectTimeout = DEFAULT_TIMEOUT) {
+  constructor(
+    url: string,
+    connectTimeout = settings.remoteLoggerConnectTimeout,
+  ) {
     let hasFailed = false; // initially
     let isClosed = false;
 
@@ -166,7 +171,10 @@ export class RemoteConsole implements ConsoleInterface {
    * @param [connectTimeout] The timeout in ms for a remote connection to
    *                         be considered failed. Default is 1500.
    */
-  static reuse(url: string, connectTimeout = DEFAULT_TIMEOUT) {
+  static reuse(
+    url: string,
+    connectTimeout = settings.remoteLoggerConnectTimeout,
+  ) {
     let rConsole = instances.get(url)?.get(connectTimeout);
     if (!rConsole) {
       rConsole = new RemoteConsole(url, connectTimeout);
@@ -180,7 +188,5 @@ export class RemoteConsole implements ConsoleInterface {
 const instances = createXMap<string, Map<number, RemoteConsole>>(() =>
   _.createMap(),
 );
-
-const DEFAULT_TIMEOUT = 1500;
 
 _.brandClass(RemoteConsole, "RemoteConsole");

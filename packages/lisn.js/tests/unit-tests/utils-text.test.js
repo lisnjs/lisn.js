@@ -1,15 +1,31 @@
-const { describe, test, expect } = require("@jest/globals");
+const { jest, describe, test, expect } = require("@jest/globals");
 
 const utils = window.LISN.utils;
 
+class Test {
+  prop = [1, "a"];
+}
+
 describe("formatAsString", () => {
-  test("string", () => {
+  test("primitives", () => {
+    expect(utils.formatAsString(0)).toBe("0");
+    expect(utils.formatAsString(1)).toBe("1");
+    expect(utils.formatAsString(false)).toBe("false");
+    expect(utils.formatAsString(true)).toBe("true");
+    expect(utils.formatAsString(null)).toBe("null");
+    expect(utils.formatAsString(undefined)).toBe("undefined");
     expect(utils.formatAsString("foo")).toBe("foo");
   });
 
   test("<p>", () => {
     const el = document.createElement("p");
     expect(utils.formatAsString(el)).toBe("<P>");
+  });
+
+  test("<div id='foo'>", () => {
+    const el = document.createElement("div");
+    el.id = "foo";
+    expect(utils.formatAsString(el)).toBe('<DIV id="foo">');
   });
 
   test("<div class='foo bar'>", () => {
@@ -22,51 +38,31 @@ describe("formatAsString", () => {
     expect(utils.formatAsString(new Error("foobar"))).toMatch(/^Error: foobar/);
   });
 
-  test("Set([1,2,3])", () => {
-    expect(utils.formatAsString(new Set([1, 2, 3]))).toBe("Set([1,2,3])");
+  test('iterable: Set([1,2,"a"])', () => {
+    expect(utils.formatAsString(new Set([1, 2, "a"]))).toBe(
+      "Set([\n 1,\n 2,\n a\n])",
+    );
   });
 
-  test("1", () => {
-    expect(utils.formatAsString(1)).toBe("1");
+  test('iterable: compact: Set([1,2,"a"])', () => {
+    expect(utils.formatAsString(new Set([1, 2, "a"]), { compact: true })).toBe(
+      "Set([1,2,a])",
+    );
   });
 
-  test("true", () => {
-    expect(utils.formatAsString(true)).toBe("true");
+  test("Test()", () => {
+    expect(utils.formatAsString(new Test())).toBe(
+      "Test<{\n prop: [\n  1,\n  a\n ]\n}>",
+    );
   });
 
-  test("null", () => {
-    expect(utils.formatAsString(null)).toBe("null");
+  test("compact: Test()", () => {
+    expect(utils.formatAsString(new Test(), { compact: true })).toBe(
+      "Test<{prop:[1,a]}>",
+    );
   });
 
-  test("'aaaaaa' maxLen = -1", () => {
-    expect(utils.formatAsString("aaaaaa", -1)).toBe("aaaaaa");
-  });
-
-  test("'aaaaaa' maxLen = 0", () => {
-    expect(utils.formatAsString("aaaaaa", 0)).toBe("aaaaaa");
-  });
-
-  test("'aaaaaa' maxLen = 1", () => {
-    expect(utils.formatAsString("aaaaaa", 1)).toBe("...");
-  });
-
-  test("'aaaaaa' maxLen = 2", () => {
-    expect(utils.formatAsString("aaaaaa", 2)).toBe("...");
-  });
-
-  test("'aaaaaa' maxLen = 3", () => {
-    expect(utils.formatAsString("aaaaaa", 3)).toBe("...");
-  });
-
-  test("'aaaaaa' maxLen = 4", () => {
-    expect(utils.formatAsString("aaaaaa", 4)).toBe("a...");
-  });
-
-  test("'aaaaaa' maxLen = 5", () => {
-    expect(utils.formatAsString("aaaaaa", 5)).toBe("aa...");
-  });
-
-  test("deeply nested", () => {
+  test("mixed deeply nested", () => {
     expect(
       utils.formatAsString({
         a: {
@@ -87,11 +83,509 @@ describe("formatAsString", () => {
             i: 13,
             j: "s",
           },
+          m: new Test(),
         },
       }),
     ).toBe(
-      '{"a":{"b":"[\\"1\\",2,3,null,true,Set([4,[5,false,\\"true\\",6,7,Set([8,9])]])]","c":"[Map([[\\"a\\",1]])]","d":"Map([[\\"a\\",1]])","e":"foo","f":{"g":"[<BODY>]","h":true,"i":13,"j":"s"}}}',
+      `{
+ a: {
+  b: [
+   1,
+   2,
+   3,
+   null,
+   true,
+   Set([
+    4,
+    [
+     5,
+     false,
+     true,
+     6,
+     7,
+     Set([
+      8,
+      9
+     ])
+    ]
+   ])
+  ],
+  c: [
+   Map([
+    [
+     a,
+     1
+    ]
+   ])
+  ],
+  d: Map([
+   [
+    a,
+    1
+   ]
+  ]),
+  e: foo,
+  f: {
+   g: [
+    <BODY>
+   ],
+   h: true,
+   i: 13,
+   j: s
+  },
+  m: Test<{
+   prop: [
+    1,
+    a
+   ]
+  }>
+ }
+}`,
     );
+  });
+
+  test("compact: mixed deeply nested", () => {
+    expect(
+      utils.formatAsString(
+        {
+          a: {
+            b: [
+              "1",
+              2,
+              3,
+              null,
+              true,
+              new Set([4, [5, false, "true", 6, 7, new Set([8, 9])]]),
+            ],
+            c: [new Map([["a", 1]])],
+            d: new Map([["a", 1]]),
+            e: "foo",
+            f: {
+              g: [document.body],
+              h: true,
+              i: 13,
+              j: "s",
+            },
+            m: new Test(),
+          },
+        },
+        { compact: true },
+      ),
+    ).toBe(
+      "{a:{b:[1,2,3,null,true,Set([4,[5,false,true,6,7,Set([8,9])]])],c:[Map([[a,1]])],d:Map([[a,1]]),e:foo,f:{g:[<BODY>],h:true,i:13,j:s},m:Test<{prop:[1,a]}>}}",
+    );
+  });
+
+  test("object recursion v1", () => {
+    const o = { a: null };
+    o.a = o;
+    expect(utils.formatAsString(o, { compact: true })).toBe("{a:<recursion>}");
+  });
+
+  test("object recursion v2", () => {
+    const o = { a: { b: null } };
+    o.a.b = o;
+    expect(utils.formatAsString(o, { compact: true })).toBe(
+      "{a:{b:<recursion>}}",
+    );
+  });
+
+  test("array recursion v1", () => {
+    const a = [];
+    a.push(a);
+    expect(utils.formatAsString(a, { compact: true })).toBe("[<recursion>]");
+  });
+
+  test("array recursion v2", () => {
+    const a = [[]];
+    a[0].push(a);
+    expect(utils.formatAsString(a, { compact: true })).toBe("[[<recursion>]]");
+  });
+
+  for (const l of [-2, -1, 0, 6, 7]) {
+    test(`maxLength = ${l} (max is 6)`, () => {
+      expect(utils.formatAsString("abcdef", { maxLength: l })).toBe("abcdef");
+    });
+  }
+
+  for (const l of [1, 2, 3]) {
+    test(`maxLength = ${l} (max is 6)`, () => {
+      expect(utils.formatAsString("abcdef", { maxLength: l })).toBe("...");
+    });
+  }
+
+  test("maxLength = 4 (max is 6)", () => {
+    expect(utils.formatAsString("abcdef", { maxLength: 4 })).toBe("a...");
+  });
+
+  test("maxLength = 5 (max is 6)", () => {
+    expect(utils.formatAsString("abcdef", { maxLength: 5 })).toBe("ab...");
+  });
+
+  for (const d of [-2, -1, 0, 4, 5]) {
+    test(`depth = ${d} (max is 4)`, () => {
+      expect(
+        utils.formatAsString(
+          { a: { b: { c: 1, c2: [1, 2, 3] }, b2: [1, 2, 3] }, a2: [1, 2, 3] },
+          { depth: d },
+        ),
+      ).toBe(`{
+ a: {
+  b: {
+   c: 1,
+   c2: [
+    1,
+    2,
+    3
+   ]
+  },
+  b2: [
+   1,
+   2,
+   3
+  ]
+ },
+ a2: [
+  1,
+  2,
+  3
+ ]
+}`);
+    });
+  }
+
+  test("depth = 1 (max is 4)", () => {
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1, c2: [1, 2, 3] }, b2: [1, 2, 3] }, a2: [1, 2, 3] },
+        { depth: 1 },
+      ),
+    ).toBe(`{
+ a: { ... },
+ a2: [ ... ]
+}`);
+  });
+
+  test("depth = 2 (max is 4)", () => {
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1, c2: [1, 2, 3] }, b2: [1, 2, 3] }, a2: [1, 2, 3] },
+        { depth: 2 },
+      ),
+    ).toBe(`{
+ a: {
+  b: { ... },
+  b2: [ ... ]
+ },
+ a2: [
+  1,
+  2,
+  3
+ ]
+}`);
+  });
+
+  test("depth = 3 (max is 4)", () => {
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1, c2: [1, 2, 3] }, b2: [1, 2, 3] }, a2: [1, 2, 3] },
+        { depth: 3 },
+      ),
+    ).toBe(`{
+ a: {
+  b: {
+   c: 1,
+   c2: [ ... ]
+  },
+  b2: [
+   1,
+   2,
+   3
+  ]
+ },
+ a2: [
+  1,
+  2,
+  3
+ ]
+}`);
+  });
+
+  test("lineLength v1", () => {
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: ["aaa", "bbb", "ccc"] }, b2: ["a", "b", "c"] } },
+        { lineLength: 100 },
+      ),
+    ).toBe(`{ a: { b: { c: [ aaa, bbb, ccc ] }, b2: [ a, b, c ] } }`);
+  });
+
+  test("lineLength v2", () => {
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: ["aaa", "bbb", "ccc"] }, b2: ["a", "b", "c"] } },
+        { lineLength: 13 },
+      ),
+    ).toBe(`{
+ a: {
+  b: {
+   c: [ aaa, bbb, ccc ]
+  },
+  b2: [ a, b, c ]
+ }
+}`);
+  });
+
+  test("lineLength v3", () => {
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: ["aaa", "bbb", "ccc"] }, b2: ["a", "b", "c"] } },
+        { lineLength: 7 },
+      ),
+    ).toBe(`{
+ a: {
+  b: {
+   c: [
+    aaa,
+    bbb,
+    ccc
+   ]
+  },
+  b2: [ a, b, c ]
+ }
+}`);
+  });
+
+  test("formatter -> self", () => {
+    const cbk = jest.fn((v) => v);
+
+    expect(
+      utils.formatAsString(
+        { a: { b: [1, 2] } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe("{a:{b:[1,2]}}");
+
+    expect(cbk).toHaveBeenCalledTimes(3);
+    expect(cbk).toHaveBeenCalledWith({ a: { b: [1, 2] } });
+    expect(cbk).toHaveBeenCalledWith({ b: [1, 2] });
+    expect(cbk).toHaveBeenCalledWith([1, 2]);
+  });
+
+  test("formatter -> string or self", () => {
+    const cbk = jest.fn((v) => ("b" in v ? "foo" : v));
+
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1 } } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe("{a:foo}");
+
+    expect(cbk).toHaveBeenCalledTimes(2);
+    expect(cbk).toHaveBeenCalledWith({ a: { b: { c: 1 } } });
+    expect(cbk).toHaveBeenCalledWith({ b: { c: 1 } });
+  });
+
+  test("formatter -> undefined", () => {
+    const cbk = jest.fn(() => {});
+
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1 } } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe("undefined");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenCalledWith({ a: { b: { c: 1 } } });
+  });
+
+  test("formatter -> other non-string primitive", () => {
+    const cbk = jest.fn(() => false);
+
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1 } } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe("false");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenCalledWith({ a: { b: { c: 1 } } });
+  });
+
+  test("formatter -> other object v1", () => {
+    const cbk = jest.fn(() => ({ z: "foo" }));
+
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1 } } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe("{z:foo}");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenCalledWith({ a: { b: { c: 1 } } });
+  });
+
+  test("formatter -> other object v2", () => {
+    const cbk = jest.fn((v) => ("y" in v ? v : { z: { y: 1 } }));
+
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1 } } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe("{z:{y:1}}");
+
+    expect(cbk).toHaveBeenCalledTimes(2);
+    expect(cbk).toHaveBeenCalledWith({ a: { b: { c: 1 } } });
+    expect(cbk).toHaveBeenCalledWith({ y: 1 });
+  });
+
+  test("formatter -> recursion v1", () => {
+    const cbk = jest.fn((v) => ({ z: v }));
+
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1 } } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe("{z:<recursion>}");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenCalledWith({ a: { b: { c: 1 } } });
+  });
+
+  test("formatter -> recursion v2", () => {
+    const cbk = jest.fn(() => ({ z: { y: 1 } }));
+
+    let expected = "...";
+    for (let i = 0; i < 100; i++) {
+      expected = `z:{${expected}}`;
+    }
+    expected = `{${expected}}`;
+
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1 } } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe(expected);
+
+    expect(cbk).toHaveBeenCalledTimes(100);
+    expect(cbk).toHaveBeenNthCalledWith(1, { a: { b: { c: 1 } } });
+    for (let i = 2; i <= 100; i++) {
+      expect(cbk).toHaveBeenNthCalledWith(i, { y: 1 });
+    }
+  });
+
+  test("formatter -> recursion v3", () => {
+    const cbk = jest.fn((v) => utils.formatAsString(v, { formatter: cbk }));
+
+    let expected = "...";
+    for (let i = 0; i < 100; i++) {
+      expected = `z:{${expected}}`;
+    }
+    expected = `{${expected}}`;
+
+    expect(
+      utils.formatAsString(
+        { a: { b: { c: 1 } } },
+        { formatter: cbk, compact: true },
+      ),
+    ).toBe("<recursion>");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+    expect(cbk).toHaveBeenCalledWith({ a: { b: { c: 1 } } });
+  });
+
+  test("toJSON -> self", () => {
+    const cbk = jest.fn(() => obj);
+    const obj = { a: { b: { c: 1 } } };
+    obj.toJSON = cbk;
+
+    expect(utils.formatAsString(obj, { compact: true })).toBe(
+      `{a:{b:{c:1}},toJSON:${String(cbk).replace(/\s+/g, " ")}}`,
+    );
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+  });
+
+  test("toJSON -> string", () => {
+    const cbk = jest.fn(() => "foo");
+    const obj = { a: { b: { c: 1 } } };
+    obj.toJSON = cbk;
+
+    expect(utils.formatAsString(obj, { compact: true })).toBe("foo");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+  });
+
+  test("toJSON -> undefined", () => {
+    const cbk = jest.fn(() => {});
+    const obj = { a: { b: { c: 1 } } };
+    obj.toJSON = cbk;
+
+    expect(utils.formatAsString(obj, { compact: true })).toBe("undefined");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+  });
+
+  test("toJSON -> other non-string primitive", () => {
+    const cbk = jest.fn(() => false);
+    const obj = { a: { b: { c: 1 } } };
+    obj.toJSON = cbk;
+
+    expect(utils.formatAsString(obj, { compact: true })).toBe("false");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+  });
+
+  test("toJSON -> other object", () => {
+    const cbk = jest.fn(() => ({ z: "foo" }));
+    const obj = { a: { b: { c: 1 } } };
+    obj.toJSON = cbk;
+
+    expect(utils.formatAsString(obj, { compact: true })).toBe("{z:foo}");
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+  });
+
+  test("toJSON -> recursion v1", () => {
+    const cbk = jest.fn(() => ({ z: obj }));
+    const obj = { a: { b: { c: 1 } } };
+    obj.toJSON = cbk;
+
+    expect(utils.formatAsString(obj, { compact: true })).toBe(
+      "{z:<recursion>}",
+    );
+
+    expect(cbk).toHaveBeenCalledTimes(1);
+  });
+
+  test("toJSON -> recursion v2", () => {
+    const cbk = jest.fn(() => {
+      const newObj = { z: "foo" };
+      newObj.toJSON = cbk;
+      return newObj;
+    });
+
+    const obj = { a: { b: { c: 1 } } };
+    obj.toJSON = cbk;
+
+    let expected = "...";
+    for (let i = 0; i < 100; i++) {
+      expected = `z:{${expected}}`;
+    }
+    expected = `{${expected}}`;
+
+    expect(() => utils.formatAsString(obj, { compact: true })).toThrow(
+      /Recursion in formatAsString/,
+    );
+
+    expect(cbk).toHaveBeenCalledTimes(1000);
   });
 });
 
@@ -99,8 +593,58 @@ describe("joinAsString", () => {
   test("no args", () => {
     expect(utils.joinAsString("|")).toBe("");
   });
+
   test("|-separated misc values", () => {
-    expect(utils.joinAsString("|", [1, 2, 3], 1, "a")).toBe("[1,2,3]|1|a");
+    expect(utils.joinAsString("|", [1, 2, 3], 1, "a")).toBe(
+      "[\n 1,\n 2,\n 3\n]|1|a",
+    );
+  });
+
+  test("compact: |-separated misc values", () => {
+    expect(
+      utils.joinAsString({ compact: true, separator: "|" }, [1, 2, 3], 1, "a"),
+    ).toBe("[1,2,3]|1|a");
+  });
+
+  test("maxLength", () => {
+    expect(
+      utils.joinAsString(
+        { maxLength: 4, separator: "," },
+        "aaaaa",
+        "bbbbb",
+        "cccc",
+      ),
+    ).toBe("a...,b...,cccc");
+  });
+
+  test("depth", () => {
+    expect(
+      utils.joinAsString(
+        { depth: 1 },
+        { a: { b: { c: 1, c2: [1, 2, 3] }, b2: [1, 2, 3] }, a2: [1, 2, 3] },
+      ),
+    ).toBe(`{
+ a: { ... },
+ a2: [ ... ]
+}`);
+  });
+
+  test("formatter", () => {
+    expect(
+      utils.joinAsString(
+        { formatter: () => "foo" },
+        { a: { b: { c: 1, c2: [1, 2, 3] }, b2: [1, 2, 3] }, a2: [1, 2, 3] },
+      ),
+    ).toBe("foo");
+  });
+
+  test("lineLength v1", () => {
+    expect(
+      utils.joinAsString(
+        { lineLength: 100 },
+        { a: { b: { c: ["aaa", "bbb", "ccc"] }, b2: ["a", "b", "c"] } },
+      ),
+    ).toBe(`{ a: { b: { c: [ aaa, bbb, ccc ] }, b2: [ a, b, c ] } }`);
   });
 });
 

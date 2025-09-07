@@ -98,23 +98,23 @@ export const copyNested = <T>(value: T): T => {
  *
  * @since v1.3.0
  */
-export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
+export const deepCopy = <T>(value: T, seen = new WeakMap()): T => {
   if (!isObject(value)) {
     // Primitive or function
     return value;
   }
 
-  if (_seen.has(value)) {
+  if (seen.has(value)) {
     // Circular reference
-    return _seen.get(value);
+    return seen.get(value);
   }
 
   if (isArray(value)) {
     const out = new M.ARRAY(value.length);
-    _seen.set(value, out);
+    seen.set(value, out);
     for (let i = 0; i < value.length; i++) {
       if (i in value) {
-        out[i] = deepCopy(value[i], _seen);
+        out[i] = deepCopy(value[i], seen);
       }
     }
     return out as T;
@@ -122,10 +122,10 @@ export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
 
   if (isMap(value)) {
     const out = M.createMap();
-    _seen.set(value, out);
+    seen.set(value, out);
     for (const [k, v] of value) {
-      const kCopy = deepCopy(k, _seen);
-      const vCopy = deepCopy(v, _seen);
+      const kCopy = deepCopy(k, seen);
+      const vCopy = deepCopy(v, seen);
       out.set(kCopy, vCopy);
     }
     return out as T;
@@ -133,9 +133,9 @@ export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
 
   if (isSet(value)) {
     const out = M.createSet();
-    _seen.set(value, out);
+    seen.set(value, out);
     for (const v of value) {
-      out.add(deepCopy(v, _seen));
+      out.add(deepCopy(v, seen));
     }
     return out as T;
   }
@@ -145,7 +145,7 @@ export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
   }
 
   if (isOfType(value, "DataView")) {
-    const buf = deepCopy(value.buffer, _seen);
+    const buf = deepCopy(value.buffer, seen);
     return new DataView(buf, value.byteOffset, value.byteLength) as T;
   } else if (ArrayBuffer.isView(value)) {
     // DataView already handled above, so this is TypedArray:
@@ -180,7 +180,7 @@ export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
   // Plain object (preserve prototype, if it's null & property descriptors,
   // including symbols)
   const out = M.OBJECT.create(M.getPrototypeOf(value));
-  _seen.set(value, out);
+  seen.set(value, out);
 
   for (const key of Reflect.ownKeys(value)) {
     const desc = M.OBJECT.getOwnPropertyDescriptor(value, key);
@@ -190,7 +190,7 @@ export const deepCopy = <T>(value: T, _seen = new WeakMap()): T => {
 
     if ("value" in desc) {
       // Data descriptor: deep copy the value
-      desc.value = deepCopy(desc.value, _seen);
+      desc.value = deepCopy(desc.value, seen);
     }
     // Otherwise it's accessor descriptor: keep same getter/setter references
     // (cannot deep copy closures, so we redefine them as is)
@@ -314,8 +314,10 @@ export const constructorOf = (obj: object) => obj.constructor;
 
 export const typeOf = (obj: unknown) => typeof obj;
 
-export const typeOrClassOf = (obj: unknown) =>
-  isObject(obj) ? constructorOf(obj)?.name : typeOf(obj);
+export const typeOrClassOf = (obj: unknown) => {
+  const name = isObject(obj) ? constructorOf(obj)?.name : void 0;
+  return name ?? getStringTag(obj);
+};
 
 export const isNull = (v: unknown) => v === null;
 
@@ -330,9 +332,13 @@ export const isOfType = <T extends keyof StringTagMap>(
   tag: T,
   checkLevelsUp = 0,
 ): v is StringTagMap[T] =>
+  getStringTag(v) === tag ||
   isInstanceOfByClassName(v, tag) ||
-  M.OBJECT.prototype.toString.call(v) === `[object ${tag}]` ||
   (checkLevelsUp > 0 && isOfType(M.getPrototypeOf(v), tag, checkLevelsUp - 1));
+
+const TAG_REGEX = new RegExp(/^\[object (.*)\]$/);
+export const getStringTag = (v: unknown) =>
+  (TAG_REGEX.exec(M.OBJECT.prototype.toString.call(v)) ?? [])[1] ?? "";
 
 // Not including function
 export const isObject = (v: unknown) => !isNull(v) && typeof v === "object";
@@ -526,7 +532,7 @@ const isInstanceOfByClass = <C extends Class<unknown>>(
   Class: C,
   checkLisnBrand = false,
 ): value is ClassInstance<C> => {
-  if (!isFunction(Class) || !isObject(value)) {
+  if (typeof Class !== "function" || !isObject(value)) {
     return false;
   }
 
@@ -541,7 +547,7 @@ const isInstanceOfLisnClass = <C extends Class<unknown>>(
   value: unknown,
   Class: C,
 ): value is ClassInstance<C> => {
-  if (!isFunction(Class) || !isObject(value)) {
+  if (typeof Class !== "function" || !isObject(value)) {
     return false;
   }
 

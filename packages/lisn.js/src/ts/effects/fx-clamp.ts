@@ -20,7 +20,7 @@ import {
 import { havingMaxAbs, toRawNum, RawNumberCalculator } from "@lisn/utils/math";
 import { toIterableIfNot } from "@lisn/utils/misc";
 
-import { createCallback } from "@lisn/modules/callback";
+import { createConcurrentCallback } from "@lisn/modules/callback";
 
 import type {
   FXComposer,
@@ -865,7 +865,7 @@ const { init: initComposer } = registerFXClamp<
       // set initial state
       store.setState(composer.getState());
 
-      const tweenHandler: FXComposerHandler = createCallback(() => {
+      const tweenHandler: FXComposerHandler = createConcurrentCallback(() => {
         const refComposerState = store.getReferenceState();
 
         const composerState = composer.getState();
@@ -881,7 +881,7 @@ const { init: initComposer } = registerFXClamp<
 
         const violation = getBoundViolation(boundedState);
         store.notify(violation.active, violation.deviation);
-      }, true);
+      });
 
       const tweenWatch = {
         start: () => composer.onTween(tweenHandler),
@@ -1007,7 +1007,7 @@ const { init: initView } = registerFXClamp<
 
       let closeMonitor: StartStopper;
       if (animatingComposers.all) {
-        const callback = createCallback(closeMonitorHandler, true);
+        const callback = createConcurrentCallback(closeMonitorHandler);
         closeMonitor = {
           start: () => {
             for (const c of animatingComposers.composers) {

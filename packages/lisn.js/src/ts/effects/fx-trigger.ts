@@ -18,7 +18,7 @@ import { addDeltaZ } from "@lisn/utils/gesture";
 import { toNumWithBounds } from "@lisn/utils/math";
 import { waitForDelay } from "@lisn/utils/tasks";
 
-import { createCallback } from "@lisn/modules/callback";
+import { createConcurrentCallback } from "@lisn/modules/callback";
 
 import type { FXStateUpdate } from "@lisn/effects/fx-composer";
 import {
@@ -646,7 +646,7 @@ const { init: initScroll } = registerFXTrigger<
       const scrollWatcher = ScrollWatcher.reuse();
       let shouldSnap = true;
 
-      const scrollHandler: OnScrollHandler = createCallback(
+      const scrollHandler: OnScrollHandler = createConcurrentCallback(
         (e__ignored, scrollData) => {
           store.push({
             x: {
@@ -665,7 +665,6 @@ const { init: initScroll } = registerFXTrigger<
           });
           shouldSnap = false;
         },
-        true,
       );
 
       const watch: StartStopper = {

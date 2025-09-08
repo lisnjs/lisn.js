@@ -15,7 +15,6 @@ import {
   removeClassesNow,
 } from "@lisn/utils/css-alter";
 import { isPageReady, waitForPageReady } from "@lisn/utils/dom-events";
-import { formatAsString } from "@lisn/utils/text";
 
 import { Action, registerAction } from "@lisn/actions/action";
 
@@ -66,9 +65,7 @@ export class Animate implements Action {
 
   constructor(element: Element) {
     const logger = debug
-      ? new debug.Logger({
-          name: `Animate-${formatAsString(element)}`,
-        })
+      ? debug.Logger.getLoggerFor(this, { forElement: element })
       : null;
 
     // initial state is 0% and paused

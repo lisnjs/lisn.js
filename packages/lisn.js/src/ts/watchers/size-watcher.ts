@@ -163,7 +163,7 @@ export class SizeWatcher {
     }
 
     const logger = debug
-      ? new debug.Logger({ name: "SizeWatcher", logAtCreation: config })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
       : null;
 
     const allSizeData = _.createWeakMap<Element, SizeData>();
@@ -243,7 +243,7 @@ export class SizeWatcher {
 
     // ----------
 
-    const createCallback = (
+    const createWatcherCallback = (
       handler: OnResizeHandler,
       options: OnResizeOptionsInternal,
     ): CallbackEntry => {
@@ -251,7 +251,9 @@ export class SizeWatcher {
       _.remove(allCallbacks.get(element)?.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", options);
-      const callback = wrapCallback(handler, options._debounceWindow);
+      const callback = wrapCallback(handler, {
+        debounceWindow: options._debounceWindow,
+      });
       callback.onRemove(() => deleteHandler(handler, options));
 
       const entry = { _callback: callback, _options: options };
@@ -272,7 +274,7 @@ export class SizeWatcher {
       // setupOnResize and removeOnResize have the same "timing" and therefore
       // calling onResize and offResize immediately without awaiting removes the
       // callback.
-      const entry = createCallback(handler, options);
+      const entry = createWatcherCallback(handler, options);
       const callback = entry._callback;
       const sizeData = await fetchCurrentSize(element);
 

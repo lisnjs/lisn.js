@@ -351,7 +351,6 @@ import {
 import { getVisibleContentChildren } from "@lisn/utils/dom-query";
 import { logError } from "@lisn/utils/log";
 import { isValidNum, toNumWithBounds, quadraticRoots } from "@lisn/utils/math";
-import { formatAsString } from "@lisn/utils/text";
 import { validateNumber, validateNonNegNumber } from "@lisn/utils/validation";
 
 import { SizeWatcher, SizeData } from "@lisn/watchers/size-watcher";
@@ -860,9 +859,7 @@ const init = (
   config: SameHeightConfigInternal,
 ) => {
   const logger = debug
-    ? new debug.Logger({
-        name: `SameHeight-${formatAsString(containerElement)}`,
-      })
+    ? debug.Logger.getLoggerFor(widget, { logAtCreation: config })
     : null;
 
   const diffTolerance = config._diffTolerance;

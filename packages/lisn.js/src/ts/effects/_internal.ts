@@ -14,7 +14,7 @@ import { waitForSubsequentMeasureTime } from "@lisn/utils/dom-optimize";
 import { toNum } from "@lisn/utils/math";
 import { getSizeOf } from "@lisn/utils/size";
 
-import { createCallback } from "@lisn/modules/callback";
+import { createConcurrentCallback } from "@lisn/modules/callback";
 
 import type {
   FXComposer,
@@ -253,17 +253,20 @@ export const atLeastOneVisible = (
 
   let hasVisible = false;
 
-  const viewHandler: OnViewHandler = createCallback((el, viewData) => {
-    const isThisVisible = viewData.views[0] === "at";
-    visible.set(el, isThisVisible);
+  const viewHandler: OnViewHandler = createConcurrentCallback(
+    (el, viewData) => {
+      const isThisVisible = viewData.views[0] === "at";
+      visible.set(el, isThisVisible);
 
-    const newHasVisible = isThisVisible || [...visible.values()].some((v) => v);
+      const newHasVisible =
+        isThisVisible || [...visible.values()].some((v) => v);
 
-    if (hasVisible !== newHasVisible) {
-      hasVisible = newHasVisible;
-      callback(hasVisible);
-    }
-  }, true);
+      if (hasVisible !== newHasVisible) {
+        hasVisible = newHasVisible;
+        callback(hasVisible);
+      }
+    },
+  );
 
   const start = () => {
     for (const el of elements) {
@@ -285,12 +288,11 @@ export const watchSize = (target?: Element) => {
   let size = sizes.get(mapKey) ?? getSizeOf(target);
 
   const sizeWatcher = SizeWatcher.reuse();
-  const resizeHandler: OnResizeHandler = createCallback(
+  const resizeHandler: OnResizeHandler = createConcurrentCallback(
     (e__ignored, sizeData) => {
       size = sizeData.border;
       sizes.set(mapKey, size);
     },
-    true,
   );
 
   const start = () => {

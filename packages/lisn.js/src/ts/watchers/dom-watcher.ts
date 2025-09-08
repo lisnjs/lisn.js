@@ -147,7 +147,7 @@ export class DOMWatcher {
     }
 
     const logger = debug
-      ? new debug.Logger({ name: "DOMWatcher", logAtCreation: config })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
       : null;
 
     const buffer = createXMap<Element, MutationOperationInternal>((t) => ({
@@ -238,7 +238,7 @@ export class DOMWatcher {
 
     // ----------
 
-    const createCallback = (
+    const createWatcherCallback = (
       handler: OnMutationHandler,
       options: OnMutationOptionsInternal,
     ): OnMutationCallback => {
@@ -260,7 +260,7 @@ export class DOMWatcher {
       userOptions: OnMutationOptions | undefined,
     ) => {
       const options = getOptions(userOptions ?? {});
-      const callback = createCallback(handler, options);
+      const callback = createWatcherCallback(handler, options);
 
       let root = config._root ?? _.getBody();
       if (!root) {

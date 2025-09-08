@@ -61,13 +61,15 @@ export const scheduleHighPriorityTask = (task: () => void) => {
  * Returns a wrapper around the given handler that is debounced by the given
  * debounce window.
  *
+ * If `debounceWindow` is <= 0, it returns the original handler.
+ *
  * @category Tasks
  */
 export const getDebouncedHandler = <Args extends readonly unknown[]>(
   debounceWindow: number,
   handler: (...args: Args) => void,
 ) => {
-  if (!debounceWindow) {
+  if (debounceWindow <= 0) {
     return handler;
   }
 
@@ -78,11 +80,43 @@ export const getDebouncedHandler = <Args extends readonly unknown[]>(
     lastArgs = args;
 
     if (_.isNull(timer)) {
-      timer = _.setTimer(async () => {
-        await handler(...lastArgs);
+      timer = _.setTimer(() => {
+        handler(...lastArgs);
         timer = null;
       }, debounceWindow);
     }
+  };
+};
+
+/**
+ * Like {@link getDebouncedHandler} except that the debounced handler returns a
+ * promise that resolves after `debounceWindow` milliseconds with an object
+ * containing a `result` property holding the return value from the original
+ * handler. If handler itself is asynchronous, `result` will hold a promise.
+ *
+ * @category Tasks
+ *
+ * @since v1.3.0
+ */
+export const getAsyncDebouncedHandler = <Args extends readonly unknown[], R>(
+  debounceWindow: number,
+  handler: (...args: Args) => R,
+): ((...args: Args) => Promise<{ result: R }>) => {
+  const nextPromise = () =>
+    _.createPromise<{ result: R }>((r) => (resolve = r));
+
+  let resolve: (ret: { result: R }) => void;
+  let promise = nextPromise();
+
+  const wrapper = getDebouncedHandler(debounceWindow, (...args: Args) => {
+    resolve({ result: handler(...args) });
+    promise = nextPromise();
+  });
+
+  return (...args: Args) => {
+    const oldPromise = promise;
+    wrapper(...args);
+    return oldPromise;
   };
 };
 

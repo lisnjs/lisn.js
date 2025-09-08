@@ -37,7 +37,7 @@ import {
   CallbackHandler,
   Callback,
   CallbackManager,
-  createCallback,
+  createConcurrentCallback,
   createCallbackManager,
 } from "@lisn/modules/callback";
 
@@ -347,10 +347,7 @@ export class FXComposer {
    */
   constructor(elements: Iterable<Element>, config?: FXComposerConfig) {
     const logger = debug
-      ? new debug.Logger({
-          name: "FXComposer",
-          logAtCreation: { elements, config },
-        })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: { elements, config } })
       : null;
 
     // ----- config
@@ -438,13 +435,13 @@ export class FXComposer {
 
     // ----------
 
-    const recomposeOnOtherCompose = createCallback(() => {
+    const recomposeOnOtherCompose = createConcurrentCallback(() => {
       recompose(UPDATE_NONE);
-    }, true);
+    });
 
-    const reanimateOnNegatedCompose = createCallback(() => {
+    const reanimateOnNegatedCompose = createConcurrentCallback(() => {
       applyCss(); // no need to await
-    }, true);
+    });
 
     // ----------
 

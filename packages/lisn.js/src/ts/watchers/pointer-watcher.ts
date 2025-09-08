@@ -114,7 +114,7 @@ export class PointerWatcher {
 
     // ----------
 
-    const createCallback = (
+    const createWatcherCallback = (
       target: EventTarget,
       handler: OnPointerHandler,
     ): OnPointerCallback => {
@@ -140,10 +140,10 @@ export class PointerWatcher {
       userOptions: OnPointerOptions | undefined,
     ) => {
       const options = getOptions(config, userOptions);
-      const startCallback = createCallback(target, startHandler);
+      const startCallback = createWatcherCallback(target, startHandler);
       const endCallback =
         endHandler && endHandler !== startHandler
-          ? createCallback(target, endHandler)
+          ? createWatcherCallback(target, endHandler)
           : startCallback;
 
       for (const action of options._actions) {

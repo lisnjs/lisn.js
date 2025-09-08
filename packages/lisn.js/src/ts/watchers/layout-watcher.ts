@@ -168,7 +168,7 @@ export class LayoutWatcher {
     }
 
     const logger = debug
-      ? new debug.Logger({ name: "LayoutWatcher", logAtCreation: config })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
       : null;
     let nonIntersectingBitmask = 0;
     let currentLayoutData: LayoutData = {
@@ -255,7 +255,7 @@ export class LayoutWatcher {
 
     // ----------
 
-    const createCallback = (
+    const createWatcherCallback = (
       handler: OnLayoutHandler,
       layoutBitmask: number,
     ): OnLayoutCallback => {
@@ -277,7 +277,7 @@ export class LayoutWatcher {
       options: OnLayoutOptions | undefined,
     ) => {
       const layoutBitmask = getLayoutBitmask(options);
-      const callback = createCallback(handler, layoutBitmask);
+      const callback = createWatcherCallback(handler, layoutBitmask);
 
       if (options?.skipInitial) {
         return;

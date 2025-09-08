@@ -75,7 +75,6 @@ import {
   tryGetMainScrollableElement,
   ScrollAction,
 } from "@lisn/utils/scroll";
-import { formatAsString } from "@lisn/utils/text";
 import { isValidPosition } from "@lisn/utils/position";
 import {
   validateStrList,
@@ -567,10 +566,7 @@ const init = (
   } = props;
 
   const logger = debug
-    ? new debug.Logger({
-        name: `Scrollbar-${formatAsString(root)}`,
-        logAtCreation: { props, config },
-      })
+    ? debug.Logger.getLoggerFor(widget, { logAtCreation: { props, config } })
     : null;
 
   // config

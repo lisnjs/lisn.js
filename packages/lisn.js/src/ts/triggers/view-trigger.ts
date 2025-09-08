@@ -15,7 +15,6 @@ import { ViewTarget, View, CommaSeparatedStr } from "@lisn/globals/types";
 import { hasClass } from "@lisn/utils/css-alter";
 import { insertGhostClone, tryWrap } from "@lisn/utils/dom-alter";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
-import { formatAsString } from "@lisn/utils/text";
 import {
   validateStrList,
   validateString,
@@ -196,9 +195,7 @@ export class ViewTrigger extends Trigger {
     super(element, actions, config);
 
     const logger = debug
-      ? new debug.Logger({
-          name: `ViewTrigger-${formatAsString(element)}`,
-        })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
       : null;
 
     this.getConfig = () => _.copyNested(config);

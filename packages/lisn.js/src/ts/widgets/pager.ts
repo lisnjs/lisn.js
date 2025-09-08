@@ -44,7 +44,6 @@ import { isValidInputDevice } from "@lisn/utils/gesture";
 import { toInt } from "@lisn/utils/math";
 import { toBoolean } from "@lisn/utils/misc";
 import { getClosestScrollable } from "@lisn/utils/scroll";
-import { formatAsString } from "@lisn/utils/text";
 import {
   validateStrList,
   validatePosNumber,
@@ -875,10 +874,7 @@ const init = (
   methods: ReturnType<typeof getMethods>,
 ) => {
   const logger = debug
-    ? new debug.Logger({
-        name: `Pager-${formatAsString(element)}`,
-        logAtCreation: config,
-      })
+    ? debug.Logger.getLoggerFor(widget, { logAtCreation: config })
     : null;
 
   const pages = components._pages;

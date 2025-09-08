@@ -204,21 +204,33 @@ describe("formatAsString", () => {
 
   for (const l of [-2, -1, 0, 6, 7]) {
     test(`maxLength = ${l} (max is 6)`, () => {
+      // deprecated signature
+      expect(utils.formatAsString("abcdef", l)).toBe("abcdef");
+
       expect(utils.formatAsString("abcdef", { maxLength: l })).toBe("abcdef");
     });
   }
 
   for (const l of [1, 2, 3]) {
     test(`maxLength = ${l} (max is 6)`, () => {
+      // deprecated signature
+      expect(utils.formatAsString("abcdef", l)).toBe("...");
+
       expect(utils.formatAsString("abcdef", { maxLength: l })).toBe("...");
     });
   }
 
   test("maxLength = 4 (max is 6)", () => {
+    // deprecated signature
+    expect(utils.formatAsString("abcdef", 4)).toBe("a...");
+
     expect(utils.formatAsString("abcdef", { maxLength: 4 })).toBe("a...");
   });
 
   test("maxLength = 5 (max is 6)", () => {
+    // deprecated signature
+    expect(utils.formatAsString("abcdef", 5)).toBe("ab...");
+
     expect(utils.formatAsString("abcdef", { maxLength: 5 })).toBe("ab...");
   });
 
@@ -591,11 +603,19 @@ describe("formatAsString", () => {
 
 describe("joinAsString", () => {
   test("no args", () => {
+    // deprecated signature
     expect(utils.joinAsString("|")).toBe("");
+
+    expect(utils.joinAsString({ separator: "|" })).toBe("");
   });
 
   test("|-separated misc values", () => {
+    // deprecated signature
     expect(utils.joinAsString("|", [1, 2, 3], 1, "a")).toBe(
+      "[\n 1,\n 2,\n 3\n]|1|a",
+    );
+
+    expect(utils.joinAsString({ separator: "|" }, [1, 2, 3], 1, "a")).toBe(
       "[\n 1,\n 2,\n 3\n]|1|a",
     );
   });
@@ -620,7 +640,7 @@ describe("joinAsString", () => {
   test("depth", () => {
     expect(
       utils.joinAsString(
-        { depth: 1 },
+        { depth: 1, separator: "," },
         { a: { b: { c: 1, c2: [1, 2, 3] }, b2: [1, 2, 3] }, a2: [1, 2, 3] },
       ),
     ).toBe(`{
@@ -632,7 +652,7 @@ describe("joinAsString", () => {
   test("formatter", () => {
     expect(
       utils.joinAsString(
-        { formatter: () => "foo" },
+        { formatter: () => "foo", separator: "," },
         { a: { b: { c: 1, c2: [1, 2, 3] }, b2: [1, 2, 3] }, a2: [1, 2, 3] },
       ),
     ).toBe("foo");
@@ -641,7 +661,7 @@ describe("joinAsString", () => {
   test("lineLength v1", () => {
     expect(
       utils.joinAsString(
-        { lineLength: 100 },
+        { lineLength: 100, separator: "," },
         { a: { b: { c: ["aaa", "bbb", "ccc"] }, b2: ["a", "b", "c"] } },
       ),
     ).toBe(`{ a: { b: { c: [ aaa, bbb, ccc ] }, b2: [ a, b, c ] } }`);

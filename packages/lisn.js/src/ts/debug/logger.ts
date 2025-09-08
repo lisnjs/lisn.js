@@ -94,8 +94,15 @@ export class Logger implements LoggerInterface {
    * `debugID`. An existing logger instance however won't have its `debugID`
    * changed.
    *
+   * ------
+   *
    * If the given object is not tagged, **it will be tagged with the final
    * `debugID` of the logger**.
+   *
+   * ------
+   *
+   * If `defaultConfig` includes `logAtCreation` it will always be logged, even
+   * if there's already an existing logger instance.
    *
    * ### Updating existing instance configuration
    *
@@ -111,10 +118,10 @@ export class Logger implements LoggerInterface {
     const strTag = _.typeOrClassOf(object);
     const defaultName = objTag ?? (strTag === "Object" ? void 0 : strTag);
 
-    const config: LoggerConfig = _.merge(
-      { name: defaultName, debugID: objTag },
-      defaultConfig,
-    );
+    const config: LoggerConfig = _.merge(defaultConfig, {
+      name: defaultConfig?.name || defaultName,
+      debugID: defaultConfig?.debugID || objTag,
+    });
 
     let logger = instances.get(object);
 
@@ -135,6 +142,10 @@ export class Logger implements LoggerInterface {
       if (!_.isUndefined(compact)) {
         logger.useCompact(compact);
       }
+
+      if ("logAtCreation" in config) {
+        logger.debug5("Reused logger:", config.logAtCreation);
+      }
     }
 
     if (_.isUndefined(objTag)) {
@@ -146,19 +157,19 @@ export class Logger implements LoggerInterface {
 
   constructor(config?: LoggerConfig) {
     config ??= {};
-    const myConfig: EffectiveLoggerConfig = _.merge(
-      {
-        // set defaults
-        name: "",
-        verbosityLevel: settings.verbosityLevel,
-        compact: settings.compactLogging,
-        remoteLoggerURL: settings.remoteLoggerURL ?? "",
-        remoteLoggerOnMobileOnly: settings.remoteLoggerOnMobileOnly,
-        remoteLoggerConnectTimeout: settings.remoteLoggerConnectTimeout,
-        debugID: randId(),
-      },
-      config,
-    );
+    const myConfig: EffectiveLoggerConfig = {
+      // set defaults
+      name: "",
+      verbosityLevel: settings.verbosityLevel,
+      compact: settings.compactLogging,
+      remoteLoggerURL: settings.remoteLoggerURL ?? "",
+      remoteLoggerOnMobileOnly: settings.remoteLoggerOnMobileOnly,
+      remoteLoggerConnectTimeout: settings.remoteLoggerConnectTimeout,
+      debugID: randId(),
+      logAtCreation: void 0,
+      forElement: void 0,
+    };
+    _.copyExistingKeysTo(config ?? {}, myConfig);
 
     if (
       getBooleanURLParam("disableRemoteLog") ||
@@ -172,12 +183,17 @@ export class Logger implements LoggerInterface {
       myConfig.remoteLoggerConnectTimeout,
     );
 
+    const { forElement } = myConfig;
     let logPrefix = "";
     let debugPrefix = "";
 
     this.getName = () => myConfig.name;
     this.setName = (name: string) => {
       myConfig.name = name;
+
+      if (forElement) {
+        myConfig.name += "-" + formatAsString(forElement);
+      }
 
       logPrefix = `[LISN${name ? ": " + name : ""}]`;
       const debugID = myConfig.debugID;
@@ -217,16 +233,16 @@ export class Logger implements LoggerInterface {
 
     // --------------------
 
-    const { forElement } = myConfig;
+    this.setName(myConfig.name); // append forElement if needed
+
     if (forElement) {
-      this.setName(myConfig.name + formatAsString(forElement));
       if (!objectTags.has(forElement)) {
         objectTags.set(forElement, myConfig.debugID);
       }
     }
 
     if ("logAtCreation" in myConfig) {
-      this.debug6("New logger:", myConfig.logAtCreation);
+      this.debug5("New logger:", myConfig.logAtCreation);
     }
   }
 }
@@ -240,13 +256,12 @@ export type ErrorMatchList = Array<
 const instances = _.createWeakMap<object, Logger>();
 const objectTags = _.createWeakMap<object, string>();
 
-const logDebugN = (logger: Logger, level: number, ...args: unknown[]) => {
-  if (!_.isNumber(level)) {
-    args.unshift(level);
-    level = 1;
-    logger.error(bugError("Missing logger.debug level"));
-  }
-
+const logDebugN = (
+  logger: Logger,
+  level: number,
+  debugPrefix: string,
+  ...args: unknown[]
+) => {
   if (logger.getVerbosityLevel() < level) {
     return;
   }
@@ -267,7 +282,7 @@ const logDebugN = (logger: Logger, level: number, ...args: unknown[]) => {
   );
 
   const filter = settings.debugMessageFilter;
-  if (!filter || string.match(filter)) {
+  if (!filter || (debugPrefix + " " + string).match(filter)) {
     logger.debug(`[DEBUG ${level}]`, string);
   }
 };

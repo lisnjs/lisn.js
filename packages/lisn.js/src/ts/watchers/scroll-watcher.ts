@@ -310,7 +310,7 @@ export class ScrollWatcher {
     }
 
     const logger = debug
-      ? new debug.Logger({ name: "ScrollWatcher", logAtCreation: config })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
       : null;
 
     const allScrollData = _.createWeakMap<Element, ScrollData>();
@@ -350,7 +350,7 @@ export class ScrollWatcher {
 
     // ----------
 
-    const createCallback = (
+    const createWatcherCallback = (
       handler: OnScrollHandler,
       options: OnScrollOptionsInternal,
       trackType: TrackType,
@@ -359,7 +359,9 @@ export class ScrollWatcher {
       _.remove(allCallbacks.get(element)?.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", options);
-      const callback = wrapCallback(handler, options._debounceWindow);
+      const callback = wrapCallback(handler, {
+        debounceWindow: options._debounceWindow,
+      });
       callback.onRemove(() => deleteHandler(handler, options));
 
       const entry = {
@@ -386,7 +388,7 @@ export class ScrollWatcher {
       // setupOnScroll and removeOnScroll have the same "timing" and therefore
       // calling onScroll and offScroll immediately without awaiting removes the
       // callback.
-      const entry = createCallback(handler, options, trackType);
+      const entry = createWatcherCallback(handler, options, trackType);
       const callback = entry._callback;
 
       const eventTarget = options._eventTarget;

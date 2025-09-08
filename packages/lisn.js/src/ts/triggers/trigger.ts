@@ -75,7 +75,7 @@ import { wrapCallback } from "@lisn/modules/callback";
 import { getData } from "@lisn/utils/css-alter";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
 import { waitForDelay } from "@lisn/utils/tasks";
-import { formatAsString, randId, splitOn } from "@lisn/utils/text";
+import { randId, splitOn } from "@lisn/utils/text";
 import {
   validateString,
   validateNonNegNumber,
@@ -167,10 +167,7 @@ export class Trigger extends Widget {
     super(element, config);
 
     const logger = debug
-      ? new debug.Logger({
-          name: `Trigger-${formatAsString(element)}`,
-          logAtCreation: { actions, config },
-        })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: { actions, config } })
       : null;
 
     const once = config.once ?? false;

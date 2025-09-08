@@ -176,10 +176,7 @@ export abstract class Widget {
    */
   protected constructor(element: Element, config?: { id?: string }) {
     const logger = debug
-      ? new debug.Logger({
-          name: `${this.constructor.name}-${formatAsString(element)}`,
-          logAtCreation: this,
-        })
+      ? debug.Logger.getLoggerFor(this, { forElement: element })
       : null;
 
     const id = config?.id;

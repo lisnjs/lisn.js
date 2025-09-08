@@ -30,7 +30,7 @@ import {
 } from "@lisn/utils/events";
 import { logError, logWarn } from "@lisn/utils/log";
 import { maxAbs } from "@lisn/utils/math";
-import { randId, formatAsString } from "@lisn/utils/text";
+import { randId } from "@lisn/utils/text";
 import { animation3DTweener, Tweener } from "@lisn/utils/tween";
 import { isValidStrList } from "@lisn/utils/validation";
 
@@ -692,7 +692,8 @@ const initiateScroll = async (
 
   const logger = debug
     ? new debug.Logger({
-        name: `scroll-${formatAsString(scrollable)}-${randId()}`,
+        name: `scroll-${randId()}`,
+        forElement: scrollable,
         logAtCreation: {
           options,
           position,

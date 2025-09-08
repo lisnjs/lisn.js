@@ -401,9 +401,7 @@ export const numKeysOf = (obj: object) => lengthOf(keysOf(obj));
 // use it in place of object spread
 export const merge = <A extends readonly (object | null | undefined)[]>(
   ...a: [...A]
-) => {
-  return assign({}, ...a) as Spread<A>;
-};
+): Spread<A> => assign({}, ...a);
 
 export function copyObject<T extends object>(obj: T): T;
 export function copyObject(obj: null | undefined): EmptyLiteral;

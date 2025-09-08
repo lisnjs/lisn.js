@@ -209,7 +209,7 @@ export class ViewWatcher {
     }
 
     const logger = debug
-      ? new debug.Logger({ name: "ViewWatcher", logAtCreation: config })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
       : null;
 
     const allViewData = _.createWeakMap<Element, ViewData>();
@@ -274,7 +274,7 @@ export class ViewWatcher {
 
     // ----------
 
-    const createCallback = (
+    const createWatcherCallback = (
       handler: OnViewHandler,
       options: OnViewOptionsInternal,
       trackType: TrackType,
@@ -307,7 +307,7 @@ export class ViewWatcher {
       const options = await fetchOptions(config._root, target, userOptions);
       const element = options._element;
 
-      const entry = createCallback(handler, options, trackType);
+      const entry = createWatcherCallback(handler, options, trackType);
       const callback = entry._callback;
 
       // View watcher should be used before the DOM is loaded since the initial
@@ -550,7 +550,7 @@ export class ViewWatcher {
         }
       };
 
-      const { _callback: enterOrLeaveCallback } = createCallback(
+      const { _callback: enterOrLeaveCallback } = createWatcherCallback(
         (target__ignored, viewData) => {
           if (viewData.views[0] === _.S_AT) {
             if (!isInview) {

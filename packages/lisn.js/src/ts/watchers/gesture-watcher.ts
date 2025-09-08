@@ -170,7 +170,7 @@ export class GestureWatcher {
     }
 
     const logger = debug
-      ? new debug.Logger({ name: "GestureWatcher", logAtCreation: config })
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
       : null;
 
     const allCallbacks = createXWeakMap<
@@ -194,7 +194,7 @@ export class GestureWatcher {
 
     // ----------
 
-    const createCallback = (
+    const createWatcherCallback = (
       target: EventTarget,
       handler: OnGestureHandler,
       options: OnGestureOptionsInternal,
@@ -231,7 +231,7 @@ export class GestureWatcher {
       userOptions: OnGestureOptions | undefined,
     ) => {
       const options = getOptions(config, userOptions ?? {});
-      createCallback(target, handler, options);
+      createWatcherCallback(target, handler, options);
 
       for (const device of options._devices ?? DEVICES) {
         let listeners = allListeners.get(target)?.get(device);

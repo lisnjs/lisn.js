@@ -333,13 +333,12 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
    * is captured and returned by {@link invoke}.
    */
   constructor(handler: CallbackHandler<Args, Ret>, config?: CallbackConfig) {
-    const logger =
-      config?.logger ??
-      (debug
-        ? debug.Logger.getLoggerFor(this, {
-            logAtCreation: { handler, config },
-          })
-        : null);
+    const logger = debug
+      ? debug.Logger.getLoggerFor(this, {
+          parent: config?.logger,
+          logAtCreation: { handler, config },
+        })
+      : null;
 
     const concurrent = config?.concurrent ?? false;
     const debounceWindow = _.max(0, config?.debounceWindow ?? 0);

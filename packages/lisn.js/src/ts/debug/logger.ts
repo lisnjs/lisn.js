@@ -23,8 +23,6 @@ import * as _ from "@lisn/_internal";
 
 import { settings } from "@lisn/globals/settings";
 
-import { bugError } from "@lisn/globals/errors";
-
 import { LogFunction } from "@lisn/globals/types";
 
 import { randId, joinAsString, formatAsString } from "@lisn/utils/text";
@@ -64,6 +62,7 @@ export class Logger implements LoggerInterface {
   readonly usesCompact: () => boolean;
   readonly useCompact: (compact: boolean) => void;
   readonly getConfig: () => EffectiveLoggerConfig;
+  readonly getChildLogger: (config?: LoggerConfig) => Logger;
 
   /**
    * Tags the given object, so that the tag is included with it whenever the
@@ -156,7 +155,6 @@ export class Logger implements LoggerInterface {
   }
 
   constructor(config?: LoggerConfig) {
-    config ??= {};
     const myConfig: EffectiveLoggerConfig = {
       // set defaults
       name: "",
@@ -166,9 +164,19 @@ export class Logger implements LoggerInterface {
       remoteLoggerOnMobileOnly: settings.remoteLoggerOnMobileOnly,
       remoteLoggerConnectTimeout: settings.remoteLoggerConnectTimeout,
       debugID: randId(),
+      parent: void 0,
       logAtCreation: void 0,
       forElement: void 0,
     };
+
+    const parent = config?.parent;
+    if (parent) {
+      // override defaults above
+      _.copyExistingKeysTo(parent.getConfig(), myConfig);
+      myConfig.parent = parent;
+    }
+
+    // override with explicit config
     _.copyExistingKeysTo(config ?? {}, myConfig);
 
     if (
@@ -189,14 +197,18 @@ export class Logger implements LoggerInterface {
 
     this.getName = () => myConfig.name;
     this.setName = (name: string) => {
-      myConfig.name = name;
-
       if (forElement) {
-        myConfig.name += "-" + formatAsString(forElement);
+        name += "-" + formatAsString(forElement);
       }
 
-      logPrefix = `[LISN${name ? ": " + name : ""}]`;
+      const parentName = parent?.getName();
+      if (parentName) {
+        name = parentName + "-" + name;
+      }
+
+      myConfig.name = name;
       const debugID = myConfig.debugID;
+      logPrefix = `[LISN${name ? ": " + name : ""}]`;
       debugPrefix = `[LISN${(name ? ": " + name : "") + (debugID ? "-" + debugID : "")}]`;
     };
 
@@ -211,6 +223,9 @@ export class Logger implements LoggerInterface {
     };
 
     this.getConfig = () => _.copyNested(myConfig);
+
+    this.getChildLogger = (childConfig) =>
+      new Logger(_.merge(childConfig, { parent: this }));
 
     this.debug1 = (...args) => logDebugN(this, 1, debugPrefix, ...args);
     this.debug2 = (...args) => logDebugN(this, 2, debugPrefix, ...args);
@@ -233,7 +248,7 @@ export class Logger implements LoggerInterface {
 
     // --------------------
 
-    this.setName(myConfig.name); // append forElement if needed
+    this.setName(myConfig.name); // append forElement and parent name if needed
 
     if (forElement) {
       if (!objectTags.has(forElement)) {
@@ -269,7 +284,7 @@ const logDebugN = (
   const usesCompact = logger.usesCompact();
   const string = joinAsString(
     {
-      separator: usesCompact ? "," : ",\n",
+      separator: usesCompact ? " " : "\n",
       depth: 10,
       lineLength: 100,
       compact: usesCompact,

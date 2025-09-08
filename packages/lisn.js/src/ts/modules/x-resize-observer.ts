@@ -9,6 +9,7 @@ import { bugError } from "@lisn/globals/errors";
 import { logWarn, logError } from "@lisn/utils/log";
 
 import debug from "@lisn/debug/debug";
+import { LoggerInterface } from "@lisn/debug/types";
 
 /**
  * @category XResizeObserver
@@ -53,12 +54,33 @@ export class XResizeObserver {
   readonly disconnect: () => void;
 
   /**
-   * @param debounceWindow Debounce the handler so that it's called at most
-   *                       every `debounceWindow` ms.
+   * @param options                 For backwards compatibility, if options is a
+   *                                plain number, it is treated as
+   *                                `options.debounceWindow`.
+   * @param [options.debounceWindow] Debounce the handler so that it's called at
+   *                                 most every `debounceWindow` ms.
+   *
+   * @since Support for `options` as an object was added in v1.3.0. Previously
+   * the second argument was a number specifying the debounce window. This
+   * signature is still supported.
    */
-  constructor(callback: XResizeObserverCallback, debounceWindow?: number) {
+  constructor(
+    callback: XResizeObserverCallback,
+    options?: number | { debounceWindow?: number; logger?: LoggerInterface },
+  ) {
+    let debounceWindow = 0;
+    let parentLogger: LoggerInterface | undefined = void 0;
+    if (_.isObject(options)) {
+      ({ debounceWindow = 0, logger: parentLogger } = options);
+    } else if (_.isNumber(options)) {
+      debounceWindow = options;
+    }
+
     const logger = debug
-      ? debug.Logger.getLoggerFor(this, { logAtCreation: { debounceWindow } })
+      ? debug.Logger.getLoggerFor(this, {
+          parent: parentLogger,
+          logAtCreation: { debounceWindow },
+        })
       : void 0;
 
     // Keep the latest ResizeObserverEntry for each target during the

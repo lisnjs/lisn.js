@@ -182,7 +182,7 @@ export class SizeWatcher {
     };
 
     // Don't debounce the observer, only callbacks.
-    const xObserver = new XResizeObserver(resizeHandler);
+    const xObserver = new XResizeObserver(resizeHandler, { logger });
 
     // ----------
 

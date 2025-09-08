@@ -127,6 +127,12 @@ export type LoggerInterface = ConsoleInterface & {
    * @since v1.3.0
    */
   readonly getConfig: () => EffectiveLoggerConfig;
+
+  /**
+   * Returns a new logger that inherits the configuration options of the parent
+   * by default and whose name is prefixed with the parent's name.
+   */
+  readonly getChildLogger: (config?: LoggerConfig) => LoggerInterface;
 };
 
 /**
@@ -190,6 +196,14 @@ export type LoggerConfig = {
   debugID?: string;
 
   /**
+   * This sets the parent logger, as if
+   * {@link LoggerInterface.getChildLogger | getChildLogger} was called on it.
+   *
+   * @defaultValue undefined // none
+   */
+  parent?: LoggerInterface;
+
+  /**
    * Log the given value when the logger is created.
    *
    * @defaultValue undefined // none
@@ -223,6 +237,7 @@ export type EffectiveLoggerConfig = {
   remoteLoggerConnectTimeout: number;
   remoteLoggerOnMobileOnly: boolean;
   debugID: string;
+  parent?: LoggerInterface;
   logAtCreation?: unknown;
   forElement?: Element;
 };

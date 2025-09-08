@@ -36,6 +36,7 @@ import {
   Callback,
   invokeHandler,
   wrapCallback,
+  createCallback,
 } from "@lisn/modules/callback";
 import { createXMap, createXWeakMap } from "@lisn/modules/x-map";
 import { XIntersectionObserver } from "@lisn/modules/x-intersection-observer";
@@ -478,7 +479,7 @@ export class ViewWatcher {
       }
 
       const addTrackCallback = () => {
-        const trackCallback = wrapCallback(
+        const trackCallback = createCallback(
           async () => {
             const prevData = allViewData.get(element);
 

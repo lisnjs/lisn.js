@@ -49,6 +49,7 @@ import {
   Callback,
   invokeHandler,
   wrapCallback,
+  createCallback,
 } from "@lisn/modules/callback";
 import { createXWeakMap } from "@lisn/modules/x-map";
 
@@ -508,7 +509,7 @@ export class ScrollWatcher {
       const doc = _.getDoc();
       const docScrollingElement = _.getDocScrollingElement();
 
-      const resizeCallback = wrapCallback(
+      const resizeCallback = createCallback(
         async () => {
           // Get the latest scroll data for the scrollable
           // Currently, the resize callback is already delayed by a frame due to
@@ -605,7 +606,7 @@ export class ScrollWatcher {
         subtree: false,
       });
 
-      const onAddedCallback = wrapCallback(
+      const onAddedCallback = createCallback(
         (operation: MutationOperation) => {
           const child = _.currentTargetOf(operation);
           // If we've just added the wrapper, it will be in DOMWatcher's queue,

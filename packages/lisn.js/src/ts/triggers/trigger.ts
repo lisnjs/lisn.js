@@ -70,7 +70,7 @@ import * as _ from "@lisn/_internal";
 
 import { isUsageError } from "@lisn/globals/errors";
 
-import { wrapCallback } from "@lisn/modules/callback";
+import { createCallback } from "@lisn/modules/callback";
 
 import { getData } from "@lisn/utils/css-alter";
 import { waitForReferenceElement } from "@lisn/utils/dom-search";
@@ -221,7 +221,7 @@ export class Trigger extends Widget {
       }
     };
 
-    const run = wrapCallback(
+    const run = createCallback(
       () => {
         callActions(
           doDelay,
@@ -234,7 +234,7 @@ export class Trigger extends Widget {
       { logger },
     );
 
-    const reverse = wrapCallback(
+    const reverse = createCallback(
       () => {
         if (!oneWay) {
           callActions(
@@ -249,7 +249,7 @@ export class Trigger extends Widget {
       { logger },
     );
 
-    const toggle = wrapCallback(
+    const toggle = createCallback(
       () => {
         callActions(
           toggleState ? undoDelay : doDelay,

@@ -66,7 +66,7 @@ export class Animate implements Action {
   constructor(element: Element) {
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { forElement: element })
-      : null;
+      : void 0;
 
     // initial state is 0% and paused
     animate(element, GO_FORWARD, logger, true);
@@ -96,7 +96,7 @@ const GO_TOGGLE = 2;
 const animate = (
   element: Element,
   direction: AnimateDirection,
-  logger: LoggerInterface | null,
+  logger: LoggerInterface | undefined,
   isInitial = false,
 ) => {
   debug: logger?.debug8("Animating element");
@@ -113,7 +113,7 @@ const animate = (
 const setupAnimation = (
   animation: Animation,
   direction: AnimateDirection,
-  logger: LoggerInterface | null,
+  logger: LoggerInterface | undefined,
   isInitial: boolean,
 ) => {
   const pauseTillReady = !isPageReady();
@@ -173,7 +173,7 @@ const onAnimationCancel = (
   event: AnimationPlaybackEvent,
   animation: CSSAnimation,
   direction: AnimateDirection,
-  logger: LoggerInterface | null,
+  logger: LoggerInterface | undefined,
   isInitial: boolean,
 ) => {
   // setup again the new animation
@@ -202,7 +202,7 @@ const onAnimationCancel = (
 const setupAnimationLegacy = (
   element: Element,
   direction: AnimateDirection,
-  logger: LoggerInterface | null,
+  logger: LoggerInterface | undefined,
   isInitial: boolean,
 ) => {
   const isBackward = hasClass(element, _.PREFIX_ANIMATE_REVERSE);

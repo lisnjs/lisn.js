@@ -348,7 +348,7 @@ export class FXComposer {
   constructor(elements: Iterable<Element>, config?: FXComposerConfig) {
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: { elements, config } })
-      : null;
+      : void 0;
 
     // ----- config
 
@@ -389,12 +389,24 @@ export class FXComposer {
 
     const animatedElements = _.createSet<Element>();
 
-    const toggleCallbacks = createCallbackManager<FXComposerHandlerArgs>();
-    const clearCallbacks = createCallbackManager<FXComposerHandlerArgs>();
-    const destroyCallbacks = createCallbackManager<FXComposerHandlerArgs>();
-    const triggerCallbacks = createCallbackManager<FXComposerHandlerArgs>();
-    const tweenCallbacks = createCallbackManager<FXComposerHandlerArgs>();
-    const composeCallbacks = createCallbackManager<FXComposerHandlerArgs>();
+    const toggleCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      logger,
+    });
+    const clearCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      logger,
+    });
+    const destroyCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      logger,
+    });
+    const triggerCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      logger,
+    });
+    const tweenCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      logger,
+    });
+    const composeCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      logger,
+    });
 
     const currentFXState = createState();
 
@@ -435,13 +447,19 @@ export class FXComposer {
 
     // ----------
 
-    const recomposeOnOtherCompose = createConcurrentCallback(() => {
-      recompose(UPDATE_NONE);
-    });
+    const recomposeOnOtherCompose = createConcurrentCallback(
+      () => {
+        recompose(UPDATE_NONE);
+      },
+      { logger },
+    );
 
-    const reanimateOnNegatedCompose = createConcurrentCallback(() => {
-      applyCss(); // no need to await
-    });
+    const reanimateOnNegatedCompose = createConcurrentCallback(
+      () => {
+        applyCss(); // no need to await
+      },
+      { logger },
+    );
 
     // ----------
 

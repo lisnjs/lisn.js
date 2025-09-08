@@ -58,7 +58,6 @@ import {
 } from "@lisn/modules/callback";
 import { createXWeakMap } from "@lisn/modules/x-map";
 
-import { LoggerInterface } from "@lisn/debug/types";
 import debug from "@lisn/debug/debug";
 
 /**
@@ -171,7 +170,7 @@ export class GestureWatcher {
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
-      : null;
+      : void 0;
 
     const allCallbacks = createXWeakMap<
       EventTarget,
@@ -207,7 +206,6 @@ export class GestureWatcher {
         handler,
         options,
         this,
-        logger,
       );
 
       _callback.onRemove(() => deleteHandler(target, handler, options));
@@ -958,8 +956,9 @@ const getCallbackAndWrapper = (
   handler: OnGestureHandler,
   options: OnGestureOptionsInternal,
   watcher: GestureWatcher,
-  logger: LoggerInterface | null,
 ): { _callback: OnGestureCallback; _wrapper: OnGestureHandlerWrapper } => {
+  const logger = debug ? debug.Logger.getLoggerFor(watcher) : void 0;
+
   let totalDeltaX = 0,
     totalDeltaY = 0,
     totalDeltaZ = 1;
@@ -993,7 +992,7 @@ const getCallbackAndWrapper = (
   // so that in case it's already a callback, its removal will result in
   // deleteHandler getting called. It is not debounced itself, instead there's
   // a debounced wrapper that invokes it.
-  const callback = wrapCallback(handler);
+  const callback = wrapCallback(handler, { logger });
 
   // The debounced callback wrapper is what is debounced.
   // It accumulates total deltas and checks if the conditions (of threshold,

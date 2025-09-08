@@ -49,6 +49,8 @@ import {
   getDefaultWidgetSelector,
 } from "@lisn/widgets/widget";
 
+import debug from "@lisn/debug/debug";
+
 /**
  * Configures the given element as a {@link Sortable} widget.
  *
@@ -503,10 +505,12 @@ const getMethods = (
   items: Element[],
   config: SortableConfig | undefined,
 ) => {
+  const logger = debug ? debug.Logger.getLoggerFor(widget) : void 0;
+
   const doSwap = config?.mode === "swap";
 
   const disabledItems: Record<number, boolean> = {};
-  const callbacks = createCallbackManager<WidgetHandlerArgs>();
+  const callbacks = createCallbackManager<WidgetHandlerArgs>({ logger });
 
   const getSortedItems = () =>
     _.slice(items).sort((a, b) => (isNodeBAfterA(a, b) ? -1 : 1));

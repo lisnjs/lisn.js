@@ -168,7 +168,7 @@ export class Trigger extends Widget {
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: { actions, config } })
-      : null;
+      : void 0;
 
     const once = config.once ?? false;
     const oneWay = config.oneWay ?? false;
@@ -221,37 +221,46 @@ export class Trigger extends Widget {
       }
     };
 
-    const run = wrapCallback(() => {
-      callActions(
-        doDelay,
-        (action) => {
-          action.do();
-        },
-        true,
-      ); // don't await
-    });
-
-    const reverse = wrapCallback(() => {
-      if (!oneWay) {
+    const run = wrapCallback(
+      () => {
         callActions(
-          undoDelay,
+          doDelay,
           (action) => {
-            action.undo();
+            action.do();
           },
-          false,
+          true,
         ); // don't await
-      }
-    });
+      },
+      { logger },
+    );
 
-    const toggle = wrapCallback(() => {
-      callActions(
-        toggleState ? undoDelay : doDelay,
-        (action) => {
-          action[_.S_TOGGLE]();
-        },
-        !toggleState,
-      ); // don't await
-    });
+    const reverse = wrapCallback(
+      () => {
+        if (!oneWay) {
+          callActions(
+            undoDelay,
+            (action) => {
+              action.undo();
+            },
+            false,
+          ); // don't await
+        }
+      },
+      { logger },
+    );
+
+    const toggle = wrapCallback(
+      () => {
+        callActions(
+          toggleState ? undoDelay : doDelay,
+          (action) => {
+            action[_.S_TOGGLE]();
+          },
+          !toggleState,
+        ); // don't await
+      },
+      { logger },
+    );
 
     // ----------
 

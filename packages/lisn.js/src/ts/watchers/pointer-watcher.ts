@@ -27,6 +27,8 @@ import {
 } from "@lisn/modules/callback";
 import { createXWeakMap } from "@lisn/modules/x-map";
 
+import debug from "@lisn/debug/debug";
+
 /**
  * {@link PointerWatcher} listens for simple pointer actions like clicks, press
  * and hold or hover.
@@ -99,6 +101,10 @@ export class PointerWatcher {
       throw illegalConstructorError("PointerWatcher.create");
     }
 
+    const logger = debug
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
+      : void 0;
+
     // Keep this watcher super simple. The events we listen for don't fire at a
     // high rate and it's unlikely for there to be many many callbacks for each
     // target and event type, so don't bother with using a delegating listener,
@@ -120,7 +126,7 @@ export class PointerWatcher {
     ): OnPointerCallback => {
       _.remove(allCallbacks.get(target)?.get(handler));
 
-      const callback = wrapCallback(handler);
+      const callback = wrapCallback(handler, { logger });
       callback.onRemove(() => {
         _.deleteKey(allCallbacks.get(target), handler);
       });

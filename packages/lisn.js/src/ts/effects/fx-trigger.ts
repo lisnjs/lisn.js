@@ -665,7 +665,7 @@ const { init: initScroll } = registerFXTrigger<
           });
           shouldSnap = false;
         },
-      );
+      ); // XXX , {logger});
 
       const watch: StartStopper = {
         start: () => {

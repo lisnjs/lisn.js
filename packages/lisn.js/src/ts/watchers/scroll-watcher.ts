@@ -311,7 +311,7 @@ export class ScrollWatcher {
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
-      : null;
+      : void 0;
 
     const allScrollData = _.createWeakMap<Element, ScrollData>();
 
@@ -361,6 +361,7 @@ export class ScrollWatcher {
       debug: logger?.debug5("Adding/updating handler", options);
       const callback = wrapCallback(handler, {
         debounceWindow: options._debounceWindow,
+        logger,
       });
       callback.onRemove(() => deleteHandler(handler, options));
 
@@ -432,7 +433,7 @@ export class ScrollWatcher {
         // Use a one-off callback that's not debounced for the initial call.
         // If it gets removed on the first call (by the handler returning
         // Callback.REMOVE for example), the debounced one should also be removed.
-        const initialCallback = wrapCallback(handler);
+        const initialCallback = wrapCallback(handler, { logger });
         initialCallback.onRemove(() => deleteHandler(handler, options));
 
         await invokeCallback(
@@ -507,37 +508,40 @@ export class ScrollWatcher {
       const doc = _.getDoc();
       const docScrollingElement = _.getDocScrollingElement();
 
-      const resizeCallback = wrapCallback(async () => {
-        // Get the latest scroll data for the scrollable
-        // Currently, the resize callback is already delayed by a frame due to
-        // the SizeWatcher, so we don't need to treat this as realtime.
-        const latestData = await fetchCurrentScroll(element);
-        const thresholdsExceeded = hasExceededThreshold(
-          options,
-          latestData,
-          entry._data,
-        );
-
-        if (!thresholdsExceeded) {
-          debug: logger?.debug9(
-            "Threshold not exceeded",
+      const resizeCallback = wrapCallback(
+        async () => {
+          // Get the latest scroll data for the scrollable
+          // Currently, the resize callback is already delayed by a frame due to
+          // the SizeWatcher, so we don't need to treat this as realtime.
+          const latestData = await fetchCurrentScroll(element);
+          const thresholdsExceeded = hasExceededThreshold(
             options,
             latestData,
             entry._data,
           );
-        } else if (!scrollCallback.isRemoved()) {
-          const prevData = entry._data;
-          entry._data = latestData;
 
-          await invokeCallback(
-            scrollCallback,
-            element,
-            latestData,
-            prevData,
-            this,
-          );
-        }
-      });
+          if (!thresholdsExceeded) {
+            debug: logger?.debug9(
+              "Threshold not exceeded",
+              options,
+              latestData,
+              entry._data,
+            );
+          } else if (!scrollCallback.isRemoved()) {
+            const prevData = entry._data;
+            entry._data = latestData;
+
+            await invokeCallback(
+              scrollCallback,
+              element,
+              latestData,
+              prevData,
+              this,
+            );
+          }
+        },
+        { logger },
+      );
 
       scrollCallback.onRemove(resizeCallback.remove);
 
@@ -601,27 +605,30 @@ export class ScrollWatcher {
         subtree: false,
       });
 
-      const onAddedCallback = wrapCallback((operation: MutationOperation) => {
-        const child = _.currentTargetOf(operation);
-        // If we've just added the wrapper, it will be in DOMWatcher's queue,
-        // so check.
-        if (child !== wrapper) {
-          if (wrapper) {
-            // Move this child into the wrapper. If this results in change of size
-            // for wrapper, SizeWatcher will call us.
-            moveElement(child, {
-              to: wrapper,
-              position: isNodeBAfterA(wrapper, child) ? "append" : "prepend",
-              ignoreMove: true,
-            });
-          } else {
-            // We weren't allowed to wrap, so track the size of this child.
-            // Don't skip initial, call the callback now
-            setupOnResize(child);
-            observedElements.add(child);
+      const onAddedCallback = wrapCallback(
+        (operation: MutationOperation) => {
+          const child = _.currentTargetOf(operation);
+          // If we've just added the wrapper, it will be in DOMWatcher's queue,
+          // so check.
+          if (child !== wrapper) {
+            if (wrapper) {
+              // Move this child into the wrapper. If this results in change of size
+              // for wrapper, SizeWatcher will call us.
+              moveElement(child, {
+                to: wrapper,
+                position: isNodeBAfterA(wrapper, child) ? "append" : "prepend",
+                ignoreMove: true,
+              });
+            } else {
+              // We weren't allowed to wrap, so track the size of this child.
+              // Don't skip initial, call the callback now
+              setupOnResize(child);
+              observedElements.add(child);
+            }
           }
-        }
-      });
+        },
+        { logger },
+      );
 
       domWatcher.onMutation(onAddedCallback, { categories: [_.S_ADDED] });
       resizeCallback.onRemove(onAddedCallback.remove);

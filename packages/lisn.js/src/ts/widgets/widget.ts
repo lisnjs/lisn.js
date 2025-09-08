@@ -177,7 +177,7 @@ export abstract class Widget {
   protected constructor(element: Element, config?: { id?: string }) {
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { forElement: element })
-      : null;
+      : void 0;
 
     const id = config?.id;
     if (id) {
@@ -189,9 +189,15 @@ export abstract class Widget {
     let isDestroyed = false;
     let destroyPromise: Promise<void>;
 
-    const enableCallbacks = createCallbackManager<WidgetHandlerArgs>();
-    const disableCallbacks = createCallbackManager<WidgetHandlerArgs>();
-    const destroyCallbacks = createCallbackManager<WidgetHandlerArgs>();
+    const enableCallbacks = createCallbackManager<WidgetHandlerArgs>({
+      logger,
+    });
+    const disableCallbacks = createCallbackManager<WidgetHandlerArgs>({
+      logger,
+    });
+    const destroyCallbacks = createCallbackManager<WidgetHandlerArgs>({
+      logger,
+    });
 
     this.disable = async () => {
       if (!isDisabled) {

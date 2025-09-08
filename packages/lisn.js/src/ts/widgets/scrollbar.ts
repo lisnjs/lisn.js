@@ -567,7 +567,7 @@ const init = (
 
   const logger = debug
     ? debug.Logger.getLoggerFor(widget, { logAtCreation: { props, config } })
-    : null;
+    : void 0;
 
   // config
   const onMobile = config?.onMobile ?? settings.scrollbarOnMobile;

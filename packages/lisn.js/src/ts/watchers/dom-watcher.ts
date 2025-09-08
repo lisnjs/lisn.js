@@ -148,7 +148,7 @@ export class DOMWatcher {
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
-      : null;
+      : void 0;
 
     const buffer = createXMap<Element, MutationOperationInternal>((t) => ({
       _target: t,
@@ -246,7 +246,7 @@ export class DOMWatcher {
 
       debug: logger?.debug5("Adding/updating handler", options);
 
-      const callback = wrapCallback(handler);
+      const callback = wrapCallback(handler, { logger });
       callback.onRemove(() => deleteHandler(handler));
 
       allCallbacks.set(handler, { _callback: callback, _options: options });

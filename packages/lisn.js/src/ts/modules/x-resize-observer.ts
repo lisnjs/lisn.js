@@ -59,7 +59,7 @@ export class XResizeObserver {
   constructor(callback: XResizeObserverCallback, debounceWindow?: number) {
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: { debounceWindow } })
-      : null;
+      : void 0;
 
     // Keep the latest ResizeObserverEntry for each target during the
     // debounceWindow. Short-lived, so ok to use a Map.

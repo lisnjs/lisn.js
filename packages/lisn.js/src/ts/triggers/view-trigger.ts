@@ -196,7 +196,7 @@ export class ViewTrigger extends Trigger {
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
-      : null;
+      : void 0;
 
     this.getConfig = () => _.copyNested(config);
 

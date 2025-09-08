@@ -169,7 +169,8 @@ export class LayoutWatcher {
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
-      : null;
+      : void 0;
+
     let nonIntersectingBitmask = 0;
     let currentLayoutData: LayoutData = {
       device: null,
@@ -262,7 +263,7 @@ export class LayoutWatcher {
       _.remove(allCallbacks.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", layoutBitmask);
-      const callback = wrapCallback(handler);
+      const callback = wrapCallback(handler, { logger });
       callback.onRemove(() => deleteHandler(handler));
 
       allCallbacks.set(handler, {

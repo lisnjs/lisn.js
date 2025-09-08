@@ -266,7 +266,7 @@ export const atLeastOneVisible = (
         callback(hasVisible);
       }
     },
-  );
+  ); // XXX , {logger});
 
   const start = () => {
     for (const el of elements) {
@@ -293,7 +293,7 @@ export const watchSize = (target?: Element) => {
       size = sizeData.border;
       sizes.set(mapKey, size);
     },
-  );
+  ); // XXX , {logger});
 
   const start = () => {
     sizeWatcher.onResize(resizeHandler, _.fastWatcherConf({ target }));

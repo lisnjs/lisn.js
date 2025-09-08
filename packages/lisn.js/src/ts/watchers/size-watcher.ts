@@ -164,7 +164,7 @@ export class SizeWatcher {
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
-      : null;
+      : void 0;
 
     const allSizeData = _.createWeakMap<Element, SizeData>();
 
@@ -253,6 +253,7 @@ export class SizeWatcher {
       debug: logger?.debug5("Adding/updating handler", options);
       const callback = wrapCallback(handler, {
         debounceWindow: options._debounceWindow,
+        logger,
       });
       callback.onRemove(() => deleteHandler(handler, options));
 
@@ -298,7 +299,7 @@ export class SizeWatcher {
         // Use a one-off callback that's not debounced for the initial call.
         // If it gets removed on the first call (by the handler returning
         // Callback.REMOVE for example), the debounced one should also be removed.
-        const initialCallback = wrapCallback(handler);
+        const initialCallback = wrapCallback(handler, { logger });
         initialCallback.onRemove(() => deleteHandler(handler, options));
 
         await invokeCallback(initialCallback, element, sizeData, void 0, this);

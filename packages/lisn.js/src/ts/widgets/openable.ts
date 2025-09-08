@@ -98,6 +98,8 @@ import {
   getDefaultWidgetSelector,
 } from "@lisn/widgets/widget";
 
+import debug from "@lisn/debug/debug";
+
 /* ********************
  * Base Openable
  * ********************/
@@ -260,8 +262,11 @@ export abstract class Openable extends Widget {
 
     const { isModal, isOffcanvas } = config;
 
-    const openCallbacks = createCallbackManager<WidgetHandlerArgs>();
-    const closeCallbacks = createCallbackManager<WidgetHandlerArgs>();
+    const logger = debug
+      ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
+      : void 0;
+    const openCallbacks = createCallbackManager<WidgetHandlerArgs>({ logger });
+    const closeCallbacks = createCallbackManager<WidgetHandlerArgs>({ logger });
 
     let isOpen = false;
 

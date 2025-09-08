@@ -9,6 +9,7 @@ import { bugError, usageError } from "@lisn/globals/errors";
 import { getDebouncedHandler } from "@lisn/utils/tasks";
 
 import debug from "@lisn/debug/debug";
+import { LoggerInterface } from "@lisn/debug/types";
 
 // [TODO v2]:
 // - don't await unless return is actually a promise (i.e. don't enforce
@@ -69,6 +70,28 @@ export type OnRemoveHandler<
 export type RemoveReason =
   | typeof Callback.REMOVE_REASON_USER
   | typeof Callback.REMOVE_REASON_RETURN;
+
+/**
+ * @category Callback
+ *
+ * @since v1.3.0
+ */
+export type CallbackConfig = {
+  /**
+   * See {@link Callback.invoke}.
+   */
+  concurrent?: boolean;
+
+  /**
+   * See {@link Callback.invoke}.
+   */
+  debounceWindow?: number;
+
+  /**
+   * The logger to user for debug logging.
+   */
+  logger?: LoggerInterface;
+};
 
 /**
  * {@link Callback} wraps user-supplied callbacks. Supports
@@ -232,31 +255,32 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
    * removed. If you want to do this, then do
    * `wrapper.onRemove(original.remove)`.
    *
-   * @param options See {@link Callback.constructor}.
-   *                If the handler is already a callback and
-   *                {@link Callback.isConcurrent | is concurrent}, so will the
-   *                wrapper be. And if the handler is already a callback that's
-   *                debounced by a _larger_ window, then `debounceWindow` will
-   *                have no effect. For backwards compatibility, if options is a
-   *                plain number, it is treated as `options.debounceWindow`.
+   * @param config See {@link CallbackConfig}.
+   *               If the handler is already a callback and
+   *               {@link Callback.isConcurrent | is concurrent}, so will the
+   *               wrapper be. And if the handler is already a callback that's
+   *               debounced by a _larger_ window, then `debounceWindow` will
+   *               have no effect. For backwards compatibility, if config is a
+   *               plain number, it is treated as `config.debounceWindow`.
    *
-   * @since Support for `options` was added in v1.3.0. Previously the second
+   * @since Support for `config` was added in v1.3.0. Previously the second
    * argument was a number specifying the debounce window. This signature is
    * still supported.
    *
    */
   static wrap<Args extends readonly unknown[] = unknown[], Ret = void>(
     handlerOrCallback: CallbackHandler<Args, Ret> | Callback<Args, Ret>,
-    options?: { concurrent?: boolean; debounceWindow?: number } | number,
+    config?: CallbackConfig | number,
   ): Callback<Args, Ret> {
     const isFunction = _.isFunction(handlerOrCallback);
 
     let debounceWindow = 0;
     let concurrent = false;
-    if (_.isObject(options)) {
-      ({ concurrent = false, debounceWindow = 0 } = options);
-    } else if (_.isNumber(options)) {
-      debounceWindow = options;
+    let logger: LoggerInterface | undefined = void 0;
+    if (_.isObject(config)) {
+      ({ concurrent = false, debounceWindow = 0, logger } = config);
+    } else if (_.isNumber(config)) {
+      debounceWindow = config;
     }
 
     let handler: CallbackHandler<Args, Ret>;
@@ -264,7 +288,7 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
       // check if it's an invoke method
       const callback = invokersMap.get<Args, Ret>(handlerOrCallback);
       if (callback) {
-        return wrapCallback(callback, options);
+        return wrapCallback(callback, config);
       }
 
       handler = handlerOrCallback;
@@ -283,7 +307,11 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
       handler = getHandlerFor(handlerOrCallback);
     }
 
-    const wrapper = createCallback(handler, { debounceWindow, concurrent });
+    const wrapper = createCallback(handler, {
+      debounceWindow,
+      concurrent,
+      logger,
+    });
 
     if (!isFunction) {
       handlerOrCallback.onRemove(wrapper.remove);
@@ -298,26 +326,23 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
   }
 
   /**
-   * @param handler                  The function to call when the callback is
-   *                                 {@link invoke | invoked}.
-   * @param [options.concurrent]     See {@link invoke}.
-   * @param [options.debounceWindow] See {@link invoke}.
+   * @param handler The function to call when the callback is
+   *                {@link invoke | invoked}.
    *
-   * @since Since v1.3.0, `options` is accepted and the handler's return value
+   * @since Since v1.3.0, `config` is accepted and the handler's return value
    * is captured and returned by {@link invoke}.
    */
-  constructor(
-    handler: CallbackHandler<Args, Ret>,
-    options?: { concurrent?: boolean; debounceWindow?: number },
-  ) {
-    const logger = debug
-      ? debug.Logger.getLoggerFor(this, {
-          logAtCreation: { handler, options },
-        })
-      : null;
+  constructor(handler: CallbackHandler<Args, Ret>, config?: CallbackConfig) {
+    const logger =
+      config?.logger ??
+      (debug
+        ? debug.Logger.getLoggerFor(this, {
+            logAtCreation: { handler, config },
+          })
+        : null);
 
-    const concurrent = options?.concurrent ?? false;
-    const debounceWindow = _.max(0, options?.debounceWindow ?? 0);
+    const concurrent = config?.concurrent ?? false;
+    const debounceWindow = _.max(0, config?.debounceWindow ?? 0);
 
     let isRemoved = false;
     const id = _.SYMBOL();
@@ -428,18 +453,32 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
   }
 }
 
+// ------------------------------
+
+/**
+ * @category Callback
+ *
+ * @interface
+ *
+ * @since v1.3.0
+ */
+export type CallbackManagerConfig<Args extends readonly unknown[] = unknown[]> =
+  {
+    onRemove?: OnRemoveHandler<Args>;
+  } & CallbackConfig;
+
 /**
  * {@link CallbackManager} stores handlers or callbacks and can invoke all of
  * them at once.
  *
  * @typeParam Args The type of arguments that the callback expects.
  *
- * @param [options.concurrent]     See {@link Callback.wrap}
- *                                 this sets its `concurrent`. Otherwise the
- *                                 wrapper will inherit the callback's setting.
- * @param [options.debounceWindow] See {@link Callback.wrap}
- * @param [options.onRemove]       Will call the given handler when the
- *                                 callback is removed or deleted from the map.
+ * @param [config.concurrent]     See {@link Callback.wrap}
+ *                                this sets its `concurrent`. Otherwise the
+ *                                wrapper will inherit the callback's setting.
+ * @param [config.debounceWindow] See {@link Callback.wrap}
+ * @param [config.onRemove]       Will call the given handler when the
+ *                                callback is removed or deleted from the map.
  *
  * @category Callback
  *
@@ -451,11 +490,7 @@ export class CallbackManager<Args extends readonly unknown[] = []> {
    */
   readonly add: (
     handler: CallbackHandler<Args> | Callback<Args>,
-    options?: {
-      onRemove?: OnRemoveHandler<Args>;
-      concurrent?: boolean;
-      debounceWindow?: number;
-    },
+    config?: CallbackManagerConfig<Args>,
   ) => void;
 
   /**
@@ -479,25 +514,22 @@ export class CallbackManager<Args extends readonly unknown[] = []> {
   readonly isEmpty: () => boolean;
 
   /**
-   * @param config Default options for {@link add}
+   * @param defaultConfig Default config for {@link add}
    */
-  constructor(config?: {
-    onRemove?: OnRemoveHandler<Args>;
-    concurrent?: boolean;
-    debounceWindow?: number;
-  }) {
+  constructor(defaultConfig?: CallbackManagerConfig<Args>) {
     const callbacks = _.createMap<
       CallbackHandler<Args> | Callback<Args>,
       Callback<Args>
     >();
 
-    this.add = (handler, options) => {
+    this.add = (handler, config) => {
       const wrapped = addHandlerToMap(handler, callbacks, {
-        concurrent: options?.concurrent ?? config?.concurrent,
-        debounceWindow: options?.debounceWindow ?? config?.debounceWindow,
+        concurrent: config?.concurrent ?? defaultConfig?.concurrent,
+        debounceWindow: config?.debounceWindow ?? defaultConfig?.debounceWindow,
+        logger: config?.logger ?? defaultConfig?.logger,
       });
 
-      const onRemove = options?.onRemove ?? config?.onRemove;
+      const onRemove = config?.onRemove ?? defaultConfig?.onRemove;
       if (onRemove) {
         wrapped.onRemove(onRemove);
       }
@@ -541,8 +573,8 @@ export const wrapCallback = Callback.wrap;
  */
 export const createCallback = <Args extends readonly unknown[], Ret = void>(
   handler: CallbackHandler<Args, Ret>,
-  options?: { concurrent?: boolean; debounceWindow?: number },
-) => new Callback(handler, options);
+  config?: CallbackConfig,
+) => new Callback(handler, config);
 
 /**
  * For minification optimization.
@@ -557,7 +589,8 @@ export const createConcurrentCallback = <
   Ret = void,
 >(
   handler: CallbackHandler<Args, Ret>,
-) => createCallback(handler, { concurrent: true });
+  config?: CallbackConfig,
+) => createCallback(handler, _.merge(config, { concurrent: true }));
 
 /**
  * For minification optimization.
@@ -567,13 +600,9 @@ export const createConcurrentCallback = <
  *
  * @category Callback
  */
-export const createCallbackManager = <
-  Args extends readonly unknown[],
->(config?: {
-  onRemove?: OnRemoveHandler<Args>;
-  concurrent?: boolean;
-  debounceWindow?: number;
-}) => new CallbackManager<Args>(config);
+export const createCallbackManager = <Args extends readonly unknown[]>(
+  defaultConfig?: CallbackManagerConfig<Args>,
+) => new CallbackManager<Args>(defaultConfig);
 
 /**
  * Wraps the given handler as a callback, even if it's already a callback,
@@ -594,9 +623,9 @@ export const addHandlerToMap = <Args extends readonly unknown[], Ret>(
     CallbackHandler<Args, Ret> | Callback<Args, Ret>,
     Callback<Args, Ret>
   >,
-  options?: { concurrent?: boolean; debounceWindow?: number },
+  config?: CallbackConfig,
 ) => {
-  const callback = wrapCallback(handler, options);
+  const callback = wrapCallback(handler, config);
   map.set(handler, callback);
 
   callback.onRemove(() => {

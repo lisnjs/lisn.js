@@ -875,7 +875,7 @@ const init = (
 ) => {
   const logger = debug
     ? debug.Logger.getLoggerFor(widget, { logAtCreation: config })
-    : null;
+    : void 0;
 
   const pages = components._pages;
   const toggles = components._toggles;
@@ -1182,11 +1182,13 @@ const getMethods = (
   element: Element,
   config: PagerConfig | undefined,
 ) => {
+  const logger = debug ? debug.Logger.getLoggerFor(widget) : void 0;
+
   const pages = components._pages;
   const scrollWatcher = ScrollWatcher.reuse();
   const isFullscreen = config?.fullscreen;
   const disabledPages: Record<number, boolean> = {};
-  const callbacks = createCallbackManager<WidgetHandlerArgs>();
+  const callbacks = createCallbackManager<WidgetHandlerArgs>({ logger });
 
   const fetchScrollOptions = async (): Promise<ScrollOptions> => ({
     scrollable: await fetchClosestScrollable(element),

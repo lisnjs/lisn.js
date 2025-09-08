@@ -699,7 +699,7 @@ const initiateScroll = async (
           position,
         },
       })
-    : null;
+    : void 0;
 
   const currentPosition = _.copyObject(position._start);
 

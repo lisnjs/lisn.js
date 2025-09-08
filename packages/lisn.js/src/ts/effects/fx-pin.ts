@@ -209,7 +209,7 @@ const createMasterPinInstance = (
 ): FXMasterPinInstance => {
   const logger = debug
     ? new debug.Logger({ name: "FXPin", logAtCreation: { conditionBuilders } })
-    : null;
+    : void 0;
 
   const slaves = _.createMap<
     FXPinInstance,

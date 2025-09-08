@@ -671,7 +671,7 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
         name: `FXClamp-${clamp.type}${invert ? "-inverted" : ""}`,
         logAtCreation: args,
       })
-    : null;
+    : void 0;
 
   let isPaused = true; // don't start until the pin restarts us
   let effectiveViolation: BoundedStateViolation | null = null;
@@ -881,7 +881,7 @@ const { init: initComposer } = registerFXClamp<
 
         const violation = getBoundViolation(boundedState);
         store.notify(violation.active, violation.deviation);
-      });
+      }); // XXX , {logger});
 
       const tweenWatch = {
         start: () => composer.onTween(tweenHandler),
@@ -1007,7 +1007,7 @@ const { init: initView } = registerFXClamp<
 
       let closeMonitor: StartStopper;
       if (animatingComposers.all) {
-        const callback = createConcurrentCallback(closeMonitorHandler);
+        const callback = createConcurrentCallback(closeMonitorHandler); // XXX , {logger});
         closeMonitor = {
           start: () => {
             for (const c of animatingComposers.composers) {

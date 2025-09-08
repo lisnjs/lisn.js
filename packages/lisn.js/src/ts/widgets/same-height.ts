@@ -860,7 +860,7 @@ const init = (
 ) => {
   const logger = debug
     ? debug.Logger.getLoggerFor(widget, { logAtCreation: config })
-    : null;
+    : void 0;
 
   const diffTolerance = config._diffTolerance;
   const debounceWindow = config._debounceWindow;
@@ -1065,7 +1065,7 @@ const calculateMeasurements = (
   containerElement: HTMLElement,
   allItems: Map<Element, ItemProperties>,
   isFirstTime: boolean,
-  logger: LoggerInterface | null,
+  logger: LoggerInterface | undefined,
 ): AverageMeasurements | null => {
   if (getData(containerElement, _.PREFIX_ORIENTATION) === _.S_VERTICAL) {
     debug: logger?.debug8("In vertical mode");
@@ -1161,7 +1161,7 @@ const getWidthAtH = (
 const getOptimalHeight = (
   measurements: AverageMeasurements,
   config: SameHeightConfigInternal,
-  logger: LoggerInterface | null,
+  logger: LoggerInterface | undefined,
 ) => {
   const tArea = measurements._tArea;
   const tExtraH = measurements._tExtraH;

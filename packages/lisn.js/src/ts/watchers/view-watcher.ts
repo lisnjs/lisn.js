@@ -210,7 +210,7 @@ export class ViewWatcher {
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
-      : null;
+      : void 0;
 
     const allViewData = _.createWeakMap<Element, ViewData>();
 
@@ -283,7 +283,7 @@ export class ViewWatcher {
       _.remove(allCallbacks.get(element)?.get(handler)?._callback);
 
       debug: logger?.debug5("Adding/updating handler", options);
-      const callback = wrapCallback(handler);
+      const callback = wrapCallback(handler, { logger });
       callback.onRemove(() => deleteHandler(handler, options));
 
       const entry = {
@@ -478,39 +478,42 @@ export class ViewWatcher {
       }
 
       const addTrackCallback = () => {
-        const trackCallback = wrapCallback(async () => {
-          const prevData = allViewData.get(element);
+        const trackCallback = wrapCallback(
+          async () => {
+            const prevData = allViewData.get(element);
 
-          // Get the latest view data for the target
-          const latestData = await fetchCurrentView(element, realtime);
-          debug: logger?.debug9("Got ViewData", element, latestData);
+            // Get the latest view data for the target
+            const latestData = await fetchCurrentView(element, realtime);
+            debug: logger?.debug9("Got ViewData", element, latestData);
 
-          const changed = viewChanged(latestData, prevData);
-          if (changed) {
-            // When comparing for changes, we round the numbers to certain number
-            // of decimal places, and allViewData serves as a "last threshold"
-            // state, so only update it if there was a significant change.
-            // Otherwise very quick changes in small increments would get
-            // rejected as "no change".
-            allViewData.set(element, latestData);
+            const changed = viewChanged(latestData, prevData);
+            if (changed) {
+              // When comparing for changes, we round the numbers to certain number
+              // of decimal places, and allViewData serves as a "last threshold"
+              // state, so only update it if there was a significant change.
+              // Otherwise very quick changes in small increments would get
+              // rejected as "no change".
+              allViewData.set(element, latestData);
 
-            if (isInview && !viewCallback.isRemoved()) {
-              // Could have been removed during the debounce window
-              const prevData = entry._data;
-              entry._data = latestData;
+              if (isInview && !viewCallback.isRemoved()) {
+                // Could have been removed during the debounce window
+                const prevData = entry._data;
+                entry._data = latestData;
 
-              await invokeCallback(
-                viewCallback,
-                element,
-                latestData,
-                prevData,
-                this,
-              );
+                await invokeCallback(
+                  viewCallback,
+                  element,
+                  latestData,
+                  prevData,
+                  this,
+                );
+              }
+            } else {
+              debug: logger?.debug9("ViewData same as last");
             }
-          } else {
-            debug: logger?.debug9("ViewData same as last");
-          }
-        });
+          },
+          { logger },
+        );
 
         // TODO Is there a better way to detect when it's moved?
         viewCallback.onRemove(trackCallback.remove);

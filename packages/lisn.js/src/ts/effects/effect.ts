@@ -823,6 +823,7 @@ const _createEffectInstance = <T extends EffectName, S>(
 
   const logger = debug
     ? debug.Logger.getLoggerFor(self, {
+        name: `Effect-${type}`,
         parent: parentLogger,
       })
     : void 0;

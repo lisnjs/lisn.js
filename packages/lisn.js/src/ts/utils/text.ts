@@ -593,7 +593,7 @@ const _convertToString = (
   const nestedToString = (thisValue: unknown) => {
     let string = "";
     if (_.isFunction(thisValue)) {
-      string = _.STRING(thisValue);
+      string = `FUNCTION<${thisValue.name}>`;
     } else {
       string = convertToString(thisValue, options, level + 1);
     }

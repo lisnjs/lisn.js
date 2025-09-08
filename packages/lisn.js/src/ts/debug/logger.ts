@@ -95,11 +95,6 @@ export class Logger implements LoggerInterface {
    *
    * ------
    *
-   * If the given object is not tagged, **it will be tagged with the final
-   * `debugID` of the logger**.
-   *
-   * ------
-   *
    * If `defaultConfig` includes `logAtCreation` it will always be logged, even
    * if there's already an existing logger instance.
    *
@@ -147,10 +142,6 @@ export class Logger implements LoggerInterface {
       }
     }
 
-    if (_.isUndefined(objTag)) {
-      objectTags.set(object, logger.getConfig().debugID);
-    }
-
     return logger;
   }
 
@@ -173,7 +164,7 @@ export class Logger implements LoggerInterface {
     if (parent) {
       // override defaults above
       _.copyExistingKeysTo(parent.getConfig(), myConfig);
-      myConfig.parent = parent;
+      myConfig.name = config?.name ?? "";
     }
 
     // override with explicit config

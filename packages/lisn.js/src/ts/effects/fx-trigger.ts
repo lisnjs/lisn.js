@@ -547,6 +547,7 @@ const createTriggerInstance = <T extends string, D, A extends unknown[]>(
   const self: FXTriggerInstance = { poll };
   const logger__ignored = debug
     ? debug.Logger.getLoggerFor(self, {
+        name: `FXTrigger-${trigger.type}`,
         parent: logger,
       })
     : void 0;

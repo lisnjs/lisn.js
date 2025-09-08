@@ -256,7 +256,6 @@ export const atLeastOneVisible = (
 ) => {
   viewWatcher ??= ViewWatcher.reuse({ rootMargin: "200px" });
   const visible = _.createMap<Element, boolean>();
-
   let hasVisible = false;
 
   const viewHandler: OnViewHandler = createConcurrentCallback(
@@ -283,6 +282,8 @@ export const atLeastOneVisible = (
   const stop = () => {
     for (const el of elements) {
       viewWatcher.offView(el, viewHandler);
+      visible.clear();
+      hasVisible = false;
     }
   };
 

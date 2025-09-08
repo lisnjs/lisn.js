@@ -487,9 +487,13 @@ export interface FXClampInstance {
   resume: () => void;
 
   /**
-   * Updates the clamps's internal reference data to be its current data.
+   * If the clamp is paused, it will resume it and on the
+   * {@link FXClampStore.setState | next update of the state}, it will also
+   * update the clamps's {@link FXClampStore.getReferenceState | reference state}.
    *
-   * It also resumes it if it is paused.
+   * If the clamp is not paused, it will immediately update the
+   * clamps's {@link FXClampStore.getReferenceState | reference state} to be its
+   * current one.
    */
   restart: () => void;
 }
@@ -528,8 +532,18 @@ export type FXClampDefinitions<
 export type FXClampLogic<State, Data, Args extends unknown[]> = {
   /**
    * The function will be called once when the clamp instance is created.
+   *
+   * It should {@link FXClampStore.setData | set the clamp's data} and do other
+   * initialization.
    */
   run: (store: FXClampStore<State, Data>, ...args: Args) => void;
+
+  /**
+   * It is called when the clamp is first initialized (after {@link run} has
+   * been called) or when it's resumed and
+   * must return an up-to-date state.
+   */
+  refreshState: (store: FXClampStore<State, Data>) => State;
 
   /**
    * If given, it will be called when the clamp is paused.
@@ -544,7 +558,7 @@ export type FXClampLogic<State, Data, Args extends unknown[]> = {
   /**
    * If given, it will be used to copy the state before storing it in or
    * retrieving it from the store. It is required in order to keep a copy of the
-   * state at the time of last restart.
+   * state when restarting.
    *
    * @defaultValue An internal function which deeply copies arbitrary data, but
    * may not be the most performance-efficient.
@@ -562,17 +576,16 @@ export type FXClampStore<State, Data> = {
   /**
    * Returns the current state, last set using {@link setState}.
    *
-   * You **must** call {@link setState} before calling this.
-   *
    * It is copied according to
    * {@link FXClampLogic.copyState | your logic's `copyState`} before returning.
+   *
+   * @param refresh If true, it will first {@link FXClampLogic.refreshState}
+   *                refresh the state.
    */
-  getState: () => State;
+  getState: (refresh?: boolean) => State;
 
   /**
-   * Updates the current state. If this is the first state to be set and the
-   * clamp has been restarted already, it will also update the
-   * {@link getReferenceState | reference} state.
+   * Updates the current state.
    *
    * It is copied according to
    * {@link FXClampLogic.copyState | your logic's `copyState`} before storing.
@@ -581,12 +594,13 @@ export type FXClampStore<State, Data> = {
 
   /**
    * Returns the state at the time the clamp was last
-   * {@link FXClampInstance.restart | restarted}.
+   * {@link FXClampInstance.restart | restarted} (or the subsequent state update
+   * if the clamp was paused prior to restarting).
    *
    * It is copied according to
    * {@link FXClampLogic.copyState | your logic's `copyState`} before returning.
    */
-  getReferenceState: () => State;
+  getReferenceState: () => State | undefined;
 
   /**
    * Returns the current data, last set using {@link setData}.
@@ -672,49 +686,45 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
   let effectiveViolation: BoundedStateViolation | null = null;
   let lastChangeWhilePaused: BoundedStateViolation | null;
 
-  let hasSetState = false;
-
   const storeData: {
     _data?: D;
     _state?: S;
     _refState?: S;
   } = {};
 
-  const getState = (useReference = false) => {
-    /* istanbul ignore next */
-    const state = useReference ? storeData._refState : storeData._state;
-    if (_.isUndefined(state)) {
-      throw usageError(`No state saved for clamp '${clamp.type}'`);
-    }
-
-    return copyState<S>(state);
-  };
-
-  const getData = () => {
-    /* istanbul ignore next */
-    const data = storeData._data;
-    if (_.isUndefined(data)) {
-      throw usageError(`No data saved for clamp '${clamp.type}'`);
-    }
-
-    return data;
-  };
-
   const store: FXClampStore<S, D> = {
-    getState: () => getState(),
-    setState: (state) => {
-      storeData._state = copyState<S>(state);
-
-      if (!hasSetState) {
-        // first time, save it as a reference too
-        storeData._refState = storeData._state;
+    getState: (refresh) => {
+      if (refresh) {
+        storeData._state = refreshState(store);
       }
 
-      hasSetState = true;
-    },
-    getReferenceState: () => getState(true),
+      /* istanbul ignore next */
+      if (_.isUndefined(storeData._state)) {
+        throw (refresh ? usageError : bugError)(
+          `No state saved for clamp '${clamp.type}'`,
+        );
+      }
 
-    getData,
+      return copyState<S>(storeData._state);
+    },
+    setState: (state) => {
+      logger?.debug10("New state", state);
+      storeData._state = copyState<S>(state);
+    },
+    getReferenceState: () =>
+      _.isUndefined(storeData._refState)
+        ? void 0
+        : copyState<S>(storeData._refState),
+
+    getData: () => {
+      /* istanbul ignore next */
+      const data = storeData._data;
+      if (_.isUndefined(data)) {
+        throw usageError(`No data saved for clamp '${clamp.type}'`);
+      }
+
+      return data;
+    },
     setData: (data) => {
       storeData._data = data;
     },
@@ -769,6 +779,12 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
         );
       }
 
+      if (isPaused) {
+        storeData._refState = void 0;
+      } else {
+        store.getState(true); // refresh the state
+      }
+
       (isPaused ? logic?.pause : logic?.resume)?.call(self, store);
     }
   };
@@ -779,9 +795,9 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
     pause: () => setRunningState(PAUSE),
     resume: () => setRunningState(RESUME),
     restart: () => {
-      logger?.debug7("Restarting clamp");
-      storeData._refState = storeData._state;
       self.resume();
+      storeData._refState = storeData._state;
+      logger?.debug7("Restarting clamp", storeData._refState);
     },
   };
 
@@ -794,10 +810,12 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
     : void 0;
 
   const copyState = logic.copyState?.bind(self) ?? _.deepCopy;
+  const refreshState = logic.refreshState?.bind(self);
 
   // --------------------
 
   logic.run.call(self, store, ...args);
+
   return self;
 };
 
@@ -869,15 +887,13 @@ const { init: initComposer } = registerFXClamp<
 
       const composer = store.getComposer();
 
-      // set initial state
-      store.setState(composer.getState());
-
       const tweenHandler: FXComposerHandler = createConcurrentCallback(
         () => {
           const refComposerState = store.getReferenceState();
-
-          const composerState = composer.getState();
-          store.setState(composerState);
+          const composerState = store.getState(true);
+          if (!refComposerState) {
+            return;
+          }
 
           const offsets = getComposerOffsets(composerState, refComposerState);
 
@@ -888,6 +904,7 @@ const { init: initComposer } = registerFXClamp<
           });
 
           const violation = getBoundViolation(boundedState);
+          logger?.debug10("Bounded state violation", boundedState, violation);
           store.notify(violation.active, violation.deviation);
         },
         { logger },
@@ -902,6 +919,10 @@ const { init: initComposer } = registerFXClamp<
         _vpSizeWatch: vpSizeWatch,
         _tweenWatch: tweenWatch,
       });
+    },
+
+    refreshState: (store) => {
+      return store.getComposer().getState();
     },
 
     pause: (store) => {
@@ -922,8 +943,11 @@ const { init: initView } = registerFXClamp<
   "view",
   Map<Element, { x: number; y: number }>,
   {
+    _xyToAnchor: { x: "left" | "right"; y: "top" | "bottom" };
+    _targets: Iterable<Element>;
+    _root: Element | undefined;
     _viewWatch: StartStopper;
-    _vpSizeWatch: StartStopper;
+    _vpSizeWatch: StartStopper & { get: () => Size };
     _rootSizeWatch: StartStopper;
     _closeMonitor: StartStopper;
   },
@@ -956,21 +980,13 @@ const { init: initView } = registerFXClamp<
       const vpSizeWatch = watchSize();
       const rootSizeWatch = root ? watchSize(root) : vpSizeWatch;
 
-      // set initial state
-      store.setState(
-        getViewOffsets(vpSizeWatch.get(), xyToAnchor, targets, root),
-      );
-
       const closeMonitorHandler = () => {
         const prevOffsets = store.getState();
         const refOffsets = store.getReferenceState();
-        const offsets = getViewOffsets(
-          vpSizeWatch.get(),
-          xyToAnchor,
-          targets,
-          root,
-        );
-        store.setState(offsets);
+        const offsets = store.getState(true);
+        if (!refOffsets) {
+          return;
+        }
 
         const composerState = composer.getState();
         const vpSize = vpSizeWatch.get();
@@ -1006,6 +1022,18 @@ const { init: initView } = registerFXClamp<
         }
 
         const violation = getMaxBoundViolation(violations);
+        logger?.debug10(
+          "Bounded state violation",
+          {
+            previous: [...prevOffsets],
+            offsets: [...offsets],
+            reference: [...refOffsets],
+            low,
+            high,
+            xyBounds,
+          },
+          violation,
+        );
         store.notify(violation.active, violation.deviation);
       };
 
@@ -1053,11 +1081,24 @@ const { init: initView } = registerFXClamp<
       );
 
       store.setData({
+        _xyToAnchor: xyToAnchor,
+        _targets: targets,
+        _root: root,
         _viewWatch: viewWatch,
         _vpSizeWatch: vpSizeWatch,
         _rootSizeWatch: rootSizeWatch,
         _closeMonitor: closeMonitor,
       });
+    },
+
+    refreshState: (store) => {
+      const data = store.getData();
+      return getViewOffsets(
+        data._vpSizeWatch.get(),
+        data._xyToAnchor,
+        data._targets,
+        data._root,
+      );
     },
 
     pause: (store) => {

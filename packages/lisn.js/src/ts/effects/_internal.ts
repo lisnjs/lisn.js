@@ -36,6 +36,8 @@ import type { FXTrigger, FXTriggerInstance } from "@lisn/effects/fx-trigger";
 import { SizeWatcher, OnResizeHandler } from "@lisn/watchers/size-watcher";
 import { ViewWatcher, OnViewHandler } from "@lisn/watchers/view-watcher";
 
+import { LoggerInterface } from "@lisn/debug/types";
+
 export type StartStopper = {
   start: () => void;
   stop: () => void;
@@ -67,7 +69,8 @@ export const getComposerInstance = (element: Element) =>
 export const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
   composer: FXComposer,
-) => instanceCreators.effect(effect, composer);
+  logger?: LoggerInterface,
+) => instanceCreators.effect(effect, composer, logger);
 
 // pins -----
 
@@ -80,7 +83,8 @@ export const createPinInstance = <T extends EffectName>(
   pin: FXPin,
   composer: FXComposer,
   effectInstance: EffectInstance<T>,
-) => instanceCreators.pin(pin, composer, effectInstance);
+  logger?: LoggerInterface,
+) => instanceCreators.pin(pin, composer, effectInstance, logger);
 
 // clamps -----
 
@@ -91,7 +95,8 @@ export const createClampInstance = <T extends string>(
     active: boolean,
     deviation: { x?: number; y?: number; z?: number } | null,
   ) => void,
-) => instanceCreators.clamp(clamp, composer, notifyPin);
+  logger?: LoggerInterface,
+) => instanceCreators.clamp(clamp, composer, notifyPin, logger);
 
 // triggers -----
 
@@ -100,7 +105,8 @@ export const getTriggerInstance = <T extends string>(trigger: FXTrigger<T>) =>
 
 export const createTriggerInstance = <T extends string>(
   trigger: FXTrigger<T>,
-) => instanceCreators.trigger(trigger);
+  logger?: LoggerInterface,
+) => instanceCreators.trigger(trigger, logger);
 
 // FX state and params --------------------
 
@@ -361,12 +367,14 @@ type InstanceCreators = {
   effect: <T extends EffectName>(
     effect: Effect<T>,
     composer: FXComposer,
+    logger?: LoggerInterface,
   ) => EffectInstance<T>;
 
   pin: <T extends EffectName>(
     pin: FXPin,
     composer: FXComposer,
     effectInstance: EffectInstance<T>,
+    logger?: LoggerInterface,
   ) => FXPinInstance;
 
   clamp: <T extends string>(
@@ -376,9 +384,13 @@ type InstanceCreators = {
       active: boolean,
       deviation: { x?: number; y?: number; z?: number } | null,
     ) => void,
+    logger?: LoggerInterface,
   ) => FXClampInstance;
 
-  trigger: <T extends string>(trigger: FXTrigger<T>) => FXTriggerInstance;
+  trigger: <T extends string>(
+    trigger: FXTrigger<T>,
+    logger?: LoggerInterface,
+  ) => FXTriggerInstance;
 };
 
 const noInstanceGetterErr = (t: string) =>

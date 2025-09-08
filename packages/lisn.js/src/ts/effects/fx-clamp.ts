@@ -39,6 +39,7 @@ import {
 import { ViewWatcher } from "@lisn/watchers/view-watcher";
 
 import debug from "@lisn/debug/debug";
+import { LoggerInterface } from "@lisn/debug/types";
 
 const CLAMP: unique symbol = _.SYMBOL.for(
   "LISN.js/types/clamp",
@@ -642,6 +643,7 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
     active: boolean,
     deviation: { x?: number; y?: number; z?: number } | null,
   ) => void,
+  parentLogger?: LoggerInterface,
 ): FXClampInstance => {
   /* istanbul ignore next */
   if (!_.isInstanceOf(clamp, FXClampBase)) {
@@ -665,13 +667,6 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
   }
 
   const { logic } = definitions;
-
-  const logger = debug
-    ? new debug.Logger({
-        name: `FXClamp-${clamp.type}${invert ? "-inverted" : ""}`,
-        logAtCreation: args,
-      })
-    : void 0;
 
   let isPaused = true; // don't start until the pin restarts us
   let effectiveViolation: BoundedStateViolation | null = null;
@@ -790,6 +785,14 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
     },
   };
 
+  const logger = debug
+    ? debug.Logger.getLoggerFor(self, {
+        name: `FXClamp-${clamp.type}${invert ? "-inverted" : ""}`,
+        parent: parentLogger,
+        logAtCreation: args,
+      })
+    : void 0;
+
   const copyState = logic.copyState?.bind(self) ?? _.deepCopy;
 
   // --------------------
@@ -857,7 +860,11 @@ const { init: initComposer } = registerFXClamp<
 >({
   type: "composer",
   logic: {
-    run: (store, bounds) => {
+    run(store, bounds) {
+      const logger = debug
+        ? debug.Logger.getLoggerFor(this, { logAtCreation: bounds })
+        : void 0;
+
       const vpSizeWatch = watchSize();
 
       const composer = store.getComposer();
@@ -865,23 +872,26 @@ const { init: initComposer } = registerFXClamp<
       // set initial state
       store.setState(composer.getState());
 
-      const tweenHandler: FXComposerHandler = createConcurrentCallback(() => {
-        const refComposerState = store.getReferenceState();
+      const tweenHandler: FXComposerHandler = createConcurrentCallback(
+        () => {
+          const refComposerState = store.getReferenceState();
 
-        const composerState = composer.getState();
-        store.setState(composerState);
+          const composerState = composer.getState();
+          store.setState(composerState);
 
-        const offsets = getComposerOffsets(composerState, refComposerState);
+          const offsets = getComposerOffsets(composerState, refComposerState);
 
-        const boundedState: BoundedState<"x" | "y" | "z"> = _.merge(offsets, {
-          _bounds: bounds,
-          _viewportSize: vpSizeWatch.get(),
-          _composerState: composerState,
-        });
+          const boundedState: BoundedState<"x" | "y" | "z"> = _.merge(offsets, {
+            _bounds: bounds,
+            _viewportSize: vpSizeWatch.get(),
+            _composerState: composerState,
+          });
 
-        const violation = getBoundViolation(boundedState);
-        store.notify(violation.active, violation.deviation);
-      }); // XXX , {logger});
+          const violation = getBoundViolation(boundedState);
+          store.notify(violation.active, violation.deviation);
+        },
+        { logger },
+      );
 
       const tweenWatch = {
         start: () => composer.onTween(tweenHandler),
@@ -921,7 +931,11 @@ const { init: initView } = registerFXClamp<
 >({
   type: "view",
   logic: {
-    run: (store, bounds, config) => {
+    run(store, bounds, config) {
+      const logger = debug
+        ? debug.Logger.getLoggerFor(this, { logAtCreation: { bounds, config } })
+        : void 0;
+
       const xyToAnchor = {
         x: _.S_LEFT in bounds ? _.S_LEFT : _.S_RIGHT,
         y: _.S_TOP in bounds ? _.S_TOP : _.S_BOTTOM,
@@ -1007,7 +1021,10 @@ const { init: initView } = registerFXClamp<
 
       let closeMonitor: StartStopper;
       if (animatingComposers.all) {
-        const callback = createConcurrentCallback(closeMonitorHandler); // XXX , {logger});
+        const callback = createConcurrentCallback(closeMonitorHandler, {
+          logger,
+        });
+
         closeMonitor = {
           start: () => {
             for (const c of animatingComposers.composers) {

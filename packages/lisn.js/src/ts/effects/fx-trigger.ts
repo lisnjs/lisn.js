@@ -34,6 +34,9 @@ import {
   OnGestureOptions,
 } from "@lisn/watchers/gesture-watcher";
 
+import debug from "@lisn/debug/debug";
+import { LoggerInterface } from "@lisn/debug/types";
+
 const TRIGGER: unique symbol = _.SYMBOL.for(
   "LISN.js/types/trigger",
 ) as typeof TRIGGER;
@@ -426,6 +429,7 @@ const getTriggerInstance = <T extends string>(trigger: FXTrigger<T>) =>
 
 const createTriggerInstance = <T extends string, D, A extends unknown[]>(
   trigger: FXTrigger<T>,
+  logger?: LoggerInterface,
 ): FXTriggerInstance => {
   /* istanbul ignore next */
   if (!_.isInstanceOf(trigger, FXTriggerBase)) {
@@ -541,6 +545,12 @@ const createTriggerInstance = <T extends string, D, A extends unknown[]>(
   // --------------------
 
   const self: FXTriggerInstance = { poll };
+  const logger__ignored = debug
+    ? debug.Logger.getLoggerFor(self, {
+        parent: logger,
+      })
+    : void 0;
+
   allInstances.set(trigger, self);
 
   logic.run.call(self, store, ...args);
@@ -594,7 +604,9 @@ const { init: initProxy } = registerFXTrigger<
 >({
   type: "proxy",
   logic: {
-    run: async (store, trigger, config) => {
+    async run(store, trigger, config) {
+      const logger = debug ? debug.Logger.getLoggerFor(this) : void 0;
+
       const { delay = 0, transformFn } = config ?? {};
 
       const relayUpdate = async (update: FXStateUpdate) => {
@@ -605,7 +617,7 @@ const { init: initProxy } = registerFXTrigger<
         store.push(transformFn ? transformFn(update) : update);
       };
 
-      const triggerInstance = createTriggerInstance(trigger);
+      const triggerInstance = createTriggerInstance(trigger, logger);
       let poller: AsyncGenerator<FXStateUpdate, undefined, undefined> | null =
         null;
 
@@ -642,7 +654,11 @@ const { init: initScroll } = registerFXTrigger<
 >({
   type: "scroll",
   logic: {
-    run: (store, scrollable) => {
+    run(store, scrollable) {
+      const logger = debug
+        ? debug.Logger.getLoggerFor(this, { forElement: scrollable })
+        : void 0;
+
       const scrollWatcher = ScrollWatcher.reuse();
       let shouldSnap = true;
 
@@ -665,7 +681,8 @@ const { init: initScroll } = registerFXTrigger<
           });
           shouldSnap = false;
         },
-      ); // XXX , {logger});
+        { logger },
+      );
 
       const watch: StartStopper = {
         start: () => {

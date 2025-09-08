@@ -211,8 +211,8 @@ export type LoggerConfig = {
   logAtCreation?: unknown;
 
   /**
-   * If given, a string representation of the element will be appended to the
-   * name. Moreover, if the element is
+   * If given, a string representation of the element/document/window will be
+   * appended to the name. Moreover, if the element is
    * {@link Debugging.Logger.tagObject | tagged}, the {@link debugID} will use
    * that tag by default. And if the element is not tagged, it will be tagged
    * with the {@link debugID} of the logger.
@@ -221,7 +221,7 @@ export type LoggerConfig = {
    *
    * @defaultValue undefined // none
    */
-  forElement?: Element;
+  forElement?: Element | Document | Window;
 };
 
 /**
@@ -239,7 +239,7 @@ export type EffectiveLoggerConfig = {
   debugID: string;
   parent?: LoggerInterface;
   logAtCreation?: unknown;
-  forElement?: Element;
+  forElement?: Element | Document | Window;
 };
 
 export type LevelName = "debug" | "log" | "info" | "warn" | "error";

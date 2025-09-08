@@ -667,6 +667,20 @@ const _convertToString = (
       );
     }
 
+    // Window ----------
+  } else if (value === _.getWindow()) {
+    result = "<WINDOW>";
+  } else if (_.isInstanceOf(value, Window)) {
+    result = "<WINDOW> (other)";
+
+    // Document ----------
+  } else if (value === _.getDoc()) {
+    result = "<DOCUMENT>";
+  } else if (_.isInstanceOf(value, Document)) {
+    result = "<DOCUMENT> (other)";
+  } else if (_.isInstanceOf(value, DocumentFragment)) {
+    result = "<DOCUMENT FRAGMENT>";
+
     // Element ----------
   } else if (_.isElement(value)) {
     const classStr = _.classList(value).toString().trim();

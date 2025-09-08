@@ -410,7 +410,7 @@ export class FXComposer {
 
     const currentFXState = createState();
 
-    const triggerInstance = createTriggerInstance(trigger);
+    const triggerInstance = createTriggerInstance(trigger, logger);
 
     let parent = getParentComposer(elements);
     let isActive = false; // we start after initialized
@@ -469,7 +469,7 @@ export class FXComposer {
         link.onCompose(recomposeOnOtherCompose);
         addToComposition(link);
       } else {
-        const effectInstance = createEffectInstance(link, this);
+        const effectInstance = createEffectInstance(link, this, logger);
         compositionChain.push(effectInstance);
         addToComposition(effectInstance);
 

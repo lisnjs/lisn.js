@@ -17,46 +17,56 @@ describe("formatAsString", () => {
     expect(utils.formatAsString("foo")).toBe("foo");
   });
 
-  test("<p>", () => {
-    const el = document.createElement("p");
-    expect(utils.formatAsString(el)).toBe("<P>");
+  test("window", () => {
+    expect(utils.formatAsString(window)).toBe("<WINDOW>");
   });
 
-  test("<div id='foo'>", () => {
+  test("document", () => {
+    expect(utils.formatAsString(document)).toBe("<DOCUMENT>");
+  });
+
+  test("element", () => {
+    const el = document.createElement("p");
+    expect(utils.formatAsString(el)).toBe("<P>");
+    expect(utils.formatAsString(document.body)).toBe("<BODY>");
+  });
+
+  test("element with ID", () => {
     const el = document.createElement("div");
+    el.classList.add("foo", "bar"); // ignored
     el.id = "foo";
     expect(utils.formatAsString(el)).toBe('<DIV id="foo">');
   });
 
-  test("<div class='foo bar'>", () => {
+  test("element with classes", () => {
     const el = document.createElement("div");
     el.classList.add("foo", "bar");
     expect(utils.formatAsString(el)).toBe('<DIV class="foo bar">');
   });
 
-  test("Error('foobar')", () => {
+  test("Error", () => {
     expect(utils.formatAsString(new Error("foobar"))).toMatch(/^Error: foobar/);
   });
 
-  test('iterable: Set([1,2,"a"])', () => {
+  test("iterable: Set", () => {
     expect(utils.formatAsString(new Set([1, 2, "a"]))).toBe(
       "Set([\n 1,\n 2,\n a\n])",
     );
   });
 
-  test('iterable: compact: Set([1,2,"a"])', () => {
+  test("iterable: compact: Set", () => {
     expect(utils.formatAsString(new Set([1, 2, "a"]), { compact: true })).toBe(
       "Set([1,2,a])",
     );
   });
 
-  test("Test()", () => {
+  test("arbitrary object", () => {
     expect(utils.formatAsString(new Test())).toBe(
       "Test<{\n prop: [\n  1,\n  a\n ]\n}>",
     );
   });
 
-  test("compact: Test()", () => {
+  test("compact: arbitrary object", () => {
     expect(utils.formatAsString(new Test(), { compact: true })).toBe(
       "Test<{prop:[1,a]}>",
     );

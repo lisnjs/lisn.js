@@ -31,6 +31,7 @@ import {
 } from "@lisn/effects/_internal";
 
 import debug from "@lisn/debug/debug";
+import { LoggerInterface } from "@lisn/debug/types";
 
 /**
  * {@link FXPin} can be associated with {@link Effects.Effect | effects}
@@ -180,6 +181,7 @@ const createPinInstance = <T extends EffectName>(
   pin: FXPin,
   composer: FXComposer,
   effectInstance: EffectInstance<T>,
+  logger?: LoggerInterface,
 ): FXPinInstance => {
   /* istanbul ignore next */
   if (!_.isInstanceOf(pin, FXPin)) {
@@ -194,7 +196,7 @@ const createPinInstance = <T extends EffectName>(
       throw bugError("No init data saved for pin");
     }
 
-    master = createMasterPinInstance(conditionBuilders, composer);
+    master = createMasterPinInstance(conditionBuilders, composer, logger);
     masterInstances.sGet(pin).set(composer, master);
   }
 
@@ -206,11 +208,8 @@ const createPinInstance = <T extends EffectName>(
 const createMasterPinInstance = (
   conditionBuilders: ConditionBuilders,
   composer: FXComposer,
+  parentLogger?: LoggerInterface,
 ): FXMasterPinInstance => {
-  const logger = debug
-    ? new debug.Logger({ name: "FXPin", logAtCreation: { conditionBuilders } })
-    : void 0;
-
   const slaves = _.createMap<
     FXPinInstance,
     { _callback: FXMasterPinInstanceCallback; _isPaused: boolean }
@@ -239,6 +238,7 @@ const createMasterPinInstance = (
           (active, deviation) => {
             onClampChange(clampInstance, { active, deviation });
           },
+          logger,
         );
 
         return clampInstance;
@@ -407,6 +407,14 @@ const createMasterPinInstance = (
       } as const;
     },
   };
+
+  const logger = debug
+    ? debug.Logger.getLoggerFor(self, {
+        name: "FXPin",
+        parent: parentLogger,
+        logAtCreation: { conditionBuilders },
+      })
+    : void 0;
 
   addConditions(ACTIVATE, conditionBuilders._when);
   addConditions(DEACTIVATE, conditionBuilders._until);

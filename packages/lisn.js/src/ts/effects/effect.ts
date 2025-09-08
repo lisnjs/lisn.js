@@ -35,6 +35,9 @@ import {
   scaleParameters,
 } from "@lisn/effects/_internal";
 
+import debug from "@lisn/debug/debug";
+import { LoggerInterface } from "@lisn/debug/types";
+
 /**
  * An effect updater function should return a value specific to each effect type
  * and sub-type (e.g. translate sub-type part of transform).
@@ -668,6 +671,7 @@ const addUpdater = <T extends EffectName>(
 const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
   composer: FXComposer,
+  logger?: LoggerInterface,
 ): EffectInstance<T> => {
   /* istanbul ignore next */
   if (!_.isInstanceOf(effect, EffectBase)) {
@@ -685,6 +689,7 @@ const createEffectInstance = <T extends EffectName>(
   return _createEffectInstance(
     definitions,
     _.merge(init, { _composer: composer }),
+    logger,
   );
 };
 
@@ -695,6 +700,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     nullState: S;
   },
   init: SemiPartial<EffectInitData<T> & EffectInstanceData<T, S>, "_state">,
+  parentLogger: LoggerInterface | undefined,
 ): EffectInstance<T> => {
   const update = () => {
     const clampedState = pinInstance
@@ -702,6 +708,7 @@ const _createEffectInstance = <T extends EffectName, S>(
       : composer.getState();
 
     if (!clampedState) {
+      logger?.debug10("Skipping update, no clamp change");
       // no change
       return;
     }
@@ -712,6 +719,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     }
 
     const parameters = toParameters(clampedState, isAbsolute);
+    logger?.debug10("Updating", parameters);
 
     for (const entry of data._updaters) {
       const { name, updater, scaler, tag } = entry;
@@ -737,6 +745,7 @@ const _createEffectInstance = <T extends EffectName, S>(
             _updaters: [],
           })
         : instanceData,
+      parentLogger,
     );
   };
 
@@ -812,6 +821,12 @@ const _createEffectInstance = <T extends EffectName, S>(
     },
   };
 
+  const logger = debug
+    ? debug.Logger.getLoggerFor(self, {
+        parent: parentLogger,
+      })
+    : void 0;
+
   const processUpdate = _.bind(logic.processUpdate, self);
   const cloneState = _.bind(logic.clone, self);
   const composeStateWith = _.bind(logic.composeWith, self);
@@ -824,7 +839,7 @@ const _createEffectInstance = <T extends EffectName, S>(
   const nullState = cloneState(definitions.nullState);
 
   const pinInstance = init._pin
-    ? createPinInstance(init._pin, composer, self)
+    ? createPinInstance(init._pin, composer, self, logger)
     : void 0;
 
   const data: EffectInstanceData<T, S> = {

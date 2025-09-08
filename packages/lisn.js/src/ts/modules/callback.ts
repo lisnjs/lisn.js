@@ -338,7 +338,7 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
           parent: config?.logger,
           logAtCreation: { handler, config },
         })
-      : null;
+      : void 0;
 
     const concurrent = config?.concurrent ?? false;
     const debounceWindow = _.max(0, config?.debounceWindow ?? 0);

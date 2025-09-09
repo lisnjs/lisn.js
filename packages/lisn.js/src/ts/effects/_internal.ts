@@ -10,7 +10,7 @@ import { Size } from "@lisn/globals/types";
 
 import { bugError } from "@lisn/globals/errors";
 
-import { waitForSubsequentMeasureTime } from "@lisn/utils/dom-optimize";
+import { animationFrameGenerator } from "@lisn/utils/animations";
 import { toNum } from "@lisn/utils/math";
 import { getSizeOf } from "@lisn/utils/size";
 
@@ -30,7 +30,11 @@ import type {
   EffectParams,
 } from "@lisn/effects/effect";
 import type { FXPin, FXPinInstance } from "@lisn/effects/fx-pin";
-import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
+import type {
+  FXClamp,
+  FXClampInstance,
+  FXClampViolation,
+} from "@lisn/effects/fx-clamp";
 import type { FXTrigger, FXTriggerInstance } from "@lisn/effects/fx-trigger";
 
 import { SizeWatcher, OnResizeHandler } from "@lisn/watchers/size-watcher";
@@ -69,8 +73,9 @@ export const getComposerInstance = (element: Element) =>
 export const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
   composer: FXComposer,
+  requestRecompose: (realtime?: boolean) => void,
   logger?: LoggerInterface,
-) => instanceCreators.effect(effect, composer, logger);
+) => instanceCreators.effect(effect, composer, requestRecompose, logger);
 
 // pins -----
 
@@ -83,20 +88,25 @@ export const createPinInstance = <T extends EffectName>(
   pin: FXPin,
   composer: FXComposer,
   effectInstance: EffectInstance<T>,
+  requestEffectUpdate: (clampedState: FXState, realtime?: boolean) => void,
   logger?: LoggerInterface,
-) => instanceCreators.pin(pin, composer, effectInstance, logger);
+) =>
+  instanceCreators.pin(
+    pin,
+    composer,
+    effectInstance,
+    requestEffectUpdate,
+    logger,
+  );
 
 // clamps -----
 
 export const createClampInstance = <T extends string>(
   clamp: FXClamp<T>,
   composer: FXComposer,
-  notifyPin: (
-    active: boolean,
-    deviation: { x?: number; y?: number; z?: number } | null,
-  ) => void,
+  requestPinUpdate: (violation: FXClampViolation) => void,
   logger?: LoggerInterface,
-) => instanceCreators.clamp(clamp, composer, notifyPin, logger);
+) => instanceCreators.clamp(clamp, composer, requestPinUpdate, logger);
 
 // triggers -----
 
@@ -318,7 +328,7 @@ export const watchSize = (target?: Element) => {
   } as const;
 };
 
-export const loopOnAfterPaint = (callback: () => void) => {
+export const loopOnAnimationFrame = (callback: () => void) => {
   let shouldStop = false;
   let isRunning = false;
 
@@ -326,8 +336,7 @@ export const loopOnAfterPaint = (callback: () => void) => {
     if (!isRunning) {
       isRunning = true;
 
-      while (true) {
-        await waitForSubsequentMeasureTime(); // just after each repaint
+      for await (const e__ignored of animationFrameGenerator()) {
         if (shouldStop) {
           break;
         }
@@ -368,6 +377,7 @@ type InstanceCreators = {
   effect: <T extends EffectName>(
     effect: Effect<T>,
     composer: FXComposer,
+    requestRecompose: (realtime?: boolean) => void,
     logger?: LoggerInterface,
   ) => EffectInstance<T>;
 
@@ -375,16 +385,14 @@ type InstanceCreators = {
     pin: FXPin,
     composer: FXComposer,
     effectInstance: EffectInstance<T>,
+    requestEffectUpdate: (clampedState: FXState, realtime?: boolean) => void,
     logger?: LoggerInterface,
   ) => FXPinInstance;
 
   clamp: <T extends string>(
     clamp: FXClamp<T>,
     composer: FXComposer,
-    notifyPin: (
-      active: boolean,
-      deviation: { x?: number; y?: number; z?: number } | null,
-    ) => void,
+    requestPinUpdate: (violation: FXClampViolation) => void,
     logger?: LoggerInterface,
   ) => FXClampInstance;
 

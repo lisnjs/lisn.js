@@ -671,6 +671,7 @@ const addUpdater = <T extends EffectName>(
 const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
   composer: FXComposer,
+  requestRecompose: (realtime?: boolean) => void,
   logger?: LoggerInterface,
 ): EffectInstance<T> => {
   /* istanbul ignore next */
@@ -689,6 +690,7 @@ const createEffectInstance = <T extends EffectName>(
   return _createEffectInstance(
     definitions,
     _.merge(init, { _composer: composer }),
+    requestRecompose,
     logger,
   );
 };
@@ -700,34 +702,32 @@ const _createEffectInstance = <T extends EffectName, S>(
     nullState: S;
   },
   init: SemiPartial<EffectInitData<T> & EffectInstanceData<T, S>, "_state">,
+  requestRecompose: (realtime?: boolean) => void,
   parentLogger: LoggerInterface | undefined,
 ): EffectInstance<T> => {
-  const update = () => {
-    const clampedState = pinInstance
-      ? pinInstance.getClampedState().state
-      : composer.getState();
-
-    if (!clampedState) {
-      logger?.debug10("Skipping update, no clamp change");
-      // no change
+  const update = (clampedState?: FXState) => {
+    if (!clampedState && pinInstance?.isActive()) {
+      logger?.debug10("Pinned, skipping update");
       return;
     }
+
+    const state = clampedState ?? composer.getState();
 
     if (isAbsolute) {
       // reset state
       data._state = cloneState(nullState);
     }
 
-    const parameters = toParameters(clampedState, isAbsolute);
-    logger?.debug10("Updating", parameters);
+    const parameters = toParameters(state, isAbsolute);
+    logger?.debug10("Updating", state, parameters);
 
     for (const entry of data._updaters) {
       const { name, updater, scaler, tag } = entry;
       const scaledParameters = scaler
-        ? scaleParameters(parameters, clampedState, scaler)
+        ? scaleParameters(parameters, state, scaler)
         : parameters;
 
-      const result = updater(scaledParameters, clampedState);
+      const result = updater(scaledParameters, state);
 
       if (!_.isUndefined(result)) {
         processUpdate(data._state, name, result, tag);
@@ -745,6 +745,7 @@ const _createEffectInstance = <T extends EffectName, S>(
             _updaters: [],
           })
         : instanceData,
+      requestRecompose,
       parentLogger,
     );
   };
@@ -805,7 +806,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     type: type,
     isAbsolute: () => isAbsolute,
     getPin: () => init._pin,
-    update,
+    update: () => update(),
     clone: (discardUpdaters) => clone(data, discardUpdaters),
     toComposition,
     toCss: () => {
@@ -840,7 +841,16 @@ const _createEffectInstance = <T extends EffectName, S>(
   const nullState = cloneState(definitions.nullState);
 
   const pinInstance = init._pin
-    ? createPinInstance(init._pin, composer, self, logger)
+    ? createPinInstance(
+        init._pin,
+        composer,
+        self,
+        (clampedState, realtime) => {
+          update(clampedState);
+          requestRecompose(realtime);
+        },
+        logger,
+      )
     : void 0;
 
   const data: EffectInstanceData<T, S> = {

@@ -14,9 +14,9 @@
     />
     <script>
       LISN.settings.effectLag = 1;
-      LISN.settings.verbosityLevel = 7;
+      LISN.settings.verbosityLevel = 10;
       // LISN.settings.compactLogging = true;
-      // LISN.settings.debugMessageFilter = /FXPin/;
+      LISN.settings.debugMessageFilter = /FXComposer/;
     </script>
     <style type="text/css" media="screen">
       .section {
@@ -82,11 +82,11 @@
             top: { min: 0, max: "100%" },
           }).invert();
 
-          const sectionInCentre = new FXViewClamp({ top: "50%" });
+          const sectionInCentre = new FXViewClamp({ top: "50%" }); // XXX middle at 50%
 
           // 500 px up or down from when it's restarted
           const scrolledAway = new FXComposerClamp({
-            x: { max: "+500", min: "-500" },
+            y: { max: "+500", min: "-500" },
           });
 
           const translateYPin = new FXPin()
@@ -96,19 +96,15 @@
           // pin for the horizontal translate effect
           // const translateXPin = new FXPin().while(boxesNotInView);
 
-          const vp = { width: window.innerWidth, height: window.innerHeight };
-
           const trY = new Transform({
             pin: translateYPin,
           }).translate((p) => ({
             y: -p.y,
           }));
           // const trXLeft = new Transform({ pin: translateXPin })
-          //   .translate({ x: vp.width / 2 })
-          //   .translate((p) => ({ x: -p.y }));
+          //   .translate((p, state) => ({ x: -p.y + state.x.high / 2 }));
           // const trXRight = new Transform({ pin: translateXPin })
-          //   .translate({ x: -vp.width / 2 })
-          //   .translate((p) => ({ x: p.y }));
+          //   .translate((p, state) => ({ x: p.y - state.x.high / 2 }));
 
           new FXComposer([section], { trigger }).add(trY);
           // new FXComposer(evenBoxes, { trigger, negateParent: false }).add(

@@ -23,7 +23,11 @@ import { createXWeakMap } from "@lisn/modules/x-map";
 
 import type { EffectInstance, EffectName } from "@lisn/effects/effect";
 import type { FXComposer, FXState } from "@lisn/effects/fx-composer";
-import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
+import type {
+  FXClamp,
+  FXClampInstance,
+  FXClampViolation,
+} from "@lisn/effects/fx-clamp";
 import {
   setInstanceGetter,
   setInstanceCreator,
@@ -113,18 +117,18 @@ export class FXPin {
       _while: [],
     };
 
-    this.when = (...matchers) => {
-      conditionBuilders._when.push(matchers);
+    this.when = (...clamps) => {
+      conditionBuilders._when.push(clamps);
       return this;
     };
 
-    this.until = (...matchers) => {
-      conditionBuilders._until.push(matchers);
+    this.until = (...clamps) => {
+      conditionBuilders._until.push(clamps);
       return this;
     };
 
-    this.while = (...matchers) => {
-      conditionBuilders._while.push(matchers);
+    this.while = (...clamps) => {
+      conditionBuilders._while.push(clamps);
       return this;
     };
 
@@ -152,22 +156,6 @@ export interface FXPinInstance {
    * Returns true if the pin is actively clamping (and it's not paused).
    */
   readonly isActive: () => boolean;
-
-  /**
-   * Returns an object with the following properties:
-   * - `changed`: boolean indicating the state has changed since the last call
-   * - `state`:   a possibly clamped composer state, limited to fit within the
-   *              bounds configured by the clamps.
-   *
-   * If the pin is not {@link isActive | active} or it's
-   * {@link pause | paused}, the state is the unmodified composer state.
-   *
-   * If the pin is active but the clamped state hasn't changed since the last
-   * call to {@link getClampedState} `changed` is `false` and `state` is `null`.
-   */
-  readonly getClampedState: () =>
-    | { changed: true; state: FXState }
-    | { changed: false; state: null };
 }
 
 // --------------------
@@ -181,6 +169,7 @@ const createPinInstance = <T extends EffectName>(
   pin: FXPin,
   composer: FXComposer,
   effectInstance: EffectInstance<T>,
+  requestEffectUpdate: (clampedState: FXState, realtime?: boolean) => void,
   logger?: LoggerInterface,
 ): FXPinInstance => {
   /* istanbul ignore next */
@@ -200,7 +189,7 @@ const createPinInstance = <T extends EffectName>(
     masterInstances.sGet(pin).set(composer, master);
   }
 
-  const slave = createSlavePinInstance(master, composer);
+  const slave = createSlavePinInstance(master, composer, requestEffectUpdate);
   slaveInstances.set(effectInstance, slave);
   return slave;
 };
@@ -235,8 +224,8 @@ const createMasterPinInstance = (
         const clampInstance = createClampInstance(
           c,
           composer,
-          (active, deviation) => {
-            onClampChange(clampInstance, { active, deviation });
+          (violation) => {
+            onClampChange(clampInstance, violation);
           },
           logger,
         );
@@ -261,10 +250,7 @@ const createMasterPinInstance = (
 
   const onClampChange = (
     clampInstance: FXClampInstance,
-    violation: {
-      active: boolean;
-      deviation: { x?: number; y?: number; z?: number } | null;
-    },
+    violation: FXClampViolation,
   ) => {
     clampStates.set(clampInstance, violation.active);
 
@@ -309,10 +295,7 @@ const createMasterPinInstance = (
 
   const onConditionChange = (
     condition: Condition,
-    violation: {
-      active: boolean;
-      deviation: { x?: number; y?: number; z?: number } | null;
-    },
+    violation: FXClampViolation,
   ) => {
     let activateClamping;
 
@@ -336,7 +319,7 @@ const createMasterPinInstance = (
     // changed, and do not deactivate the pin if it's locked.
     if (isClamping !== activateClamping && (activateClamping || !isLocked())) {
       for (const e of slaves.values()) {
-        e._callback(activateClamping, _.copyObject(violation));
+        e._callback(activateClamping, _.copyNested(violation));
       }
 
       isClamping = activateClamping;
@@ -384,26 +367,23 @@ const createMasterPinInstance = (
     }
   };
 
-  const setRunningState = (
-    state: RUNNING_STATE,
-    resumeMode: CLAMP_RESUME_MODE = CLAMP_RESUME,
-  ) => {
+  const setRunningState = (state: RUNNING_STATE) => {
     if (isPaused !== (state === PAUSE)) {
       isPaused = !isPaused;
       logger?.debug7(`${isPaused ? "Pausing" : "Resuming"} pin`);
-      pauseOrResumeClamps(resumeMode);
+      pauseOrResumeClamps(CLAMP_RESUME);
     }
   };
 
   // --------------------
 
   const self: FXMasterPinInstance = {
-    addSlave: (slave, callback) => {
-      slaves.set(slave, { _callback: callback, _isPaused: false });
+    addSlave: (slave, onChangeCallback) => {
+      slaves.set(slave, { _callback: onChangeCallback, _isPaused: false });
 
       return {
-        pause: () => setSlaveRunningState(slave, PAUSE),
-        resume: () => setSlaveRunningState(slave, RESUME),
+        requestPause: () => setSlaveRunningState(slave, PAUSE),
+        requestResume: () => setSlaveRunningState(slave, RESUME),
       } as const;
     },
   };
@@ -428,30 +408,30 @@ const createMasterPinInstance = (
 const createSlavePinInstance = (
   master: FXMasterPinInstance,
   composer: FXComposer,
+  requestEffectUpdate: (clampedState: FXState, realtime?: boolean) => void,
 ): FXPinInstance => {
   let isClamping = false;
   let isPaused = false;
 
-  let lastViolation: {
-    active: boolean;
-    deviation: {
-      x?: number;
-      y?: number;
-      z?: number;
-    } | null;
-  } | null = null;
-
   const isActive = () => !isPaused && isClamping;
 
-  const setState = (
+  const onMasterChange = (
     activateClamping: boolean,
-    violation: {
-      active: boolean;
-      deviation: { x?: number; y?: number; z?: number } | null;
-    },
+    violation: FXClampViolation,
   ) => {
     isClamping = activateClamping;
-    lastViolation = violation;
+
+    const clampedState = violation.state ?? composer.getState();
+    const { deviation } = violation;
+    if (deviation) {
+      for (const a of ["x", "y", "z"] as const) {
+        clampedState[a].previous = clampedState[a].current;
+        clampedState[a].current -= deviation[a] ?? 0;
+      }
+    }
+
+    logger?.debug7("New clamped state", clampedState);
+    requestEffectUpdate(clampedState, violation.realtime);
   };
 
   // --------------------
@@ -459,40 +439,21 @@ const createSlavePinInstance = (
   const self: FXPinInstance = {
     pause: () => {
       isPaused = true;
-      pauseMaster();
+      requestPause();
     },
     resume: () => {
       isPaused = false;
-      resumeMaster();
+      requestResume();
     },
     isActive,
-    getClampedState: () => {
-      const clampedState = composer.getState();
-      const hasChanged = !!lastViolation || !isActive();
-
-      if (lastViolation) {
-        const { deviation } = lastViolation;
-        if (deviation) {
-          for (const a of ["x", "y", "z"] as const) {
-            clampedState[a].current -= deviation[a] ?? 0;
-          }
-        }
-
-        lastViolation = null;
-      }
-
-      if (hasChanged) {
-        return { changed: true, state: clampedState };
-      }
-
-      return { changed: false, state: null };
-    },
   };
 
-  const { pause: pauseMaster, resume: resumeMaster } = master.addSlave(
-    self,
-    setState,
-  );
+  const parentLogger = debug ? debug.Logger.getLoggerFor(master) : void 0;
+  const logger = debug
+    ? debug.Logger.getLoggerFor(self, { name: "slave", parent: parentLogger })
+    : void 0;
+
+  const { requestPause, requestResume } = master.addSlave(self, onMasterChange);
 
   return self;
 };
@@ -513,17 +474,14 @@ type ConditionBuilders = {
 
 type FXMasterPinInstanceCallback = (
   activateClamping: boolean,
-  violation: {
-    active: boolean;
-    deviation: { x?: number; y?: number; z?: number } | null;
-  },
+  violation: FXClampViolation,
 ) => void;
 
 interface FXMasterPinInstance {
   addSlave: (
     slave: FXPinInstance,
-    callback: FXMasterPinInstanceCallback,
-  ) => { pause: () => void; resume: () => void };
+    onChangeCallback: FXMasterPinInstanceCallback,
+  ) => { requestPause: () => void; requestResume: () => void };
 }
 
 interface EffectPinMap {

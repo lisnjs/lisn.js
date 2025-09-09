@@ -295,10 +295,6 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
     } else {
       // it's a callback
       concurrent = handlerOrCallback.isConcurrent();
-      // Technically, we don't need to modify debounceWindow, or we could even
-      // set it to 0 if the callback's debounce window is larger than the given,
-      // but so that the wrapper's getDebounceWindow returns the effective
-      // window, we set it to the larger of the two.
       debounceWindow = _.max(
         debounceWindow,
         handlerOrCallback.getDebounceWindow(),
@@ -366,7 +362,7 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
     };
 
     const callHandler = async (queue: InvokeQueue<Ret>, args: Args) => {
-      debug: logger?.debug8("Calling with", args);
+      debug: logger?.debug10("Calling with", args);
       try {
         let result = handler(...args);
         if (_.isInstanceOf(result, _.PROMISE)) {
@@ -409,7 +405,7 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
 
     this.remove = (reason: RemoveReason = Callback.REMOVE_REASON_USER) => {
       if (!isRemoved) {
-        debug: logger?.debug8("Removing");
+        debug: logger?.debug7("Removing");
         isRemoved = true;
 
         CallbackScheduler._clear(id);
@@ -422,7 +418,7 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
     };
 
     this.onRemove = (rHandler) => {
-      debug: logger?.debug8("Adding onRemove handler");
+      debug: logger?.debug7("Adding onRemove handler");
       removeHandlers.add(rHandler);
       if (_.isInstanceOf(rHandler, Callback)) {
         rHandler.onRemove(() => {
@@ -440,7 +436,7 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
         if (isRemoved) {
           reject(usageError("Callback has been removed"));
         } else {
-          debug: logger?.debug8("Scheduling with", args);
+          debug: logger?.debug10("Scheduling with", args);
 
           invokeQueue.add(resolve, reject);
           invokeWrapper(args);

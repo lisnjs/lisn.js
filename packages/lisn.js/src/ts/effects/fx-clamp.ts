@@ -4,6 +4,19 @@
  * @since v1.3.0
  */
 
+// XXX
+// - there's a jump because view clamp waits for measure time; it needs to act
+//   during mutate time and predict the offsets that will result (but check
+//   afterwards and correct if needed)
+//
+// - view clamp doesn't react when jump scrolling (activates but doesn't do anything)
+//
+// - view clamp doesn't work with transition: after each restyling of composer
+//   it needs to loop on after paint until offsets no longer change
+//
+// - composer clamp reference when restarted after other pinned is wrong;
+//   master pin needs to save deviation and pass it to restart?
+
 import * as _ from "@lisn/_internal";
 
 import { bugError, usageError } from "@lisn/globals/errors";
@@ -17,6 +30,7 @@ import {
   RawOrRelativeNumber,
 } from "@lisn/globals/types";
 
+import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { havingMaxAbs, toRawNum, RawNumberCalculator } from "@lisn/utils/math";
 import { toIterableIfNot } from "@lisn/utils/misc";
 
@@ -33,7 +47,7 @@ import {
   getComposerInstance,
   atLeastOneVisible,
   watchSize,
-  loopOnAfterPaint,
+  loopOnAnimationFrame,
 } from "@lisn/effects/_internal";
 
 import { ViewWatcher } from "@lisn/watchers/view-watcher";
@@ -641,11 +655,27 @@ export type FXClampStore<State, Data> = {
    *
    * Note that if the clamp is paused, it will update the state only when
    * resumed.
+   *
+   * If the correction to the state requires immediate updating of the CSS (if,
+   * for example, it was as a result of a layout change), set `realtime` to
+   * true.
+   *
+   * If a particular composer state needs to be used, other than the current
+   * composer state, pass this as the `state` property.
    */
-  notify: (
-    active: boolean,
-    deviation: { x?: number; y?: number; z?: number } | null,
-  ) => void;
+  requestUpdate: (violation: FXClampViolation) => void;
+};
+
+/**
+ * Base clamp builder class.
+ *
+ * @category Base
+ */
+export type FXClampViolation = {
+  active: boolean;
+  deviation: { x?: number; y?: number; z?: number } | null;
+  realtime?: boolean;
+  state?: FXState;
 };
 
 // ------------------------------
@@ -653,10 +683,7 @@ export type FXClampStore<State, Data> = {
 const createClampInstance = <T extends string, S, D, A extends unknown[]>(
   clamp: FXClamp<T>,
   composer: FXComposer,
-  notifyPin: (
-    active: boolean,
-    deviation: { x?: number; y?: number; z?: number } | null,
-  ) => void,
+  requestPinUpdate: (violation: FXClampViolation) => void,
   parentLogger?: LoggerInterface,
 ): FXClampInstance => {
   /* istanbul ignore next */
@@ -683,8 +710,8 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
   const { logic } = definitions;
 
   let isPaused = true; // don't start until the pin restarts us
-  let effectiveViolation: BoundedStateViolation | null = null;
-  let lastChangeWhilePaused: BoundedStateViolation | null;
+  let isClamping = false;
+  let lastChangeWhilePaused: FXClampViolation | null = null;
 
   const storeData: {
     _data?: D;
@@ -731,38 +758,34 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
 
     getComposer: () => composer,
 
-    notify: (active, deviation) => {
-      logger?.debug7("Got violation", {
-        active,
-        deviation,
-        invert,
-      });
+    requestUpdate: (violation) => {
+      let active = violation.active;
+      const { deviation, realtime, state } = violation;
+
+      logger?.debug7("Got violation", violation, { invert });
 
       if (invert) {
         active = !active;
       }
 
-      setViolation(active, deviation);
+      setViolation({ active, deviation, realtime, state });
     },
   };
 
   // ----------
 
-  const setViolation = (
-    active: boolean,
-    deviation: { x?: number; y?: number; z?: number } | null,
-  ) => {
+  const setViolation = (violation: FXClampViolation) => {
+    const { active } = violation;
     if (!isPaused) {
-      if (!!effectiveViolation?.active !== active) {
-        logger?.debug7("Setting new clamp violation", { active, deviation });
-
-        effectiveViolation = { active, deviation };
-        notifyPin(active, deviation);
+      if (isClamping !== active) {
+        logger?.debug7("Setting new clamp violation", violation);
+        isClamping = active;
+        requestPinUpdate(_.copyNested(violation));
       }
 
       lastChangeWhilePaused = null;
     } else if (!!lastChangeWhilePaused?.active !== active) {
-      lastChangeWhilePaused = { active, deviation };
+      lastChangeWhilePaused = violation;
     }
   };
 
@@ -773,10 +796,7 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
       logger?.debug7(`${isPaused ? "Pausing" : "Resuming"} clamp`);
 
       if (!isPaused && lastChangeWhilePaused) {
-        setViolation(
-          lastChangeWhilePaused.active,
-          lastChangeWhilePaused.deviation,
-        );
+        setViolation(lastChangeWhilePaused);
       }
 
       if (isPaused) {
@@ -832,10 +852,7 @@ type BoundedState<Axes extends "x" | "y" | "z"> = {
   _composerState?: FXState;
 };
 
-type BoundedStateViolation = {
-  active: boolean;
-  deviation: { x?: number; y?: number; z?: number } | null;
-};
+type BoundedStateViolation = Pick<FXClampViolation, "active" | "deviation">;
 
 type FXClampInitData<A extends unknown[]> = {
   _invert: boolean;
@@ -905,7 +922,7 @@ const { init: initComposer } = registerFXClamp<
 
           const violation = getBoundViolation(boundedState);
           logger?.debug10("Bounded state violation", boundedState, violation);
-          store.notify(violation.active, violation.deviation);
+          store.requestUpdate(violation);
         },
         { logger },
       );
@@ -980,7 +997,15 @@ const { init: initView } = registerFXClamp<
       const vpSizeWatch = watchSize();
       const rootSizeWatch = root ? watchSize(root) : vpSizeWatch;
 
-      const closeMonitorHandler = () => {
+      const closeMonitorHandler = async (composerState?: FXState) => {
+        let setDeviation = true;
+        if (!composerState) {
+          setDeviation = false;
+          composerState = composer.getState();
+        }
+
+        await waitForMeasureTime(); // wait for the browser to repaing
+
         const prevOffsets = store.getState();
         const refOffsets = store.getReferenceState();
         const offsets = store.getState(true);
@@ -988,7 +1013,6 @@ const { init: initView } = registerFXClamp<
           return;
         }
 
-        const composerState = composer.getState();
         const vpSize = vpSizeWatch.get();
         const rootSize = rootSizeWatch.get();
 
@@ -1021,7 +1045,14 @@ const { init: initView } = registerFXClamp<
           violations.push(getBoundViolation(boundedState));
         }
 
-        const violation = getMaxBoundViolation(violations);
+        const { active, deviation } = getMaxBoundViolation(violations);
+        const violation = {
+          active,
+          realtime: true,
+          state: composerState,
+          deviation: setDeviation ? deviation : null,
+        };
+
         logger?.debug10(
           "Bounded state violation",
           {
@@ -1034,11 +1065,12 @@ const { init: initView } = registerFXClamp<
           },
           violation,
         );
-        store.notify(violation.active, violation.deviation);
+
+        store.requestUpdate(violation);
       };
 
       // If all targets we're watching are animated by some composer, use an
-      // onTween callback rather than looping on each animation frame when
+      // onStyle callback rather than looping on each animation frame when
       // monitoring closely.
       const animatingComposers: {
         composers: Iterable<FXComposer>;
@@ -1049,24 +1081,27 @@ const { init: initView } = registerFXClamp<
 
       let closeMonitor: StartStopper;
       if (animatingComposers.all) {
-        const callback = createConcurrentCallback(closeMonitorHandler, {
-          logger,
-        });
+        const callback: FXComposerHandler = createConcurrentCallback(
+          (c, { state }) => closeMonitorHandler(state),
+          {
+            logger,
+          },
+        );
 
         closeMonitor = {
           start: () => {
             for (const c of animatingComposers.composers) {
-              c.onTween(callback);
+              c.onStyle(callback);
             }
           },
           stop: () => {
             for (const c of animatingComposers.composers) {
-              c.offTween(callback);
+              c.offStyle(callback);
             }
           },
         };
       } else {
-        closeMonitor = loopOnAfterPaint(closeMonitorHandler);
+        closeMonitor = loopOnAnimationFrame(closeMonitorHandler);
       }
 
       const viewWatch = atLeastOneVisible(

@@ -206,6 +206,22 @@ export class FXComposer {
   readonly offTween: (handler: FXComposerHandler) => this;
 
   /**
+   * Calls the given handler whenever the composer re-applies CSS to the
+   * elements.
+   *
+   * The handler is called **after** applying the CSS such that checking the
+   * style/layout from the handler will reflect the latest CSS. The second
+   * argument to the callback will contain the state the resulted in the CSS,
+   * which may no longer be the current state of the composer.
+   */
+  readonly onStyle: (handler: FXComposerHandler) => this;
+
+  /**
+   * Removes a previously added {@link onStyle} handler.
+   */
+  readonly offStyle: (handler: FXComposerHandler) => this;
+
+  /**
    * Calls the given handler whenever the composer updates its
    * {@link getComposition | composition}. This happens **as long as there are
    * effects or composers {@link add | added}** and then one of these occurs:
@@ -404,6 +420,9 @@ export class FXComposer {
     const tweenCallbacks = createCallbackManager<FXComposerHandlerArgs>({
       logger,
     });
+    const styleCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      logger,
+    });
     const composeCallbacks = createCallbackManager<FXComposerHandlerArgs>({
       logger,
     });
@@ -419,6 +438,7 @@ export class FXComposer {
     let updatePending = false;
     let hasVisibleElements = false;
     let hasIncrementalEffects = false;
+    let lastCss: Record<string, string> = {};
 
     // ----- viewport watching (for auto stand-by)
     // set/reset when updating elements or autoStandBy
@@ -469,7 +489,13 @@ export class FXComposer {
         link.onCompose(recomposeOnOtherCompose);
         addToComposition(link);
       } else {
-        const effectInstance = createEffectInstance(link, this, logger);
+        const effectInstance = createEffectInstance(
+          link,
+          this,
+          (realtime) => recompose(UPDATE_NONE, realtime),
+          logger,
+        );
+
         compositionChain.push(effectInstance);
         addToComposition(effectInstance);
 
@@ -515,7 +541,7 @@ export class FXComposer {
           }
         }
 
-        applyCss(!activate && options?._clearCss);
+        applyCss({ _clearCss: !activate && options?._clearCss });
 
         isActive = activate;
         if (viewWatch) {
@@ -572,6 +598,7 @@ export class FXComposer {
           destroyCallbacks.clear();
           triggerCallbacks.clear();
           tweenCallbacks.clear();
+          styleCallbacks.clear();
           composeCallbacks.clear();
         });
       }
@@ -599,6 +626,7 @@ export class FXComposer {
         }
       }
 
+      lastCss = css;
       return css;
     };
 
@@ -619,6 +647,8 @@ export class FXComposer {
       for (const el of elements) {
         animatedElements.add(el);
       }
+
+      logger?.debug5("New elements", animatedElements);
 
       parent = getParentComposer(elements);
       effectiveConfig.negated = negateParent ? parent : null;
@@ -759,7 +789,13 @@ export class FXComposer {
 
     const invokeCallbacks = (
       callbacks: CallbackManager<FXComposerHandlerArgs>,
-    ) => callbacks.invoke(this);
+      state?: FXState,
+      css?: Record<string, string>,
+    ) =>
+      callbacks.invoke(this, {
+        state: state ?? _.copyNested(currentFXState),
+        style: css ?? lastCss,
+      });
 
     // ----------
 
@@ -832,7 +868,7 @@ export class FXComposer {
 
     // ----------
 
-    const recompose = (update: UPDATE_MODE = UPDATE_ALL) => {
+    const recompose = (update: UPDATE_MODE = UPDATE_ALL, realtime = false) => {
       if (_.sizeOf(currentComposition)) {
         currentComposition.clear();
         logger?.debug10("Recomposing", _.copyNested(currentFXState));
@@ -853,7 +889,7 @@ export class FXComposer {
           addToComposition(link);
         }
 
-        applyCss(); // no need to await
+        applyCss({ _realtime: realtime }); // no need to await
         invokeCallbacks(composeCallbacks);
       }
 
@@ -888,10 +924,30 @@ export class FXComposer {
 
     // ----------
 
-    const applyCss = async (clearCss = false) => {
+    let scheduledApplyCss: symbol | null = null;
+
+    const applyCss = async (options?: {
+      _clearCss?: boolean;
+      _realtime?: boolean;
+    }) => {
+      const myId = _.SYMBOL();
+      scheduledApplyCss = myId;
+      const { _clearCss: clearCss = false, _realtime: realtime = false } =
+        options ?? {};
+
+      const state = _.copyNested(currentFXState);
       const css = toCss();
-      logger?.debug10("Applying CSS ", animatedElements, css, clearCss);
-      await waitForMutateTime();
+
+      if (!realtime) {
+        await waitForMutateTime();
+        if (scheduledApplyCss !== myId) {
+          logger?.debug10("Cancelling CSS application ", state, css, options);
+          return;
+        }
+      }
+
+      logger?.debug10("Applying CSS ", state, css, options);
+
       for (const prop in css) {
         for (const element of animatedElements) {
           if (clearCss) {
@@ -901,6 +957,8 @@ export class FXComposer {
           }
         }
       }
+
+      invokeCallbacks(styleCallbacks, state, css);
     };
 
     // --------------------
@@ -942,6 +1000,9 @@ export class FXComposer {
 
     this.onTween = (handler) => addHandler(handler, tweenCallbacks);
     this.offTween = (handler) => deleteHandler(handler, tweenCallbacks);
+
+    this.onStyle = (handler) => addHandler(handler, styleCallbacks);
+    this.offStyle = (handler) => deleteHandler(handler, styleCallbacks);
 
     this.onCompose = (handler) => addHandler(handler, composeCallbacks);
     this.offCompose = (handler) => deleteHandler(handler, composeCallbacks);
@@ -1122,13 +1183,24 @@ export type FXComposerEffectiveConfig = {
 };
 
 /**
- * The handler is invoked with one argument:
+ * The handler is invoked with two arguments:
  *
  * - The {@link FXComposer} instance.
+ * - An object containing:
+ *   - `state`: The {@link FXComposer.getState | state} of the composer at the
+ *              time a call to the callback was triggered. It may not be the
+ *              current state of the composer at the time the callback was
+ *              invoked.
+ *   - `style`: The {@link FXComposer.toCSS | CSS} of the composer corresponding
+ *              to the state given. It may not be the current CSS of the
+ *              composer at the time the callback was invoked.
  *
  * @category Composer
  */
-export type FXComposerHandlerArgs = [FXComposer];
+export type FXComposerHandlerArgs = [
+  FXComposer,
+  { state: FXState; style: Record<string, string> },
+];
 /**
  * @category Composer
  */

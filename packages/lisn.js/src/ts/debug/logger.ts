@@ -300,7 +300,7 @@ const logDebugN = (
       compact: usesCompact,
       formatter: (value) => {
         const tag = _.isObject(value) ? objectTags.get(value) : void 0;
-        return tag ? `TAGGED: ${tag}` : value;
+        return tag ? `TAGGED<${tag}>` : value;
       },
     },
     ...args,

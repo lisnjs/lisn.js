@@ -265,8 +265,14 @@ export abstract class Openable extends Widget {
     const logger = debug
       ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
       : void 0;
-    const openCallbacks = createCallbackManager<WidgetHandlerArgs>({ logger });
-    const closeCallbacks = createCallbackManager<WidgetHandlerArgs>({ logger });
+    const openCallbacks = createCallbackManager<WidgetHandlerArgs>({
+      description: "open",
+      logger,
+    });
+    const closeCallbacks = createCallbackManager<WidgetHandlerArgs>({
+      description: "close",
+      logger,
+    });
 
     let isOpen = false;
 

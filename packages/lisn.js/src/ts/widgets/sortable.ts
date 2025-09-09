@@ -510,7 +510,10 @@ const getMethods = (
   const doSwap = config?.mode === "swap";
 
   const disabledItems: Record<number, boolean> = {};
-  const callbacks = createCallbackManager<WidgetHandlerArgs>({ logger });
+  const callbacks = createCallbackManager<WidgetHandlerArgs>({
+    description: "move",
+    logger,
+  });
 
   const getSortedItems = () =>
     _.slice(items).sort((a, b) => (isNodeBAfterA(a, b) ? -1 : 1));

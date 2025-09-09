@@ -190,12 +190,15 @@ export abstract class Widget {
     let destroyPromise: Promise<void>;
 
     const enableCallbacks = createCallbackManager<WidgetHandlerArgs>({
+      description: "enable",
       logger,
     });
     const disableCallbacks = createCallbackManager<WidgetHandlerArgs>({
+      description: "disable",
       logger,
     });
     const destroyCallbacks = createCallbackManager<WidgetHandlerArgs>({
+      description: "destroy",
       logger,
     });
 

@@ -79,16 +79,30 @@ export type RemoveReason =
 export type CallbackConfig = {
   /**
    * See {@link Callback.invoke}.
+   *
+   * @defaultValue false
    */
   concurrent?: boolean;
 
   /**
    * See {@link Callback.invoke}.
+   *
+   * @defaultValue 0
    */
   debounceWindow?: number;
 
   /**
-   * The logger to user for debug logging.
+   * A description of the callback that will be added to its logger name.
+   * Only used for debugging.
+   *
+   * @defaultValue undefined
+   */
+  description?: string;
+
+  /**
+   * The parent logger to use. Only used for debugging.
+   *
+   * @defaultValue undefined
    */
   logger?: LoggerInterface;
 };
@@ -274,14 +288,12 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
   ): Callback<Args, Ret> {
     const isFunction = _.isFunction(handlerOrCallback);
 
-    let debounceWindow = 0;
-    let concurrent = false;
-    let logger: LoggerInterface | undefined = void 0;
-    if (_.isObject(config)) {
-      ({ concurrent = false, debounceWindow = 0, logger } = config);
-    } else if (_.isNumber(config)) {
-      debounceWindow = config;
-    }
+    const configObj = _.isNumber(config)
+      ? { debounceWindow: config }
+      : (config ?? {});
+
+    const { description, logger } = configObj;
+    let { debounceWindow = 0, concurrent = false } = configObj;
 
     let handler: CallbackHandler<Args, Ret>;
     if (isFunction) {
@@ -306,6 +318,7 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
     const wrapper = createCallback(handler, {
       debounceWindow,
       concurrent,
+      description,
       logger,
     });
 
@@ -329,14 +342,20 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
    * is captured and returned by {@link invoke}.
    */
   constructor(handler: CallbackHandler<Args, Ret>, config?: CallbackConfig) {
+    const {
+      concurrent = false,
+      description,
+      logger: parentLogger,
+    } = config ?? {};
+
     const logger = debug
       ? debug.Logger.getLoggerFor(this, {
-          parent: config?.logger,
+          name: description ? `Callback<${description}>` : void 0,
+          parent: parentLogger,
           logAtCreation: { handler, config },
         })
       : void 0;
 
-    const concurrent = config?.concurrent ?? false;
     const debounceWindow = _.max(0, config?.debounceWindow ?? 0);
 
     let isRemoved = false;
@@ -459,6 +478,12 @@ export class Callback<Args extends readonly unknown[] = unknown[], Ret = void> {
  */
 export type CallbackManagerConfig<Args extends readonly unknown[] = unknown[]> =
   {
+    /**
+     * Will call the given handler when the callback is removed or deleted from
+     * the map.
+     *
+     * @defaultValue undefined
+     */
     onRemove?: OnRemoveHandler<Args>;
   } & CallbackConfig;
 
@@ -467,13 +492,6 @@ export type CallbackManagerConfig<Args extends readonly unknown[] = unknown[]> =
  * them at once.
  *
  * @typeParam Args The type of arguments that the callback expects.
- *
- * @param [config.concurrent]     See {@link Callback.wrap}
- *                                this sets its `concurrent`. Otherwise the
- *                                wrapper will inherit the callback's setting.
- * @param [config.debounceWindow] See {@link Callback.wrap}
- * @param [config.onRemove]       Will call the given handler when the
- *                                callback is removed or deleted from the map.
  *
  * @category Callback
  *
@@ -521,6 +539,7 @@ export class CallbackManager<Args extends readonly unknown[] = []> {
       const wrapped = addHandlerToMap(handler, callbacks, {
         concurrent: config?.concurrent ?? defaultConfig?.concurrent,
         debounceWindow: config?.debounceWindow ?? defaultConfig?.debounceWindow,
+        description: config?.description ?? defaultConfig?.description,
         logger: config?.logger ?? defaultConfig?.logger,
       });
 

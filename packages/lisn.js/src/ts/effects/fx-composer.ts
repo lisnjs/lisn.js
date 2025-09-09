@@ -406,24 +406,31 @@ export class FXComposer {
     const animatedElements = _.createSet<Element>();
 
     const toggleCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      description: "toggle",
       logger,
     });
     const clearCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      description: "clear",
       logger,
     });
     const destroyCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      description: "destroy",
       logger,
     });
     const triggerCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      description: "trigger",
       logger,
     });
     const tweenCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      description: "tween",
       logger,
     });
     const styleCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      description: "style",
       logger,
     });
     const composeCallbacks = createCallbackManager<FXComposerHandlerArgs>({
+      description: "compose",
       logger,
     });
 

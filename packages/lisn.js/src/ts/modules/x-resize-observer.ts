@@ -68,13 +68,9 @@ export class XResizeObserver {
     callback: XResizeObserverCallback,
     options?: number | { debounceWindow?: number; logger?: LoggerInterface },
   ) {
-    let debounceWindow = 0;
-    let parentLogger: LoggerInterface | undefined = void 0;
-    if (_.isObject(options)) {
-      ({ debounceWindow = 0, logger: parentLogger } = options);
-    } else if (_.isNumber(options)) {
-      debounceWindow = options;
-    }
+    const { debounceWindow = 0, logger: parentLogger } = _.isNumber(options)
+      ? { debounceWindow: options }
+      : (options ?? {});
 
     const logger = debug
       ? debug.Logger.getLoggerFor(this, {
@@ -93,8 +89,6 @@ export class XResizeObserver {
     const targetsToSkip = _.createWeakMap<Element, 1 | 2>();
 
     let observedTargets = _.createWeakSet<Element>();
-
-    debounceWindow ??= 0;
 
     let timer: ReturnType<typeof setTimeout> | null = null;
     const resizeHandler = (entries: ResizeObserverEntry[]) => {

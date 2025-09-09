@@ -254,18 +254,18 @@ export const camelToKebabCase = _.camelToKebabCase;
  *
  * **IMPORTANT:** This is _not_ suitable for cryptographic applications.
  *
- * @param nChars The length of the returned stirng.
+ * @param nChars The length of the returned string.
  *
  * @category Text
  */
 export const randId = (nChars = 8) => {
-  const segment = () => _.floor(100000 + _.random() * 900000).toString(36);
-
-  let s = "";
-  while (_.lengthOf(s) < nChars) {
-    s += segment();
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < nChars; i++) {
+    result += chars.charAt(_.floor(_.random() * chars.length));
   }
-  return _.slice(s, 0, nChars);
+  return result;
 };
 
 /**
@@ -590,16 +590,8 @@ const _convertToString = (
 
   // -----
 
-  const nestedToString = (thisValue: unknown) => {
-    let string = "";
-    if (_.isFunction(thisValue)) {
-      string = `FUNCTION<${thisValue.name}>`;
-    } else {
-      string = convertToString(thisValue, options, level + 1);
-    }
-
-    return string;
-  };
+  const nestedToString = (thisValue: unknown) =>
+    convertToString(thisValue, options, level + 1);
 
   // --------------------
   // --------------------
@@ -696,6 +688,10 @@ const _convertToString = (
           : "") +
       ">";
 
+    // Function ----------
+  } else if (_.isFunction(value)) {
+    result = `FUNCTION<${value.name}>`;
+
     // Error ----------
   } else if (_.isOfType(value, "Error")) {
     /* istanbul ignore else */
@@ -719,7 +715,9 @@ const _convertToString = (
     } else {
       for (const prop in value) {
         const thisValue: unknown = value[prop as keyof typeof value];
-        parts.push(prop + ":" + space + nestedToString(thisValue));
+        if (!_.isFunction(thisValue)) {
+          parts.push(prop + ":" + space + nestedToString(thisValue));
+        }
       }
     }
 

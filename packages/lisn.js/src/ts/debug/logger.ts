@@ -73,7 +73,7 @@ export class Logger implements LoggerInterface {
    * @since v1.3.0
    */
   static tagObject(object: object, tag?: string) {
-    objectTags.set(object, tag ?? randId());
+    objectTags.set(object, tag ?? randId(4));
   }
 
   /**
@@ -92,6 +92,11 @@ export class Logger implements LoggerInterface {
    * {@link tagObject | tagged}, a newly created logger will use that for its
    * `debugID`. An existing logger instance however won't have its `debugID`
    * changed.
+   *
+   * ------
+   *
+   * If the object is not tagged, it will be tagged with the final `debugID` of
+   * the logger.
    *
    * ------
    *
@@ -125,7 +130,7 @@ export class Logger implements LoggerInterface {
     } else {
       const { name, verbosityLevel, compact } = config;
 
-      if (!_.isUndefined(name)) {
+      if (name && name !== defaultName) {
         logger.setName(name);
       }
 
@@ -142,6 +147,10 @@ export class Logger implements LoggerInterface {
       }
     }
 
+    if (_.isUndefined(objTag)) {
+      objectTags.set(object, logger.getConfig().debugID);
+    }
+
     return logger;
   }
 
@@ -154,7 +163,7 @@ export class Logger implements LoggerInterface {
       remoteLoggerURL: settings.remoteLoggerURL ?? "",
       remoteLoggerOnMobileOnly: settings.remoteLoggerOnMobileOnly,
       remoteLoggerConnectTimeout: settings.remoteLoggerConnectTimeout,
-      debugID: randId(),
+      debugID: randId(4),
       parent: void 0,
       logAtCreation: void 0,
       forElement: void 0,
@@ -162,9 +171,16 @@ export class Logger implements LoggerInterface {
 
     const parent = config?.parent;
     if (parent) {
-      // override defaults above
-      _.copyExistingKeysTo(parent.getConfig(), myConfig);
-      myConfig.name = config?.name ?? "";
+      // override some defaults
+      _.copyExistingKeysTo(
+        _.omitKeys(parent.getConfig(), {
+          name: 1,
+          debugID: 1,
+          parent: 1,
+          logAtCreation: 1,
+        }),
+        myConfig,
+      );
     }
 
     // override with explicit config
@@ -191,16 +207,19 @@ export class Logger implements LoggerInterface {
       if (forElement) {
         name += "-" + formatAsString(forElement);
       }
+      myConfig.name = name;
 
-      const parentName = parent?.getName();
-      if (parentName) {
-        name = parentName + "-" + name;
+      const logNames: string[] = [];
+      const debugNames: string[] = [];
+      let c: EffectiveLoggerConfig | undefined = myConfig;
+      while (c) {
+        logNames.push(c.name);
+        debugNames.push(c.name + "_" + c.debugID);
+        c = c.parent?.getConfig();
       }
 
-      myConfig.name = name;
-      const debugID = myConfig.debugID;
-      logPrefix = `[LISN${name ? ": " + name : ""}]`;
-      debugPrefix = `[LISN${(name ? ": " + name : "") + (debugID ? "-" + debugID : "")}]`;
+      logPrefix = `[LISN: ${logNames.reverse().join(" > ")}]`;
+      debugPrefix = `[LISN: ${debugNames.reverse().join(" > ")}]`;
     };
 
     this.getVerbosityLevel = () => myConfig.verbosityLevel;
@@ -248,7 +267,7 @@ export class Logger implements LoggerInterface {
     }
 
     if ("logAtCreation" in myConfig) {
-      this.debug5("New logger:", myConfig.logAtCreation);
+      this.debug5("New logger", myConfig.logAtCreation);
     }
   }
 }
@@ -281,7 +300,7 @@ const logDebugN = (
       compact: usesCompact,
       formatter: (value) => {
         const tag = _.isObject(value) ? objectTags.get(value) : void 0;
-        return tag ? [`TAG: ${tag}`, value] : value;
+        return tag ? `TAGGED: ${tag}` : value;
       },
     },
     ...args,

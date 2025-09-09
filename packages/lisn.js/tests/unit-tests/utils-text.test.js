@@ -72,6 +72,17 @@ describe("formatAsString", () => {
     );
   });
 
+  test("functions", () => {
+    const fn = jest.fn();
+    const name = fn.name;
+    expect(utils.formatAsString(fn, { compact: true })).toBe(
+      `FUNCTION<${name}>`,
+    );
+    expect(utils.formatAsString([fn, { a: 1, b: fn }], { compact: true })).toBe(
+      `[FUNCTION<${name}>,{a:1}]`,
+    );
+  });
+
   test("mixed deeply nested", () => {
     expect(
       utils.formatAsString({
@@ -528,9 +539,7 @@ describe("formatAsString", () => {
     const obj = { a: { b: { c: 1 } } };
     obj.toJSON = cbk;
 
-    expect(utils.formatAsString(obj, { compact: true })).toBe(
-      `{a:{b:{c:1}},toJSON:${String(cbk).replace(/\s+/g, " ")}}`,
-    );
+    expect(utils.formatAsString(obj, { compact: true })).toBe("{a:{b:{c:1}}}");
 
     expect(cbk).toHaveBeenCalledTimes(1);
   });

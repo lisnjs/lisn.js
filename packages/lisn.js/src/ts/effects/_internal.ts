@@ -11,6 +11,7 @@ import { Size } from "@lisn/globals/types";
 import { bugError } from "@lisn/globals/errors";
 
 import { animationFrameGenerator } from "@lisn/utils/animations";
+import { waitForMeasureTime } from "@lisn/utils/dom-optimize";
 import { toNum } from "@lisn/utils/math";
 import { getSizeOf } from "@lisn/utils/size";
 
@@ -79,25 +80,12 @@ export const createEffectInstance = <T extends EffectName>(
 
 // pins -----
 
-export const getPinInstance = <T extends EffectName>(
-  composer: FXComposer,
-  effectInstance: EffectInstance<T>,
-) => instanceGetters.pin(composer, effectInstance);
-
-export const createPinInstance = <T extends EffectName>(
+export const createPinInstance = (
   pin: FXPin,
   composer: FXComposer,
-  effectInstance: EffectInstance<T>,
   requestEffectUpdate: (clampedState: FXState, realtime?: boolean) => void,
   logger?: LoggerInterface,
-) =>
-  instanceCreators.pin(
-    pin,
-    composer,
-    effectInstance,
-    requestEffectUpdate,
-    logger,
-  );
+) => instanceCreators.pin(pin, composer, requestEffectUpdate, logger);
 
 // clamps -----
 
@@ -262,7 +250,8 @@ export const getUpdatedState = (
 export const atLeastOneVisible = (
   elements: Iterable<Element>,
   callback: (hasVisible: boolean) => void,
-  viewWatcher?: ViewWatcher,
+  viewWatcher?: ViewWatcher | null,
+  logger?: LoggerInterface | undefined,
 ) => {
   viewWatcher ??= ViewWatcher.reuse({ rootMargin: "200px" });
   const visible = _.createMap<Element, boolean>();
@@ -281,7 +270,8 @@ export const atLeastOneVisible = (
         callback(hasVisible);
       }
     },
-  ); // XXX , {logger});
+    { logger },
+  );
 
   const start = () => {
     for (const el of elements) {
@@ -300,7 +290,10 @@ export const atLeastOneVisible = (
   return { start, stop } as const;
 };
 
-export const watchSize = (target?: Element) => {
+export const watchSize = (
+  target?: Element | null,
+  logger?: LoggerInterface | undefined,
+) => {
   const mapKey = target ?? null;
   let size = sizes.get(mapKey) ?? getSizeOf(target);
 
@@ -310,7 +303,8 @@ export const watchSize = (target?: Element) => {
       size = sizeData.border;
       sizes.set(mapKey, size);
     },
-  ); // XXX , {logger});
+    { logger },
+  );
 
   const start = () => {
     sizeWatcher.onResize(resizeHandler, _.fastWatcherConf({ target }));
@@ -328,19 +322,22 @@ export const watchSize = (target?: Element) => {
   } as const;
 };
 
-export const loopOnAnimationFrame = (callback: () => void) => {
-  let shouldStop = false;
+export const loopOnRepaint = (
+  callback: () => void,
+  logger?: LoggerInterface,
+) => {
   let isRunning = false;
+  let generator: AsyncGenerator | null = null;
 
   const looper = async () => {
     if (!isRunning) {
+      logger?.debug10("Starting repaint check loop");
       isRunning = true;
 
-      for await (const e__ignored of animationFrameGenerator()) {
-        if (shouldStop) {
-          break;
-        }
-
+      generator = animationFrameGenerator();
+      for await (const e__ignored of generator) {
+        // wait for the browser to repaint
+        await waitForMeasureTime();
         callback();
       }
 
@@ -350,7 +347,11 @@ export const loopOnAnimationFrame = (callback: () => void) => {
 
   return {
     stop: () => {
-      shouldStop = true;
+      if (isRunning) {
+        logger?.debug10("Stopping repaint check loop");
+        generator?.return(void 0);
+        generator = null;
+      }
     },
     start: () => {
       looper();
@@ -362,11 +363,6 @@ export const loopOnAnimationFrame = (callback: () => void) => {
 
 type InstanceGetters = {
   composer: (element: Element) => FXComposer | undefined;
-
-  pin: <T extends EffectName>(
-    composer: FXComposer,
-    effectInstance: EffectInstance<T>,
-  ) => FXPinInstance | undefined;
 
   trigger: <T extends string>(
     trigger: FXTrigger<T>,
@@ -381,10 +377,9 @@ type InstanceCreators = {
     logger?: LoggerInterface,
   ) => EffectInstance<T>;
 
-  pin: <T extends EffectName>(
+  pin: (
     pin: FXPin,
     composer: FXComposer,
-    effectInstance: EffectInstance<T>,
     requestEffectUpdate: (clampedState: FXState, realtime?: boolean) => void,
     logger?: LoggerInterface,
   ) => FXPinInstance;
@@ -411,9 +406,6 @@ const noInstanceCreatorErr = (t: string) =>
 const instanceGetters: InstanceGetters = {
   composer: () => {
     throw noInstanceGetterErr("effect");
-  },
-  pin: () => {
-    throw noInstanceGetterErr("pin");
   },
   trigger: () => {
     throw noInstanceGetterErr("trigger");

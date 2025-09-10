@@ -458,7 +458,7 @@ const createTriggerInstance = <T extends string, D, A extends unknown[]>(
     throw usageError(`No arguments saved for trigger '${trigger.type}'`);
   }
 
-  let isActive = false;
+  let isPaused = true;
 
   const pollers = _.createSet<Poller>();
 
@@ -492,9 +492,9 @@ const createTriggerInstance = <T extends string, D, A extends unknown[]>(
 
   const updateState = (state: PollUpdate | null) => {
     lastPush = state;
-    pushedWhilePaused = !isActive;
+    pushedWhilePaused = isPaused;
 
-    if (state && isActive) {
+    if (state && !isPaused) {
       for (const poller of pollers) {
         poller._push(state._update);
       }
@@ -503,28 +503,28 @@ const createTriggerInstance = <T extends string, D, A extends unknown[]>(
 
   // ----------
 
-  const setState = (activate: boolean) => {
-    if (isActive !== activate) {
-      isActive = activate;
+  const setState = (state: RUNNING_STATE) => {
+    if (isPaused !== (state === PAUSE)) {
+      isPaused = !isPaused;
 
-      if (activate && pushedWhilePaused) {
+      if (!isPaused && pushedWhilePaused) {
         // wake up pollers with the last data pushed while paused
         updateState(lastPush);
       }
 
-      (isActive ? logic?.resume : logic?.pause)?.call(self, store);
+      (isPaused ? logic?.pause : logic?.resume)?.call(self, store);
     }
   };
 
   // --------------------
 
   async function* poll(): AsyncGenerator<FXStateUpdate, undefined, undefined> {
-    setState(true); // resume if needed
+    setState(RESUME);
 
     const poller = createPoller();
     pollers.add(poller);
 
-    if (lastPush && isActive) {
+    if (lastPush && !isPaused) {
       // there's been a push already
       yield _.copyNested(lastPush._update);
     }
@@ -537,7 +537,7 @@ const createTriggerInstance = <T extends string, D, A extends unknown[]>(
       _.deleteKey(pollers, poller);
 
       if (!_.sizeOf(pollers)) {
-        setState(false); // pause
+        setState(PAUSE);
       }
     }
   }
@@ -591,6 +591,11 @@ interface BuilderDataMap {
     data: FXTriggerInitData<A>,
   ): this;
 }
+
+type RUNNING_STATE = typeof PAUSE | typeof RESUME;
+
+const PAUSE: unique symbol = _.SYMBOL() as typeof PAUSE;
+const RESUME: unique symbol = _.SYMBOL() as typeof RESUME;
 
 const registeredTypes: RegistrationMap = new Map();
 const allBuilderData = new WeakMap() as BuilderDataMap;

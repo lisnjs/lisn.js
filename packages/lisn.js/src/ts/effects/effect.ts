@@ -276,9 +276,14 @@ export interface EffectInstanceInterface<T extends string> {
   isAbsolute: () => boolean;
 
   /**
-   * Returns the pin for this effect if any.
+   * Pauses the pin for this effect if any.
    */
-  getPin: () => FXPin | undefined;
+  pausePin: () => void;
+
+  /**
+   * Resumes the pin for this effect if any.
+   */
+  resumePin: () => void;
 
   /**
    * Triggers an update of the effect as per the composer's state.
@@ -805,7 +810,8 @@ const _createEffectInstance = <T extends EffectName, S>(
   const self: EffectInstance<T> = {
     type: type,
     isAbsolute: () => isAbsolute,
-    getPin: () => init._pin,
+    pausePin: () => pinInstance?.pause(),
+    resumePin: () => pinInstance?.resume(),
     update: () => update(),
     clone: (discardUpdaters) => clone(data, discardUpdaters),
     toComposition,
@@ -844,7 +850,6 @@ const _createEffectInstance = <T extends EffectName, S>(
     ? createPinInstance(
         init._pin,
         composer,
-        self,
         (clampedState, realtime) => {
           update(clampedState);
           requestRecompose(realtime);

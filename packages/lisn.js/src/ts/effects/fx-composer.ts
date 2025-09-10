@@ -46,8 +46,8 @@ import { FXComposition } from "@lisn/effects/fx-composition";
 import { FXScrollTrigger, FXTrigger } from "@lisn/effects/fx-trigger";
 
 import {
+  StartStopper,
   createEffectInstance,
-  getPinInstance,
   getUpdatedState,
   createTriggerInstance,
   atLeastOneVisible,
@@ -55,6 +55,7 @@ import {
 } from "@lisn/effects/_internal";
 
 import debug from "@lisn/debug/debug";
+import { LoggerInterface } from "@lisn/debug/types";
 
 /**
  * {@link FXComposer} links together multiple effects or other composers. It
@@ -90,9 +91,9 @@ export class FXComposer {
   readonly add: (...links: Array<Effect | FXComposer>) => this;
 
   /**
-   * Returns true if the composer is running (not paused).
+   * Returns true if the composer is paused.
    */
-  readonly isActive: () => boolean;
+  readonly isPaused: () => boolean;
 
   /**
    * Pauses the composer. It will stop polling the trigger and therefore, stop
@@ -114,7 +115,7 @@ export class FXComposer {
    * Calls the given handler when the composer is paused or resumed.
    *
    * The handler is called after updating the state such that calling
-   * {@link isActive} from the handler will reflect the latest state.
+   * {@link isPaused} from the handler will reflect the latest state.
    */
   readonly onToggle: (handler: FXComposerHandler) => this;
 
@@ -207,7 +208,8 @@ export class FXComposer {
 
   /**
    * Calls the given handler whenever the composer re-applies CSS to the
-   * elements.
+   * elements. The handler is not called when clearing the CSS (during
+   * {@link pause} or {@link clear}).
    *
    * The handler is called **after** applying the CSS such that checking the
    * style/layout from the handler will reflect the latest CSS. The second
@@ -242,6 +244,33 @@ export class FXComposer {
    * Removes a previously added {@link onCompose} handler.
    */
   readonly offCompose: (handler: FXComposerHandler) => this;
+
+  /**
+   * Use this if you need to detect how a certain target state of the composer
+   * would affect the element's styles. What it does is, it:
+   * 1. temporarily applies the requested update
+   * 2. updates the effect composition (without calling any callbacks)
+   * 3. applies the CSS immediately
+   * 4. calls the callback, which should do whatever measurements it needs
+   *    synchronously
+   * 5. resets the state and effect composition back to the previous one
+   *
+   * This is a very expensive operation that will cause a forced layout, so only
+   * use this sparingly.
+   *
+   * @param callback Will be called after applying the CSS for the new state. It
+   *                 will be passed the full resultant state as well as the CSS
+   *                 properties and values.
+   * @param state    Partial or full state. If only some properties are given,
+   *                 the rest are set to their initial/default values. The
+   *                 current composer state is not used.
+   *
+   * @returns The return value of the callback.
+   */
+  readonly withCalibrationContext: <R>(
+    callback: (state: FXState, style: Record<string, string>) => R,
+    state: DeepPartial<FXState>,
+  ) => R;
 
   /**
    * Returns an object with the combined CSS properties and their values from
@@ -399,76 +428,44 @@ export class FXComposer {
 
     // ----- data
 
-    const compositionChain: Array<EffectInstance | FXComposer> = [];
-    const currentComposition = new FXComposition();
-    compositions.set(this, currentComposition);
-
-    const animatedElements = _.createSet<Element>();
-
-    const toggleCallbacks = createCallbackManager<FXComposerHandlerArgs>({
-      description: "toggle",
-      logger,
-    });
-    const clearCallbacks = createCallbackManager<FXComposerHandlerArgs>({
-      description: "clear",
-      logger,
-    });
-    const destroyCallbacks = createCallbackManager<FXComposerHandlerArgs>({
-      description: "destroy",
-      logger,
-    });
-    const triggerCallbacks = createCallbackManager<FXComposerHandlerArgs>({
-      description: "trigger",
-      logger,
-    });
-    const tweenCallbacks = createCallbackManager<FXComposerHandlerArgs>({
-      description: "tween",
-      logger,
-    });
-    const styleCallbacks = createCallbackManager<FXComposerHandlerArgs>({
-      description: "style",
-      logger,
-    });
-    const composeCallbacks = createCallbackManager<FXComposerHandlerArgs>({
-      description: "compose",
-      logger,
-    });
-
-    const currentFXState = createState();
-
     const triggerInstance = createTriggerInstance(trigger, logger);
 
-    let parent = getParentComposer(elements);
-    let isActive = false; // we start after initialized
-    let isDestroyed = false;
+    let ctx = createContext(elements, logger);
+    ctx._isPaused = true; // we start after initialized
+    compositions.set(this, ctx._composition);
+
+    const linkInput: Array<Effect | FXComposer> = [];
+
     let isTweening = false;
     let updatePending = false;
-    let hasVisibleElements = false;
-    let hasIncrementalEffects = false;
-    let lastCss: Record<string, string> = {};
 
     // ----- viewport watching (for auto stand-by)
     // set/reset when updating elements or autoStandBy
-    let viewWatch: ReturnType<typeof atLeastOneVisible> | null = null;
+    let viewWatch: StartStopper | null = null;
 
     const resetViewWatch = () => {
       viewWatch?.stop();
       // We don't bother figuring out if animated elements are inside a custom
       // scrollable, just use the viewport as the root.
       viewWatch = effectiveConfig.autoStandBy
-        ? atLeastOneVisible(animatedElements, (hasVisible) => {
-            hasVisibleElements = hasVisible;
+        ? atLeastOneVisible(
+            ctx._elements,
+            (hasVisible) => {
+              ctx._isVisible = hasVisible;
 
-            if (
-              effectiveConfig.autoStandBy &&
-              !hasVisibleElements &&
-              !hasIncrementalEffects
-            ) {
-              pause();
-            } else {
-              resume();
-            }
-          })
+              if (
+                effectiveConfig.autoStandBy &&
+                !ctx._isVisible &&
+                !ctx._hasIncrementalEffects
+              ) {
+                pause();
+              } else {
+                resume();
+              }
+            },
+            null,
+            logger,
+          )
         : null;
     };
 
@@ -476,7 +473,7 @@ export class FXComposer {
 
     const recomposeOnOtherCompose = createConcurrentCallback(
       () => {
-        recompose(UPDATE_NONE);
+        recompose({ _updateMode: UPDATE_NONE });
       },
       { logger },
     );
@@ -490,24 +487,40 @@ export class FXComposer {
 
     // ----------
 
-    const add = (link: Effect | FXComposer) => {
-      if (_.isInstanceOf(link, FXComposer)) {
-        compositionChain.push(link);
-        link.onCompose(recomposeOnOtherCompose);
-        addToComposition(link);
-      } else {
-        const effectInstance = createEffectInstance(
-          link,
-          this,
-          (realtime) => recompose(UPDATE_NONE, realtime),
-          logger,
-        );
-
-        compositionChain.push(effectInstance);
-        addToComposition(effectInstance);
-
-        hasIncrementalEffects ||= !effectInstance.isAbsolute();
+    const add = (...links: Array<Effect | FXComposer>) => {
+      if (ctx._isDestroyed) {
+        logError(usageError("FXComposer is destroyed"));
+        return this;
       }
+
+      logger?.debug7("Adding links", links);
+
+      for (const link of links) {
+        linkInput.push(link);
+
+        if (_.isInstanceOf(link, FXComposer)) {
+          ctx._links.push(link);
+          link.onCompose(recomposeOnOtherCompose);
+          addToComposition(link);
+        } else {
+          const effectInstance = createEffectInstance(
+            link,
+            this,
+            (realtime) =>
+              recompose({ _updateMode: UPDATE_NONE, _realtime: realtime }),
+            logger,
+          );
+
+          ctx._links.push(effectInstance);
+          addToComposition(effectInstance);
+
+          ctx._hasIncrementalEffects ||= !effectInstance.isAbsolute();
+        }
+      }
+
+      resume();
+      invokeCallbacks(ctx._callbacks._compose);
+      return this;
     };
 
     // ----------
@@ -524,42 +537,39 @@ export class FXComposer {
       state: RUNNING_STATE,
       options?: { _clearCss?: boolean; _skipCallbacks?: boolean },
     ) => {
-      const activate = state === RESUME;
-      if (isActive !== activate && !isDestroyed) {
-        logger?.debug5(activate ? "Resuming" : "Pausing");
+      if (ctx._isPaused !== (state === PAUSE) && !ctx._isDestroyed) {
+        ctx._isPaused = !ctx._isPaused;
+
+        logger?.debug5(ctx._isPaused ? "Pausing" : "Resuming");
         const negated = effectiveConfig.negated;
 
         if (negated) {
-          (activate ? negated.onCompose : negated.offCompose)(
+          (ctx._isPaused ? negated.offCompose : negated.onCompose)(
             reanimateOnNegatedCompose,
           );
         }
 
-        for (const link of compositionChain) {
+        for (const link of ctx._links) {
           if (_.isInstanceOf(link, FXComposer)) {
-            (activate ? link.onCompose : link.offCompose)(
+            (ctx._isPaused ? link.offCompose : link.onCompose)(
               recomposeOnOtherCompose,
             );
           } else {
-            const pinInstance = getPinInstance(this, link);
-            if (pinInstance) {
-              (activate ? pinInstance.resume : pinInstance.pause)();
-            }
+            (ctx._isPaused ? link.pausePin : link.resumePin)();
           }
         }
 
-        applyCss({ _clearCss: !activate && options?._clearCss });
+        applyCss({ _clearCss: ctx._isPaused && options?._clearCss });
 
-        isActive = activate;
         if (viewWatch) {
-          (activate ? viewWatch.start : viewWatch.stop)();
+          (ctx._isPaused ? viewWatch.stop : viewWatch.start)();
         }
 
         if (!options?._skipCallbacks) {
-          invokeCallbacks(toggleCallbacks);
+          invokeCallbacks(ctx._callbacks._toggle);
         }
 
-        if (activate) {
+        if (!ctx._isPaused) {
           pollTrigger();
         }
       }
@@ -570,16 +580,17 @@ export class FXComposer {
     // ----------
 
     const clear = () => {
-      if (_.lengthOf(compositionChain)) {
+      if (_.lengthOf(ctx._links)) {
         logger?.debug5("Clearing");
         pause({ _clearCss: true });
 
-        compositionChain.length = 0; // clear
-        currentComposition.clear();
+        linkInput.length = 0;
+        ctx._links.length = 0;
+        ctx._composition.clear();
 
-        hasIncrementalEffects = false;
+        ctx._hasIncrementalEffects = false;
 
-        invokeCallbacks(clearCallbacks);
+        invokeCallbacks(ctx._callbacks._clear);
       }
 
       return this;
@@ -588,25 +599,25 @@ export class FXComposer {
     // ----------
 
     const destroy = () => {
-      if (!isDestroyed) {
+      if (!ctx._isDestroyed) {
         logger?.debug5("Destroying");
         clear();
-        isDestroyed = true;
+        ctx._isDestroyed = true;
 
-        for (const el of animatedElements) {
+        for (const el of ctx._elements) {
           _.deleteKey(allAnimatedElements, el);
         }
 
         _.deleteKey(compositions, this);
 
-        invokeCallbacks(destroyCallbacks).then(() => {
-          toggleCallbacks.clear();
-          clearCallbacks.clear();
-          destroyCallbacks.clear();
-          triggerCallbacks.clear();
-          tweenCallbacks.clear();
-          styleCallbacks.clear();
-          composeCallbacks.clear();
+        invokeCallbacks(ctx._callbacks._destroy).then(() => {
+          ctx._callbacks._toggle.clear();
+          ctx._callbacks._clear.clear();
+          ctx._callbacks._destroy.clear();
+          ctx._callbacks._trigger.clear();
+          ctx._callbacks._tween.clear();
+          ctx._callbacks._style.clear();
+          ctx._callbacks._compose.clear();
         });
       }
 
@@ -615,10 +626,34 @@ export class FXComposer {
 
     // ----------
 
+    const withCalibrationContext = <R>(
+      callback: (state: FXState, style: Record<string, string>) => R,
+      state: DeepPartial<FXState>,
+    ): R => {
+      logger?.debug5("Setting up calibration context", state);
+
+      const backup = ctx;
+
+      ctx = createContext(elements, logger); // clean, no callbacks
+      add(...linkInput);
+      ctx._isVisible = true; // force update absolute effects
+
+      updateState(state);
+
+      recompose({ _realtime: true, _overrideCss: { transition: "none" } });
+      const result = callback(ctx._state, ctx._css);
+
+      ctx = backup;
+      applyCss({ _realtime: true });
+      return result;
+    };
+
+    // ----------
+
     const toCss = () => {
       const css: Record<string, string> = {};
 
-      for (const [type__ignored, effect] of currentComposition) {
+      for (const [type__ignored, effect] of ctx._composition) {
         const thisCss = effect.toCss();
 
         for (const p in thisCss) {
@@ -633,7 +668,7 @@ export class FXComposer {
         }
       }
 
-      lastCss = css;
+      ctx._css = css;
       return css;
     };
 
@@ -650,15 +685,15 @@ export class FXComposer {
 
       pause({ _clearCss: true, _skipCallbacks: true });
 
-      animatedElements.clear();
+      ctx._elements.clear();
       for (const el of elements) {
-        animatedElements.add(el);
+        ctx._elements.add(el);
       }
 
-      logger?.debug5("New elements", animatedElements);
+      logger?.debug5("New elements", ctx._elements);
 
-      parent = getParentComposer(elements);
-      effectiveConfig.negated = negateParent ? parent : null;
+      ctx._parent = getParentComposer(elements);
+      effectiveConfig.negated = negateParent ? ctx._parent : null;
 
       resetViewWatch();
       resume({ _skipCallbacks: true });
@@ -671,8 +706,8 @@ export class FXComposer {
     const setAutoStandBy = (autoStandBy?: boolean) => {
       if (_.isNullish(autoStandBy)) {
         autoStandBy = false;
-        if (parent) {
-          const parentConfig = parent.getConfig();
+        if (ctx._parent) {
+          const parentConfig = ctx._parent.getConfig();
           autoStandBy =
             parentConfig.depthX <= effectiveConfig.depthX &&
             parentConfig.depthY <= effectiveConfig.depthY &&
@@ -707,7 +742,7 @@ export class FXComposer {
       if (didUpdate) {
         // If it's currently tweening, it will recompose anyway.
         if (!isTweening) {
-          recompose(UPDATE_ABSOLUTE);
+          recompose({ _updateMode: UPDATE_ABSOLUTE });
         }
       }
 
@@ -748,35 +783,14 @@ export class FXComposer {
         didUpdate ||= effectiveConfig[`${prop}${A}`] !== newVal;
 
         effectiveConfig[`${prop}${A}`] = newVal;
-        currentFXState[a][prop] = newVal;
+        ctx._state[a][prop] = newVal;
       }
 
       updateState(); // will re-apply lag/depth from config
       return didUpdate;
     };
 
-    // ----------
-
-    const updateState = (
-      newState?: DeepPartial<FXState> | null,
-      updateData?: FXStateUpdate,
-    ): boolean => {
-      if (newState) {
-        _.copyExistingKeysTo(newState, currentFXState);
-      }
-
-      const validated = getUpdatedState(currentFXState, updateData);
-      const didUpdate = !compareValuesIn(currentFXState, validated, 5);
-
-      logger?.debug10("New state", validated, { didUpdate });
-      _.assign(currentFXState, validated); // override current state object
-
-      updatePending ||= didUpdate;
-
-      return didUpdate;
-    };
-
-    // ----------
+    /* ****************************** */
 
     const addHandler = (
       handler: FXComposerHandler,
@@ -800,9 +814,44 @@ export class FXComposer {
       css?: Record<string, string>,
     ) =>
       callbacks.invoke(this, {
-        state: state ?? _.copyNested(currentFXState),
-        style: css ?? lastCss,
+        state: state ?? _.copyNested(ctx._state),
+        style: css ?? ctx._css,
       });
+
+    // ----------
+
+    const addToComposition = (link: EffectInstance | FXComposer) => {
+      if (_.isInstanceOf(link, FXComposer)) {
+        for (const effect of compositions.get(link)?.values() ?? []) {
+          ctx._composition.add(effect);
+        }
+      } else {
+        ctx._composition.add(link);
+      }
+    };
+
+    // ----------
+
+    const updateState = (
+      newState?: DeepPartial<FXState> | null,
+      updateData?: FXStateUpdate,
+    ): boolean => {
+      let current = ctx._state;
+      if (newState) {
+        current = _.copyNested(current);
+        _.copyExistingKeysTo(newState, current);
+      }
+
+      const validated = getUpdatedState(current, updateData);
+      const didUpdate = !compareValuesIn(current, validated, 5);
+
+      logger?.debug10("New state", validated, { didUpdate });
+      ctx._state = validated;
+
+      updatePending ||= didUpdate;
+
+      return didUpdate;
+    };
 
     // ----------
 
@@ -813,18 +862,18 @@ export class FXComposer {
 
       isTweening = true;
 
-      logger?.debug7("Starting tween", _.copyNested(currentFXState));
-      const tweenGenerator = animation3DTweener(tweener, currentFXState);
+      logger?.debug7("Starting tween", _.copyNested(ctx._state));
+      const tweenGenerator = animation3DTweener(tweener, ctx._state);
       while (true) {
-        if (!isActive) {
+        if (ctx._isPaused) {
           break;
         }
 
         const tweenUpdate: Animation3DTweenerUpdate<keyof FXState> = {};
         for (const a of ["x", "y", "z"] as const) {
-          tweenUpdate[a] = { snap: currentFXState[a].snap };
+          tweenUpdate[a] = { snap: ctx._state[a].snap };
           for (const p of ["target", "lag"] as const) {
-            tweenUpdate[a][p] = currentFXState[a][p];
+            tweenUpdate[a][p] = ctx._state[a][p];
           }
         }
 
@@ -846,12 +895,12 @@ export class FXComposer {
             partial[a][p] = newState[a][p];
           }
 
-          updatePending ||= newState[a].target !== currentFXState[a].target;
+          updatePending ||= newState[a].target !== ctx._state[a].target;
         }
 
         updateState(partial);
         recompose();
-        invokeCallbacks(tweenCallbacks);
+        invokeCallbacks(ctx._callbacks._tween);
       }
 
       isTweening = false;
@@ -863,27 +912,25 @@ export class FXComposer {
 
     // ----------
 
-    const addToComposition = (link: EffectInstance | FXComposer) => {
-      if (_.isInstanceOf(link, FXComposer)) {
-        for (const effect of compositions.get(link)?.values() ?? []) {
-          currentComposition.add(effect);
-        }
-      } else {
-        currentComposition.add(link);
-      }
-    };
+    const recompose = (options?: {
+      _updateMode?: UPDATE_MODE; // default is UPDATE_ALL
+      _realtime?: boolean;
+      _overrideCss?: Record<string, string>;
+    }) => {
+      const {
+        _updateMode: update = UPDATE_ALL,
+        _realtime: realtime = false,
+        _overrideCss: overrideCss,
+      } = options ?? {};
 
-    // ----------
-
-    const recompose = (update: UPDATE_MODE = UPDATE_ALL, realtime = false) => {
-      if (_.sizeOf(currentComposition)) {
-        currentComposition.clear();
-        logger?.debug10("Recomposing", _.copyNested(currentFXState));
+      if (_.sizeOf(ctx._composition)) {
+        ctx._composition.clear();
+        logger?.debug10("Recomposing", _.copyNested(ctx._state));
 
         const shouldSkipAbsolute =
-          effectiveConfig.autoStandBy && !hasVisibleElements;
+          effectiveConfig.autoStandBy && !ctx._isVisible;
 
-        for (const link of compositionChain) {
+        for (const link of ctx._links) {
           if (
             !_.isInstanceOf(link, FXComposer) &&
             (update === UPDATE_ALL ||
@@ -896,8 +943,8 @@ export class FXComposer {
           addToComposition(link);
         }
 
-        applyCss({ _realtime: realtime }); // no need to await
-        invokeCallbacks(composeCallbacks);
+        applyCss({ _realtime: realtime, _override: overrideCss }); // no need to await
+        invokeCallbacks(ctx._callbacks._compose);
       }
 
       return this;
@@ -911,7 +958,7 @@ export class FXComposer {
         isPolling = true;
 
         for await (const updateData of triggerInstance.poll()) {
-          if (!isActive) {
+          if (ctx._isPaused) {
             break;
           }
 
@@ -919,8 +966,8 @@ export class FXComposer {
           logger?.debug9("Got trigger data", { updateData, didUpdate });
 
           if (didUpdate) {
-            invokeCallbacks(triggerCallbacks);
-            invokeCallbacks(tweenCallbacks);
+            invokeCallbacks(ctx._callbacks._trigger);
+            invokeCallbacks(ctx._callbacks._tween);
             tween();
           }
         }
@@ -932,17 +979,20 @@ export class FXComposer {
     // ----------
 
     let scheduledApplyCss: symbol | null = null;
-
     const applyCss = async (options?: {
       _clearCss?: boolean;
       _realtime?: boolean;
+      _override?: Record<string, string>;
     }) => {
       const myId = _.SYMBOL();
       scheduledApplyCss = myId;
-      const { _clearCss: clearCss = false, _realtime: realtime = false } =
-        options ?? {};
+      const {
+        _clearCss: clearCss = false,
+        _realtime: realtime = false,
+        _override: override = {},
+      } = options ?? {};
 
-      const state = _.copyNested(currentFXState);
+      const state = _.copyNested(ctx._state);
       const css = toCss();
 
       if (!realtime) {
@@ -956,71 +1006,63 @@ export class FXComposer {
       logger?.debug10("Applying CSS ", state, css, options);
 
       for (const prop in css) {
-        for (const element of animatedElements) {
+        for (const element of ctx._elements) {
           if (clearCss) {
             delStylePropNow(element, prop);
           } else {
-            setStylePropNow(element, prop, css[prop]);
+            setStylePropNow(element, prop, override[prop] ?? css[prop]);
           }
         }
       }
 
-      invokeCallbacks(styleCallbacks, state, css);
+      if (!clearCss) {
+        invokeCallbacks(ctx._callbacks._style, state, css);
+      }
     };
 
     // --------------------
 
-    this.add = (...links) => {
-      if (isDestroyed) {
-        logError(usageError("FXComposer is destroyed"));
-        return this;
-      }
-
-      logger?.debug7("Adding links", links);
-
-      for (const link of links) {
-        add(link);
-      }
-
-      resume();
-      invokeCallbacks(composeCallbacks);
-      return this;
-    };
-
-    this.isActive = () => isActive;
+    this.add = add;
+    this.isPaused = () => ctx._isPaused;
     this.pause = (clearCss?: boolean) => pause({ _clearCss: clearCss });
     this.resume = () => resume();
-    this.onToggle = (handler) => addHandler(handler, toggleCallbacks);
-    this.offToggle = (handler) => deleteHandler(handler, toggleCallbacks);
+    this.onToggle = (handler) => addHandler(handler, ctx._callbacks._toggle);
+    this.offToggle = (handler) =>
+      deleteHandler(handler, ctx._callbacks._toggle);
 
     this.clear = clear;
-    this.onClear = (handler) => addHandler(handler, clearCallbacks);
-    this.offClear = (handler) => deleteHandler(handler, clearCallbacks);
+    this.onClear = (handler) => addHandler(handler, ctx._callbacks._clear);
+    this.offClear = (handler) => deleteHandler(handler, ctx._callbacks._clear);
 
-    this.isDestroyed = () => isDestroyed;
+    this.isDestroyed = () => ctx._isDestroyed;
     this.destroy = destroy;
-    this.onDestroy = (handler) => addHandler(handler, destroyCallbacks);
-    this.offDestroy = (handler) => deleteHandler(handler, destroyCallbacks);
+    this.onDestroy = (handler) => addHandler(handler, ctx._callbacks._destroy);
+    this.offDestroy = (handler) =>
+      deleteHandler(handler, ctx._callbacks._destroy);
 
-    this.onTrigger = (handler) => addHandler(handler, triggerCallbacks);
-    this.offTrigger = (handler) => deleteHandler(handler, triggerCallbacks);
+    this.onTrigger = (handler) => addHandler(handler, ctx._callbacks._trigger);
+    this.offTrigger = (handler) =>
+      deleteHandler(handler, ctx._callbacks._trigger);
 
-    this.onTween = (handler) => addHandler(handler, tweenCallbacks);
-    this.offTween = (handler) => deleteHandler(handler, tweenCallbacks);
+    this.onTween = (handler) => addHandler(handler, ctx._callbacks._tween);
+    this.offTween = (handler) => deleteHandler(handler, ctx._callbacks._tween);
 
-    this.onStyle = (handler) => addHandler(handler, styleCallbacks);
-    this.offStyle = (handler) => deleteHandler(handler, styleCallbacks);
+    this.onStyle = (handler) => addHandler(handler, ctx._callbacks._style);
+    this.offStyle = (handler) => deleteHandler(handler, ctx._callbacks._style);
 
-    this.onCompose = (handler) => addHandler(handler, composeCallbacks);
-    this.offCompose = (handler) => deleteHandler(handler, composeCallbacks);
+    this.onCompose = (handler) => addHandler(handler, ctx._callbacks._compose);
+    this.offCompose = (handler) =>
+      deleteHandler(handler, ctx._callbacks._compose);
+
+    this.withCalibrationContext = withCalibrationContext;
 
     this.toCss = toCss;
     this.getComposition = (discardUpdaters) =>
-      currentComposition.clone(discardUpdaters);
-    this.getState = () => _.copyNested(currentFXState);
-    this.getElements = () => [...animatedElements];
+      ctx._composition.clone(discardUpdaters);
+    this.getState = () => _.copyNested(ctx._state);
+    this.getElements = () => [...ctx._elements];
     this.addElements = (...elements: Element[]) =>
-      setElements(...animatedElements, ...elements);
+      setElements(...ctx._elements, ...elements);
     this.setElements = (...elements: Element[]) => setElements(...elements);
     this.getConfig = () => _.copyNested(effectiveConfig);
     this.setAutoStandBy = setAutoStandBy;
@@ -1350,6 +1392,28 @@ export type FXState = {
 
 // ------------------------------
 
+type Context = {
+  _links: Array<EffectInstance | FXComposer>;
+  _composition: FXComposition;
+  _state: FXState;
+  _css: Record<string, string>;
+  _elements: Set<Element>;
+  _parent: FXComposer | null;
+  _callbacks: {
+    _toggle: CallbackManager<FXComposerHandlerArgs>;
+    _clear: CallbackManager<FXComposerHandlerArgs>;
+    _destroy: CallbackManager<FXComposerHandlerArgs>;
+    _trigger: CallbackManager<FXComposerHandlerArgs>;
+    _tween: CallbackManager<FXComposerHandlerArgs>;
+    _style: CallbackManager<FXComposerHandlerArgs>;
+    _compose: CallbackManager<FXComposerHandlerArgs>;
+  };
+  _isVisible: boolean;
+  _isPaused: boolean;
+  _isDestroyed: boolean;
+  _hasIncrementalEffects: boolean;
+};
+
 type UPDATE_MODE =
   | typeof UPDATE_NONE
   | typeof UPDATE_ABSOLUTE
@@ -1409,6 +1473,39 @@ const getParentComposer = (elements: Iterable<Element>): FXComposer | null => {
   }
 
   return null;
+};
+
+const createContext = (
+  elements: Iterable<Element>,
+  logger: LoggerInterface | undefined,
+): Context => {
+  const createCallbackManagerFor = (description: string) =>
+    createCallbackManager<FXComposerHandlerArgs>({
+      description,
+      logger,
+    });
+
+  return {
+    _links: [],
+    _composition: new FXComposition(),
+    _state: createState(),
+    _css: {},
+    _elements: _.createSet([...elements]),
+    _parent: getParentComposer(elements),
+    _callbacks: {
+      _toggle: createCallbackManagerFor("toggle"),
+      _clear: createCallbackManagerFor("clear"),
+      _destroy: createCallbackManagerFor("destroy"),
+      _trigger: createCallbackManagerFor("trigger"),
+      _tween: createCallbackManagerFor("tween"),
+      _style: createCallbackManagerFor("style"),
+      _compose: createCallbackManagerFor("compose"),
+    },
+    _isVisible: false,
+    _isPaused: false,
+    _isDestroyed: false,
+    _hasIncrementalEffects: false,
+  };
 };
 
 // --------------------

@@ -102,7 +102,7 @@ export const onEveryAnimationFrame = async (
  */
 export async function* animationFrameGenerator(
   elapsed?: ElapsedTimes,
-): AsyncGenerator<ElapsedTimes, never, undefined> {
+): AsyncGenerator<ElapsedTimes, undefined, undefined> {
   let startTime: number, previousTimeStamp: number;
   const { total: totalSeed = 0, sinceLast: sinceLastSeed = 0 } = elapsed ?? {};
 

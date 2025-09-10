@@ -696,13 +696,12 @@ export async function* animation3DTweener<Axes extends "x" | "y" | "z">(
   // when caller has quit
   const generator = animationFrameGenerator();
   while (true) {
-    const {
-      value: { sinceLast: deltaTime },
-      done,
-    } = await generator.next();
+    const { value, done } = await generator.next();
     if (done) {
       break;
     }
+
+    const { sinceLast: deltaTime } = value;
 
     if (deltaTime === 0) {
       continue;

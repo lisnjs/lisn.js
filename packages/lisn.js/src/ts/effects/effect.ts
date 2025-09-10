@@ -219,13 +219,13 @@ export const registerEffect = <const T extends EffectName, State>(
     init: (self: Effect<T>, config?: EffectConfig) => {
       const { pin, isAbsolute = !pin } = config ?? {};
 
-      const init: Required<EffectInitData<T>> = {
+      const initData: Required<EffectInitData<T>> = {
         _isAbsolute: isAbsolute,
         _pin: pin,
         _updaters: [],
       };
 
-      allBuilderData.set(self, init);
+      allBuilderData.set(self, initData);
 
       return {
         addUpdater: (updater: EffectUpdaterEntry<T>) =>
@@ -629,7 +629,10 @@ interface RegistrationMap {
 
 interface BuilderDataMap {
   get<T extends EffectName>(effect: Effect<T>): EffectInitData<T> | undefined;
-  set<T extends EffectName>(effect: Effect<T>, data: EffectInitData<T>): this;
+  set<T extends EffectName>(
+    effect: Effect<T>,
+    initData: EffectInitData<T>,
+  ): this;
 }
 
 interface InstanceDataMap {
@@ -649,28 +652,28 @@ const allInstanceData = new WeakMap() as InstanceDataMap;
 // ------------------------------
 
 const getInitData = <T extends EffectName>(effect: Effect<T>) => {
-  const data = allBuilderData.get(effect);
+  const initData = allBuilderData.get(effect);
   /* istanbul ignore next */
-  if (!data) {
+  if (!initData) {
     throw bugError(`No init data saved for effect '${effect.type}'`);
   }
-  return data;
+  return initData;
 };
 
 const setUpdaters = <T extends EffectName>(
   effect: Effect<T>,
   updaters: EffectUpdaterEntry<T>[],
 ) => {
-  const data = getInitData(effect);
-  data._updaters = updaters;
+  const initData = getInitData(effect);
+  initData._updaters = updaters;
 };
 
 const addUpdater = <T extends EffectName>(
   effect: Effect<T>,
   updater: EffectUpdaterEntry<T>,
 ) => {
-  const data = getInitData(effect);
-  data._updaters.push(updater);
+  const initData = getInitData(effect);
+  initData._updaters.push(updater);
 };
 
 const createEffectInstance = <T extends EffectName>(
@@ -690,11 +693,11 @@ const createEffectInstance = <T extends EffectName>(
     throw bugError(`No definitions saved for effect type '${effect.type}'`);
   }
 
-  const init = getInitData(effect);
+  const initData = getInitData(effect);
 
   return _createEffectInstance(
     definitions,
-    _.merge(init, { _composer: composer }),
+    _.merge(initData, { _composer: composer }),
     requestRecompose,
     logger,
   );
@@ -706,17 +709,15 @@ const _createEffectInstance = <T extends EffectName, S>(
     logic: EffectLogic<T, S>;
     nullState: S;
   },
-  init: SemiPartial<EffectInitData<T> & EffectInstanceData<T, S>, "_state">,
+  initData: SemiPartial<EffectInitData<T> & EffectInstanceData<T, S>, "_state">,
   requestRecompose: (realtime?: boolean) => void,
   parentLogger: LoggerInterface | undefined,
 ): EffectInstance<T> => {
-  const update = (clampedState?: FXState) => {
-    if (!clampedState && pinInstance?.isActive()) {
+  const update = (state: FXState, byPin: boolean) => {
+    if (!byPin && pinInstance?.isActive()) {
       logger?.debug10("Pinned, skipping update");
       return;
     }
-
-    const state = clampedState ?? composer.getState();
 
     if (isAbsolute) {
       // reset state
@@ -812,7 +813,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     isAbsolute: () => isAbsolute,
     pausePin: () => pinInstance?.pause(),
     resumePin: () => pinInstance?.resume(),
-    update: () => update(),
+    update: () => update(composer.getState(), false),
     clone: (discardUpdaters) => clone(data, discardUpdaters),
     toComposition,
     toCss: () => {
@@ -842,16 +843,16 @@ const _createEffectInstance = <T extends EffectName, S>(
 
   // ----------
 
-  const { _isAbsolute: isAbsolute = false, _composer: composer } = init;
+  const { _isAbsolute: isAbsolute = false, _composer: composer } = initData;
   const negated = composer.getConfig().negated;
   const nullState = cloneState(definitions.nullState);
 
-  const pinInstance = init._pin
+  const pinInstance = initData._pin
     ? createPinInstance(
-        init._pin,
+        initData._pin,
         composer,
-        (clampedState, realtime) => {
-          update(clampedState);
+        (state, realtime) => {
+          update(state, true);
           requestRecompose(realtime);
         },
         logger,
@@ -860,8 +861,8 @@ const _createEffectInstance = <T extends EffectName, S>(
 
   const data: EffectInstanceData<T, S> = {
     _isAbsolute: isAbsolute,
-    _pin: init._pin,
-    _state: cloneState(init._state ?? nullState),
+    _pin: initData._pin,
+    _state: cloneState(initData._state ?? nullState),
     _updaters: [],
     _composer: composer,
   };
@@ -869,7 +870,7 @@ const _createEffectInstance = <T extends EffectName, S>(
 
   // ----------
 
-  for (const entry of init._updaters ?? []) {
+  for (const entry of initData._updaters ?? []) {
     if (_.isFunction(entry.updater)) {
       data._updaters.push(entry);
     } else {

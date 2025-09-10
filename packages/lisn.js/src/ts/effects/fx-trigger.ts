@@ -54,11 +54,6 @@ export abstract class FXTriggerBase<T extends string> implements FXTrigger<T> {
   readonly [TRIGGER] = true;
 
   abstract type: T;
-
-  constructor() {
-    const data: FXTriggerInitData<unknown[]> = { _args: null };
-    allBuilderData.set(this, data);
-  }
 }
 
 /**
@@ -100,8 +95,7 @@ export class FXProxyTrigger extends FXTriggerBase<"proxy"> {
       throw usageError("A trigger is required for FXProxyTrigger");
     }
 
-    const { setArgs } = initProxy(this);
-    setArgs(trigger, config);
+    initProxy(this, trigger, config);
   }
 }
 
@@ -149,8 +143,7 @@ export class FXScrollTrigger extends FXTriggerBase<"scroll"> {
   constructor(scrollable?: ScrollTarget) {
     super();
 
-    const { setArgs } = initScroll(this);
-    setArgs(scrollable);
+    initScroll(this, scrollable);
   }
 }
 
@@ -172,8 +165,7 @@ export class FXGestureTrigger extends FXTriggerBase<"gesture"> {
       throw usageError("A target is required for FXGestureTrigger");
     }
 
-    const { setArgs } = initGesture(this);
-    setArgs(target, config);
+    initGesture(this, target, config);
   }
 }
 
@@ -202,11 +194,8 @@ export type FXGestureTriggerConfig = Omit<
  * with an `init` property holding a function.
  *
  * Your trigger class should call this `init` function in its constructor,
- * passing it itself (`this`). `init` will return an object containing the
- * following function:
- * - `setArgs`: Sets the arguments that the {@link FXTriggerLogic}'s run method
- *              will receive. Your trigger class **must** call this in its
- *              constructor.
+ * passing it itself (`this`) and the arguments that the
+ * {@link FXTriggerLogic}'s run method expects.
  *
  * See example below for implementing a basic trigger class.
  *
@@ -220,16 +209,12 @@ export type FXGestureTriggerConfig = Omit<
  *
  * const { init } = registerFXTrigger<
  *   "custom",
- *   number, // state
  *   { start: () => void, stop: () => void }, // data
  *   [CustomArg, CustomConfig | undefined], // arguments passed to run
  * >({
  *   type: "custom",
  *   logic: {
  *     run(store, arg, config) {
- *       // required, set initial state and data
- *       store.setState(0);
- *       // ... rest of init
  *       store.setData({
  *         start: () => {
  *           // ...
@@ -256,9 +241,7 @@ export type FXGestureTriggerConfig = Omit<
  *
  *   constructor(arg: CustomArgs, config?: CustomConfig) {
  *     super();
- *
- *     const { setArgs } = init(this);
- *     setArgs(arg, config);
+ *     init(this, arg, config);
  *   }
  * }
  * ```
@@ -266,8 +249,8 @@ export type FXGestureTriggerConfig = Omit<
  *
  * @typeParam Data The type of data the trigger stores. This is arbitrary data
  *                 to be shared across the {@link FXTriggerLogic} methods.
- * @typeParam Args The type of arguments to pass to the instance methods
- *                 (defined in your {@link FXTriggerLogic}).
+ * @typeParam Args The type of arguments to pass to the `run` method defined in
+ *                 your {@link FXTriggerLogic}.
  *
  * @category Base
  */
@@ -287,15 +270,11 @@ export const registerFXTrigger = <
   registeredTypes.set(definitions.type, definitions);
 
   return {
-    init: (self: FXTrigger<T>) => {
-      return {
-        setArgs: (...args: Args) => {
-          const data = getInitData<Args>(self);
-          data._args = args;
-        },
-      } as const;
+    init: (self: FXTrigger<T>, ...args: Args) => {
+      const initData: FXTriggerInitData<Args> = { _args: args };
+      allBuilderData.set(self, initData);
     },
-  };
+  } as const;
 };
 
 /**
@@ -447,16 +426,13 @@ const createTriggerInstance = <T extends string, D, A extends unknown[]>(
     throw bugError(`No definitions saved for trigger type '${trigger.type}'`);
   }
 
-  const { logic } = definitions;
-
-  const init = getInitData<A>(trigger);
-  const { _args: args } = init;
-
-  /* istanbul ignore next */
-  if (!_.isArray(args)) {
-    // child class didn't call setArgs
-    throw usageError(`No arguments saved for trigger '${trigger.type}'`);
+  const initData = allBuilderData.get<A>(trigger);
+  if (!initData) {
+    throw usageError(`Trigger '${trigger.type}' not initialized`);
   }
+
+  const { logic } = definitions;
+  const { _args: args } = initData;
 
   let isPaused = true;
 
@@ -568,7 +544,7 @@ type Poller = {
 type PollUpdate = { _update: FXStateUpdate };
 
 type FXTriggerInitData<A extends unknown[]> = {
-  _args: A | null;
+  _args: A;
 };
 
 interface RegistrationMap {
@@ -588,7 +564,7 @@ interface BuilderDataMap {
   ): FXTriggerInitData<A> | undefined;
   set<A extends unknown[]>(
     trigger: FXTrigger,
-    data: FXTriggerInitData<A>,
+    initData: FXTriggerInitData<A>,
   ): this;
 }
 
@@ -798,15 +774,6 @@ const { init: initGesture } = registerFXTrigger<
 });
 
 // --------------------
-
-const getInitData = <A extends unknown[]>(trigger: FXTrigger) => {
-  const data = allBuilderData.get<A>(trigger);
-  /* istanbul ignore next */
-  if (!data) {
-    throw bugError(`No init data saved for trigger '${trigger.type}'`);
-  }
-  return data;
-};
 
 const createPoller = (): Poller => {
   const queue: PollUpdate[] = [];

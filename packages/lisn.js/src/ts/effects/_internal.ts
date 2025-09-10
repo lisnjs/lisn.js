@@ -34,7 +34,7 @@ import type { FXPin, FXPinInstance } from "@lisn/effects/fx-pin";
 import type {
   FXClamp,
   FXClampInstance,
-  FXClampViolation,
+  FXClampUpdate,
 } from "@lisn/effects/fx-clamp";
 import type { FXTrigger, FXTriggerInstance } from "@lisn/effects/fx-trigger";
 
@@ -83,7 +83,7 @@ export const createEffectInstance = <T extends EffectName>(
 export const createPinInstance = (
   pin: FXPin,
   composer: FXComposer,
-  requestEffectUpdate: (clampedState: FXState, realtime?: boolean) => void,
+  requestEffectUpdate: (state: FXState, realtime?: boolean) => void,
   logger?: LoggerInterface,
 ) => instanceCreators.pin(pin, composer, requestEffectUpdate, logger);
 
@@ -92,7 +92,7 @@ export const createPinInstance = (
 export const createClampInstance = <T extends string>(
   clamp: FXClamp<T>,
   composer: FXComposer,
-  requestPinUpdate: (violation: FXClampViolation) => void,
+  requestPinUpdate: (update: FXClampUpdate) => void,
   logger?: LoggerInterface,
 ) => instanceCreators.clamp(clamp, composer, requestPinUpdate, logger);
 
@@ -380,14 +380,14 @@ type InstanceCreators = {
   pin: (
     pin: FXPin,
     composer: FXComposer,
-    requestEffectUpdate: (clampedState: FXState, realtime?: boolean) => void,
+    requestEffectUpdate: (state: FXState, realtime?: boolean) => void,
     logger?: LoggerInterface,
   ) => FXPinInstance;
 
   clamp: <T extends string>(
     clamp: FXClamp<T>,
     composer: FXComposer,
-    requestPinUpdate: (violation: FXClampViolation) => void,
+    requestPinUpdate: (update: FXClampUpdate) => void,
     logger?: LoggerInterface,
   ) => FXClampInstance;
 

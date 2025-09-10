@@ -6,11 +6,15 @@
 
 // XXX
 // TODO:
-// - composer clamp reference when restarted after other pinned is wrong;
-//   master pin needs to save deviation and pass it to restart? then restart
-//   needs to apply this deviation to the ref state?
+// - clamp to internally calculate violation and resulting clamped composer
+//   state and pass this onto the pin
+//   - clamp store to store bounds and clamp specific offsets (current/low/high)
+//     and translate
+//   - requestUpdate to accept useDeviation param
 //
-// - need to be able to update deviation even when still actively clamping
+// - composer clamp reference when restarted after other pinned is wrong;
+//   master pin needs to save clamped state and pass it to restart? then
+//   restart needs to apply this deviation to the ref state?
 //
 // - view clamp to support middle (x/y)
 //
@@ -18,6 +22,8 @@
 //
 // -----------------
 // Fixed?
+// - need to be able to update deviation even when still actively clamping
+//
 // - view clamp doesn't react when jump scrolling (activates but doesn't do
 //   anything)
 //
@@ -38,8 +44,8 @@ import {
   ViewportLength,
   AtLeastOne,
   OnlyOne,
-  SemiRequired,
   RawOrRelativeNumber,
+  DeepPartial,
 } from "@lisn/globals/types";
 
 import { havingMaxAbs, toRawNum, RawNumberCalculator } from "@lisn/utils/math";
@@ -86,11 +92,9 @@ export abstract class FXClampBase<T extends string> implements FXClamp<T> {
   readonly invert: () => this;
 
   constructor() {
-    const data: FXClampInitData<unknown[]> = { _invert: false, _args: null };
-    allBuilderData.set(this, data);
-
     this.invert = () => {
-      data._invert = true;
+      const initData = getInitData(this);
+      initData._invert = true;
       return this;
     };
   }
@@ -130,7 +134,7 @@ export interface FXClamp<T extends string = string> {
  * If the value has a `%` suffix, the way it is handled depends on each matcher.
  *
  * ----- +/- prefix:
- * Offsets with `+` or `-` prefix are relative to the values at the time the
+ * Bounds with `+` or `-` prefix are relative to the values at the time the
  * matcher was last restarted.
  *
  * See each matcher for examples and concrete meaning.
@@ -156,7 +160,7 @@ export type BoundedValue =
  * {@link FXState | state parameters} are **outside** the given
  * {@link FXComposerClampBounds | bounds}.
  *
- * It supports relative offsets as `"+<limit>"` or `"-<limit>"` which will be
+ * It supports relative bounds as `"+<limit>"` or `"-<limit>"` which will be
  * relative to the parameters at the time it was last restarted.
  *
  * See {@link FXComposerClampBounds}.
@@ -175,8 +179,7 @@ export class FXComposerClamp extends FXClampBase<"composer"> {
       );
     }
 
-    const { setArgs } = initComposer(this);
-    setArgs(bounds);
+    initComposer(this, bounds);
   }
 }
 
@@ -193,7 +196,7 @@ export class FXComposerClamp extends FXClampBase<"composer"> {
  * {@link Effects.FXAxisState.high | high} values of each axis' current value.
  *
  * ----- +/- prefix:
- * Offsets with `+` or `-` prefix are relative to the values at the time the
+ * Bounds with `+` or `-` prefix are relative to the values at the time the
  * matcher was last restarted.
  *
  * @example
@@ -237,7 +240,7 @@ export type FXComposerClampBounds = AtLeastOne<{
  * its containing root (by default the viewport) are **outside** the given
  * {@link FXViewClampBounds | bounds}.
  *
- * It supports relative offsets as `"+<limit>"` or `"-<limit>"` which will be
+ * It supports relative bounds as `"+<limit>"` or `"-<limit>"` which will be
  * relative to the offsets at the time it was last restarted.
  *
  * The clamp can operate in two modes: monitoring one or all of the composer's
@@ -313,8 +316,17 @@ export class FXViewClamp extends FXClampBase<"view"> {
       }
     }
 
-    const { setArgs } = initView(this);
-    setArgs(bounds, config);
+    const xyToAnchor = {
+      x: _.S_LEFT in bounds ? _.S_LEFT : _.S_RIGHT,
+      y: _.S_TOP in bounds ? _.S_TOP : _.S_BOTTOM,
+    } as const;
+
+    const xyBounds = {
+      x: bounds[xyToAnchor.x],
+      y: bounds[xyToAnchor.y],
+    };
+
+    initView(this, xyBounds, xyToAnchor, config);
   }
 }
 
@@ -347,10 +359,10 @@ export class FXViewClamp extends FXClampBase<"view"> {
  * viewport size.
  *
  * ----- +/- prefix:
- * Offsets with `+` or `-` prefix are relative to the offsets at the time the
+ * Bounds with `+` or `-` prefix are relative to the offsets at the time the
  * matcher was last restarted.
  *
- * All offsets given ultimately resolve to pixels and it is assumed this matches
+ * All bounds given ultimately resolve to pixels and it is assumed this matches
  * whatever units the composer's parameters use, so that the composer's state is
  * clamped correctly.
  *
@@ -446,11 +458,45 @@ export type FXViewClampConfig = {
  * an `init` property holding a function.
  *
  * Your clamp class should call this `init` function in its constructor, passing
- * it itself (`this`). `init` will return an object containing the following
- * function:
- * - `setArgs`: Sets the arguments that the {@link FXClampLogic}'s run method
- *              will receive. Your clamp class **must** call this in its
- *              constructor.
+ * it itself (`this`), the arguments that the {@link FXTriggerLogic}'s run
+ * method expects, as well as the bounds if any.
+ *
+ * ## Types of clamps
+ *
+ * Clamps can be of two types:
+ * 1. clamps that support bounds (or limits) to certain parameters and activate
+ *    when the bounds are violated; and
+ * 2. clamps that simply activate or deactivate when a certain event happens
+ *
+ * Currently, both built-in clamps are of the first type, but your custom clamp
+ * can be of the second type.
+ *
+ * ### Bounded clamps
+ * Clamps that define bounds adjust the composer's state when the bounds are
+ * violated, in order to clamp it to fit within bounds. The condition they
+ * monitor should translate to composer state parameters. The clamps can store
+ * one or more sets of X/Y/Z parameters in the {@link FXClampStore} and define
+ * the needed calculation to translate to and from clamp parameters to composer
+ * state parameters via {@link FXClampLogic.toComposerParam} and
+ * {@link FXClampLogic.toClampParam}.
+ *
+ * The {@link FXClampLogic.refresh} method should return an array of parameter
+ * sets. A violation of the bounds will be calculated for each entry will, and
+ * the maximum violation will be used to calculate the clamped composer state.
+ *
+ * The base clamp implementation will calculate whether the bounds have been
+ * violated and request the pin to activate and adjust the composer state
+ * accordingly.
+ *
+ * Bounded clamps **must** call the `setBounds` function in their constructor
+ * to set the bounds.
+ *
+ * ### Unbounded clamps
+ * Clamps that don't support bounds simply return a boolean from their
+ * {@link FXClampLogic.refresh | logic's refresh} method to indicate whether
+ * the clamp is active or not.
+ *
+ * __________________________
  *
  * See example below for implementing a basic clamp class.
  *
@@ -458,22 +504,19 @@ export type FXViewClampConfig = {
  *                If this clamp type has already been registered.
  *
  * @example
+ * XXX TODO complete example
  * ```typescript
  * type CustomArg = string;
  * type CustomConfig = { opt: boolean };
  *
  * const { init } = registerFXClamp<
  *   "custom",
- *   number, // state
  *   { start: () => void, stop: () => void }, // data
  *   [CustomArg, CustomConfig | undefined], // arguments passed to run
  * >({
  *   type: "custom",
  *   logic: {
  *     run(store, arg, config) {
- *       // required, set initial state and data
- *       store.setState(0);
- *       // ... rest of init
  *       store.setData({
  *         start: () => {
  *           // ...
@@ -500,16 +543,11 @@ export type FXViewClampConfig = {
  *
  *   constructor(arg: CustomArgs, config?: CustomConfig) {
  *     super();
- *
- *     const { setArgs } = init(this);
- *     setArgs(arg, config);
+ *     init(this, arg, config);
  *   }
  * }
  * ```
  *
- * @typeParam State  The type of state the clamp has. The store will hold both
- *                   the current state as well as the state at the time the
- *                   clamp was last restarted.
  * @typeParam Data   The type of data the clamp stores. This is arbitrary data
  *                   to be shared across the {@link FXClampLogic} methods.
  * @typeParam Args   The type of arguments to pass to the instance methods
@@ -519,13 +557,8 @@ export type FXViewClampConfig = {
  *
  * @category Base
  */
-export const registerFXClamp = <
-  T extends string,
-  State,
-  Data,
-  Args extends unknown[],
->(
-  definitions: FXClampDefinitions<T, State, Data, Args>,
+export const registerFXClamp = <T extends string, Data, Args extends unknown[]>(
+  definitions: FXClampDefinitions<T, Data, Args>,
 ) => {
   if (registeredTypes.has(definitions.type)) {
     throw usageError(
@@ -536,15 +569,15 @@ export const registerFXClamp = <
   registeredTypes.set(definitions.type, definitions);
 
   return {
-    init: (self: FXClamp<T>) => {
-      return {
-        setArgs: (...args: Args) => {
-          const data = getInitData<Args>(self);
-          data._args = args;
-        },
-      } as const;
+    init: (self: FXClamp<T>, bounds: FXClampBounds | null, ...args: Args) => {
+      const initData: FXClampInitData<Args> = {
+        _invert: false,
+        _args: args,
+        _bounds: bounds,
+      };
+      allBuilderData.set(self, initData);
     },
-  };
+  } as const;
 };
 
 /**
@@ -562,13 +595,17 @@ export interface FXClampInstance {
   resume: () => void;
 
   /**
-   * Updates the clamps's
-   * {@link FXClampStore.getReferenceState | reference state} to be its current
-   * state.
+   * Updates the clamps's reference parameters to be its current ones.
    *
    * It will also {@link resume} the clamp if it's paused.
+   *
+   * @param reference If given, this state will be translated to clamp parameters
+   *                  according to
+   *                  {@link FXClampLogic.toClampParam | the logic's toComposerParam}
+   *                  and used to construct the reference parameters, instead
+   *                  of the current parameters being used.
    */
-  restart: () => void;
+  restart: (reference?: FXState) => void;
 }
 
 /**
@@ -578,7 +615,6 @@ export interface FXClampInstance {
  */
 export type FXClampDefinitions<
   T extends string,
-  State,
   Data,
   Args extends unknown[],
 > = {
@@ -590,11 +626,11 @@ export type FXClampDefinitions<
   /**
    * See {@link FXClampLogic}.
    */
-  logic: FXClampLogic<State, Data, Args>;
+  logic: FXClampLogic<Data, Args>;
 };
 
 /**
- * These methods define how clamps operate and copy their state/data.
+ * These methods define how clamps operate.
  *
  * Inside each method, the current clamp instance which the logic operates can
  * be accessed as the `this` value (as long as the logic method is not an arrow
@@ -602,41 +638,65 @@ export type FXClampDefinitions<
  *
  * @category Base
  */
-export type FXClampLogic<State, Data, Args extends unknown[]> = {
+export type FXClampLogic<Data, Args extends unknown[]> = {
   /**
    * The function will be called once when the clamp instance is created.
    *
    * It should {@link FXClampStore.setData | set the clamp's data} and do other
    * initialization.
    */
-  run: (store: FXClampStore<State, Data>, ...args: Args) => void;
+  run: (store: FXClampStore<Data>, ...args: Args) => void;
 
   /**
+   * The function should return an up-to-date clamp parameters or active state.
+   *
+   * If the clamp defines bounds, then it may return an array of up-to-date
+   * parameters. In any case, the clamp may return a boolean where `true` means
+   * the clamp is active and `false` means it's not. If it returns only a
+   * boolean, the composer's state is not adjusted in any way, but simply
+   * frozen at its current values if the clamp is active.
+   *
    * It is called when the clamp is first initialized (after {@link run} has
-   * been called) or when it's resumed and
-   * must return an up-to-date state.
+   * been called) or when it's resumed.
+   *
+   * **IMPORTANT:** If returning an array of parameters, the number of entries
+   * in the array must be the same each time, and their order must be fixed.
    */
-  refreshState: (store: FXClampStore<State, Data>) => State;
+  refresh: (store: FXClampStore<Data>) => boolean | FXClampParams[];
 
   /**
    * If given, it will be called when the clamp is paused.
    */
-  pause?: (store: FXClampStore<State, Data>) => void;
+  pause?: (store: FXClampStore<Data>) => void;
 
   /**
    * If given, it will be called when the clamp is resumed.
    */
-  resume?: (store: FXClampStore<State, Data>) => void;
+  resume?: (store: FXClampStore<Data>) => void;
 
   /**
-   * If given, it will be used to copy the state before storing it in or
-   * retrieving it from the store. It is required in order to keep a copy of the
-   * state when restarting.
+   * Only used for bounded clamps during {@link refresh | updates} that set
+   * parameters and unless {@link FXClampStore.update | `applyDeviation`} was
+   * set to false.
    *
-   * @defaultValue An internal function which deeply copies arbitrary data, but
-   * may not be the most performance-efficient.
+   * If given, it is used to translate from the clamp's parameters to the
+   * composer's state parameters. If not given, the translation is one to one.
    */
-  copyState?: (state: State) => State;
+  toComposerState?: (
+    store: FXClampStore<Data>,
+    params: FXClampParams,
+  ) => DeepPartial<FXState>;
+
+  /**
+   * Only used for bounded clamps during {@link refresh | updates} that set
+   * parameters and unless {@link FXClampStore.update | `applyDeviation`} was
+   * set to false.
+   *
+   * If given, it is used to translate between from the composers's state
+   * parameters to the clamp's parameters. If not given, the translation is one
+   * to one.
+   */
+  toClampParams?: (store: FXClampStore<Data>, state: FXState) => FXClampParams;
 };
 
 /**
@@ -645,34 +705,60 @@ export type FXClampLogic<State, Data, Args extends unknown[]> = {
  *
  * @category Base
  */
-export type FXClampStore<State, Data> = {
+export type FXClampStore<Data> = {
   /**
-   * Returns the current state, last set using {@link setState}.
+   * Updates the clamp's parameters or state as per
+   * {@link FXClampLogic.refresh | the clamp logic's refresh} method.
    *
-   * It is copied according to
-   * {@link FXClampLogic.copyState | your logic's `copyState`} before returning.
+   * Note that if the clamp is paused, it will update the state only when
+   * resumed.
    *
-   * @param refresh If true, it will first {@link FXClampLogic.refreshState}
-   *                refresh the state.
+   * @param [options.input]          If given, this will be used as the update
+   *                                 and the
+   *                                 {@link FXClampLogic.refresh | logic's refresh}
+   *                                 method will not be called.
+   * @param [options.applyDeviation] Only relevant for bounded clamps. Ignored
+   *                                 if the update input (or refresh result) is
+   *                                 a boolean only.
+   *                                 This setting is true by default and it
+   *                                 results in the composer's state being
+   *                                 adjusted by the same amount that the
+   *                                 bounds were violated, so as to clamp it
+   *                                 to the bounded parameters (after they have
+   *                                 been translated using
+   *                                 {@link FXClampLogic.toComposerState}).
+   *                                 Set it to false to disable this behaviour
+   *                                 and simply freeze the composer state to
+   *                                 its current values when activating.
+   *                                 This makes sense for example if the
+   *                                 clamp's parameters are not based on or
+   *                                 influenced by the composer's state.
+   * @param [options.realtime]       If true, it indicates the update should
+   *                                 happen immediately instead of waiting for
+   *                                 the next animation frame. Only set this if
+   *                                 required.
+   * @param [options.state]          The composer state that the parameters are
+   *                                 related to. If not given, the current
+   *                                 composer state is used.
    */
-  getState: (refresh?: boolean) => State;
+  update: (options?: {
+    input?: FXClampParams[] | boolean;
+    applyDeviation?: boolean;
+    realtime?: boolean;
+    state?: FXState;
+  }) => void;
 
   /**
-   * Updates the current state.
-   *
-   * It is copied according to
-   * {@link FXClampLogic.copyState | your logic's `copyState`} before storing.
+   * Returns the current state of the clamp. `params` holds the parameters that
+   * were returned during the last {@link FXClampLogic.refresh | refresh} if
+   * any.
    */
-  setState: (state: State) => void;
+  getClampState: () => { params: FXClampParams[] | null; active: boolean };
 
   /**
-   * Returns the state at the time the clamp was last
-   * {@link FXClampInstance.restart | restarted}.
-   *
-   * It is copied according to
-   * {@link FXClampLogic.copyState | your logic's `copyState`} before returning.
+   * Returns the current viewport size.
    */
-  getReferenceState: () => State;
+  getViewportSize: () => Size;
 
   /**
    * Returns the current data, last set using {@link setData}.
@@ -694,66 +780,54 @@ export type FXClampStore<State, Data> = {
    * Returns the {@link FXComposer} associated with this clamp.
    */
   getComposer: () => FXComposer;
-
-  /**
-   * Returns the composer's current state. Same as
-   * {@link `getComposer`}`().getState()`.
-   */
-  getComposerState: () => FXState;
-
-  /**
-   * Returns the composer's state at the time the clamp was last
-   * {@link FXClampInstance.restart | restarted}.
-   */
-  getReferenceComposerState: () => FXState;
-
-  /**
-   * Informs the pin that the clamp's state has changed.
-   *
-   * Set `active` to true if the clamp is now active, meaning that the pin
-   * should also be activated. Set `active` to false otherwise, meaning that the
-   * pin may be deactivated.
-   *
-   * If the clamp supports limits or bounds, such as maximum/minimum x/y/z, then
-   * in either case (active or not), set the deviation from the limits as the
-   * difference between the current value of x/y/z and the limit for that axis.
-   *
-   * For example if the clamp is activated on minimum x = 100 and the composer's
-   * state is 150, set deviation to `{ x: 50 }` and active to `true`; and if the
-   * composer's state is 50, then set deviation to `{ x: -50 }` and active to
-   * `false`.
-   *
-   * Note that if the clamp is paused, it will update the state only when
-   * resumed.
-   *
-   * If the correction to the state requires immediate updating of the CSS (if,
-   * for example, it was as a result of a layout change), set `realtime` to
-   * true.
-   *
-   * If a particular composer state needs to be used, other than the current
-   * composer state, pass this as the `state` property.
-   */
-  requestUpdate: (violation: FXClampViolation) => void;
 };
 
 /**
- * Base clamp builder class.
+ * @category Base
+ */
+export type FXClampBounds = {
+  [A in "x" | "y" | "z"]?: BoundedValue;
+};
+
+/**
+ * @category Base
+ */
+export type FXClampParams = {
+  [A in "x" | "y" | "z"]: {
+    current: number;
+    low: number;
+    high: number;
+  };
+};
+
+/**
+ * This is passed by the base clamp implementation to the associated pin.
  *
  * @category Base
  */
-export type FXClampViolation = {
-  active: boolean;
-  deviation: { x?: number; y?: number; z?: number } | null;
+export type FXClampUpdate = {
+  /**
+   * The composer state to update to.
+   */
   state: FXState;
-  realtime?: boolean;
+
+  /**
+   * True if the clamp is active.
+   */
+  active: boolean;
+
+  /**
+   * True if the update should happen immediately.
+   */
+  realtime: boolean;
 };
 
 // ------------------------------
 
-const createClampInstance = <T extends string, S, D, A extends unknown[]>(
+const createClampInstance = <T extends string, D, A extends unknown[]>(
   clamp: FXClamp<T>,
   composer: FXComposer,
-  requestPinUpdate: (violation: FXClampViolation) => void,
+  requestPinUpdate: (update: FXClampUpdate) => void,
   parentLogger?: LoggerInterface,
 ): FXClampInstance => {
   /* istanbul ignore next */
@@ -761,56 +835,30 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
     throw usageError("Object is not an FXClamp");
   }
 
-  const definitions = registeredTypes.get<T, S, D, A>(clamp.type);
+  const definitions = registeredTypes.get<T, D, A>(clamp.type);
   /* istanbul ignore next */
   if (!definitions) {
     throw bugError(`No definitions saved for clamp type '${clamp.type}'`);
   }
 
-  const init = getInitData<A>(clamp);
-
-  const { _args: args, _invert: invert } = init;
-
-  /* istanbul ignore next */
-  if (!_.isArray(args)) {
-    // child class didn't call setArgs
-    throw usageError(`No arguments saved for clamp '${clamp.type}'`);
-  }
-
   const { logic } = definitions;
+  const {
+    _args: args,
+    _bounds: bounds,
+    _invert: invert,
+  } = getInitData<A>(clamp);
 
   let isPaused = true; // don't start until the pin restarts us
-  let lastChangeWhilePaused: FXClampViolation | null = null;
+  // XXX let lastChangeWhilePaused: FXClampViolation | null = null;
 
   const storeData: {
     _data?: D;
-    _state?: S;
-    _refState?: S;
-    _refComposerState: FXState;
-  } = { _refComposerState: composer.getState() };
+  } = {}; // XXX
 
-  const getState = (useReference: boolean, refresh?: boolean) => {
-    if (refresh) {
-      storeData._state = refreshState(store);
-    }
-
-    const state = useReference ? storeData._refState : storeData._state;
-
-    /* istanbul ignore next */
-    if (_.isUndefined(state)) {
-      throw bugError(`No state saved for clamp '${clamp.type}'`);
-    }
-
-    return copyState<S>(state);
-  };
-
-  const store: FXClampStore<S, D> = {
-    getState: (refresh) => getState(false, refresh),
-    setState: (state) => {
-      logger?.debug10("New state", state);
-      storeData._state = copyState<S>(state);
+  const store: FXClampStore<D> = {
+    update: (options) => {
+      // XXX TODO
     },
-    getReferenceState: () => getState(true),
 
     getData: () => {
       /* istanbul ignore next */
@@ -826,69 +874,86 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
     },
 
     getComposer: () => composer,
-    getComposerState: () => composer.getState(),
-    getReferenceComposerState: () => _.copyNested(storeData._refComposerState),
-
-    requestUpdate: (violation) => {
-      let active = violation.active;
-      const { state, deviation, realtime } = violation;
-
-      logger?.debug7("Got violation", violation, { invert });
-
-      if (invert) {
-        active = !active;
-      }
-
-      setViolation({ state, active, deviation, realtime });
-    },
   };
 
   // ----------
 
-  const setViolation = (violation: FXClampViolation) => {
-    const { active } = violation;
-    if (!isPaused) {
-      logger?.debug7("Setting new clamp violation", violation);
-      requestPinUpdate(_.copyNested(violation));
-    } else if (!!lastChangeWhilePaused?.active !== active) {
-      lastChangeWhilePaused = violation;
-    }
-  };
+  // const updateViolation = (
+  //   params: FXClampParams[],
+  //   options?: { applyDeviation?: boolean; realtime?: boolean },
+  // ) => {
+  //   // XXX
+  //   // calculate violation
+  //   // scale deviation ?
+  // };
 
-  const setRunningState = (state: RUNNING_STATE, updateRef = false) => {
-    const isChanged = isPaused !== (state === PAUSE);
-    if (isChanged) {
-      isPaused = !isPaused;
+  // // -----
+  // // XXX ------------------------------
 
-      logger?.debug7(`${isPaused ? "Pausing" : "Resuming"} clamp`);
+  // const XXXgetState = (useReference: boolean, refresh?: boolean) => {
+  //   if (refresh) {
+  //     storeData._state = refreshState(store);
+  //   }
 
-      if (!isPaused && lastChangeWhilePaused) {
-        setViolation(lastChangeWhilePaused);
-        lastChangeWhilePaused = null;
-      }
+  //   const state = useReference ? storeData._refState : storeData._state;
 
-      if (!isPaused) {
-        store.getState(true); // refresh the state
-      }
-    }
+  //   /* istanbul ignore next */
+  //   if (_.isUndefined(state)) {
+  //     throw bugError(`No state saved for clamp '${clamp.type}'`);
+  //   }
 
-    if (updateRef) {
-      storeData._refState = storeData._state;
-      storeData._refComposerState = composer.getState();
-      logger?.debug7("Updated reference state", storeData._refState);
-    }
+  //   return _.copyNested(state);
+  // };
 
-    if (isChanged) {
-      (isPaused ? logic?.pause : logic?.resume)?.call(self, store);
-    }
-  };
+  // // -----
+
+  // const setViolation = (violation: FXClampViolation) => {
+  //   const { active } = violation;
+  //   if (!isPaused) {
+  //     logger?.debug7("Setting new clamp violation", violation);
+  //     requestPinUpdate(_.copyNested(violation));
+  //   } else if (!!lastChangeWhilePaused?.active !== active) {
+  //     lastChangeWhilePaused = violation;
+  //   }
+  // };
+
+  // const setRunningState = (state: RUNNING_STATE, updateRef = false) => {
+  //   const isChanged = isPaused !== (state === PAUSE);
+  //   if (isChanged) {
+  //     isPaused = !isPaused;
+
+  //     logger?.debug7(`${isPaused ? "Pausing" : "Resuming"} clamp`);
+
+  //     if (!isPaused && lastChangeWhilePaused) {
+  //       setViolation(lastChangeWhilePaused);
+  //       lastChangeWhilePaused = null;
+  //     }
+
+  //     if (!isPaused) {
+  //       store.getState(true); // refresh the state
+  //     }
+  //   }
+
+  //   if (updateRef) {
+  //     storeData._refState = storeData._state;
+  //     storeData._refComposerState = composer.getState();
+  //     logger?.debug7("Updated reference state", storeData._refState);
+  //   }
+
+  //   if (isChanged) {
+  //     (isPaused ? logic?.pause : logic?.resume)?.call(self, store);
+  //   }
+  // };
 
   // --------------------
 
   const self: FXClampInstance = {
     pause: () => setRunningState(PAUSE),
     resume: () => setRunningState(RESUME),
-    restart: () => setRunningState(RESUME, true),
+    restart: (reference?: FXState) => {
+      // XXX TODO reference
+      setRunningState(RESUME, true);
+    },
   };
 
   const logger = debug
@@ -899,8 +964,9 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
       })
     : void 0;
 
-  const copyState = logic.copyState?.bind(self) ?? _.deepCopy;
-  const refreshState = logic.refreshState?.bind(self);
+  const vpSizeWatch = watchSize(null, logger);
+
+  const refresh = logic.refresh?.bind(self);
 
   // --------------------
 
@@ -911,46 +977,47 @@ const createClampInstance = <T extends string, S, D, A extends unknown[]>(
 
 // ------------------------------
 
-type BoundedState<Axes extends "x" | "y" | "z"> = {
-  _state: FXState;
-  _bounds: { [A in Axes]?: BoundedValue };
-  _current: { [A in Axes]: number };
-  _previous: { [A in Axes]: number };
-  _reference: { [A in Axes]: number };
-  _low: { [A in Axes]: number };
-  _high: { [A in Axes]: number };
-  _vpSizeWatch: { get: () => Size };
-};
-
-type Offsets = Array<{ x: number; y: number }>;
-
-type ViewOffsetsInput = {
-  _targets: Element[];
-  _root: Element | undefined;
-  _xyToAnchor: { x: "left" | "right"; y: "top" | "bottom" };
-  _vpSizeWatch: { get: () => Size };
-};
-
 type FXClampInitData<A extends unknown[]> = {
   _invert: boolean;
-  _args: A | null;
+  _args: A;
+  _bounds: FXClampBounds | null;
 };
 
 interface RegistrationMap {
   has(type: string): boolean;
-  get<T extends string, S, D, A extends unknown[]>(
+  get<T extends string, D, A extends unknown[]>(
     type: T,
-  ): FXClampDefinitions<T, S, D, A> | undefined;
-  set<T extends string, S, D, A extends unknown[]>(
+  ): FXClampDefinitions<T, D, A> | undefined;
+  set<T extends string, D, A extends unknown[]>(
     type: T,
-    definitions: FXClampDefinitions<T, S, D, A>,
+    definitions: FXClampDefinitions<T, D, A>,
   ): this;
 }
 
 interface BuilderDataMap {
   get<A extends unknown[]>(clamp: FXClamp): FXClampInitData<A> | undefined;
-  set<A extends unknown[]>(clamp: FXClamp, data: FXClampInitData<A>): this;
+  set<A extends unknown[]>(clamp: FXClamp, initData: FXClampInitData<A>): this;
 }
+
+type BoundViolationInput = {
+  _bounds: FXClampBounds;
+  _current: FXClampParams;
+  _previous: FXClampParams;
+  _reference: FXClampParams;
+  _viewportSize: { get: () => Size };
+};
+
+type BoundViolation = {
+  _violated: boolean;
+  _clampTo: FXClampParams;
+};
+
+type ViewOffsetsInput = {
+  _targets: Element[];
+  _root: Element | undefined;
+  _xyToAnchor: { x: "left" | "right"; y: "top" | "bottom" };
+  _viewportSize: { get: () => Size };
+};
 
 type RUNNING_STATE = typeof PAUSE | typeof RESUME;
 const PAUSE: unique symbol = _.SYMBOL() as typeof PAUSE;
@@ -963,43 +1030,18 @@ const allBuilderData = new WeakMap() as BuilderDataMap;
 
 const { init: initComposer } = registerFXClamp<
   "composer",
-  FXState,
   {
-    _vpSizeWatch: StartStopper;
     _tweenWatch: StartStopper;
   },
-  [FXComposerClampBounds]
+  []
 >({
   type: "composer",
   logic: {
-    run(store, bounds) {
-      const logger = debug
-        ? debug.Logger.getLoggerFor(this, { logAtCreation: bounds })
-        : void 0;
-
-      const vpSizeWatch = watchSize(null, logger);
-
+    run(store) {
+      const logger = debug ? debug.Logger.getLoggerFor(this) : void 0;
       const composer = store.getComposer();
-
       const tweenHandler: FXComposerHandler = createConcurrentCallback(
-        () => {
-          const refComposerState = store.getReferenceState();
-          const composerState = store.getState(true);
-
-          // XXX
-          const boundedState = getComposerBoundedState(
-            composerState,
-            refComposerState,
-          );
-          // const boundedState: BoundedState<"x" | "y" | "z"> = _.merge(offsets, {
-          //   _bounds: bounds,
-          //   _vpSizeWatch: vpSizeWatch,
-          // });
-
-          const violation = getBoundViolation(boundedState);
-          logger?.debug10("Bounded state violation", boundedState, violation);
-          store.requestUpdate(violation);
-        },
+        () => store.update(),
         { logger },
       );
 
@@ -1009,75 +1051,45 @@ const { init: initComposer } = registerFXClamp<
       } as const;
 
       store.setData({
-        _vpSizeWatch: vpSizeWatch,
         _tweenWatch: tweenWatch,
       });
     },
 
-    refreshState: (store) => {
-      return store.getComposer().getState();
-    },
-
-    pause: (store) => {
-      const data = store.getData();
-      data._vpSizeWatch.stop();
-      data._tweenWatch.stop();
-    },
-
-    resume: (store) => {
-      const data = store.getData();
-      data._vpSizeWatch.start();
-      data._tweenWatch.start();
-    },
+    refresh: (store) => [store.getComposer().getState()],
+    pause: (store) => store.getData()._tweenWatch.stop(),
+    resume: (store) => store.getData()._tweenWatch.start(),
   },
 });
 
 const { init: initView } = registerFXClamp<
   "view",
-  Offsets,
   {
-    _offsetInput: ViewOffsetsInput & {
-      _vpSizeWatch: StartStopper & ViewOffsetsInput["_vpSizeWatch"];
-    };
-    _rootSizeWatch: StartStopper;
+    _offsetsInput: ViewOffsetsInput;
     _viewWatch: StartStopper;
-    _closeMonitor: StartStopper;
+    _monitor: StartStopper;
   },
-  [FXViewClampBounds, FXViewClampConfig | undefined]
+  [{ x: "left" | "right"; y: "top" | "bottom" }, FXViewClampConfig | undefined]
 >({
   type: "view",
   logic: {
-    run(store, bounds, config) {
+    run(store, xyToAnchor, config) {
       const logger = debug
-        ? debug.Logger.getLoggerFor(this, { logAtCreation: { bounds, config } })
+        ? debug.Logger.getLoggerFor(this, { logAtCreation: config })
         : void 0;
 
-      const xyToAnchor = {
-        x: _.S_LEFT in bounds ? _.S_LEFT : _.S_RIGHT,
-        y: _.S_TOP in bounds ? _.S_TOP : _.S_BOTTOM,
-      } as const;
-
-      const xyBounds = {
-        x: bounds.left ?? bounds.right,
-        y: bounds.top ?? bounds.bottom,
-      };
-      const low = { x: 0, y: 0 } as const;
-
       const composer = store.getComposer();
-
       const { target: customTarget, root, aggressiveWatching } = config ?? {};
 
       const targets = customTarget ? [customTarget] : composer.getElements();
       const numTargets = _.lengthOf(targets);
 
-      const vpSizeWatch = watchSize(null, logger);
-      const rootSizeWatch = root ? watchSize(root, logger) : vpSizeWatch;
-
-      const offsetInput = {
+      const offsetsInput: ViewOffsetsInput = {
         _targets: targets,
         _root: root,
         _xyToAnchor: xyToAnchor,
-        _vpSizeWatch: vpSizeWatch,
+        _viewportSize: {
+          get: () => store.getViewportSize(),
+        },
       };
 
       const animatingComposer = customTarget
@@ -1087,7 +1099,7 @@ const { init: initView } = registerFXClamp<
       const viewWatch = atLeastOneVisible(
         targets,
         (hasVisible) => {
-          (hasVisible ? closeMonitor.start : closeMonitor.stop)();
+          (hasVisible ? monitor.start : monitor.stop)();
         },
         ViewWatcher.reuse({
           root,
@@ -1098,226 +1110,133 @@ const { init: initView } = registerFXClamp<
 
       // ----------
 
-      const updateViolation = (
-        composerState: FXState,
-        offsets: { _current: Offsets; _previous: Offsets },
-        usesDeviation: boolean,
-      ) => {
-        const refOffsets = store.getReferenceState();
-
-        const rootSize = rootSizeWatch.get();
-        const high = {
-          x: rootSize.width,
-          y: rootSize.height,
-        };
-
-        const violations: FXClampViolation[] = [];
-        for (let i = 0; i < numTargets; i++) {
-          const boundedState: BoundedState<"x" | "y"> = {
-            _state: composerState,
-            _bounds: xyBounds,
-            _current: offsets._current[i],
-            _previous: offsets._previous[i],
-            _reference: refOffsets[i],
-            _low: low,
-            _high: high,
-            _vpSizeWatch: vpSizeWatch,
-          };
-
-          violations.push(getBoundViolation(boundedState));
+      const getSavedOffsets = () => {
+        const { params: offsets } = store.getClampState();
+        if (!offsets) {
+          throw bugError("No offsets saved for view clamp");
         }
-
-        const { active, deviation } = getMaxBoundViolation(violations);
-        const violation = {
-          state: composerState,
-          active,
-          deviation: usesDeviation ? deviation : null,
-          realtime: true,
-        };
-
-        logger?.debug10(
-          "Bounded state violation",
-          {
-            composerState,
-            usesDeviation,
-            current: offsets._current,
-            previous: offsets._previous,
-            reference: refOffsets,
-            low,
-            high,
-            xyBounds,
-          },
-          violation,
-        );
-
-        store.requestUpdate(violation);
+        return offsets;
       };
 
       // -----
 
       const onStyleHandler = (
-        predictOffsets: ReturnType<typeof getViewOffsetsPredictor>,
-        composerState: FXState,
+        predictOffsets: (
+          state: FXState,
+          prevOffsets: FXClampParams[],
+        ) => FXClampParams[],
+        state: FXState,
       ) => {
-        const prevOffsets = store.getState();
-        const predictedOffsets = predictOffsets(composerState, prevOffsets);
-        store.setState(predictedOffsets);
-
-        const usesDeviation = animatingComposer === composer;
-        updateViolation(
-          composerState,
-          { _current: predictedOffsets, _previous: prevOffsets },
-          usesDeviation,
-        );
+        const prevOffsets = getSavedOffsets();
+        const predictedOffsets = predictOffsets(state, prevOffsets);
+        const applyDeviation = animatingComposer === composer;
+        store.update({
+          input: predictedOffsets,
+          applyDeviation,
+          realtime: true,
+          state,
+        });
 
         // Check if corrections are needed after repaint.
         // Keep going for as long as there are changes which would happen if
         // the styles use transitions.
-        repaintWatch.start();
+        onRepaintCheck.start();
       };
 
       // -----
 
-      const repaintHandler = async (options: {
-        _usesDeviation: boolean;
-        _keepGoing: boolean;
-      }) => {
-        const prevOffsets = store.getState();
-        const offsets = store.getState(true); // refresh state
-        updateViolation(
-          (animatingComposer ?? composer).getState(),
-          { _current: offsets, _previous: prevOffsets },
-          options._usesDeviation,
-        );
+      const onRepaintChecker = async () => {
+        const prevOffsets = getSavedOffsets();
+        store.update();
+        const offsets = getSavedOffsets();
 
-        if (!options._keepGoing) {
-          let hasChanged = false;
-          for (let i = 0; i < numTargets; i++) {
-            if (
-              offsets[i].x !== prevOffsets[i].x ||
-              offsets[i].y !== prevOffsets[i].y
-            ) {
-              hasChanged = true;
-              break;
-            }
-          }
-
-          if (!hasChanged) {
-            repaintWatch.stop();
+        let hasChanged = false;
+        for (let i = 0; i < numTargets; i++) {
+          if (
+            offsets[i].x !== prevOffsets[i].x ||
+            offsets[i].y !== prevOffsets[i].y
+          ) {
+            hasChanged = true;
+            break;
           }
         }
+
+        if (!hasChanged) {
+          onRepaintCheck.stop();
+        }
       };
+
+      const onRepaintCheck = loopOnRepaint(onRepaintChecker);
 
       // -----
 
       // If the targets we're watching are animated by a composer, use an
-      // onStyle callback rather than looping on each animation frame when
-      // monitoring closely.
-      let closeMonitor: StartStopper;
-      let repaintWatch: StartStopper;
+      // onStyle callback and afterwards check for needed corrections short-term.
+      // Otherwise, if the target is not animated by any composer, we have to
+      // loop on each repaint following an animation frame.
+      let monitor: StartStopper;
       if (animatingComposer) {
-        const predictOffsets = getViewOffsetsPredictor(
-          animatingComposer,
-          offsetInput,
-        );
+        const { predictOffsets, toClampParams, toClampParams } =
+          getViewOffsetsPredictor(animatingComposer, offsetsInput);
 
         const callback: FXComposerHandler = createConcurrentCallback(
           (c, { state }) => onStyleHandler(predictOffsets, state),
           { logger },
         );
 
-        closeMonitor = {
+        monitor = {
           start: () => {
             animatingComposer.onStyle(callback);
           },
           stop: () => {
             animatingComposer.offStyle(callback);
-            repaintWatch.stop();
+            onRepaintCheck.stop();
           },
         };
-
-        repaintWatch = loopOnRepaint(
-          () => repaintHandler({ _keepGoing: false, _usesDeviation: true }),
-          logger,
-        );
       } else {
-        closeMonitor = repaintWatch = loopOnRepaint(
-          () => repaintHandler({ _keepGoing: true, _usesDeviation: false }),
+        monitor = loopOnRepaint(
+          () =>
+            store.update({
+              applyDeviation: false,
+              realtime: true,
+            }),
           logger,
         );
       }
 
       store.setData({
-        _offsetInput: offsetInput,
-        _rootSizeWatch: rootSizeWatch,
+        _offsetsInput: offsetsInput,
         _viewWatch: viewWatch,
-        _closeMonitor: closeMonitor,
+        _monitor: monitor,
       });
     },
 
-    refreshState: (store) => {
-      const data = store.getData();
-      return getViewOffsets(data._offsetInput);
-    },
+    refresh: (store) => getViewOffsets(store.getData()._offsetsInput),
 
     pause: (store) => {
       const data = store.getData();
-      data._offsetInput._vpSizeWatch.stop();
-      data._rootSizeWatch.stop();
       data._viewWatch.stop();
-      data._closeMonitor.stop();
+      data._monitor.stop();
     },
 
-    resume: (store) => {
-      const data = store.getData();
-      data._offsetInput._vpSizeWatch.start();
-      data._rootSizeWatch.start();
-      data._viewWatch.start();
-    },
-
-    copyState: (s) => [...s],
+    resume: (store) => store.getData()._viewWatch.start(),
   },
 });
 
 // --------------------
 
 const getInitData = <A extends unknown[]>(clamp: FXClamp) => {
-  const data = allBuilderData.get<A>(clamp);
+  const initData = allBuilderData.get<A>(clamp);
   /* istanbul ignore next */
-  if (!data) {
+  if (!initData) {
     throw bugError(`No init data saved for clamp '${clamp.type}'`);
   }
-  return data;
-};
-
-const getComposerOffsets = (
-  currState: FXState,
-  refState: FXState,
-): SemiRequired<
-  BoundedState<"x" | "y" | "z">,
-  "_current" | "_previous" | "_reference" | "_low" | "_high"
-> => {
-  const fromProp = (
-    state: FXState,
-    prop: "current" | "previous" | "low" | "high",
-  ): { x: number; y: number; z: number } => ({
-    x: state.x[prop],
-    y: state.y[prop],
-    z: state.z[prop],
-  });
-
-  return {
-    _current: fromProp(currState, "current"),
-    _previous: fromProp(currState, "previous"),
-    _reference: fromProp(refState, "current"),
-    _low: fromProp(currState, "low"),
-    _high: fromProp(currState, "high"),
-  };
+  return initData;
 };
 
 const getViewOffsets = (input: ViewOffsetsInput) => {
-  const offsets: Offsets = [];
-  const viewport = input._vpSizeWatch.get();
+  const offsets: FXClampParams[] = [];
+  const viewport = input._viewportSize.get();
 
   for (const t of input._targets) {
     const rect = _.getBoundingClientRect(t);
@@ -1330,8 +1249,21 @@ const getViewOffsets = (input: ViewOffsetsInput) => {
     };
 
     offsets.push({
-      x: tblrOffsets[input._xyToAnchor.x],
-      y: tblrOffsets[input._xyToAnchor.y],
+      x: {
+        current: tblrOffsets[input._xyToAnchor.x],
+        low: 0,
+        high: viewport.width,
+      },
+      y: {
+        current: tblrOffsets[input._xyToAnchor.y],
+        low: 0,
+        high: viewport.height,
+      },
+      z: {
+        current: 0,
+        low: 0,
+        high: 0,
+      },
     });
   }
 
@@ -1342,7 +1274,13 @@ const getViewOffsetsPredictor = (
   composer: FXComposer,
   input: ViewOffsetsInput,
 ) => {
-  const calibrator = () => getViewOffsets(input);
+  const calibrator = () => {
+    const offsets = getViewOffsets(input);
+    return offsets.map((o) => ({
+      x: o.x.current,
+      y: o.y.current,
+    }));
+  };
 
   const stateToXY = (s: FXState, usePrevious = false) => {
     const prop = usePrevious ? "previous" : "current";
@@ -1355,10 +1293,35 @@ const getViewOffsetsPredictor = (
   const delta = 100;
   const numElements = _.lengthOf(input._targets);
 
-  // Assume it doesn't depend on z, and only check x/y dependency.
-  // Check separately.
+  // Assume that offsets don't depend on state's Z value, and only check X/Y
+  // dependency.
+  // Also assume that all elements are translated in the same way by the
+  // composer.
+  //
+  // => we have 4 linear equations to solve for with calibration:
+  //
+  // 1. Offset's X as a function of state's X value
+  //    o_x = A_x + B_xx * s_x (when s_y is 0)
+  //
+  // 2. Offset's X as a function of state's Y value
+  //    o_x = A_x + B_xy * s_y (when s_x is 0)
+  //
+  // 3. Offset's Y as a function of state's X value
+  //    o_y = A_y + B_yx * s_x (when s_y is 0)
+  //
+  // 4. Offset's Y as a function of state's Y value
+  //    o_y = A_y + B_yy * s_y (when s_x is 0)
+  //
+  // In general:
+  // A_j = o_j at the initial state of 0
+  // B_jk = (o_j - A_j) / s_k
+  //
+  // So we measure offsets at 3 points:
+  // - s_x = 0, s_y = 0
+  // - s_x = delta, s_y = 0
+  // - s_x = 0, s_y = delta
 
-  const offsetsI = composer.withCalibrationContext(calibrator, {
+  const offsets0 = composer.withCalibrationContext(calibrator, {
     x: { current: 0 },
     y: { current: 0 },
   });
@@ -1371,53 +1334,56 @@ const getViewOffsetsPredictor = (
     y: { current: delta },
   });
 
-  const multipliers: Array<{
-    xVarX: number;
-    xVarY: number;
-    yVarX: number;
-    yVarY: number;
-  }> = [];
+  const constants = (() => {
+    const o = offsets0[0];
+    const oVarX = offsetsVarX[0];
+    const oVarY = offsetsVarY[0];
 
-  for (let i = 0; i < numElements; i++) {
-    const oI = offsetsI[i];
-    const oVarX = offsetsVarX[i];
-    const oVarY = offsetsVarY[i];
-
-    const m = {
-      xVarX: (oVarX.x - oI.x) / delta, // change in offset X as a result of change in state X
-      xVarY: (oVarY.x - oI.x) / delta, // change in offset X as a result of change in state Y
-
-      yVarX: (oVarX.y - oI.y) / delta, // change in offset Y as a result of change in state X
-      yVarY: (oVarY.y - oI.y) / delta, // change in offset Y as a result of change in state Y
+    return {
+      A_x: o.x,
+      A_y: o.y,
+      B_xx: (oVarX.x - o.x) / delta,
+      B_xy: (oVarY.x - o.x) / delta,
+      B_yx: (oVarX.y - o.y) / delta,
+      B_yy: (oVarY.y - o.y) / delta,
     };
+  })();
 
-    multipliers.push(m);
-  }
-
-  return (state: FXState, prevOffsets: Offsets): Offsets => {
+  const predictOffsets = (
+    state: FXState,
+    prevOffsets: FXClampParams[],
+  ): FXClampParams[] => {
     const s = stateToXY(state);
     const prevS = stateToXY(state, true);
 
-    const predicted: Offsets = [];
+    const predicted: FXClampParams[] = [];
     for (let i = 0; i < numElements; i++) {
-      const o = prevOffsets[i];
-      const m = multipliers[i];
+      const params = _.copyNested(prevOffsets[i]);
+      const c = constants;
 
-      const x =
-        o.x + // previous X offset
-        (s.x - prevS.x) * m.xVarX + // + change due to change in state X
-        (s.y - prevS.y) * m.xVarY; // + change due to change in state Y
+      params.x.current +=
+        (s.x - prevS.x) * c.B_xx + // + change due to change in state X
+        (s.y - prevS.y) * c.B_xy; // + change due to change in state Y
 
-      const y =
-        o.y + // previous Y offset
-        (s.x - prevS.x) * m.yVarX + // + change due to change in state X
-        (s.y - prevS.y) * m.yVarY; // + change due to change in state Y
+      params.y.current +=
+        (s.x - prevS.x) * c.B_yx + // + change due to change in state X
+        (s.y - prevS.y) * c.B_yy; // + change due to change in state Y
 
-      predicted.push({ x, y });
+      predicted.push(params);
     }
 
     return predicted;
   };
+
+  const toComposerState = (params: FXClampParams): DeepPartial<FXState> => {
+    // XXX
+  };
+
+  const toClampParams = (state: FXState): FXClampParams => {
+    // XXX
+  };
+
+  return { predictOffsets, toComposerState, toClampParams };
 };
 
 /**
@@ -1426,15 +1392,15 @@ const getViewOffsetsPredictor = (
  *
  * @returns `null` if it doesn't resolve to a valid number.
  */
-const toRawBoundsValue = <Axes extends "x" | "y" | "z">(
+const toRawBoundsValue = (
   boundedValue: RawOrRelativeNumber | ViewportLength | undefined,
-  input: BoundedState<Axes>,
-  axis: Axes,
+  input: BoundViolationInput,
+  axis: "x" | "y" | "z",
 ): number | null => {
-  const reference = input._reference[axis];
-  const low = input._low[axis];
-  const high = input._high[axis];
-  const viewport = input._vpSizeWatch.get();
+  const reference = input._reference[axis].current;
+  const low = input._current[axis].low;
+  const high = input._current[axis].high;
+  const viewport = input._viewportSize.get();
 
   let rawOrRelBound: string | number | undefined = boundedValue;
   let multiplier = 1;
@@ -1467,71 +1433,64 @@ const toRawBoundsValue = <Axes extends "x" | "y" | "z">(
   return toRawNum(rawOrRelBound, calculator, null);
 };
 
-const getBoundViolation = <Axes extends "x" | "y" | "z">(
-  input: BoundedState<Axes>,
-): FXClampViolation => {
+const getBoundViolation = (input: BoundViolationInput): BoundViolation => {
   const getDiff = (
     boundedValue: RawOrRelativeNumber | ViewportLength | undefined,
-    axis: Axes,
+    axis: "x" | "y" | "z",
   ) => {
-    const raw = toRawBoundsValue(boundedValue, input, axis);
-    return { raw, diff: _.isNull(raw) ? null : raw - input._current[axis] };
+    const rawBound = toRawBoundsValue(boundedValue, input, axis);
+    return {
+      _rawBound: rawBound,
+      _diff: _.isNull(rawBound)
+        ? null
+        : input._current[axis].current - rawBound,
+    };
   };
 
-  let active = false;
-  const deviation = { x: 0, y: 0, z: 0 };
+  let violated = false;
+  const clampTo = _.copyNested(input._current);
 
-  for (const axis in input._bounds) {
+  for (const axis of ["x", "y", "z"] as const) {
     const boundedValue = input._bounds[axis];
     if (_.isNullish(boundedValue)) {
       continue;
     }
 
-    if (_.isNonNullablePrimitive(boundedValue)) {
-      const { raw, diff } = getDiff(boundedValue, axis);
-      deviation[axis] = diff ?? 0;
-      // this is an "exact" bound, therefore it has been violated if it the
-      // bound has been crossed since the previous time
-      if (!_.isNull(raw)) {
-        active ||= input._current[axis] < raw !== input._previous[axis] < raw;
+    let rawBound: number | null = null,
+      thisViolated = false;
+
+    if (_.isPrimitive(boundedValue)) {
+      ({ _rawBound: rawBound } = getDiff(boundedValue, axis));
+
+      if (!_.isNull(rawBound)) {
+        // This is an "exact" bound, therefore it has been violated if it the
+        // bound has been crossed since the previous time.
+        thisViolated =
+          input._current[axis].current < rawBound !==
+          input._previous[axis].current < rawBound;
       }
     } else {
       for (const k of ["min", "max"] as const) {
-        const bound = boundedValue[k];
+        const { _rawBound, _diff: diff } = getDiff(boundedValue[k], axis);
+        rawBound = _rawBound;
 
-        if (!_.isNullish(bound)) {
-          const thisDeviation = getDiff(bound, axis).diff ?? 0;
-          // this is a min/max bound, therefore it has been violated if it's min and
-          // current < bound or if it's max and current > bound
-          const thisViolated =
-            k === "min" ? thisDeviation > 0 : thisDeviation < 0;
-
-          if (thisViolated) {
-            deviation[axis] = havingMaxAbs(deviation[axis], thisDeviation);
-            active = true;
-          }
+        if (!_.isNull(diff)) {
+          // Diff is the current - bound.
+          // This is a min/max bound, therefore it has been violated if
+          // - it is min and current < bound (diff < 0), or
+          // - it is max and current > bound (diff > 0)
+          thisViolated = k === "min" ? diff < 0 : diff > 0;
         }
       }
     }
+
+    if (thisViolated && !_.isNull(rawBound)) {
+      clampTo[axis].current = rawBound;
+      violated = true;
+    }
   }
 
-  return { active, deviation, state: input._state };
-};
-
-const getMaxBoundViolation = (
-  deviations: FXClampViolation[],
-): FXClampViolation => {
-  const maxDeviation = { x: 0, y: 0, z: 0 };
-  let maxActive = false;
-
-  for (const { active, deviation } of deviations) {
-    maxActive ||= active;
-    maxDeviation.x = havingMaxAbs(maxDeviation.x, deviation?.x ?? 0);
-    maxDeviation.y = havingMaxAbs(maxDeviation.y, deviation?.y ?? 0);
-    maxDeviation.z = havingMaxAbs(maxDeviation.z, deviation?.z ?? 0);
-  }
-
-  return { active: maxActive, deviation: maxDeviation };
+  return { _violated: violated, _clampTo: clampTo };
 };
 
 // --------------------

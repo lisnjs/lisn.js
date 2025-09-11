@@ -30,12 +30,9 @@ import { logError } from "@lisn/utils/log";
 import { createXWeakMap } from "@lisn/modules/x-map";
 
 import type { FXComposer, FXState } from "@lisn/effects/fx-composer";
-import type {
-  FXClamp,
-  FXClampInstance,
-  FXClampUpdate,
-} from "@lisn/effects/fx-clamp";
+import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
 import {
+  FXPinUpdate,
   setInstanceCreator,
   createClampInstance,
 } from "@lisn/effects/_internal";
@@ -271,7 +268,7 @@ const createMasterPinInstance = (
 
   const onClampChange = (
     clampInstance: FXClampInstance,
-    update: FXClampUpdate,
+    update: FXPinUpdate,
   ) => {
     clampActiveStates.set(clampInstance, update.active);
 
@@ -292,7 +289,7 @@ const createMasterPinInstance = (
 
   // ----------
 
-  const onConditionChange = (condition: Condition, update: FXClampUpdate) => {
+  const onConditionChange = (condition: Condition, update: FXPinUpdate) => {
     let activateClamping;
 
     logger?.debug7("Condition changed", condition, update);
@@ -316,13 +313,13 @@ const createMasterPinInstance = (
     if (isClamping !== activateClamping && (activateClamping || !isLocked())) {
       isClamping = activateClamping;
       updateClampedState(update);
-      pauseOrRestartClamps(CLAMP_RESTART, update);
+      pauseOrRestartClamps(CLAMP_RESTART, update.state);
     }
   };
 
   // ----------
 
-  const updateClampedState = (update: FXClampUpdate) => {
+  const updateClampedState = (update: FXPinUpdate) => {
     for (const e of slaves.values()) {
       e._callback(isClamping, update);
     }
@@ -332,7 +329,7 @@ const createMasterPinInstance = (
 
   const pauseOrRestartClamps = (
     resumeMode: CLAMP_RESUME_MODE = CLAMP_RESTART,
-    update?: FXClampUpdate,
+    state?: FXState,
   ) => {
     for (const condition of conditions.values()) {
       for (const clampInstance of condition._clamps) {
@@ -346,7 +343,7 @@ const createMasterPinInstance = (
           clampInstance.pause();
         } else {
           if (resumeMode === CLAMP_RESTART) {
-            clampInstance.restart(update?.state);
+            clampInstance.restart(state);
           } else {
             clampInstance.resume();
           }
@@ -419,18 +416,9 @@ const createSlavePinInstance = (
 
   const isActive = () => !isPaused && isClamping;
 
-  const onNewClampedState = (activateClamp: boolean, update: FXClampUpdate) => {
+  const onNewClampedState = (activateClamp: boolean, update: FXPinUpdate) => {
+    logger?.debug7("New clamped state", activateClamp, update);
     isClamping = activateClamp;
-    // XXX move to clamp
-    // const { deviation } = violation;
-    // if (deviation) {
-    //   for (const a of ["x", "y", "z"] as const) {
-    //     state[a].previous = state[a].current;
-    //     state[a].current -= deviation[a] ?? 0;
-    //   }
-    // }
-
-    logger?.debug7("New clamped state", isClamping, update);
     requestEffectUpdate(update.state, update.realtime);
   };
 
@@ -477,7 +465,7 @@ type ConditionBuilders = {
 
 type FXMasterPinInstanceCallback = (
   activateClamping: boolean,
-  update: FXClampUpdate,
+  update: FXPinUpdate,
 ) => void;
 
 interface FXMasterPinInstance {

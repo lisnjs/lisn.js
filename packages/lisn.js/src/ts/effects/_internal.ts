@@ -31,11 +31,7 @@ import type {
   EffectParams,
 } from "@lisn/effects/effect";
 import type { FXPin, FXPinInstance } from "@lisn/effects/fx-pin";
-import type {
-  FXClamp,
-  FXClampInstance,
-  FXClampUpdate,
-} from "@lisn/effects/fx-clamp";
+import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
 import type { FXTrigger, FXTriggerInstance } from "@lisn/effects/fx-trigger";
 
 import { SizeWatcher, OnResizeHandler } from "@lisn/watchers/size-watcher";
@@ -46,6 +42,23 @@ import { LoggerInterface } from "@lisn/debug/types";
 export type StartStopper = {
   start: () => void;
   stop: () => void;
+};
+
+export type FXPinUpdate = {
+  /**
+   * The composer state to update to.
+   */
+  state: FXState;
+
+  /**
+   * True if the clamp is active.
+   */
+  active: boolean;
+
+  /**
+   * True if the update should happen immediately.
+   */
+  realtime: boolean;
 };
 
 // Instances --------------------
@@ -92,7 +105,7 @@ export const createPinInstance = (
 export const createClampInstance = <T extends string>(
   clamp: FXClamp<T>,
   composer: FXComposer,
-  requestPinUpdate: (update: FXClampUpdate) => void,
+  requestPinUpdate: (update: FXPinUpdate) => void,
   logger?: LoggerInterface,
 ) => instanceCreators.clamp(clamp, composer, requestPinUpdate, logger);
 
@@ -387,7 +400,7 @@ type InstanceCreators = {
   clamp: <T extends string>(
     clamp: FXClamp<T>,
     composer: FXComposer,
-    requestPinUpdate: (update: FXClampUpdate) => void,
+    requestPinUpdate: (update: FXPinUpdate) => void,
     logger?: LoggerInterface,
   ) => FXClampInstance;
 

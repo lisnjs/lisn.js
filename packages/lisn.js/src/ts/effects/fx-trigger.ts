@@ -271,7 +271,7 @@ export const registerFXTrigger = <
 
   return {
     init: (self: FXTrigger<T>, ...args: Args) => {
-      const initData: FXTriggerInitData<Args> = { _args: args };
+      const initData: InitData<Args> = { _args: args };
       allBuilderData.set(self, initData);
     },
   } as const;
@@ -543,7 +543,7 @@ type Poller = {
 
 type PollUpdate = { _update: FXStateUpdate };
 
-type FXTriggerInitData<A extends unknown[]> = {
+type InitData<A extends unknown[]> = {
   _args: A;
 };
 
@@ -559,13 +559,8 @@ interface RegistrationMap {
 }
 
 interface BuilderDataMap {
-  get<A extends unknown[]>(
-    trigger: FXTrigger,
-  ): FXTriggerInitData<A> | undefined;
-  set<A extends unknown[]>(
-    trigger: FXTrigger,
-    initData: FXTriggerInitData<A>,
-  ): this;
+  get<A extends unknown[]>(trigger: FXTrigger): InitData<A> | undefined;
+  set<A extends unknown[]>(trigger: FXTrigger, initData: InitData<A>): this;
 }
 
 type RUNNING_STATE = typeof PAUSE | typeof RESUME;

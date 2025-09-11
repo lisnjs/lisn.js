@@ -219,7 +219,7 @@ export const registerEffect = <const T extends EffectName, State>(
     init: (self: Effect<T>, config?: EffectConfig) => {
       const { pin, isAbsolute = !pin } = config ?? {};
 
-      const initData: Required<EffectInitData<T>> = {
+      const initData: Required<InitData<T>> = {
         _isAbsolute: isAbsolute,
         _pin: pin,
         _updaters: [],
@@ -294,12 +294,20 @@ export interface EffectInstanceInterface<T extends string> {
    * Returns a copy of the effect that has the same state as the
    * current state of the effect.
    *
-   * @param discardUpdaters If false (default) the copy has all the
-   *                        {@link EffectUpdater | updaters} from this effect.
-   *                        If true, updaters are discarded, so the copy is
-   *                        initially static, but new updaters can be added.
+   * @param [options.pin]             By default the clone has the original
+   *                                  effect's pin. You can pass a different pin
+   *                                  to use or set this to `false` to not use a
+   *                                  pin for the clone.
+   * @param [options.discardUpdaters] By default the clone has all the
+   *                                  {@link EffectUpdater | updaters} from this
+   *                                  effect. Set this to true to discard those,
+   *                                  such that the copy is initially static,
+   *                                  but new updaters can be added.
    */
-  clone: (discardUpdaters?: boolean) => EffectInstanceInterface<T>;
+  clone: (options?: {
+    pin?: FXPin | false;
+    discardUpdaters?: boolean;
+  }) => EffectInstanceInterface<T>;
 
   /**
    * Returns a **new live** effect that has all the updaters from this one and
@@ -604,13 +612,13 @@ type EffectUpdaterFnEntry<
   tag?: any;
 };
 
-type EffectInitData<T extends EffectName> = {
+type InitData<T extends EffectName> = {
   _isAbsolute: boolean;
   _pin: FXPin | undefined;
   _updaters: EffectUpdaterEntry<T>[];
 };
 
-type EffectInstanceData<T extends EffectName, S> = {
+type InstanceData<T extends EffectName, S> = {
   _isAbsolute: boolean;
   _pin: FXPin | undefined;
   _updaters: EffectUpdaterFnEntry<T>[];
@@ -628,20 +636,17 @@ interface RegistrationMap {
 }
 
 interface BuilderDataMap {
-  get<T extends EffectName>(effect: Effect<T>): EffectInitData<T> | undefined;
-  set<T extends EffectName>(
-    effect: Effect<T>,
-    initData: EffectInitData<T>,
-  ): this;
+  get<T extends EffectName>(effect: Effect<T>): InitData<T> | undefined;
+  set<T extends EffectName>(effect: Effect<T>, initData: InitData<T>): this;
 }
 
 interface InstanceDataMap {
   get<T extends EffectName, S>(
     effectInstance: EffectInstance<T>,
-  ): EffectInstanceData<T, S> | undefined;
+  ): InstanceData<T, S> | undefined;
   set<T extends EffectName, S>(
     effectInstance: EffectInstance<T>,
-    data: EffectInstanceData<T, S>,
+    data: InstanceData<T, S>,
   ): this;
 }
 
@@ -709,7 +714,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     logic: EffectLogic<T, S>;
     nullState: S;
   },
-  initData: SemiPartial<EffectInitData<T> & EffectInstanceData<T, S>, "_state">,
+  initData: SemiPartial<InitData<T> & InstanceData<T, S>, "_state">,
   requestRecompose: (realtime?: boolean) => void,
   parentLogger: LoggerInterface | undefined,
 ): EffectInstance<T> => {
@@ -774,7 +779,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     const resultUpdaters: EffectUpdaterFnEntry<T>[] = [];
 
     for (const effectI of toCompose) {
-      const thisData: EffectInstanceData<T, S> | undefined =
+      const thisData: InstanceData<T, S> | undefined =
         effectI === self ? data : allInstanceData.get(effectI);
 
       if (!thisData) {
@@ -814,7 +819,15 @@ const _createEffectInstance = <T extends EffectName, S>(
     pausePin: () => pinInstance?.pause(),
     resumePin: () => pinInstance?.resume(),
     update: () => update(composer.getState(), false),
-    clone: (discardUpdaters) => clone(data, discardUpdaters),
+    clone: (options) => {
+      const { pin = data._pin, discardUpdaters } = options ?? {};
+      return clone(
+        _.merge(data, {
+          _pin: pin === false ? void 0 : pin,
+        }),
+        discardUpdaters,
+      );
+    },
     toComposition,
     toCss: () => {
       const negatedEffectI: EffectInstance<T> | undefined = negated
@@ -859,7 +872,7 @@ const _createEffectInstance = <T extends EffectName, S>(
       )
     : void 0;
 
-  const data: EffectInstanceData<T, S> = {
+  const data: InstanceData<T, S> = {
     _isAbsolute: isAbsolute,
     _pin: initData._pin,
     _state: cloneState(initData._state ?? nullState),

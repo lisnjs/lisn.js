@@ -42,6 +42,7 @@ import {
 } from "@lisn/modules/callback";
 
 import type { Effect, EffectInstance } from "@lisn/effects/effect";
+import { EffectBase } from "@lisn/effects/effect";
 import { FXComposition } from "@lisn/effects/fx-composition";
 import { FXScrollTrigger, FXTrigger } from "@lisn/effects/fx-trigger";
 
@@ -248,12 +249,14 @@ export class FXComposer {
   /**
    * Use this if you need to detect how a certain target state of the composer
    * would affect the element's styles. What it does is, it:
-   * 1. temporarily applies the requested update
-   * 2. updates the effect composition (without calling any callbacks)
-   * 3. applies the CSS immediately
-   * 4. calls the callback, which should do whatever measurements it needs
+   * 1. sets up a clean composer context with a cloned effect composition,
+   *    but discarding all effect {@link Effects.FXPin | pins}
+   * 2. applies the requested update
+   * 3. updates the cloned effect composition (without calling any callbacks)
+   * 4. applies the CSS immediately
+   * 5. calls the callback, which should do whatever measurements it needs
    *    synchronously
-   * 5. resets the state and effect composition back to the previous one
+   * 6. resets the state and effect composition back to the original one
    *
    * This is a very expensive operation that will cause a forced layout, so only
    * use this sparingly.
@@ -434,8 +437,6 @@ export class FXComposer {
     ctx._isPaused = true; // we start after initialized
     compositions.set(this, ctx._composition);
 
-    const linkInput: Array<Effect | FXComposer> = [];
-
     let isTweening = false;
     let updatePending = false;
 
@@ -487,7 +488,7 @@ export class FXComposer {
 
     // ----------
 
-    const add = (...links: Array<Effect | FXComposer>) => {
+    const add = (...links: Array<Effect | EffectInstance | FXComposer>) => {
       if (ctx._isDestroyed) {
         logError(usageError("FXComposer is destroyed"));
         return this;
@@ -496,20 +497,20 @@ export class FXComposer {
       logger?.debug7("Adding links", links);
 
       for (const link of links) {
-        linkInput.push(link);
-
         if (_.isInstanceOf(link, FXComposer)) {
           ctx._links.push(link);
           link.onCompose(recomposeOnOtherCompose);
           addToComposition(link);
         } else {
-          const effectInstance = createEffectInstance(
-            link,
-            this,
-            (realtime) =>
-              recompose({ _updateMode: UPDATE_NONE, _realtime: realtime }),
-            logger,
-          );
+          const effectInstance = _.isInstanceOf(link, EffectBase)
+            ? createEffectInstance(
+                link,
+                this,
+                (realtime) =>
+                  recompose({ _updateMode: UPDATE_NONE, _realtime: realtime }),
+                logger,
+              )
+            : link;
 
           ctx._links.push(effectInstance);
           addToComposition(effectInstance);
@@ -584,7 +585,6 @@ export class FXComposer {
         logger?.debug5("Clearing");
         pause({ _clearCss: true });
 
-        linkInput.length = 0;
         ctx._links.length = 0;
         ctx._composition.clear();
 
@@ -635,7 +635,11 @@ export class FXComposer {
       const backup = ctx;
 
       ctx = createContext(elements, logger); // clean, no callbacks
-      add(...linkInput);
+      add(
+        ...backup._links.map((l) =>
+          _.isInstanceOf(l, FXComposer) ? l : l.clone({ pin: false }),
+        ),
+      );
       ctx._isVisible = true; // force update absolute effects
 
       updateState(state);
@@ -1058,7 +1062,7 @@ export class FXComposer {
 
     this.toCss = toCss;
     this.getComposition = (discardUpdaters) =>
-      ctx._composition.clone(discardUpdaters);
+      ctx._composition.clone({ discardUpdaters });
     this.getState = () => _.copyNested(ctx._state);
     this.getElements = () => [...ctx._elements];
     this.addElements = (...elements: Element[]) =>

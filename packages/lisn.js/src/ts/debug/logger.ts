@@ -142,7 +142,7 @@ export class Logger implements LoggerInterface {
         logger.useCompact(compact);
       }
 
-      if ("logAtCreation" in config) {
+      if (!_.isUndefined(config.logAtCreation)) {
         logger.debug5("Reused logger:", config.logAtCreation);
       }
     }
@@ -266,7 +266,7 @@ export class Logger implements LoggerInterface {
       }
     }
 
-    if ("logAtCreation" in myConfig) {
+    if (!_.isUndefined(myConfig.logAtCreation)) {
       this.debug5("New logger", myConfig.logAtCreation);
     }
   }

@@ -7,6 +7,7 @@
 import * as _ from "@lisn/_internal";
 
 import type { EffectInstance, EffectName } from "@lisn/effects/effect";
+import type { FXPin } from "@lisn/effects/fx-pin";
 
 /**
  * Represents a map of effects, one per
@@ -35,7 +36,10 @@ export class FXComposition implements Iterable<[EffectName, EffectInstance]> {
    *
    * @param discardUpdaters See {@link Effects.EffectInstanceInterface.clone}
    */
-  readonly clone: (discardUpdaters?: boolean) => FXComposition;
+  readonly clone: (options?: {
+    pin?: FXPin | false;
+    discardUpdaters?: boolean;
+  }) => FXComposition;
 
   readonly get: <T extends EffectName>(key: T) => EffectInstance<T> | undefined;
 
@@ -70,10 +74,10 @@ export class FXComposition implements Iterable<[EffectName, EffectInstance]> {
 
     this.add = (instance) => add(instance);
 
-    this.clone = (discardUpdaters) => {
+    this.clone = (options) => {
       const copy = new FXComposition();
       for (const instance of map.values()) {
-        copy.add(instance.clone(discardUpdaters));
+        copy.add(instance.clone(options));
       }
 
       return copy;

@@ -6,6 +6,12 @@
 
 // XXX
 // TODO:
+// - el doesn't revert to its original offset
+// - XXX request update to deviation without changing clamped state: needs to be
+//   handled by clamp: flag in FXPinUpdate?
+// - to correct clamp by view in onRepaintCheck, the clamp should not be paused
+//   (or the repaint check should still run)
+//
 // - view clamp to support middle (x/y)
 // - effect callbacks to receive viewport size
 // - infinite loops when calibration is all 0s?
@@ -726,8 +732,8 @@ export type FXClampStore<Data, Bounded extends boolean> = {
    * Updates the clamp's parameters or state as per
    * {@link FXClampLogic.refresh | the clamp logic's refresh} method.
    *
-   * Note that if the clamp is paused, it will update the state only when
-   * resumed.
+   * Note that if the clamp is paused, it will only process the update if the
+   * clamp is bounded and the bounds have been violated.
    *
    * @param override If given, this will be used as the update and the
    *                 {@link FXClampLogic.refresh | logic's refresh} method will
@@ -902,6 +908,7 @@ const createClampInstance = <
           instanceData,
           input,
           vpSizeWatch.get(),
+          logger,
         );
       } catch (err) {
         // So that it's logged only once
@@ -914,6 +921,8 @@ const createClampInstance = <
         logError(bugError("Clamp state not updated"));
         return;
       }
+
+      // XXX apply deviation to last clamped, not to current composer state
       const clampedComposerState =
         applyDeviation && deviation
           ? getClampedComposerState(state, toComposerDeltas(store, deviation))
@@ -925,9 +934,8 @@ const createClampInstance = <
         realtime,
       };
 
-      if (isPaused) {
-        lastChangeWhilePaused = update;
-      } else {
+      if (!isPaused || (isBounded(instanceData) && update.active)) {
+        logger?.debug10("Updating clamp", { isPaused, state, update });
         requestPinUpdate(update);
       }
     },
@@ -1212,8 +1220,6 @@ const { init: initView } = registerFXClamp<
         });
 
         // Check if corrections are needed after repaint.
-        // Keep going for as long as there are changes which would happen if
-        // the styles use transitions.
         onRepaintCheck.start();
       };
 
@@ -1227,14 +1233,22 @@ const { init: initView } = registerFXClamp<
         let hasChanged = false;
         for (let i = 0; i < numTargets; i++) {
           if (
-            offsets[i].x !== prevOffsets[i].x ||
-            offsets[i].y !== prevOffsets[i].y
+            offsets[i].x.current !== prevOffsets[i].x.current ||
+            offsets[i].y.current !== prevOffsets[i].y.current
           ) {
             hasChanged = true;
             break;
           }
         }
 
+        logger?.debug10("Repaint offset check", {
+          prevOffsets,
+          offsets,
+          hasChanged,
+        });
+
+        // Keep going for as long as there are changes which would happen if
+        // the styles use transitions.
         if (!hasChanged) {
           onRepaintCheck.stop();
         }
@@ -1253,17 +1267,18 @@ const { init: initView } = registerFXClamp<
       let toComposerDeltas: (clampDeltas: AxesDeltaValues) => AxesDeltaValues;
 
       if (animatingComposer) {
-        // XXX not working because the effect is not added yet to the composer
-        // when its pin/clamp is instantiating
-        // Need to defer this
-        const calibration = getViewOffsetsCalibration(
-          animatingComposer,
-          offsetsInput,
-          logger,
-        );
+        let predictOffsets: (
+          state: FXState,
+          prevOffsets: FXClampParams[],
+        ) => FXClampParams[];
 
-        const { predictOffsets } = calibration;
-        ({ toClampDeltas, toComposerDeltas } = calibration);
+        const recalibrate = () => {
+          ({ predictOffsets, toClampDeltas, toComposerDeltas } =
+            getViewOffsetsCalibration(animatingComposer, offsetsInput, logger));
+        };
+
+        recalibrate();
+        animatingComposer.onAdd(recalibrate);
 
         const callback: FXComposerHandler = createConcurrentCallback(
           (c, { state }) => onStyleHandler(predictOffsets, state),
@@ -1276,7 +1291,8 @@ const { init: initView } = registerFXClamp<
           },
           stop: () => {
             animatingComposer.offStyle(callback);
-            onRepaintCheck.stop();
+            // keep the temporary check in case corrections are needed
+            // onRepaintCheck.stop();
           },
         };
       } else {
@@ -1290,8 +1306,10 @@ const { init: initView } = registerFXClamp<
         _offsetsInput: offsetsInput,
         _viewWatch: viewWatch,
         _monitor: monitor,
-        _toComposerDeltas: toComposerDeltas,
-        _toClampDeltas: toClampDeltas,
+        // toComposerDeltas and toComposerDeltas may be updated, so set a proxy
+        // function
+        _toComposerDeltas: (d) => toComposerDeltas(d),
+        _toClampDeltas: (d) => toClampDeltas(d),
       });
     },
 
@@ -1378,6 +1396,7 @@ const updateClampState = <D, B extends boolean>(
   instanceData: InstanceData<D, B>,
   input: FXClampUpdateInput<B>,
   viewportSize: Size,
+  logger: LoggerInterface | undefined,
 ): AxesDeltaValues | null => {
   let deviation: AxesDeltaValues | null = null;
   let newState: InstanceData<D, B>["_clampState"];
@@ -1422,6 +1441,7 @@ const updateClampState = <D, B extends boolean>(
 
     if (boundViolationInput) {
       const boundViolation = getBoundViolation(boundViolationInput);
+      logger?.debug10("Bound violation", boundViolation);
 
       newState.active = boundViolation._violated;
       deviation = boundViolation._deviation;
@@ -1798,11 +1818,32 @@ const getViewOffsetsCalibration = (
   const toComposerDeltas = (clampDeltas: AxesDeltaValues): AxesDeltaValues => {
     const c = constants;
     const det = c.A_xx * c.A_yy - c.A_xy * c.A_yx;
-    return {
-      x: det ? (c.A_yy * clampDeltas.x - c.A_xy * clampDeltas.y) / det : 0,
-      y: det ? (c.A_xx * clampDeltas.y - c.A_yx * clampDeltas.x) / det : 0,
-      z: 0,
-    };
+    if (clampDeltas.y !== 0) {
+      console.warn("XXX", clampDeltas, constants, det);
+    }
+
+    let x = 0,
+      y = 0;
+    const z = 0;
+    if (det !== 0) {
+      x = (c.A_yy * clampDeltas.x - c.A_xy * clampDeltas.y) / det;
+      y = (c.A_xx * clampDeltas.y - c.A_yx * clampDeltas.x) / det;
+    } else if (c.A_xx * c.A_yy === 0) {
+      if (clampDeltas.x && c.A_xx && !c.A_xy) {
+        x = clampDeltas.x / c.A_xx;
+      } else if (clampDeltas.y && c.A_yx && !c.A_yx) {
+        x = clampDeltas.y / c.A_yx;
+      }
+
+      if (clampDeltas.x && c.A_xy && !c.A_xx) {
+        y = clampDeltas.x / c.A_xy;
+      } else if (clampDeltas.y && c.A_yy && !c.A_yx) {
+        y = clampDeltas.y / c.A_yy;
+      }
+    }
+    // Otherwise XXX TODO: ambiguous and not invertible
+
+    return { x, y, z };
   };
 
   const toClampDeltas = (composerDeltas: AxesDeltaValues): AxesDeltaValues => {

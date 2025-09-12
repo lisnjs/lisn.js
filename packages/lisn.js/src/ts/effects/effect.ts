@@ -719,7 +719,7 @@ const _createEffectInstance = <T extends EffectName, S>(
   parentLogger: LoggerInterface | undefined,
 ): EffectInstance<T> => {
   const update = (state: FXState, byPin: boolean) => {
-    if (!byPin && pinInstance?.isActive()) {
+    if (!byPin && pinInstance?.isClamping()) {
       logger?.debug10("Pinned, skipping update");
       return;
     }
@@ -730,7 +730,12 @@ const _createEffectInstance = <T extends EffectName, S>(
     }
 
     const parameters = toParameters(state, isAbsolute);
-    logger?.debug10("Updating", state, parameters);
+    logger?.debug10(
+      "Updating",
+      { byPin, pinActive: pinInstance?.isClamping() },
+      state,
+      parameters,
+    );
 
     for (const entry of data._updaters) {
       const { name, updater, scaler, tag } = entry;

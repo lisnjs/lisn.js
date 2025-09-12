@@ -92,6 +92,19 @@ export class FXComposer {
   readonly add: (...links: Array<Effect | FXComposer>) => this;
 
   /**
+   * Calls the given handler when new effects or composers are
+   * {@link add | added}.
+   *
+   * The handler is called after adding the effects.
+   */
+  readonly onAdd: (handler: FXComposerHandler) => this;
+
+  /**
+   * Removes a previously added {@link onAdd} handler.
+   */
+  readonly offAdd: (handler: FXComposerHandler) => this;
+
+  /**
    * Returns true if the composer is paused.
    */
   readonly isPaused: () => boolean;
@@ -520,6 +533,7 @@ export class FXComposer {
       }
 
       resume();
+      invokeCallbacks(ctx._callbacks._add);
       invokeCallbacks(ctx._callbacks._compose);
       return this;
     };
@@ -611,6 +625,7 @@ export class FXComposer {
         _.deleteKey(compositions, this);
 
         invokeCallbacks(ctx._callbacks._destroy).then(() => {
+          ctx._callbacks._add.clear();
           ctx._callbacks._toggle.clear();
           ctx._callbacks._clear.clear();
           ctx._callbacks._destroy.clear();
@@ -1027,6 +1042,9 @@ export class FXComposer {
     // --------------------
 
     this.add = add;
+    this.onAdd = (handler) => addHandler(handler, ctx._callbacks._add);
+    this.offAdd = (handler) => deleteHandler(handler, ctx._callbacks._add);
+
     this.isPaused = () => ctx._isPaused;
     this.pause = (clearCss?: boolean) => pause({ _clearCss: clearCss });
     this.resume = () => resume();
@@ -1404,6 +1422,7 @@ type Context = {
   _elements: Set<Element>;
   _parent: FXComposer | null;
   _callbacks: {
+    _add: CallbackManager<FXComposerHandlerArgs>;
     _toggle: CallbackManager<FXComposerHandlerArgs>;
     _clear: CallbackManager<FXComposerHandlerArgs>;
     _destroy: CallbackManager<FXComposerHandlerArgs>;
@@ -1497,6 +1516,7 @@ const createContext = (
     _elements: _.createSet([...elements]),
     _parent: getParentComposer(elements),
     _callbacks: {
+      _add: createCallbackManagerFor("add"),
       _toggle: createCallbackManagerFor("toggle"),
       _clear: createCallbackManagerFor("clear"),
       _destroy: createCallbackManagerFor("destroy"),

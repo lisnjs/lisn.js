@@ -30,7 +30,7 @@ import type {
   ParallaxScalerFn,
   EffectParams,
 } from "@lisn/effects/effect";
-import type { FXPin, FXPinInstance } from "@lisn/effects/fx-pin";
+import type { FXPin, FXPinInstance, FXPinState } from "@lisn/effects/fx-pin";
 import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
 import type { FXTrigger, FXTriggerInstance } from "@lisn/effects/fx-trigger";
 
@@ -84,30 +84,43 @@ export const getComposerInstance = (element: Element) =>
 
 // effects -----
 
+export type FXComposerActions = {
+  requestRecompose: (realtime?: boolean) => void;
+};
+
 export const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
   composer: FXComposer,
-  requestRecompose: (realtime?: boolean) => void,
+  composerActions: FXComposerActions,
   logger?: LoggerInterface,
-) => instanceCreators.effect(effect, composer, requestRecompose, logger);
+) => instanceCreators.effect(effect, composer, composerActions, logger);
 
 // pins -----
+
+export type EffectActions = {
+  requestUpdate: (state: FXState, realtime?: boolean) => void;
+};
 
 export const createPinInstance = (
   pin: FXPin,
   composer: FXComposer,
-  requestEffectUpdate: (state: FXState, realtime?: boolean) => void,
+  effectActions: EffectActions,
   logger?: LoggerInterface,
-) => instanceCreators.pin(pin, composer, requestEffectUpdate, logger);
+) => instanceCreators.pin(pin, composer, effectActions, logger);
 
 // clamps -----
+
+export type FXPinActions = {
+  requestUpdate: (update: FXPinUpdate) => void;
+  getState: () => FXPinState;
+};
 
 export const createClampInstance = <T extends string>(
   clamp: FXClamp<T>,
   composer: FXComposer,
-  requestPinUpdate: (update: FXPinUpdate) => void,
+  pinActions: FXPinActions,
   logger?: LoggerInterface,
-) => instanceCreators.clamp(clamp, composer, requestPinUpdate, logger);
+) => instanceCreators.clamp(clamp, composer, pinActions, logger);
 
 // triggers -----
 
@@ -386,21 +399,21 @@ type InstanceCreators = {
   effect: <T extends EffectName>(
     effect: Effect<T>,
     composer: FXComposer,
-    requestRecompose: (realtime?: boolean) => void,
+    composerActions: FXComposerActions,
     logger?: LoggerInterface,
   ) => EffectInstance<T>;
 
   pin: (
     pin: FXPin,
     composer: FXComposer,
-    requestEffectUpdate: (state: FXState, realtime?: boolean) => void,
+    effectActions: EffectActions,
     logger?: LoggerInterface,
   ) => FXPinInstance;
 
   clamp: <T extends string>(
     clamp: FXClamp<T>,
     composer: FXComposer,
-    requestPinUpdate: (update: FXPinUpdate) => void,
+    pinActions: FXPinActions,
     logger?: LoggerInterface,
   ) => FXClampInstance;
 

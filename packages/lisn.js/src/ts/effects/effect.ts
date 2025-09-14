@@ -29,6 +29,7 @@ import type { FXComposer, FXState } from "@lisn/effects/fx-composer";
 import type { FXPin } from "@lisn/effects/fx-pin";
 
 import {
+  FXComposerActions,
   setInstanceCreator,
   createPinInstance,
   toParameters,
@@ -684,7 +685,7 @@ const addUpdater = <T extends EffectName>(
 const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
   composer: FXComposer,
-  requestRecompose: (realtime?: boolean) => void,
+  composerActions: FXComposerActions,
   logger?: LoggerInterface,
 ): EffectInstance<T> => {
   /* istanbul ignore next */
@@ -703,7 +704,7 @@ const createEffectInstance = <T extends EffectName>(
   return _createEffectInstance(
     definitions,
     _.merge(initData, { _composer: composer }),
-    requestRecompose,
+    composerActions,
     logger,
   );
 };
@@ -715,7 +716,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     nullState: S;
   },
   initData: SemiPartial<InitData<T> & InstanceData<T, S>, "_state">,
-  requestRecompose: (realtime?: boolean) => void,
+  composerActions: FXComposerActions,
   parentLogger: LoggerInterface | undefined,
 ): EffectInstance<T> => {
   const update = (state: FXState, byPin: boolean) => {
@@ -761,7 +762,7 @@ const _createEffectInstance = <T extends EffectName, S>(
             _updaters: [],
           })
         : instanceData,
-      requestRecompose,
+      composerActions,
       parentLogger,
     );
   };
@@ -869,9 +870,11 @@ const _createEffectInstance = <T extends EffectName, S>(
     ? createPinInstance(
         initData._pin,
         composer,
-        (state, realtime) => {
-          update(state, true);
-          requestRecompose(realtime);
+        {
+          requestUpdate: (state, realtime) => {
+            update(state, true);
+            composerActions.requestRecompose(realtime);
+          },
         },
         logger,
       )

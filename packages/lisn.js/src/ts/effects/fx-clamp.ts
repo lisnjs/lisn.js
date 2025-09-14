@@ -7,7 +7,10 @@
 // XXX
 // TODO:
 // - el doesn't revert to its original offset
-// - predictOffsets should not run when clamp is active
+// - disable transition
+// - updated reference state is wrong
+// - avoid updating pin if current for all axes is the same
+// - lastClampedComposerState being cleared when it shouldn't be
 //
 // - view clamp to support middle (x/y)
 // - effect callbacks to receive viewport size
@@ -55,9 +58,10 @@ import type {
   FXComposerHandler,
   FXState,
 } from "@lisn/effects/fx-composer";
+import type { FXPinState } from "@lisn/effects/fx-pin";
 import {
   StartStopper,
-  FXPinUpdate,
+  FXPinActions,
   setInstanceCreator,
   getComposerInstance,
   atLeastOneVisible,
@@ -69,6 +73,7 @@ import { ViewWatcher } from "@lisn/watchers/view-watcher";
 
 import debug from "@lisn/debug/debug";
 import { LoggerInterface } from "@lisn/debug/types";
+import { waitForMeasureTime } from "@lisn/utils";
 
 const CLAMP: unique symbol = _.SYMBOL.for(
   "LISN.js/types/clamp",
@@ -740,11 +745,18 @@ export type FXClampStore<Data, Bounded extends boolean> = {
   update: (override?: FXClampUpdate<Bounded>) => void;
 
   /**
-   * Returns the current state of the clamp. `params` holds the parameters that
-   * were returned during the last {@link FXClampLogic.refresh | refresh} if
-   * any.
+   * Returns the current state of the clamp.
+   *
+   * For bounded clamps, `params` holds the parameters that were returned during
+   * the last {@link FXClampLogic.refresh | refresh} and `active` will be true
+   * if the bounds are violated, false otherwise.
    */
   getClampState: () => FXClampState<Bounded>;
+
+  /**
+   * Returns the current state of the pin associated with the clamp.
+   */
+  getPinState: () => FXPinState;
 
   /**
    * Returns the current viewport size.
@@ -863,7 +875,7 @@ const createClampInstance = <
 >(
   clamp: FXClamp<T>,
   composer: FXComposer,
-  requestPinUpdate: (update: FXPinUpdate) => void,
+  pinActions: FXPinActions,
   parentLogger?: LoggerInterface,
 ): FXClampInstance => {
   /* istanbul ignore next */
@@ -928,6 +940,9 @@ const createClampInstance = <
             )
           : state;
 
+      // XXX
+      // - avoid updating pin if current for all axes is the same
+      // - lastClampedComposerState being cleared when it shouldn't be
       if (deviation && (deviation.x || deviation.y || deviation.z)) {
         lastClampedComposerState = clampedComposerState;
       } else if (
@@ -953,11 +968,13 @@ const createClampInstance = <
           deviation,
           update,
         });
-        requestPinUpdate(update);
+        pinActions.requestUpdate(update);
       }
     },
 
     getClampState: () => _.copyNested(getClampState(clamp, instanceData)),
+
+    getPinState: () => pinActions.getState(),
 
     getViewportSize: () => vpSizeWatch.get(),
 
@@ -1006,7 +1023,20 @@ const createClampInstance = <
         );
 
         const r = getClampState(clamp, instanceData, true);
+        logger?.debug7("Adjusting reference state", {
+          deviation,
+          ref: r,
+        });
+        // const cpy = _.copyNested(r.params); // XXX
         r.params = getClampedParams(r.params, toClampDeltas(store, deviation));
+        // console.warn("XXX", {
+        //   currComposerState,
+        //   customRefComposerState,
+        //   deviation,
+        //   clampDeltas: toClampDeltas(store, deviation),
+        //   cpy,
+        //   new: r.params,
+        // });
       }
 
       logger?.debug7("Updated reference state", instanceData._refClampState);
@@ -1219,7 +1249,11 @@ const { init: initView } = registerFXClamp<
         state: FXState,
       ) => {
         const prevOffsets = store.getClampState().params;
-        const predictedOffsets = predictOffsets(state, prevOffsets);
+        const pinState = store.getPinState();
+        const predictedOffsets = predictOffsets(
+          pinState.clamped ? pinState.state : state,
+          prevOffsets,
+        );
         store.update({
           input: predictedOffsets,
           applyDeviation,
@@ -1227,42 +1261,10 @@ const { init: initView } = registerFXClamp<
           state,
         });
 
-        // Check if corrections are needed after repaint.
-        onRepaintCheck.start();
+        // Check the actual offsets after repaint, in case corrections are
+        // needed.
+        waitForMeasureTime().then(() => store.update());
       };
-
-      // -----
-
-      const onRepaintChecker = async () => {
-        const prevOffsets = store.getClampState().params;
-        store.update();
-        const offsets = store.getClampState().params;
-
-        let hasChanged = false;
-        for (let i = 0; i < numTargets; i++) {
-          if (
-            offsets[i].x.current !== prevOffsets[i].x.current ||
-            offsets[i].y.current !== prevOffsets[i].y.current
-          ) {
-            hasChanged = true;
-            break;
-          }
-        }
-
-        logger?.debug10("Repaint offset check", {
-          prevOffsets,
-          offsets,
-          hasChanged,
-        });
-
-        // Keep going for as long as there are changes which would happen if
-        // the styles use transitions.
-        if (!hasChanged) {
-          onRepaintCheck.stop();
-        }
-      };
-
-      const onRepaintCheck = loopOnRepaint(onRepaintChecker);
 
       // -----
 
@@ -1299,8 +1301,6 @@ const { init: initView } = registerFXClamp<
           },
           stop: () => {
             animatingComposer.offStyle(callback);
-            // keep the temporary check in case corrections are needed
-            // onRepaintCheck.stop();
           },
         };
       } else {
@@ -1575,8 +1575,9 @@ const getBoundViolation = (input: BoundViolationInput): BoundViolation => {
           // This is an "exact" bound, therefore it has been violated if it the
           // bound has been crossed since the previous time.
           thisViolated =
+            thisDiff !== 0 &&
             input._current[idx][axis].current < res._rawBound !==
-            input._previous[idx][axis].current < res._rawBound;
+              input._previous[idx][axis].current < res._rawBound;
         }
       } else {
         const res = {
@@ -1647,7 +1648,7 @@ const getBoundViolation = (input: BoundViolationInput): BoundViolation => {
 
 const getClampedParams = (params: FXClampParams[], deltas: AxesDeltaValues) => {
   const result = _.copyNested(params);
-  for (const p of params) {
+  for (const p of result) {
     for (const a of ["x", "y", "z"] as const) {
       p[a].current -= deltas[a] ?? 0;
     }

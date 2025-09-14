@@ -519,8 +519,13 @@ export class FXComposer {
             ? createEffectInstance(
                 link,
                 this,
-                (realtime) =>
-                  recompose({ _updateMode: UPDATE_NONE, _realtime: realtime }),
+                {
+                  requestRecompose: (realtime) =>
+                    recompose({
+                      _updateMode: UPDATE_NONE,
+                      _realtime: realtime,
+                    }),
+                },
                 logger,
               )
             : link;

@@ -34,6 +34,7 @@ import type { FXComposer, FXState } from "@lisn/effects/fx-composer";
 import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
 import {
   FXPinUpdate,
+  EffectActions,
   setInstanceCreator,
   createClampInstance,
 } from "@lisn/effects/_internal";
@@ -162,12 +163,28 @@ export interface FXPinInstance {
   readonly isClamping: () => boolean;
 }
 
+/**
+ * @category Base
+ */
+export interface FXPinState {
+  /**
+   * The possibly clamped composer state that the effect is using.
+   */
+  state: FXState;
+
+  /**
+   * True if {@link state} holds a clamped state rather than the unmodified
+   * current composer state.
+   */
+  clamped: boolean;
+}
+
 // --------------------
 
 const createPinInstance = (
   pin: FXPin,
   composer: FXComposer,
-  requestEffectUpdate: (state: FXState, realtime?: boolean) => void,
+  effectActions: EffectActions,
   logger?: LoggerInterface,
 ): FXPinInstance => {
   /* istanbul ignore next */
@@ -187,7 +204,7 @@ const createPinInstance = (
     masterInstances.sGet(pin).set(composer, master);
   }
 
-  const slave = createSlavePinInstance(master, composer, requestEffectUpdate);
+  const slave = createSlavePinInstance(master, composer, effectActions);
   return slave;
 };
 
@@ -202,6 +219,7 @@ const createMasterPinInstance = (
   >();
 
   let isClamping = false;
+  let clampedComposerState: FXState | null = null;
   let isPaused = false;
   let numFulfilledLocking = 0; // number of fulfilled while conditions
   let numLocking = 0; // total number of while conditions; for testing
@@ -211,6 +229,11 @@ const createMasterPinInstance = (
   const clampActiveStates = _.createMap<FXClampInstance, boolean>();
 
   // ----------
+
+  const getState = () => ({
+    state: clampedComposerState ?? composer.getState(),
+    clamped: isClamping,
+  });
 
   const addConditions = (type: CONDITION_TYPE, clampsSets: FXClamp[][]) => {
     for (const set of clampsSets) {
@@ -222,7 +245,10 @@ const createMasterPinInstance = (
         const clampInstance = createClampInstance(
           c,
           composer,
-          (update) => onClampChange(clampInstance, update),
+          {
+            requestUpdate: (update) => onClampChange(clampInstance, update),
+            getState,
+          },
           logger,
         );
 
@@ -310,7 +336,7 @@ const createMasterPinInstance = (
       isClamping = activateClamping;
       updateClampedState(update);
       pauseOrRestartClamps(CLAMP_RESTART, update.state);
-    } else if (isClamping) {
+    } else if (activateClamping) {
       // This is a correction to the clamped state by an active clamp.
       updateClampedState(update);
     }
@@ -326,6 +352,7 @@ const createMasterPinInstance = (
     ) {
       logger?.debug7("New clamped state", { isClamping, lastUpdate, update });
       lastUpdate = update;
+      clampedComposerState = update.state;
       for (const e of slaves.values()) {
         e._callback(isClamping, update);
       }
@@ -416,14 +443,14 @@ const createMasterPinInstance = (
 const createSlavePinInstance = (
   master: FXMasterPinInstance,
   composer: FXComposer,
-  requestEffectUpdate: (state: FXState, realtime?: boolean) => void,
+  effectActions: EffectActions,
 ): FXPinInstance => {
   let isPaused = false;
   let isClamping = false;
 
   const onNewClampedState = (activateClamp: boolean, update: FXPinUpdate) => {
     isClamping = activateClamp;
-    requestEffectUpdate(update.state, update.realtime);
+    effectActions.requestUpdate(update.state, update.realtime);
   };
 
   // --------------------

@@ -327,7 +327,7 @@ const { init } = registerEffect<"transform", TransformState>({
 
       return {
         transform: perspectiveString + matrix.toString(),
-        transition: "transform 0.05s linear",
+        // XXX transition: "transform 0.05s linear",
       };
     },
   },

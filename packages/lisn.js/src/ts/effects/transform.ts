@@ -13,7 +13,6 @@ import * as _ from "@lisn/_internal";
 
 import { AtLeastOne, Axis, Origin } from "@lisn/globals/types";
 
-import { sum } from "@lisn/utils/math";
 import {
   validateNumber,
   validateNonNegNumber,
@@ -384,7 +383,10 @@ const UPDATE_PROCESSORS: {
 
     validateNumber("Rotation angle", deg);
     axis.map((v) => validateNumber("Rotation axis coordinates", v));
-    validatePosNumber("Rotation axis length", _.abs(sum(...axis)));
+    validatePosNumber(
+      "Rotation axis length",
+      _.abs(axis[0] || axis[1] || axis[2] || 0),
+    );
     state._matrix.rotateAxisAngleSelf(axis[0], axis[1] ?? 0, axis[2] ?? 0, deg);
   },
 };

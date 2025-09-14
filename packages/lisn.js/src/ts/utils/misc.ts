@@ -61,36 +61,40 @@ export const toIterableIfNot = <T>(
   _.isIterableObject(value) ? value : !_.isNullish(value) ? [value] : [];
 
 /**
- * Returns true if the two objects are equal. If values are numeric, it will
- * round to the given number of decimal places.
+ * Returns true if the two objects are equal. Nested objects and arrays are
+ * recursed into (since v1.3.0). Numeric values are rounded to the given number
+ * of decimal places.
  *
  * @category Misc
  */
-export const compareValuesIn = <T extends NestedRecord<V>, V>(
-  objA: T,
-  objB: T,
-  roundTo = 3,
-) => {
-  for (const key in objA) {
-    if (!_.hasOwnProp(objA, key)) {
-      continue;
-    }
-
-    const valA = objA[key];
-    const valB = objB[key];
-
-    if (_.isPlainObject(valA) && _.isPlainObject(valB)) {
-      if (!compareValuesIn(valA, valB)) {
-        return false;
-      }
-    } else if (_.isLiteralNumber(valA) && _.isLiteralNumber(valB)) {
-      if (roundNumTo(valA, roundTo) !== roundNumTo(valB, roundTo)) {
-        return false;
-      }
-    } else if (valA !== valB) {
+export const compareValuesIn = (valA: unknown, valB: unknown, roundTo = 3) => {
+  if (_.isPlainObject(valA) && _.isPlainObject(valB)) {
+    if (_.lengthOf(_.keysOf(valA)) !== _.lengthOf(_.keysOf(valB))) {
       return false;
     }
+
+    for (const key in valA) {
+      if (!compareValuesIn(valA[key], valB[key], roundTo)) {
+        return false;
+      }
+    }
+
+    return true;
+  } else if (_.isArray(valA) && _.isArray(valB)) {
+    if (_.lengthOf(valA) !== _.lengthOf(valB)) {
+      return false;
+    }
+
+    for (let idx = 0; idx < _.lengthOf(valA); idx++) {
+      if (!compareValuesIn(valA[idx], valB[idx], roundTo)) {
+        return false;
+      }
+    }
+
+    return true;
+  } else if (_.isLiteralNumber(valA) && _.isLiteralNumber(valB)) {
+    return roundNumTo(valA, roundTo) === roundNumTo(valB, roundTo);
   }
 
-  return true;
+  return valA === valB;
 };

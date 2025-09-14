@@ -50,80 +50,151 @@ test("toIterableIfNot", () => {
 });
 
 describe("compareValuesIn", () => {
-  test("basic", () => {
-    const objA = {
-      a: 1.1112,
-      b: 2,
-      c: {
-        a: 1,
-        b: 2,
-        c: {
-          a: "a",
-          b: "b",
-        },
-      },
-    };
+  test("primitives: numbers", () => {
+    expect(utils.compareValuesIn(1.1112, 1.1111)).toBe(true);
+    expect(utils.compareValuesIn(1.1112, 1.1111, 4)).toBe(false);
 
-    const objB = {
-      // same to precision 3
-      a: 1.1111,
-      b: 2,
-      c: {
-        a: 1,
-        b: 2,
-        c: {
-          a: "a",
-          b: "b",
-        },
-      },
-    };
-
-    const objC = {
-      a: 1.1111,
-      b: 2,
-      c: {
-        a: 1,
-        b: 2,
-        c: {
-          a: "aa", // diff
-          b: "b",
-        },
-      },
-    };
-
-    expect(utils.compareValuesIn(objA, objB)).toBe(true);
-    expect(utils.compareValuesIn(objA, objC)).toBe(false);
+    expect(utils.compareValuesIn(1, 1)).toBe(true);
+    expect(utils.compareValuesIn(1, 1, 4)).toBe(true);
   });
 
-  test("custom precision", () => {
-    const objA = {
+  test("primitives: booleans", () => {
+    expect(utils.compareValuesIn(true, true)).toBe(true);
+    expect(utils.compareValuesIn(true, true, 4)).toBe(true);
+
+    expect(utils.compareValuesIn(false, false)).toBe(true);
+    expect(utils.compareValuesIn(false, false, 4)).toBe(true);
+
+    expect(utils.compareValuesIn(false, true)).toBe(false);
+    expect(utils.compareValuesIn(false, true, 4)).toBe(false);
+  });
+
+  test("primitives: strings", () => {
+    expect(utils.compareValuesIn("1", "1")).toBe(true);
+    expect(utils.compareValuesIn("1", "1", 4)).toBe(true);
+
+    expect(utils.compareValuesIn("1.11111", "1.11112")).toBe(false);
+    expect(utils.compareValuesIn("0", "-0")).toBe(false);
+  });
+
+  test("primitives: symbols", () => {
+    const sA = Symbol("foo");
+    const sB = Symbol("foo");
+    expect(utils.compareValuesIn(sA, sA)).toBe(true);
+    expect(utils.compareValuesIn(sA, sA, 4)).toBe(true);
+
+    expect(utils.compareValuesIn(sA, sB)).toBe(false);
+    expect(utils.compareValuesIn(sA, sB, 4)).toBe(false);
+  });
+
+  test("objects: l1", () => {
+    const valA = {
       a: 1.1112,
       b: 2,
-      c: {
-        a: 1,
-        b: 2,
-        c: {
-          a: "a",
-          b: "b",
-        },
-      },
     };
 
-    const objB = {
-      // same to precision 3 but not to 4
+    const valB = {
       a: 1.1111,
       b: 2,
-      c: {
-        a: 1,
+    };
+
+    expect(utils.compareValuesIn(valA, valB)).toBe(true);
+    expect(utils.compareValuesIn(valA, valB, 4)).toBe(false);
+  });
+
+  test("objects: l2", () => {
+    const valA = {
+      a: {
+        a: 1.1112,
         b: 2,
-        c: {
-          a: "a",
-          b: "b",
-        },
       },
     };
 
-    expect(utils.compareValuesIn(objA, objB)).toBe(true);
-    expect(utils.compareValuesIn(objA, objB, 4)).toBe(false);
+    const valB = {
+      a: {
+        a: 1.1111,
+        b: 2,
+      },
+    };
+
+    expect(utils.compareValuesIn(valA, valB)).toBe(true);
+    expect(utils.compareValuesIn(valA, valB, 4)).toBe(false);
+  });
+
+  test("objects: extra keys", () => {
+    const valA = {
+      a: {
+        a: 1,
+      },
+    };
+
+    const valB = {
+      a: {
+        a: 1,
+        b: 2,
+      },
+    };
+
+    expect(utils.compareValuesIn(valA, valB)).toBe(false);
+    expect(utils.compareValuesIn(valB, valA)).toBe(false);
+  });
+
+  test("objects: diff keys", () => {
+    const valA = {
+      a: {
+        a: 1,
+      },
+    };
+
+    const valB = {
+      a: {
+        b: 1,
+      },
+    };
+
+    expect(utils.compareValuesIn(valA, valB)).toBe(false);
+    expect(utils.compareValuesIn(valB, valA)).toBe(false);
+  });
+
+  test("arrays l1", () => {
+    const valA = [1, 1.1112, 2];
+    const valB = [1, 1.1111, 2];
+
+    expect(utils.compareValuesIn(valA, valB)).toBe(true);
+    expect(utils.compareValuesIn(valA, valB, 4)).toBe(false);
+  });
+
+  test("arrays l2", () => {
+    const valA = [[1, 1.1112, 2], 3];
+    const valB = [[1, 1.1111, 2], 3];
+
+    expect(utils.compareValuesIn(valA, valB)).toBe(true);
+    expect(utils.compareValuesIn(valA, valB, 4)).toBe(false);
+  });
+
+  test("arrays diff length", () => {
+    const valA = [1, 2];
+    const valB = [1, 2, 3];
+
+    expect(utils.compareValuesIn(valA, valB)).toBe(false);
+    expect(utils.compareValuesIn(valB, valA)).toBe(false);
+  });
+
+  test("arrays in objects in arrays", () => {
+    const valA = [
+      {
+        a: [1, 1.1112],
+      },
+      2,
+    ];
+    const valB = [
+      {
+        a: [1, 1.1111],
+      },
+      2,
+    ];
+
+    expect(utils.compareValuesIn(valA, valB)).toBe(true);
+    expect(utils.compareValuesIn(valA, valB, 4)).toBe(false);
   });
 });

@@ -7,10 +7,7 @@
 // XXX
 // TODO:
 // - el doesn't revert to its original offset
-// - XXX request update to deviation without changing clamped state: needs to be
-//   handled by clamp: flag in FXPinUpdate?
-// - to correct clamp by view in onRepaintCheck, the clamp should not be paused
-//   (or the repaint check should still run)
+// - predictOffsets should not run when clamp is active
 //
 // - view clamp to support middle (x/y)
 // - effect callbacks to receive viewport size
@@ -43,6 +40,7 @@ import {
 } from "@lisn/globals/types";
 
 import { logError } from "@lisn/utils/log";
+import { compareValuesIn } from "@lisn/utils/misc";
 import {
   RawNumberCalculator,
   toRawNum,
@@ -887,7 +885,7 @@ const createClampInstance = <
   } = getInitData<A, B>(clamp);
 
   let isPaused = true; // don't start until the pin restarts us
-  let lastChangeWhilePaused: FXPinUpdate | null = null;
+  let lastClampedComposerState: FXState | null = null;
 
   const instanceData = createInstanceData<D, B>(bounds);
 
@@ -922,11 +920,23 @@ const createClampInstance = <
         return;
       }
 
-      // XXX apply deviation to last clamped, not to current composer state
       const clampedComposerState =
         applyDeviation && deviation
-          ? getClampedComposerState(state, toComposerDeltas(store, deviation))
+          ? getClampedComposerState(
+              lastClampedComposerState ?? state,
+              toComposerDeltas(store, deviation),
+            )
           : state;
+
+      if (deviation && (deviation.x || deviation.y || deviation.z)) {
+        lastClampedComposerState = clampedComposerState;
+      } else if (
+        !compareValuesIn(instanceData._prevClampState, instanceData._clampState)
+      ) {
+        // There was a change to the clamp parameters, but no deviation, so
+        // we're not clamping anymore.
+        lastClampedComposerState = null;
+      }
 
       const update = {
         state: clampedComposerState,
@@ -935,7 +945,14 @@ const createClampInstance = <
       };
 
       if (!isPaused || (isBounded(instanceData) && update.active)) {
-        logger?.debug10("Updating clamp", { isPaused, state, update });
+        logger?.debug10("Updated clamp", {
+          isPaused,
+          input,
+          state,
+          lastClampedComposerState,
+          deviation,
+          update,
+        });
         requestPinUpdate(update);
       }
     },
@@ -962,8 +979,6 @@ const createClampInstance = <
 
   // ----------
 
-  // -----
-
   const setRunningState = (
     state: RUNNING_STATE,
     updateRef: FXState | boolean = false,
@@ -972,11 +987,6 @@ const createClampInstance = <
     if (isChanged) {
       isPaused = !isPaused;
       logger?.debug7(`${isPaused ? "Pausing" : "Resuming"} clamp`);
-
-      if (!isPaused && lastChangeWhilePaused) {
-        requestPinUpdate(lastChangeWhilePaused);
-        lastChangeWhilePaused = null;
-      }
 
       if (!isPaused) {
         store.update(); // refresh the state
@@ -1026,10 +1036,8 @@ const createClampInstance = <
 
   const vpSizeWatch = watchSize(null, logger);
   const refresh = logic.refresh.bind(self);
-  const toClampDeltas =
-    logic.toClampDeltas?.bind(self) ?? (() => ({ x: 0, y: 0, z: 0 }));
-  const toComposerDeltas =
-    logic.toComposerDeltas?.bind(self) ?? (() => ({ x: 0, y: 0, z: 0 }));
+  const toClampDeltas = logic.toClampDeltas?.bind(self) ?? ((s, d) => d);
+  const toComposerDeltas = logic.toComposerDeltas?.bind(self) ?? ((s, d) => d);
 
   // --------------------
 
@@ -1433,18 +1441,18 @@ const updateClampState = <D, B extends boolean>(
   }
 
   if (isBounded(instanceData)) {
-    const boundViolationInput = getBoundViolationInput(
+    const violationInput = getBoundViolationInput(
       clamp,
       instanceData,
       viewportSize,
     );
 
-    if (boundViolationInput) {
-      const boundViolation = getBoundViolation(boundViolationInput);
-      logger?.debug10("Bound violation", boundViolation);
+    if (violationInput) {
+      const violation = getBoundViolation(violationInput);
+      logger?.debug10("Bound violation", { violationInput, violation });
 
-      newState.active = boundViolation._violated;
-      deviation = boundViolation._deviation;
+      newState.active = violation._violated;
+      deviation = violation._deviation;
     }
   }
 
@@ -1651,6 +1659,7 @@ const getClampedParams = (params: FXClampParams[], deltas: AxesDeltaValues) => {
 const getClampedComposerState = (state: FXState, deltas: AxesDeltaValues) => {
   const result = _.copyNested(state);
   for (const a of ["x", "y", "z"] as const) {
+    result[a].previous = result[a].current;
     result[a].current -= deltas[a] ?? 0;
   }
 
@@ -1818,9 +1827,6 @@ const getViewOffsetsCalibration = (
   const toComposerDeltas = (clampDeltas: AxesDeltaValues): AxesDeltaValues => {
     const c = constants;
     const det = c.A_xx * c.A_yy - c.A_xy * c.A_yx;
-    if (clampDeltas.y !== 0) {
-      console.warn("XXX", clampDeltas, constants, det);
-    }
 
     let x = 0,
       y = 0;

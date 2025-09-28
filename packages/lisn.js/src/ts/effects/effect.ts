@@ -146,7 +146,7 @@ export interface EffectRegistry {}
  * const { init } = registerEffect<"fancy", FancyState>({
  *   type: "fancy",
  *   logic: {
- *     processUpdate(state, name, result, tag) {
+ *     update(state, name, result, tag) {
  *       state.data.push(result);
  *       return state;
  *     },
@@ -373,16 +373,16 @@ export type EffectDefinitions<T extends EffectName, S> = {
 export type EffectLogic<T extends EffectName, S> = {
   /**
    * It is called whenever the effect instance is updated, once for each updater
-   * function that has been added, with the type of the updater (e.g. "translate")
+   * function that has been added, with the name of the updater (e.g. "translate")
    * and the return value of the updater.
    *
-   * If the updater function returns `undefined`, `processUpdate` is not called.
+   * If an updater function returns `undefined`, `update` is not called.
    *
-   * It is fine to mutate the state object, but in any case, it should return
-   * the state object to be saved (which can be the same object that is passed
-   * to the function).
+   * It is fine to mutate the state object, but in any case, it must return
+   * the state to be saved (which can be the same object that is passed to the
+   * function).
    */
-  processUpdate: <M extends EffectUpdaterName<T>>(
+  update: <M extends EffectUpdaterName<T>>(
     state: S,
     name: M,
     result: Exclude<EffectUpdaterReturn<T, M>, undefined>,
@@ -391,13 +391,16 @@ export type EffectLogic<T extends EffectName, S> = {
   ) => S;
 
   /**
-   * Must return a **new** state that is identical to the given state.
+   * Must return a **new** state that is identical to the given state. If the
+   * type of the state is an object (non-primitive), it must not be the same
+   * object as the input current state.
    */
   clone: (state: S) => S;
 
   /**
    * Must return a **new** state that's the combined one for the two given
-   * states.
+   * states. If the type of the state is an object (non-primitive), it must not
+   * be the same object as the input current state.
    */
   composeWith: (state: S, other: S) => S;
 
@@ -473,8 +476,8 @@ export type EffectUpdaterName<T extends EffectName> = {
  *   this updater method doesn't use parallax depth or if `updater` is already
  *   a resolved value to initialize.
  * - tag (optional): Arbitrary value that you want passed to
- *   {@link EffectLogic.processUpdate | your logic's `processUpdate`} to
- *   identify this entry if needed.
+ *   {@link EffectLogic.update | your logic's `update`} to identify this entry
+ *   if needed.
  *
  * @example
  * If a user created a {@link Effects.Transform | Transform} like so:
@@ -747,7 +750,7 @@ const _createEffectInstance = <T extends EffectName, S>(
       const result = updater(scaledParameters, state);
 
       if (!_.isUndefined(result)) {
-        processUpdate(data._state, name, result, tag);
+        data._state = updateState(data._state, name, result, tag);
       }
     }
   };
@@ -855,7 +858,7 @@ const _createEffectInstance = <T extends EffectName, S>(
       })
     : void 0;
 
-  const processUpdate = _.bind(logic.processUpdate, self);
+  const updateState = _.bind(logic.update, self);
   const cloneState = _.bind(logic.clone, self);
   const composeStateWith = _.bind(logic.composeWith, self);
   const stateToCss = _.bind(logic.toCss, self);
@@ -871,6 +874,7 @@ const _createEffectInstance = <T extends EffectName, S>(
         initData._pin,
         composer,
         {
+          // XXX remove
           requestUpdate: (state, realtime) => {
             update(state, true);
             composerActions.requestRecompose(realtime);
@@ -897,7 +901,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     } else {
       // TODO why is updater inferred to here as never
       const v: EffectUpdaterReturn<T, typeof entry.name> = entry.updater;
-      processUpdate(data._state, entry.name, v, entry.tag);
+      data._state = updateState(data._state, entry.name, v, entry.tag);
     }
   }
 

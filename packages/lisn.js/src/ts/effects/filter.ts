@@ -402,7 +402,7 @@ type FilterState = {
 const { init } = registerEffect<"filter", FilterState>({
   type: "filter",
   logic: {
-    processUpdate: (state, name, result, idx) => {
+    update: (state, name, result, idx) => {
       if (!_.isLiteralNumber(idx)) {
         throw bugError("Filter entry tag is not a number");
       }

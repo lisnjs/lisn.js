@@ -6,18 +6,83 @@
 
 // XXX
 // TODO:
-// - el doesn't revert to its original offset
-// - disable transition
-// - updated reference state is wrong
-// - avoid updating pin if current for all axes is the same
-// - lastClampedComposerState being cleared when it shouldn't be
+// - update explanation about clamp types and modes
+// - composer clamp also to work in two modes (clamping/adjusting or simply freezing
+//   composer state)
 //
+// - ensure clamp updates are processed only if params change
+//
+// - relative bounds: compute effective absolute bounds on restart (based on
+//   direction): this should be factored into base
+//
+// - base clamp to detect violation and request best guess for from clamp logic
+//   method
+//   - tries it, can request correction
+//   - ensure it doesn't loop infinitely, if next guess is not closer, stop
+//
+// - composer calibration to support not applying CSS but instead call callback
+//   with the resulting CSS only
+//   - do we even need calibration? remove?
+//
+// - remove requestUpdate and requestRecompose:
+//   - instead effect's update method to call pin method (named ???) to check
+//     for corrections
+//     - ??? what does the pin do now with all active clamps: they each need to
+//       check...
+//       - calls method (named ???) on each clamp which should return a composer
+//         state to use or null
+//       - for each axis, it chooses the value that is furthest away from the
+//         current composer state (most clamping)
+//       - stores this as the clamped state
+//     - pin method should return a composer state to use (update using) or null
+//       if no corrections needed
+//     - effect loops, reupdating and calling pin's method until it returns null
+//   - when the pin clamps to a state, the next time the composer tries to
+//     update: need to check if we can release clamp
+//     - pin tries the latest composer state and checks bounds
+//     - if still violated, reverts to the last clamped state it set
+//
+// - view clamp modes:
+//   - mode 1: when the only thing affecting the element's position is the
+//     associated composer and a linear translation effect on it (i.e. element
+//     can be pinned reliably by clamping the composer's state and the resulting
+//     offsets can be calculated)
+//     - case if
+//       1. element is animated by composer
+//       2. either it negates parent or has no parent
+//       4. has no scrollable ancestor (stop checking at the first fixed
+//          positioned ancestor)
+//       3. the pin is associated with a transform effect on that composer
+//     - need a self-correcting best-guess numeric approach to find clamp
+//       parameters for given offset bounds
+//     - view clamp to use the transform CSS property of the composer to predict
+//       the offsets and compute a state to clamp to
+//       - ??? how should we calculate the state to clamp to? still need the
+//         calibration?
+//   - mode 2: any other scenario
+//     - view clamp to monitor on every animation frame and simply
+//       activate/deactivate
+// - no need to allow corrections to clamped state
+//   - ??? but what if multiple running clamps ask the pin to clamp in the same
+//     "loop": we should be able to use the largest clamp
+//
+// - ?? no need for deviation/delta mapping: clamps set absolute x, y, z values
+//   to clamp to
+//
+// - re-enable transition
 // - view clamp to support middle (x/y)
 // - effect callbacks to receive viewport size
-// - infinite loops when calibration is all 0s?
+// - implement invert
 //
 // -----------------
-// Fixed?
+// To check?
+// - all is reversible back to beginning even when resizing window/elements and
+//   using min/max relative bounds
+//
+// - test with transition
+//
+// - el doesn't revert to its original offset
+//
 // - need to be able to update deviation even when still actively clamping
 //
 // - view clamp doesn't react when jump scrolling (activates but doesn't do
@@ -29,6 +94,64 @@
 // - composer clamp reference when restarted after other pinned is wrong;
 //   master pin needs to save clamped state and pass it to restart? then
 //   restart needs to apply this deviation to the ref state?
+//
+// __________________________________________
+//
+//
+// function getTransformedBoundingBox(element, domMatrix) {
+//   const rect = element.getBoundingClientRect();
+//
+//   // --- 1. Convert DOMMatrix to a flat array (row-major) ---
+//   // DOMMatrix stores in column-major, so we map it carefully
+//   const m = [
+//     domMatrix.m11, domMatrix.m12, domMatrix.m13, domMatrix.m14,
+//     domMatrix.m21, domMatrix.m22, domMatrix.m23, domMatrix.m24,
+//     domMatrix.m31, domMatrix.m32, domMatrix.m33, domMatrix.m34,
+//     domMatrix.m41, domMatrix.m42, domMatrix.m43, domMatrix.m44,
+//   ];
+//
+//   // --- 2. Multiply matrix × point ---
+//   function multiplyMatrixAndPoint(matrix, point) {
+//     const [x, y, z, w] = point;
+//     const out = [];
+//     for (let i = 0; i < 4; i++) {
+//       out[i] = matrix[i*4+0] * x +
+//                matrix[i*4+1] * y +
+//                matrix[i*4+2] * z +
+//                matrix[i*4+3] * w;
+//     }
+//     return out;
+//   }
+//
+//   // --- 3. Perspective divide ---
+//   function project([x, y, z, w]) {
+//     return [x / w, y / w, z / w];
+//   }
+//
+//   // --- 4. Original box corners ---
+//   const corners = [
+//     [rect.left,  rect.top,    0, 1],
+//     [rect.right, rect.top,    0, 1],
+//     [rect.right, rect.bottom, 0, 1],
+//     [rect.left,  rect.bottom, 0, 1],
+//   ];
+//
+//   // --- 5. Transform and project ---
+//   const transformed = corners.map(p => project(multiplyMatrixAndPoint(m, p)));
+//
+//   // --- 6. New axis-aligned bounding box ---
+//   const xs = transformed.map(p => p[0]);
+//   const ys = transformed.map(p => p[1]);
+//
+//   return {
+//     left: Math.min(...xs),
+//     top: Math.min(...ys),
+//     right: Math.max(...xs),
+//     bottom: Math.max(...ys),
+//     width: Math.max(...xs) - Math.min(...xs),
+//     height: Math.max(...ys) - Math.min(...ys),
+//   };
+// }
 
 import * as _ from "@lisn/_internal";
 
@@ -93,6 +216,7 @@ export abstract class FXClampBase<T extends string> implements FXClamp<T> {
 
   abstract type: T;
 
+  // XXX TODO
   readonly invert: () => this;
 
   constructor() {
@@ -128,20 +252,20 @@ export interface FXClamp<T extends string = string> {
 
 /**
  * This sets a limit (minimum and/or maximum, or exact value) for a parameter
- * (specific to each matcher).
+ * (specific to each clamp).
  *
  * ----- vw/vh suffix:
  * If the value has a `vw` or `vh` suffix, it will be treated as a percentage of
  * the width or height of the viewport.
  *
  * ----- % suffix:
- * If the value has a `%` suffix, the way it is handled depends on each matcher.
+ * If the value has a `%` suffix, the way it is handled depends on each clamp.
  *
  * ----- +/- prefix:
  * Bounds with `+` or `-` prefix are relative to the values at the time the
- * matcher was last restarted.
+ * clamp was last restarted.
  *
- * See each matcher for examples and concrete meaning.
+ * See each clamp for examples and concrete meaning.
  *
  * @category Pinning
  */
@@ -154,7 +278,7 @@ export type BoundedValue =
     }>;
 
 // -------------------------------------------------------------------------
-// --------------------------- BUILT-IN MATCHERS ---------------------------
+// ---------------------------- BUILT-IN CLAMPS ----------------------------
 // -------------------------------------------------------------------------
 
 // ------------------------------- COMPOSER --------------------------------
@@ -164,13 +288,15 @@ export type BoundedValue =
  * {@link FXState | state parameters} are **outside** the given
  * {@link FXComposerClampBounds | bounds}.
  *
- * It supports relative bounds as `"+<limit>"` or `"-<limit>"` which will be
- * relative to the parameters at the time it was last restarted.
+ * It supports relative bounds as `"+<delta>"` which will be relative to the
+ * parameters at the time it was last restarted.
  *
  * See {@link FXComposerClampBounds}.
  *
  * @category Pinning
  */
+// XXX accept optional other composer and not the one tied to the pin
+// in this case no deviation/adjustment to the effect is needed
 export class FXComposerClamp extends FXClampBase<"composer"> {
   readonly type = "composer";
 
@@ -199,9 +325,15 @@ export class FXComposerClamp extends FXClampBase<"composer"> {
  * difference between the {@link Effects.FXAxisState.low | low} and
  * {@link Effects.FXAxisState.high | high} values of each axis' current value.
  *
- * ----- +/- prefix:
- * Bounds with `+` or `-` prefix are relative to the values at the time the
- * matcher was last restarted.
+ * ----- + prefix:
+ * Bounds with `+` prefix are relative to the values at the time the clamp was
+ * last restarted. The number given indicates a change and the effective
+ * bound/limit for an axis depends on the direction the composer's parameters
+ * are advancing. For example when the value of the X axis of the composer's
+ * parameters is increasing, an X bounded value of `+20` means 20 more than the
+ * X value at the time the clamp was restarted. If the value of the X axis is
+ * decreasing, `+20` means 20 **less** than the X value at the time the clamp
+ * was restarted.
  *
  * @example
  * - `10` or `"10"` is treated as an absolute value of 10 (units of the
@@ -213,20 +345,12 @@ export class FXComposerClamp extends FXClampBase<"composer"> {
  * - `"10%"` is treated as an absolute value of "low + 0.1 * (high - low)",
  *   ignoring the reference value (at the time of last restart).
  *
- * - `"+10"` is treated as 10 more than the value since the matcher was last
+ * - `"+10"` is treated as 10 further than the value since the clamp was last
  *   restarted.
- * - `"-10"` is treated as 10 less than the value since the matcher was last
- *   restarted.
- *
  * - `"+10vw"` and `"+10vh"` are treated as 10% the viewport width or height
- *   more than the value since the matcher was last restarted.
- * - `"-10vw"` and `"-10vh"` are treated as 10% the viewport width or height
- *   less than the value since the matcher was last restarted.
- *
- * - `"+10%"` is treated as "0.1 * (high - low)" more than the value since the
- *   matcher was last restarted.
- * - `"-10%"` is treated as "0.1 * (high - low)" less than the value since the
- *   matcher was last restarted.
+ *   further than the value since the clamp was last restarted.
+ * - `"+10%"` is treated as "0.1 * (high - low)" further than the value since
+ *   the clamp was last restarted.
  *
  * @category Pinning
  */
@@ -244,20 +368,20 @@ export type FXComposerClampBounds = AtLeastOne<{
  * its containing root (by default the viewport) are **outside** the given
  * {@link FXViewClampBounds | bounds}.
  *
- * It supports relative bounds as `"+<limit>"` or `"-<limit>"` which will be
- * relative to the offsets at the time it was last restarted.
+ * It supports relative bounds as `"+<delta>"` which will be relative to the
+ * offsets at the time it was last restarted.
  *
+ * XXX update this
  * The clamp can operate in two modes: monitoring one or all of the composer's
  * elements, or monitoring an unrelated element. See below for an explanation
  * of each.
  *
+ * XXX TODO add a setting to override the mode
+ *
  * **IMPORTANT:** If the element(s) being monitored by the clamp are animated
  * by the composer, then the clamp assumes that the only thing affecting the
- * position of the element is a linear translation that's proportional to the
- * composer's state (and possibly the state of composers animating ancestor
- * elements as well). For performance optimization, the element's offsets are
- * not immediately re-measured after the composer updates the style, and so if
- * there are other unexpected factors translating the element, this can lead to
+ * position of the element is a linear translation applied by the composer. If
+ * there are other factors affecting the element's position, this can lead to
  * unexpected results or visible glitches.
  *
  * ## Default mode: Monitoring each of the composer's elements
@@ -335,6 +459,7 @@ export class FXViewClamp extends FXClampBase<"view"> {
 }
 
 /**
+ * XXX update to include V/H middle
  * Minimum and/or maximum, or exact top, bottom, left and/or right offset of the
  * view target from the given root's edge.
  * - top offset is the difference between the given root's top edge and the
@@ -362,13 +487,14 @@ export class FXViewClamp extends FXClampBase<"view"> {
  * root's size. If there is no explicit root given, then this is the same as the
  * viewport size.
  *
- * ----- +/- prefix:
- * Bounds with `+` or `-` prefix are relative to the offsets at the time the
- * matcher was last restarted.
- *
- * All bounds given ultimately resolve to pixels and it is assumed this matches
- * whatever units the composer's parameters use, so that the composer's state is
- * clamped correctly.
+ * ----- + prefix:
+ * Bounds with `+` prefix are relative to the offsets at the time the clamp was
+ * last restarted. The number given indicates a change and the effective
+ * bound/limit for an axis depends on the direction the element's offsets are
+ * advancing. For example when the element's vertical offset is increasing, a
+ * top/bottom bounded value of `+20` means 20 more than the offset at the time
+ * the clamp was restarted. If the vertical offset is decreasing, `+20` means 20
+ * **less** than the offset at the time the clamp was restarted.
  *
  * @example
  * - `10` or `"10"` is treated as an absolute value of 10 pixels, ignoring the
@@ -379,20 +505,12 @@ export class FXViewClamp extends FXClampBase<"view"> {
  * - `"10%"` is treated as an absolute value of 10% the width (for X parameters)
  *   or height (for Y parameters) of the root's size.
  *
- * - `"+10"` is treated as 10 more than the value since the matcher was last
+ * - `"+10"` is treated as 10 further than the value since the clamp was last
  *   restarted.
- * - `"-10"` is treated as 10 less than the value since the matcher was last
- *   restarted.
- *
  * - `"+10vw"` and `"+10vh"` are treated as 10% the viewport width or height
- *   more than the value since the matcher was last restarted.
- * - `"-10vw"` and `"-10vh"` are treated as 10% the viewport width or height
- *   less than the value since the matcher was last restarted.
- *
- * - `"+10%"` is treated as 10% (of the root's size) more than the value since
- *   the matcher was last restarted.
- * - `"-10%"` is treated as 10% (of the root's size) less than the value since
- *   the matcher was last restarted.
+ *   further than the value since the clamp was last restarted.
+ * - `"+10%"` is treated as 10% (of the root's size) further than the value
+ *   since the clamp was last restarted.
  *
  * @category Pinning
  */
@@ -472,10 +590,8 @@ export type FXViewClampConfig = {
  *    when the bounds are violated; and
  * 2. clamps that simply activate or deactivate when a certain event happens
  *
- * Currently, both built-in clamps are of the first type, but your custom clamp
- * can be of the second type.
- *
  * ### Bounded clamps
+ * XXX update this
  * Clamps that define bounds adjust the composer's state when the bounds are
  * violated, in order to clamp it to fit within bounds. The condition they
  * monitor should translate to composer state parameters. The clamps can store
@@ -615,6 +731,7 @@ export interface FXClampInstance {
    *                  {@link FXClampLogic.toClampDeltas | the logic's toComposerDeltas}
    *                  and used to construct the reference parameters, instead
    *                  of the current parameters being used.
+   *                  XXX update this ^
    */
   restart: (reference?: FXState) => void;
 }
@@ -659,7 +776,7 @@ export type FXClampLogic<
    * The function will be called once when the clamp instance is created.
    *
    * It should {@link FXClampStore.setData | set the clamp's data} and do other
-   * initialization.
+   * required initialization.
    */
   run: (store: FXClampStore<Data, Bounded>, ...args: Args) => void;
 
@@ -700,6 +817,7 @@ export type FXClampLogic<
    *
    * @returns Should return the change to be applied to the composer state axes.
    */
+  // XXX remove
   toComposerDeltas?: (
     store: FXClampStore<Data, Bounded>,
     clampDeltas: AxesDeltaValues,
@@ -718,6 +836,7 @@ export type FXClampLogic<
    *
    * @returns Should return the change to be applied to the clamp parameters
    */
+  // XXX remove
   toClampDeltas?: (
     store: FXClampStore<Data, Bounded>,
     composerDeltas: AxesDeltaValues,
@@ -732,17 +851,32 @@ export type FXClampLogic<
  */
 export type FXClampStore<Data, Bounded extends boolean> = {
   /**
-   * Updates the clamp's parameters or state as per
+   * Updates the clamp's state as per
    * {@link FXClampLogic.refresh | the clamp logic's refresh} method.
    *
-   * Note that if the clamp is paused, it will only process the update if the
-   * clamp is bounded and the bounds have been violated.
+   * Note that if the clamp is paused the update will be ignored. XXX TODO this
    *
    * @param override If given, this will be used as the update and the
    *                 {@link FXClampLogic.refresh | logic's refresh} method will
    *                 not be called.
    */
   update: (override?: FXClampUpdate<Bounded>) => void;
+
+  /**
+   * Returns the current data, last set using {@link setData}.
+   *
+   * You **must** call {@link setData} before calling this.
+   *
+   * It is not copied before storing.
+   */
+  getData: () => Data;
+
+  /**
+   * Updates the current data.
+   *
+   * It is not copied before returning.
+   */
+  setData: (data: Data) => void;
 
   /**
    * Returns the current state of the clamp.
@@ -762,22 +896,6 @@ export type FXClampStore<Data, Bounded extends boolean> = {
    * Returns the current viewport size.
    */
   getViewportSize: () => Size;
-
-  /**
-   * Returns the current data, last set using {@link setData}.
-   *
-   * You **must** call {@link setData} before calling this.
-   *
-   * It is not copied before storing.
-   */
-  getData: () => Data;
-
-  /**
-   * Updates the current data.
-   *
-   * It is not copied before returning.
-   */
-  setData: (data: Data) => void;
 
   /**
    * Returns the {@link FXComposer} associated with this clamp.
@@ -823,11 +941,13 @@ export type FXClampUpdateOptions<Bounded extends boolean> = {
    *
    * @defaultValue true
    */
+  // XXX remove
   applyDeviation?: Bounded extends true ? boolean : never;
 
   /**
    * If true, it indicates the update should happen immediately instead of
-   * waiting for the next animation frame. Only set this if required.
+   * waiting for the next animation frame. To avoid unnecessary forced layouts,
+   * only set this if required.
    */
   realtime?: boolean;
 
@@ -897,7 +1017,7 @@ const createClampInstance = <
   } = getInitData<A, B>(clamp);
 
   let isPaused = true; // don't start until the pin restarts us
-  let lastClampedComposerState: FXState | null = null;
+  let lastClampedComposerState: FXState | null = null; // XXX remove?
 
   const instanceData = createInstanceData<D, B>(bounds);
 
@@ -940,9 +1060,6 @@ const createClampInstance = <
             )
           : state;
 
-      // XXX
-      // - avoid updating pin if current for all axes is the same
-      // - lastClampedComposerState being cleared when it shouldn't be
       if (deviation && (deviation.x || deviation.y || deviation.z)) {
         lastClampedComposerState = clampedComposerState;
       } else if (
@@ -972,12 +1089,6 @@ const createClampInstance = <
       }
     },
 
-    getClampState: () => _.copyNested(getClampState(clamp, instanceData)),
-
-    getPinState: () => pinActions.getState(),
-
-    getViewportSize: () => vpSizeWatch.get(),
-
     getData: () => {
       /* istanbul ignore next */
       const data = instanceData._data;
@@ -990,6 +1101,12 @@ const createClampInstance = <
     setData: (data) => {
       instanceData._data = data;
     },
+
+    getClampState: () => _.copyNested(getClampState(clamp, instanceData)),
+
+    getPinState: () => pinActions.getState(),
+
+    getViewportSize: () => vpSizeWatch.get(),
 
     getComposer: () => composer,
   };
@@ -1027,16 +1144,7 @@ const createClampInstance = <
           deviation,
           ref: r,
         });
-        // const cpy = _.copyNested(r.params); // XXX
         r.params = getClampedParams(r.params, toClampDeltas(store, deviation));
-        // console.warn("XXX", {
-        //   currComposerState,
-        //   customRefComposerState,
-        //   deviation,
-        //   clampDeltas: toClampDeltas(store, deviation),
-        //   cpy,
-        //   new: r.params,
-        // });
       }
 
       logger?.debug7("Updated reference state", instanceData._refClampState);
@@ -1210,7 +1318,6 @@ const { init: initView } = registerFXClamp<
       const { target: customTarget, root, aggressiveWatching } = config ?? {};
 
       const targets = customTarget ? [customTarget] : composer.getElements();
-      const numTargets = _.lengthOf(targets);
 
       const offsetsInput: ViewOffsetsInput = {
         _targets: targets,
@@ -1241,6 +1348,8 @@ const { init: initView } = registerFXClamp<
 
       // ----------
 
+      let lastState: FXState | null = null;
+
       const onStyleHandler = (
         predictOffsets: (
           state: FXState,
@@ -1248,6 +1357,14 @@ const { init: initView } = registerFXClamp<
         ) => FXClampParams[],
         state: FXState,
       ) => {
+        if (
+          lastState?.x.current === state.x.current &&
+          lastState?.y.current === state.y.current
+        ) {
+          return;
+        }
+        lastState = state;
+
         const prevOffsets = store.getClampState().params;
         const pinState = store.getPinState();
         const predictedOffsets = predictOffsets(
@@ -1522,14 +1639,16 @@ const toRawBoundsValue = (
     isPercent,
     numerical,
   }) => {
+    const isRelative = isAdditive && numerical >= 0;
+
     let result;
     numerical *= multiplier;
 
     if (isPercent) {
       result =
-        (isAdditive ? reference : low) + (numerical * (high - low)) / 100;
+        (isRelative ? reference : low) + (numerical * (high - low)) / 100;
     } else {
-      result = numerical + (isAdditive ? reference : 0);
+      result = numerical + (isRelative ? reference : 0);
     }
 
     return result;

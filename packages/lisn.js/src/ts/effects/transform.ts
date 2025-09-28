@@ -295,7 +295,7 @@ const createMatrix = (init?: DOMMatrix) => {
 const { init } = registerEffect<"transform", TransformState>({
   type: "transform",
   logic: {
-    processUpdate: (state, name, result) => {
+    update: (state, name, result) => {
       if (!_.isNull(result) || name === "perspective") {
         UPDATE_PROCESSORS[name](state, result);
       }

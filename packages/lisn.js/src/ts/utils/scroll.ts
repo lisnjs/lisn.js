@@ -244,6 +244,7 @@ export const getClosestScrollable = (
     noCache?: boolean;
   },
 ) => {
+  // TODO: need to check if ancestor is fixed positioned and stop there if so.
   // Walk up the tree, starting at the element in question but excluding it.
   let ancestor: Element | null | undefined = element;
   while ((ancestor = _.parentOf(ancestor))) {

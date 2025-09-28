@@ -250,7 +250,7 @@ export class FXComposer {
    *
    * The handler is called after updating its composition, such that calling
    * {@link toCss} or {@link getComposition} from the handler will reflect the
-   * latest effect composition.
+   * latest CSS or effect composition.
    */
   readonly onCompose: (handler: FXComposerHandler) => this;
 
@@ -520,6 +520,7 @@ export class FXComposer {
                 link,
                 this,
                 {
+                  // XXX remove
                   requestRecompose: (realtime) =>
                     recompose({
                       _updateMode: UPDATE_NONE,
@@ -922,6 +923,7 @@ export class FXComposer {
           updatePending ||= newState[a].target !== ctx._state[a].target;
         }
 
+        // TODO should we skip if previous === current for all axes?
         updateState(partial);
         recompose();
         invokeCallbacks(ctx._callbacks._tween);

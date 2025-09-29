@@ -26,15 +26,11 @@ import * as _ from "@lisn/_internal";
 import { bugError, usageError } from "@lisn/globals/errors";
 
 import { logError } from "@lisn/utils/log";
-import { compareValuesIn } from "@lisn/utils/misc";
-
-import { createXWeakMap } from "@lisn/modules/x-map";
 
 import type { FXComposer, FXState } from "@lisn/effects/fx-composer";
 import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
+import type { EffectName, EffectInstance } from "@lisn/effects/effect";
 import {
-  FXPinUpdate,
-  EffectActions,
   setInstanceCreator,
   createClampInstance,
 } from "@lisn/effects/_internal";
@@ -158,9 +154,18 @@ export interface FXPinInstance {
   readonly resume: () => void;
 
   /**
-   * Returns true if the pin is actively clamping (and it's not paused).
+   * Should be called whenever the composer wants to update the effect
+   * associated with this pin.
+   *
+   * It will request all active clamps to process the given composer state and
+   * return a possibly clamped state for the effect to use.
+   *
+   * @returns If `recheck` is true, the effect instance needs to call this
+   * again after applying the returned composer state. It should pass as the
+   * argument the same state that was returned by the last call to {@link
+   * clamp}.
    */
-  readonly isClamping: () => boolean;
+  readonly clamp: (state: FXState) => { state: FXState; recheck: boolean };
 }
 
 /**
@@ -181,59 +186,32 @@ export interface FXPinState {
 
 // --------------------
 
-const createPinInstance = (
+const createPinInstance = <T extends EffectName>(
   pin: FXPin,
-  composer: FXComposer,
-  effectActions: EffectActions,
-  logger?: LoggerInterface,
+  parents: { effectInstance: EffectInstance<T>; composer: FXComposer },
+  parentLogger?: LoggerInterface,
 ): FXPinInstance => {
   /* istanbul ignore next */
   if (!_.isInstanceOf(pin, FXPin)) {
     throw usageError("Object is not an FXPin");
   }
 
-  let master = masterInstances.get(pin)?.get(composer);
-  if (!master) {
-    const conditionBuilders = allBuilderData.get(pin);
-    /* istanbul ignore next */
-    if (!conditionBuilders) {
-      throw bugError("No init data saved for pin");
-    }
-
-    master = createMasterPinInstance(conditionBuilders, composer, logger);
-    masterInstances.sGet(pin).set(composer, master);
+  const conditionBuilders = allBuilderData.get(pin);
+  /* istanbul ignore next */
+  if (!conditionBuilders) {
+    throw bugError("No init data saved for pin");
   }
 
-  const slave = createSlavePinInstance(master, composer, effectActions);
-  return slave;
-};
-
-const createMasterPinInstance = (
-  conditionBuilders: ConditionBuilders,
-  composer: FXComposer,
-  parentLogger?: LoggerInterface,
-): FXMasterPinInstance => {
-  const slaves = _.createMap<
-    FXPinInstance,
-    { _callback: FXMasterPinInstanceCallback; _isPaused: boolean }
-  >();
-
   let isClamping = false;
-  let clampedComposerState: FXState | null = null;
+  let clampedComposerState: FXState | undefined = void 0;
   let isPaused = false;
   let numFulfilledLocking = 0; // number of fulfilled while conditions
   let numLocking = 0; // total number of while conditions; for testing
-  let lastUpdate: FXPinUpdate | null = null;
 
   const conditions = _.createMap<FXClampInstance, Condition>();
   const clampActiveStates = _.createMap<FXClampInstance, boolean>();
 
   // ----------
-
-  const getState = () => ({
-    state: clampedComposerState ?? composer.getState(),
-    clamped: isClamping,
-  });
 
   const addConditions = (type: CONDITION_TYPE, clampsSets: FXClamp[][]) => {
     for (const set of clampsSets) {
@@ -242,15 +220,7 @@ const createMasterPinInstance = (
       }
 
       const clamps = set.map((c): FXClampInstance => {
-        const clampInstance = createClampInstance(
-          c,
-          composer,
-          {
-            requestUpdate: (update) => onClampChange(clampInstance, update),
-            getState,
-          },
-          logger,
-        );
+        const clampInstance = createClampInstance(c, parents, logger);
 
         return clampInstance;
       });
@@ -294,67 +264,57 @@ const createMasterPinInstance = (
 
   // ----------
 
-  const onClampChange = (
-    clampInstance: FXClampInstance,
-    update: FXPinUpdate,
-  ) => {
-    const condition = conditions.get(clampInstance);
-    /* istanbul ignore next */
-    if (!condition) {
-      throw bugError("No condition saved for clamp instance");
-    }
-
-    clampActiveStates.set(clampInstance, update.active);
-    const isFulfilled = condition._clamps.every((c) =>
-      clampActiveStates.get(c),
-    );
+  const onConditionChange = (condition: Condition) => {
+    logger?.debug7("Condition changed", condition);
 
     let activateClamping = isClamping;
     if (condition._type === LOCK) {
-      activateClamping = isFulfilled;
-    } else if (isFulfilled) {
+      activateClamping = condition._fulfilled;
+      if (condition._fulfilled) {
+        incrementLocking();
+      } else {
+        decrementLocking();
+      }
+    } else if (condition._fulfilled) {
       activateClamping = condition._type === ACTIVATE;
     } else {
       // Otherwise, one-way condition no longer fulfilled doesn't change state
       return;
     }
 
-    if (condition._fulfilled !== isFulfilled) {
-      condition._fulfilled = isFulfilled;
-      logger?.debug7("Condition changed", condition, update);
-      if (condition._type === LOCK) {
-        if (condition._fulfilled) {
-          incrementLocking();
-        } else {
-          decrementLocking();
-        }
-      }
-    }
-
     // Do not deactivate the pin if it's locked.
     if (isClamping !== activateClamping && (activateClamping || !isLocked())) {
       isClamping = activateClamping;
-      updateClampedState(update);
-      pauseOrRestartClamps(CLAMP_RESTART, update.state);
-    } else if (activateClamping) {
-      // This is a correction to the clamped state by an active clamp.
-      updateClampedState(update);
+      pauseOrRestartClamps(CLAMP_RESTART, clampedComposerState);
     }
   };
 
   // ----------
 
-  const updateClampedState = (update: FXPinUpdate) => {
-    if (
-      !lastUpdate ||
-      lastUpdate.active !== update.active ||
-      !compareValuesIn(lastUpdate.state, update.state)
-    ) {
-      logger?.debug7("New clamped state", { isClamping, lastUpdate, update });
-      lastUpdate = update;
-      clampedComposerState = update.state;
-      for (const e of slaves.values()) {
-        e._callback(isClamping, update);
+  const clampState = (state: FXState) => {
+    logger?.debug7("Clamping state", {
+      state,
+      isClamping,
+      clampedComposerState,
+    });
+
+    for (const condition of conditions.values()) {
+      let isFulfilled = condition._fulfilled;
+
+      for (const clampInstance of condition._clamps) {
+        if (clampInstance.isPaused()) {
+          continue;
+        }
+
+        // XXX clampInstance.XXX()
+        // update clamp state
+        // clampActiveStates.set(clampInstance, active);
+      }
+
+      isFulfilled = condition._clamps.every((c) => clampActiveStates.get(c));
+      if (isFulfilled !== condition._fulfilled) {
+        condition._fulfilled = isFulfilled;
+        onConditionChange(condition);
       }
     }
   };
@@ -363,7 +323,7 @@ const createMasterPinInstance = (
 
   const pauseOrRestartClamps = (
     resumeMode: CLAMP_RESUME_MODE = CLAMP_RESTART,
-    state?: FXState,
+    refState?: FXState,
   ) => {
     for (const condition of conditions.values()) {
       for (const clampInstance of condition._clamps) {
@@ -377,7 +337,7 @@ const createMasterPinInstance = (
           clampInstance.pause();
         } else {
           if (resumeMode === CLAMP_RESTART) {
-            clampInstance.restart(state);
+            clampInstance.restart(refState);
           } else {
             clampInstance.resume();
           }
@@ -387,20 +347,6 @@ const createMasterPinInstance = (
   };
 
   // ----------
-
-  const setSlaveRunningState = (slave: FXPinInstance, state: RUNNING_STATE) => {
-    const data = slaves.get(slave);
-    /* istanbul ignore next */
-    if (!data) {
-      throw bugError("No data saved for slave clamp instance");
-    }
-
-    if (data._isPaused !== (state === PAUSE)) {
-      data._isPaused = !data._isPaused;
-      const shouldPause = [...slaves.values()].every((e) => e._isPaused);
-      setRunningState(shouldPause ? PAUSE : RESUME);
-    }
-  };
 
   const setRunningState = (state: RUNNING_STATE) => {
     if (isPaused !== (state === PAUSE)) {
@@ -412,15 +358,10 @@ const createMasterPinInstance = (
 
   // --------------------
 
-  const self: FXMasterPinInstance = {
-    addSlave: (slave, onNewClampedState) => {
-      slaves.set(slave, { _callback: onNewClampedState, _isPaused: false });
-
-      return {
-        requestPause: () => setSlaveRunningState(slave, PAUSE),
-        requestResume: () => setSlaveRunningState(slave, RESUME),
-      } as const;
-    },
+  const self: FXPinInstance = {
+    pause: () => setRunningState(PAUSE),
+    resume: () => setRunningState(RESUME),
+    clamp: clampState,
   };
 
   const logger = debug
@@ -440,41 +381,6 @@ const createMasterPinInstance = (
   return self;
 };
 
-const createSlavePinInstance = (
-  master: FXMasterPinInstance,
-  composer: FXComposer,
-  effectActions: EffectActions,
-): FXPinInstance => {
-  let isPaused = false;
-  let isClamping = false;
-
-  const onNewClampedState = (activateClamp: boolean, update: FXPinUpdate) => {
-    isClamping = activateClamp;
-    effectActions.requestUpdate(update.state, update.realtime);
-  };
-
-  // --------------------
-
-  const self: FXPinInstance = {
-    pause: () => {
-      isPaused = true;
-      requestPause();
-    },
-    resume: () => {
-      isPaused = false;
-      requestResume();
-    },
-    isClamping: () => !isPaused && isClamping,
-  };
-
-  const { requestPause, requestResume } = master.addSlave(
-    self,
-    onNewClampedState,
-  );
-
-  return self;
-};
-
 // ------------------------------
 
 type Condition = {
@@ -488,18 +394,6 @@ type ConditionBuilders = {
   _until: FXClamp[][];
   _while: FXClamp[][];
 };
-
-type FXMasterPinInstanceCallback = (
-  activateClamping: boolean,
-  update: FXPinUpdate,
-) => void;
-
-interface FXMasterPinInstance {
-  addSlave: (
-    slave: FXPinInstance,
-    onChangeCallback: FXMasterPinInstanceCallback,
-  ) => { requestPause: () => void; requestResume: () => void };
-}
 
 type CONDITION_TYPE = typeof ACTIVATE | typeof DEACTIVATE | typeof LOCK;
 const ACTIVATE: unique symbol = _.SYMBOL("when") as typeof ACTIVATE;
@@ -515,10 +409,6 @@ const CLAMP_RESUME: unique symbol = _.SYMBOL() as typeof CLAMP_RESUME;
 const CLAMP_RESTART: unique symbol = _.SYMBOL() as typeof CLAMP_RESTART;
 
 const allBuilderData = _.createWeakMap<FXPin, ConditionBuilders>();
-const masterInstances = createXWeakMap<
-  FXPin,
-  WeakMap<FXComposer, FXMasterPinInstance>
->(() => _.createWeakMap());
 
 // --------------------
 

@@ -30,7 +30,7 @@ import type {
   ParallaxScalerFn,
   EffectParams,
 } from "@lisn/effects/effect";
-import type { FXPin, FXPinInstance, FXPinState } from "@lisn/effects/fx-pin";
+import type { FXPin, FXPinInstance } from "@lisn/effects/fx-pin";
 import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
 import type { FXTrigger, FXTriggerInstance } from "@lisn/effects/fx-trigger";
 
@@ -42,23 +42,6 @@ import { LoggerInterface } from "@lisn/debug/types";
 export type StartStopper = {
   start: () => void;
   stop: () => void;
-};
-
-export type FXPinUpdate = {
-  /**
-   * The composer state to update to.
-   */
-  state: FXState;
-
-  /**
-   * True if the clamp is active.
-   */
-  active: boolean;
-
-  /**
-   * True if the update should happen immediately.
-   */
-  realtime: boolean;
 };
 
 // Instances --------------------
@@ -84,43 +67,27 @@ export const getComposerInstance = (element: Element) =>
 
 // effects -----
 
-export type FXComposerActions = {
-  requestRecompose: (realtime?: boolean) => void;
-};
-
 export const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
-  composer: FXComposer,
-  composerActions: FXComposerActions,
+  parents: { composer: FXComposer },
   logger?: LoggerInterface,
-) => instanceCreators.effect(effect, composer, composerActions, logger);
+) => instanceCreators.effect(effect, parents, logger);
 
 // pins -----
 
-export type EffectActions = {
-  requestUpdate: (state: FXState, realtime?: boolean) => void;
-};
-
-export const createPinInstance = (
+export const createPinInstance = <T extends EffectName>(
   pin: FXPin,
-  composer: FXComposer,
-  effectActions: EffectActions,
+  parents: { effectInstance: EffectInstance<T>; composer: FXComposer },
   logger?: LoggerInterface,
-) => instanceCreators.pin(pin, composer, effectActions, logger);
+) => instanceCreators.pin(pin, parents, logger);
 
 // clamps -----
 
-export type FXPinActions = {
-  requestUpdate: (update: FXPinUpdate) => void;
-  getState: () => FXPinState;
-};
-
-export const createClampInstance = <T extends string>(
+export const createClampInstance = <T extends string, E extends EffectName>(
   clamp: FXClamp<T>,
-  composer: FXComposer,
-  pinActions: FXPinActions,
+  parents: { effectInstance: EffectInstance<E>; composer: FXComposer },
   logger?: LoggerInterface,
-) => instanceCreators.clamp(clamp, composer, pinActions, logger);
+) => instanceCreators.clamp(clamp, parents, logger);
 
 // triggers -----
 
@@ -398,22 +365,22 @@ type InstanceGetters = {
 type InstanceCreators = {
   effect: <T extends EffectName>(
     effect: Effect<T>,
-    composer: FXComposer,
-    composerActions: FXComposerActions,
+    parents: { composer: FXComposer },
     logger?: LoggerInterface,
   ) => EffectInstance<T>;
 
-  pin: (
+  pin: <T extends EffectName>(
     pin: FXPin,
-    composer: FXComposer,
-    effectActions: EffectActions,
+    parents: { effectInstance: EffectInstance<T>; composer: FXComposer },
     logger?: LoggerInterface,
   ) => FXPinInstance;
 
-  clamp: <T extends string>(
+  clamp: <T extends string, E extends EffectName>(
     clamp: FXClamp<T>,
-    composer: FXComposer,
-    pinActions: FXPinActions,
+    parents: {
+      effectInstance: EffectInstance<E>;
+      composer: FXComposer;
+    },
     logger?: LoggerInterface,
   ) => FXClampInstance;
 

@@ -29,7 +29,6 @@ import type { FXComposer, FXState } from "@lisn/effects/fx-composer";
 import type { FXPin } from "@lisn/effects/fx-pin";
 
 import {
-  FXComposerActions,
   setInstanceCreator,
   createPinInstance,
   toParameters,
@@ -687,8 +686,7 @@ const addUpdater = <T extends EffectName>(
 
 const createEffectInstance = <T extends EffectName>(
   effect: Effect<T>,
-  composer: FXComposer,
-  composerActions: FXComposerActions,
+  { composer }: { composer: FXComposer },
   logger?: LoggerInterface,
 ): EffectInstance<T> => {
   /* istanbul ignore next */
@@ -707,7 +705,6 @@ const createEffectInstance = <T extends EffectName>(
   return _createEffectInstance(
     definitions,
     _.merge(initData, { _composer: composer }),
-    composerActions,
     logger,
   );
 };
@@ -719,27 +716,21 @@ const _createEffectInstance = <T extends EffectName, S>(
     nullState: S;
   },
   initData: SemiPartial<InitData<T> & InstanceData<T, S>, "_state">,
-  composerActions: FXComposerActions,
   parentLogger: LoggerInterface | undefined,
 ): EffectInstance<T> => {
-  const update = (state: FXState, byPin: boolean) => {
-    if (!byPin && pinInstance?.isClamping()) {
-      logger?.debug10("Pinned, skipping update");
-      return;
+  const update = (state: FXState) => {
+    let recheck = false;
+    if (pinInstance) {
+      ({ state, recheck } = pinInstance.clamp(state));
     }
 
     if (isAbsolute) {
-      // reset state
+      // reset effect state
       data._state = cloneState(nullState);
     }
 
     const parameters = toParameters(state, isAbsolute);
-    logger?.debug10(
-      "Updating",
-      { byPin, pinActive: pinInstance?.isClamping() },
-      state,
-      parameters,
-    );
+    logger?.debug10("Updating", state, parameters);
 
     for (const entry of data._updaters) {
       const { name, updater, scaler, tag } = entry;
@@ -753,6 +744,11 @@ const _createEffectInstance = <T extends EffectName, S>(
         data._state = updateState(data._state, name, result, tag);
       }
     }
+
+    // XXX TODO pin to ensure no infinite loops?
+    if (recheck) {
+      update(state);
+    }
   };
 
   // -----
@@ -765,7 +761,6 @@ const _createEffectInstance = <T extends EffectName, S>(
             _updaters: [],
           })
         : instanceData,
-      composerActions,
       parentLogger,
     );
   };
@@ -827,7 +822,7 @@ const _createEffectInstance = <T extends EffectName, S>(
     isAbsolute: () => isAbsolute,
     pausePin: () => pinInstance?.pause(),
     resumePin: () => pinInstance?.resume(),
-    update: () => update(composer.getState(), false),
+    update: () => update(composer.getState()),
     clone: (options) => {
       const { pin = data._pin, discardUpdaters } = options ?? {};
       return clone(
@@ -870,18 +865,7 @@ const _createEffectInstance = <T extends EffectName, S>(
   const nullState = cloneState(definitions.nullState);
 
   const pinInstance = initData._pin
-    ? createPinInstance(
-        initData._pin,
-        composer,
-        {
-          // XXX remove
-          requestUpdate: (state, realtime) => {
-            update(state, true);
-            composerActions.requestRecompose(realtime);
-          },
-        },
-        logger,
-      )
+    ? createPinInstance(initData._pin, { composer, effect: self }, logger)
     : void 0;
 
   const data: InstanceData<T, S> = {

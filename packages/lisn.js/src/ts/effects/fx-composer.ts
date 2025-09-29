@@ -10,6 +10,11 @@
  * more elements by applying its CSS to them.
  */
 
+// XXX TODO
+// - composer calibration to support not applying CSS but instead call callback
+//   with the resulting CSS only
+//   - do we even need calibration? remove? if so, remove support for realtime
+
 import * as _ from "@lisn/_internal";
 
 import {
@@ -516,19 +521,7 @@ export class FXComposer {
           addToComposition(link);
         } else {
           const effectInstance = _.isInstanceOf(link, EffectBase)
-            ? createEffectInstance(
-                link,
-                this,
-                {
-                  // XXX remove
-                  requestRecompose: (realtime) =>
-                    recompose({
-                      _updateMode: UPDATE_NONE,
-                      _realtime: realtime,
-                    }),
-                },
-                logger,
-              )
+            ? createEffectInstance(link, { composer: this }, logger)
             : link;
 
           ctx._links.push(effectInstance);
@@ -678,8 +671,8 @@ export class FXComposer {
     const toCss = () => {
       const css: Record<string, string> = {};
 
-      for (const [type__ignored, effect] of ctx._composition) {
-        const thisCss = effect.toCss();
+      for (const [type__ignored, effectInstance] of ctx._composition) {
+        const thisCss = effectInstance.toCss();
 
         for (const p in thisCss) {
           const val = _.STRING(thisCss[p]);

@@ -25,7 +25,7 @@ import * as _ from "@lisn/_internal";
 
 import { bugError, usageError } from "@lisn/globals/errors";
 
-import { logError } from "@lisn/utils/log";
+import { logError, logWarn } from "@lisn/utils/log";
 
 import type { FXComposer, FXState } from "@lisn/effects/fx-composer";
 import type { FXClamp, FXClampInstance } from "@lisn/effects/fx-clamp";
@@ -154,8 +154,8 @@ export interface FXPinInstance {
   readonly resume: () => void;
 
   /**
-   * Should be called whenever the composer wants to update the effect
-   * associated with this pin.
+   * Should be called by the effect associated with this pin whenever it is to
+   * be updated.
    *
    * It will request all active clamps to process the given composer state and
    * return a possibly clamped state for the effect to use.
@@ -203,13 +203,12 @@ const createPinInstance = <T extends EffectName>(
   }
 
   let isClamping = false;
-  let clampedComposerState: FXState | undefined = void 0;
   let isPaused = false;
   let numFulfilledLocking = 0; // number of fulfilled while conditions
   let numLocking = 0; // total number of while conditions; for testing
 
   const conditions = _.createMap<FXClampInstance, Condition>();
-  const clampActiveStates = _.createMap<FXClampInstance, boolean>();
+  const clampStates = _.createMap<FXClampInstance, boolean>();
 
   // ----------
 
@@ -233,7 +232,7 @@ const createPinInstance = <T extends EffectName>(
 
       for (const c of clamps) {
         conditions.set(c, condition);
-        clampActiveStates.set(c, false);
+        clampStates.set(c, false);
       }
     }
   };
@@ -264,7 +263,7 @@ const createPinInstance = <T extends EffectName>(
 
   // ----------
 
-  const onConditionChange = (condition: Condition) => {
+  const onConditionChange = (condition: Condition, state?: FXState) => {
     logger?.debug7("Condition changed", condition);
 
     let activateClamping = isClamping;
@@ -285,38 +284,69 @@ const createPinInstance = <T extends EffectName>(
     // Do not deactivate the pin if it's locked.
     if (isClamping !== activateClamping && (activateClamping || !isLocked())) {
       isClamping = activateClamping;
-      pauseOrRestartClamps(CLAMP_RESTART, clampedComposerState);
+      pauseOrRestartClamps(CLAMP_RESTART, state);
     }
   };
 
   // ----------
 
-  const clampState = (state: FXState) => {
+  const clampState = (inputState: FXState) => {
     logger?.debug7("Clamping state", {
-      state,
+      inputState,
       isClamping,
-      clampedComposerState,
     });
 
-    for (const condition of conditions.values()) {
-      let isFulfilled = condition._fulfilled;
+    const states: FXState[] = [];
+    let recheck = false;
 
+    for (const condition of conditions.values()) {
       for (const clampInstance of condition._clamps) {
         if (clampInstance.isPaused()) {
           continue;
         }
 
-        // XXX clampInstance.XXX()
-        // update clamp state
-        // clampActiveStates.set(clampInstance, active);
-      }
+        const { state: thisClampedState, recheck: thisRecheck } =
+          clampInstance.clamp(inputState);
+        states.push(thisClampedState);
 
-      isFulfilled = condition._clamps.every((c) => clampActiveStates.get(c));
-      if (isFulfilled !== condition._fulfilled) {
-        condition._fulfilled = isFulfilled;
-        onConditionChange(condition);
+        recheck ||= thisRecheck;
+
+        clampStates.set(clampInstance, clampInstance.isClamping());
       }
     }
+
+    const state = _.copyNested(inputState);
+
+    for (const a of _.A_AXES) {
+      let maxDiff = 0;
+      let hasClampedUp = false;
+      let hasClampedDown = false;
+
+      for (const thisState of states) {
+        const diff = thisState[a].current - inputState[a].current;
+        if (_.abs(diff) > maxDiff) {
+          state[a].current = thisState[a].current;
+          maxDiff = diff;
+        }
+
+        hasClampedUp ||= diff > 0;
+        hasClampedDown ||= diff < 0;
+      }
+
+      if (hasClampedUp || hasClampedDown) {
+        logWarn("FXPin has conflicting clamps (opposite constraints)");
+      }
+    }
+
+    for (const condition of conditions.values()) {
+      const isFulfilled = condition._clamps.every((c) => clampStates.get(c));
+      if (isFulfilled !== condition._fulfilled) {
+        condition._fulfilled = isFulfilled;
+        onConditionChange(condition, state);
+      }
+    }
+
+    return { state, recheck };
   };
 
   // ----------

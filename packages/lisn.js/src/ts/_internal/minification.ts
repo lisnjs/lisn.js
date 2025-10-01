@@ -169,6 +169,8 @@ export const PREFIX_ANIMATE_PAUSE = `${ANIMATE_PREFIX}pause`;
 export const PREFIX_ANIMATE_REVERSE = `${ANIMATE_PREFIX}${S_REVERSE}`;
 export const PREFIX_ANIMATE_INFINITE = `${ANIMATE_PREFIX}infinite`;
 
+export const A_AXES = ["x", "y", "z"] as const;
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type */
 export const bind = <F extends Function>(fn: F, thisArg: any): F =>
   fn.bind(thisArg);

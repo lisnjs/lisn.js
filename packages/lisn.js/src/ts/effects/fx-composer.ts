@@ -888,7 +888,7 @@ export class FXComposer {
         }
 
         const tweenUpdate: Animation3DTweenerUpdate<keyof FXState> = {};
-        for (const a of ["x", "y", "z"] as const) {
+        for (const a of _.A_AXES) {
           tweenUpdate[a] = { snap: ctx._state[a].snap };
           for (const p of ["target", "lag"] as const) {
             tweenUpdate[a][p] = ctx._state[a][p];
@@ -906,7 +906,7 @@ export class FXComposer {
         }
 
         const partial: DeepPartial<FXState> = {};
-        for (const a of ["x", "y", "z"] as const) {
+        for (const a of _.A_AXES) {
           // target, lag and snap are set by us on each frame, ignore
           for (const p of ["initial", "previous", "current"] as const) {
             partial[a] ??= {};

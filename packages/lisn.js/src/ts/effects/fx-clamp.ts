@@ -733,6 +733,19 @@ export interface FXClampInstance {
    * Returns true if the clamp is paused.
    */
   isPaused: () => boolean;
+
+  /**
+   * Returns true if the clamp is actively clamping.
+   */
+  isClamping: () => boolean;
+
+  /**
+   * @returns `state` holds a possibly clamped state or the original one passed
+   * as the argument. If `recheck` is true, the pin instance needs to call this
+   * again after the effect has applied the returned composer state. It should
+   * pass as the argument the final state that was applied by the effect.
+   */
+  clamp: (state: FXState) => { state: FXState; recheck: boolean };
 }
 
 /**
@@ -1008,7 +1021,7 @@ const createClampInstance = <
   } = getInitData<A, B>(clamp);
 
   let isPaused = true; // don't start until the pin restarts us
-  let lastClampedComposerState: FXState | null = null; // XXX remove?
+  let clampedComposerState: FXState | null = null;
 
   const instanceData = createInstanceData<D, B>(bounds);
 
@@ -1074,7 +1087,7 @@ const createClampInstance = <
         isPaused,
         input,
         state,
-        lastClampedComposerState,
+        clampedComposerState,
         deviation,
         update,
       });
@@ -1149,6 +1162,8 @@ const createClampInstance = <
     restart: (reference?: FXState) =>
       setRunningState(RESUME, reference ?? true),
     isPaused: () => isPaused,
+    isClamping: () => !!clampedComposerState,
+    clamp: (state) => XXX,
   };
 
   const logger = debug
@@ -1660,7 +1675,7 @@ const getBoundViolation = (input: BoundViolationInput): BoundViolation => {
   let violated = false;
   const deviation: AxesDeltaValues = { x: 0, y: 0, z: 0 };
 
-  for (const axis of ["x", "y", "z"] as const) {
+  for (const axis of _.A_AXES) {
     const boundedValue = input._bounds[axis];
     if (_.isNullish(boundedValue)) {
       continue;
@@ -1753,7 +1768,7 @@ const getBoundViolation = (input: BoundViolationInput): BoundViolation => {
 const getClampedParams = (params: FXClampParams[], deltas: AxesDeltaValues) => {
   const result = _.copyNested(params);
   for (const p of result) {
-    for (const a of ["x", "y", "z"] as const) {
+    for (const a of _.A_AXES) {
       p[a].current -= deltas[a] ?? 0;
     }
   }
@@ -1763,7 +1778,7 @@ const getClampedParams = (params: FXClampParams[], deltas: AxesDeltaValues) => {
 
 const getClampedComposerState = (state: FXState, deltas: AxesDeltaValues) => {
   const result = _.copyNested(state);
-  for (const a of ["x", "y", "z"] as const) {
+  for (const a of _.A_AXES) {
     result[a].previous = result[a].current;
     result[a].current -= deltas[a] ?? 0;
   }
@@ -1776,7 +1791,7 @@ const getComposerStateDiff = (
   stateB: FXState,
 ): AxesDeltaValues => {
   const deltas = { x: 0, y: 0, z: 0 };
-  for (const a of ["x", "y", "z"] as const) {
+  for (const a of _.A_AXES) {
     deltas[a] = stateA[a].current - stateB[a].current;
   }
 

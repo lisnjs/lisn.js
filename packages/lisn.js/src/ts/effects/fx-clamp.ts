@@ -44,11 +44,11 @@
 //     can be pinned reliably by clamping the composer's state and the resulting
 //     offsets can be calculated)
 //     - case if
-//       1. element is animated by composer
+//       1. element is animated by the associated composer
 //       2. either it negates parent or has no parent
-//       4. has no scrollable ancestor (stop checking at the first fixed
+//       3. has no scrollable ancestor (stop checking at the first fixed
 //          positioned ancestor)
-//       3. the pin is associated with a transform effect on that composer
+//       4. the associated effect is a Transform (or has "transform" in its css)
 //     - need a self-correcting best-guess numeric approach to find clamp
 //       parameters for given offset bounds
 //     - view clamp to use the transform CSS property of the composer to predict
@@ -290,21 +290,19 @@ export type BoundedValue =
  *
  * @category Pinning
  */
-// XXX accept optional other composer and not the one tied to the pin
-// in this case no deviation/adjustment to the effect is needed
 export class FXComposerClamp extends FXClampBase<"composer"> {
   readonly type = "composer";
 
-  constructor(bounds: FXComposerClampBounds) {
+  constructor(bounds: FXComposerClampBounds, composer?: FXComposer) {
     super();
 
     if (_.isNullish(bounds?.x ?? bounds?.y ?? bounds?.z)) {
       throw usageError(
-        "At least one parameter bounding value is required for FXComposerClamp",
+        "At least one parameter bounding value is required for FXClamp",
       );
     }
 
-    initComposer(this, bounds);
+    initComposer(this, { bounds }, composer);
   }
 }
 
@@ -422,6 +420,7 @@ export class FXViewClamp extends FXClampBase<"view"> {
 
     const { top, bottom, left, right } = bounds;
 
+    // XXX TODO support h/v middle
     if (_.isNullish(top ?? bottom ?? left ?? right)) {
       throw usageError(
         "At least one parameter bounding value is required for FXViewClamp",
@@ -449,7 +448,7 @@ export class FXViewClamp extends FXClampBase<"view"> {
       y: bounds[xyToAnchor.y],
     };
 
-    initView(this, xyBounds, xyToAnchor, config);
+    initView(this, { bounds: xyBounds }, xyToAnchor, config);
   }
 }
 
@@ -592,8 +591,8 @@ export type FXViewClampConfig = {
  * monitor should translate to composer state parameters. The clamps can store
  * one or more sets of X/Y/Z parameters in the {@link FXClampStore} and define
  * the needed calculation to translate to and from clamp parameters to composer
- * state parameters via {@link FXClampLogic.toComposerParams} and
- * {@link FXClampLogic.toClampParams}.
+ * state parameters via {@link FXClampLogic.toComposerDeltas} and
+ * {@link FXClampLogic.toClampDeltas}.
  *
  * The {@link FXClampLogic.refresh} method should return an array of parameter
  * sets. A violation of the bounds will be calculated for each entry will, and
@@ -691,11 +690,11 @@ export const registerFXClamp = <
   registeredTypes.set(definitions.type, definitions);
 
   return {
-    init: (self: FXClamp<T>, bounds: FXClampBounds<Bounded>, ...args: Args) => {
+    init: (self: FXClamp<T>, config: FXClampConfig<Bounded>, ...args: Args) => {
       const initData: InitData<Args, Bounded> = {
         _invert: false,
         _args: args,
-        _bounds: bounds,
+        _config: config,
       };
       allBuilderData.set(self, initData);
     },
@@ -717,15 +716,14 @@ export interface FXClampInstance {
   resume: () => void;
 
   /**
-   * Updates the clamps's reference parameters to be its current ones.
+   * Updates the clamp's reference state to be its current state.
    *
    * It will also {@link resume} the clamp if it's paused.
    *
-   * @param reference If given, this state will be translated to clamp parameters
-   *                  according to
-   *                  {@link FXClampLogic.toClampParams | the logic's toClampParams}
-   *                  and used to construct the reference clamp state, instead
-   *                  of the current clamp state being used.
+   * @param reference If given, this composer state will be used to get the
+   *                  clamp's state according to
+   *                  {@link FXClampLogic.update | the logic's update} method.
+   *                  Otherwise the current composer state is used.
    */
   restart: (reference?: FXState) => void;
 
@@ -793,19 +791,25 @@ export type FXClampLogic<
   run: (store: FXClampStore<Data, Bounded>, ...args: Args) => void;
 
   /**
-   * The function should return an up-to-date clamp parameters or active state.
+   * The function should return an object containing `result` which is up-to-date
+   * clamp parameters (for bounded clamps) or active boolean state (for
+   * unbounded clamps).
    *
-   * If the clamp is bounded, then it **must** return an array of up-to-date
-   * parameters. Otherwise, the clamp **must** return a boolean where `true`
-   * means the clamp is active and `false` means it's not.
+   * If the clamp is bounded, then `result` **must** be an array of up-to-date
+   * parameters. Otherwise, it **must** be a boolean where `true` means the
+   * clamp is active and `false` means it's not.
    *
-   * It is called when the clamp is first initialized (after {@link run} has
-   * been called) or when it's resumed.
+   * **IMPORTANT:** A bounded clamp's update result must always be an array of
+   * parameters, with the same number of entries each time, and their order must
+   * be fixed.
    *
-   * **IMPORTANT:** Bounded clamps must always return an array of parameters,
-   * with the same number of entries each time, and their order must be fixed.
+   * @param state The composer state that the return value should relate to. It
+   *              may not be the current composer state.
    */
-  refresh: (store: FXClampStore<Data, Bounded>) => FXClampUpdate<Bounded>;
+  update: (
+    store: FXClampStore<Data, Bounded>,
+    state: FXState,
+  ) => FXClampUpdate<Bounded>;
 
   /**
    * If given, it will be called when the clamp is paused.
@@ -818,36 +822,18 @@ export type FXClampLogic<
   resume?: (store: FXClampStore<Data, Bounded>) => void;
 
   /**
-   * Only used for bounded clamps during {@link refresh | updates} unless
-   * {@link FXClampUpdate | applyDeviationXXX} was set to false.
+   * Only used for bounded clamps.
    *
-   * It is used to translate from the clamp's state to the composer's state
-   * for each axis value. If not given, the clamp's parameters are assumed
-   * to match the composer's axes.
+   * It is used to translate changes in the clamp's parameters to the composer's
+   * parameters for each axis value. If not given, changes in the clamp's
+   * parameters are assumed to match changes in the composer's axes.
    *
-   * @returns Should return the values for X, Y and Z composer axes that the
-   * effect should use during updates.
+   * @returns Should return the delta values for X, Y and Z composer axes.
    */
-  toComposerParams?: (
+  toComposerDeltas?: (
     store: FXClampStore<Data, Bounded>,
-    params: FXClampParams,
-  ) => AxesValues;
-
-  /**
-   * XXX update this if needed; should it accept just AxesValues
-   * Only used for bounded clamps during
-   * {@link FXClampInstance.restart | restart}.
-   *
-   * It is used to translate from the composer's state to the clamp's state
-   * for each axis value. If not given, the clamp's parameters are assumed
-   * to match the composer's axes.
-   *
-   * @returns Should return the values for X, Y and Z clamp parameters.
-   */
-  toClampParams?: (
-    store: FXClampStore<Data, Bounded>,
-    state: FXState,
-  ) => AxesValues;
+    deltas: AxesDeltaValues,
+  ) => AxesDeltaValues;
 };
 
 /**
@@ -857,18 +843,6 @@ export type FXClampLogic<
  * @category Base
  */
 export type FXClampStore<Data, Bounded extends boolean> = {
-  /**
-   * Updates the clamp's state as per
-   * {@link FXClampLogic.refresh | the clamp logic's refresh} method.
-   *
-   * Note that if the clamp is paused the update will be ignored.
-   *
-   * @param override If given, this will be used as the update and the
-   *                 {@link FXClampLogic.refresh | logic's refresh} method will
-   *                 not be called.
-   */
-  update: (override?: FXClampUpdate<Bounded>) => void;
-
   /**
    * Returns the current data, last set using {@link setData}.
    *
@@ -921,52 +895,47 @@ export type FXClampState<Bounded extends boolean> = Bounded extends true
  * @category Base
  */
 export type FXClampUpdate<Bounded extends boolean> = {
-  input: FXClampUpdateInput<Bounded>;
-} & FXClampUpdateOptions<Bounded>;
-
-/**
- * @category Base
- */
-export type FXClampUpdateInput<Bounded extends boolean> = Bounded extends true
-  ? FXClampParams[]
-  : boolean;
-
-/**
- * @category Base
- */
-export type FXClampUpdateOptions<Bounded extends boolean> = {
-  /**
-   * Only relevant for bounded clamps.
-   *
-   * This setting is true by default and it results in the composer's state
-   * being adjusted by the same amount that the bounds were violated, so as to
-   * clamp it to the bounded parameters (after they have been translated using
-   * {@link FXClampLogic.toComposerState}). Set it to false to disable this
-   * behaviour and simply freeze the composer state to its current values when
-   * activating. This makes sense for example if the clamp's parameters are not
-   * based on or influenced by the composer's state.
-   *
-   * @defaultValue true
-   */
-  // XXX rename? and also pass this to the init method instead since it
-  // shouldn't change
-  applyDeviation?: Bounded extends true ? boolean : never;
+  result: FXClampUpdateResult<Bounded>;
 
   /**
-   * The composer state that the parameters are related to. If not given, the
-   * current composer state is used.
+   * If set to true, the composer's state will simply fixed to its current
+   * values rather than being adjusted when the bounds are violated according to
+   * the deviation between the bounds and the current parameters.
    */
-  state?: FXState;
+  noAdjust?: boolean;
+
+  /**
+   * If set to true, the method will be called again after the effect has
+   * applied the new effective state.
+   */
+  recheck?: boolean;
 };
 
 /**
  * @category Base
  */
-export type FXClampBounds<Bounded extends boolean> = Bounded extends true
-  ? {
-      [A in "x" | "y" | "z"]?: BoundedValue;
-    }
+export type FXClampUpdateResult<Bounded extends boolean> = Bounded extends true
+  ? FXClampParams[]
+  : boolean;
+
+/**
+ * Currently config is only relevant for bounded clamps.
+ *
+ * @category Base
+ */
+export type FXClampConfig<Bounded extends boolean> = Bounded extends true
+  ? FXBoundedClampConfig
   : null;
+
+/**
+ * @category Base
+ */
+export type FXBoundedClampConfig = {
+  /**
+   * The bounds (limits) for the clamp's parameters.
+   */
+  bounds: { [A in "x" | "y" | "z"]?: BoundedValue };
+};
 
 /**
  * @category Base
@@ -1016,83 +985,16 @@ const createClampInstance = <
   const { logic } = definitions;
   const {
     _args: args,
-    _bounds: bounds,
+    _config: config,
     _invert: invert,
   } = getInitData<A, B>(clamp);
 
   let isPaused = true; // don't start until the pin restarts us
   let clampedComposerState: FXState | null = null;
 
-  const instanceData = createInstanceData<D, B>(bounds);
+  const instanceData = createInstanceData<D, B>(config);
 
   const store: FXClampStore<D, B> = {
-    update: (override) => {
-      // XXX update or remove
-      if (isPaused) {
-        return;
-      }
-
-      const result = override ?? refresh(store);
-      const {
-        input,
-        applyDeviation = false,
-        state = composer.getState(),
-      } = result;
-
-      let deviation: AxesDeltaValues | null = null;
-      try {
-        deviation = updateClampState(
-          clamp,
-          instanceData,
-          input,
-          vpSizeWatch.get(),
-          logger,
-        );
-      } catch (err) {
-        // So that it's logged only once
-        logError(err);
-        return;
-      }
-
-      const s = instanceData._clampState;
-      if (!s) {
-        logError(bugError("Clamp state not updated"));
-        return;
-      }
-
-      const clampedComposerState =
-        applyDeviation && deviation
-          ? getClampedComposerState(
-              lastClampedComposerState ?? state,
-              toComposerDeltas(store, deviation),
-            )
-          : state;
-
-      if (deviation && (deviation.x || deviation.y || deviation.z)) {
-        lastClampedComposerState = clampedComposerState;
-      } else if (
-        !compareValuesIn(instanceData._prevClampState, instanceData._clampState)
-      ) {
-        // There was a change to the clamp parameters, but no deviation, so
-        // we're not clamping anymore.
-        lastClampedComposerState = null;
-      }
-
-      const update = {
-        state: clampedComposerState,
-        active: s.active,
-      };
-
-      logger?.debug10("Updated clamp", {
-        isPaused,
-        input,
-        state,
-        clampedComposerState,
-        deviation,
-        update,
-      });
-    },
-
     getData: () => {
       /* istanbul ignore next */
       const data = instanceData._data;
@@ -1117,36 +1019,61 @@ const createClampInstance = <
 
   // ----------
 
-  const setRunningState = (
-    state: RUNNING_STATE,
-    updateRef: FXState | boolean = false,
+  const clampState = (state: FXState) => update(state, { _getDeviation: true });
+
+  // ----------
+
+  // XXX TODO if same as last one, reuse last result and set recheck to false?
+  const update = (
+    state: FXState,
+    options?: { _updateRef?: boolean; _getDeviation?: boolean },
   ) => {
+    if (isPaused) {
+      return { recheck: false, state };
+    }
+
+    const {
+      recheck = false,
+      noAdjust = false,
+      result,
+    } = logic.update.call(self, store, state);
+    let deviation: AxesDeltaValues | null = null;
+    try {
+      deviation = updateClampState(
+        clamp,
+        instanceData,
+        result,
+        vpSizeWatch.get(),
+        logger,
+        options ?? {},
+      );
+    } catch (err) {
+      logError(err);
+      return { recheck: false, state };
+    }
+
+    clampedComposerState =
+      deviation && !noAdjust
+        ? getClampedComposerState(
+            state,
+            logic.toComposerDeltas?.call(self, store, deviation) ?? deviation,
+          )
+        : state;
+
+    return { recheck, state: clampedComposerState };
+  };
+
+  // ----------
+
+  const setRunningState = (state: RUNNING_STATE, reference?: FXState) => {
     const isChanged = isPaused !== (state === PAUSE);
     if (isChanged) {
       isPaused = !isPaused;
       logger?.debug7(`${isPaused ? "Pausing" : "Resuming"} clamp`);
-
-      if (!isPaused) {
-        store.update(); // refresh the state
-      }
     }
 
-    if (updateRef) {
-      const refComposerState = updateRef === true ? null : updateRef;
-
-      if (isBounded(instanceData) && refComposerState) {
-        const r = getClampState(clamp, instanceData, true);
-        logger?.debug7("Adjusting reference state", {
-          ref: r,
-        });
-        // XXX
-        r.params = getClampedParams(
-          r.params,
-          toClampParams(store, refComposerState),
-        );
-      }
-
-      logger?.debug7("Updated reference state", instanceData._refClampState);
+    if (reference) {
+      update(reference, { _updateRef: true });
     }
 
     if (isChanged) {
@@ -1160,10 +1087,10 @@ const createClampInstance = <
     pause: () => setRunningState(PAUSE),
     resume: () => setRunningState(RESUME),
     restart: (reference?: FXState) =>
-      setRunningState(RESUME, reference ?? true),
+      setRunningState(RESUME, reference ?? composer.getState()),
     isPaused: () => isPaused,
-    isClamping: () => !!clampedComposerState,
-    clamp: (state) => XXX,
+    isClamping: () => !isPaused && !!clampedComposerState,
+    clamp: clampState,
   };
 
   const logger = debug
@@ -1175,10 +1102,6 @@ const createClampInstance = <
     : void 0;
 
   const vpSizeWatch = watchSize(null, logger);
-  const refresh = logic.refresh.bind(self);
-  const toComposerParams =
-    logic.toComposerParams?.bind(self) ?? ((_, p) => XXX);
-  const toClampParams = logic.toClampParams?.bind(self) ?? ((_, s) => XXX);
 
   // --------------------
 
@@ -1192,7 +1115,7 @@ const createClampInstance = <
 type InitData<A extends unknown[], B extends boolean> = {
   _invert: boolean;
   _args: A;
-  _bounds: FXClampBounds<B>;
+  _config: FXClampConfig<B>;
 };
 
 interface RegistrationMap {
@@ -1218,22 +1141,24 @@ interface BuilderDataMap {
 
 type InstanceData<D, B extends boolean> = B extends true
   ? {
-      _bounds: FXClampBounds<true>;
+      _config: FXClampConfig<true>;
       _clampState?: { params: FXClampParams[]; active: boolean };
       _prevClampState?: { params: FXClampParams[]; active: boolean };
       _refClampState?: { params: FXClampParams[]; active: boolean };
       _data?: D;
     }
   : {
-      _bounds: FXClampBounds<false>;
+      _config: FXClampConfig<false>;
       _clampState?: { active: boolean };
       _prevClampState?: { active: boolean };
       _refClampState?: { active: boolean };
       _data?: D;
     };
 
+type FXClampBounds = FXBoundedClampConfig["bounds"];
+
 type BoundViolationInput = {
-  _bounds: FXClampBounds<true>;
+  _bounds: FXClampBounds;
   _current: FXClampParams[];
   _previous: FXClampParams[];
   _reference: FXClampParams[];
@@ -1264,42 +1189,32 @@ const allBuilderData = new WeakMap() as BuilderDataMap;
 const { init: initComposer } = registerFXClamp<
   "composer",
   {
-    _tweenWatch: StartStopper;
+    _composer: FXComposer;
   },
-  [],
+  [FXComposer | undefined],
   true
 >({
   type: "composer",
   logic: {
-    run(store) {
-      const logger = debug ? debug.Logger.getLoggerFor(this) : void 0;
-      const composer = store.getComposer();
-      const tweenHandler: FXComposerHandler = createConcurrentCallback(
-        () => store.update(), // XXX
-        { logger },
-      );
-
-      const tweenWatch = {
-        // XXX only needed if composer is other than the associated one
-        start: () => composer.onTween(tweenHandler),
-        stop: () => composer.offTween(tweenHandler),
-      } as const;
-
+    run(store, composer) {
       store.setData({
-        _tweenWatch: tweenWatch,
+        _composer: composer ?? store.getComposer(),
       });
     },
 
-    refresh: (store) => ({ input: [store.getComposer().getState()] }),
-    pause: (store) => store.getData()._tweenWatch.stop(),
-    resume: (store) => store.getData()._tweenWatch.start(),
+    update: (store, state) => {
+      return {
+        result: [state],
+        noAdjust: store.getData()._composer !== store.getComposer(),
+      };
+    },
   },
 });
 
 const { init: initView } = registerFXClamp<
   "view",
   {
-    _applyDeviation: boolean;
+    _noAdjust: boolean;
     _offsetsInput: ViewOffsetsInput;
     _viewWatch: StartStopper;
     _monitor: StartStopper;
@@ -1334,7 +1249,12 @@ const { init: initView } = registerFXClamp<
         ? getComposerInstance(customTarget)
         : composer;
 
-      const applyDeviation = animatingComposer === composer;
+      // XXX more checks:
+      // 1. the composer either negates its parent or has no parent
+      // 2. has no scrollable ancestor (stop checking at the first fixed
+      //    positioned ancestor)
+      // 3. the associated effect is a Transform (or has "transform" in its css)
+      const noAdjust = animatingComposer !== composer;
 
       const viewWatch = atLeastOneVisible(
         targets,
@@ -1352,6 +1272,7 @@ const { init: initView } = registerFXClamp<
 
       let lastState: FXState | null = null;
 
+      // XXX --------------------------------------------
       const onStyleHandler = (
         predictOffsets: (
           state: FXState,
@@ -1375,7 +1296,7 @@ const { init: initView } = registerFXClamp<
         );
         store.update({
           input: predictedOffsets,
-          applyDeviation,
+          noAdjust,
           state,
         });
 
@@ -1428,7 +1349,7 @@ const { init: initView } = registerFXClamp<
       }
 
       store.setData({
-        _applyDeviation: applyDeviation,
+        _noAdjust: noAdjust,
         _offsetsInput: offsetsInput,
         _viewWatch: viewWatch,
         _monitor: monitor,
@@ -1439,12 +1360,10 @@ const { init: initView } = registerFXClamp<
       });
     },
 
-    refresh: (store) => {
-      const applyDeviation = store.getData()._applyDeviation;
-
+    update: (store, state) => {
       return {
-        applyDeviation,
-        input: getViewOffsets(store.getData()._offsetsInput),
+        noAdjust: store.getData()._noAdjust,
+        input: getViewOffsets(store.getData()._offsetsInput), // XXX use state
       };
     },
 
@@ -1458,9 +1377,6 @@ const { init: initView } = registerFXClamp<
 
     toComposerDeltas: (store, clampDeltas) =>
       store.getData()._toComposerDeltas(clampDeltas),
-
-    toClampDeltas: (store, composerDeltas) =>
-      store.getData()._toClampDeltas(composerDeltas),
   },
 });
 
@@ -1478,10 +1394,10 @@ const getInitData = <A extends unknown[], B extends boolean>(
 };
 
 function createInstanceData<D, B extends boolean>(
-  bounds: FXClampBounds<B>,
+  config: FXClampConfig<B>,
 ): InstanceData<D, B>;
-function createInstanceData(bounds: FXClampBounds<boolean>) {
-  return { _bounds: bounds };
+function createInstanceData(config: FXClampConfig<boolean>) {
+  return { _config: config };
 }
 
 function getClampState<D>(
@@ -1516,48 +1432,57 @@ function getClampState<D>(
   return state;
 }
 
+const isBounded = <D>(
+  data: InstanceData<D, boolean>,
+): data is InstanceData<D, true> => !!data._config?.bounds;
+
 const updateClampState = <D, B extends boolean>(
   clamp: FXClamp,
   instanceData: InstanceData<D, B>,
-  input: FXClampUpdateInput<B>,
+  result: FXClampUpdateResult<B>,
   viewportSize: Size,
   logger: LoggerInterface | undefined,
+  {
+    _updateRef: updateRef,
+    _getDeviation: getDeviation,
+  }: { _updateRef?: boolean; _getDeviation?: boolean },
 ): AxesDeltaValues | null => {
   let deviation: AxesDeltaValues | null = null;
   let newState: InstanceData<D, B>["_clampState"];
 
   if (isBounded(instanceData)) {
-    if (_.isBoolean(input)) {
+    if (_.isBoolean(result)) {
       throw usageError(
         `Clamp '${clamp.type}' is bounded. Update must be array of parameters`,
       );
     }
 
     const currParams = instanceData._clampState?.params;
-    if (currParams && _.lengthOf(currParams) !== _.lengthOf(input)) {
+    if (currParams && _.lengthOf(currParams) !== _.lengthOf(result)) {
       throw usageError(
         `Clamp '${clamp.type}': length of update parameters array must be fixed`,
       );
     }
 
-    newState = { params: input, active: false };
+    newState = { params: result, active: false };
   } else {
-    if (!_.isBoolean(input)) {
+    if (!_.isBoolean(result)) {
       throw usageError(
         `Clamp '${clamp.type}' is not bounded. Update must be true/false`,
       );
     }
 
-    newState = { active: input };
+    newState = { active: result };
   }
 
   instanceData._prevClampState = instanceData._clampState;
   instanceData._clampState = newState;
-  if (!instanceData._refClampState) {
+  if (updateRef || !instanceData._refClampState) {
     instanceData._refClampState = newState;
+    logger?.debug7("Updated reference state", instanceData._refClampState);
   }
 
-  if (isBounded(instanceData)) {
+  if (getDeviation && isBounded(instanceData)) {
     const violationInput = getBoundViolationInput(
       clamp,
       instanceData,
@@ -1575,10 +1500,6 @@ const updateClampState = <D, B extends boolean>(
 
   return deviation;
 };
-
-const isBounded = <D>(
-  data: InstanceData<D, boolean>,
-): data is InstanceData<D, true> => !!data._bounds;
 
 const getBoundViolationInput = <D, B extends boolean>(
   clamp: FXClamp,
@@ -1598,7 +1519,7 @@ const getBoundViolationInput = <D, B extends boolean>(
   const refParams = getClampState(clamp, data, true).params;
 
   return {
-    _bounds: data._bounds,
+    _bounds: data._config.bounds,
     _current: params,
     _previous: prevParams,
     _reference: refParams,
@@ -1762,18 +1683,8 @@ const getBoundViolation = (input: BoundViolationInput): BoundViolation => {
     violated ||= axisViolated;
   }
 
+  // XXX should we set deviation to null/0 if NOT violated?
   return { _violated: violated, _deviation: deviation };
-};
-
-const getClampedParams = (params: FXClampParams[], deltas: AxesDeltaValues) => {
-  const result = _.copyNested(params);
-  for (const p of result) {
-    for (const a of _.A_AXES) {
-      p[a].current -= deltas[a] ?? 0;
-    }
-  }
-
-  return result;
 };
 
 const getClampedComposerState = (state: FXState, deltas: AxesDeltaValues) => {
@@ -1786,6 +1697,7 @@ const getClampedComposerState = (state: FXState, deltas: AxesDeltaValues) => {
   return result;
 };
 
+// XXX remove
 const getComposerStateDiff = (
   stateA: FXState,
   stateB: FXState,
@@ -1836,6 +1748,7 @@ const getViewOffsets = (input: ViewOffsetsInput) => {
   return offsets;
 };
 
+// XXX update
 const getViewOffsetsCalibration = (
   composer: FXComposer,
   input: ViewOffsetsInput,

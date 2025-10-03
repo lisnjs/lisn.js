@@ -6,37 +6,15 @@
 
 // XXX
 // TODO:
-// - update explanation about clamp types and modes
-// - composer clamp also to work in two modes (clamping/adjusting or simply freezing
-//   composer state)
+// - update doc especially explanation about clamp types and modes
 //
-// - ensure clamp updates are processed only if params change
+// - a way for a clamp to update the effect instance if correction is needed
+//   outside update loop
 //
-// - relative bounds: compute effective absolute bounds on restart (based on
-//   direction): this should be factored into base
-//
-// - base clamp to detect violation and request best guess for from clamp logic
-//   method
-//   - tries it, can request correction
-//   - ensure it doesn't loop infinitely, if next guess is not closer, stop
-//
-// - remove requestUpdate and requestRecompose:
-//   - instead effect's update method to call pin method (named ???) to check
-//     for corrections
-//     - ??? what does the pin do now with all active clamps: they each need to
-//       check...
-//       - calls method (named ???) on each clamp which should return a composer
-//         state to use or null
-//       - for each axis, it chooses the value that is furthest away from the
-//         current composer state (most clamping)
-//       - stores this as the clamped state
-//     - pin method should return a composer state to use (update using) or null
-//       if no corrections needed
-//     - effect loops, reupdating and calling pin's method until it returns null
-//   - when the pin clamps to a state, the next time the composer tries to
-//     update: need to check if we can release clamp
-//     - pin tries the latest composer state and checks bounds
-//     - if still violated, reverts to the last clamped state it set
+// - relative bounds: compute effective absolute bounds on restart NOT on
+//   getting bound violation (based on direction): this should be factored into
+//   based
+//   - for exact relative bounds, set min to 0 and max to the resolved bound
 //
 // - view clamp modes:
 //   - mode 1: when the only thing affecting the element's position is the
@@ -49,47 +27,44 @@
 //       3. has no scrollable ancestor (stop checking at the first fixed
 //          positioned ancestor)
 //       4. the associated effect is a Transform (or has "transform" in its css)
-//     - need a self-correcting best-guess numeric approach to find clamp
-//       parameters for given offset bounds
-//     - view clamp to use the transform CSS property of the composer to predict
-//       the offsets and compute a state to clamp to
-//       - ??? how should we calculate the state to clamp to? still need the
-//         calibration?
+//     - view clamp to use the transform CSS property of the effect to predict
+//       the offsets
+//       - should use untransformed bounding box as input
+//       - needs to check on after every animation frame apply corrections if
+//         needed and re-measure the untransformed bounding box (but this causes
+//         reflow... what to do????)
+//     - on update, let the effect update using input state but set recheck to
+//       true
+//       - if not violated, return input state and recheck false
+//       - if violated and it was previously violated too, return old clamped
+//         composer state and recheck false
+//       - if violated, but previously not, need to find composer params to
+//         clamp to
+//         - need a self-correcting best-guess numeric approach to find composer
+//           state parameters for given offset bounds and rechecking until good
 //   - mode 2: any other scenario
-//     - view clamp to monitor on every animation frame and simply
+//     - view clamp to monitor offsets on every animation frame and simply
 //       activate/deactivate
-// - no need to allow corrections to clamped state
-//   - ??? but what if multiple running clamps ask the pin to clamp in the same
-//     "loop": we should be able to use the largest clamp
-//
-// - ?? no need for deviation/delta mapping: clamps set absolute x, y, z values
-//   to clamp to
 //
 // - re-enable transition
+//
 // - view clamp to support middle (x/y)
+//
 // - effect callbacks to receive viewport size
-// - implement invert
 //
 // -----------------
 // To check?
-// - all is reversible back to beginning even when resizing window/elements and
-//   using min/max relative bounds
+// - test invert
 //
 // - test with transition
 //
-// - el doesn't revert to its original offset
+// - all is reversible back to beginning even when resizing window/elements and
+//   using min/max relative bounds
 //
 // - need to be able to update deviation even when still actively clamping
 //
 // - view clamp doesn't react when jump scrolling (activates but doesn't do
 //   anything)
-//
-// - view clamp doesn't work with transition: after each restyling of composer
-//   it needs to loop on after paint until offsets no longer change
-//
-// - composer clamp reference when restarted after other pinned is wrong;
-//   master pin needs to save clamped state and pass it to restart? then
-//   restart needs to apply this deviation to the ref state?
 //
 // __________________________________________
 //
@@ -211,7 +186,6 @@ export abstract class FXClampBase<T extends string> implements FXClamp<T> {
 
   abstract type: T;
 
-  // XXX TODO
   readonly invert: () => this;
 
   constructor() {
@@ -283,6 +257,14 @@ export type BoundedValue =
  * {@link FXState | state parameters} are **outside** the given
  * {@link FXComposerClampBounds | bounds}.
  *
+ * You can specify a custom composer to match against, however note that in this
+ * case when the bounds are violated, the effective clamped composer state
+ * passed to the effect associated with this clamp will simply be the current
+ * state of the associated effect's composer (and not the composer being
+ * monitored). Otherwise when the composer monitored is the associated one
+ * (default), then when the bounds are violated the effective clamped composer
+ * state passed to the associated effect will be constrained to fit the bounds.
+ *
  * It supports relative bounds as `"+<delta>"` which will be relative to the
  * parameters at the time it was last restarted.
  *
@@ -293,6 +275,11 @@ export type BoundedValue =
 export class FXComposerClamp extends FXClampBase<"composer"> {
   readonly type = "composer";
 
+  /**
+   * @param composer The {@link FXComposer} to monitor and check bounds against.
+   *                 If not given, the composer associated with this clamp will
+   *                 be used.
+   */
   constructor(bounds: FXComposerClampBounds, composer?: FXComposer) {
     super();
 
@@ -876,12 +863,13 @@ export type FXClampStore<Data, Bounded extends boolean> = {
   /**
    * Returns the {@link FXComposer} associated with this clamp.
    */
-  getComposer: () => FXComposer;
+  getComposer: () => FXComposer; // XXX is this needed
 
   /**
-   * Returns the {@link EffectInstance} associated with this clamp.
+   * Returns the {@link EffectInstanceInterface.toCSS | CSS} for the effect
+   * associated with this clamp.
    */
-  getEffect: () => EffectInstance; // XXX TODO make generic?
+  getEffectCss: () => Record<string, string>;
 };
 
 /**
@@ -990,8 +978,12 @@ const createClampInstance = <
   } = getInitData<A, B>(clamp);
 
   let isPaused = true; // don't start until the pin restarts us
-  let clampedComposerState: FXState | null = null;
-
+  let isClamping = false;
+  let lastUpdate: {
+    _inputState: FXState;
+    _clampedState: FXState;
+    _result: FXClampUpdateResult<B>;
+  } | null = null;
   const instanceData = createInstanceData<D, B>(config);
 
   const store: FXClampStore<D, B> = {
@@ -1008,26 +1000,22 @@ const createClampInstance = <
       instanceData._data = data;
     },
 
-    getClampState: () => _.copyNested(getClampState(clamp, instanceData)),
+    getState: () => _.copyNested(getClampState(clamp, instanceData)),
 
     getViewportSize: () => vpSizeWatch.get(),
 
     getComposer: () => composer,
 
-    getEffect: () => effectInstance,
+    getEffectCss: () => effectInstance.toCss(),
   };
 
   // ----------
 
-  const clampState = (state: FXState) => update(state, { _getDeviation: true });
+  const clampState = (state: FXState) => update(state);
 
   // ----------
 
-  // XXX TODO if same as last one, reuse last result and set recheck to false?
-  const update = (
-    state: FXState,
-    options?: { _updateRef?: boolean; _getDeviation?: boolean },
-  ) => {
+  const update = (state: FXState, updateRef = false) => {
     if (isPaused) {
       return { recheck: false, state };
     }
@@ -1037,28 +1025,50 @@ const createClampInstance = <
       noAdjust = false,
       result,
     } = logic.update.call(self, store, state);
-    let deviation: AxesDeltaValues | null = null;
+
+    if (lastUpdate) {
+      if (
+        compareComposerParams(state, lastUpdate._inputState) &&
+        compareValuesIn(result, lastUpdate._result)
+      ) {
+        return { recheck: false, state: lastUpdate._clampedState };
+      }
+    }
+
+    let violation: BoundViolation | null = null;
     try {
-      deviation = updateClampState(
-        clamp,
-        instanceData,
-        result,
-        vpSizeWatch.get(),
-        logger,
-        options ?? {},
-      );
+      violation = updateClampState(clamp, instanceData, result, {
+        _viewportSize: vpSizeWatch.get(),
+        _logger: logger,
+        _updateRef: updateRef,
+      });
     } catch (err) {
       logError(err);
       return { recheck: false, state };
     }
 
-    clampedComposerState =
-      deviation && !noAdjust
+    const deviation = violation?._deviation;
+
+    isClamping = isBounded(instanceData)
+      ? (violation?._violated ?? false)
+      : result === true;
+    if (invert) {
+      isClamping = !isClamping;
+    }
+
+    const clampedComposerState =
+      isClamping && deviation && !noAdjust
         ? getClampedComposerState(
             state,
             logic.toComposerDeltas?.call(self, store, deviation) ?? deviation,
           )
         : state;
+
+    lastUpdate = {
+      _inputState: state,
+      _result: result,
+      _clampedState: clampedComposerState,
+    };
 
     return { recheck, state: clampedComposerState };
   };
@@ -1073,7 +1083,7 @@ const createClampInstance = <
     }
 
     if (reference) {
-      update(reference, { _updateRef: true });
+      update(reference, true);
     }
 
     if (isChanged) {
@@ -1089,7 +1099,7 @@ const createClampInstance = <
     restart: (reference?: FXState) =>
       setRunningState(RESUME, reference ?? composer.getState()),
     isPaused: () => isPaused,
-    isClamping: () => !isPaused && !!clampedComposerState,
+    isClamping: () => !isPaused && isClamping,
     clamp: clampState,
   };
 
@@ -1440,14 +1450,17 @@ const updateClampState = <D, B extends boolean>(
   clamp: FXClamp,
   instanceData: InstanceData<D, B>,
   result: FXClampUpdateResult<B>,
-  viewportSize: Size,
-  logger: LoggerInterface | undefined,
   {
+    _viewportSize: viewportSize,
+    _logger: logger,
     _updateRef: updateRef,
-    _getDeviation: getDeviation,
-  }: { _updateRef?: boolean; _getDeviation?: boolean },
-): AxesDeltaValues | null => {
-  let deviation: AxesDeltaValues | null = null;
+  }: {
+    _viewportSize: Size;
+    _logger: LoggerInterface | undefined;
+    _updateRef?: boolean;
+  },
+): BoundViolation | null => {
+  let violation: BoundViolation | null = null;
   let newState: InstanceData<D, B>["_clampState"];
 
   if (isBounded(instanceData)) {
@@ -1482,7 +1495,7 @@ const updateClampState = <D, B extends boolean>(
     logger?.debug7("Updated reference state", instanceData._refClampState);
   }
 
-  if (getDeviation && isBounded(instanceData)) {
+  if (isBounded(instanceData)) {
     const violationInput = getBoundViolationInput(
       clamp,
       instanceData,
@@ -1490,15 +1503,14 @@ const updateClampState = <D, B extends boolean>(
     );
 
     if (violationInput) {
-      const violation = getBoundViolation(violationInput);
+      violation = getBoundViolation(violationInput);
       logger?.debug10("Bound violation", { violationInput, violation });
 
       newState.active = violation._violated;
-      deviation = violation._deviation;
     }
   }
 
-  return deviation;
+  return violation;
 };
 
 const getBoundViolationInput = <D, B extends boolean>(
@@ -1542,6 +1554,8 @@ const toRawBoundsValue = (
   const reference = input._reference[idx][axis].current;
   const low = input._current[idx][axis].low;
   const high = input._current[idx][axis].high;
+  const isIncreasing =
+    input._current[idx][axis].current > input._previous[idx][axis].current;
 
   const viewport = input._viewportSize;
 
@@ -1561,6 +1575,10 @@ const toRawBoundsValue = (
     numerical,
   }) => {
     const isRelative = isAdditive && numerical >= 0;
+
+    if (isRelative && !isIncreasing) {
+      numerical = -numerical;
+    }
 
     let result;
     numerical *= multiplier;
@@ -1584,6 +1602,7 @@ const getBoundViolation = (input: BoundViolationInput): BoundViolation => {
     axis: "x" | "y" | "z",
     idx: number,
   ) => {
+    // XXX this needs to be computed at restart time
     const rawBound = toRawBoundsValue(boundedValue, input, axis, idx);
     return _.isNull(rawBound)
       ? null
@@ -1683,7 +1702,6 @@ const getBoundViolation = (input: BoundViolationInput): BoundViolation => {
     violated ||= axisViolated;
   }
 
-  // XXX should we set deviation to null/0 if NOT violated?
   return { _violated: violated, _deviation: deviation };
 };
 
@@ -1697,17 +1715,14 @@ const getClampedComposerState = (state: FXState, deltas: AxesDeltaValues) => {
   return result;
 };
 
-// XXX remove
-const getComposerStateDiff = (
-  stateA: FXState,
-  stateB: FXState,
-): AxesDeltaValues => {
-  const deltas = { x: 0, y: 0, z: 0 };
+const compareComposerParams = (stateA: FXState, stateB: FXState) => {
   for (const a of _.A_AXES) {
-    deltas[a] = stateA[a].current - stateB[a].current;
+    if (!compareValuesIn(stateA[a].current, stateB[a].current)) {
+      return false;
+    }
   }
 
-  return deltas;
+  return true;
 };
 
 // ----------

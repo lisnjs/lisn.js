@@ -61,7 +61,7 @@ export const toIterableIfNot = <T>(
   _.isIterableObject(value) ? value : !_.isNullish(value) ? [value] : [];
 
 /**
- * Returns true if the two objects are equal. Nested objects and arrays are
+ * Returns true if the two values are equal. Nested objects and arrays are
  * recursed into (since v1.3.0). Numeric values are rounded to the given number
  * of decimal places.
  *

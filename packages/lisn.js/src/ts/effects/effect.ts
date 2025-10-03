@@ -719,6 +719,8 @@ const _createEffectInstance = <T extends EffectName, S>(
   parentLogger: LoggerInterface | undefined,
 ): EffectInstance<T> => {
   const update = (state: FXState) => {
+    // XXX if previous equals current for all axes, skip
+
     let recheck = false;
     if (pinInstance) {
       ({ state, recheck } = pinInstance.clamp(state));
@@ -747,6 +749,7 @@ const _createEffectInstance = <T extends EffectName, S>(
 
     // XXX TODO pin to ensure no infinite loops?
     if (recheck) {
+      // XXX set previous to equal current for all axes
       update(state);
     }
   };
